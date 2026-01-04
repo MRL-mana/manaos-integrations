@@ -1,0 +1,161 @@
+{
+  "name": "ManaOS Image Generation Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "comfyui-generated",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "comfyui-generated"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "name": "={{ $json.prompt_id }}.png",
+        "binaryData": true,
+        "folderId": {
+          "__rl": true,
+          "value": "",
+          "mode": "id"
+        }
+      },
+      "id": "google-drive-upload",
+      "name": "Google Drive Upload",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "credentials": {
+        "googleApi": {
+          "id": "1",
+          "name": "Google Drive API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "name": "画像生成_{{ $now.toISO() }}.md",
+        "content": "= 画像生成: {{ $json.prompt }}\n\n- 生成日時: {{ $json.timestamp }}\n- プロンプト: {{ $json.prompt }}\n- ネガティブプロンプト: {{ $json.negative_prompt }}\n- パラメータ: width={{ $json.width }}, height={{ $json.height }}, steps={{ $json.steps }}\n- Google Drive: [リンク]"
+      },
+      "id": "obsidian-create",
+      "name": "Obsidian Create",
+      "type": "n8n-nodes-base.obsidian",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "credentials": {
+        "obsidianApi": {
+          "id": "1",
+          "name": "Obsidian API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "channel": "#manaos-notifications",
+        "text": "🎨 画像生成完了\n\nプロンプト: {{ $json.prompt }}\n生成ID: {{ $json.prompt_id }}\n生成日時: {{ $json.timestamp }}"
+      },
+      "id": "slack-notify",
+      "name": "Slack Notify",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "credentials": {
+        "slackApi": {
+          "id": "1",
+          "name": "Slack API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"success\", \"message\": \"Workflow executed\" } }}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Google Drive Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Upload": {
+      "main": [
+        [
+          {
+            "node": "Obsidian Create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obsidian Create": {
+      "main": [
+        [
+          {
+            "node": "Slack Notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Notify": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-28T12:00:00.000Z",
+  "versionId": "1"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

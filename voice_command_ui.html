@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ManaOS Voice Command</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5em;
+        }
+        
+        .voice-button {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            margin: 0 auto;
+            display: block;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .voice-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+        }
+        
+        .voice-button:active {
+            transform: scale(0.95);
+        }
+        
+        .voice-button.recording {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+            }
+            50% {
+                box-shadow: 0 15px 50px rgba(255, 107, 107, 0.8);
+            }
+        }
+        
+        .text-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1.1em;
+            margin-top: 20px;
+            transition: border-color 0.2s;
+        }
+        
+        .text-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .execute-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .execute-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .transcript {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            min-height: 50px;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .history {
+            margin-top: 30px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .history-item.success {
+            border-left-color: #50C878;
+        }
+        
+        .history-item.error {
+            border-left-color: #FF6B6B;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 ManaOS Voice Command</h1>
+        
+        <button id="voiceButton" class="voice-button">
+            🎤 タップして話す
+        </button>
+        
+        <div id="transcript" class="transcript" style="display: none;"></div>
+        
+        <input type="text" id="textInput" class="text-input" placeholder="または、テキストで入力...">
+        
+        <button id="executeButton" class="execute-button">実行</button>
+        
+        <div id="status" class="status"></div>
+        
+        <div class="history">
+            <h3>実行履歴</h3>
+            <div id="history"></div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:5115';
+        
+        let recognition = null;
+        let isRecording = false;
+        
+        // Web Speech API初期化
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'ja-JP';
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            
+            recognition.onstart = () => {
+                isRecording = true;
+                updateButtonState(true);
+                showStatus('🎤 聞いています...', 'info');
+            };
+            
+            recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                document.getElementById('transcript').textContent = transcript;
+                document.getElementById('transcript').style.display = 'block';
+                document.getElementById('textInput').value = transcript;
+            };
+            
+            recognition.onerror = (event) => {
+                console.error('音声認識エラー:', event.error);
+                showStatus('❌ 音声認識エラー: ' + event.error, 'error');
+                isRecording = false;
+                updateButtonState(false);
+            };
+            
+            recognition.onend = () => {
+                isRecording = false;
+                updateButtonState(false);
+                
+                const text = document.getElementById('textInput').value;
+                if (text) {
+                    executeCommand(text);
+                }
+            };
+        } else {
+            document.getElementById('voiceButton').disabled = true;
+            document.getElementById('voiceButton').textContent = '❌ 音声認識非対応';
+            showStatus('このブラウザは音声認識に対応していません', 'error');
+        }
+        
+        function updateButtonState(recording) {
+            const button = document.getElementById('voiceButton');
+            if (recording) {
+                button.classList.add('recording');
+                button.textContent = '🔴 録音中...';
+            } else {
+                button.classList.remove('recording');
+                button.textContent = '🎤 タップして話す';
+            }
+        }
+        
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        async function executeCommand(text) {
+            if (!text.trim()) {
+                showStatus('コマンドを入力してください', 'error');
+                return;
+            }
+            
+            showStatus('⏳ 実行中...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/voice/execute`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        user: 'web_user'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    showStatus(`✅ 実行完了: ${result.execution_id}`, 'success');
+                    addToHistory(text, result.execution_id, 'success');
+                } else {
+                    showStatus(`❌ エラー: ${result.error}`, 'error');
+                    addToHistory(text, result.error, 'error');
+                }
+            } catch (error) {
+                console.error('実行エラー:', error);
+                showStatus(`❌ 通信エラー: ${error.message}`, 'error');
+                addToHistory(text, error.message, 'error');
+            }
+        }
+        
+        function addToHistory(text, result, type) {
+            const history = document.getElementById('history');
+            const item = document.createElement('div');
+            item.className = `history-item ${type}`;
+            item.innerHTML = `
+                <strong>${text}</strong><br>
+                <small>${new Date().toLocaleTimeString()} - ${result}</small>
+            `;
+            history.insertBefore(item, history.firstChild);
+            
+            // 最大10件まで保持
+            while (history.children.length > 10) {
+                history.removeChild(history.lastChild);
+            }
+        }
+        
+        // イベントリスナー
+        document.getElementById('voiceButton').addEventListener('click', () => {
+            if (!recognition) return;
+            
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                document.getElementById('textInput').value = '';
+                document.getElementById('transcript').style.display = 'none';
+                recognition.start();
+            }
+        });
+        
+        document.getElementById('executeButton').addEventListener('click', () => {
+            const text = document.getElementById('textInput').value;
+            executeCommand(text);
+        });
+        
+        document.getElementById('textInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                executeCommand(e.target.value);
+            }
+        });
+        
+        // ステータス確認
+        async function checkStatus() {
+            try {
+                const response = await fetch(`${API_URL}/api/status`);
+                const data = await response.json();
+                if (data.orchestrator_status !== 'healthy') {
+                    showStatus('⚠️ Orchestratorに接続できません', 'error');
+                }
+            } catch (error) {
+                showStatus('⚠️ APIに接続できません', 'error');
+            }
+        }
+        
+        checkStatus();
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,62 @@
+﻿# ManaOS統合システム - 依存関係
+
+# Webフレームワーク
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# HTTPリクエスト
+requests>=2.31.0
+
+# Google Drive API
+google-auth>=2.23.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.1.1
+google-api-python-client>=2.100.0
+
+# LangChain / LangGraph
+langchain>=0.1.0
+langchain-community>=0.0.20
+langchain-core>=0.1.0
+langgraph>=0.0.20
+
+# Mem0
+mem0ai>=1.0.0
+
+# CrewAI
+crewai>=0.1.0
+crewai-tools>=0.1.0
+
+# 予測的メンテナンス
+scikit-learn>=1.3.0
+numpy>=1.24.0
+psutil>=5.9.0
+
+# リアルタイムダッシュボード
+flask-socketio>=5.3.0
+
+# マルチモーダル統合
+SpeechRecognition>=3.10.0
+pyttsx3>=2.90
+
+# 通知システム
+requests>=2.31.0
+
+# バックアップ・復旧
+# (標準ライブラリのみ使用)
+
+# パフォーマンス分析
+psutil>=5.9.0
+
+# データベース統合
+psycopg2-binary>=2.9.0
+pymongo>=4.5.0
+
+# クラウド統合
+boto3>=1.28.0
+azure-identity>=1.15.0
+azure-storage-blob>=12.19.0
+google-cloud-storage>=2.10.0
+
+# その他
+python-dotenv>=1.0.0
+

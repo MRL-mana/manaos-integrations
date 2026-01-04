@@ -1,0 +1,20 @@
+============================================================
+File Secretary 状態確認
+============================================================
+
+=== API確認 ===
+Traceback (most recent call last):
+  File "C:\Users\mana4\Desktop\manaos_integrations\file_secretary_status_check.py", line 40, in check_api
+    print(f"\u2705 APIサーバー: 正常 ({data.get('version')})")
+UnicodeEncodeError: 'cp932' codec can't encode character '\u2705' in position 0: illegal multibyte sequence
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\mana4\Desktop\manaos_integrations\file_secretary_status_check.py", line 187, in <module>
+    main()
+  File "C:\Users\mana4\Desktop\manaos_integrations\file_secretary_status_check.py", line 152, in main
+    results['api'] = check_api()
+  File "C:\Users\mana4\Desktop\manaos_integrations\file_secretary_status_check.py", line 49, in check_api
+    print(f"\u274c APIサーバー: エラー - {e}")
+UnicodeEncodeError: 'cp932' codec can't encode character '\u274c' in position 0: illegal multibyte sequence

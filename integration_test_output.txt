@@ -1,0 +1,61 @@
+============================================================
+File Secretary 邨ｱ蜷医ユ繧ｹ繝・
+============================================================
+=== 繝・・繧ｿ繝吶・繧ｹ繝・せ繝・===
+2026-01-03 20:48:55 [    INFO] [file_secretary_db] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ file_secretary_test.db
+笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹匁・蜉・
+  譁ｰ隕上ヵ繧｡繧､繝ｫ: 0莉ｶ
+  譛ｪ蜃ｦ逅・ヵ繧｡繧､繝ｫ: 0莉ｶ
+2026-01-03 20:48:55 [    INFO] [file_secretary_db] 笨・繝・・繧ｿ繝吶・繧ｹ謗･邯壹ｒ髢峨§縺ｾ縺励◆
+
+=== Indexer繝・せ繝・===
+2026-01-03 20:48:55 [    INFO] [file_secretary_db] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ file_secretary_test.db
+2026-01-03 20:48:55 [    INFO] [file_secretary_db] 笨・繝輔ぃ繧､繝ｫ繝ｬ繧ｳ繝ｼ繝我ｽ懈・: 3f6ae7d0ba240122c9ad4087fc314cd2653623c3f68e34be7a673061d192c9cb
+2026-01-03 20:48:55 [    INFO] [file_secretary_indexer] 笨・繝輔ぃ繧､繝ｫ繧､繝ｳ繝・ャ繧ｯ繧ｹ螳御ｺ・ integration_test.txt (3f6ae7d0...)
+2026-01-03 20:48:55 [    INFO] [file_secretary_db] 笨・繝輔ぃ繧､繝ｫ繝ｬ繧ｳ繝ｼ繝我ｽ懈・: b40e3d4da484dc00599df9b70d4ccf67aa04bcf04e13637569f65f1bdcba7b72
+2026-01-03 20:48:55 [    INFO] [file_secretary_indexer] 笨・繝輔ぃ繧､繝ｫ繧､繝ｳ繝・ャ繧ｯ繧ｹ螳御ｺ・ test_final.txt (b40e3d4d...)
+2026-01-03 20:48:55 [    INFO] [file_secretary_db] 笨・繝輔ぃ繧､繝ｫ繝ｬ繧ｳ繝ｼ繝我ｽ懈・: 0e804e442ec83b420a5b110bef4fd6417eb340779b1385bdb952c8f97ef90535
+2026-01-03 20:48:55 [    INFO] [file_secretary_indexer] 笨・繝輔ぃ繧､繝ｫ繧､繝ｳ繝・ャ繧ｯ繧ｹ螳御ｺ・ test_organize.txt (0e804e44...)
+2026-01-03 20:48:55 [    INFO] [file_secretary_indexer] 笨・繝・ぅ繝ｬ繧ｯ繝医Μ繧､繝ｳ繝・ャ繧ｯ繧ｹ螳御ｺ・ 3莉ｶ
+笨・繧､繝ｳ繝・ャ繧ｯ繧ｹ螳御ｺ・ 3莉ｶ
+2026-01-03 20:48:55 [    INFO] [file_secretary_db] 笨・繝・・繧ｿ繝吶・繧ｹ謗･邯壹ｒ髢峨§縺ｾ縺励◆
+
+=== Organizer繝・せ繝・===
+2026-01-03 20:48:55 [    INFO] [file_secretary_db] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ file_secretary_test.db
+2026-01-03 20:48:55 [ WARNING] [file_secretary_db] FTS5 update error (ignored): database disk image is malformed
+2026-01-03 20:48:55 [    INFO] [file_secretary_db] 笨・繝輔ぃ繧､繝ｫ繝ｬ繧ｳ繝ｼ繝画峩譁ｰ: 0e804e442ec83b420a5b110bef4fd6417eb340779b1385bdb952c8f97ef90535
+2026-01-03 20:48:55 [    INFO] [file_secretary_organizer] 笨・繝輔ぃ繧､繝ｫ謨ｴ逅・ｮ御ｺ・ test_organize.txt 竊・2026-01-03_縺昴・莉棒test_organize.txt
+笨・謨ｴ逅・ｮ御ｺ・ 1莉ｶ
+2026-01-03 20:48:55 [    INFO] [file_secretary_db] 笨・繝・・繧ｿ繝吶・繧ｹ謗･邯壹ｒ髢峨§縺ｾ縺励◆
+
+=== 蠕ｩ蜈・ユ繧ｹ繝・===
+2026-01-03 20:48:55 [    INFO] [file_secretary_db] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ file_secretary_test.db
+2026-01-03 20:48:55 [ WARNING] [file_secretary_db] FTS5 update error (ignored): database disk image is malformed
+2026-01-03 20:48:55 [    INFO] [file_secretary_db] 笨・繝輔ぃ繧､繝ｫ繝ｬ繧ｳ繝ｼ繝画峩譁ｰ: 0e804e442ec83b420a5b110bef4fd6417eb340779b1385bdb952c8f97ef90535
+2026-01-03 20:48:55 [    INFO] [file_secretary_organizer] 笨・繝輔ぃ繧､繝ｫ蠕ｩ蜈・ｮ御ｺ・ test_organize.txt
+笨・蠕ｩ蜈・ｮ御ｺ・ 1莉ｶ
+2026-01-03 20:48:55 [    INFO] [file_secretary_db] 笨・繝・・繧ｿ繝吶・繧ｹ謗･邯壹ｒ髢峨§縺ｾ縺励◆
+
+=== API繝・せ繝・===
+笨・繝倥Ν繧ｹ繝√ぉ繝・け謌仙粥
+笨・INBOX迥ｶ豕∝叙蠕玲・蜉・
+
+=== Slack邨ｱ蜷医ユ繧ｹ繝・===
+笨・"Inbox縺ｩ縺・ｼ・ -> status
+笨・"邨ゅｏ縺｣縺・ -> done
+笨・"謌ｻ縺励※" -> restore
+笨・"謗｢縺励※・壽律蝣ｱ" -> search
+
+============================================================
+繝・せ繝育ｵ先棡繧ｵ繝槭Μ
+============================================================
+database            : 笨・PASS
+indexer             : 笨・PASS
+organizer           : 笨・PASS
+restore             : 笨・PASS
+api                 : 笨・PASS
+slack               : 笨・PASS
+
+蜷郁ｨ・ 6/6 繝・せ繝磯夐℃
+
+脂 縺吶∋縺ｦ縺ｮ繝・せ繝医′騾夐℃縺励∪縺励◆・・

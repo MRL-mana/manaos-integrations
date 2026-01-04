@@ -1,0 +1,30 @@
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\mana4\Desktop\manaos_integrations\file_secretary_image_templates.py", line 63, in __init__
+    self.comfyui_integration = ComfyUIIntegration(api_url=comfyui_url)
+TypeError: ComfyUIIntegration.__init__() got an unexpected keyword argument 'api_url'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\logging\__init__.py", line 1103, in emit
+    stream.write(msg + self.terminator)
+UnicodeEncodeError: 'cp932' codec can't encode character '\u274c' in position 64: illegal multibyte sequence
+Call stack:
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_image_templates.py", line 47, in <module>
+    main()
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_image_templates.py", line 20, in main
+    templates = FileSecretaryImageTemplates()
+  File "C:\Users\mana4\Desktop\manaos_integrations\file_secretary_image_templates.py", line 69, in __init__
+    logger.error(f"\u274c ComfyUI統合初期化エラー: {e}")
+Message: "\u274c ComfyUI統合初期化エラー: ComfyUIIntegration.__init__() got an unexpected keyword argument 'api_url'"
+Arguments: ()
+=== 画像生成テンプレテスト ===
+
+画像生成テンプレ初期化中...
+Traceback (most recent call last):
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_image_templates.py", line 47, in <module>
+    main()
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_image_templates.py", line 23, in main
+    print("\u26a0\ufe0f ComfyUI統合が利用できません")
+UnicodeEncodeError: 'cp932' codec can't encode character '\u26a0' in position 0: illegal multibyte sequence

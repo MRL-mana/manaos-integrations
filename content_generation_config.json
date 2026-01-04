@@ -1,0 +1,23 @@
+{
+  "ollama_url": "http://localhost:11434",
+  "model": "qwen2.5:14b",
+  "auto_generate": true,
+  "generation_rules": {
+    "daily_report": {
+      "enabled": true,
+      "target": "blog_draft",
+      "template": "blog_template"
+    },
+    "config_log": {
+      "enabled": true,
+      "target": ["note_article", "zenn_article"],
+      "template": "tech_article_template"
+    },
+    "image_generation": {
+      "enabled": true,
+      "target": "template_product",
+      "min_quality_score": 0.7
+    }
+  }
+}
+

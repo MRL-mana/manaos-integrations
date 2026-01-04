@@ -1,0 +1,246 @@
+/* Portal UI Styles - Unified Portal v2用のスタイル */
+
+.mode-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.mode-switch label {
+    color: white;
+    font-weight: bold;
+}
+
+.mode-switch select {
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: none;
+    background: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.execute-panel {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+#task-input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 16px;
+    resize: vertical;
+    margin-bottom: 15px;
+    font-family: inherit;
+}
+
+#task-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.execute-button {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.execute-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+}
+
+.execute-button:active {
+    transform: translateY(0);
+}
+
+.execute-status {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.execute-status .loading {
+    color: #667eea;
+    font-weight: bold;
+}
+
+.execute-status .success {
+    color: #50C878;
+    font-weight: bold;
+}
+
+.execute-status .error {
+    color: #FF6B6B;
+    font-weight: bold;
+}
+
+.cost-meter {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.cost-meter h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.cost-today {
+    margin-bottom: 15px;
+}
+
+.cost-bar {
+    width: 100%;
+    height: 20px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.cost-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #50C878 0%, #FFB347 50%, #FF6B6B 100%);
+    transition: width 0.3s;
+}
+
+.cost-total {
+    color: #666;
+    font-size: 14px;
+}
+
+.queue-status {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.queue-status h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.queue-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.queue-info div {
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.execution-history {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.execution-history h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.history-item {
+    padding: 15px;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 10px;
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.history-id {
+    font-family: monospace;
+    font-size: 12px;
+    color: #666;
+}
+
+.history-status {
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.status-completed {
+    background: #50C878;
+    color: white;
+}
+
+.status-failed {
+    background: #FF6B6B;
+    color: white;
+}
+
+.status-executing {
+    background: #FFB347;
+    color: white;
+}
+
+.status-pending {
+    background: #e0e0e0;
+    color: #666;
+}
+
+.history-content {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.history-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 12px;
+    color: #666;
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+    .execute-panel,
+    .cost-meter,
+    .queue-status,
+    .execution-history {
+        margin-bottom: 15px;
+    }
+    
+    .queue-info {
+        grid-template-columns: 1fr;
+    }
+}
+

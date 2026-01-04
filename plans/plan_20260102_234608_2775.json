@@ -1,0 +1,27 @@
+{
+  "plan_id": "plan_20260102_234608_2775",
+  "intent_type": "unknown",
+  "original_input": "画像を生成して",
+  "steps": [
+    {
+      "step_id": "step_1",
+      "description": "unknownを実行",
+      "action": "call_api",
+      "target": "",
+      "parameters": {},
+      "dependencies": [],
+      "estimated_duration": 60,
+      "priority": "medium",
+      "status": "pending",
+      "result": null,
+      "error": null,
+      "started_at": null,
+      "completed_at": null
+    }
+  ],
+  "total_estimated_duration": 60,
+  "priority": "medium",
+  "created_at": "2026-01-02T23:46:08.617041",
+  "status": "pending",
+  "completed_at": null
+}

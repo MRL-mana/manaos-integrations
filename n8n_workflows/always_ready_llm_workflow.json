@@ -1,0 +1,365 @@
+{
+  "name": "常時起動LLM - キャッシュ付きチャット",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "llm-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - LLM Chat",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "always-ready-llm-chat"
+    },
+    {
+      "parameters": {
+        "jsCode": "// リクエストデータ取得\nconst input = $input.first().json.body || $input.first().json;\n\n// パラメータ抽出\nconst message = input.message || input.prompt || '';\nconst model = input.model || 'llama3.2:3b';\nconst task_type = input.task_type || 'conversation';\nconst use_cache = input.use_cache !== false; // デフォルトでキャッシュ有効\n\n// キャッシュキー生成（SHA256ハッシュ）\nfunction sha256(message) {\n  const crypto = require('crypto');\n  return crypto.createHash('sha256').update(message + model + task_type).digest('hex');\n}\n\nconst cache_key = `llm:${sha256(message)}`;\n\nreturn [{\n  json: {\n    message,\n    model,\n    task_type,\n    use_cache,\n    cache_key,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "prepare-request",
+      "name": "リクエスト準備",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-cache",
+              "leftValue": "={{ $json.use_cache }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-cache-enabled",
+      "name": "キャッシュ有効？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://localhost:9500/api/cache/get",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $json.cache_key }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "redis-get",
+      "name": "キャッシュ取得",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 200],
+      "notes": "統合APIサーバー経由でキャッシュから結果を取得"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-cache",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "cache-hit-check",
+      "name": "キャッシュヒット？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// キャッシュヒット時の処理\nconst cached = $input.first().json;\n\nreturn [{\n  json: {\n    response: cached.response || cached,\n    cached: true,\n    cache_key: $('prepare-request').first().json.cache_key,\n    timestamp: new Date().toISOString(),\n    source: 'cache'\n  }\n}];"
+      },
+      "id": "return-cached",
+      "name": "キャッシュ返却",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://ollama:11434/api/generate",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "={{ $('prepare-request').first().json.model }}"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $('prepare-request').first().json.message }}"
+            },
+            {
+              "name": "stream",
+              "value": "=false"
+            },
+            {
+              "name": "options",
+              "value": "={{ JSON.stringify({ temperature: 0.7, top_p: 0.9, top_k: 40 }) }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "ollama-generate",
+      "name": "Ollama - LLM生成",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 400],
+      "notes": "OllamaでLLM生成実行"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ollamaレスポンス処理\nconst ollama_response = $input.first().json;\nconst request_data = $('prepare-request').first().json;\n\n// レスポンス抽出\nconst response_text = ollama_response.response || ollama_response.text || '';\nconst model_used = ollama_response.model || request_data.model;\n\n// 結果オブジェクト\nconst result = {\n  response: response_text,\n  model: model_used,\n  cached: false,\n  cache_key: request_data.cache_key,\n  timestamp: new Date().toISOString(),\n  source: 'ollama',\n  tokens: ollama_response.eval_count || 0,\n  duration_ms: ollama_response.total_duration || 0\n};\n\nreturn [{\n  json: result\n}];"
+      },
+      "id": "process-response",
+      "name": "レスポンス処理",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://localhost:9500/api/cache/set",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $json.cache_key }}"
+            },
+            {
+              "name": "value",
+              "value": "={{ JSON.stringify($json) }}"
+            },
+            {
+              "name": "ttl_seconds",
+              "value": "=86400"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "redis-set",
+      "name": "キャッシュ保存",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1450, 400],
+      "notes": "統合APIサーバー経由で結果をキャッシュに保存（24時間TTL）"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "merge-results",
+      "name": "結果マージ",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [1650, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - LLM Chat": {
+      "main": [
+        [
+          {
+            "node": "リクエスト準備",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "リクエスト準備": {
+      "main": [
+        [
+          {
+            "node": "キャッシュ有効？",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "キャッシュ有効？": {
+      "main": [
+        [
+          {
+            "node": "Redis - キャッシュ取得",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ollama - LLM生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis - キャッシュ取得": {
+      "main": [
+        [
+          {
+            "node": "キャッシュヒット？",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "キャッシュヒット？": {
+      "main": [
+        [
+          {
+            "node": "キャッシュ返却",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ollama - LLM生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "キャッシュ返却": {
+      "main": [
+        [
+          {
+            "node": "結果マージ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama - LLM生成": {
+      "main": [
+        [
+          {
+            "node": "レスポンス処理",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "レスポンス処理": {
+      "main": [
+        [
+          {
+            "node": "Redis - キャッシュ保存",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis - キャッシュ保存": {
+      "main": [
+        [
+          {
+            "node": "結果マージ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "結果マージ": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-28T00:00:00.000Z",
+  "versionId": "1"
+}
+

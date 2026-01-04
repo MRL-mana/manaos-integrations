@@ -1,0 +1,20 @@
+{
+  "llm_url": "http://localhost:11434/api/generate",
+  "llm_model": "llama3.2:3b",
+  "device_health_monitor_url": "http://localhost:5111",
+  "recommendations_file": "maintenance_recommendations.json",
+  "predictions_file": "maintenance_predictions.json",
+  "prediction_thresholds": {
+    "cpu_warning": 80.0,
+    "cpu_critical": 95.0,
+    "memory_warning": 85.0,
+    "memory_critical": 95.0,
+    "disk_warning": 85.0,
+    "disk_critical": 95.0
+  },
+  "maintenance_intervals": {
+    "preventive": 30,
+    "corrective": 7,
+    "optimization": 14
+  }
+}

@@ -1,0 +1,319 @@
+{
+  "name": "LLM統合ワークフロー - Obsidian保存 + Slack通知",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "llm-chat-integrated",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - LLM Chat",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "llm-chat-integrated"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://localhost:11434/api/generate",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "={{ $json.body.model || 'llama3.2:3b' }}"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $json.body.message || $json.body.prompt }}"
+            },
+            {
+              "name": "stream",
+              "value": "=false"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "ollama-generate",
+      "name": "Ollama - LLM生成",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// レスポンス処理\nconst ollama_response = $input.first().json;\nconst request_data = $('webhook-trigger').first().json.body || $('webhook-trigger').first().json;\n\nconst result = {\n  message: request_data.message || request_data.prompt || '',\n  response: ollama_response.response || ollama_response.text || '',\n  model: ollama_response.model || request_data.model || 'llama3.2:3b',\n  latency_ms: ollama_response.total_duration || 0,\n  tokens: ollama_response.eval_count || 0,\n  timestamp: new Date().toISOString(),\n  save_to_obsidian: request_data.save_to_obsidian !== false,\n  notify_slack: request_data.notify_slack === true\n};\n\nreturn [{ json: result }];"
+      },
+      "id": "process-response",
+      "name": "レスポンス処理",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-obsidian",
+              "leftValue": "={{ $json.save_to_obsidian }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-obsidian",
+      "name": "Obsidian保存？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://localhost:9500/api/obsidian/create",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "=LLM会話 - {{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}"
+            },
+            {
+              "name": "content",
+              "value": "=# LLM会話記録\\n\\n## メッセージ\\n{{ $json.message }}\\n\\n## レスポンス\\n{{ $json.response }}\\n\\n## メタデータ\\n- モデル: {{ $json.model }}\\n- レイテンシ: {{ $json.latency_ms }}ms\\n- トークン数: {{ $json.tokens }}\\n- タイムスタンプ: {{ $json.timestamp }}"
+            },
+            {
+              "name": "tags",
+              "value": "=[\"LLM\", \"会話\"]"
+            },
+            {
+              "name": "folder",
+              "value": "=LLM"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "obsidian-save",
+      "name": "Obsidian保存",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 100]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-slack",
+              "leftValue": "={{ $json.notify_slack }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-slack",
+      "name": "Slack通知？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=🤖 LLM応答\\n\\n**メッセージ**: {{ $json.message }}\\n**レスポンス**: {{ $json.response }}\\n**モデル**: {{ $json.model }}\\n**レイテンシ**: {{ $json.latency_ms }}ms"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "slack-notify",
+      "name": "Slack通知",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "merge-results",
+      "name": "結果マージ",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - LLM Chat": {
+      "main": [
+        [
+          {
+            "node": "Ollama - LLM生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama - LLM生成": {
+      "main": [
+        [
+          {
+            "node": "レスポンス処理",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "レスポンス処理": {
+      "main": [
+        [
+          {
+            "node": "Obsidian保存？",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack通知？",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obsidian保存？": {
+      "main": [
+        [
+          {
+            "node": "Obsidian保存",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "結果マージ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obsidian保存": {
+      "main": [
+        [
+          {
+            "node": "結果マージ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack通知？": {
+      "main": [
+        [
+          {
+            "node": "Slack通知",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "結果マージ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack通知": {
+      "main": [
+        [
+          {
+            "node": "結果マージ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "結果マージ": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-28T00:00:00.000Z",
+  "versionId": "1"
+}
+

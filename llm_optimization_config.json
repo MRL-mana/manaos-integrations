@@ -1,0 +1,36 @@
+{
+  "ollama_url": "http://localhost:11434",
+  "filter_model": "llama3.2:1b",
+  "role_models": {
+    "conversation": {
+      "primary": "llama3.2:3b",
+      "fallback": "qwen2.5:7b",
+      "vram_gb": 4.0
+    },
+    "reasoning": {
+      "primary": "qwen2.5:14b",
+      "fallback": "llama3.1:8b",
+      "vram_gb": 8.0
+    },
+    "generation": {
+      "primary": "qwen2.5:32b",
+      "fallback": "qwen2.5:14b",
+      "vram_gb": 20.0
+    },
+    "filter": {
+      "primary": "llama3.2:1b",
+      "vram_gb": 2.0
+    }
+  },
+  "gpu_efficiency": {
+    "enable_dynamic_loading": true,
+    "unload_idle_timeout_seconds": 300,
+    "max_concurrent_models": 2,
+    "vram_threshold_percent": 80
+  },
+  "filter": {
+    "enabled": true,
+    "threshold": 0.5
+  }
+}
+

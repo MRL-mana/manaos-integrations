@@ -1,0 +1,20 @@
+{
+  "default_mode": "auto",
+  "cost_tracking_enabled": true,
+  "cost_limits": {
+    "daily": 1000.0,
+    "monthly": 30000.0
+  },
+  "service_costs": {
+    "llm_api": 0.01,
+    "image_generation": 0.05,
+    "workflow_execution": 0.02,
+    "code_generation": 0.03,
+    "information_search": 0.01,
+    "task_execution": 0.02,
+    "system_control": 0.01,
+    "scheduling": 0.01,
+    "data_analysis": 0.02
+  }
+}
+

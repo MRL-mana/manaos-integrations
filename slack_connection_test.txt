@@ -1,0 +1,19 @@
+============================================================
+Slack接続テスト
+============================================================
+=== Slack Integration API確認 ===
+Traceback (most recent call last):
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_slack_connection.py", line 23, in check_slack_integration_api
+    print(f"\u2705 Slack Integration API: 正常応答")
+UnicodeEncodeError: 'cp932' codec can't encode character '\u2705' in position 0: illegal multibyte sequence
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_slack_connection.py", line 173, in <module>
+    main()
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_slack_connection.py", line 139, in main
+    results['slack_api'] = check_slack_integration_api()
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_slack_connection.py", line 33, in check_slack_integration_api
+    print(f"\u274c Slack Integration API: エラー - {e}")
+UnicodeEncodeError: 'cp932' codec can't encode character '\u274c' in position 0: illegal multibyte sequence

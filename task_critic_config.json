@@ -1,0 +1,36 @@
+{
+  "ollama_url": "http://localhost:11434",
+  "model": "llama3.2:3b",
+  "success_threshold": 0.7,
+  "partial_success_threshold": 0.4,
+  "evaluation_criteria": {
+    "success": {
+      "score_range": [0.7, 1.0],
+      "conditions": [
+        "エラーがない",
+        "期待される出力が得られた",
+        "実行時間が適切",
+        "品質が基準を満たしている"
+      ]
+    },
+    "partial_success": {
+      "score_range": [0.4, 0.7],
+      "conditions": [
+        "一部のエラーがある",
+        "期待される出力の一部が得られた",
+        "実行時間が長い",
+        "品質が基準を下回っている"
+      ]
+    },
+    "failure": {
+      "score_range": [0.0, 0.4],
+      "conditions": [
+        "重大なエラーがある",
+        "期待される出力が得られない",
+        "タイムアウト",
+        "品質が基準を大幅に下回っている"
+      ]
+    }
+  }
+}
+

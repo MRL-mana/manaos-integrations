@@ -1,0 +1,21 @@
+{
+  "credentials_path": "credentials.json",
+  "token_path": "token.json",
+  "version_file": "sync_versions.json",
+  "conflicts_file": "sync_conflicts.json",
+  "sync_rules": [
+    {
+      "rule_id": "manaos_sync",
+      "local_path": "./manaos_integrations",
+      "sync_path": "ManaOS_Sync",
+      "devices": [
+        "mothership",
+        "x280",
+        "konoha"
+      ],
+      "sync_mode": "bidirectional",
+      "conflict_resolution": "newest",
+      "enabled": true
+    }
+  ]
+}

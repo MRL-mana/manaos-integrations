@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ManaOS Revenue Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stat-card.profit .value {
+            color: #50C878;
+        }
+        
+        .stat-card.cost .value {
+            color: #FF6B6B;
+        }
+        
+        .stat-card.revenue .value {
+            color: #667eea;
+        }
+        
+        .products-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+        
+        .product-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .product-item h4 {
+            margin-bottom: 5px;
+        }
+        
+        .product-item .meta {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.2em;
+        }
+        
+        .error {
+            background: #FF6B6B;
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 ManaOS Revenue Dashboard</h1>
+        </div>
+        
+        <div id="loading" class="loading">
+            Loading revenue data...
+        </div>
+        
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <div id="content" style="display: none;">
+            <div class="stats-grid" id="stats-grid"></div>
+            
+            <div class="products-section">
+                <h2>成果物一覧</h2>
+                <div id="products-list"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const REVENUE_API = 'http://localhost:5117';
+        
+        async function loadRevenueData() {
+            try {
+                // 統計情報取得
+                const statsResponse = await fetch(`${REVENUE_API}/api/statistics?days=30`);
+                if (!statsResponse.ok) {
+                    throw new Error(`HTTP ${statsResponse.status}`);
+                }
+                const stats = await statsResponse.json();
+                
+                // 成果物一覧取得
+                const productsResponse = await fetch(`${REVENUE_API}/api/products`);
+                if (!productsResponse.ok) {
+                    throw new Error(`HTTP ${productsResponse.status}`);
+                }
+                const productsData = await productsResponse.json();
+                
+                updateDashboard(stats, productsData.products);
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = `Error: ${error.message}`;
+                document.getElementById('content').style.display = 'none';
+            }
+        }
+        
+        function updateDashboard(stats, products) {
+            // 統計カード
+            const statsGrid = document.getElementById('stats-grid');
+            statsGrid.innerHTML = `
+                <div class="stat-card revenue">
+                    <h3>収益（30日間）</h3>
+                    <div class="value">¥${Math.round(stats.total_revenue).toLocaleString()}</div>
+                </div>
+                <div class="stat-card cost">
+                    <h3>コスト（30日間）</h3>
+                    <div class="value">¥${Math.round(stats.total_costs).toLocaleString()}</div>
+                </div>
+                <div class="stat-card profit">
+                    <h3>利益（30日間）</h3>
+                    <div class="value">¥${Math.round(stats.profit).toLocaleString()}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>利益率</h3>
+                    <div class="value">${stats.profit_margin.toFixed(1)}%</div>
+                </div>
+                <div class="stat-card">
+                    <h3>成果物数</h3>
+                    <div class="value">${stats.product_count}</div>
+                </div>
+            `;
+            
+            // 成果物一覧
+            const productsList = document.getElementById('products-list');
+            if (products.length === 0) {
+                productsList.innerHTML = '<p>成果物がありません</p>';
+            } else {
+                productsList.innerHTML = products.map(product => `
+                    <div class="product-item">
+                        <h4>${product.title || product.product_id}</h4>
+                        <div class="meta">
+                            タイプ: ${product.product_type} | 
+                            価格: ¥${product.price} | 
+                            ステータス: ${product.status} | 
+                            作成日: ${new Date(product.created_at).toLocaleDateString()}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        // Initial load
+        loadRevenueData();
+        
+        // Auto refresh every 30 seconds
+        setInterval(loadRevenueData, 30000);
+    </script>
+</body>
+</html>
+

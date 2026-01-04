@@ -1,0 +1,81 @@
+# LLMルーティング設定
+# ロール別モデル + fallback設定
+
+ollama_url: "http://localhost:11434"
+
+routing:
+  conversation:
+    # 会話（軽量・高速・レスポンス最優先）
+    primary: "llama3.2:3b"
+    fallback:
+      - "qwen2.5:7b"
+      - "llama3.1:8b"
+    priority: "latency"
+    max_tokens: 2048
+    temperature: 0.7
+    use_case:
+      - "日常対話"
+      - "雑談"
+      - "質問応答"
+  
+  reasoning:
+    # 推論（重い・強い・品質最優先）
+    primary: "qwen2.5:72b"
+    fallback:
+      - "qwen2.5:32b"
+      - "llama3.1:70b"
+    priority: "quality"
+    max_tokens: 8192
+    temperature: 0.3
+    use_case:
+      - "複雑な判断"
+      - "分析"
+      - "計画立案"
+  
+  automation:
+    # 自動処理（ツール呼び出し得意・安定最優先）
+    primary: "qwen2.5:14b"
+    fallback:
+      - "llama3.1:8b"
+      - "mistral:7b"
+    priority: "tool_use"
+    max_tokens: 4096
+    temperature: 0.5
+    use_case:
+      - "タスク実行"
+      - "コード生成"
+      - "データ処理"
+
+# 監査ログ設定
+audit_log:
+  enabled: true
+  storage: "obsidian"  # obsidian or local_cache
+  include_fields:
+    - "request_id"
+    - "timestamp"
+    - "routed_model"
+    - "task_type"
+    - "memory_refs"
+    - "tools_used"
+    - "input_summary"
+    - "output_summary"
+    - "latency_ms"
+    - "fallback_used"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

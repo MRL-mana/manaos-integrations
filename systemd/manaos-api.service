@@ -1,0 +1,28 @@
+[Unit]
+Description=manaOS統合APIサーバー
+After=network.target
+
+[Service]
+Type=simple
+User=mana
+WorkingDirectory=/root/manaos_integrations
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONPATH=/root/manaos_integrations"
+ExecStart=/usr/bin/python3 /root/manaos_integrations/start_server_with_notification.py
+ExecStartPost=/usr/bin/python3 /root/manaos_integrations/startup_notification.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# リソース制限
+LimitNOFILE=65536
+MemoryMax=4G
+
+# セキュリティ
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+

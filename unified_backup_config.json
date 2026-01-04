@@ -1,0 +1,20 @@
+{
+  "backup_base_dir": "./backups",
+  "use_google_drive": true,
+  "credentials_path": "credentials.json",
+  "token_path": "token.json",
+  "jobs": [
+    {
+      "job_id": "manaos_backup",
+      "device_name": "ManaOS",
+      "source_path": "./manaos_integrations",
+      "destination_path": "ManaOS_Backups",
+      "backup_type": "incremental",
+      "schedule": "0 2 * * *",
+      "enabled": true
+    }
+  ],
+  "history_file": "backup_history.json",
+  "state_file": "backup_state.json",
+  "max_history": 1000
+}
