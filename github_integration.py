@@ -8,6 +8,16 @@ import os
 import requests
 from typing import Dict, Any, Optional, List
 from datetime import datetime
+from pathlib import Path
+
+# .envファイルの読み込み
+try:
+    from dotenv import load_dotenv
+    env_path = Path(__file__).parent / '.env'
+    if env_path.exists():
+        load_dotenv(env_path)
+except ImportError:
+    pass  # python-dotenvがインストールされていない場合はスキップ
 
 try:
     from github import Github

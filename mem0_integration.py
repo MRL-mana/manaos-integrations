@@ -4,6 +4,7 @@ AIエージェント向けメモリ管理システムとの統合
 ベースクラスを使用して統一モジュールを活用
 """
 
+import os
 import json
 from typing import Optional, Dict, List, Any
 from datetime import datetime
@@ -69,6 +70,7 @@ class Mem0Integration(BaseIntegration):
             
             if openai_api_key:
                 # OpenAI APIを使用（有料）
+                # 環境変数に設定されている場合、Mem0が自動的に読み込む
                 default_config = {
                     "vector_store": {
                         "provider": "chroma",
@@ -80,11 +82,14 @@ class Mem0Integration(BaseIntegration):
                     "llm": {
                         "provider": "openai",
                         "config": {
-                            "model": "gpt-4o-mini",
-                            "api_key": openai_api_key
+                            "model": "gpt-4o-mini"
+                            # api_keyは環境変数OPENAI_API_KEYから自動的に読み込まれる
                         }
                     }
                 }
+                # 環境変数を確実に設定
+                os.environ["OPENAI_API_KEY"] = openai_api_key
+                self.logger.info("⚠️ OpenAI APIを使用します（有料APIです）")
             else:
                 # Ollamaを使用（無料、ローカル）
                 # OllamaConfigの新しいバージョンではurlパラメータを使用
