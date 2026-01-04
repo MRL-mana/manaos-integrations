@@ -44,6 +44,7 @@ def main():
     remote_url = f"https://github.com/{username}/{repo_name}.git"
     
     print(f"\nリモートURL: {remote_url}")
+    print("⚠️ 注意: プライベートリポジトリとして設定してください")
     confirm = input("このリポジトリに接続しますか？ (y/n): ").strip().lower()
     
     if confirm != 'y':
