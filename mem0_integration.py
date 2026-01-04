@@ -65,50 +65,28 @@ class Mem0Integration(BaseIntegration):
         """
         try:
             # デフォルト設定
-            # OpenAI APIを使用する場合（有料）
-            openai_api_key = os.getenv("OPENAI_API_KEY")
+            # OpenAI APIは保留のため、Ollamaを使用（無料、ローカル）
+            ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
+            ollama_model = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
             
-            if openai_api_key:
-                # OpenAI APIを使用（有料）
-                # 環境変数に設定されている場合、Mem0が自動的に読み込む
-                default_config = {
-                    "vector_store": {
-                        "provider": "chroma",
-                        "config": {
-                            "collection_name": "manaos_memories",
-                            "path": "./mem0_storage"
-                        }
-                    },
-                    "llm": {
-                        "provider": "openai",
-                        "config": {
-                            "model": "gpt-4o-mini"
-                            # api_keyは環境変数OPENAI_API_KEYから自動的に読み込まれる
-                        }
+            default_config = {
+                "vector_store": {
+                    "provider": "chroma",
+                    "config": {
+                        "collection_name": "manaos_memories",
+                        "path": "./mem0_storage"
+                    }
+                },
+                "llm": {
+                    "provider": "ollama",
+                    "config": {
+                        "model": ollama_model,
+                        "url": ollama_url  # base_urlからurlに変更
                     }
                 }
-                # 環境変数を確実に設定
-                os.environ["OPENAI_API_KEY"] = openai_api_key
-                self.logger.info("⚠️ OpenAI APIを使用します（有料APIです）")
-            else:
-                # Ollamaを使用（無料、ローカル）
-                # OllamaConfigの新しいバージョンではurlパラメータを使用
-                default_config = {
-                    "vector_store": {
-                        "provider": "chroma",
-                        "config": {
-                            "collection_name": "manaos_memories",
-                            "path": "./mem0_storage"
-                        }
-                    },
-                    "llm": {
-                        "provider": "ollama",
-                        "config": {
-                            "model": "qwen2.5:7b",
-                            "url": "http://localhost:11434"  # base_urlからurlに変更
-                        }
-                    }
-                }
+            }
+            
+            self.logger.info(f"Mem0統合: Ollamaを使用（無料） - {ollama_url}/{ollama_model}")
             
             # ユーザー設定で上書き
             config = {**default_config, **self.config}
