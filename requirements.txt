@@ -1,0 +1,51 @@
+# ManaOS Core Dependencies
+# Python 3.8以上が必要
+
+# Web Framework
+Flask>=2.3.0,<3.0.0
+flask-cors>=4.0.0,<5.0.0
+
+# HTTP Client
+httpx>=0.24.0,<1.0.0
+
+# System Monitoring
+psutil>=5.9.0,<6.0.0
+
+# HTTP Client (for device monitoring)
+requests>=2.31.0,<3.0.0
+
+# File System Monitoring (for Google Drive Sync)
+watchdog>=3.0.0,<4.0.0
+
+# Google Drive API (for sync agent)
+google-api-python-client>=2.100.0,<3.0.0
+google-auth>=2.23.0,<3.0.0
+google-auth-oauthlib>=1.1.0,<2.0.0
+google-auth-httplib2>=0.1.1,<1.0.0
+
+# Task Scheduling (for backup manager)
+schedule>=1.2.0,<2.0.0
+
+# HTTP Client (for AI predictive maintenance)
+httpx>=0.24.0,<1.0.0
+
+# Database (SQLite is built-in, but SQLAlchemy for future use)
+# sqlalchemy>=2.0.0,<3.0.0
+
+# Optional: GPU Monitoring (install separately if needed)
+# GPUtil>=1.4.0
+
+# Optional: Redis (for distributed task queue)
+# redis>=4.5.0,<5.0.0
+
+# Optional: Stripe (for payment integration)
+# stripe>=6.0.0,<7.0.0
+
+# GitHub Integration
+PyGithub>=1.59.0,<2.0.0
+
+# Development Dependencies (optional)
+# pytest>=7.0.0
+# pytest-asyncio>=0.21.0
+# black>=23.0.0
+# flake8>=6.0.0

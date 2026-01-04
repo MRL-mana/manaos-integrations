@@ -1,0 +1,51 @@
+{
+  "ollama_url": "http://localhost:11434",
+  "model": "llama3.2:3b",
+  "intent_router_url": "http://localhost:5100",
+  "max_steps": 10,
+  "default_priority": "medium",
+  "action_templates": {
+    "image_generation": {
+      "action": "execute_workflow",
+      "target": "n8n_workflow",
+      "workflow_name": "image_generation",
+      "default_params": {
+        "steps": 20,
+        "cfg_scale": 7.0,
+        "sampler": "Euler a"
+      }
+    },
+    "code_generation": {
+      "action": "call_api",
+      "target": "code_generation_api",
+      "default_params": {}
+    },
+    "information_search": {
+      "action": "call_api",
+      "target": "rag_api",
+      "default_params": {}
+    },
+    "task_execution": {
+      "action": "execute_workflow",
+      "target": "n8n_workflow",
+      "default_params": {}
+    },
+    "system_control": {
+      "action": "call_api",
+      "target": "system_control_api",
+      "default_params": {}
+    },
+    "scheduling": {
+      "action": "execute_workflow",
+      "target": "n8n_workflow",
+      "workflow_name": "calendar_generation",
+      "default_params": {}
+    },
+    "data_analysis": {
+      "action": "call_api",
+      "target": "data_analysis_api",
+      "default_params": {}
+    }
+  }
+}
+

@@ -1,0 +1,9 @@
+============================================================
+既存のSlack設定を統合
+============================================================
+Traceback (most recent call last):
+  File "C:\Users\mana4\Desktop\manaos_integrations\integrate_slack_config.py", line 127, in <module>
+    main()
+  File "C:\Users\mana4\Desktop\manaos_integrations\integrate_slack_config.py", line 80, in main
+    print(f"\u2705 MDファイルからWebhook URL取得")
+UnicodeEncodeError: 'cp932' codec can't encode character '\u2705' in position 0: illegal multibyte sequence

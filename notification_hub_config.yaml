@@ -1,0 +1,60 @@
+# 通知ハブ設定
+
+# 一次通知先（固定）
+primary: "slack"
+
+# 転送先
+secondary:
+  - "discord"
+  - "email"
+
+# 優先度別ルーティング
+routing:
+  critical:
+    slack: true    # 必ず送信
+    discord: true  # 転送
+    email: true    # 転送
+  
+  important:
+    slack: true    # 必ず送信
+    discord: true  # 転送
+    email: false
+  
+  normal:
+    slack: true    # 必ず送信
+    discord: false
+    email: false
+  
+  low:
+    slack: true    # 必ず送信（ただし優先度低）
+    discord: false
+    email: false
+
+# 再送設定
+retry:
+  max_retries: 3
+  retry_delay_seconds: 5
+
+# 失敗通知の保存
+failed_notifications:
+  enabled: true
+  storage_dir: "data/failed_notifications"
+  retention_days: 30
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

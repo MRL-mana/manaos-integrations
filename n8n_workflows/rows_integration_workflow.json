@@ -1,0 +1,180 @@
+{
+  "name": "Rows × ManaOS統合ワークフロー",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rows-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Rows Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "rows-manaos-integration"
+    },
+    {
+      "parameters": {
+        "operation": "postApi",
+        "url": "=http://localhost:9500/api/rows/webhook",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "event_type",
+              "value": "={{ $json.event_type }}"
+            },
+            {
+              "name": "spreadsheet_id",
+              "value": "={{ $json.spreadsheet_id }}"
+            },
+            {
+              "name": "payload",
+              "value": "={{ $json.payload }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "manaos-api",
+      "name": "ManaOS API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "query",
+        "spreadsheetId": "={{ $json.spreadsheet_id }}",
+        "query": "=この売上データ、傾向分析してグラフ出して",
+        "options": {}
+      },
+      "id": "rows-ai-query",
+      "name": "Rows AI分析",
+      "type": "n8n-nodes-base.rows",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "credentials": {
+        "rowsApi": {
+          "id": "1",
+          "name": "Rows API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "postMessage",
+        "channel": "#manaos-notifications",
+        "text": "=📊 Rowsデータ分析完了\n\nスプレッドシート: {{ $json.spreadsheet_id }}\n分析結果: {{ $json.result }}\n\n{{ $json.summary }}",
+        "options": {}
+      },
+      "id": "slack-notify",
+      "name": "Slack通知",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "credentials": {
+        "slackApi": {
+          "id": "2",
+          "name": "Slack API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "name": "=Rows分析_{{ $now.toISO() }}.md",
+        "content": "=# Rowsデータ分析\n\n- スプレッドシートID: {{ $json.spreadsheet_id }}\n- 分析日時: {{ $now.toISO() }}\n- 分析結果: {{ $json.result }}\n\n## 要約\n\n{{ $json.summary }}",
+        "options": {}
+      },
+      "id": "obsidian-create",
+      "name": "Obsidian記録",
+      "type": "n8n-nodes-base.obsidian",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Rows Webhook": {
+      "main": [
+        [
+          {
+            "node": "ManaOS API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ManaOS API": {
+      "main": [
+        [
+          {
+            "node": "Rows AI分析",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rows AI分析": {
+      "main": [
+        [
+          {
+            "node": "Slack通知",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack通知": {
+      "main": [
+        [
+          {
+            "node": "Obsidian記録",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-01-28T00:00:00.000Z",
+      "updatedAt": "2025-01-28T00:00:00.000Z",
+      "id": "1",
+      "name": "rows"
+    },
+    {
+      "createdAt": "2025-01-28T00:00:00.000Z",
+      "updatedAt": "2025-01-28T00:00:00.000Z",
+      "id": "2",
+      "name": "manaos"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-28T00:00:00.000Z",
+  "versionId": "1"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

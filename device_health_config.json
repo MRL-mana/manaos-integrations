@@ -1,0 +1,38 @@
+{
+  "devices": [
+    {
+      "name": "ManaOS",
+      "type": "manaos",
+      "api_endpoint": "http://localhost:5106/health"
+    },
+    {
+      "name": "Mothership",
+      "type": "mothership",
+      "api_endpoint": null
+    },
+    {
+      "name": "X280",
+      "type": "x280",
+      "api_endpoint": "http://100.127.121.20:5120/health"
+    },
+    {
+      "name": "Konoha Server",
+      "type": "konoha",
+      "api_endpoint": "http://100.93.120.33:5106/health"
+    },
+    {
+      "name": "Pixel 7",
+      "type": "pixel7",
+      "api_endpoint": "http://100.127.121.20:5122/health"
+    }
+  ],
+  "check_interval": 30,
+  "alert_thresholds": {
+    "cpu_warning": 80.0,
+    "cpu_critical": 95.0,
+    "memory_warning": 85.0,
+    "memory_critical": 95.0,
+    "disk_warning": 85.0,
+    "disk_critical": 95.0
+  }
+}

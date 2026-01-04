@@ -1,0 +1,25 @@
+2026-01-03 20:57:14 [    INFO] [intent_router] 笨・Intent Router蛻晄悄蛹門ｮ御ｺ・(繝｢繝・Ν: llama3.2:3b)
+笶・Intent Router邨ｱ蜷医お繝ｩ繝ｼ: FILE_ORGANIZE
+
+=== File Secretary API謗･邯壹ユ繧ｹ繝・===
+笨・API謗･邯壽・蜉・ http://localhost:5120
+
+=== Slack Integration邨ｱ蜷医ユ繧ｹ繝・===
+笶・Slack Integration邨ｱ蜷医お繝ｩ繝ｼ: expected an indented block after 'if' statement on line 77 (slack_integration.py, line 78)
+
+============================================================
+邨ｱ蜷医ユ繧ｹ繝育ｵ先棡
+============================================================
+intent_router       : 笶・NG
+api_connection      : 笨・OK
+slack_integration   : 笶・NG
+
+蜷郁ｨ・ 1/3 邨ｱ蜷医′遒ｺ隱阪＆繧後∪縺励◆
+
+笞・・荳驛ｨ縺ｮ邨ｱ蜷医′蜍穂ｽ懊＠縺ｦ縺・∪縺帙ｓ
+  - Intent Router縺ｮ險ｭ螳壹ｒ遒ｺ隱阪＠縺ｦ縺上□縺輔＞
+  - Slack Integration縺ｮ險ｭ螳壹ｒ遒ｺ隱阪＠縺ｦ縺上□縺輔＞
+============================================================
+ManaOS統合テスト
+============================================================
+=== Intent Router統合テスト ===

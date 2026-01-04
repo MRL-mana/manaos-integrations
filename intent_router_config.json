@@ -1,0 +1,67 @@
+{
+  "ollama_url": "http://localhost:11434",
+  "model": "llama3.2:3b",
+  "confidence_threshold": 0.6,
+  "use_keyword_fallback": true,
+  "keyword_mapping": {
+    "conversation": [
+      "こんにちは",
+      "おはよう",
+      "ありがとう",
+      "どうも",
+      "話",
+      "雑談"
+    ],
+    "task_execution": [
+      "実行",
+      "やって",
+      "作って",
+      "作成",
+      "処理",
+      "開始",
+      "起動"
+    ],
+    "information_search": [
+      "検索",
+      "調べて",
+      "探して",
+      "確認",
+      "見つけて",
+      "教えて"
+    ],
+    "image_generation": [
+      "画像",
+      "生成",
+      "描いて",
+      "絵",
+      "イラスト"
+    ],
+    "code_generation": [
+      "コード",
+      "プログラム",
+      "実装",
+      "スクリプト"
+    ],
+    "system_control": [
+      "再起動",
+      "停止",
+      "開始",
+      "状態",
+      "設定"
+    ],
+    "scheduling": [
+      "予定",
+      "カレンダー",
+      "スケジュール",
+      "予約"
+    ],
+    "data_analysis": [
+      "分析",
+      "統計",
+      "レポート",
+      "集計"
+    ]
+  },
+  "intent_prompt_template": "あなたは意図分類システムです。ユーザーの入力から意図を分類してください。\n\n利用可能な意図タイプ:\n- conversation: 会話・雑談\n- task_execution: タスク実行（実行、作って、処理など）\n- information_search: 情報検索（検索、調べて、確認など）\n- image_generation: 画像生成（画像、生成、描いてなど）\n- code_generation: コード生成（コード、実装、プログラムなど）\n- system_control: システム制御（再起動、停止、設定など）\n- scheduling: スケジューリング（予定、カレンダー、予約など）\n- data_analysis: データ分析（分析、統計、レポートなど）\n- unknown: 不明\n\nユーザー入力: {input}\n\n以下のJSON形式で回答してください:\n{\n    \"intent_type\": \"意図タイプ\",\n    \"confidence\": 0.0-1.0の信頼度,\n    \"entities\": {\"key\": \"value\"},\n    \"reasoning\": \"分類理由\",\n    \"suggested_actions\": [\"アクション1\", \"アクション2\"]\n}"
+}
+

@@ -1,0 +1,14 @@
+{
+  "snapshot_dir": "crash_snapshots",
+  "log_lines": 50,
+  "max_snapshots": 100,
+  "auto_cleanup": true,
+  "cleanup_days": 30,
+  "services": {
+    "task_queue": {
+      "url": "http://localhost:5104",
+      "enabled": true
+    }
+  }
+}
+

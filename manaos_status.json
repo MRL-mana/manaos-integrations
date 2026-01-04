@@ -1,0 +1,228 @@
+{
+  "timestamp": "2026-01-03T13:07:38.827145",
+  "version": "1.0",
+  "services": [
+    {
+      "name": "Intent Router",
+      "port": 5100,
+      "status": "up",
+      "pid": 27768,
+      "response_time_ms": 2009.53,
+      "last_heartbeat": "2026-01-03T13:07:40.840627",
+      "memory_mb": 50.71,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "Task Planner",
+      "port": 5101,
+      "status": "up",
+      "pid": 9712,
+      "response_time_ms": 2003.18,
+      "last_heartbeat": "2026-01-03T13:07:44.164861",
+      "memory_mb": 50.54,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "Task Critic",
+      "port": 5102,
+      "status": "up",
+      "pid": 4324,
+      "response_time_ms": 2010.76,
+      "last_heartbeat": "2026-01-03T13:07:47.125739",
+      "memory_mb": 40.63,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "RAG Memory",
+      "port": 5103,
+      "status": "up",
+      "pid": 20568,
+      "response_time_ms": 2008.26,
+      "last_heartbeat": "2026-01-03T13:07:49.679123",
+      "memory_mb": 41.85,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "Task Queue",
+      "port": 5104,
+      "status": "up",
+      "pid": 22380,
+      "response_time_ms": 2013.46,
+      "last_heartbeat": "2026-01-03T13:07:52.905964",
+      "memory_mb": 35.12,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "UI Operations",
+      "port": 5105,
+      "status": "up",
+      "pid": 18456,
+      "response_time_ms": 2006.88,
+      "last_heartbeat": "2026-01-03T13:07:56.080544",
+      "memory_mb": 41.54,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "Unified Orchestrator",
+      "port": 5106,
+      "status": "up",
+      "pid": 5976,
+      "response_time_ms": 2018.9,
+      "last_heartbeat": "2026-01-03T13:07:59.339337",
+      "memory_mb": 42.14,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "Executor Enhanced",
+      "port": 5107,
+      "status": "up",
+      "pid": 26496,
+      "response_time_ms": 2035.33,
+      "last_heartbeat": "2026-01-03T13:08:01.968676",
+      "memory_mb": 40.9,
+      "cpu_percent": 0.1
+    },
+    {
+      "name": "Portal Integration",
+      "port": 5108,
+      "status": "up",
+      "pid": 18152,
+      "response_time_ms": 2017.48,
+      "last_heartbeat": "2026-01-03T13:08:05.234930",
+      "memory_mb": 40.21,
+      "cpu_percent": 0.5
+    },
+    {
+      "name": "Content Generation",
+      "port": 5109,
+      "status": "up",
+      "pid": 2856,
+      "response_time_ms": 2011.72,
+      "last_heartbeat": "2026-01-03T13:08:08.309839",
+      "memory_mb": 41.77,
+      "cpu_percent": 0.5
+    },
+    {
+      "name": "LLM Optimization",
+      "port": 5110,
+      "status": "up",
+      "pid": 7620,
+      "response_time_ms": 2017.04,
+      "last_heartbeat": "2026-01-03T13:08:10.580806",
+      "memory_mb": 41.11,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "System Status API",
+      "port": 5112,
+      "status": "up",
+      "pid": 9852,
+      "response_time_ms": 2004.03,
+      "last_heartbeat": "2026-01-03T13:08:13.335305",
+      "memory_mb": 52.74,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "Crash Snapshot",
+      "port": 5113,
+      "status": "up",
+      "pid": 21572,
+      "response_time_ms": 2020.44,
+      "last_heartbeat": "2026-01-03T13:08:16.340781",
+      "memory_mb": 41.4,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "Slack Integration",
+      "port": 5114,
+      "status": "up",
+      "pid": 17272,
+      "response_time_ms": 2031.17,
+      "last_heartbeat": "2026-01-03T13:08:19.442434",
+      "memory_mb": 40.41,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "Web Voice Interface",
+      "port": 5115,
+      "status": "up",
+      "pid": 472,
+      "response_time_ms": 2014.22,
+      "last_heartbeat": "2026-01-03T13:08:22.518813",
+      "memory_mb": 40.05,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "Portal Voice Integration",
+      "port": 5116,
+      "status": "up",
+      "pid": 23612,
+      "response_time_ms": 2007.88,
+      "last_heartbeat": "2026-01-03T13:08:24.564287",
+      "memory_mb": 40.02,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "Revenue Tracker",
+      "port": 5117,
+      "status": "up",
+      "pid": 9680,
+      "response_time_ms": 2010.18,
+      "last_heartbeat": "2026-01-03T13:08:27.823463",
+      "memory_mb": 34.27,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "Product Automation",
+      "port": 5118,
+      "status": "up",
+      "pid": 28652,
+      "response_time_ms": 2030.38,
+      "last_heartbeat": "2026-01-03T13:08:30.750384",
+      "memory_mb": 40.45,
+      "cpu_percent": 0.0
+    },
+    {
+      "name": "Payment Integration",
+      "port": 5119,
+      "status": "up",
+      "pid": 30064,
+      "response_time_ms": 2017.73,
+      "last_heartbeat": "2026-01-03T13:08:33.821596",
+      "memory_mb": 40.14,
+      "cpu_percent": 0.0
+    }
+  ],
+  "system": {
+    "cpu": {
+      "percent": 6.2,
+      "count": 16
+    },
+    "ram": {
+      "total_gb": 125.66,
+      "used_gb": 30.37,
+      "available_gb": 95.29,
+      "percent": 24.2
+    },
+    "gpu": null,
+    "disk": {
+      "total_gb": 1862.08,
+      "used_gb": 1157.78,
+      "free_gb": 704.3,
+      "percent": 62.2
+    }
+  },
+  "active_tasks": {
+    "pending": 0,
+    "running": 0,
+    "total": 0
+  },
+  "recent_inputs": [],
+  "last_error": null,
+  "summary": {
+    "total_services": 19,
+    "up": 19,
+    "down": 0,
+    "unhealthy": 0
+  }
+}

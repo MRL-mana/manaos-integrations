@@ -1,0 +1,189 @@
+version: '3.8'
+
+# 🚀 常時起動LLMスタック
+# Ollama + n8n + Redis + Traefik の完全セットアップ
+
+services:
+  # 🧠 Ollama - ローカルLLMサーバー
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-always-ready
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./ollama_models:/models  # モデル永続化（オプション）
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_KEEP_ALIVE=5m  # モデルを5分間メモリに保持
+      - OLLAMA_MAX_LOADED_MODELS=2  # 同時ロード最大2モデル
+      - OLLAMA_NUM_PARALLEL=4  # 並列リクエスト数
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - llm_network
+
+  # 🔄 Redis - キャッシュ & キューイング
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+      --save 60 1000
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - llm_network
+
+  # 🎛️ n8n - ワークフロー自動化
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n-workflows
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-changeme}
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
+      - GENERIC_TIMEZONE=Asia/Tokyo
+      - EXECUTIONS_PROCESS=main
+      - EXECUTIONS_DATA_SAVE_ON_ERROR=all
+      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=all
+      - EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS=true
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168  # 7日間保持
+      - QUEUE_BULL_REDIS_HOST=redis
+      - QUEUE_BULL_REDIS_PORT=6379
+      - QUEUE_BULL_REDIS_DB=0
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n_workflows:/data/n8n_workflows  # ワークフロー永続化
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - llm_network
+
+  # 🌐 Traefik - リバースプロキシ & SSL自動化
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik-proxy
+    restart: unless-stopped
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@example.com}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Traefikダッシュボード
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_certs:/letsencrypt
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ollama.rule=Host(`ollama.${DOMAIN:-localhost}`)"
+      - "traefik.http.routers.ollama.entrypoints=websecure"
+      - "traefik.http.routers.ollama.tls.certresolver=letsencrypt"
+      - "traefik.http.services.ollama.loadbalancer.server.port=11434"
+      - "traefik.http.routers.n8n.rule=Host(`n8n.${DOMAIN:-localhost}`)"
+      - "traefik.http.routers.n8n.entrypoints=websecure"
+      - "traefik.http.routers.n8n.tls.certresolver=letsencrypt"
+      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+    networks:
+      - llm_network
+
+  # 📊 Prometheus - メトリクス収集（オプション）
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus-metrics
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - llm_network
+    profiles:
+      - monitoring
+
+  # 📈 Grafana - 可視化ダッシュボード（オプション）
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - llm_network
+    profiles:
+      - monitoring
+
+volumes:
+  ollama_data:
+    driver: local
+  redis_data:
+    driver: local
+  n8n_data:
+    driver: local
+  traefik_certs:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  llm_network:
+    driver: bridge
+

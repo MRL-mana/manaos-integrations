@@ -1,0 +1,43 @@
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\logging\__init__.py", line 1103, in emit
+    stream.write(msg + self.terminator)
+UnicodeEncodeError: 'cp932' codec can't encode character '\u2705' in position 51: illegal multibyte sequence
+Call stack:
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_ocr.py", line 97, in <module>
+    main()
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_ocr.py", line 22, in main
+    db = FileSecretaryDB('file_secretary.db')
+  File "C:\Users\mana4\Desktop\manaos_integrations\file_secretary_db.py", line 32, in __init__
+    self._init_db()
+  File "C:\Users\mana4\Desktop\manaos_integrations\file_secretary_db.py", line 91, in _init_db
+    logger.info(f"\u2705 データベース初期化完了: {self.db_path}")
+Message: '\u2705 データベース初期化完了: file_secretary.db'
+Arguments: ()
+INFO:file_secretary_db:\u2705 データベース初期化完了: file_secretary.db
+INFO:ocr_multi_provider:Tesseract OCRが利用可能です
+INFO:ocr_multi_provider:Amazon Textractが利用可能です
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\logging\__init__.py", line 1103, in emit
+    stream.write(msg + self.terminator)
+UnicodeEncodeError: 'cp932' codec can't encode character '\u2705' in position 52: illegal multibyte sequence
+Call stack:
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_ocr.py", line 97, in <module>
+    main()
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_ocr.py", line 26, in main
+    ocr_engine = FileSecretaryOCR(db)
+  File "C:\Users\mana4\Desktop\manaos_integrations\file_secretary_ocr.py", line 52, in __init__
+    logger.info(f"\u2705 OCR統合初期化完了: {self.ocr_provider}")
+Message: '\u2705 OCR統合初期化完了: tesseract'
+Arguments: ()
+INFO:file_secretary_ocr:\u2705 OCR統合初期化完了: tesseract
+Traceback (most recent call last):
+=== OCR統合テスト ===
+
+OCRエンジン初期化中...
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_ocr.py", line 97, in <module>
+    main()
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_ocr.py", line 35, in main
+    print(f"\u2705 OCRエンジン利用可能: {ocr_engine.ocr_provider}\n")
+UnicodeEncodeError: 'cp932' codec can't encode character '\u2705' in position 0: illegal multibyte sequence

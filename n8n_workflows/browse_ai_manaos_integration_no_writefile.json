@@ -1,0 +1,84 @@
+{
+  "name": "Browse AI → ManaOS統合（Slack通知のみ）",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "browse-ai-webhook",
+        "responseMode": "responseNode"
+      },
+      "id": "browse-ai-webhook-node",
+      "name": "Browse AI Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "browse-ai-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json.body || $input.first().json;\nconst robotName = input.robot?.name || input.robotName || 'unknown';\nconst url = input.capturedAt?.url || input.url || '';\nconst extractedData = input.extractedData || input.data || {};\nconst timestamp = input.capturedAt?.timestamp || new Date().toISOString();\n\nlet score = 0;\nif (robotName.includes('Sale') || robotName.includes('セール')) {\n  if (extractedData.salePrice || extractedData.discount) score += 10;\n  if (extractedData.price && extractedData.originalPrice) score += 8;\n}\nif (robotName.includes('Trending') || robotName.includes('トレンド')) {\n  if (extractedData.stars || extractedData.starCount) score += 5;\n  if (extractedData.trending) score += 5;\n}\nif (robotName.includes('Competitor') || robotName.includes('競合')) {\n  if (extractedData.changes || extractedData.diff) score += 8;\n  score += 5;\n}\n\nlet message = `🔍 **${robotName}** から新しい情報を検出\\n\\n`;\nif (robotName.includes('Sale')) {\n  message += `💰 **セール情報**\\n`;\n  if (extractedData.name) message += `商品: ${extractedData.name}\\n`;\n  if (extractedData.price) message += `価格: ${extractedData.price}\\n`;\n  if (extractedData.discount) message += `割引: ${extractedData.discount}\\n`;\n  if (extractedData.link) message += `リンク: ${extractedData.link}\\n`;\n} else if (robotName.includes('Trending')) {\n  message += `📈 **トレンド情報**\\n`;\n  if (extractedData.name) message += `リポジトリ: ${extractedData.name}\\n`;\n  if (extractedData.stars) message += `⭐ ${extractedData.stars} stars\\n`;\n  if (extractedData.language) message += `言語: ${extractedData.language}\\n`;\n} else if (robotName.includes('Competitor')) {\n  message += `🕵️ **競合サイト変更**\\n`;\n  message += `URL: ${url}\\n`;\n  if (extractedData.changes) message += `変更内容: ${JSON.stringify(extractedData.changes)}\\n`;\n}\nmessage += `\\n重要度スコア: ${score}/20`;\n\nreturn [{\n  json: {\n    robotName,\n    url,\n    extractedData,\n    timestamp,\n    importance: score,\n    message,\n    shouldNotify: score >= 5\n  }\n}];"
+      },
+      "id": "data-processor-node",
+      "name": "データ整形・重要度判定",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.shouldNotify }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-node",
+      "name": "通知判定",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://hooks.slack.com/services/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",
+        "httpMethod": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"text\": $json.message } }}",
+        "options": {}
+      },
+      "id": "slack-webhook-node",
+      "name": "Slack通知",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [850, 200]
+    }
+  ],
+  "connections": {
+    "Browse AI Webhook": {
+      "main": [[{"node": "データ整形・重要度判定", "type": "main", "index": 0}]]
+    },
+    "データ整形・重要度判定": {
+      "main": [[{"node": "通知判定", "type": "main", "index": 0}]]
+    },
+    "通知判定": {
+      "main": [
+        [{"node": "Slack通知", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["browse-ai", "manaos", "automation"],
+  "triggerCount": 0,
+  "updatedAt": "2025-01-01T00:00:00.000Z",
+  "versionId": "1"
+}
+
+

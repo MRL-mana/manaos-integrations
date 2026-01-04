@@ -1,0 +1,73 @@
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\logging\__init__.py", line 1103, in emit
+    stream.write(msg + self.terminator)
+UnicodeEncodeError: 'cp932' codec can't encode character '\u2705' in position 51: illegal multibyte sequence
+Call stack:
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_update_debug.py", line 90, in <module>
+    main()
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_update_debug.py", line 23, in main
+    db = FileSecretaryDB('file_secretary.db')
+  File "C:\Users\mana4\Desktop\manaos_integrations\file_secretary_db.py", line 32, in __init__
+    self._init_db()
+  File "C:\Users\mana4\Desktop\manaos_integrations\file_secretary_db.py", line 91, in _init_db
+    logger.info(f"\u2705 データベース初期化完了: {self.db_path}")
+Message: '\u2705 データベース初期化完了: file_secretary.db'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\mana4\Desktop\manaos_integrations\file_secretary_db.py", line 228, in update_file_record
+    cursor.execute("""
+sqlite3.DatabaseError: database disk image is malformed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\logging\__init__.py", line 1103, in emit
+    stream.write(msg + self.terminator)
+UnicodeEncodeError: 'cp932' codec can't encode character '\u274c' in position 51: illegal multibyte sequence
+Call stack:
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_update_debug.py", line 90, in <module>
+    main()
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_update_debug.py", line 58, in main
+    result = db.update_file_record(file_record)
+  File "C:\Users\mana4\Desktop\manaos_integrations\file_secretary_db.py", line 244, in update_file_record
+    logger.error(f"\u274c ファイルレコード更新エラー: {e}")
+Message: '\u274c ファイルレコード更新エラー: database disk image is malformed'
+Arguments: ()
+Traceback (most recent call last):
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_update_debug.py", line 64, in main
+    print("\u274c 更新失敗")
+UnicodeEncodeError: 'cp932' codec can't encode character '\u274c' in position 0: illegal multibyte sequence
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\logging\__init__.py", line 1103, in emit
+    stream.write(msg + self.terminator)
+UnicodeEncodeError: 'cp932' codec can't encode character '\u2705' in position 51: illegal multibyte sequence
+Call stack:
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_update_debug.py", line 90, in <module>
+    main()
+  File "C:\Users\mana4\Desktop\manaos_integrations\test_update_debug.py", line 87, in main
+    db.close()
+  File "C:\Users\mana4\Desktop\manaos_integrations\file_secretary_db.py", line 432, in close
+    logger.info("\u2705 データベース接続を閉じました")
+Message: '\u2705 データベース接続を閉じました'
+Arguments: ()
+=== データベース更新デバッグ ===
+
+対象ファイル:
+  ID: 0e804e442ec83b420a5b110bef4fd6417eb340779b1385bdb952c8f97ef90535
+  名前: test_organize.txt
+  ステータス: triaged
+  タグ: []
+  alias: None
+
+更新前の状態:
+  ステータス: triaged
+  タグ: []
+  alias: None
+
+更新実行...
+更新結果: False
+
+エラー発生:

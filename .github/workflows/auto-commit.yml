@@ -1,0 +1,41 @@
+name: Auto Commit
+
+on:
+  schedule:
+    # 毎日午前2時（UTC）に実行
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  auto-commit:
+    runs-on: ubuntu-latest
+    if: github.repository_owner != github.actor
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Configure Git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+    
+    - name: Check for changes
+      id: check
+      run: |
+        git diff --quiet || echo "changed=true" >> $GITHUB_OUTPUT
+    
+    - name: Commit changes
+      if: steps.check.outputs.changed == 'true'
+      run: |
+        git add .
+        git commit -m "Auto-commit: $(date +'%Y-%m-%d %H:%M:%S')" || exit 0
+        git push || exit 0
+

@@ -1,0 +1,9 @@
+{
+  "ollama_url": "http://localhost:11434",
+  "model": "qwen2.5:14b",
+  "importance_threshold": 0.6,
+  "duplicate_threshold": 0.9,
+  "temporal_window_days": 30,
+  "max_entries": 10000
+}
+

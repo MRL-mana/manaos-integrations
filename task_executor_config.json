@@ -1,0 +1,8 @@
+{
+  "n8n_url": "http://localhost:5678",
+  "task_critic_url": "http://localhost:5102",
+  "timeout_seconds": 300,
+  "retry_on_failure": true,
+  "max_retries": 3
+}
+

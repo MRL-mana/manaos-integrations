@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "C:\Users\mana4\OneDrive\Desktop\manaos_integrations\product_automation.py", line 27, in <module>
+    def get_generated_contents(content_type: Optional[str] = None, status: str = "draft", limit: int = 10) -> List[Dict[str, Any]]:
+NameError: name 'List' is not defined. Did you mean: 'list'?

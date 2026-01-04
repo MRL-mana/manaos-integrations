@@ -1,0 +1,22 @@
+{
+  "credentials_path": "credentials.json",
+  "token_path": "token.json",
+  "state_file": "sync_state.json",
+  "sync_rules": [
+    {
+      "local_path": "./backups",
+      "drive_folder": "ManaOS_Backups",
+      "sync_mode": "bidirectional",
+      "include_patterns": [
+        "*"
+      ],
+      "exclude_patterns": [
+        ".git",
+        "__pycache__",
+        "*.pyc"
+      ]
+    }
+  ],
+  "sync_interval": 60,
+  "auto_sync": true
+}

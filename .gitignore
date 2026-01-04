@@ -1,0 +1,103 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Credentials and secrets
+credentials.json
+token.json
+*.pem
+*.key
+*.crt
+*.p12
+auth.db
+
+# Backup files
+backups/
+*.backup
+*.bak
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Crash snapshots
+crash_snapshots/
+
+# Data files
+data/
+*.csv
+*.xlsx
+*.xls
+
+# Cache
+.cache/
+*.cache
+config_cache.py
+
+# Node modules (if any)
+node_modules/
+
+# Archives
+archive/
+00_INBOX/
+
+# OS specific
+Thumbs.db
+.DS_Store
+
+# ManaOS specific
+integration_status.json
+learning_system_state.json
+auto_optimization_state.json
+backup_history.json
+

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ManaOS Status Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+        
+        .status-healthy {
+            background: #50C878;
+            color: white;
+        }
+        
+        .status-degraded {
+            background: #FFB347;
+            color: white;
+        }
+        
+        .status-down {
+            background: #FF6B6B;
+            color: white;
+        }
+        
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .service-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+        }
+        
+        .service-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .service-card h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .service-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .status-indicator.healthy {
+            background: #50C878;
+            box-shadow: 0 0 10px #50C878;
+        }
+        
+        .status-indicator.unhealthy {
+            background: #FFB347;
+            box-shadow: 0 0 10px #FFB347;
+        }
+        
+        .status-indicator.down {
+            background: #FF6B6B;
+            box-shadow: 0 0 10px #FF6B6B;
+        }
+        
+        .service-info {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .system-resources {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+        
+        .resource-item {
+            margin-bottom: 15px;
+        }
+        
+        .resource-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .resource-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .resource-bar-fill {
+            height: 100%;
+            transition: width 0.3s;
+            border-radius: 10px;
+        }
+        
+        .resource-bar-fill.cpu {
+            background: linear-gradient(90deg, #50C878 0%, #FFB347 50%, #FF6B6B 100%);
+        }
+        
+        .resource-bar-fill.memory {
+            background: linear-gradient(90deg, #50C878 0%, #FFB347 50%, #FF6B6B 100%);
+        }
+        
+        .resource-bar-fill.disk {
+            background: linear-gradient(90deg, #50C878 0%, #FFB347 50%, #FF6B6B 100%);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.2em;
+        }
+        
+        .error {
+            background: #FF6B6B;
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .last-update {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ManaOS Status Dashboard</h1>
+            <div id="overall-status" class="status-badge status-down">Loading...</div>
+        </div>
+        
+        <div id="loading" class="loading">
+            Loading status...
+        </div>
+        
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <div id="content" style="display: none;">
+            <div class="system-resources">
+                <h2>System Resources</h2>
+                <div id="system-resources"></div>
+            </div>
+            
+            <div class="services-grid" id="services-grid"></div>
+        </div>
+        
+        <div class="last-update" id="last-update"></div>
+    </div>
+    
+    <script>
+        const STATUS_API = 'http://localhost:5112';
+        
+        async function loadStatus() {
+            try {
+                const response = await fetch(`${STATUS_API}/api/status`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                updateDashboard(data);
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = `Error: ${error.message}`;
+                document.getElementById('content').style.display = 'none';
+            }
+        }
+        
+        function updateDashboard(data) {
+            // Overall status
+            const overallStatus = document.getElementById('overall-status');
+            const statusClass = `status-${data.overall_status}`;
+            overallStatus.className = `status-badge ${statusClass}`;
+            overallStatus.textContent = `${data.overall_status.toUpperCase()} (${data.summary.healthy}/${data.summary.total_services})`;
+            
+            // System resources
+            if (data.system_resources) {
+                const resourcesDiv = document.getElementById('system-resources');
+                resourcesDiv.innerHTML = `
+                    <div class="resource-item">
+                        <div class="resource-label">CPU: ${data.system_resources.cpu?.percent || 0}%</div>
+                        <div class="resource-bar">
+                            <div class="resource-bar-fill cpu" style="width: ${data.system_resources.cpu?.percent || 0}%"></div>
+                        </div>
+                    </div>
+                    <div class="resource-item">
+                        <div class="resource-label">Memory: ${data.system_resources.memory?.used_gb || 0}GB / ${data.system_resources.memory?.total_gb || 0}GB (${data.system_resources.memory?.percent || 0}%)</div>
+                        <div class="resource-bar">
+                            <div class="resource-bar-fill memory" style="width: ${data.system_resources.memory?.percent || 0}%"></div>
+                        </div>
+                    </div>
+                    <div class="resource-item">
+                        <div class="resource-label">Disk: ${data.system_resources.disk?.used_gb || 0}GB / ${data.system_resources.disk?.total_gb || 0}GB (${data.system_resources.disk?.percent || 0}%)</div>
+                        <div class="resource-bar">
+                            <div class="resource-bar-fill disk" style="width: ${data.system_resources.disk?.percent || 0}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Services
+            const servicesGrid = document.getElementById('services-grid');
+            servicesGrid.innerHTML = data.services.map(service => {
+                const statusClass = service.health.status === 'healthy' ? 'healthy' : 
+                                   service.health.status === 'down' ? 'down' : 'unhealthy';
+                const responseTime = service.health.response_time_ms ? 
+                    `${Math.round(service.health.response_time_ms)}ms` : 'N/A';
+                
+                return `
+                    <div class="service-card">
+                        <h3>${service.name}</h3>
+                        <div class="service-status">
+                            <div class="status-indicator ${statusClass}"></div>
+                            <span>${service.health.status.toUpperCase()}</span>
+                        </div>
+                        <div class="service-info">
+                            <div>Port: ${service.port}</div>
+                            <div>Response: ${responseTime}</div>
+                            ${service.health.error ? `<div style="color: #FF6B6B;">Error: ${service.health.error}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Last update
+            document.getElementById('last-update').textContent = 
+                `Last update: ${new Date(data.timestamp).toLocaleString()}`;
+        }
+        
+        // Initial load
+        loadStatus();
+        
+        // Auto refresh every 10 seconds
+        setInterval(loadStatus, 10000);
+    </script>
+</body>
+</html>
+

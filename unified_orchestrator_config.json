@@ -1,0 +1,13 @@
+{
+  "auto_evaluate": true,
+  "auto_retry": true,
+  "max_retries": 3,
+  "save_to_memory": true,
+  "memory_importance_threshold": 0.6,
+  "intent_router_url": "http://localhost:5100",
+  "task_planner_url": "http://localhost:5101",
+  "task_critic_url": "http://localhost:5102",
+  "task_queue_url": "http://localhost:5104",
+  "rag_memory_url": "http://localhost:5103"
+}
+

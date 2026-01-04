@@ -1,0 +1,93 @@
+INFO:Integration.Obsidian:Obsidianの初期化を開始...
+2026-01-04 18:12:31 [    INFO] [Integration.Obsidian] Obsidian縺ｮ蛻晄悄蛹悶ｒ髢句ｧ・..
+2026-01-04 18:12:31 [    INFO] [Integration.Obsidian] Obsidian Vault繧貞・譛溷喧縺励∪縺励◆: C:\Users\mana4\Documents\Obsidian Vault
+INFO:Integration.Obsidian:Obsidian Vaultを初期化しました: C:\Users\mana4\Documents\Obsidian Vault
+2026-01-04 18:12:31 [    INFO] [Integration.Obsidian] Obsidian縺ｮ蛻晄悄蛹悶′螳御ｺ・＠縺ｾ縺励◆
+INFO:Integration.Obsidian:Obsidianの初期化が完了しました
+笨・UnifiedMemory: 蛻ｩ逕ｨ蜿ｯ閭ｽ
+   繧ｯ繝ｩ繧ｹ: UnifiedMemory
+
+=== 莠ｺ譬ｼ邉ｻ遒ｺ隱・===
+笨・莠ｺ譬ｼ邉ｻ繝輔ぃ繧､繝ｫ: 蟄伜惠
+   - personality_system.py
+   - test_persona.py
+   - persona_config.yaml
+2026-01-04 18:12:31 [    INFO] [intent_router] 笨・Intent Router蛻晄悄蛹門ｮ御ｺ・(繝｢繝・Ν: llama3.2:3b)
+INFO:intent_router:\u2705 Intent Router初期化完了 (モデル: llama3.2:3b)
+INFO:httpx:HTTP Request: GET http://localhost:5120/health "HTTP/1.1 200 OK"
+笞・・IntentRouter: 莠ｺ譬ｼ險ｭ螳壹↑縺・
+
+=== 蟄ｦ鄙堤ｳｻ遒ｺ隱・===
+笨・蟄ｦ鄙堤ｳｻ繝輔ぃ繧､繝ｫ: 蟄伜惠
+   - learning_system.py
+   - learning_system_api.py
+笨・learning_system: 蛻ｩ逕ｨ蜿ｯ閭ｽ
+
+=== 閾ｪ蠕狗ｳｻ遒ｺ隱・===
+笨・閾ｪ蠕狗ｳｻ繝輔ぃ繧､繝ｫ: 蟄伜惠
+   - ai_agent_autonomous.py
+笨・FileIndexer: 閾ｪ蜍慕屮隕匁ｩ溯・縺ゅｊ
+
+=== 遘俶嶌邉ｻ遒ｺ隱・===
+笨・File Secretary: 蛻ｩ逕ｨ蜿ｯ閭ｽ
+   繝｢繧ｸ繝･繝ｼ繝ｫ:
+     - FileSecretaryDB
+     - FileOrganizer
+     - FileIndexer
+笨・File Secretary API: 螳溯｡御ｸｭ
+
+=== Slack Integration邨ｱ蜷育｢ｺ隱・===
+2026-01-04 18:12:47 [    INFO] [slack_integration] 蟶ｸ譎りｵｷ蜍畢LM繧ｯ繝ｩ繧､繧｢繝ｳ繝医ｒ菴ｿ逕ｨ縺励∪縺・
+INFO:slack_integration:常時起動LLMクライアントを使用します
+笞・・險俶・讖溯・: 譛ｪ邨ｱ蜷・
+笨・File Secretary: 邨ｱ蜷域ｸ医∩・・xecute_command蜀・ｼ・
+笨・LLM: 邨ｱ蜷域ｸ医∩
+
+=== 險俶・讖溯・縺ｮ蜈ｱ譛臥｢ｺ隱・===
+笨・Slack Integration: 險俶・讖溯・菴ｿ逕ｨ
+笞・・File Secretary: 險俶・讖溯・譛ｪ菴ｿ逕ｨ
+
+============================================================
+遒ｺ隱咲ｵ先棡繧ｵ繝槭Μ
+C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\site-packages\google\api_core\_python_version_support.py:266: FutureWarning: You are using a Python version (3.10.6) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+============================================================
+memory              : 笨・OK
+persona             : 笨・OK
+learning            : 笨・OK
+autonomous          : 笨・OK
+secretary           : 笨・OK
+slack_integration   : 笨・OK
+memory_sharing      : 笨・OK
+
+============================================================
+邨ｱ蜷育憾豕・
+============================================================
+笨・遘俶嶌邉ｻ縺ｨSlack Integration: 邨ｱ蜷域ｸ医∩
+  warnings.warn(message, FutureWarning)
+笨・險俶・讖溯・縺ｮ蜈ｱ譛・ 蛻ｩ逕ｨ蜿ｯ閭ｽ
+C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\site-packages\httplib2\auth.py:19: DeprecationWarning: 'setName' deprecated - use 'set_name'
+笨・閾ｪ蠕狗ｳｻ: 蜍穂ｽ應ｸｭ・・ileIndexer閾ｪ蜍慕屮隕厄ｼ・
+  token = pp.Word(tchar).setName("token")
+C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\site-packages\httplib2\auth.py:20: DeprecationWarning: 'leaveWhitespace' deprecated - use 'leave_whitespace'
+  token68 = pp.Combine(pp.Word("-._~+/" + pp.nums + pp.alphas) + pp.Optional(pp.Word("=").leaveWhitespace())).setName(
+C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\site-packages\httplib2\auth.py:20: DeprecationWarning: 'setName' deprecated - use 'set_name'
+  token68 = pp.Combine(pp.Word("-._~+/" + pp.nums + pp.alphas) + pp.Optional(pp.Word("=").leaveWhitespace())).setName(
+C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\site-packages\httplib2\auth.py:24: DeprecationWarning: 'setName' deprecated - use 'set_name'
+  quoted_string = pp.dblQuotedString.copy().setName("quoted-string").setParseAction(unquote)
+C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\site-packages\httplib2\auth.py:24: DeprecationWarning: 'setParseAction' deprecated - use 'set_parse_action'
+  quoted_string = pp.dblQuotedString.copy().setName("quoted-string").setParseAction(unquote)
+C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\site-packages\httplib2\auth.py:25: DeprecationWarning: 'setName' deprecated - use 'set_name'
+  auth_param_name = token.copy().setName("auth-param-name").addParseAction(downcaseTokens)
+C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\site-packages\httplib2\auth.py:25: DeprecationWarning: 'addParseAction' deprecated - use 'add_parse_action'
+  auth_param_name = token.copy().setName("auth-param-name").addParseAction(downcaseTokens)
+C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\site-packages\httplib2\auth.py:27: DeprecationWarning: 'delimitedList' deprecated - use 'DelimitedList'
+  params = pp.Dict(pp.delimitedList(pp.Group(auth_param)))
+C:\Users\mana4\AppData\Local\Programs\Python\Python310\lib\site-packages\httplib2\auth.py:33: DeprecationWarning: 'delimitedList' deprecated - use 'DelimitedList'
+  www_authenticate = pp.delimitedList(pp.Group(challenge))
+C:\Users\mana4\AppData\Roaming\Python\Python310\site-packages\transformers\utils\hub.py:110: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+============================================================
+ManaOS統合機能確認
+============================================================
+
+=== 記憶機能確認 ===
