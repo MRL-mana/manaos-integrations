@@ -39,12 +39,12 @@ def main():
     repo_name = "manaos-integrations"
     print(f"\nリポジトリ名: {repo_name}")
     
-    # リポジトリを作成して接続
-    print("\nリポジトリを作成中...")
+    # リポジトリを作成して接続（プライベート）
+    print("\nリポジトリを作成中（プライベート）...")
     remote_url = automation.create_and_connect_repo(
         repo_name=repo_name,
         description="ManaOS外部システム統合モジュール集",
-        private=False
+        private=True  # プライベートリポジトリとして作成
     )
     
     if not remote_url:
