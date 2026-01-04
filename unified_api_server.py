@@ -145,6 +145,22 @@ try:
 except ImportError:
     logger.warning("Redisキャッシュモジュールが見つかりません")
 
+# 統一キャッシュシステム統合（オプション）
+UNIFIED_CACHE_AVAILABLE = False
+try:
+    from unified_cache_system import get_unified_cache
+    UNIFIED_CACHE_AVAILABLE = True
+except ImportError:
+    logger.warning("統一キャッシュシステムモジュールが見つかりません")
+
+# パフォーマンス最適化システム統合（オプション）
+PERFORMANCE_OPTIMIZER_AVAILABLE = False
+try:
+    from manaos_performance_optimizer import PerformanceOptimizer
+    PERFORMANCE_OPTIMIZER_AVAILABLE = True
+except ImportError:
+    logger.warning("パフォーマンス最適化システムモジュールが見つかりません")
+
 # 拡張フェーズ統合（オプション）
 LLM_ROUTING_AVAILABLE = False
 MEMORY_UNIFIED_AVAILABLE = False
@@ -202,6 +218,14 @@ try:
 except ImportError:
     logger.warning("GitHub統合モジュールが見つかりません")
     GITHUB_AVAILABLE = False
+
+# n8n統合（オプション）
+try:
+    from n8n_integration import N8NIntegration
+    N8N_AVAILABLE = True
+except ImportError:
+    logger.warning("n8n統合モジュールが見つかりません")
+    N8N_AVAILABLE = False
 
 app = Flask(__name__)
 CORS(app)
@@ -318,6 +342,21 @@ def initialize_integrations():
         init_tasks.append(("github", lambda: GitHubIntegration(
             token=os.getenv("GITHUB_TOKEN")
         )))
+    
+    # n8n統合（オプション）
+    if N8N_AVAILABLE:
+        init_tasks.append(("n8n", lambda: N8NIntegration(
+            base_url=os.getenv("N8N_BASE_URL", "http://localhost:5678"),
+            api_key=os.getenv("N8N_API_KEY")
+        )))
+    
+    # 統一キャッシュシステム（オプション）
+    if UNIFIED_CACHE_AVAILABLE:
+        init_tasks.append(("unified_cache", lambda: get_unified_cache()))
+    
+    # パフォーマンス最適化システム（オプション）
+    if PERFORMANCE_OPTIMIZER_AVAILABLE:
+        init_tasks.append(("performance_optimizer", lambda: PerformanceOptimizer()))
     
     # 初期化タスクを実行
     initialization_status["pending"] = [name for name, _ in init_tasks]
@@ -1146,24 +1185,41 @@ def llm_chat():
 
 @app.route("/api/cache/get", methods=["GET"])
 def cache_get():
-    """キャッシュから取得"""
-    if not REDIS_CACHE_AVAILABLE:
-        return jsonify({"error": "Redisキャッシュが利用できません"}), 503
+    """キャッシュから取得（統一キャッシュシステム優先）"""
+    # 統一キャッシュシステムを優先
+    if UNIFIED_CACHE_AVAILABLE:
+        unified_cache = integrations.get("unified_cache")
+        if unified_cache:
+            try:
+                cache_key = request.args.get("key")
+                cache_type = request.args.get("type", "api_response")
+                if not cache_key:
+                    return jsonify({"error": "keyパラメータが必要です"}), 400
+                
+                # 統一キャッシュシステムはkeyをkwargsで受け取る
+                cached_data = unified_cache.get(cache_type, key=cache_key)
+                if cached_data is not None:
+                    return jsonify({
+                        "found": True,
+                        "data": cached_data,
+                        "cache_type": "unified"
+                    })
+                else:
+                    return jsonify({
+                        "found": False,
+                        "data": None
+                    })
+            except Exception as e:
+                logger.warning(f"統一キャッシュ取得エラー: {e}")
+                # フォールバック: Redisキャッシュに切り替え
     
-    try:
-        cache_key = request.args.get("key")
-        if not cache_key:
-            return jsonify({"error": "keyパラメータが必要です"}), 400
-        
-        # Redisキャッシュインスタンス取得
-        redis_cache = get_redis_cache(
-            host=os.getenv("REDIS_HOST", "localhost"),
-            port=int(os.getenv("REDIS_PORT", 6379)),
-            enable=True
-        )
-        
-        # キャッシュから取得（簡易版：keyから直接取得）
+    # Redisキャッシュ（フォールバック）
+    if REDIS_CACHE_AVAILABLE:
         try:
+            cache_key = request.args.get("key")
+            if not cache_key:
+                return jsonify({"error": "keyパラメータが必要です"}), 400
+            
             import redis
             redis_client = redis.Redis(
                 host=os.getenv("REDIS_HOST", "localhost"),
@@ -1177,7 +1233,8 @@ def cache_get():
                 result = json.loads(cached_data)
                 return jsonify({
                     "found": True,
-                    "data": result
+                    "data": result,
+                    "cache_type": "redis"
                 })
             else:
                 return jsonify({
@@ -1190,55 +1247,116 @@ def cache_get():
                 "found": False,
                 "error": str(e)
             })
-    except Exception as e:
-        logger.error(f"キャッシュ取得エラー: {e}")
-        return jsonify({"error": str(e)}), 500
+    
+    return jsonify({"error": "キャッシュシステムが利用できません"}), 503
 
 
 @app.route("/api/cache/set", methods=["POST"])
 def cache_set():
-    """キャッシュに保存"""
-    if not REDIS_CACHE_AVAILABLE:
-        return jsonify({"error": "Redisキャッシュが利用できません"}), 503
-    
+    """キャッシュに保存（統一キャッシュシステム優先）"""
     try:
         data = request.json
         cache_key = data.get("key")
         cache_value = data.get("value")
+        cache_type = data.get("type", "api_response")
         ttl_seconds = data.get("ttl_seconds", 86400)  # デフォルト24時間
         
         if not cache_key or cache_value is None:
             return jsonify({"error": "keyとvalueが必要です"}), 400
         
-        # Redisに保存
-        try:
-            import redis
-            import json
-            redis_client = redis.Redis(
-                host=os.getenv("REDIS_HOST", "localhost"),
-                port=int(os.getenv("REDIS_PORT", 6379)),
-                decode_responses=True
-            )
-            
-            # 値が文字列でない場合はJSON文字列化
-            if isinstance(cache_value, str):
-                value_str = cache_value
-            else:
-                value_str = json.dumps(cache_value, ensure_ascii=False)
-            
-            redis_client.setex(cache_key, ttl_seconds, value_str)
-            
-            return jsonify({
-                "status": "success",
-                "key": cache_key,
-                "ttl_seconds": ttl_seconds
-            })
-        except Exception as e:
-            logger.warning(f"キャッシュ保存エラー: {e}")
-            return jsonify({"error": str(e)}), 500
+        # 統一キャッシュシステムを優先
+        if UNIFIED_CACHE_AVAILABLE:
+            unified_cache = integrations.get("unified_cache")
+            if unified_cache:
+                try:
+                    # 統一キャッシュシステムはkeyをkwargsで受け取る
+                    unified_cache.set(cache_type, cache_value, ttl_seconds=ttl_seconds, key=cache_key)
+                    return jsonify({
+                        "status": "success",
+                        "key": cache_key,
+                        "ttl_seconds": ttl_seconds,
+                        "cache_type": "unified"
+                    })
+                except Exception as e:
+                    logger.warning(f"統一キャッシュ保存エラー: {e}")
+                    # フォールバック: Redisキャッシュに切り替え
+        
+        # Redisキャッシュ（フォールバック）
+        if REDIS_CACHE_AVAILABLE:
+            try:
+                import redis
+                import json
+                redis_client = redis.Redis(
+                    host=os.getenv("REDIS_HOST", "localhost"),
+                    port=int(os.getenv("REDIS_PORT", 6379)),
+                    decode_responses=True
+                )
+                
+                # 値が文字列でない場合はJSON文字列化
+                if isinstance(cache_value, str):
+                    value_str = cache_value
+                else:
+                    value_str = json.dumps(cache_value, ensure_ascii=False)
+                
+                redis_client.setex(cache_key, ttl_seconds, value_str)
+                
+                return jsonify({
+                    "status": "success",
+                    "key": cache_key,
+                    "ttl_seconds": ttl_seconds,
+                    "cache_type": "redis"
+                })
+            except Exception as e:
+                logger.warning(f"キャッシュ保存エラー: {e}")
+                return jsonify({"error": str(e)}), 500
+        
+        return jsonify({"error": "キャッシュシステムが利用できません"}), 503
     except Exception as e:
         logger.error(f"キャッシュ保存エラー: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/cache/stats", methods=["GET"])
+def cache_stats():
+    """キャッシュ統計を取得"""
+    if UNIFIED_CACHE_AVAILABLE:
+        unified_cache = integrations.get("unified_cache")
+        if unified_cache:
+            try:
+                stats = unified_cache.get_stats()
+                return jsonify({
+                    "status": "success",
+                    "stats": stats,
+                    "cache_type": "unified"
+                })
+            except Exception as e:
+                logger.warning(f"キャッシュ統計取得エラー: {e}")
+    
+    return jsonify({"error": "統一キャッシュシステムが利用できません"}), 503
+
+
+@app.route("/api/performance/stats", methods=["GET"])
+def performance_stats():
+    """パフォーマンス統計を取得"""
+    if PERFORMANCE_OPTIMIZER_AVAILABLE:
+        optimizer = integrations.get("performance_optimizer")
+        if optimizer:
+            try:
+                cache_stats = optimizer.get_cache_stats()
+                http_pool_stats = optimizer.get_http_pool_stats()
+                config_cache_stats = optimizer.get_config_cache_stats()
+                
+                return jsonify({
+                    "status": "success",
+                    "cache_stats": cache_stats,
+                    "http_pool_stats": http_pool_stats,
+                    "config_cache_stats": config_cache_stats
+                })
+            except Exception as e:
+                logger.warning(f"パフォーマンス統計取得エラー: {e}")
+                return jsonify({"error": str(e)}), 500
+    
+    return jsonify({"error": "パフォーマンス最適化システムが利用できません"}), 503
 
 
 @app.route("/api/memory/store", methods=["POST"])
@@ -1525,6 +1643,124 @@ def github_search():
         })
     except Exception as e:
         logger.error(f"GitHub検索エラー: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/n8n/workflows", methods=["GET"])
+def n8n_workflows():
+    """n8nワークフロー一覧を取得"""
+    if not N8N_AVAILABLE:
+        return jsonify({"error": "n8n統合が利用できません"}), 503
+    
+    n8n = integrations.get("n8n")
+    if not n8n or not n8n.is_available():
+        return jsonify({"error": "n8n統合が初期化されていません"}), 503
+    
+    try:
+        workflows = n8n.list_workflows()
+        
+        return jsonify({
+            "workflows": workflows,
+            "count": len(workflows),
+            "status": "success"
+        })
+    except Exception as e:
+        logger.error(f"n8nワークフロー一覧取得エラー: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/n8n/workflow/<workflow_id>", methods=["GET"])
+def n8n_workflow(workflow_id):
+    """n8nワークフロー情報を取得"""
+    if not N8N_AVAILABLE:
+        return jsonify({"error": "n8n統合が利用できません"}), 503
+    
+    n8n = integrations.get("n8n")
+    if not n8n or not n8n.is_available():
+        return jsonify({"error": "n8n統合が初期化されていません"}), 503
+    
+    try:
+        workflow = n8n.get_workflow(workflow_id)
+        
+        if workflow:
+            return jsonify({
+                "workflow": workflow,
+                "status": "success"
+            })
+        else:
+            return jsonify({"error": "ワークフロー情報を取得できませんでした"}), 404
+    except Exception as e:
+        logger.error(f"n8nワークフロー取得エラー: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/n8n/workflow/<workflow_id>/execute", methods=["POST"])
+def n8n_execute_workflow(workflow_id):
+    """n8nワークフローを実行"""
+    if not N8N_AVAILABLE:
+        return jsonify({"error": "n8n統合が利用できません"}), 503
+    
+    n8n = integrations.get("n8n")
+    if not n8n or not n8n.is_available():
+        return jsonify({"error": "n8n統合が初期化されていません"}), 503
+    
+    try:
+        data = request.json or {}
+        result = n8n.execute_workflow(workflow_id, data)
+        
+        if result:
+            return jsonify({
+                "result": result,
+                "status": "success"
+            })
+        else:
+            return jsonify({"error": "ワークフローの実行に失敗しました"}), 500
+    except Exception as e:
+        logger.error(f"n8nワークフロー実行エラー: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/n8n/workflow/<workflow_id>/activate", methods=["POST"])
+def n8n_activate_workflow(workflow_id):
+    """n8nワークフローを有効化"""
+    if not N8N_AVAILABLE:
+        return jsonify({"error": "n8n統合が利用できません"}), 503
+    
+    n8n = integrations.get("n8n")
+    if not n8n or not n8n.is_available():
+        return jsonify({"error": "n8n統合が初期化されていません"}), 503
+    
+    try:
+        success = n8n.activate_workflow(workflow_id)
+        
+        if success:
+            return jsonify({"status": "success", "message": "ワークフローを有効化しました"})
+        else:
+            return jsonify({"error": "ワークフローの有効化に失敗しました"}), 500
+    except Exception as e:
+        logger.error(f"n8nワークフロー有効化エラー: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/n8n/workflow/<workflow_id>/deactivate", methods=["POST"])
+def n8n_deactivate_workflow(workflow_id):
+    """n8nワークフローを無効化"""
+    if not N8N_AVAILABLE:
+        return jsonify({"error": "n8n統合が利用できません"}), 503
+    
+    n8n = integrations.get("n8n")
+    if not n8n or not n8n.is_available():
+        return jsonify({"error": "n8n統合が初期化されていません"}), 503
+    
+    try:
+        success = n8n.deactivate_workflow(workflow_id)
+        
+        if success:
+            return jsonify({"status": "success", "message": "ワークフローを無効化しました"})
+        else:
+            return jsonify({"error": "ワークフローの無効化に失敗しました"}), 500
+    except Exception as e:
+        logger.error(f"n8nワークフロー無効化エラー: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -2234,8 +2470,11 @@ if __name__ == "__main__":
     print("  POST /api/mem0/add - Mem0メモリ追加")
     print("  POST /api/obsidian/create - Obsidianノート作成")
     print("  GET  /api/local-llm/systems - ローカルLLMシステム一覧")
-    print("  GET  /api/cache/get - キャッシュ取得")
-    print("  POST /api/cache/set - キャッシュ保存")
+    print("\n【キャッシュ・パフォーマンス API】")
+    print("  GET  /api/cache/get - キャッシュ取得（統一キャッシュシステム優先）")
+    print("  POST /api/cache/set - キャッシュ保存（統一キャッシュシステム優先）")
+    print("  GET  /api/cache/stats - キャッシュ統計")
+    print("  GET  /api/performance/stats - パフォーマンス統計")
     print("\n【拡張フェーズ API】")
     print("  POST /api/llm/route - LLMルーティング")
     print("  POST /api/memory/store - 記憶への保存")

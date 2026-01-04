@@ -57,6 +57,13 @@ try:
 except ImportError:
     GITHUB_AVAILABLE = False
 
+# n8n統合
+try:
+    from n8n_integration import N8NIntegration
+    N8N_AVAILABLE = True
+except ImportError:
+    N8N_AVAILABLE = False
+
 # ロガーの初期化
 logger = get_logger(__name__)
 
@@ -198,7 +205,26 @@ class ManaOSCompleteIntegration:
             logger.warning(f"⚠️ GitHub Integration統合エラー: {e}")
             self.github = None
         
-        logger.info("✅ ManaOS Complete Integration初期化完了（ローカルLLM・GitHub統合済み）")
+        # n8n統合
+        try:
+            if N8N_AVAILABLE:
+                import os
+                self.n8n = N8NIntegration(
+                    base_url=os.getenv("N8N_BASE_URL", "http://localhost:5678"),
+                    api_key=os.getenv("N8N_API_KEY")
+                )
+                if self.n8n.is_available():
+                    logger.info("✅ N8N Integration統合完了")
+                else:
+                    logger.warning("⚠️ N8N Integrationは利用できません（APIキー未設定またはサーバー未起動）")
+                    self.n8n = None
+            else:
+                self.n8n = None
+        except Exception as e:
+            logger.warning(f"⚠️ N8N Integration統合エラー: {e}")
+            self.n8n = None
+        
+        logger.info("✅ ManaOS Complete Integration初期化完了（ローカルLLM・GitHub・N8N統合済み）")
     
     async def execute_with_full_integration(
         self,
@@ -344,6 +370,7 @@ class ManaOSCompleteIntegration:
             "personality_autonomy_secretary": {},
             "local_llm": {},
             "github": {},
+            "n8n": {},
             "timestamp": datetime.now().isoformat()
         }
         
@@ -421,6 +448,26 @@ class ManaOSCompleteIntegration:
                 status["github"]["github_integration"] = {"available": False}
         else:
             status["github"]["github_integration"] = {"available": False, "token_set": False}
+        
+        # n8n統合の状態
+        status["n8n"] = {}
+        if self.n8n:
+            try:
+                workflows = self.n8n.list_workflows()
+                status["n8n"]["n8n_integration"] = {
+                    "available": self.n8n.is_available(),
+                    "api_key_set": bool(os.getenv("N8N_API_KEY")),
+                    "base_url": self.n8n.base_url,
+                    "workflows_count": len(workflows)
+                }
+            except:
+                status["n8n"]["n8n_integration"] = {"available": False}
+        else:
+            status["n8n"]["n8n_integration"] = {
+                "available": False,
+                "api_key_set": bool(os.getenv("N8N_API_KEY")),
+                "base_url": os.getenv("N8N_BASE_URL", "http://localhost:5678")
+            }
         
         return status
     
