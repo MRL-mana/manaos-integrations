@@ -38,6 +38,8 @@ env/
 .env
 .env.local
 .env.*.local
+.env.*.env
+.env.konoha
 
 # Database
 *.db
@@ -59,6 +61,11 @@ token.json
 *.crt
 *.p12
 auth.db
+
+# Migration / vault secret drops (never commit)
+temp_migration/
+**/vault_envs/
+**/*.env
 
 # Backup files
 backups/
@@ -100,4 +107,25 @@ integration_status.json
 learning_system_state.json
 auto_optimization_state.json
 backup_history.json
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

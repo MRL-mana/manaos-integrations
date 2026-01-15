@@ -1,9 +1,6 @@
 name: Auto Sync
 
 on:
-  schedule:
-    # 毎日午前3時（UTC）に実行
-    - cron: '0 3 * * *'
   workflow_dispatch:
 
 jobs:
@@ -41,10 +38,32 @@ jobs:
       run: |
         python github_advanced_features.py || true
     
-    - name: Commit changes
+    # 安全のため、デフォルトでは自動commit/pushは行いません（意図しない変更/秘密情報混入を防止）
+    - name: Block auto commit/push
       if: steps.check.outputs.changed == 'true'
       run: |
-        git add .
-        git commit -m "Auto-sync: $(date +'%Y-%m-%d %H:%M:%S')" || exit 0
-        git push || exit 0
+        echo "Detected changes, but auto-commit/push is disabled for safety."
+        git status --porcelain
+        exit 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
