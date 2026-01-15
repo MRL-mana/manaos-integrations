@@ -51,7 +51,7 @@ $scriptPath = Join-Path $PSScriptRoot "slack_integration.py"
 if (Test-Path $scriptPath) {
     Start-Process python -ArgumentList $scriptPath -WindowStyle Normal
     Start-Sleep -Seconds 3
-    
+
     # 起動確認
     Write-Host "`n[5] 起動確認中..." -ForegroundColor Yellow
     try {
@@ -75,4 +75,3 @@ Write-Host "  Slack Events API: http://localhost:5114/api/slack/events" -Foregro
 Write-Host "  ヘルスチェック: http://localhost:5114/health" -ForegroundColor White
 Write-Host "`n停止方法:" -ForegroundColor Yellow
 Write-Host "  Get-Process python | Where-Object {`$_.CommandLine -like '*slack_integration.py*' } | Stop-Process" -ForegroundColor White
-

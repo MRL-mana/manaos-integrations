@@ -170,7 +170,7 @@ class ContentGenerationLoop:
         logger.info(f"✅ データベース初期化完了: {self.db_path}")
     
     def generate_blog_from_daily_report(self, daily_report: Dict[str, Any]) -> Optional[GeneratedContent]:
-        """日報からブログ草稿を生成"""
+        """日報からブログ草稿を生成（下書きはLFM 2.5を使用）"""
         if not self.config.get("generation_rules", {}).get("daily_report", {}).get("enabled", True):
             return None
         
@@ -178,7 +178,7 @@ class ContentGenerationLoop:
         report_content = daily_report.get("content", "")
         report_date = daily_report.get("date", datetime.now().strftime("%Y-%m-%d"))
         
-        # LLMでブログ草稿を生成
+        # LLMでブログ草稿を生成（下書きはLFM 2.5を使用）
         prompt = f"""以下の日報を基に、ブログ記事の草稿を作成してください。
 
 日報（{report_date}）:
@@ -197,25 +197,37 @@ JSON形式で回答してください:
 }}"""
         
         try:
-            response = httpx.post(
-                f"{self.ollama_url}/api/generate",
-                json={
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.7,
-                        "num_predict": 2000
-                    }
-                },
-                timeout=timeout_config.get("llm_call", 30.0)
-            )
-            
-            if response.status_code != 200:
-                logger.error(f"ブログ生成失敗: {response.status_code}")
-                return None
-            
-            result_text = response.json().get("response", "")
+            # 下書き生成はLFM 2.5を使用（高速・軽量）
+            try:
+                import manaos_core_api as manaos
+                draft_result = manaos.act("llm_call", {
+                    "task_type": "lightweight_conversation",  # LFM 2.5使用
+                    "prompt": prompt
+                })
+                result_text = draft_result.get("response", "")
+                logger.info("✅ LFM 2.5で下書き生成完了")
+            except Exception as e:
+                logger.warning(f"LFM 2.5呼び出し失敗、従来モデルにフォールバック: {e}")
+                # フォールバック: 従来のモデルを使用
+                response = httpx.post(
+                    f"{self.ollama_url}/api/generate",
+                    json={
+                        "model": self.model,
+                        "prompt": prompt,
+                        "stream": False,
+                        "options": {
+                            "temperature": 0.7,
+                            "num_predict": 2000
+                        }
+                    },
+                    timeout=timeout_config.get("llm_call", 30.0)
+                )
+                
+                if response.status_code != 200:
+                    logger.error(f"ブログ生成失敗: {response.status_code}")
+                    return None
+                
+                result_text = response.json().get("response", "")
             
             # JSONを抽出
             try:
@@ -260,7 +272,7 @@ JSON形式で回答してください:
             return None
     
     def generate_article_from_config_log(self, config_log: Dict[str, Any]) -> List[GeneratedContent]:
-        """構成ログからnote/Zenn記事を生成"""
+        """構成ログからnote/Zenn記事を生成（下書きはLFM 2.5を使用）"""
         if not self.config.get("generation_rules", {}).get("config_log", {}).get("enabled", True):
             return []
         
@@ -287,7 +299,7 @@ JSON形式で回答してください:
         return generated_contents
     
     def _generate_note_article(self, title: str, content: str, source: Dict[str, Any]) -> Optional[GeneratedContent]:
-        """note記事を生成"""
+        """note記事を生成（下書きはLFM 2.5を使用）"""
         prompt = f"""以下の技術的な構成ログを基に、note記事を作成してください。
 
 タイトル: {title}
@@ -307,24 +319,36 @@ JSON形式で回答してください:
 }}"""
         
         try:
-            response = httpx.post(
-                f"{self.ollama_url}/api/generate",
-                json={
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.7,
-                        "num_predict": 3000
-                    }
-                },
-                timeout=timeout_config.get("llm_call", 30.0)
-            )
-            
-            if response.status_code != 200:
-                return None
-            
-            result_text = response.json().get("response", "")
+            # 下書き生成はLFM 2.5を使用（高速・軽量）
+            try:
+                import manaos_core_api as manaos
+                draft_result = manaos.act("llm_call", {
+                    "task_type": "lightweight_conversation",  # LFM 2.5使用
+                    "prompt": prompt
+                })
+                result_text = draft_result.get("response", "")
+                logger.info("✅ LFM 2.5でnote記事下書き生成完了")
+            except Exception as e:
+                logger.warning(f"LFM 2.5呼び出し失敗、従来モデルにフォールバック: {e}")
+                # フォールバック: 従来のモデルを使用
+                response = httpx.post(
+                    f"{self.ollama_url}/api/generate",
+                    json={
+                        "model": self.model,
+                        "prompt": prompt,
+                        "stream": False,
+                        "options": {
+                            "temperature": 0.7,
+                            "num_predict": 3000
+                        }
+                    },
+                    timeout=timeout_config.get("llm_call", 30.0)
+                )
+                
+                if response.status_code != 200:
+                    return None
+                
+                result_text = response.json().get("response", "")
             
             try:
                 json_start = result_text.find("{")
@@ -364,7 +388,7 @@ JSON形式で回答してください:
             return None
     
     def _generate_zenn_article(self, title: str, content: str, source: Dict[str, Any]) -> Optional[GeneratedContent]:
-        """Zenn記事を生成"""
+        """Zenn記事を生成（下書きはLFM 2.5を使用）"""
         prompt = f"""以下の技術的な構成ログを基に、Zenn記事を作成してください。
 
 タイトル: {title}
@@ -384,24 +408,36 @@ JSON形式で回答してください:
 }}"""
         
         try:
-            response = httpx.post(
-                f"{self.ollama_url}/api/generate",
-                json={
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.7,
-                        "num_predict": 3000
-                    }
-                },
-                timeout=timeout_config.get("llm_call", 30.0)
-            )
-            
-            if response.status_code != 200:
-                return None
-            
-            result_text = response.json().get("response", "")
+            # 下書き生成はLFM 2.5を使用（高速・軽量）
+            try:
+                import manaos_core_api as manaos
+                draft_result = manaos.act("llm_call", {
+                    "task_type": "lightweight_conversation",  # LFM 2.5使用
+                    "prompt": prompt
+                })
+                result_text = draft_result.get("response", "")
+                logger.info("✅ LFM 2.5でZenn記事下書き生成完了")
+            except Exception as e:
+                logger.warning(f"LFM 2.5呼び出し失敗、従来モデルにフォールバック: {e}")
+                # フォールバック: 従来のモデルを使用
+                response = httpx.post(
+                    f"{self.ollama_url}/api/generate",
+                    json={
+                        "model": self.model,
+                        "prompt": prompt,
+                        "stream": False,
+                        "options": {
+                            "temperature": 0.7,
+                            "num_predict": 3000
+                        }
+                    },
+                    timeout=timeout_config.get("llm_call", 30.0)
+                )
+                
+                if response.status_code != 200:
+                    return None
+                
+                result_text = response.json().get("response", "")
             
             try:
                 json_start = result_text.find("{")

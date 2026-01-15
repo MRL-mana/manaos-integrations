@@ -58,19 +58,33 @@ class LearningSystemEnhanced:
             except Exception as e:
                 logger.warning(f"状態読み込みエラー: {e}")
     
-    def _save_state(self):
-        """状態を保存"""
-        try:
-            with open(self.storage_path, 'w', encoding='utf-8') as f:
-                json.dump({
-                    "usage_patterns": dict(self.usage_patterns),
-                    "preferences": self.preferences,
-                    "optimizations": self.optimizations,
-                    "prediction_models": self.prediction_models,
-                    "last_updated": datetime.now().isoformat()
-                }, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            logger.error(f"状態保存エラー: {e}")
+    def _save_state(self, max_retries: int = 3):
+        """状態を保存（リトライ機能付き）"""
+        for attempt in range(max_retries):
+            try:
+                # ディレクトリが存在しない場合は作成
+                self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+                
+                # 一時ファイルに書き込んでからリネーム（アトミック操作）
+                temp_path = self.storage_path.with_suffix('.tmp')
+                with open(temp_path, 'w', encoding='utf-8') as f:
+                    json.dump({
+                        "usage_patterns": dict(self.usage_patterns),
+                        "preferences": self.preferences,
+                        "optimizations": self.optimizations,
+                        "prediction_models": self.prediction_models,
+                        "last_updated": datetime.now().isoformat()
+                    }, f, ensure_ascii=False, indent=2)
+                
+                # アトミックにリネーム
+                temp_path.replace(self.storage_path)
+                return
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    logger.warning(f"状態保存エラー（{max_retries}回リトライ後）: {e}")
+                else:
+                    import time
+                    time.sleep(0.1 * (attempt + 1))  # 指数バックオフ
     
     def record_usage(
         self,
@@ -275,6 +289,63 @@ class LearningSystemEnhanced:
         
         return optimized_params
     
+    def analyze_patterns(self) -> Dict[str, Any]:
+        """
+        パターンを分析
+        
+        Returns:
+            分析結果
+        """
+        analysis = {
+            "most_used_actions": [],
+            "success_rates": {},
+            "time_patterns": {},
+            "recommendations": []
+        }
+        
+        # 最も使用されるアクション
+        action_counts = Counter()
+        for action, records in self.usage_patterns.items():
+            action_counts[action] = len(records)
+        
+        analysis["most_used_actions"] = [
+            {"action": action, "count": count}
+            for action, count in action_counts.most_common(10)
+        ]
+        
+        # 成功率
+        for action, records in self.usage_patterns.items():
+            if records:
+                success_count = sum(1 for r in records if r["success"])
+                success_rate = success_count / len(records) * 100
+                analysis["success_rates"][action] = {
+                    "rate": success_rate,
+                    "total": len(records),
+                    "success": success_count,
+                    "failed": len(records) - success_count
+                }
+        
+        # 時間パターン
+        from collections import defaultdict
+        hour_counts = defaultdict(int)
+        for records in self.usage_patterns.values():
+            for record in records:
+                try:
+                    hour = datetime.fromisoformat(record["timestamp"]).hour
+                    hour_counts[hour] += 1
+                except:
+                    pass
+        
+        if hour_counts:
+            peak_hour = max(hour_counts.items(), key=lambda x: x[1])
+            analysis["time_patterns"] = {
+                "peak_hour": peak_hour[0],
+                "peak_count": peak_hour[1],
+                "hour_distribution": dict(hour_counts)
+            }
+        
+        return analysis
+    
     def get_optimization_suggestions(self) -> List[Dict[str, Any]]:
         """最適化提案を取得"""
         suggestions = []
@@ -329,4 +400,18 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

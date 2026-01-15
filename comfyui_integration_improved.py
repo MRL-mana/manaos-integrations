@@ -214,3 +214,24 @@ class ComfyUIIntegration(BaseIntegration):
             self.logger.error(f"画像生成エラー: {error.message}")
             return None
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -81,11 +81,14 @@ class DeviceHealthMonitor:
                     {
                         "name": "Mothership",
                         "type": "mothership",
+                        # 重要: 母艦はメインのWindows PC（このコードが実行されているPC）
                         "api_endpoint": None  # ローカル監視
                     },
                     {
                         "name": "X280",
                         "type": "x280",
+                        # 重要: X280は別のThinkPad Windows PC（母艦とは別のPC）
+                        # Tailscale IP経由で接続: 100.127.121.20
                         "api_endpoint": "http://100.127.121.20:5120/health"
                     },
                     {
@@ -302,6 +305,14 @@ class DeviceHealthMonitor:
         }
         
         return summary
+    
+    def get_all_devices_health(self) -> Dict[str, Any]:
+        """全デバイスの健康状態を取得（統一インターフェース）"""
+        return self.get_health_summary()
+    
+    def get_status(self) -> Dict[str, Any]:
+        """システム状態を取得（統一インターフェース）"""
+        return self.get_health_summary()
     
     def run_monitoring_loop(self, notification_hub=None):
         """監視ループを実行

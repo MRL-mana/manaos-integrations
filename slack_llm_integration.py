@@ -392,3 +392,24 @@ if __name__ == '__main__':
     logger.info(f"LLMクライアント: {'利用可能' if LLM_CLIENT else '利用不可'}")
     app.run(host='0.0.0.0', port=port, debug=os.getenv("DEBUG", "False").lower() == "true")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -368,6 +368,10 @@ class AutomatedDeploymentPipeline:
             "success_rate": successful_deployments / max(total_deployments, 1),
             "recent_deployments": [asdict(d) for d in self.deployment_history[-10:]]
         }
+    
+    def get_status(self) -> Dict[str, Any]:
+        """システム状態を取得（統一インターフェース）"""
+        return self.get_stats()
 
 
 def main():

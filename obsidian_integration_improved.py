@@ -220,3 +220,24 @@ class ObsidianIntegration(BaseIntegration):
             self.logger.error(f"ノート検索エラー: {error.message}")
             return []
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

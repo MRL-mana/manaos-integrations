@@ -153,7 +153,14 @@ class ConfigValidator:
         else:
             if default_config:
                 config = default_config.copy()
-                logger.warning(f"設定ファイルが見つかりません: {config_file}。デフォルト設定を使用します。")
+                # デフォルト設定を自動生成
+                try:
+                    config_file.parent.mkdir(parents=True, exist_ok=True)
+                    with open(config_file, 'w', encoding='utf-8') as f:
+                        json.dump(config, f, ensure_ascii=False, indent=2)
+                    logger.info(f"✅ デフォルト設定ファイルを自動作成しました: {config_file}")
+                except Exception as e:
+                    logger.debug(f"設定ファイル自動作成スキップ: {e}")
             else:
                 error = self.error_handler.handle_config_error(
                     config_key=str(config_file),

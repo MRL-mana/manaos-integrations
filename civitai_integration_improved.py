@@ -237,3 +237,24 @@ class CivitAIIntegration(BaseIntegration):
             self.logger.error(f"モデルダウンロードエラー: {error.message}")
             return None
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

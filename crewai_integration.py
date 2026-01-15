@@ -99,12 +99,63 @@ class CrewAIIntegration(BaseIntegration):
             self.logger.error(f"LLM初期化エラー: {error.message}")
             return False
     
+    def get_searxng_tool(self) -> Optional[Any]:
+        """
+        SearXNG検索ツールを取得（CrewAI用）
+        
+        Returns:
+            CrewAI Tool（成功時）、None（失敗時）
+        """
+        if not CREWAI_AVAILABLE:
+            return None
+        
+        try:
+            from searxng_integration import SearXNGIntegration
+            
+            searxng = SearXNGIntegration()
+            
+            @tool
+            def web_search(query: str, max_results: int = 5) -> str:
+                """Web検索を実行します。最新情報や事実確認が必要な場合に使用してください。
+                
+                Args:
+                    query: 検索クエリ
+                    max_results: 最大結果数（デフォルト: 5）
+                
+                Returns:
+                    検索結果の文字列
+                """
+                result = searxng.search(query, max_results=max_results)
+                
+                if result.get("error"):
+                    return f"検索エラー: {result['error']}"
+                
+                output = f"検索クエリ: {result.get('query', '')}\n"
+                output += f"結果数: {result.get('count', 0)}件\n\n"
+                
+                for i, item in enumerate(result.get("results", []), 1):
+                    output += f"{i}. {item.get('title', '')}\n"
+                    output += f"   URL: {item.get('url', '')}\n"
+                    if item.get('content'):
+                        content = item.get('content', '')[:200]
+                        output += f"   概要: {content}...\n"
+                    output += "\n"
+                
+                return output
+            
+            return web_search
+        
+        except Exception as e:
+            self.logger.warning(f"SearXNGツールの作成に失敗: {e}")
+            return None
+    
     def create_agent(
         self,
         role: str,
         goal: str,
         backstory: str = "",
-        tools: Optional[List[Any]] = None
+        tools: Optional[List[Any]] = None,
+        include_search: bool = False
     ) -> Optional[Any]:
         """
         エージェントを作成
@@ -114,6 +165,7 @@ class CrewAIIntegration(BaseIntegration):
             goal: エージェントの目標
             backstory: エージェントの背景
             tools: 使用可能なツールのリスト
+            include_search: SearXNG検索ツールを含めるか
             
         Returns:
             Agent（成功時）、None（失敗時）
@@ -121,16 +173,23 @@ class CrewAIIntegration(BaseIntegration):
         if not self.is_available():
             return None
         
+        # 検索ツールを追加
+        agent_tools = list(tools) if tools else []
+        if include_search:
+            search_tool = self.get_searxng_tool()
+            if search_tool:
+                agent_tools.append(search_tool)
+        
         try:
             agent = Agent(
                 role=role,
                 goal=goal,
                 backstory=backstory or f"{role}として活動するエージェントです。",
                 llm=self.llm,
-                tools=tools or [],
+                tools=agent_tools,
                 verbose=True
             )
-            self.logger.info(f"エージェントを作成しました: {role}")
+            self.logger.info(f"エージェントを作成しました: {role} (検索ツール: {include_search})")
             return agent
         except Exception as e:
             error = self.error_handler.handle_exception(
@@ -182,7 +241,7 @@ class CrewAIIntegration(BaseIntegration):
         self,
         agents: List[Any],
         tasks: List[Any],
-        process: Process = Process.sequential
+        process: Optional[Process] = None  # Process.sequential  # CrewAIのProcessが利用可能な場合に設定
     ) -> Optional[Dict[str, Any]]:
         """
         クルーを実行

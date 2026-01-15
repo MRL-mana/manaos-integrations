@@ -417,13 +417,22 @@ class ManaOSCompleteIntegration:
         # ローカルLLMシステムの状態
         if self.llm_optimization:
             try:
-                gpu_status = self.llm_optimization.get_gpu_status()
-                status["local_llm"]["llm_optimization"] = {
-                    "available": True,
-                    "gpu_available": gpu_status.available if gpu_status else False,
-                    "models_count": len(self.llm_optimization.models)
-                }
-            except:
+                if hasattr(self.llm_optimization, 'get_gpu_status'):
+                    gpu_status = self.llm_optimization.get_gpu_status()
+                    status["local_llm"]["llm_optimization"] = {
+                        "available": True,
+                        "gpu_available": gpu_status.available if gpu_status else False,
+                        "models_count": len(self.llm_optimization.models) if hasattr(self.llm_optimization, 'models') else 0
+                    }
+                else:
+                    status["local_llm"]["llm_optimization"] = {
+                        "available": True,
+                        "gpu_available": False,
+                        "models_count": len(self.llm_optimization.models) if hasattr(self.llm_optimization, 'models') else 0,
+                        "note": "get_gpu_statusメソッドが利用できません"
+                    }
+            except Exception as e:
+                logger.warning(f"LLM最適化状態取得エラー: {e}")
                 status["local_llm"]["llm_optimization"] = {"available": False}
         
         if self.local_llm_unified:
@@ -503,16 +512,26 @@ class ManaOSCompleteIntegration:
         if self.llm_optimization:
             try:
                 # GPU状態を取得して最適化提案
-                gpu_status = self.llm_optimization.get_gpu_status()
-                if gpu_status:
+                if hasattr(self.llm_optimization, 'get_gpu_status'):
+                    gpu_status = self.llm_optimization.get_gpu_status()
+                    if gpu_status:
+                        optimizations["llm_optimization"] = {
+                            "gpu_utilization": gpu_status.utilization,
+                            "vram_used": gpu_status.vram_used_gb,
+                            "vram_total": gpu_status.vram_total_gb,
+                            "recommendation": "GPU使用率が高い場合はモデルのアンロードを検討" if gpu_status.utilization > 80 else "正常"
+                        }
+                else:
                     optimizations["llm_optimization"] = {
-                        "gpu_utilization": gpu_status.utilization,
-                        "vram_used": gpu_status.vram_used_gb,
-                        "vram_total": gpu_status.vram_total_gb,
-                        "recommendation": "GPU使用率が高い場合はモデルのアンロードを検討" if gpu_status.utilization > 80 else "正常"
+                        "status": "warning",
+                        "message": "get_gpu_statusメソッドが利用できません"
                     }
             except Exception as e:
                 logger.warning(f"LLM最適化エラー: {e}")
+                optimizations["llm_optimization"] = {
+                    "status": "error",
+                    "error": str(e)
+                }
         
         # GitHub統合の最適化
         if self.github:

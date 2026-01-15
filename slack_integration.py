@@ -40,9 +40,17 @@ SLACK_VERIFICATION_TOKEN = os.getenv("SLACK_VERIFICATION_TOKEN", "")
 # ローカルLLM統合（常時起動LLMを使用）
 try:
     from always_ready_llm_client import AlwaysReadyLLMClient, ModelType, TaskType
-    LLM_CLIENT = AlwaysReadyLLMClient()
+    # n8n Webhookが設定されていない場合は、直接Ollama呼び出しを使用
+    # n8n_webhook_urlをNoneに設定すると、直接Ollama呼び出しにフォールバック
+    LLM_CLIENT = AlwaysReadyLLMClient(
+        n8n_webhook_url=None,  # n8n Webhook未設定の場合は直接LLM呼び出し
+        ollama_url="http://localhost:11434",
+        lm_studio_url="http://localhost:1234/v1",  # LM Studioを優先使用
+        use_cache=False,  # キャッシュAPIが未設定の可能性があるため無効化
+        prefer_lm_studio=True  # LM Studioを優先（14Bモデルを使用）
+    )
     LLM_AVAILABLE = True
-    logger.info("常時起動LLMクライアントを使用します")
+    logger.info("常時起動LLMクライアントを使用します（LM Studio優先モード・14Bモデル使用）")
 except ImportError:
     try:
         from local_llm_helper import ask, chat
@@ -53,6 +61,21 @@ except ImportError:
         LLM_CLIENT = None
         LLM_AVAILABLE = False
         logger.warning("ローカルLLMヘルパーが利用できません。会話機能は無効です。")
+
+# 統一記憶システムの統合
+try:
+    from memory_unified import UnifiedMemory
+    MEMORY_SYSTEM = UnifiedMemory()
+    MEMORY_AVAILABLE = True
+    logger.info("統一記憶システムを初期化しました")
+except ImportError:
+    MEMORY_SYSTEM = None
+    MEMORY_AVAILABLE = False
+    logger.warning("統一記憶システムが利用できません")
+except Exception as e:
+    MEMORY_SYSTEM = None
+    MEMORY_AVAILABLE = False
+    logger.warning(f"統一記憶システムの初期化エラー: {e}")
 
 def send_to_slack(text: str, channel: Optional[str] = None, thread_ts: Optional[str] = None):
     """Slackにメッセージを送信"""
@@ -136,6 +159,48 @@ def send_to_slack(text: str, channel: Optional[str] = None, thread_ts: Optional[
 def execute_command(text: str, user: str = "unknown", channel: str = "general", thread_ts: Optional[str] = None, files: Optional[list] = None) -> Dict[str, Any]:
     """コマンドを実行"""
     try:
+        # 検索コマンドかチェック
+        if text.startswith("/search ") or text.startswith("検索 "):
+            query = text.replace("/search ", "").replace("検索 ", "").strip()
+            if query:
+                try:
+                    import manaos_core_api as manaos
+                    search_result = manaos.act("web_search", {
+                        "query": query,
+                        "max_results": 5
+                    })
+                    
+                    if search_result.get("error"):
+                        return {
+                            "status": "error",
+                            "response_text": f"検索エラー: {search_result['error']}",
+                            "response_type": "thread"
+                        }
+                    
+                    # 結果を整形
+                    response_lines = [f"🔍 検索結果: {query}\n"]
+                    for i, item in enumerate(search_result.get("results", [])[:5], 1):
+                        response_lines.append(f"{i}. {item.get('title', '')}")
+                        response_lines.append(f"   {item.get('url', '')}")
+                        if item.get('content'):
+                            content = item.get('content', '')[:100]
+                            response_lines.append(f"   {content}...")
+                        response_lines.append("")
+                    
+                    return {
+                        "status": "success",
+                        "response_text": "\n".join(response_lines),
+                        "response_type": "thread",
+                        "service": "searxng"
+                    }
+                except Exception as e:
+                    logger.error(f"検索エラー: {e}")
+                    return {
+                        "status": "error",
+                        "response_text": f"検索エラー: {e}",
+                        "response_type": "thread"
+                    }
+        
         # 会話モードかチェック（「こんにちは」「元気？」などの一般的な会話）
         conversation_keywords = ["こんにちは", "こんばんは", "おはよう", "元気", "どう", "教えて", "説明", "質問", "？", "?"]
         is_conversation = any(keyword in text for keyword in conversation_keywords) or len(text.split()) < 10
@@ -147,31 +212,75 @@ def execute_command(text: str, user: str = "unknown", channel: str = "general", 
                 
                 # 常時起動LLMクライアントを使用（推奨）
                 if LLM_CLIENT:
-                    # 人格設定を取得してシステムプロンプトに追加
-                    system_prompt = None
                     try:
-                        from personality_system import PersonalitySystem
-                        persona_system = PersonalitySystem()
-                        persona = persona_system.get_current_persona()
-                        if persona and persona.get('personality_prompt'):
-                            system_prompt = persona['personality_prompt']
-                            logger.debug("✅ 人格設定を適用しました")
+                        logger.info(f"ローカルLLMで会話: {text[:50]}...")
+                        
+                        # 人格設定を取得してシステムプロンプトに追加（オプション）
+                        system_prompt = None
+                        try:
+                            from personality_system import PersonalitySystem
+                            persona_system = PersonalitySystem()
+                            persona = persona_system.get_current_persona()
+                            if persona and persona.get('personality_prompt'):
+                                system_prompt = persona['personality_prompt']
+                                logger.debug("✅ 人格設定を適用しました")
+                        except Exception as e:
+                            logger.debug(f"人格設定の取得エラー（無視）: {e}")
+                        
+                        # 記憶システムから関連情報を取得
+                        if MEMORY_AVAILABLE and MEMORY_SYSTEM:
+                            try:
+                                # 会話の文脈を検索
+                                memories = MEMORY_SYSTEM.recall(text, scope="all", limit=3)
+                                if memories:
+                                    context_memories = [m.get('content', '') for m in memories]
+                                    logger.debug(f"✅ 関連記憶を取得: {len(memories)}件")
+                                    # 記憶をシステムプロンプトに追加
+                                    if context_memories:
+                                        memory_context = "\n".join([f"- {m}" for m in context_memories[:3]])
+                                        if system_prompt:
+                                            system_prompt += f"\n\n関連する過去の会話:\n{memory_context}"
+                                        else:
+                                            system_prompt = f"関連する過去の会話:\n{memory_context}"
+                            except Exception as e:
+                                logger.debug(f"記憶検索エラー（無視）: {e}")
+                        
+                        # バランス型モデルを使用（高品質応答）
+                        response = LLM_CLIENT.chat(
+                            text,
+                            model=ModelType.MEDIUM,  # qwen2.5-coder-14b-instruct（LM Studio 14Bモデル）
+                            task_type=TaskType.CONVERSATION
+                        )
+                        
+                        # LLMResponseオブジェクトからテキストを取得
+                        if hasattr(response, 'response'):
+                            answer = response.response
+                        elif hasattr(response, 'text'):
+                            answer = response.text
+                        else:
+                            answer = str(response)
+                        
+                        logger.info(f"LLM応答取得成功: {answer[:50]}...")
+                        
+                        # 会話を記憶システムに保存
+                        if MEMORY_AVAILABLE and MEMORY_SYSTEM:
+                            try:
+                                memory_id = MEMORY_SYSTEM.store({
+                                    "content": f"ユーザー: {text}\nアシスタント: {answer}",
+                                    "metadata": {
+                                        "source": "slack",
+                                        "user": user,
+                                        "channel": channel,
+                                        "tags": ["conversation", "slack"]
+                                    }
+                                }, format_type="conversation")
+                                logger.debug(f"✅ 会話を記憶に保存: {memory_id}")
+                            except Exception as e:
+                                logger.debug(f"記憶保存エラー（無視）: {e}")
+                        
                     except Exception as e:
-                        logger.debug(f"人格設定の取得エラー（無視）: {e}")
-                    
-                    response = LLM_CLIENT.chat(
-                        text,
-                        model=ModelType.MEDIUM,  # qwen2.5:14b（バランス型・高品質）
-                        task_type=TaskType.CONVERSATION,
-                        system_prompt=system_prompt  # 人格設定を適用
-                    )
-                    # LLMResponseオブジェクトからテキストを取得
-                    if hasattr(response, 'response'):
-                        answer = response.response
-                    elif hasattr(response, 'text'):
-                        answer = response.text
-                    else:
-                        answer = str(response)
+                        logger.error(f"常時起動LLMクライアントエラー: {e}", exc_info=True)
+                        raise  # エラーを再発生させてフォールバック処理へ
                 else:
                     # フォールバック: local_llm_helperを使用
                     from local_llm_helper import ask

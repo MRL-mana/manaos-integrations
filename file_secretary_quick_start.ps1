@@ -79,3 +79,24 @@ try {
     Remove-Job $indexerJob, $apiJob
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

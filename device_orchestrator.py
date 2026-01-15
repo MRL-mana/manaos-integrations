@@ -129,13 +129,16 @@ class DeviceOrchestrator:
                         "device_id": "mothership",
                         "device_name": "Mothership",
                         "device_type": "mothership",
-                        "api_endpoint": None,
+                        # 重要: 母艦はメインのWindows PC（このコードが実行されているPC）
+                        "api_endpoint": None,  # ローカル監視のみ
                         "capabilities": ["compute", "storage"]
                     },
                     {
                         "device_id": "x280",
                         "device_name": "X280",
                         "device_type": "x280",
+                        # 重要: X280は別のThinkPad Windows PC（母艦とは別のPC）
+                        # Tailscale IP経由で接続: 100.127.121.20
                         "api_endpoint": "http://100.127.121.20:5120",
                         "capabilities": ["compute", "storage"]
                     },
@@ -354,6 +357,10 @@ class DeviceOrchestrator:
             "queue_length": len(self.task_queue),
             "running_tasks": len(self.running_tasks)
         }
+    
+    def get_status(self) -> Dict[str, Any]:
+        """システム状態を取得（統一インターフェース）"""
+        return self.get_device_status()
     
     def run(self):
         """オーケストレーターを実行"""

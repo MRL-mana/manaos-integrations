@@ -132,3 +132,24 @@ echo "📊 パフォーマンス監視:"
 echo "  python llm_performance_monitor.py"
 echo ""
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

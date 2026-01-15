@@ -45,8 +45,8 @@ class SVIWan22VideoIntegration:
     
     def translate_prompt_to_english(self, japanese_prompt: str) -> str:
         """
-        日本語プロンプトを英語に翻訳（簡易版）
-        実際の実装では、翻訳APIやLLMを使用することを推奨
+        日本語プロンプトを英語に翻訳
+        ManaOSのLLMルーターを使用して翻訳を実行
         
         Args:
             japanese_prompt: 日本語プロンプト
@@ -54,10 +54,55 @@ class SVIWan22VideoIntegration:
         Returns:
             英語プロンプト
         """
-        # TODO: 実際の翻訳機能を実装
-        # 現時点では、ユーザーが英語プロンプトを直接入力することを想定
-        # または、ManaOSのLLMルーターを使用して翻訳
-        return japanese_prompt
+        # 既に英語の場合（簡易チェック）
+        if not any('\u3040' <= char <= '\u309F' or '\u30A0' <= char <= '\u30FF' or '\u4E00' <= char <= '\u9FAF' for char in japanese_prompt):
+            # 日本語文字（ひらがな、カタカナ、漢字）が含まれていない場合は英語と判断
+            logger.debug("プロンプトに日本語が含まれていないため、そのまま返します")
+            return japanese_prompt
+        
+        try:
+            # LLMルーターを使用して翻訳
+            from llm_routing import LLMRouter
+            
+            router = LLMRouter()
+            
+            # 翻訳プロンプトを作成
+            translation_prompt = f"""以下の日本語プロンプトを英語に翻訳してください。動画生成用のプロンプトなので、技術的な用語は正確に翻訳してください。日本語の説明や補足は含めず、英語のプロンプトのみを返してください。
+
+日本語プロンプト: {japanese_prompt}
+
+英語プロンプト:"""
+            
+            # conversationタスクタイプで翻訳を実行（軽量で高速）
+            result = router.route(
+                task_type="conversation",
+                prompt=translation_prompt
+            )
+            
+            english_prompt = result.get("response", "").strip()
+            
+            # 余分な説明文を削除（「英語プロンプト:」などのプレフィックスを削除）
+            if ":" in english_prompt:
+                # 「:」以降のテキストを取得
+                parts = english_prompt.split(":", 1)
+                if len(parts) > 1:
+                    english_prompt = parts[1].strip()
+            
+            # 空の場合は元のプロンプトを返す
+            if not english_prompt:
+                logger.warning("翻訳結果が空のため、元のプロンプトを返します")
+                return japanese_prompt
+            
+            logger.info(f"翻訳完了: {japanese_prompt[:50]}... -> {english_prompt[:50]}...")
+            return english_prompt
+            
+        except ImportError:
+            logger.warning("LLMRouterが利用できません。元のプロンプトを返します")
+            return japanese_prompt
+        except Exception as e:
+            logger.error(f"翻訳エラー: {e}")
+            # エラー時は元のプロンプトを返す
+            return japanese_prompt
     
     def create_timestamped_prompt_json(
         self,

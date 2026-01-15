@@ -10,6 +10,15 @@ from pathlib import Path
 from datetime import datetime
 import uuid
 
+# .envファイルから環境変数を読み込む
+try:
+    from dotenv import load_dotenv
+    env_path = Path(__file__).parent / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+except ImportError:
+    pass
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -56,6 +65,9 @@ class ManaOSCoreAPI:
         self._notification_hub = None
         self._unified_memory = None
         self._hf_integration = None
+        self._searxng_integration = None
+        self._brave_search_integration = None
+        self._base_ai_integration = {}  # use_freeをキーとする辞書
     
     def _get_llm_router(self):
         """LLMルーターを取得（遅延インポート）"""
@@ -97,6 +109,42 @@ class ManaOSCoreAPI:
             except ImportError as e:
                 logger.warning(f"Hugging Face統合が利用できません: {e}")
         return self._hf_integration
+    
+    def _get_searxng_integration(self):
+        """SearXNG統合を取得（遅延インポート）"""
+        if self._searxng_integration is None:
+            try:
+                from searxng_integration import SearXNGIntegration
+                base_url = os.getenv("SEARXNG_BASE_URL", "http://localhost:8080")
+                self._searxng_integration = SearXNGIntegration(base_url=base_url)
+            except ImportError as e:
+                logger.warning(f"SearXNG統合が利用できません: {e}")
+        return self._searxng_integration
+    
+    def _get_brave_search_integration(self):
+        """Brave Search統合を取得（遅延インポート）"""
+        if self._brave_search_integration is None:
+            try:
+                from brave_search_integration import BraveSearchIntegration
+                self._brave_search_integration = BraveSearchIntegration()
+            except ImportError as e:
+                logger.warning(f"Brave Search統合が利用できません: {e}")
+        return self._brave_search_integration
+    
+    def _get_base_ai_integration(self, use_free: bool = False):
+        """Base AI統合を取得（遅延インポート）"""
+        if not isinstance(self._base_ai_integration, dict):
+            self._base_ai_integration = {}
+        
+        if use_free not in self._base_ai_integration:
+            try:
+                from base_ai_integration import BaseAIIntegration
+                self._base_ai_integration[use_free] = BaseAIIntegration(use_free=use_free)
+            except ImportError as e:
+                logger.warning(f"Base AI統合が利用できません: {e}")
+                return None
+        
+        return self._base_ai_integration.get(use_free)
     
     def emit(self, event_type: str, payload: Dict[str, Any], priority: str = "normal"):
         """
@@ -342,12 +390,22 @@ class ManaOSCoreAPI:
                     memory_refs = args.get("memory_refs", [])
                     tools_used = args.get("tools_used", [])
                     
-                    result = router.route(
-                        task_type=task_type,
-                        prompt=prompt,
-                        memory_refs=memory_refs,
-                        tools_used=tools_used
-                    )
+                    # lightweight_conversationタスクタイプのサポート
+                    if task_type == "lightweight_conversation":
+                        # LFM 2.5専用タスクタイプとして処理
+                        result = router.route(
+                            task_type="lightweight_conversation",
+                            prompt=prompt,
+                            memory_refs=memory_refs,
+                            tools_used=tools_used
+                        )
+                    else:
+                        result = router.route(
+                            task_type=task_type,
+                            prompt=prompt,
+                            memory_refs=memory_refs,
+                            tools_used=tools_used
+                        )
                     
                     action["result"] = result
                     logger.info(f"[Act] LLM call: {task_type} -> {result['model']}")
@@ -356,6 +414,44 @@ class ManaOSCoreAPI:
                     logger.error(f"LLM呼び出しエラー: {e}")
                     action["error"] = str(e)
                     return {"error": str(e)}
+        
+        # LFM 2.5専用呼び出し
+        if action_type == "lfm25_call" or action_type == "lightweight_llm":
+            try:
+                from always_ready_llm_client import AlwaysReadyLLMClient, ModelType, TaskType
+                client = AlwaysReadyLLMClient()
+                message = args.get("message", args.get("prompt", ""))
+                task_type = args.get("task_type", "lightweight_conversation")
+                
+                if task_type == "lightweight_conversation":
+                    task_type_enum = TaskType.LIGHTWEIGHT_CONVERSATION
+                else:
+                    task_type_enum = TaskType.CONVERSATION
+                
+                response = client.chat(
+                    message=message,
+                    model=ModelType.ULTRA_LIGHT,
+                    task_type=task_type_enum
+                )
+                
+                result = {
+                    "response": response.response,
+                    "model": response.model,
+                    "latency_ms": response.latency_ms,
+                    "cached": response.cached,
+                    "source": response.source
+                }
+                
+                action["result"] = result
+                logger.info(f"[Act] LFM 2.5 call: {task_type} -> {response.latency_ms:.2f}ms")
+                return result
+            except ImportError:
+                logger.error("LFM 2.5クライアントが利用できません")
+                return {"error": "LFM 2.5クライアントが利用できません"}
+            except Exception as e:
+                logger.error(f"LFM 2.5呼び出しエラー: {e}")
+                action["error"] = str(e)
+                return {"error": str(e)}
         
         # SVI動画生成
         if action_type == "generate_video" or action_type == "svi_generate":
@@ -516,6 +612,178 @@ class ManaOSCoreAPI:
                 action["error"] = str(e)
                 return {"error": str(e)}
         
+        # Stable Diffusion プロンプト生成（Ollama統合）
+        if action_type == "generate_sd_prompt" or action_type == "sd_prompt":
+            try:
+                import requests
+                
+                japanese_description = args.get("prompt", args.get("description", ""))
+                if not japanese_description:
+                    return {"error": "日本語の説明が指定されていません"}
+                
+                model_name = args.get("model", "llama3-uncensored")
+                temperature = args.get("temperature", 0.9)
+                ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
+                
+                # システムプロンプト
+                system_prompt = "You are an expert at creating detailed prompts for Stable Diffusion image generation. Convert the following Japanese description into a detailed, descriptive English prompt suitable for Stable Diffusion. Include style, composition, lighting, and other relevant details. Output only the prompt, no explanations."
+                
+                # Ollama APIを呼び出し
+                request_body = {
+                    "model": model_name,
+                    "prompt": f"{system_prompt}\n\nJapanese description: {japanese_description}\n\nEnglish prompt for Stable Diffusion:",
+                    "stream": False,
+                    "options": {
+                        "temperature": temperature,
+                        "top_p": 0.95,
+                        "top_k": 40
+                    }
+                }
+                
+                response = requests.post(
+                    f"{ollama_url}/api/generate",
+                    json=request_body,
+                    timeout=60
+                )
+                response.raise_for_status()
+                result_data = response.json()
+                
+                generated_prompt = result_data.get("response", "")
+                if not generated_prompt:
+                    return {"error": "プロンプトの生成に失敗しました"}
+                
+                result = {
+                    "success": True,
+                    "prompt": generated_prompt,
+                    "japanese_description": japanese_description,
+                    "model": model_name,
+                    "temperature": temperature
+                }
+                
+                action["result"] = result
+                logger.info(f"[Act] SDプロンプト生成: {japanese_description[:50]}...")
+                return result
+                
+            except ImportError:
+                logger.error("requestsライブラリが利用できません")
+                return {"error": "requestsライブラリが必要です"}
+            except Exception as e:
+                logger.error(f"SDプロンプト生成エラー: {e}")
+                action["error"] = str(e)
+                return {"error": str(e)}
+        
+        # SearXNG Web検索
+        if action_type == "web_search" or action_type == "search_web":
+            searxng = self._get_searxng_integration()
+            if not searxng:
+                return {"error": "SearXNG統合が利用できません"}
+            
+            try:
+                query = args.get("query", "")
+                if not query:
+                    return {"error": "検索クエリが指定されていません"}
+                
+                result = searxng.search(
+                    query=query,
+                    max_results=args.get("max_results", 10),
+                    language=args.get("language", "ja"),
+                    categories=args.get("categories"),
+                    time_range=args.get("time_range")
+                )
+                
+                action["result"] = result
+                logger.info(f"[Act] Web検索: {query} -> {result.get('count', 0)}件")
+                return result
+            except Exception as e:
+                logger.error(f"Web検索エラー: {e}")
+                action["error"] = str(e)
+                return {"error": str(e)}
+        
+        # Brave Search Web検索
+        if action_type == "brave_search" or action_type == "brave_web_search":
+            brave = self._get_brave_search_integration()
+            if not brave or not brave.is_available():
+                return {"error": "Brave Search統合が利用できません"}
+            
+            try:
+                query = args.get("query", "")
+                if not query:
+                    return {"error": "検索クエリが指定されていません"}
+                
+                results = brave.search(
+                    query=query,
+                    count=args.get("count", 10),
+                    search_lang=args.get("search_lang", "jp"),
+                    country=args.get("country", "JP"),
+                    freshness=args.get("freshness")
+                )
+                
+                result = {
+                    "query": query,
+                    "total_results": len(results),
+                    "results": [
+                        {
+                            "title": r.title,
+                            "url": r.url,
+                            "description": r.description,
+                            "age": r.age
+                        }
+                        for r in results
+                    ]
+                }
+                
+                action["result"] = result
+                logger.info(f"[Act] Brave Search: {query} -> {len(results)}件")
+                # イベント発行
+                self.emit("web_search", {
+                    "provider": "brave",
+                    "query": query,
+                    "count": len(results)
+                }, "normal")
+                return result
+            except Exception as e:
+                logger.error(f"Brave Searchエラー: {e}")
+                action["error"] = str(e)
+                return {"error": str(e)}
+        
+        # Base AI チャット
+        if action_type == "base_ai_chat" or action_type == "base_ai_completion":
+            use_free = args.get("use_free", False)
+            base_ai = self._get_base_ai_integration(use_free=use_free)
+            if not base_ai or not base_ai.is_available():
+                return {"error": "Base AI統合が利用できません"}
+            
+            try:
+                prompt = args.get("prompt", "")
+                system_prompt = args.get("system_prompt")
+                if not prompt:
+                    return {"error": "プロンプトが指定されていません"}
+                
+                response = base_ai.chat_simple(
+                    prompt=prompt,
+                    system_prompt=system_prompt
+                )
+                
+                result = {
+                    "response": response,
+                    "model": "base-ai",
+                    "use_free": use_free
+                }
+                
+                action["result"] = result
+                logger.info(f"[Act] Base AIチャット: {prompt[:50]}...")
+                # イベント発行
+                self.emit("llm_call", {
+                    "provider": "base_ai",
+                    "prompt": prompt[:100],
+                    "use_free": use_free
+                }, "normal")
+                return result
+            except Exception as e:
+                logger.error(f"Base AIチャットエラー: {e}")
+                action["error"] = str(e)
+                return {"error": str(e)}
+        
         # その他のアクション（実装予定）
         logger.info(f"[Act] {action_type}: {args}")
         return action
@@ -532,7 +800,10 @@ class ManaOSCoreAPI:
             important_actions = [
                 "llm_call", "generate_image", "generate_video", 
                 "svi_generate", "svi_extend", "svi_story",
-                "run_workflow", "search_models", "get_model_info"
+                "run_workflow", "search_models", "get_model_info",
+                "web_search", "search_web", "brave_search", "brave_web_search",
+                "base_ai_chat", "base_ai_completion",
+                "generate_sd_prompt", "sd_prompt"
             ]
             
             action_type = action.get("action_type", "")

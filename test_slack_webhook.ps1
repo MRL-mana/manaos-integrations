@@ -23,7 +23,7 @@ Write-Host ""
 # URL形式確認
 if (-not $webhookUrl.StartsWith("https://hooks.slack.com/services/")) {
     Write-Host "⚠️  Webhook URLの形式が正しくない可能性があります" -ForegroundColor Yellow
-    Write-Host "   正しい形式: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX" -ForegroundColor Yellow
+    Write-Host "   正しい形式: https://hooks.slack.com/services/<YOUR>/<WEBHOOK>/<URL>" -ForegroundColor Yellow
     Write-Host ""
     $continue = Read-Host "続行しますか？ (y/n)"
     if ($continue -ne "y") {

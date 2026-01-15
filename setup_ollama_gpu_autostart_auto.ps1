@@ -14,4 +14,3 @@ if (-not $isAdmin) {
 
 # If already admin, run the setup script
 & $scriptPath
-

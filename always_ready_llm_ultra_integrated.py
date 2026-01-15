@@ -556,3 +556,24 @@ if __name__ == "__main__":
     print(f"レスポンス: {result['chat'].response}")
     print(f"統合結果: {result['integrations']}")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

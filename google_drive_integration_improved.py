@@ -210,3 +210,24 @@ class GoogleDriveIntegration(BaseIntegration):
             self.logger.error(f"ファイル一覧取得エラー: {error.message}")
             return []
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

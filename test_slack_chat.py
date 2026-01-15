@@ -41,4 +41,3 @@ for i, test in enumerate(test_cases, 1):
 print("\n" + "=" * 60)
 print("テスト完了")
 print("=" * 60)
-

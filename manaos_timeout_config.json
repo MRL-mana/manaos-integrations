@@ -1,17 +1,17 @@
 {
-  "version": "1.0",
-  "description": "ManaOS Timeout Configuration",
+  "version": "1.1",
+  "description": "ManaOS Timeout Configuration (Optimized for Speed)",
   "timeouts": {
     "health_check": 2.0,
     "api_call": 5.0,
-    "llm_call": 30.0,
-    "llm_call_heavy": 60.0,
-    "workflow_execution": 300.0,
+    "llm_call": 15.0,
+    "llm_call_heavy": 30.0,
+    "workflow_execution": 120.0,
     "script_execution": 60.0,
     "command_execution": 30.0,
     "database_query": 10.0,
     "file_operation": 30.0,
     "network_request": 10.0,
-    "external_service": 30.0
+    "external_service": 20.0
   }
 }

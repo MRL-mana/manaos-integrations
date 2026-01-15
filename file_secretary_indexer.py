@@ -267,3 +267,24 @@ class FileIndexer:
             logger.info("✅ ファイル監視停止")
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

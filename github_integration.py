@@ -59,7 +59,16 @@ class GitHubIntegration(BaseIntegration):
             return False
         
         try:
-            self.github = Github(self.token)
+            # GitHub APIの新しい認証方法を使用
+            try:
+                from github import Auth
+                self.github = Github(auth=Auth.Token(self.token))
+            except (ImportError, AttributeError):
+                # フォールバック: 古い方法を使用（非推奨だが動作する）
+                import warnings
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=DeprecationWarning)
+                    self.github = Github(self.token)
             # 接続テスト
             self.github.get_user().login
             self.logger.info("GitHub統合を初期化しました")

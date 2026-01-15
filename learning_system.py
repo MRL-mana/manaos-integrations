@@ -109,23 +109,37 @@ class LearningSystem:
             self.preferences = {}
             self.optimizations = []
     
-    def _save_state(self):
-        """状態を保存"""
-        try:
-            with open(self.storage_path, 'w', encoding='utf-8') as f:
-                json.dump({
-                    "usage_patterns": dict(self.usage_patterns),
-                    "preferences": self.preferences,
-                    "optimizations": self.optimizations,
-                    "last_updated": datetime.now().isoformat()
-                }, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            error = error_handler.handle_exception(
-                e,
-                context={"storage_path": str(self.storage_path)},
-                user_message="学習システムの状態保存に失敗しました"
-            )
-            logger.error(f"状態保存エラー: {error.message}")
+    def _save_state(self, max_retries: int = 3):
+        """状態を保存（リトライ機能付き）"""
+        for attempt in range(max_retries):
+            try:
+                # ディレクトリが存在しない場合は作成
+                self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+                
+                # 一時ファイルに書き込んでからリネーム（アトミック操作）
+                temp_path = self.storage_path.with_suffix('.tmp')
+                with open(temp_path, 'w', encoding='utf-8') as f:
+                    json.dump({
+                        "usage_patterns": dict(self.usage_patterns),
+                        "preferences": self.preferences,
+                        "optimizations": self.optimizations,
+                        "last_updated": datetime.now().isoformat()
+                    }, f, ensure_ascii=False, indent=2)
+                
+                # アトミックにリネーム
+                temp_path.replace(self.storage_path)
+                return
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    error = error_handler.handle_exception(
+                        e,
+                        context={"storage_path": str(self.storage_path), "attempt": attempt + 1},
+                        user_message="学習システムの状態保存に失敗しました"
+                    )
+                    logger.warning(f"状態保存エラー（{max_retries}回リトライ後）: {error.message}")
+                else:
+                    import time
+                    time.sleep(0.1 * (attempt + 1))  # 指数バックオフ
     
     def record_usage(
         self,

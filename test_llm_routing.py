@@ -1,156 +1,197 @@
 """
-LLMルーティングシステムのテスト
+LLMルーティングシステムの統合テスト
 """
 
-import sys
-from pathlib import Path
+import requests
+import json
+import time
+from typing import Dict, Any
 
-# パスを追加
-sys.path.insert(0, str(Path(__file__).parent))
-
-from llm_routing import LLMRouter, ModelUnavailableError, AllModelsUnavailableError
-import manaos_core_api as manaos
+# APIエンドポイント
+BASE_URL = "http://localhost:9501/api/llm"
 
 
-def test_llm_routing():
-    """LLMルーティングのテスト"""
-    print("=" * 60)
-    print("LLMルーティングシステム テスト")
-    print("=" * 60)
-    
-    router = LLMRouter()
-    
-    # 1. 会話タスク
-    print("\n[1] 会話タスク（conversation）")
-    print("-" * 60)
+def test_health_check():
+    """ヘルスチェックテスト"""
+    print("=== ヘルスチェック ===")
     try:
-        result = router.route(
-            task_type="conversation",
-            prompt="こんにちは、今日はいい天気ですね。"
-        )
-        print(f"✅ 成功")
-        print(f"   モデル: {result['model']} ({result['source']})")
-        print(f"   レイテンシ: {result['latency_ms']}ms")
-        print(f"   応答: {result['response'][:100]}...")
-    except AllModelsUnavailableError as e:
-        print(f"❌ エラー: {e}")
-        print("   → Ollamaが起動しているか確認してください")
+        response = requests.get(f"{BASE_URL}/health")
+        print(f"ステータスコード: {response.status_code}")
+        print(f"レスポンス: {json.dumps(response.json(), indent=2, ensure_ascii=False)}")
+        print()
+        return response.status_code == 200
     except Exception as e:
-        print(f"❌ エラー: {e}")
-    
-    # 2. 推論タスク
-    print("\n[2] 推論タスク（reasoning）")
-    print("-" * 60)
-    try:
-        result = router.route(
-            task_type="reasoning",
-            prompt="プロジェクトの優先順位を決定する方法を分析してください。"
-        )
-        print(f"✅ 成功")
-        print(f"   モデル: {result['model']} ({result['source']})")
-        print(f"   レイテンシ: {result['latency_ms']}ms")
-        print(f"   応答: {result['response'][:100]}...")
-    except AllModelsUnavailableError as e:
-        print(f"❌ エラー: {e}")
-    except Exception as e:
-        print(f"❌ エラー: {e}")
-    
-    # 3. 自動処理タスク
-    print("\n[3] 自動処理タスク（automation）")
-    print("-" * 60)
-    try:
-        result = router.route(
-            task_type="automation",
-            prompt="Pythonでファイルを読み込むコードを生成してください。"
-        )
-        print(f"✅ 成功")
-        print(f"   モデル: {result['model']} ({result['source']})")
-        print(f"   レイテンシ: {result['latency_ms']}ms")
-        print(f"   応答: {result['response'][:100]}...")
-    except AllModelsUnavailableError as e:
-        print(f"❌ エラー: {e}")
-    except Exception as e:
-        print(f"❌ エラー: {e}")
-    
-    # 4. 監査ログ
-    print("\n[4] 監査ログ")
-    print("-" * 60)
-    logs = router.get_audit_logs(limit=10)
-    if logs:
-        print(f"✅ {len(logs)}件のログを取得")
-        for log in logs[-3:]:  # 最後の3件を表示
-            print(f"   {log['timestamp']} | {log['task_type']} -> {log['routed_model']} ({'fallback' if log['fallback_used'] else 'primary'}) | {log['latency_ms']}ms")
-    else:
-        print("⚠️  ログがありません")
+        print(f"エラー: {e}")
+        print()
+        return False
 
 
-def test_manaos_core_api():
-    """manaOS標準APIのテスト"""
-    print("\n" + "=" * 60)
-    print("manaOS標準API テスト")
+def test_get_models():
+    """モデル一覧取得テスト"""
+    print("=== モデル一覧取得 ===")
+    try:
+        response = requests.get(f"{BASE_URL}/models")
+        print(f"ステータスコード: {response.status_code}")
+        print(f"レスポンス: {json.dumps(response.json(), indent=2, ensure_ascii=False)}")
+        print()
+        return response.status_code == 200
+    except Exception as e:
+        print(f"エラー: {e}")
+        print()
+        return False
+
+
+def test_analyze_difficulty(prompt: str, context: Dict[str, Any] = None):
+    """難易度分析テスト"""
+    print(f"=== 難易度分析: {prompt[:50]}... ===")
+    try:
+        data = {
+            "prompt": prompt,
+            "context": context or {}
+        }
+        response = requests.post(f"{BASE_URL}/analyze", json=data)
+        print(f"ステータスコード: {response.status_code}")
+        print(f"レスポンス: {json.dumps(response.json(), indent=2, ensure_ascii=False)}")
+        print()
+        return response.status_code == 200
+    except Exception as e:
+        print(f"エラー: {e}")
+        print()
+        return False
+
+
+def test_route_llm(prompt: str, context: Dict[str, Any] = None, preferences: Dict[str, Any] = None):
+    """LLMルーティングテスト"""
+    print(f"=== LLMルーティング: {prompt[:50]}... ===")
+    try:
+        data = {
+            "prompt": prompt,
+            "context": context or {},
+            "preferences": preferences or {}
+        }
+        start_time = time.time()
+        response = requests.post(f"{BASE_URL}/route", json=data, timeout=300)
+        elapsed_time = time.time() - start_time
+        
+        print(f"ステータスコード: {response.status_code}")
+        result = response.json()
+        print(f"選択モデル: {result.get('model')}")
+        print(f"難易度スコア: {result.get('difficulty_score', 0):.2f}")
+        print(f"難易度レベル: {result.get('difficulty_level')}")
+        print(f"理由: {result.get('reasoning')}")
+        print(f"レスポンス時間: {result.get('response_time_ms', 0)}ms")
+        print(f"実際の経過時間: {elapsed_time:.2f}秒")
+        if result.get('response'):
+            print(f"応答（最初の100文字）: {result['response'][:100]}...")
+        print()
+        return response.status_code == 200
+    except Exception as e:
+        print(f"エラー: {e}")
+        print()
+        return False
+
+
+def main():
+    """メインテスト"""
     print("=" * 60)
+    print("LLMルーティングシステム 統合テスト")
+    print("=" * 60)
+    print()
     
-    # 1. イベント発行
-    print("\n[1] イベント発行（emit）")
-    print("-" * 60)
-    event = manaos.emit("test_event", {"message": "テストイベント"}, "normal")
-    print(f"✅ イベント発行: {event['event_id']}")
+    # ヘルスチェック
+    if not test_health_check():
+        print("❌ ヘルスチェック失敗。APIサーバーが起動していない可能性があります。")
+        print("   manaos_llm_routing_api.py を起動してください。")
+        return
     
-    # 2. 記憶への保存
-    print("\n[2] 記憶への保存（remember）")
-    print("-" * 60)
-    memory = manaos.remember({"type": "conversation", "content": "テストメモ"}, "conversation")
-    print(f"✅ 記憶保存: {memory['memory_id']}")
+    # モデル一覧取得
+    test_get_models()
     
-    # 3. 記憶からの検索
-    print("\n[3] 記憶からの検索（recall）")
-    print("-" * 60)
-    results = manaos.recall("テスト", scope="all", limit=5)
-    print(f"✅ 検索結果: {len(results)}件")
+    # テストケース1：軽量タスク（難易度分析のみ）
+    test_analyze_difficulty(
+        "この関数のタイポを修正して",
+        {"code_context": "def hello():\n    print('helo')"}
+    )
     
-    # 4. LLM呼び出し（アクション実行）
-    print("\n[4] LLM呼び出し（act）")
-    print("-" * 60)
-    try:
-        result = manaos.act("llm_call", {
-            "task_type": "conversation",
-            "prompt": "こんにちは、テストです。"
-        })
-        if "error" in result:
-            print(f"❌ エラー: {result['error']}")
+    # テストケース2：中量タスク（難易度分析のみ）
+    test_analyze_difficulty(
+        "このコードをリファクタリングして、関数を分割して",
+        {
+            "code_context": """
+def process_data(data):
+    for item in data:
+        if item['type'] == 'A':
+            result = item['value'] * 2
+        elif item['type'] == 'B':
+            result = item['value'] * 3
         else:
-            print(f"✅ LLM呼び出し成功")
-            print(f"   モデル: {result.get('model', 'N/A')}")
-            print(f"   応答: {result.get('response', '')[:100]}...")
-    except Exception as e:
-        print(f"❌ エラー: {e}")
-
-
-if __name__ == "__main__":
-    # LLMルーティングのテスト
-    test_llm_routing()
+            result = item['value']
+        print(result)
+"""
+        }
+    )
     
-    # manaOS標準APIのテスト
-    test_manaos_core_api()
+    # テストケース3：高難易度タスク（難易度分析のみ）
+    test_analyze_difficulty(
+        "このシステムのアーキテクチャを設計して、マイクロサービス化して、パフォーマンスを最適化して",
+        {
+            "code_context": """
+class System:
+    def __init__(self):
+        self.services = []
     
-    print("\n" + "=" * 60)
+    def add_service(self, service):
+        self.services.append(service)
+    
+    def process(self, data):
+        results = []
+        for service in self.services:
+            result = service.process(data)
+            results.append(result)
+        return results
+"""
+        }
+    )
+    
+    # 注意：実際のLLM呼び出しテストは、LM Studio/Ollamaが起動している必要があります
+    print("=" * 60)
+    print("注意: 実際のLLM呼び出しテストは、LM Studio/Ollamaが起動している必要があります")
+    print("=" * 60)
+    print()
+    
+    # ユーザーに確認
+    user_input = input("LLM呼び出しテストを実行しますか？ (y/n): ")
+    if user_input.lower() == 'y':
+        # テストケース1：軽量タスク（LLM呼び出し）
+        test_route_llm(
+            "この関数のタイポを修正して",
+            {"code_context": "def hello():\n    print('helo')"}
+        )
+        
+        # テストケース2：速度優先設定
+        test_route_llm(
+            "このコードをリファクタリングして",
+            {"code_context": "def hello():\n    print('hello')"},
+            {"prefer_speed": True}
+        )
+        
+        # テストケース3：品質優先設定
+        test_route_llm(
+            "このシステムのアーキテクチャを設計して",
+            {
+                "code_context": """
+class System:
+    def __init__(self):
+        self.services = []
+"""
+            },
+            {"prefer_quality": True}
+        )
+    
+    print("=" * 60)
     print("テスト完了")
     print("=" * 60)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+if __name__ == "__main__":
+    main()

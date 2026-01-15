@@ -8,12 +8,17 @@ from flask_cors import CORS
 import json
 from datetime import datetime
 
-from ultimate_integration import UltimateIntegration
+# from ultimate_integration import UltimateIntegration
 
 app = Flask(__name__)
 CORS(app)
 
-system = UltimateIntegration()
+try:
+    from ultimate_integration import UltimateIntegration
+    system = UltimateIntegration()
+except Exception as e:
+    print(f"UltimateIntegration initialization failed: {e}")
+    system = None
 
 MASTER_CONTROL_HTML = """
 <!DOCTYPE html>
@@ -347,7 +352,13 @@ def master_control():
 @app.route('/api/status')
 def get_status():
     """状態を取得"""
-    status = system.get_comprehensive_status()
+    if system:
+        try:
+            status = system.get_comprehensive_status()
+        except Exception as e:
+            status = {"error": str(e)}
+    else:
+        status = {"error": "System not initialized"}
     return jsonify(status)
 
 
@@ -357,14 +368,26 @@ def execute_command():
     data = request.json
     command = data.get('command', '')
     
-    result = system.execute_intelligent_workflow(command)
+    if system:
+        try:
+            result = system.execute_intelligent_workflow(command)
+        except Exception as e:
+            result = {"error": str(e)}
+    else:
+        result = {"error": "System not initialized"}
     return jsonify(result)
 
 
 @app.route('/api/full-check', methods=['POST'])
 def full_check():
     """フルシステムチェック"""
-    result = system.run_full_system_check()
+    if system:
+        try:
+            result = system.run_full_system_check()
+        except Exception as e:
+            result = {"error": str(e)}
+    else:
+        result = {"error": "System not initialized"}
     return jsonify(result)
 
 

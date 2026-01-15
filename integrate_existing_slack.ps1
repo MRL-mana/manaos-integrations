@@ -4,7 +4,12 @@ Write-Host "=== 既存のSlack設定を統合 ===" -ForegroundColor Green
 Write-Host ""
 
 # Webhook URLを取得
-$webhookUrl = "https://hooks.slack.com/services/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"
+$webhookUrl = $env:SLACK_WEBHOOK_URL
+if (-not $webhookUrl) {
+    Write-Host "❌ SLACK_WEBHOOK_URL が未設定です（Webhook URLを直書きしない方針です）" -ForegroundColor Red
+    Write-Host "   例: [Environment]::SetEnvironmentVariable('SLACK_WEBHOOK_URL','https://hooks.slack.com/services/<YOUR>/<WEBHOOK>/<URL>','User')" -ForegroundColor Gray
+    exit 1
+}
 
 # 環境変数を設定
 $env:SLACK_WEBHOOK_URL = $webhookUrl
@@ -58,4 +63,25 @@ Write-Host "  - 終わった (ファイル整理)"
 Write-Host "  - 戻して (ファイル復元)"
 Write-Host "  - 探して：◯◯ (ファイル検索)"
 Write-Host ""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

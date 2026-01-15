@@ -1,54 +1,27 @@
-"""
-ManaOS統合APIサーバーの起動状況を確認
-"""
-
+"""サーバーの状態を確認するスクリプト"""
 import requests
-import sys
+import time
+import json
 
-def check_server_status():
-    """統合APIサーバーの起動状況を確認"""
-    print("=" * 60)
-    print("ManaOS統合APIサーバーの起動状況確認")
-    print("=" * 60)
-    
-    # ポート9405の確認
-    api_url = "http://localhost:9405"
-    
-    print(f"\n[確認] 統合APIサーバー ({api_url})")
-    try:
-        response = requests.get(f"{api_url}/api/status", timeout=2)
-        if response.status_code == 200:
-            print("[OK] 統合APIサーバーが起動しています")
-            status = response.json()
-            print(f"   ステータス: {status.get('status', 'unknown')}")
-        else:
-            print(f"[WARN] 統合APIサーバーが応答しません: HTTP {response.status_code}")
-    except requests.exceptions.ConnectionError:
-        print("[ERROR] 統合APIサーバーが起動していません")
-        print("   起動方法: python manaos_integrations/unified_api_server.py")
-    except Exception as e:
-        print(f"[ERROR] 確認エラー: {e}")
-    
-    # Ollamaの確認
-    ollama_url = "http://localhost:11434"
-    print(f"\n[確認] Ollama ({ollama_url})")
-    try:
-        response = requests.get(f"{ollama_url}/api/tags", timeout=2)
-        if response.status_code == 200:
-            print("[OK] Ollamaが起動しています")
-            models = response.json().get("models", [])
-            print(f"   利用可能なモデル数: {len(models)}")
-        else:
-            print(f"[WARN] Ollamaが応答しません: HTTP {response.status_code}")
-    except requests.exceptions.ConnectionError:
-        print("[ERROR] Ollamaが起動していません")
-    except Exception as e:
-        print(f"[ERROR] 確認エラー: {e}")
-    
-    print("\n" + "=" * 60)
-    print("確認完了")
-    print("=" * 60)
+print("初期化の進行を確認中...")
+time.sleep(5)
 
-
-if __name__ == "__main__":
-    check_server_status()
+try:
+    r = requests.get('http://127.0.0.1:9500/status', timeout=5)
+    data = r.json()
+    
+    print(f"Status: {data.get('status')}")
+    print(f"Completed: {len(data.get('initialization', {}).get('completed', []))}")
+    print(f"Failed: {len(data.get('initialization', {}).get('failed', []))}")
+    print(f"Pending: {len(data.get('initialization', {}).get('pending', []))}")
+    
+    completed = data.get('initialization', {}).get('completed', [])
+    if completed:
+        print(f"Completed integrations: {', '.join(completed)}")
+    
+    failed = data.get('initialization', {}).get('failed', [])
+    if failed:
+        print(f"Failed integrations: {', '.join(failed)}")
+        
+except Exception as e:
+    print(f"Error: {e}")

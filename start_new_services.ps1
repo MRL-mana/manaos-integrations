@@ -8,7 +8,12 @@ $services = @(
     @{Name="Secretary System"; Port=5125; Script="secretary_system.py"},
     @{Name="Learning System API"; Port=5126; Script="learning_system_api.py"},
     @{Name="Metrics Collector"; Port=5127; Script="metrics_collector.py"},
-    @{Name="Performance Dashboard"; Port=5128; Script="performance_dashboard.py"}
+    @{Name="Performance Dashboard"; Port=5128; Script="performance_dashboard.py"},
+    @{Name="Intrinsic Motivation System"; Port=5130; Script="intrinsic_motivation.py"},
+    @{Name="Intrinsic Motivation Metrics"; Port=5131; Script="intrinsic_motivation_metrics.py"},
+    @{Name="Intrinsic Todo Generator"; Port=5132; Script="intrinsic_todo_generator.py"},
+    @{Name="Reward Loop System"; Port=5133; Script="reward_loop.py"},
+    @{Name="Intrinsic Todo Queue"; Port=5134; Script="intrinsic_todo_queue.py"}
 )
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -37,7 +42,8 @@ foreach ($service in $services) {
     $logFile = Join-Path $logDir "$($service.Name.Replace(' ', '_')).log"
     $errorLogFile = Join-Path $logDir "$($service.Name.Replace(' ', '_'))_error.log"
     
-    Start-Process python -ArgumentList "`"$scriptPath`"" -WindowStyle Hidden -RedirectStandardOutput $logFile -RedirectStandardError $errorLogFile
+    # バックグラウンドで起動（HiddenではなくNormalにしてエラーを確認可能に）
+    Start-Process python -ArgumentList "`"$scriptPath`"" -WindowStyle Normal -RedirectStandardOutput $logFile -RedirectStandardError $errorLogFile
     
     Start-Sleep -Seconds 2
     

@@ -1,174 +1,294 @@
 version: '3.8'
-
-# 🚀 常時起動LLMスタック
-# Ollama + n8n + Redis + Traefik の完全セットアップ
-
 services:
-  # 🧠 Ollama - ローカルLLMサーバー
   ollama:
     image: ollama/ollama:latest
     container_name: ollama-always-ready
     restart: unless-stopped
     volumes:
-      - ollama_data:/root/.ollama
-      - ./ollama_models:/models  # モデル永続化（オプション）
+    - ollama_data:/root/.ollama
+    - ./ollama_models:/models
     ports:
-      - "11434:11434"
+    - 11434:11434
     environment:
-      - OLLAMA_HOST=0.0.0.0:11434
-      - OLLAMA_KEEP_ALIVE=5m  # モデルを5分間メモリに保持
-      - OLLAMA_MAX_LOADED_MODELS=2  # 同時ロード最大2モデル
-      - OLLAMA_NUM_PARALLEL=4  # 並列リクエスト数
+    - OLLAMA_HOST=0.0.0.0:11434
+    - OLLAMA_KEEP_ALIVE=5m
+    - OLLAMA_MAX_LOADED_MODELS=2
+    - OLLAMA_NUM_PARALLEL=4
+    - BRAVE_API_KEY=demo_brave_key_12345
     deploy:
       resources:
         reservations:
           devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+          - driver: nvidia
+            count: 1
+            capabilities:
+            - gpu
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:11434/api/tags
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
     networks:
-      - llm_network
-
-  # 🔄 Redis - キャッシュ & キューイング
+    - llm_network
   redis:
     image: redis:7-alpine
     container_name: redis-cache
     restart: unless-stopped
     ports:
-      - "6379:6379"
+    - 6379:6379
     volumes:
-      - redis_data:/data
-    command: >
-      redis-server
-      --appendonly yes
-      --maxmemory 2gb
-      --maxmemory-policy allkeys-lru
+    - redis_data:/data
+    command: 'redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
       --save 60 1000
+
+      '
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test:
+      - CMD
+      - redis-cli
+      - ping
       interval: 10s
       timeout: 3s
       retries: 3
     networks:
-      - llm_network
-
-  # 🎛️ n8n - ワークフロー自動化
+    - llm_network
+    environment:
+    - BRAVE_API_KEY=demo_brave_key_12345
   n8n:
     image: n8nio/n8n:latest
     container_name: n8n-workflows
     restart: unless-stopped
     ports:
-      - "5678:5678"
+    - 5678:5678
     environment:
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=${N8N_USER:-admin}
-      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-changeme}
-      - N8N_HOST=${N8N_HOST:-localhost}
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
-      - GENERIC_TIMEZONE=Asia/Tokyo
-      - EXECUTIONS_PROCESS=main
-      - EXECUTIONS_DATA_SAVE_ON_ERROR=all
-      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=all
-      - EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS=true
-      - EXECUTIONS_DATA_PRUNE=true
-      - EXECUTIONS_DATA_MAX_AGE=168  # 7日間保持
-      - QUEUE_BULL_REDIS_HOST=redis
-      - QUEUE_BULL_REDIS_PORT=6379
-      - QUEUE_BULL_REDIS_DB=0
+    - N8N_BASIC_AUTH_ACTIVE=true
+    - N8N_BASIC_AUTH_USER=${N8N_USER:-admin}
+    - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-changeme}
+    - N8N_HOST=${N8N_HOST:-localhost}
+    - N8N_PORT=5678
+    - N8N_PROTOCOL=http
+    - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
+    - GENERIC_TIMEZONE=Asia/Tokyo
+    - EXECUTIONS_PROCESS=main
+    - EXECUTIONS_DATA_SAVE_ON_ERROR=all
+    - EXECUTIONS_DATA_SAVE_ON_SUCCESS=all
+    - EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS=true
+    - EXECUTIONS_DATA_PRUNE=true
+    - EXECUTIONS_DATA_MAX_AGE=168
+    - QUEUE_BULL_REDIS_HOST=redis
+    - QUEUE_BULL_REDIS_PORT=6379
+    - QUEUE_BULL_REDIS_DB=0
+    - BRAVE_API_KEY=demo_brave_key_12345
     volumes:
-      - n8n_data:/home/node/.n8n
-      - ./n8n_workflows:/data/n8n_workflows  # ワークフロー永続化
+    - n8n_data:/home/node/.n8n
+    - ./n8n_workflows:/data/n8n_workflows
     depends_on:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5678/healthz"]
+      test:
+      - CMD
+      - wget
+      - --quiet
+      - --tries=1
+      - --spider
+      - http://localhost:5678/healthz
       interval: 30s
       timeout: 10s
       retries: 3
     networks:
-      - llm_network
-
-  # 🌐 Traefik - リバースプロキシ & SSL自動化
+    - llm_network
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    ports:
+    - 0.0.0.0:3001:8080
+    volumes:
+    - openwebui_data:/app/backend/data
+    environment:
+    - OLLAMA_BASE_URL=http://host.docker.internal:11434
+    - OPENAI_API_BASE_URL=http://host.docker.internal:1234/v1
+    - OPENAI_API_KEY=lm-studio
+    - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-your-secret-key-change-this}
+    - ENABLE_SIGNUP=true
+    - BRAVE_API_KEY=demo_brave_key_12345
+    extra_hosts:
+    - host.docker.internal:host-gateway
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - --quiet
+      - --tries=1
+      - --spider
+      - http://localhost:8080/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+    - llm_network
+  mcp-api:
+    build:
+      context: .
+      dockerfile: mcp_api_server/Dockerfile
+    container_name: mcp-api-server
+    restart: unless-stopped
+    ports:
+    - 9502:9502
+    environment:
+    - PYTHONPATH=/app
+    - PYTHONUNBUFFERED=1
+    - TZ=Asia/Tokyo
+    - FLASK_ENV=production
+    - MCP_API_PORT=9502
+    - MCP_API_HOST=0.0.0.0
+    - COMFYUI_URL=${COMFYUI_URL:-http://host.docker.internal:8188}
+    - MANAOS_API_URL=${MANAOS_API_URL:-http://host.docker.internal:9500}
+    - OBSIDIAN_VAULT_PATH=${OBSIDIAN_VAULT_PATH:-C:/Users/mana4/Documents/Obsidian Vault}
+    - SEARXNG_BASE_URL=${SEARXNG_BASE_URL:-http://host.docker.internal:8080}
+    - OPENWEBUI_URL=${OPENWEBUI_URL:-http://host.docker.internal:3001}
+    - OPENWEBUI_API_KEY=${OPENWEBUI_API_KEY:-}
+    - BRAVE_API_KEY=demo_brave_key_12345
+    volumes:
+    - ./logs:/app/logs
+    - ./mcp_api_server.py:/app/mcp_api_server.py:ro
+    - ./manaos_unified_mcp_server:/app/manaos_unified_mcp_server:ro
+    - ./comfyui_integration.py:/app/comfyui_integration.py:ro
+    - ./google_drive_integration.py:/app/google_drive_integration.py:ro
+    - ./obsidian_integration.py:/app/obsidian_integration.py:ro
+    - ./svi_wan22_video_integration.py:/app/svi_wan22_video_integration.py:ro
+    - ./searxng_integration.py:/app/searxng_integration.py:ro
+    - ./brave_search_integration.py:/app/brave_search_integration.py:ro
+    - ./base_ai_integration.py:/app/base_ai_integration.py:ro
+    extra_hosts:
+    - host.docker.internal:host-gateway
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:9502/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+    - llm_network
+  tool-server:
+    build:
+      context: .
+      dockerfile: tool_server/Dockerfile
+    container_name: tool-server
+    restart: unless-stopped
+    ports:
+    - 9503:9503
+    environment:
+    - PYTHONPATH=/app
+    - PYTHONUNBUFFERED=1
+    - TZ=Asia/Tokyo
+    - TOOL_SERVER_PORT=9503
+    - COMFYUI_URL=${COMFYUI_URL:-http://host.docker.internal:8188}
+    - MANAOS_API_URL=${MANAOS_API_URL:-http://host.docker.internal:9500}
+    volumes:
+    - ./logs:/app/logs
+    - ./tool_server/main.py:/app/main.py:ro
+    # Windows環境では、ホストのdockerコマンドを使えるようにする
+    # コンテナ内からホストのdockerを実行するには、PATHが通っている必要がある
+    extra_hosts:
+    - host.docker.internal:host-gateway
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:9503/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+    - llm_network
   traefik:
     image: traefik:v2.10
     container_name: traefik-proxy
     restart: unless-stopped
     command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@example.com}"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    - --api.insecure=true
+    - --providers.docker=true
+    - --providers.docker.exposedbydefault=false
+    - --entrypoints.web.address=:80
+    - --entrypoints.websecure.address=:443
+    - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+    - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@example.com}
+    - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
     ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"  # Traefikダッシュボード
+    - 80:80
+    - 443:443
+    - 8080:8080
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - traefik_certs:/letsencrypt
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    - traefik_certs:/letsencrypt
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.ollama.rule=Host(`ollama.${DOMAIN:-localhost}`)"
-      - "traefik.http.routers.ollama.entrypoints=websecure"
-      - "traefik.http.routers.ollama.tls.certresolver=letsencrypt"
-      - "traefik.http.services.ollama.loadbalancer.server.port=11434"
-      - "traefik.http.routers.n8n.rule=Host(`n8n.${DOMAIN:-localhost}`)"
-      - "traefik.http.routers.n8n.entrypoints=websecure"
-      - "traefik.http.routers.n8n.tls.certresolver=letsencrypt"
-      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+    - traefik.enable=true
+    - traefik.http.routers.ollama.rule=Host(`ollama.${DOMAIN:-localhost}`)
+    - traefik.http.routers.ollama.entrypoints=websecure
+    - traefik.http.routers.ollama.tls.certresolver=letsencrypt
+    - traefik.http.services.ollama.loadbalancer.server.port=11434
+    - traefik.http.routers.n8n.rule=Host(`n8n.${DOMAIN:-localhost}`)
+    - traefik.http.routers.n8n.entrypoints=websecure
+    - traefik.http.routers.n8n.tls.certresolver=letsencrypt
+    - traefik.http.services.n8n.loadbalancer.server.port=5678
+    - traefik.http.routers.openwebui.rule=Host(`openwebui.${DOMAIN:-localhost}`)
+    - traefik.http.routers.openwebui.entrypoints=websecure
+    - traefik.http.routers.openwebui.tls.certresolver=letsencrypt
+    - traefik.http.services.openwebui.loadbalancer.server.port=8080
     networks:
-      - llm_network
-
-  # 📊 Prometheus - メトリクス収集（オプション）
+    - llm_network
+    environment:
+    - BRAVE_API_KEY=demo_brave_key_12345
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus-metrics
     restart: unless-stopped
     ports:
-      - "9090:9090"
+    - 9090:9090
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
+    - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
+    - --config.file=/etc/prometheus/prometheus.yml
+    - --storage.tsdb.path=/prometheus
     networks:
-      - llm_network
+    - llm_network
     profiles:
-      - monitoring
-
-  # 📈 Grafana - 可視化ダッシュボード（オプション）
+    - monitoring
+    environment:
+    - BRAVE_API_KEY=demo_brave_key_12345
   grafana:
     image: grafana/grafana:latest
     container_name: grafana-dashboard
     restart: unless-stopped
     ports:
-      - "3000:3000"
+    - 3000:3000
     environment:
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
-      - GF_INSTALL_PLUGINS=redis-datasource
+    - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+    - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    - GF_INSTALL_PLUGINS=redis-datasource
+    - BRAVE_API_KEY=demo_brave_key_12345
     volumes:
-      - grafana_data:/var/lib/grafana
+    - grafana_data:/var/lib/grafana
     depends_on:
-      - prometheus
+    - prometheus
     networks:
-      - llm_network
+    - llm_network
     profiles:
-      - monitoring
-
+    - monitoring
 volumes:
   ollama_data:
     driver: local
@@ -176,14 +296,14 @@ volumes:
     driver: local
   n8n_data:
     driver: local
+  openwebui_data:
+    driver: local
   traefik_certs:
     driver: local
   prometheus_data:
     driver: local
   grafana_data:
     driver: local
-
 networks:
   llm_network:
     driver: bridge
-

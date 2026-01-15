@@ -95,3 +95,24 @@ class OrganizeError(FileSecretaryError):
     """整理エラー"""
     pass
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

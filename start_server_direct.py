@@ -7,10 +7,22 @@ import os
 from pathlib import Path
 
 # Windows環境でのエンコーディング問題を回避
+# 注意: sys.stdout/stderrのラッピングは他のモジュールのインポート前に実行する必要がある
 if sys.platform == "win32":
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    try:
+        import io
+        # 既にラッピングされている場合はスキップ
+        if not hasattr(sys.stdout, 'buffer') or isinstance(sys.stdout, io.TextIOWrapper):
+            pass  # 既に適切に設定されている
+        else:
+            # バッファが存在する場合のみラッピング
+            if hasattr(sys.stdout, 'buffer'):
+                sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+            if hasattr(sys.stderr, 'buffer'):
+                sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except Exception:
+        # エンコーディング設定に失敗した場合はスキップ
+        pass
 
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent))

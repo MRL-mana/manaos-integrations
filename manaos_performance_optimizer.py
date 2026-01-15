@@ -135,6 +135,51 @@ class PerformanceOptimizer:
                 "status": "error",
                 "error": error.user_message or error.message
             }
+    
+    def optimize_all(self) -> Dict[str, Any]:
+        """
+        全システムを最適化（統一インターフェース）
+        
+        Returns:
+            最適化結果
+        """
+        results = {
+            "cache": {},
+            "services_health_check": {},
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # キャッシュの最適化
+        try:
+            results["cache"] = self.optimize_cache()
+        except Exception as e:
+            results["cache"] = {"status": "error", "error": str(e)}
+        
+        # サービスヘルスチェックの最適化（非同期）
+        try:
+            import asyncio
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            if loop.is_running():
+                # 既にイベントループが実行中の場合は、新しいタスクとしてスケジュール
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(
+                        lambda: asyncio.run(self.optimize_all_services_health_check())
+                    )
+                    results["services_health_check"] = future.result(timeout=30)
+            else:
+                results["services_health_check"] = loop.run_until_complete(
+                    self.optimize_all_services_health_check()
+                )
+        except Exception as e:
+            results["services_health_check"] = {"status": "error", "error": str(e)}
+        
+        return results
 
 
 optimizer = PerformanceOptimizer()
@@ -211,4 +256,18 @@ if __name__ == '__main__':
     port = int(os.getenv("PORT", 5128))
     logger.info(f"🚀 Performance Optimizer起動中... (ポート: {port})")
     app.run(host='0.0.0.0', port=port, debug=os.getenv("DEBUG", "False").lower() == "true")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

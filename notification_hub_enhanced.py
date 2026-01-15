@@ -420,6 +420,10 @@ class NotificationHubEnhanced:
             "by_priority": self.stats["by_priority"],
             "recent_notifications": [asdict(h) for h in self.notification_history[-10:]]
         }
+    
+    def get_status(self) -> Dict[str, Any]:
+        """システム状態を取得（統一インターフェース）"""
+        return self.get_stats()
 
 
 def main():

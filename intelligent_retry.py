@@ -50,10 +50,10 @@ class CircuitState(str, Enum):
 
 @dataclass
 class RetryConfig:
-    """リトライ設定"""
-    max_retries: int = 3
-    initial_delay: float = 1.0
-    max_delay: float = 60.0
+    """リトライ設定（最適化済み）"""
+    max_retries: int = 2  # 3 → 2に削減（通信速度向上）
+    initial_delay: float = 0.5  # 1.0 → 0.5に短縮
+    max_delay: float = 10.0  # 60.0 → 10.0に短縮（通信速度向上）
     exponential_base: float = 2.0
     strategy: RetryStrategy = RetryStrategy.EXPONENTIAL_BACKOFF
     retryable_errors: List[str] = None

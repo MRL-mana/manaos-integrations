@@ -373,10 +373,19 @@ class UnifiedMemory:
                     obsidian_results = self._filter_by_scope(obsidian_results, scope)
                 
                 # 統一フォーマットに変換
-                for note in obsidian_results[:limit]:
-                    formatted = self._note_to_unified_format(note)
-                    if formatted:
-                        results.append(formatted)
+                for note_path in obsidian_results[:limit]:
+                    try:
+                        # Pathオブジェクトから内容を読み込む
+                        if isinstance(note_path, Path):
+                            content_str = self.obsidian.read_note(note_path.name)
+                            if content_str:
+                                # フロントマターを解析して辞書形式に変換
+                                note_dict = self._parse_note_content(note_path, content_str)
+                                formatted = self._note_to_unified_format(note_dict)
+                                if formatted:
+                                    results.append(formatted)
+                    except Exception as e:
+                        logger.warning(f"ノート処理エラー ({note_path}): {e}")
             
             except Exception as e:
                 logger.warning(f"Obsidian検索エラー: {e}")
@@ -422,6 +431,45 @@ class UnifiedMemory:
         
         return results
     
+    def _parse_note_content(self, path: Path, content: str) -> Dict[str, Any]:
+        """ノート内容からメタデータを抽出して辞書化"""
+        import yaml
+        import re
+        
+        note_dict = {
+            "path": str(path),
+            "title": path.stem,
+            "content": content,
+            "tags": [],
+            "frontmatter": {}
+        }
+        
+        # フロントマターの抽出
+        frontmatter_match = re.match(r'^---\n(.*?)\n---\n', content, re.DOTALL)
+        if frontmatter_match:
+            try:
+                frontmatter_str = frontmatter_match.group(1)
+                # 単純なYAML解析（PyYAMLがない場合への備えとして簡易パーサーも検討すべきだが、今回は標準入出力の前提で）
+                # ここでは簡易的に処理
+                frontmatter = {}
+                for line in frontmatter_str.split('\n'):
+                    if ':' in line:
+                        key, val = line.split(':', 1)
+                        key = key.strip()
+                        val = val.strip().strip('"\'')
+                        if val.startswith('[') and val.endswith(']'):
+                             # リストの簡易パース
+                             val = [v.strip().strip('"\'') for v in val[1:-1].split(',')]
+                        frontmatter[key] = val
+                note_dict["frontmatter"] = frontmatter
+                
+                # コンテンツからフロントマターを除去
+                note_dict["content"] = content[len(frontmatter_match.group(0)):]
+            except Exception as e:
+                logger.warning(f"フロントマター解析エラー: {e}")
+        
+        return note_dict
+
     def _note_to_unified_format(self, note: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Obsidianノートを統一フォーマットに変換"""
         try:

@@ -18,7 +18,7 @@ Get-Content "$env:USERPROFILE\.cursor\mcp.json" | ConvertFrom-Json | Select-Obje
   "args": ["-m", "n8n_mcp_server.server"],
   "env": {
     "N8N_BASE_URL": "http://localhost:5679",
-    "N8N_API_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    "N8N_API_KEY": "your_n8n_api_key_here"
   },
   "cwd": "C:\\Users\\mana4\\OneDrive\\Desktop\\manaos_integrations"
 }
@@ -69,7 +69,7 @@ $config.mcpServers.n8n.env
 期待される出力：
 ```
 N8N_BASE_URL : http://localhost:5679
-N8N_API_KEY  : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+N8N_API_KEY  : your_n8n_api_key_here
 ```
 
 ### ステップ3: MCPサーバーの動作確認

@@ -27,16 +27,22 @@ from multimodal_integration import MultimodalIntegration
 from distributed_execution import DistributedExecution
 from security_monitor import SecurityMonitor
 from manaos_service_bridge import ManaOSServiceBridge
+try:
+    from intrinsic_motivation import IntrinsicMotivation
+    INTRINSIC_MOTIVATION_AVAILABLE = True
+except ImportError:
+    INTRINSIC_MOTIVATION_AVAILABLE = False
+    IntrinsicMotivation = None
 
 
 class UltimateIntegration:
     """究極統合システム"""
-    
+
     def __init__(self):
         """初期化"""
         # 基本統合システム
         initialize_integrations()
-        
+
         # 高度機能
         self.workflow = WorkflowAutomation()
         self.agent = AutonomousAgent("ManaOS Ultimate Agent")
@@ -55,10 +61,18 @@ class UltimateIntegration:
         self.distributed = DistributedExecution()
         self.security = SecurityMonitor()
         self.bridge = ManaOSServiceBridge()
-        
+        if INTRINSIC_MOTIVATION_AVAILABLE:
+            try:
+                self.intrinsic_motivation = IntrinsicMotivation()
+            except Exception as e:
+                print(f"Intrinsic Motivation初期化エラー: {e}")
+                self.intrinsic_motivation = None
+        else:
+            self.intrinsic_motivation = None
+
         self.storage_path = Path("ultimate_integration_state.json")
         self._load_state()
-    
+
     def _load_state(self):
         """状態を読み込み"""
         if self.storage_path.exists():
@@ -67,7 +81,7 @@ class UltimateIntegration:
                     state = json.load(f)
             except:
                 pass
-    
+
     def _save_state(self):
         """状態を保存"""
         try:
@@ -77,11 +91,11 @@ class UltimateIntegration:
                 }, f, ensure_ascii=False, indent=2)
         except Exception as e:
             print(f"状態保存エラー: {e}")
-    
+
     def get_comprehensive_status(self) -> Dict[str, Any]:
         """
         包括的な状態を取得
-        
+
         Returns:
             状態の辞書
         """
@@ -104,13 +118,14 @@ class UltimateIntegration:
             "cloud_status": self.cloud.get_status(),
             "distributed_status": self.distributed.get_status(),
             "security_status": self.security.get_security_status(),
+            "intrinsic_motivation_status": self.intrinsic_motivation.get_status() if self.intrinsic_motivation else None,
             "timestamp": datetime.now().isoformat()
         }
-    
+
     def run_full_cycle(self) -> Dict[str, Any]:
         """
         完全サイクルを実行
-        
+
         Returns:
             実行結果
         """
@@ -118,41 +133,41 @@ class UltimateIntegration:
             "cycle_start": datetime.now().isoformat(),
             "steps": {}
         }
-        
+
         # 1. メトリクス収集
         metrics = self.maintenance.collect_metrics()
         results["steps"]["metrics_collection"] = {"success": bool(metrics)}
-        
+
         # 2. 予測的メンテナンス
         status = self.maintenance.get_status()
         results["steps"]["predictive_maintenance"] = {"alerts": len(status.get("alerts", []))}
-        
+
         # 3. 自動最適化
         opt_result = self.optimizer.optimize()
         results["steps"]["auto_optimization"] = {"optimizations": len(opt_result.get("optimizations", []))}
-        
+
         # 4. コスト分析
         cost_summary = self.cost_opt.get_cost_summary()
         results["steps"]["cost_analysis"] = {"total_suggested_savings": cost_summary.get("total_suggested_savings", 0)}
-        
+
         # 5. パフォーマンス分析
         if hasattr(self.analytics, "collect_metrics"):
             analytics_metrics = self.analytics.collect_metrics()
             results["steps"]["performance_analytics"] = {"success": bool(analytics_metrics)}
-        
+
         # 6. 学習システム更新
         learning_status = self.learning.get_status()
         results["steps"]["learning_update"] = {"total_actions": learning_status.get("total_actions_recorded", 0)}
-        
+
         # 7. バックアップ（必要に応じて）
         # results["steps"]["backup"] = {"success": True}
-        
+
         results["cycle_end"] = datetime.now().isoformat()
         results["duration_seconds"] = (
             datetime.fromisoformat(results["cycle_end"]) -
             datetime.fromisoformat(results["cycle_start"])
         ).total_seconds()
-        
+
         return results
 
 
@@ -160,21 +175,21 @@ def main():
     """テスト用メイン関数"""
     print("ManaOS究極統合システムテスト")
     print("=" * 60)
-    
+
     ultimate = UltimateIntegration()
-    
+
     # 包括的な状態を取得
     print("\n包括的な状態を取得中...")
     status = ultimate.get_comprehensive_status()
-    
+
     print(f"\n統合システム状態:")
     for name, available in status["integrations"].items():
         print(f"  {name}: {'✓' if available else '✗'}")
-    
+
     print(f"\nManaOSサービス状態:")
     for name, available in status["manaos_services"].items():
         print(f"  {name}: {'✓' if available else '✗'}")
-    
+
     # 完全サイクルを実行
     print("\n完全サイクルを実行中...")
     cycle_result = ultimate.run_full_cycle()
@@ -185,4 +200,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

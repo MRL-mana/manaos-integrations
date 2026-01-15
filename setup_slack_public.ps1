@@ -99,4 +99,3 @@ Write-Host "`n動作確認:" -ForegroundColor Yellow
 Write-Host "  1. SlackでBotにメンション: @bot_name こんにちは" -ForegroundColor White
 Write-Host "  2. BotにDM: こんにちは" -ForegroundColor White
 Write-Host "  3. 返信が来るか確認" -ForegroundColor White
-
