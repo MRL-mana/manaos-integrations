@@ -12,16 +12,27 @@ import threading
 import time
 
 from unified_api_server import initialize_integrations, integrations
-from manaos_service_bridge import ManaOSServiceBridge
-from ai_agent_autonomous import AutonomousAgent
+# from manaos_service_bridge import ManaOSServiceBridge
+# from ai_agent_autonomous import AutonomousAgent
 
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'manaos-dashboard-secret'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-bridge = ManaOSServiceBridge()
-agent = AutonomousAgent()
+try:
+    from manaos_service_bridge import ManaOSServiceBridge
+    bridge = ManaOSServiceBridge()
+except Exception as e:
+    print(f"ManaOSServiceBridge initialization failed: {e}")
+    bridge = None
+
+try:
+    from ai_agent_autonomous import AutonomousAgent
+    agent = AutonomousAgent()
+except Exception as e:
+    print(f"AutonomousAgent initialization failed: {e}")
+    agent = None
 
 
 DASHBOARD_HTML = """
@@ -315,8 +326,19 @@ def get_status():
         else:
             integration_status[name] = False
     
-    manaos_status = bridge.check_manaos_services()
-    agent_status = agent.get_status()
+    manaos_status = {}
+    if bridge:
+        try:
+            manaos_status = bridge.check_manaos_services()
+        except Exception as e:
+            print(f"Error checking manaos services: {e}")
+            
+    agent_status = {}
+    if agent:
+        try:
+            agent_status = agent.get_status()
+        except Exception as e:
+            print(f"Error checking agent status: {e}")
     
     return jsonify({
         "integrations": integration_status,
@@ -330,10 +352,24 @@ def background_task():
     """バックグラウンドタスク"""
     while True:
         try:
+            manaos_services = {}
+            if bridge:
+                try:
+                    manaos_services = bridge.check_manaos_services()
+                except:
+                    pass
+                    
+            agent_status = {}
+            if agent:
+                try:
+                    agent_status = agent.get_status()
+                except:
+                    pass
+
             status = {
                 "integrations": {},
-                "manaos_services": bridge.check_manaos_services(),
-                "agent": agent.get_status(),
+                "manaos_services": manaos_services,
+                "agent": agent_status,
                 "timestamp": datetime.now().isoformat()
             }
             

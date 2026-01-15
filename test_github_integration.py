@@ -7,8 +7,12 @@ GitHub統合テストスクリプト
 import os
 import sys
 
-# GitHubトークンを環境変数に設定
-os.environ["GITHUB_TOKEN"] = "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"
+# GitHubトークンは環境変数で指定してください（値の直書きは禁止）
+if not os.environ.get("GITHUB_TOKEN"):
+    print(
+        "⚠️ GITHUB_TOKEN が未設定です。環境変数に設定してから実行してください。",
+        file=sys.stderr,
+    )
 
 from github_integration import GitHubIntegration
 from manaos_complete_integration import ManaOSCompleteIntegration
@@ -63,4 +67,25 @@ def test_github_integration():
 
 if __name__ == "__main__":
     test_github_integration()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

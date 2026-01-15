@@ -84,4 +84,3 @@ try {
 
 Write-Host "`n=== Setup Complete ===" -ForegroundColor Cyan
 Write-Host "Ollama will automatically start in GPU mode on system boot." -ForegroundColor Green
-

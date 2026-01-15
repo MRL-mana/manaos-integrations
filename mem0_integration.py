@@ -81,7 +81,7 @@ class Mem0Integration(BaseIntegration):
                     "provider": "ollama",
                     "config": {
                         "model": ollama_model,
-                        "url": ollama_url  # base_urlからurlに変更
+                        "base_url": ollama_url  # Mem0の最新バージョンではbase_urlを使用
                     }
                 }
             }

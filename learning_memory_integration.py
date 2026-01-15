@@ -111,7 +111,14 @@ class LearningMemoryIntegration:
     def analyze_and_optimize(self) -> Dict[str, Any]:
         """分析して最適化提案を取得"""
         # パターン分析
-        patterns = self.learning.analyze_patterns()
+        try:
+            if self.learning and hasattr(self.learning, 'analyze_patterns'):
+                patterns = self.learning.analyze_patterns()
+            else:
+                patterns = {"recommendations": []}
+        except Exception as e:
+            logger.warning(f"学習パターン分析エラー: {e}")
+            patterns = {"recommendations": []}
         
         # 記憶から重要な情報を取得
         important_memories = self.memory.search_memories("", limit=10, min_importance=0.7)
@@ -190,4 +197,18 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

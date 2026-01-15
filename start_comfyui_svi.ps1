@@ -5,9 +5,9 @@ param(
     [switch]$Background
 )
 
-Write-Host "=" * 60
-Write-Host "ComfyUI 起動スクリプト（SVI × Wan 2.2用）"
-Write-Host "=" * 60
+Write-Host ("=" * 60) -ForegroundColor Cyan
+Write-Host "ComfyUI 起動スクリプト（SVI × Wan 2.2用）" -ForegroundColor Cyan
+Write-Host ("=" * 60) -ForegroundColor Cyan
 Write-Host ""
 
 $ComfyUIPath = "C:\ComfyUI"
@@ -47,7 +47,7 @@ if ($Background) {
     Write-Host ""
     Write-Host "停止する場合は Ctrl+C を押してください" -ForegroundColor Yellow
     Write-Host ""
-    
+
     Push-Location $ComfyUIPath
     try {
         python main.py --port $Port
@@ -55,14 +55,3 @@ if ($Background) {
         Pop-Location
     }
 }
-
-
-
-
-
-
-
-
-
-
-

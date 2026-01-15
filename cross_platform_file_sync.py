@@ -441,6 +441,10 @@ class CrossPlatformFileSync:
             "enabled_rules": sum(1 for r in self.sync_rules if r.enabled),
             "conflicts": [asdict(c) for c in self.conflicts]
         }
+    
+    def get_status(self) -> Dict[str, Any]:
+        """システム状態を取得（統一インターフェース）"""
+        return self.get_stats()
 
 
 def main():

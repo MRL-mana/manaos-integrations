@@ -272,6 +272,35 @@ class TaskPlanner:
         
         return None
     
+    def _is_simple_plan(self, input_text: str, intent_result: Dict[str, Any]) -> bool:
+        """計画が簡単かどうかを判定"""
+        intent_type = intent_result.get("intent_type", "unknown")
+        
+        # 簡単な意図タイプ
+        simple_intents = [
+            "conversation",
+            "file_search",
+            "file_status"
+        ]
+        
+        if intent_type in simple_intents:
+            return True
+        
+        # 入力テキストの長さと複雑度で判定
+        if len(input_text) < 50:  # 短い入力は簡単と判断
+            return True
+        
+        # 複雑なキーワードが含まれているかチェック
+        complex_keywords = [
+            "複雑", "複数", "統合", "分析", "設計", "アーキテクチャ",
+            "複雑な", "複数の", "統合する", "分析する", "設計する"
+        ]
+        
+        if any(keyword in input_text for keyword in complex_keywords):
+            return False
+        
+        return True
+    
     def _plan_with_llm(
         self,
         input_text: str,
@@ -286,49 +315,69 @@ class TaskPlanner:
             intent_result=json.dumps(intent_result, ensure_ascii=False, indent=2)
         )
         
-        try:
-            timeout = timeout_config.get("llm_call_heavy", 60.0)
-            response = httpx.post(
-                f"{self.ollama_url}/api/generate",
-                json={
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.5,
-                        "num_predict": 2000
-                    }
-                },
-                timeout=timeout
-            )
+        # 簡単な計画はLFM 2.5を使用
+        is_simple = self._is_simple_plan(input_text, intent_result)
+        if is_simple:
+            # LFM 2.5を使用（lightweight_conversation経由）
+            try:
+                import manaos_core_api as manaos
+                result = manaos.act("llm_call", {
+                    "task_type": "lightweight_conversation",
+                    "prompt": prompt
+                })
+                result_text = result.get("response", "")
+            except Exception as e:
+                logger.warning(f"LFM 2.5呼び出し失敗、従来モデルにフォールバック: {e}")
+                result_text = None
+        else:
+            result_text = None
+        
+        # LFM 2.5が失敗した場合、または複雑な計画の場合は従来通り
+        if not result_text:
+            try:
+                timeout = timeout_config.get("llm_call_heavy", 60.0)
+                response = httpx.post(
+                    f"{self.ollama_url}/api/generate",
+                    json={
+                        "model": self.model,
+                        "prompt": prompt,
+                        "stream": False,
+                        "options": {
+                            "temperature": 0.5,
+                            "num_predict": 2000
+                        }
+                    },
+                    timeout=timeout
+                )
             
-            if response.status_code != 200:
+                if response.status_code != 200:
+                    error = error_handler.handle_exception(
+                        Exception(f"LLMプランニング失敗: HTTP {response.status_code}"),
+                        context={"service": "Ollama", "url": self.ollama_url, "model": self.model},
+                        user_message="実行計画の作成に失敗しました"
+                    )
+                    logger.warning(f"LLMプランニング失敗: {error.message}")
+                    return self._create_fallback_plan(input_text, intent_result)
+                
+                result_text = response.json().get("response", "")
+            except httpx.TimeoutException as e:
                 error = error_handler.handle_exception(
-                    Exception(f"LLMプランニング失敗: HTTP {response.status_code}"),
+                    e,
+                    context={"service": "Ollama", "url": self.ollama_url, "model": self.model},
+                    user_message="実行計画の作成がタイムアウトしました"
+                )
+                logger.warning(f"LLMプランニングタイムアウト - フォールバック計画を使用: {error.message}")
+                return self._create_fallback_plan(input_text, intent_result)
+            except Exception as e:
+                error = error_handler.handle_exception(
+                    e,
                     context={"service": "Ollama", "url": self.ollama_url, "model": self.model},
                     user_message="実行計画の作成に失敗しました"
                 )
-                logger.warning(f"LLMプランニング失敗: {error.message}")
+                logger.error(f"LLMプランニングエラー: {error.message}")
                 return self._create_fallback_plan(input_text, intent_result)
-        except httpx.TimeoutException as e:
-            error = error_handler.handle_exception(
-                e,
-                context={"service": "Ollama", "url": self.ollama_url, "model": self.model},
-                user_message="実行計画の作成がタイムアウトしました"
-            )
-            logger.warning(f"LLMプランニングタイムアウト - フォールバック計画を使用: {error.message}")
-            return self._create_fallback_plan(input_text, intent_result)
-        except Exception as e:
-            error = error_handler.handle_exception(
-                e,
-                context={"service": "Ollama", "url": self.ollama_url, "model": self.model},
-                user_message="実行計画の作成に失敗しました"
-            )
-            logger.error(f"LLMプランニングエラー: {error.message}")
-            return self._create_fallback_plan(input_text, intent_result)
         
         # レスポンス処理（正常な場合）
-        result_text = response.json().get("response", "")
         
         # JSONを抽出
         try:

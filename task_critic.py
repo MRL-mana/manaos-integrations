@@ -267,6 +267,40 @@ class TaskCritic:
         
         return None
     
+    def _is_simple_evaluation(
+        self,
+        intent_type: str,
+        status: str,
+        error: Optional[str],
+        output: Optional[Any]
+    ) -> bool:
+        """評価が簡単かどうかを判定"""
+        # 簡単な意図タイプ
+        simple_intents = [
+            "conversation",
+            "file_search",
+            "file_status",
+            "information_search"
+        ]
+        
+        if intent_type in simple_intents:
+            return True
+        
+        # 明らかな成功/失敗パターンは簡単
+        if status == "completed" and output and not error:
+            return True
+        
+        if status == "failed" or error:
+            return True
+        
+        # 出力がシンプルな場合
+        if output:
+            output_str = json.dumps(output, ensure_ascii=False) if isinstance(output, dict) else str(output)
+            if len(output_str) < 500:  # 短い出力は簡単と判断
+                return True
+        
+        return False
+    
     def _evaluate_with_llm(
         self,
         intent_type: str,
@@ -277,7 +311,7 @@ class TaskCritic:
         error: Optional[str],
         duration: Optional[float]
     ) -> CriticResult:
-        """LLMベースの評価"""
+        """LLMベースの評価（簡単な評価はLFM 2.5を使用）"""
         prompt = self.evaluation_prompt_template.format(
             intent_type=intent_type,
             original_input=original_input,
@@ -288,49 +322,70 @@ class TaskCritic:
             duration=duration or 0
         )
         
-        try:
-            timeout = timeout_config.get("llm_call", 30.0)
-            response = httpx.post(
-                f"{self.ollama_url}/api/generate",
-                json={
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.3,
-                        "num_predict": 1000
-                    }
-                },
-                timeout=timeout
-            )
+        # 簡単な評価はLFM 2.5を使用
+        is_simple = self._is_simple_evaluation(intent_type, status, error, output)
+        if is_simple:
+            # LFM 2.5を使用（lightweight_conversation経由）
+            try:
+                import manaos_core_api as manaos
+                result = manaos.act("llm_call", {
+                    "task_type": "lightweight_conversation",
+                    "prompt": prompt
+                })
+                result_text = result.get("response", "")
+                logger.info("✅ LFM 2.5で簡単な評価完了")
+            except Exception as e:
+                logger.warning(f"LFM 2.5呼び出し失敗、従来モデルにフォールバック: {e}")
+                result_text = None
+        else:
+            result_text = None
+        
+        # LFM 2.5が失敗した場合、または複雑な評価の場合は従来通り
+        if not result_text:
+            try:
+                timeout = timeout_config.get("llm_call", 30.0)
+                response = httpx.post(
+                    f"{self.ollama_url}/api/generate",
+                    json={
+                        "model": self.model,
+                        "prompt": prompt,
+                        "stream": False,
+                        "options": {
+                            "temperature": 0.3,
+                            "num_predict": 1000
+                        }
+                    },
+                    timeout=timeout
+                )
             
-            if response.status_code != 200:
+                if response.status_code != 200:
+                    error = error_handler.handle_exception(
+                        Exception(f"LLM評価失敗: HTTP {response.status_code}"),
+                        context={"service": "Ollama", "url": self.ollama_url, "model": self.model},
+                        user_message="実行結果の評価に失敗しました"
+                    )
+                    logger.warning(f"LLM評価失敗: {error.message}")
+                    return self._create_fallback_evaluation(status, error)
+                
+                result_text = response.json().get("response", "")
+            except httpx.TimeoutException as e:
                 error = error_handler.handle_exception(
-                    Exception(f"LLM評価失敗: HTTP {response.status_code}"),
+                    e,
+                    context={"service": "Ollama", "url": self.ollama_url, "model": self.model},
+                    user_message="実行結果の評価がタイムアウトしました"
+                )
+                logger.warning(f"LLM評価タイムアウト - フォールバック評価を使用: {error.message}")
+                return self._create_fallback_evaluation(status, error)
+            except Exception as e:
+                error = error_handler.handle_exception(
+                    e,
                     context={"service": "Ollama", "url": self.ollama_url, "model": self.model},
                     user_message="実行結果の評価に失敗しました"
                 )
-                logger.warning(f"LLM評価失敗: {error.message}")
+                logger.error(f"LLM評価エラー: {error.message}")
                 return self._create_fallback_evaluation(status, error)
-        except httpx.TimeoutException as e:
-            error = error_handler.handle_exception(
-                e,
-                context={"service": "Ollama", "url": self.ollama_url, "model": self.model},
-                user_message="実行結果の評価がタイムアウトしました"
-            )
-            logger.warning(f"LLM評価タイムアウト - フォールバック評価を使用: {error.message}")
-            return self._create_fallback_evaluation(status, error)
-        except Exception as e:
-            error = error_handler.handle_exception(
-                e,
-                context={"service": "Ollama", "url": self.ollama_url, "model": self.model},
-                user_message="実行結果の評価に失敗しました"
-            )
-            logger.error(f"LLM評価エラー: {error.message}")
-            return self._create_fallback_evaluation(status, error)
         
         # レスポンス処理（正常な場合）
-        result_text = response.json().get("response", "")
         
         # JSONを抽出
         try:

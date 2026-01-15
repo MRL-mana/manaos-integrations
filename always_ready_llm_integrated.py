@@ -392,3 +392,24 @@ if __name__ == "__main__":
     print(f"レスポンス: {response.response}")
     print(f"統合結果: {response.integration_results}")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

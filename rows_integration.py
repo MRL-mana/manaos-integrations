@@ -65,19 +65,19 @@ class RowsIntegration:
         endpoint: str,
         data: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None,
-        max_retries: int = 3,
-        retry_delay: float = 1.0
+        max_retries: int = 2,  # 3 → 2に削減（通信速度向上）
+        retry_delay: float = 0.5  # 1.0 → 0.5に短縮（通信速度向上）
     ) -> Optional[Dict[str, Any]]:
         """
-        APIリクエストを実行（リトライ機能付き）
+        APIリクエストを実行（リトライ機能付き・最適化済み）
         
         Args:
             method: HTTPメソッド（GET, POST, PUT, DELETE）
             endpoint: APIエンドポイント
             data: リクエストボディ
             params: クエリパラメータ
-            max_retries: 最大リトライ回数
-            retry_delay: リトライ間隔（秒）
+            max_retries: 最大リトライ回数（デフォルト2）
+            retry_delay: リトライ間隔（秒、デフォルト0.5）
             
         Returns:
             APIレスポンス（JSON）
@@ -88,6 +88,9 @@ class RowsIntegration:
         
         import time
         
+        # タイムアウト設定（最適化済み）
+        timeout = 20.0  # 30秒 → 20秒に短縮
+        
         for attempt in range(max_retries):
             try:
                 url = f"{self.base_url}/{endpoint.lstrip('/')}"
@@ -96,7 +99,7 @@ class RowsIntegration:
                     url=url,
                     json=data,
                     params=params,
-                    timeout=30
+                    timeout=timeout
                 )
                 
                 # 429 Too Many Requests の場合はリトライ

@@ -38,6 +38,27 @@ SERVICES = {
     "task_queue": "http://localhost:5104"
 }
 
+# 統合デバイス管理システム（オプション）
+try:
+    from device_health_monitor import DeviceHealthMonitor
+    from device_orchestrator import DeviceOrchestrator
+    DEVICE_MANAGEMENT_AVAILABLE = True
+except ImportError:
+    DEVICE_MANAGEMENT_AVAILABLE = False
+    DeviceHealthMonitor = None
+    DeviceOrchestrator = None
+
+# デバイス管理システムの初期化
+device_health_monitor = None
+device_orchestrator = None
+if DEVICE_MANAGEMENT_AVAILABLE:
+    try:
+        device_health_monitor = DeviceHealthMonitor()
+        device_orchestrator = DeviceOrchestrator()
+        logger.info("✅ 統合デバイス管理システム初期化完了")
+    except Exception as e:
+        logger.warning(f"⚠️ 統合デバイス管理システム初期化エラー: {e}")
+
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -207,6 +228,197 @@ def get_execution(execution_id: str):
             return jsonify({"error": response.text}), response.status_code
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/devices/status', methods=['GET'])
+def get_devices_status():
+    """統合デバイス管理ダッシュボード: 全デバイスの状態を取得"""
+    if not DEVICE_MANAGEMENT_AVAILABLE or not device_health_monitor:
+        return jsonify({
+            "error": "統合デバイス管理システムが利用できません",
+            "available": False
+        }), 503
+    
+    try:
+        # 全デバイスの健康状態を取得
+        devices_health = device_health_monitor.check_all_devices()
+        
+        # デバイスオーケストレーターの状態を取得
+        orchestrator_status = {}
+        if device_orchestrator:
+            try:
+                orchestrator_status = device_orchestrator.get_status()
+            except Exception as e:
+                logger.warning(f"デバイスオーケストレーター状態取得エラー: {e}")
+        
+        # DeviceHealthオブジェクトを辞書に変換
+        devices_dict = []
+        for device in devices_health:
+            devices_dict.append({
+                "device_name": device.device_name,
+                "device_type": device.device_type,
+                "status": device.status,
+                "timestamp": device.timestamp,
+                "cpu_percent": device.cpu_percent,
+                "memory_percent": device.memory_percent,
+                "disk_percent": device.disk_percent,
+                "network_sent_mb": device.network_sent_mb,
+                "network_recv_mb": device.network_recv_mb,
+                "uptime_seconds": device.uptime_seconds,
+                "alerts": device.alerts,
+                "api_endpoint": device.api_endpoint
+            })
+        
+        return jsonify({
+            "timestamp": datetime.now().isoformat(),
+            "devices": devices_dict,
+            "orchestrator": orchestrator_status,
+            "summary": {
+                "total_devices": len(devices_dict),
+                "healthy_devices": sum(1 for d in devices_dict if d.get("status") == "healthy"),
+                "warning_devices": sum(1 for d in devices_dict if d.get("status") == "warning"),
+                "critical_devices": sum(1 for d in devices_dict if d.get("status") == "critical"),
+                "offline_devices": sum(1 for d in devices_dict if d.get("status") == "offline")
+            }
+        })
+    except Exception as e:
+        error = error_handler.handle_exception(
+            e,
+            context={"endpoint": "/api/devices/status"},
+            user_message="デバイス状態の取得に失敗しました"
+        )
+        return jsonify(error.to_json_response()), 500
+
+
+@app.route('/api/devices/<device_name>/health', methods=['GET'])
+def get_device_health(device_name: str):
+    """統合デバイス管理ダッシュボード: 特定デバイスの健康状態を取得"""
+    if not DEVICE_MANAGEMENT_AVAILABLE or not device_health_monitor:
+        return jsonify({
+            "error": "統合デバイス管理システムが利用できません",
+            "available": False
+        }), 503
+    
+    try:
+        # 全デバイスをチェックして該当デバイスを探す
+        devices_health = device_health_monitor.check_all_devices()
+        for device in devices_health:
+            if device.device_name.lower() == device_name.lower():
+                return jsonify({
+                    "device_name": device.device_name,
+                    "device_type": device.device_type,
+                    "status": device.status,
+                    "timestamp": device.timestamp,
+                    "cpu_percent": device.cpu_percent,
+                    "memory_percent": device.memory_percent,
+                    "disk_percent": device.disk_percent,
+                    "network_sent_mb": device.network_sent_mb,
+                    "network_recv_mb": device.network_recv_mb,
+                    "uptime_seconds": device.uptime_seconds,
+                    "alerts": device.alerts,
+                    "api_endpoint": device.api_endpoint
+                })
+        
+        return jsonify({"error": f"デバイス '{device_name}' が見つかりません"}), 404
+    except Exception as e:
+        error = error_handler.handle_exception(
+            e,
+            context={"endpoint": f"/api/devices/{device_name}/health", "device_name": device_name},
+            user_message=f"デバイス '{device_name}' の健康状態取得に失敗しました"
+        )
+        return jsonify(error.to_json_response()), 500
+
+
+@app.route('/api/devices/resources', methods=['GET'])
+def get_devices_resources():
+    """統合デバイス管理ダッシュボード: 全デバイスのリソース使用状況を取得"""
+    if not DEVICE_MANAGEMENT_AVAILABLE or not device_health_monitor:
+        return jsonify({
+            "error": "統合デバイス管理システムが利用できません",
+            "available": False
+        }), 503
+    
+    try:
+        devices_health = device_health_monitor.check_all_devices()
+        
+        resources = []
+        for device in devices_health:
+            resources.append({
+                "device_name": device.device_name,
+                "device_type": device.device_type,
+                "cpu_percent": device.cpu_percent,
+                "memory_percent": device.memory_percent,
+                "disk_percent": device.disk_percent,
+                "network_sent_mb": device.network_sent_mb,
+                "network_recv_mb": device.network_recv_mb,
+                "uptime_seconds": device.uptime_seconds,
+                "status": device.status,
+                "timestamp": device.timestamp
+            })
+        
+        return jsonify({
+            "timestamp": datetime.now().isoformat(),
+            "resources": resources,
+            "summary": {
+                "total_devices": len(resources),
+                "average_cpu": sum(r["cpu_percent"] for r in resources) / len(resources) if resources else 0.0,
+                "average_memory": sum(r["memory_percent"] for r in resources) / len(resources) if resources else 0.0,
+                "average_disk": sum(r["disk_percent"] for r in resources) / len(resources) if resources else 0.0
+            }
+        })
+    except Exception as e:
+        error = error_handler.handle_exception(
+            e,
+            context={"endpoint": "/api/devices/resources"},
+            user_message="デバイスリソース情報の取得に失敗しました"
+        )
+        return jsonify(error.to_json_response()), 500
+
+
+@app.route('/api/devices/alerts', methods=['GET'])
+def get_devices_alerts():
+    """統合デバイス管理ダッシュボード: 全デバイスのアラートを取得"""
+    if not DEVICE_MANAGEMENT_AVAILABLE or not device_health_monitor:
+        return jsonify({
+            "error": "統合デバイス管理システムが利用できません",
+            "available": False
+        }), 503
+    
+    try:
+        devices_health = device_health_monitor.check_all_devices()
+        
+        alerts = []
+        for device in devices_health:
+            device_alerts = device.alerts
+            for alert in device_alerts:
+                alerts.append({
+                    "device_name": device.device_name,
+                    "device_type": device.device_type,
+                    "alert": alert,
+                    "status": device.status,
+                    "timestamp": device.timestamp
+                })
+        
+        # アラートを優先度順にソート（critical > warning > healthy）
+        priority_order = {"critical": 0, "warning": 1, "healthy": 2, "offline": 3}
+        alerts.sort(key=lambda x: priority_order.get(x["status"], 99))
+        
+        return jsonify({
+            "timestamp": datetime.now().isoformat(),
+            "alerts": alerts,
+            "summary": {
+                "total_alerts": len(alerts),
+                "critical_alerts": sum(1 for a in alerts if a["status"] == "critical"),
+                "warning_alerts": sum(1 for a in alerts if a["status"] == "warning")
+            }
+        })
+    except Exception as e:
+        error = error_handler.handle_exception(
+            e,
+            context={"endpoint": "/api/devices/alerts"},
+            user_message="デバイスアラート情報の取得に失敗しました"
+        )
+        return jsonify(error.to_json_response()), 500
 
 
 if __name__ == '__main__':

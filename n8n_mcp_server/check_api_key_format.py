@@ -1,12 +1,19 @@
 """n8n APIキーの形式を確認するスクリプト"""
 import requests
 import json
+import os
+import sys
 
-base_url = "http://100.93.120.33:5678"
-api_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyNjcwMTg5ZS1lOTEyLTQ3MjMtYTBjOC1iZDljNWNiZDdlNDgiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjNjODAzNTllLWM0YzktNDNjNC05Yzg0LTZhNTZjN2M4MjZmZCIsImlhdCI6MTc2Mzg5MTUyMH0.3RQ65LLdFFSRy2kdPlsQzip_74NK6LvLHH5doZzrR_g"
+base_url = os.getenv("N8N_BASE_URL", "http://localhost:5679")
+api_key = os.getenv("N8N_API_KEY")
+
+if not api_key or not api_key.strip():
+    print("[NG] N8N_API_KEY が未設定です（このスクリプトはキーの形式確認用です）")
+    print("     例: $env:N8N_API_KEY = \"your_n8n_api_key_here\"")
+    sys.exit(2)
 
 print("APIキーの形式を確認中...")
-print(f"API Key (first 50 chars): {api_key[:50]}...")
+print("API Key: (redacted)")
 print()
 
 # JWTトークンをデコードしてみる

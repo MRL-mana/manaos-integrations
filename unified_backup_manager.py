@@ -340,6 +340,10 @@ class UnifiedBackupManager:
             "jobs": [asdict(job) for job in self.backup_jobs],
             "recent_backups": [asdict(h) for h in self.backup_history[-10:]]
         }
+    
+    def get_status(self) -> Dict[str, Any]:
+        """システム状態を取得（統一インターフェース）"""
+        return self.get_stats()
 
 
 def main():

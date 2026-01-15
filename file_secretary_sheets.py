@@ -196,3 +196,24 @@ class FileSecretarySheets:
             logger.error(f"❌ Slack送信エラー: {e}")
             return False
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

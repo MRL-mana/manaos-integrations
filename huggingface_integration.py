@@ -5,6 +5,7 @@ Hugging Face統合サービス（ManaOS統合版）
 
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
@@ -14,8 +15,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Hugging Face統合
-import sys
-from pathlib import Path
 
 # 親ディレクトリをパスに追加
 parent_dir = Path(__file__).parent.parent
@@ -273,9 +272,13 @@ class HuggingFaceManaOSIntegration:
                 device=device
             )
             self.generators[cache_key] = generator
+            logger.info(f"生成器の初期化が完了: {model_id}")
             return generator
         except Exception as e:
+            import traceback
+            error_detail = traceback.format_exc()
             logger.error(f"生成器初期化エラー: {e}")
+            logger.error(f"詳細: {error_detail}")
             return None
     
     def generate_image(

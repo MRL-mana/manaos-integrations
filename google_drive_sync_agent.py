@@ -161,6 +161,16 @@ class GoogleDriveSyncAgent:
         })
         logger.info(f"同期をスケジュール: {file_path} ({event_type})")
     
+    def get_status(self) -> Dict[str, Any]:
+        """システム状態を取得（統一インターフェース）"""
+        return {
+            "sync_state": self.sync_state,
+            "sync_queue_length": len(self.sync_queue),
+            "drive_available": self.drive_integration.is_available() if self.drive_integration else False,
+            "sync_rules_count": len(self.sync_rules),
+            "enabled_rules_count": sum(1 for r in self.sync_rules if r.get("enabled", True))
+        }
+    
     def sync_file(self, file_path: Path, sync_rule: Dict[str, Any]) -> bool:
         """ファイルを同期"""
         if not self.drive_integration or not self.drive_integration.is_available():
@@ -344,6 +354,16 @@ def main():
     
     # 監視モードを開始する場合は以下をコメントアウト
     # agent.run()
+    
+    def get_status(self) -> Dict[str, Any]:
+        """システム状態を取得（統一インターフェース）"""
+        return {
+            "sync_state": self.sync_state,
+            "sync_queue_length": len(self.sync_queue),
+            "drive_available": self.drive_integration.is_available() if self.drive_integration else False,
+            "sync_rules_count": len(self.sync_rules),
+            "enabled_rules_count": sum(1 for r in self.sync_rules if r.get("enabled", True))
+        }
 
 
 if __name__ == "__main__":

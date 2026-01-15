@@ -48,32 +48,32 @@ def _get_ollama_url() -> str:
         return OLLAMA_URL
 
 
-def chat(model: str = "qwen3:4b", message: str = "", messages: Optional[List[Dict]] = None, 
+def chat(model: str = "qwen3:4b", message: str = "", messages: Optional[List[Dict]] = None,
          stream: bool = False, timeout: int = 120) -> Dict[str, Any]:
     """
     ローカルLLMとチャットする（WSL2経由でGPUモード対応）
-    
+
     Args:
         model: 使用するモデル名（デフォルト: qwen3:4b）
         message: 単一のメッセージ（messagesがNoneの場合）
         messages: メッセージ履歴（[{"role": "user", "content": "..."}]形式）
         stream: ストリーミングするか（デフォルト: False）
         timeout: タイムアウト秒数（デフォルト: 120）
-    
+
     Returns:
         LLMの応答を含む辞書
     """
     url = f"{_get_ollama_url()}/api/chat"
-    
+
     if messages is None:
         messages = [{"role": "user", "content": message}]
-    
+
     data = {
         "model": model,
         "messages": messages,
         "stream": stream
     }
-    
+
     try:
         response = requests.post(url, json=data, timeout=timeout)
         response.raise_for_status()
@@ -84,28 +84,28 @@ def chat(model: str = "qwen3:4b", message: str = "", messages: Optional[List[Dic
         return {"error": str(e), "message": "ローカルLLMへの接続に失敗しました。"}
 
 
-def generate(model: str = "qwen3:4b", prompt: str = "", stream: bool = False, 
+def generate(model: str = "qwen3:4b", prompt: str = "", stream: bool = False,
              timeout: int = 120) -> Dict[str, Any]:
     """
     ローカルLLMでテキスト生成する（WSL2経由でGPUモード対応）
-    
+
     Args:
         model: 使用するモデル名（デフォルト: qwen3:4b）
         prompt: プロンプト
         stream: ストリーミングするか（デフォルト: False）
         timeout: タイムアウト秒数（デフォルト: 120）
-    
+
     Returns:
         LLMの応答を含む辞書
     """
     url = f"{_get_ollama_url()}/api/generate"
-    
+
     data = {
         "model": model,
         "prompt": prompt,
         "stream": stream
     }
-    
+
     try:
         response = requests.post(url, json=data, timeout=timeout)
         response.raise_for_status()
@@ -135,10 +135,10 @@ def check_status() -> Dict[str, Any]:
         url = _get_ollama_url()
         wsl2_running = _check_wsl2_ollama()
         windows_running = _check_windows_ollama()
-        
+
         # モデル一覧を取得
         models = list_models()
-        
+
         # 実行中のモデルを確認
         running_models = []
         try:
@@ -148,7 +148,7 @@ def check_status() -> Dict[str, Any]:
                 running_models = [m["name"] for m in data.get("models", [])]
         except:
             pass
-        
+
         # GPU使用状況を確認（WSL2の場合）
         gpu_mode = False
         if wsl2_running:
@@ -163,7 +163,7 @@ def check_status() -> Dict[str, Any]:
                     gpu_mode = True
             except:
                 pass
-        
+
         return {
             "status": "running",
             "available_models": models,
@@ -185,22 +185,22 @@ def check_status() -> Dict[str, Any]:
 def ask(question: str, model: str = "qwen3:4b") -> str:
     """
     簡単に質問する関数
-    
+
     Args:
         question: 質問内容
         model: 使用するモデル（デフォルト: qwen3:4b）
-    
+
     Returns:
         回答テキスト
     """
     result = chat(model=model, message=question)
-    
+
     if "error" in result:
         return f"エラー: {result.get('message', result.get('error', '不明なエラー'))}"
-    
+
     if "message" in result and "content" in result["message"]:
         return result["message"]["content"]
-    
+
     return json.dumps(result, indent=2, ensure_ascii=False)
 
 
@@ -209,14 +209,13 @@ if __name__ == "__main__":
     print("=" * 60)
     print("ローカルLLMヘルパーのテスト")
     print("=" * 60)
-    
+
     # 状態確認
     print("\n1. Ollamaの状態確認:")
     status = check_status()
     print(json.dumps(status, indent=2, ensure_ascii=False))
-    
+
     # 簡単な質問
     print("\n2. 簡単な質問テスト:")
     answer = ask("こんにちは、元気ですか？", model="qwen3:4b")
     print(answer)
-

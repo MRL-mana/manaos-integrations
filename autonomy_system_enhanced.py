@@ -136,7 +136,14 @@ class AutonomySystemEnhanced:
             最適化結果
         """
         # 学習統計を取得
-        analysis = self.learning.analyze_patterns()
+        try:
+            if self.learning and hasattr(self.learning, 'analyze_patterns'):
+                analysis = self.learning.analyze_patterns()
+            else:
+                analysis = {"success_rates": {}}
+        except Exception as e:
+            logger.warning(f"学習パターン分析エラー: {e}")
+            analysis = {"success_rates": {}}
         
         # 成功率を分析
         success_rates = analysis.get("success_rates", {})
@@ -202,4 +209,18 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

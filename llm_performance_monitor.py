@@ -260,3 +260,24 @@ if __name__ == "__main__":
     # ダッシュボード表示
     monitor.print_dashboard()
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

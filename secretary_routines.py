@@ -25,8 +25,8 @@ class SecretaryRoutines:
     
     def __init__(self):
         """初期化"""
-        self.tasks_storage = Path(__file__).parent.parent / "data" / "tasks.json"
-        self.schedule_storage = Path(__file__).parent.parent / "data" / "schedule.json"
+        self.tasks_storage = Path(__file__).parent / "data" / "tasks.json"
+        self.schedule_storage = Path(__file__).parent / "data" / "schedule.json"
         self._ensure_storage()
     
     def _ensure_storage(self):
@@ -135,7 +135,7 @@ class SecretaryRoutines:
                     
                     try:
                         summary_result = manaos.act("llm_call", {
-                            "task_type": "reasoning",
+                            "task_type": "lightweight_conversation",  # LFM 2.5使用（高速・軽量）
                             "prompt": summary_prompt
                         })
                         log_diff["summary"] = summary_result.get("response", "")[:200]
@@ -155,10 +155,51 @@ class SecretaryRoutines:
             "summary": "ログ取得に失敗しました"
         }
     
+    def _get_latest_news(self, topics: List[str] = None) -> Dict[str, Any]:
+        """最新情報を検索（SearXNG使用）"""
+        if not MANAOS_API_AVAILABLE:
+            return {"results": [], "count": 0}
+        
+        # デフォルトのトピック
+        if topics is None:
+            topics = ["テクノロジー", "AI", "プログラミング"]
+        
+        all_results = []
+        
+        for topic in topics[:3]:  # 最大3トピック
+            try:
+                # Brave Search APIを優先的に使用（利用可能な場合）
+                search_result = None
+                try:
+                    search_result = manaos.act("brave_search", {
+                        "query": f"{topic} 最新情報",
+                        "count": 3,
+                        "search_lang": "jp",
+                        "freshness": "pd"  # 過去1日
+                    })
+                except:
+                    # Brave Searchが利用できない場合はSearXNGを使用
+                    search_result = manaos.act("web_search", {
+                        "query": f"{topic} 最新情報",
+                        "max_results": 3,
+                        "language": "ja",
+                        "time_range": "day"  # 過去24時間
+                    })
+                
+                if search_result and search_result.get("results"):
+                    all_results.extend(search_result["results"][:2])  # 各トピックから2件
+            except Exception as e:
+                logger.warning(f"最新情報検索エラー ({topic}): {e}")
+        
+        return {
+            "results": all_results[:5],  # 最大5件
+            "count": len(all_results)
+        }
+    
     def morning_routine(self) -> Dict[str, Any]:
         """
         朝のルーチン
-        今日の予定＋最重要3タスク＋昨日のログ差分
+        今日の予定＋最重要3タスク＋昨日のログ差分＋最新情報
         """
         logger.info("[Secretary] 朝のルーチンを開始")
         
@@ -170,6 +211,9 @@ class SecretaryRoutines:
         
         # 昨日のログ差分
         log_diff = self._get_yesterday_log_diff()
+        
+        # 最新情報を検索
+        latest_news = self._get_latest_news()
         
         # レポートを生成
         report_lines = [
@@ -215,6 +259,20 @@ class SecretaryRoutines:
                 log_diff["summary"]
             ])
         
+        # 最新情報セクション
+        if latest_news.get("results"):
+            report_lines.extend([
+                "",
+                "## 📰 最新情報（Web検索）",
+            ])
+            
+            for i, item in enumerate(latest_news["results"][:3], 1):
+                title = item.get("title", "")
+                url = item.get("url", "")
+                report_lines.append(f"{i}. {title}")
+                if url:
+                    report_lines.append(f"   {url}")
+        
         report = "\n".join(report_lines)
         
         # 通知
@@ -248,6 +306,7 @@ class SecretaryRoutines:
             "schedule": schedule,
             "tasks": tasks,
             "log_diff": log_diff,
+            "latest_news": latest_news,
             "report": report
         }
     
@@ -320,7 +379,7 @@ class SecretaryRoutines:
 例: [時間不足] 他の緊急タスクが入って時間が取れなかった"""
                 
                 analysis_result = manaos.act("llm_call", {
-                    "task_type": "reasoning",
+                    "task_type": "lightweight_conversation",  # LFM 2.5使用（高速・軽量）
                     "prompt": analysis_prompt
                 })
                 
@@ -357,7 +416,7 @@ class SecretaryRoutines:
 例: 「〇〇を3ステップに分割: ①調査、②設計、③実装」"""
                     
                     suggestion_result = manaos.act("llm_call", {
-                        "task_type": "reasoning",
+                        "task_type": "lightweight_conversation",  # LFM 2.5使用（高速・軽量）
                         "prompt": suggestion_prompt
                     })
                     suggestion = suggestion_result.get("response", "").strip()
@@ -519,7 +578,7 @@ class SecretaryRoutines:
                 
                 try:
                     report_result = manaos.act("llm_call", {
-                        "task_type": "reasoning",
+                        "task_type": "lightweight_conversation",  # LFM 2.5使用（高速・軽量）
                         "prompt": report_prompt
                     })
                     return report_result.get("response", "日報生成に失敗しました")

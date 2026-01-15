@@ -19,16 +19,12 @@ try:
         print("[OK] .envファイルを読み込みました")
     else:
         print("[INFO] .envファイルが見つかりません。環境変数を直接設定します。")
-        # CivitAI APIキーを直接設定（vaultから取得）
-        civitai_key = "9d0afbe6cb2ad5d2c75080f2800dab3b"
-        os.environ["CIVITAI_API_KEY"] = civitai_key
+        # Secretsは直書きしません。必要なものは環境変数/.envで設定してください。
         os.environ["COMFYUI_URL"] = "http://localhost:8188"
         print("[OK] 環境変数を直接設定しました")
 except ImportError:
     print("[WARN] python-dotenvがインストールされていません")
-    # 直接設定
-    civitai_key = "9d0afbe6cb2ad5d2c75080f2800dab3b"
-    os.environ["CIVITAI_API_KEY"] = civitai_key
+    # Secretsは直書きしません。必要なものは環境変数/.envで設定してください。
     os.environ["COMFYUI_URL"] = "http://localhost:8188"
 
 print("\n" + "=" * 60)

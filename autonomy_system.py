@@ -58,7 +58,7 @@ class AutonomyTask:
     execution_count: int = 0
     success_count: int = 0
     created_at: str = ""
-    
+
     def __post_init__(self):
         if not self.created_at:
             self.created_at = datetime.now().isoformat()
@@ -66,16 +66,17 @@ class AutonomyTask:
 
 class AutonomySystem:
     """自律システム"""
-    
+
     def __init__(
         self,
         orchestrator_url: str = "http://localhost:5106",
         learning_system_url: Optional[str] = None,
+        intrinsic_motivation_url: Optional[str] = None,
         config_path: Optional[Path] = None
     ):
         """
         初期化
-        
+
         Args:
             orchestrator_url: Unified Orchestrator API URL
             learning_system_url: Learning System API URL（オプション）
@@ -83,29 +84,30 @@ class AutonomySystem:
         """
         self.orchestrator_url = orchestrator_url
         self.learning_system_url = learning_system_url
-        
+        self.intrinsic_motivation_url = intrinsic_motivation_url or "http://localhost:5130"
+
         self.config_path = config_path or Path(__file__).parent / "autonomy_config.json"
         self.config = self._load_config()
-        
+
         # 自律レベル
         self.autonomy_level = AutonomyLevel(self.config.get("autonomy_level", "medium"))
-        
+
         # 自律タスク
         self.tasks: Dict[str, AutonomyTask] = {}
         self._load_tasks()
-        
+
         # 実行履歴
         self.execution_history: List[Dict[str, Any]] = []
-        
+
         logger.info(f"✅ Autonomy System初期化完了 (レベル: {self.autonomy_level.value})")
-    
+
     def _load_config(self) -> Dict[str, Any]:
         """設定を読み込む"""
         if self.config_path.exists():
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
                     config = json.load(f)
-                
+
                 # 設定ファイルの検証
                 schema = {
                     "required": [],
@@ -115,7 +117,7 @@ class AutonomySystem:
                         "check_interval_seconds": {"type": int, "default": 60}
                     }
                 }
-                
+
                 is_valid, errors = config_validator.validate_config(config, schema, self.config_path)
                 if not is_valid:
                     logger.warning(f"設定ファイル検証エラー: {errors}")
@@ -123,7 +125,7 @@ class AutonomySystem:
                     default_config = self._get_default_config()
                     default_config.update(config)
                     return default_config
-                
+
                 return config
             except Exception as e:
                 error = error_handler.handle_exception(
@@ -132,9 +134,9 @@ class AutonomySystem:
                     user_message="設定ファイルの読み込みに失敗しました"
                 )
                 logger.warning(f"設定読み込みエラー: {error.message}")
-        
+
         return self._get_default_config()
-    
+
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
         return {
@@ -143,7 +145,7 @@ class AutonomySystem:
             "check_interval_seconds": 60,
             "tasks_storage_path": "autonomy_tasks.json"
         }
-    
+
     def _load_tasks(self):
         """自律タスクを読み込む"""
         storage_path = Path(self.config.get("tasks_storage_path", "autonomy_tasks.json"))
@@ -161,7 +163,7 @@ class AutonomySystem:
                     user_message="自律タスクの読み込みに失敗しました"
                 )
                 logger.warning(f"自律タスク読み込みエラー: {error.message}")
-    
+
     def _save_tasks(self):
         """自律タスクを保存"""
         storage_path = Path(self.config.get("tasks_storage_path", "autonomy_tasks.json"))
@@ -179,14 +181,14 @@ class AutonomySystem:
                 user_message="自律タスクの保存に失敗しました"
             )
             logger.error(f"自律タスク保存エラー: {error.message}")
-    
+
     def add_task(self, task: AutonomyTask) -> AutonomyTask:
         """
         自律タスクを追加
-        
+
         Args:
             task: 自律タスク
-        
+
         Returns:
             追加されたタスク
         """
@@ -194,54 +196,69 @@ class AutonomySystem:
         self._save_tasks()
         logger.info(f"✅ 自律タスク追加: {task.task_id}")
         return task
-    
+
     def check_and_execute_tasks(self) -> List[Dict[str, Any]]:
         """
         条件をチェックしてタスクを実行
-        
+
         Returns:
             実行結果のリスト
         """
         if self.autonomy_level == AutonomyLevel.DISABLED:
             return []
-        
+
         results = []
-        
+
+        # 内発的動機づけとの連携：アイドル時間をチェックして内発的タスクを生成
+        if self.intrinsic_motivation_url and self.autonomy_level.value in ["medium", "high"]:
+            try:
+                response = httpx.get(f"{self.intrinsic_motivation_url}/api/status", timeout=5)
+                if response.status_code == 200:
+                    status = response.json()
+                    if status.get("is_idle", False) and status.get("enabled", True):
+                        # 内発的タスクを生成
+                        task_response = httpx.post(f"{self.intrinsic_motivation_url}/api/generate-tasks", timeout=10)
+                        if task_response.status_code == 200:
+                            tasks_data = task_response.json()
+                            logger.info(f"✅ 内発的タスク生成: {tasks_data.get('count', 0)}件")
+            except Exception as e:
+                logger.debug(f"内発的動機づけ連携エラー（無視）: {e}")
+
         for task_id, task in self.tasks.items():
             if not task.enabled:
                 continue
-            
+
             # 条件チェック
             if self._check_condition(task.condition):
                 # タスク実行
                 result = self._execute_task(task)
                 results.append(result)
-                
+
                 # 実行履歴に追加
                 self.execution_history.append({
                     "task_id": task_id,
                     "executed_at": datetime.now().isoformat(),
                     "result": result
                 })
-                
+
                 # 最新100件のみ保持
                 if len(self.execution_history) > 100:
                     self.execution_history = self.execution_history[-100:]
-        
+
         return results
-    
+
     def _check_condition(self, condition: Dict[str, Any]) -> bool:
         """
         条件をチェック
-        
+
         Args:
             condition: 条件
-        
+
         Returns:
             条件を満たしているか
         """
         condition_type = condition.get("type", "always")
-        
+
         if condition_type == "always":
             return True
         elif condition_type == "time_based":
@@ -267,22 +284,22 @@ class AutonomySystem:
             expected_status = condition.get("expected_status", "healthy")
             # 実装が必要（Service Monitor APIを呼び出す）
             return True
-        
+
         return False
-    
+
     def _execute_task(self, task: AutonomyTask) -> Dict[str, Any]:
         """
         タスクを実行
-        
+
         Args:
             task: 自律タスク
-        
+
         Returns:
             実行結果
         """
         try:
             action_type = task.action.get("type", "orchestrator")
-            
+
             if action_type == "orchestrator":
                 # Unified Orchestrator経由で実行
                 timeout = timeout_config.get("workflow_execution", 300.0)
@@ -296,14 +313,14 @@ class AutonomySystem:
                     },
                     timeout=timeout
                 )
-                
+
                 if response.status_code == 200:
                     result = response.json()
                     task.execution_count += 1
                     task.success_count += 1
                     task.last_executed = datetime.now().isoformat()
                     self._save_tasks()
-                    
+
                     return {
                         "task_id": task.task_id,
                         "status": "success",
@@ -313,7 +330,7 @@ class AutonomySystem:
                     task.execution_count += 1
                     task.last_executed = datetime.now().isoformat()
                     self._save_tasks()
-                    
+
                     error = error_handler.handle_exception(
                         Exception(f"Orchestrator接続失敗: HTTP {response.status_code}"),
                         context={"task_id": task.task_id, "service": "Unified Orchestrator"},
@@ -329,13 +346,13 @@ class AutonomySystem:
                 task.execution_count += 1
                 task.last_executed = datetime.now().isoformat()
                 self._save_tasks()
-                
+
                 return {
                     "task_id": task.task_id,
                     "status": "skipped",
                     "reason": f"Unknown action type: {action_type}"
                 }
-        
+
         except Exception as e:
             error = error_handler.handle_exception(
                 e,
@@ -345,13 +362,13 @@ class AutonomySystem:
             task.execution_count += 1
             task.last_executed = datetime.now().isoformat()
             self._save_tasks()
-            
+
             return {
                 "task_id": task.task_id,
                 "status": "error",
                 "error": error.message
             }
-    
+
     def get_status(self) -> Dict[str, Any]:
         """状態を取得"""
         return {
@@ -419,7 +436,7 @@ def add_task():
     """自律タスクを追加"""
     try:
         data = request.get_json() or {}
-        
+
         task = AutonomyTask(
             task_id=data.get("task_id", f"task_{datetime.now().strftime('%Y%m%d_%H%M%S')}"),
             task_type=data.get("task_type", "general"),
@@ -429,10 +446,10 @@ def add_task():
             schedule=data.get("schedule"),
             enabled=data.get("enabled", True)
         )
-        
+
         system = init_autonomy_system()
         added_task = system.add_task(task)
-        
+
         return jsonify(asdict(added_task))
     except Exception as e:
         error = error_handler.handle_exception(
@@ -463,4 +480,3 @@ if __name__ == '__main__':
     logger.info(f"🤖 Autonomy System起動中... (ポート: {port})")
     init_autonomy_system()
     app.run(host='0.0.0.0', port=port, debug=os.getenv("DEBUG", "False").lower() == "true")
-

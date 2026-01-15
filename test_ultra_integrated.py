@@ -20,3 +20,24 @@ print(f"成功: {result['chat'].response[:50]}...")
 print(f"統合機能数: {len(result['integrations'])}")
 print("テスト完了！")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

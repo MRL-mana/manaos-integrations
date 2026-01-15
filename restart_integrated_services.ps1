@@ -4,7 +4,13 @@ Write-Host "=== ManaOS統合サービス再起動 ===" -ForegroundColor Green
 Write-Host ""
 
 # 環境変数を設定
-$env:SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/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"
+$slackWebhookUrl = $env:SLACK_WEBHOOK_URL
+if (-not $slackWebhookUrl) {
+    Write-Host "❌ SLACK_WEBHOOK_URL が未設定です（Webhook URLを直書きしない方針です）" -ForegroundColor Red
+    Write-Host "   例: [Environment]::SetEnvironmentVariable('SLACK_WEBHOOK_URL','https://hooks.slack.com/services/<YOUR>/<WEBHOOK>/<URL>','User')" -ForegroundColor Gray
+    exit 1
+}
+$env:SLACK_WEBHOOK_URL = $slackWebhookUrl
 $env:PORT = "5114"
 $env:FILE_SECRETARY_URL = "http://localhost:5120"
 $env:ORCHESTRATOR_URL = "http://localhost:5106"
@@ -106,4 +112,25 @@ Write-Host "  ✅ IntentRouter: 人格設定統合済み"
 Write-Host "  ✅ Slack Integration: 人格設定適用済み"
 Write-Host ""
 Write-Host "🎉 全サービス再起動完了！" -ForegroundColor Yellow
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -229,7 +229,7 @@ class LLMOptimization:
                 time.sleep(10)
     
     def _get_gpu_status(self) -> GPUStatus:
-        """GPU状態を取得"""
+        """GPU状態を取得（内部メソッド）"""
         try:
             if platform.system() == "Windows":
                 # nvidia-smiでチェック
@@ -268,6 +268,21 @@ class LLMOptimization:
             temperature=None,
             available=False
         )
+    
+    def get_gpu_status(self) -> Optional[GPUStatus]:
+        """
+        GPU状態を取得（公開メソッド）
+        
+        Returns:
+            GPU状態（利用できない場合はNone）
+        """
+        try:
+            status = self._get_gpu_status()
+            self.gpu_status = status
+            return status
+        except Exception as e:
+            logger.warning(f"GPU状態取得エラー: {e}")
+            return None
     
     def filter_request(self, prompt: str) -> Tuple[bool, float]:
         """

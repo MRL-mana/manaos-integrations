@@ -163,7 +163,8 @@ class ObsidianIntegration(BaseIntegration):
         try:
             file_path = self.vault_path / note_path
             if not file_path.exists():
-                self.logger.warning(f"ノートが見つかりません: {note_path}")
+                # 警告レベルをINFOに下げる（機能には影響なし）
+                self.logger.debug(f"ノートが見つかりません（スキップ）: {note_path}")
                 return None
             
             with open(file_path, 'r', encoding='utf-8') as f:

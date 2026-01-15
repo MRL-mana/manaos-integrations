@@ -223,3 +223,24 @@ class CrewAIIntegration(BaseIntegration):
             self.logger.error(f"クルー実行エラー: {error.message}")
             return None
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

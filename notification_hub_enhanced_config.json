@@ -1,5 +1,5 @@
 {
-  "slack_webhook_url": "https://hooks.slack.com/services/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",
+  "slack_webhook_url": "https://hooks.slack.com/services/<YOUR>/<WEBHOOK>/<URL>",
   "telegram_bot_token": null,
   "telegram_chat_id": null,
   "email": {

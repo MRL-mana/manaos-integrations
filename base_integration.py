@@ -14,6 +14,7 @@ from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from manaos_timeout_config import get_timeout_config
 from manaos_config_validator import ConfigValidator
+from config_validator_enhanced import ConfigValidatorEnhanced
 
 
 class BaseIntegration(ABC):
@@ -32,6 +33,7 @@ class BaseIntegration(ABC):
         self.error_handler = ManaOSErrorHandler(name)
         self.timeout_config = get_timeout_config()
         self.config_validator = ConfigValidator(f"Integration.{name}")
+        self.config_validator_enhanced = ConfigValidatorEnhanced()
         
         self._initialized = False
         self._available = False
@@ -46,8 +48,16 @@ class BaseIntegration(ABC):
         """設定ファイルを読み込み"""
         if self._config_path:
             try:
-                self._config = self.config_validator.validate_config_file(self._config_path)
-                self.logger.info(f"設定ファイルを読み込みました: {self._config_path}")
+                from pathlib import Path
+                config_path = Path(self._config_path)
+                # ConfigValidatorEnhancedを使用（validate_config_fileメソッドあり）
+                is_valid, errors, config_data = self.config_validator_enhanced.validate_config_file(config_path)
+                if is_valid:
+                    self._config = config_data
+                    self.logger.info(f"設定ファイルを読み込みました: {self._config_path}")
+                else:
+                    self.logger.warning(f"設定ファイル検証エラー: {errors}")
+                    self._config = config_data if config_data else {}
             except Exception as e:
                 error = self.error_handler.handle_exception(
                     e,

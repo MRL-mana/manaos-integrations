@@ -55,3 +55,24 @@ echo "  python3 file_secretary_manager.py stop"
 # プロセスを待機
 wait
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

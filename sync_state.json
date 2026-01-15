@@ -1,5 +1,81 @@
 {
-  "last_sync": "2026-01-03T11:10:00.439407",
-  "synced_files": {},
+  "last_sync": "2026-01-06T10:29:10.638583",
+  "synced_files": {
+    "backup_20260103_093746.tar.gz": {
+      "hash": "51470f5c79d5d06ca4b9c210263dd2b4",
+      "last_sync": "2026-01-06T10:28:30.964981",
+      "drive_path": "ManaOS_Backups/backup_20260103_093746.tar.gz"
+    },
+    "backup_20260103_093806.tar.gz": {
+      "hash": "ecfbedf74f759dfeb79b3b8dbdc17e0c",
+      "last_sync": "2026-01-06T10:28:33.952428",
+      "drive_path": "ManaOS_Backups/backup_20260103_093806.tar.gz"
+    },
+    "backup_20260103_093828.tar.gz": {
+      "hash": "32cf0247e490613450b3814835dee91a",
+      "last_sync": "2026-01-06T10:28:36.676898",
+      "drive_path": "ManaOS_Backups/backup_20260103_093828.tar.gz"
+    },
+    "backup_history.json": {
+      "hash": "38f2b7a29f14963b512cfddc3a294e5f",
+      "last_sync": "2026-01-06T10:28:39.521256",
+      "drive_path": "ManaOS_Backups/backup_history.json"
+    },
+    "file_secretary_20260103_205203.db": {
+      "hash": "fe5d10728ad4cfc8cd4afa03d8231783",
+      "last_sync": "2026-01-06T10:28:42.477608",
+      "drive_path": "ManaOS_Backups/file_secretary_20260103_205203.db"
+    },
+    "file_secretary_20260103_205203.db-shm": {
+      "hash": "68a7b6e9ec2f46864d87aa96007b3884",
+      "last_sync": "2026-01-06T10:28:45.008467",
+      "drive_path": "ManaOS_Backups/file_secretary_20260103_205203.db-shm"
+    },
+    "file_secretary_20260103_205203.db-wal": {
+      "hash": "0d52a8bb892341a57344a03d3d2b4467",
+      "last_sync": "2026-01-06T10:28:47.908453",
+      "drive_path": "ManaOS_Backups/file_secretary_20260103_205203.db-wal"
+    },
+    "file_secretary_20260103_205209.db": {
+      "hash": "fe5d10728ad4cfc8cd4afa03d8231783",
+      "last_sync": "2026-01-06T10:28:50.681559",
+      "drive_path": "ManaOS_Backups/file_secretary_20260103_205209.db"
+    },
+    "file_secretary_20260103_205209.db-shm": {
+      "hash": "68a7b6e9ec2f46864d87aa96007b3884",
+      "last_sync": "2026-01-06T10:28:53.693725",
+      "drive_path": "ManaOS_Backups/file_secretary_20260103_205209.db-shm"
+    },
+    "file_secretary_20260103_205209.db-wal": {
+      "hash": "0d52a8bb892341a57344a03d3d2b4467",
+      "last_sync": "2026-01-06T10:28:56.510761",
+      "drive_path": "ManaOS_Backups/file_secretary_20260103_205209.db-wal"
+    },
+    "obsidian_vault_backup_20260104_231845.zip": {
+      "hash": "6e8982ad9ec89f80bca512087d61eafe",
+      "last_sync": "2026-01-06T10:28:59.162306",
+      "drive_path": "ManaOS_Backups/obsidian_vault_backup_20260104_231845.zip"
+    },
+    "obsidian_vault_backup_20260104_232041.zip": {
+      "hash": "18945232e37e93f8cb1adc263497b9dd",
+      "last_sync": "2026-01-06T10:29:02.192192",
+      "drive_path": "ManaOS_Backups/obsidian_vault_backup_20260104_232041.zip"
+    },
+    "3_consecutive_test_results.json": {
+      "hash": "e42152a7c92527127fdfe0caae15d418",
+      "last_sync": "2026-01-06T10:29:04.858207",
+      "drive_path": "ManaOS_Data/3_consecutive_test_results.json"
+    },
+    "final_checklist_results.json": {
+      "hash": "ec3029947f49229eb47e3e95909683cd",
+      "last_sync": "2026-01-06T10:29:07.848157",
+      "drive_path": "ManaOS_Data/final_checklist_results.json"
+    },
+    "final_checklist_stable_results.json": {
+      "hash": "eec3e4e964f8c47e9820d9f10395e727",
+      "last_sync": "2026-01-06T10:29:10.636583",
+      "drive_path": "ManaOS_Data/final_checklist_stable_results.json"
+    }
+  },
   "conflicts": []
 }

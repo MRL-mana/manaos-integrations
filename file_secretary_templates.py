@@ -221,3 +221,24 @@ def template_unknown_command() -> str:
     return template_error("そのコマンドは分からなかった")
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -4,6 +4,7 @@ LLMルーティングシステム
 """
 
 import os
+import json
 import yaml
 import uuid
 import time
@@ -15,6 +16,16 @@ from typing import Dict, Any, Optional, List, Tuple
 from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass, asdict
+
+# 統一モジュールのインポート
+try:
+    from http_session_pool import get_http_session_pool
+    from manaos_timeout_config import get_timeout_config
+    USE_SESSION_POOL = True
+except ImportError:
+    USE_SESSION_POOL = False
+    logger = logging.getLogger(__name__)
+    logger.warning("http_session_poolまたはmanaos_timeout_configが見つかりません。デフォルト設定を使用します。")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -68,6 +79,20 @@ class LLMRouter:
         self.routing_config = self.config.get("routing", {})
         self.audit_config = self.config.get("audit_log", {})
         
+        # HTTPセッションプールの初期化（通信速度向上）
+        if USE_SESSION_POOL:
+            try:
+                self.session_pool = get_http_session_pool()
+                self.timeout_config = get_timeout_config()
+                logger.info("HTTPセッションプールを初期化しました")
+            except Exception as e:
+                logger.warning(f"セッションプールの初期化に失敗: {e}")
+                self.session_pool = None
+                self.timeout_config = None
+        else:
+            self.session_pool = None
+            self.timeout_config = None
+        
         # 監査ログのストレージ
         self.audit_logs: List[AuditLog] = []
         
@@ -97,10 +122,16 @@ class LLMRouter:
             "ollama_url": "http://localhost:11434",
             "routing": {
                 "conversation": {
-                    "primary": "llama3.2:3b",
-                    "fallback": ["qwen2.5:7b", "llama3.1:8b"],
+                    "primary": "lfm2.5:1.2b",
+                    "fallback": ["llama3.2:3b", "qwen2.5:7b", "llama3.1:8b"],
                     "priority": "latency",
                     "max_tokens": 2048
+                },
+                "lightweight_conversation": {
+                    "primary": "lfm2.5:1.2b",
+                    "fallback": ["llama3.2:3b", "llama3.2:1b"],
+                    "priority": "latency",
+                    "max_tokens": 1024
                 },
                 "reasoning": {
                     "primary": "qwen2.5:72b",
@@ -165,6 +196,9 @@ class LLMRouter:
         metrics = {
             "gpu_utilization": None,
             "vram_usage_mb": None,
+            "vram_total_mb": None,
+            "vram_free_mb": None,
+            "vram_usage_percent": None,
             "ollama_processes": 0,
             "check_method": "unknown"
         }
@@ -208,7 +242,7 @@ class LLMRouter:
                 # nvidia-smiが利用可能な場合は詳細情報を取得
                 try:
                     nvidia_result = subprocess.run(
-                        ["nvidia-smi", "--query-gpu=utilization.gpu,memory.used", "--format=csv,noheader,nounits"],
+                        ["nvidia-smi", "--query-gpu=utilization.gpu,memory.used,memory.total", "--format=csv,noheader,nounits"],
                         capture_output=True,
                         text=True,
                         timeout=2
@@ -217,9 +251,13 @@ class LLMRouter:
                         lines = nvidia_result.stdout.strip().split('\n')
                         if lines:
                             parts = lines[0].split(',')
-                            if len(parts) >= 2:
+                            if len(parts) >= 3:
                                 metrics["gpu_utilization"] = int(parts[0].strip())
                                 metrics["vram_usage_mb"] = int(parts[1].strip())
+                                metrics["vram_total_mb"] = int(parts[2].strip())
+                                metrics["vram_free_mb"] = metrics["vram_total_mb"] - metrics["vram_usage_mb"]
+                                if metrics["vram_total_mb"] > 0:
+                                    metrics["vram_usage_percent"] = round((metrics["vram_usage_mb"] / metrics["vram_total_mb"]) * 100, 2)
                                 metrics["check_method"] = "windows_nvidia_smi"
                                 # GPU使用率が50%以上なら使用中と判断
                                 if metrics["gpu_utilization"] > 50:
@@ -235,7 +273,7 @@ class LLMRouter:
                 # nvidia-smiでチェック（利用可能な場合）
                 try:
                     result = subprocess.run(
-                        ["nvidia-smi", "--query-gpu=utilization.gpu,memory.used", "--format=csv,noheader,nounits"],
+                        ["nvidia-smi", "--query-gpu=utilization.gpu,memory.used,memory.total", "--format=csv,noheader,nounits"],
                         capture_output=True,
                         text=True,
                         timeout=2
@@ -244,9 +282,13 @@ class LLMRouter:
                         lines = result.stdout.strip().split('\n')
                         if lines:
                             parts = lines[0].split(',')
-                            if len(parts) >= 2:
+                            if len(parts) >= 3:
                                 metrics["gpu_utilization"] = int(parts[0].strip())
                                 metrics["vram_usage_mb"] = int(parts[1].strip())
+                                metrics["vram_total_mb"] = int(parts[2].strip())
+                                metrics["vram_free_mb"] = metrics["vram_total_mb"] - metrics["vram_usage_mb"]
+                                if metrics["vram_total_mb"] > 0:
+                                    metrics["vram_usage_percent"] = round((metrics["vram_usage_mb"] / metrics["vram_total_mb"]) * 100, 2)
                                 # GPU使用率が50%以上なら使用中と判断
                                 if metrics["gpu_utilization"] > 50:
                                     logger.info(f"GPU使用率が高いためCPUモードに切り替え: {metrics['gpu_utilization']}%")
@@ -344,7 +386,10 @@ class LLMRouter:
             # num_gpuを指定しないと、OllamaがCPUモードで実行される可能性がある
             # 大きな値（99）を指定することで、可能な限りGPUレイヤーを使用
             options["num_gpu"] = 99  # GPUを最大限使用
-            logger.info(f"GPU利用可能: {model}をGPUモードで実行（num_gpu=99）")
+            # 追加の最適化設定
+            options["num_thread"] = 8  # CPUスレッド数も最適化
+            options["numa"] = False  # NUMAを無効化（パフォーマンス向上）
+            logger.info(f"GPU利用可能: {model}をGPUモードで実行（num_gpu=99, num_thread=8）")
         
         if max_tokens:
             options["num_predict"] = max_tokens
@@ -354,12 +399,29 @@ class LLMRouter:
         if options:
             params["options"] = options
         
+        # タイムアウト設定（最適化済み）
+        if self.timeout_config:
+            timeout = self.timeout_config.get("llm_call", 15.0)
+        else:
+            timeout = 15.0  # デフォルト15秒（300秒から大幅短縮）
+        
         try:
-            response = requests.post(
-                f"{self.ollama_url}/api/generate",
-                json=params,
-                timeout=300.0  # 5分タイムアウト
-            )
+            # セッションプールを使用（通信速度向上）
+            if self.session_pool:
+                response = self.session_pool.request(
+                    "POST",
+                    f"{self.ollama_url}/api/generate",
+                    base_url=self.ollama_url,
+                    json=params,
+                    timeout=timeout
+                )
+            else:
+                # フォールバック: 通常のrequestsを使用
+                response = requests.post(
+                    f"{self.ollama_url}/api/generate",
+                    json=params,
+                    timeout=timeout
+                )
             
             if response.status_code == 200:
                 return response.json()
@@ -375,7 +437,7 @@ class LLMRouter:
         
         except requests.exceptions.Timeout as e:
             logger.error(f"API呼び出しタイムアウト: {e}")
-            raise ModelUnavailableError(f"API呼び出しタイムアウト（300秒）")
+            raise ModelUnavailableError(f"API呼び出しタイムアウト（{timeout}秒）")
         except requests.exceptions.RequestException as e:
             logger.error(f"API呼び出しエラー: {e}")
             raise ModelUnavailableError(f"API呼び出しエラー: {str(e)}")
@@ -446,9 +508,99 @@ class LLMRouter:
             self._save_audit_log_to_local(audit_log)
     
     def _save_audit_log_to_obsidian(self, audit_log: AuditLog):
-        """監査ログをObsidianに保存（実装予定）"""
-        # TODO: Obsidian統合を実装
-        logger.debug(f"監査ログをObsidianに保存: {audit_log.request_id}")
+        """
+        監査ログをObsidianに保存
+        
+        Args:
+            audit_log: 監査ログデータ
+        """
+        try:
+            from obsidian_integration import ObsidianIntegration
+            import os
+            
+            # Obsidian Vaultパスを取得（環境変数から）
+            vault_path = os.getenv(
+                "OBSIDIAN_VAULT_PATH",
+                os.path.expanduser("~/Documents/Obsidian Vault")
+            )
+            
+            # Obsidian統合を初期化
+            obsidian = ObsidianIntegration(vault_path)
+            
+            if not obsidian.is_available():
+                logger.warning(f"Obsidian Vaultが見つかりません: {vault_path}。ローカルに保存します。")
+                self._save_audit_log_to_local(audit_log)
+                return
+            
+            # 監査ログの内容をMarkdown形式に変換
+            log_content = f"""# LLMルーティング監査ログ
+
+**リクエストID**: `{audit_log.request_id}`
+**タイムスタンプ**: {audit_log.timestamp}
+**タスクタイプ**: {audit_log.task_type}
+**使用モデル**: {audit_log.routed_model}
+**ソース**: {audit_log.fallback_used and "Fallback" or "Primary"}
+**レイテンシ**: {audit_log.latency_ms}ms
+
+## 入力要約
+{audit_log.input_summary}
+
+## 出力要約
+{audit_log.output_summary}
+
+## 詳細情報
+
+### メモリ参照
+{chr(10).join(f"- `{ref}`" for ref in audit_log.memory_refs) if audit_log.memory_refs else "なし"}
+
+### 使用ツール
+{chr(10).join(f"- `{tool}`" for tool in audit_log.tools_used) if audit_log.tools_used else "なし"}
+
+### フォールバック情報
+"""
+            
+            if audit_log.fallback_used:
+                log_content += f"""
+- **理由コード**: {audit_log.fallback_reason_code or "不明"}
+- **詳細**: {audit_log.fallback_reason_detail or "なし"}
+"""
+                if audit_log.trigger_metric:
+                    log_content += f"\n### トリガーメトリクス\n```json\n{json.dumps(audit_log.trigger_metric, indent=2, ensure_ascii=False)}\n```\n"
+            else:
+                log_content += "フォールバックは使用されませんでした。\n"
+            
+            log_content += f"""
+## コスト
+${audit_log.cost:.4f}
+
+---
+*このログは自動生成されました。*
+"""
+            
+            # ノートタイトルを生成
+            timestamp_str = audit_log.timestamp.replace(":", "-").replace("T", "_").split(".")[0]
+            note_title = f"LLM Routing Audit - {audit_log.request_id[:8]} - {timestamp_str}"
+            
+            # Obsidianにノートを作成
+            note_path = obsidian.create_note(
+                title=note_title,
+                content=log_content,
+                tags=["LLM-Routing", "Audit-Log", audit_log.task_type],
+                folder="LLM Routing/Audit Logs"
+            )
+            
+            if note_path:
+                logger.info(f"監査ログをObsidianに保存しました: {note_path}")
+            else:
+                logger.warning("Obsidianへの保存に失敗しました。ローカルに保存します。")
+                self._save_audit_log_to_local(audit_log)
+        
+        except ImportError:
+            logger.warning("Obsidian統合が利用できません。ローカルに保存します。")
+            self._save_audit_log_to_local(audit_log)
+        except Exception as e:
+            logger.error(f"Obsidian保存エラー: {e}。ローカルに保存します。")
+            self._save_audit_log_to_local(audit_log)
     
     def _save_audit_log_to_local(self, audit_log: AuditLog):
         """監査ログをローカルに保存"""
@@ -537,21 +689,78 @@ class LLMRouter:
             # Primary失敗の理由を記録
             primary_error_detail = str(e)
             
-            # Fallback発動理由を特定
+            # GPU/VRAM使用状況の詳細を取得
+            gpu_utilization = gpu_metrics.get("gpu_utilization", 0) if gpu_metrics else 0
+            vram_usage_mb = gpu_metrics.get("vram_usage_mb", 0) if gpu_metrics else 0
+            vram_total_mb = gpu_metrics.get("vram_total_mb", 0) if gpu_metrics else 0
+            vram_usage_percent = (vram_usage_mb / vram_total_mb * 100) if vram_total_mb > 0 else 0
+            
+            # Fallback発動理由を特定（詳細な情報を含む）
             fallback_reason_code = "MODEL_DOWN"
             fallback_reason_detail = primary_error_detail
+            fallback_metrics = {
+                "gpu_in_use": gpu_in_use,
+                "gpu_utilization": gpu_utilization,
+                "vram_usage_mb": vram_usage_mb,
+                "vram_total_mb": vram_total_mb,
+                "vram_usage_percent": round(vram_usage_percent, 2),
+                "primary_model": config["primary"],
+                "task_type": task_type,
+                "error_message": primary_error_detail,
+                "timestamp": datetime.now().isoformat()
+            }
             
             # エラーメッセージから詳細を抽出
             if "タイムアウト" in primary_error_detail or "timeout" in primary_error_detail.lower():
                 fallback_reason_code = "TIMEOUT"
+                fallback_reason_detail = (
+                    f"タイムアウト発生: {primary_error_detail} | "
+                    f"GPU使用中: {gpu_in_use} | "
+                    f"GPU使用率: {gpu_utilization}% | "
+                    f"VRAM使用率: {vram_usage_percent:.1f}% ({vram_usage_mb}MB/{vram_total_mb}MB)"
+                )
+                fallback_metrics["timeout_occurred"] = True
             elif "接続" in primary_error_detail or "connection" in primary_error_detail.lower():
                 fallback_reason_code = "DB_UNAVAILABLE"  # Ollama接続エラー
-            elif gpu_in_use and gpu_metrics.get("gpu_utilization", 0) > 80:
+                fallback_reason_detail = (
+                    f"Ollama接続エラー: {primary_error_detail} | "
+                    f"GPU使用中: {gpu_in_use} | "
+                    f"GPU使用率: {gpu_utilization}% | "
+                    f"VRAM使用率: {vram_usage_percent:.1f}%"
+                )
+                fallback_metrics["connection_error"] = True
+            elif gpu_in_use and gpu_utilization > 80:
                 fallback_reason_code = "GPU_OOM"
-                fallback_reason_detail = f"GPU使用率が高い: {gpu_metrics.get('gpu_utilization')}%"
+                fallback_reason_detail = (
+                    f"GPU使用率が高い: {gpu_utilization}% | "
+                    f"VRAM使用率: {vram_usage_percent:.1f}% ({vram_usage_mb}MB/{vram_total_mb}MB) | "
+                    f"エラー: {primary_error_detail}"
+                )
+                fallback_metrics["gpu_oom"] = True
+            elif gpu_in_use and vram_usage_percent > 90:
+                fallback_reason_code = "VRAM_OOM"
+                fallback_reason_detail = (
+                    f"VRAM不足: {vram_usage_percent:.1f}% ({vram_usage_mb}MB/{vram_total_mb}MB) | "
+                    f"GPU使用率: {gpu_utilization}% | "
+                    f"エラー: {primary_error_detail}"
+                )
+                fallback_metrics["vram_oom"] = True
             elif gpu_in_use:
                 fallback_reason_code = "GPU_BUSY"
-                fallback_reason_detail = f"GPU使用中: {gpu_metrics}"
+                fallback_reason_detail = (
+                    f"GPU使用中: GPU使用率 {gpu_utilization}% | "
+                    f"VRAM使用率 {vram_usage_percent:.1f}% ({vram_usage_mb}MB/{vram_total_mb}MB) | "
+                    f"エラー: {primary_error_detail}"
+                )
+                fallback_metrics["gpu_busy"] = True
+            else:
+                # GPU使用中ではない場合でも、詳細情報を記録
+                fallback_reason_detail = (
+                    f"モデル利用不可: {primary_error_detail} | "
+                    f"GPU使用中: {gpu_in_use} | "
+                    f"GPU使用率: {gpu_utilization}% | "
+                    f"VRAM使用率: {vram_usage_percent:.1f}%"
+                )
             
             # Fallbackモデルを試す
             for fallback_model in config.get("fallback", []):
@@ -566,7 +775,7 @@ class LLMRouter:
                     
                     latency_ms = int((time.time() - start_time) * 1000)
                     
-                    # ログに記録（fallback発動理由を含む）
+                    # ログに記録（fallback発動理由を含む、詳細なメトリクス付き）
                     self._log_routing(
                         task_type=task_type,
                         model=fallback_model,
@@ -580,7 +789,7 @@ class LLMRouter:
                         cpu_mode=gpu_in_use,
                         fallback_reason_code=fallback_reason_code,
                         fallback_reason_detail=fallback_reason_detail,
-                        trigger_metric=gpu_metrics if gpu_in_use else None
+                        trigger_metric=fallback_metrics  # 詳細なメトリクスを含む
                     )
                     
                     return {
@@ -590,7 +799,9 @@ class LLMRouter:
                         "request_id": request_id,
                         "latency_ms": latency_ms,
                         "cpu_mode": gpu_in_use,
-                        "fallback_reason": fallback_reason_code
+                        "fallback_reason": fallback_reason_code,
+                        "fallback_reason_detail": fallback_reason_detail,
+                        "fallback_metrics": fallback_metrics
                     }
                 
                 except ModelUnavailableError:
@@ -688,9 +899,11 @@ class LLMRouter:
             # num_gpuを指定しないと、OllamaがCPUモードで実行される可能性がある
             if not gpu_in_use:
                 request_params["options"] = {
-                    "num_gpu": 99  # GPUを最大限使用（可能な限りGPUレイヤーを使用）
+                    "num_gpu": 99,  # GPUを最大限使用（可能な限りGPUレイヤーを使用）
+                    "num_thread": 8,  # CPUスレッド数も最適化
+                    "numa": False  # NUMAを無効化（パフォーマンス向上）
                 }
-                logger.info(f"GPUモードで実行: {model} (num_gpu=99)")
+                logger.info(f"GPUモードで実行: {model} (num_gpu=99, num_thread=8)")
             else:
                 request_params["options"] = {
                     "num_gpu": 0  # CPUモード

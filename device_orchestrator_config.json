@@ -4,6 +4,7 @@
       "device_id": "manaos",
       "device_name": "ManaOS",
       "device_type": "manaos",
+      "device_location": "このはサーバー（Linux）",
       "api_endpoint": "http://localhost:5106",
       "capabilities": [
         "compute",

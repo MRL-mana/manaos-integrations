@@ -365,3 +365,24 @@ class GoogleDriveIndexer:
         except KeyboardInterrupt:
             logger.info("⏹️ Google Drive監視停止")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

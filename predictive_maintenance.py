@@ -70,17 +70,29 @@ class PredictiveMaintenance:
             except:
                 pass
     
-    def _save_state(self):
-        """状態を保存"""
-        try:
-            with open(self.storage_path, 'w', encoding='utf-8') as f:
-                json.dump({
-                    "metrics_history": {k: list(v) for k, v in self.metrics_history.items()},
-                    "alerts": self.alerts[-50:],
-                    "last_updated": datetime.now().isoformat()
-                }, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"状態保存エラー: {e}")
+    def _save_state(self, max_retries: int = 3):
+        """状態を保存（リトライ機能付き）"""
+        for attempt in range(max_retries):
+            try:
+                from pathlib import Path
+                self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+                temp_path = Path(str(self.storage_path) + '.tmp')
+                with open(temp_path, 'w', encoding='utf-8') as f:
+                    json.dump({
+                        "metrics_history": {k: list(v) for k, v in self.metrics_history.items()},
+                        "alerts": self.alerts[-50:],
+                        "last_updated": datetime.now().isoformat()
+                    }, f, ensure_ascii=False, indent=2)
+                temp_path.replace(self.storage_path)
+                return
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"状態保存エラー（{max_retries}回リトライ後）: {e}")
+                else:
+                    import time
+                    time.sleep(0.1 * (attempt + 1))
     
     def collect_metrics(self) -> Dict[str, float]:
         """

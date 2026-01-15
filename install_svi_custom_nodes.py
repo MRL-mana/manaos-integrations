@@ -16,8 +16,10 @@ if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
-COMFYUI_URL = "http://localhost:8188"
-COMFYUI_PATH = Path("C:/ComfyUI")
+import os
+COMFYUI_URL = os.getenv("COMFYUI_URL", "http://localhost:8188")
+# ComfyUIパスを環境変数から取得（デフォルト: C:/ComfyUI）
+COMFYUI_PATH = Path(os.getenv("COMFYUI_PATH", "C:/ComfyUI"))
 CUSTOM_NODES_PATH = COMFYUI_PATH / "custom_nodes"
 
 # 必要なカスタムノード

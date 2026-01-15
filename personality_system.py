@@ -363,11 +363,43 @@ if __name__ == '__main__':
     # WindowsのコンソールエンコーディングをUTF-8に設定
     if sys.platform == 'win32':
         import io
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+        # 既にラップされている場合はスキップ
+        if not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding != 'utf-8':
+            try:
+                sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+                sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+            except (AttributeError, ValueError):
+                pass  # 既にラップされている場合はスキップ
     
     port = int(os.getenv("PORT", 5123))
-    logger.info(f"Personality System起動中... (ポート: {port})")
-    init_personality_system()
-    app.run(host='0.0.0.0', port=port, debug=os.getenv("DEBUG", "False").lower() == "true")
+    print(f"Personality System起動中... (ポート: {port})")
+    try:
+        init_personality_system()
+        print(f"✅ Personality System初期化完了")
+        print(f"サーバー起動: http://0.0.0.0:{port}")
+        print("停止するには Ctrl+C を押してください")
+        # ロガーのハンドラーを一時的に無効化してから起動
+        import logging
+        root_logger = logging.getLogger()
+        original_handlers = root_logger.handlers[:]
+        try:
+            app.run(host='0.0.0.0', port=port, debug=os.getenv("DEBUG", "False").lower() == "true", use_reloader=False, threaded=True)
+        finally:
+            # ハンドラーを復元
+            root_logger.handlers = original_handlers
+    except KeyboardInterrupt:
+        print("\n停止しました")
+    except Exception as e:
+        print(f"❌ Flaskアプリ起動エラー: {e}")
+        import traceback
+        traceback.print_exc()
+        try:
+            error_handler.handle_exception(
+                e,
+                context={"port": port},
+                user_message="Personality Systemの起動に失敗しました"
+            )
+        except:
+            pass
+        raise
 

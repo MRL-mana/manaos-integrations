@@ -38,7 +38,19 @@ PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
 PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "")
 
 def process_stripe_payment(amount: float, currency: str = "JPY", product_id: Optional[str] = None, metadata: Optional[Dict] = None) -> Dict[str, Any]:
-    """Stripe決済処理"""
+    """
+    Stripe決済処理
+    実際のStripe APIを使用して決済を処理
+    
+    Args:
+        amount: 決済金額
+        currency: 通貨コード（デフォルト: JPY）
+        product_id: 製品ID（オプション）
+        metadata: 追加メタデータ（オプション）
+    
+    Returns:
+        決済結果
+    """
     if not STRIPE_SECRET_KEY:
         return {
             "status": "error",
@@ -46,22 +58,73 @@ def process_stripe_payment(amount: float, currency: str = "JPY", product_id: Opt
         }
     
     try:
-        # Stripe API呼び出し（実装が必要）
-        # ここではモック実装
-        logger.info(f"Stripe決済処理: {amount} {currency}")
-        
-        # 実際の実装では、Stripe APIを使用
-        # import stripe
-        # stripe.api_key = STRIPE_SECRET_KEY
-        # payment_intent = stripe.PaymentIntent.create(...)
-        
-        return {
-            "status": "success",
-            "payment_id": f"stripe_{datetime.now().timestamp()}",
-            "amount": amount,
-            "currency": currency
-        }
+        # Stripe APIをインポート（オプション）
+        stripe = None
+        try:
+            import stripe
+            stripe.api_key = STRIPE_SECRET_KEY
+            
+            # 金額を最小通貨単位に変換（例: JPYの場合はそのまま、USDの場合はセント）
+            if currency.upper() == "JPY":
+                amount_in_cents = int(amount)  # 円は整数
+            else:
+                amount_in_cents = int(amount * 100)  # その他の通貨はセント単位
+            
+            # PaymentIntentを作成
+            payment_intent_data = {
+                "amount": amount_in_cents,
+                "currency": currency.lower(),
+                "automatic_payment_methods": {
+                    "enabled": True
+                }
+            }
+            
+            # メタデータを追加
+            if metadata:
+                payment_intent_data["metadata"] = metadata
+            
+            if product_id:
+                payment_intent_data["metadata"] = payment_intent_data.get("metadata", {})
+                payment_intent_data["metadata"]["product_id"] = product_id
+            
+            payment_intent = stripe.PaymentIntent.create(**payment_intent_data)
+            
+            logger.info(f"Stripe決済処理成功: {payment_intent.id} ({amount} {currency})")
+            
+            return {
+                "status": "success",
+                "payment_id": payment_intent.id,
+                "client_secret": payment_intent.client_secret,
+                "amount": amount,
+                "currency": currency,
+                "status": payment_intent.status
+            }
+            
+        except ImportError:
+            # stripeライブラリがインストールされていない場合はモック実装
+            logger.warning("stripeライブラリがインストールされていません。モック実装を使用します。")
+            logger.info(f"Stripe決済処理（モック）: {amount} {currency}")
+            
+            return {
+                "status": "success",
+                "payment_id": f"stripe_mock_{datetime.now().timestamp()}",
+                "amount": amount,
+                "currency": currency,
+                "note": "モック実装: stripeライブラリをインストールしてください (pip install stripe)"
+            }
+    
     except Exception as e:
+        # stripeライブラリがインポートされている場合のみStripeErrorをチェック
+        if stripe and hasattr(stripe, 'error'):
+            if isinstance(e, stripe.error.StripeError):
+                logger.error(f"Stripe APIエラー: {e}")
+                return {
+                    "status": "error",
+                    "error": f"Stripe API error: {str(e)}",
+                    "error_type": e.__class__.__name__
+                }
+        
+        # その他のエラー
         logger.error(f"Stripe決済エラー: {e}")
         return {
             "status": "error",
@@ -69,7 +132,19 @@ def process_stripe_payment(amount: float, currency: str = "JPY", product_id: Opt
         }
 
 def process_paypal_payment(amount: float, currency: str = "JPY", product_id: Optional[str] = None, metadata: Optional[Dict] = None) -> Dict[str, Any]:
-    """PayPal決済処理"""
+    """
+    PayPal決済処理
+    実際のPayPal APIを使用して決済を処理
+    
+    Args:
+        amount: 決済金額
+        currency: 通貨コード（デフォルト: JPY）
+        product_id: 製品ID（オプション）
+        metadata: 追加メタデータ（オプション）
+    
+    Returns:
+        決済結果
+    """
     if not PAYPAL_CLIENT_ID or not PAYPAL_CLIENT_SECRET:
         return {
             "status": "error",
@@ -77,18 +152,80 @@ def process_paypal_payment(amount: float, currency: str = "JPY", product_id: Opt
         }
     
     try:
-        # PayPal API呼び出し（実装が必要）
-        logger.info(f"PayPal決済処理: {amount} {currency}")
-        
-        # 実際の実装では、PayPal APIを使用
-        # ここではモック実装
-        
-        return {
-            "status": "success",
-            "payment_id": f"paypal_{datetime.now().timestamp()}",
-            "amount": amount,
-            "currency": currency
-        }
+        # PayPal APIをインポート（オプション）
+        try:
+            from paypalrestsdk import Payment as PayPalPayment
+            import paypalrestsdk
+            
+            # PayPal SDK設定
+            paypalrestsdk.configure({
+                "mode": os.getenv("PAYPAL_MODE", "sandbox"),  # "sandbox" or "live"
+                "client_id": PAYPAL_CLIENT_ID,
+                "client_secret": PAYPAL_CLIENT_SECRET
+            })
+            
+            logger.info(f"PayPal決済処理開始: {amount} {currency}")
+            
+            # Paymentオブジェクトを作成
+            payment = PayPalPayment({
+                "intent": "sale",
+                "payer": {
+                    "payment_method": "paypal"
+                },
+                "transactions": [{
+                    "amount": {
+                        "total": f"{amount:.2f}",
+                        "currency": currency.upper()
+                    },
+                    "description": f"Payment for product: {product_id}" if product_id else "Payment",
+                    "custom": json.dumps(metadata) if metadata else None
+                }],
+                "redirect_urls": {
+                    "return_url": os.getenv("PAYPAL_RETURN_URL", "http://localhost:5119/api/payment/paypal/return"),
+                    "cancel_url": os.getenv("PAYPAL_CANCEL_URL", "http://localhost:5119/api/payment/paypal/cancel")
+                }
+            })
+            
+            # Paymentを作成
+            if payment.create():
+                logger.info(f"PayPal決済処理成功: {payment.id}")
+                
+                # 承認URLを取得
+                approval_url = None
+                for link in payment.links:
+                    if link.rel == "approval_url":
+                        approval_url = link.href
+                        break
+                
+                return {
+                    "status": "success",
+                    "payment_id": payment.id,
+                    "approval_url": approval_url,
+                    "amount": amount,
+                    "currency": currency,
+                    "state": payment.state
+                }
+            else:
+                error_msg = payment.error if hasattr(payment, 'error') else "Unknown PayPal error"
+                logger.error(f"PayPal決済エラー: {error_msg}")
+                return {
+                    "status": "error",
+                    "error": str(error_msg)
+                }
+            
+        except ImportError:
+            # paypalrestsdkライブラリがインストールされていない場合はモック実装
+            logger.warning("paypalrestsdkライブラリがインストールされていません。モック実装を使用します。")
+            logger.info(f"PayPal決済処理（モック）: {amount} {currency}")
+            
+            return {
+                "status": "success",
+                "payment_id": f"paypal_mock_{datetime.now().timestamp()}",
+                "amount": amount,
+                "currency": currency,
+                "note": "モック実装: paypalrestsdkライブラリをインストールしてください (pip install paypalrestsdk)"
+            }
+    
     except Exception as e:
         logger.error(f"PayPal決済エラー: {e}")
         return {

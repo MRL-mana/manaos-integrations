@@ -14,18 +14,20 @@ from enum import Enum
 
 class ModelType(Enum):
     """モデルタイプ"""
-    LIGHT = "llama3.2:3b"      # 軽量・高速
-    MEDIUM = "qwen2.5:14b"     # バランス型
-    HEAVY = "qwen2.5:32b"      # 高品質生成
-    REASONING = "qwen2.5:72b"  # 複雑な推論
+    ULTRA_LIGHT = "lfm2.5:1.2b"              # LFM 2.5: 超軽量・超高速・日本語特化（1.2B）
+    LIGHT = "qwen2.5-coder-7b-instruct"      # 軽量・高速（LM Studio）
+    MEDIUM = "qwen2.5-coder-14b-instruct"    # バランス型・高品質（LM Studio 14B）
+    HEAVY = "qwen2.5-coder-14b-instruct"     # 高品質生成（LM Studio 14B）
+    REASONING = "qwen2.5-coder-14b-instruct" # 複雑な推論（LM Studio 14B）
 
 
 class TaskType(Enum):
     """タスクタイプ"""
-    CONVERSATION = "conversation"  # 会話
-    REASONING = "reasoning"        # 推論
-    AUTOMATION = "automation"      # 自動処理
-    GENERATION = "generation"      # 生成
+    CONVERSATION = "conversation"              # 会話
+    LIGHTWEIGHT_CONVERSATION = "lightweight_conversation"  # 常駐軽量LLM（オフライン会話・下書き・整理）
+    REASONING = "reasoning"                    # 推論
+    AUTOMATION = "automation"                 # 自動処理
+    GENERATION = "generation"                  # 生成
 
 
 @dataclass
@@ -50,11 +52,13 @@ class AlwaysReadyLLMClient:
     
     def __init__(
         self,
-        n8n_webhook_url: str = "http://localhost:5678/webhook/llm-chat",
+        n8n_webhook_url: str = None,
         ollama_url: str = "http://localhost:11434",
+        lm_studio_url: str = "http://localhost:1234/v1",
         cache_api_url: str = "http://localhost:9500/api/cache",
         use_cache: bool = True,
-        default_model: ModelType = ModelType.LIGHT
+        default_model: ModelType = ModelType.MEDIUM,  # デフォルトをMEDIUM（14B）に変更
+        prefer_lm_studio: bool = True  # LM Studioを優先
     ):
         """
         初期化
@@ -62,15 +66,20 @@ class AlwaysReadyLLMClient:
         Args:
             n8n_webhook_url: n8n Webhook URL
             ollama_url: OllamaサーバーURL
+            lm_studio_url: LM StudioサーバーURL（OpenAI互換API）
             cache_api_url: キャッシュAPI URL
             use_cache: キャッシュを使用するか
             default_model: デフォルトモデル
+            prefer_lm_studio: LM Studioを優先するか
         """
         self.n8n_webhook_url = n8n_webhook_url
         self.ollama_url = ollama_url
+        self.lm_studio_url = lm_studio_url
         self.cache_api_url = cache_api_url
         self.use_cache = use_cache
         self.default_model = default_model
+        self.prefer_lm_studio = prefer_lm_studio
+        self._lm_studio_available = None  # キャッシュ用
     
     def _generate_cache_key(self, message: str, model: str, task_type: str) -> str:
         """キャッシュキー生成"""
@@ -157,36 +166,129 @@ class AlwaysReadyLLMClient:
                     source="cache"
                 )
         
-        # n8n Webhook経由で呼び出し
+        # LLM呼び出し（優先順位: LM Studio > n8n > Ollama）
         start_time = time.time()
         
+        # LM Studioを優先的に使用
+        if self.prefer_lm_studio:
+            try:
+                return self._call_lm_studio(message, model_str, start_time, cache_key, use_cache_flag, temperature, max_tokens)
+            except Exception as e:
+                # LM Studioが使えない場合はフォールバック
+                pass
+        
+        # n8n Webhook経由で呼び出し（設定されている場合のみ）
+        if self.n8n_webhook_url:
+            try:
+                response = requests.post(
+                    self.n8n_webhook_url,
+                    json={
+                        "message": message,
+                        "model": model_str,
+                        "task_type": task_type.value,
+                        "use_cache": use_cache_flag
+                    },
+                    timeout=60
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    latency_ms = (time.time() - start_time) * 1000
+                    
+                    result = LLMResponse(
+                        response=data.get("response", ""),
+                        model=data.get("model", model_str),
+                        cached=data.get("cached", False),
+                        latency_ms=latency_ms,
+                        tokens=data.get("tokens"),
+                        source=data.get("source", "n8n")
+                    )
+                    
+                    # キャッシュに保存
+                    if use_cache_flag and not result.cached:
+                        self._set_cache(cache_key, {
+                            "response": result.response,
+                            "model": result.model,
+                            "tokens": result.tokens
+                        })
+                    
+                    return result
+                else:
+                    # n8n Webhookエラー時は直接Ollama呼び出しにフォールバック
+                    return self._call_ollama_direct(message, model_str, start_time, cache_key, use_cache_flag)
+            
+            except requests.exceptions.RequestException:
+                # n8nが使えない場合は直接Ollama呼び出し
+                return self._call_ollama_direct(message, model_str, start_time, cache_key, use_cache_flag)
+        else:
+            # n8n Webhook URLが設定されていない場合は直接Ollama呼び出し
+            return self._call_ollama_direct(message, model_str, start_time, cache_key, use_cache_flag)
+    
+    def _check_lm_studio_available(self) -> bool:
+        """LM Studioが利用可能かチェック"""
+        if self._lm_studio_available is not None:
+            return self._lm_studio_available
+        
         try:
+            response = requests.get(f"{self.lm_studio_url}/models", timeout=2)
+            self._lm_studio_available = response.status_code == 200
+            return self._lm_studio_available
+        except:
+            self._lm_studio_available = False
+            return False
+    
+    def _call_lm_studio(
+        self,
+        message: str,
+        model: str,
+        start_time: float,
+        cache_key: str,
+        use_cache: bool,
+        temperature: float = 0.7,
+        max_tokens: Optional[int] = None
+    ) -> LLMResponse:
+        """LM Studio呼び出し（OpenAI互換API）"""
+        if not self._check_lm_studio_available():
+            raise Exception("LM Studioが利用できません")
+        
+        try:
+            # OpenAI互換APIを使用
             response = requests.post(
-                self.n8n_webhook_url,
+                f"{self.lm_studio_url}/chat/completions",
                 json={
-                    "message": message,
-                    "model": model_str,
-                    "task_type": task_type.value,
-                    "use_cache": use_cache_flag
+                    "model": model,
+                    "messages": [
+                        {"role": "user", "content": message}
+                    ],
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                    "stream": False
                 },
-                timeout=60
+                timeout=120
             )
             
             if response.status_code == 200:
                 data = response.json()
                 latency_ms = (time.time() - start_time) * 1000
                 
+                # OpenAI互換形式からレスポンスを取得
+                choices = data.get("choices", [])
+                if choices and len(choices) > 0:
+                    response_text = choices[0].get("message", {}).get("content", "")
+                else:
+                    response_text = ""
+                
                 result = LLMResponse(
-                    response=data.get("response", ""),
-                    model=data.get("model", model_str),
-                    cached=data.get("cached", False),
+                    response=response_text,
+                    model=model,
+                    cached=False,
                     latency_ms=latency_ms,
-                    tokens=data.get("tokens"),
-                    source=data.get("source", "n8n")
+                    tokens=data.get("usage", {}).get("total_tokens"),
+                    source="lm_studio"
                 )
                 
                 # キャッシュに保存
-                if use_cache_flag and not result.cached:
+                if use_cache:
                     self._set_cache(cache_key, {
                         "response": result.response,
                         "model": result.model,
@@ -195,12 +297,10 @@ class AlwaysReadyLLMClient:
                 
                 return result
             else:
-                # n8n Webhookエラー時は直接Ollama呼び出しにフォールバック
-                return self._call_ollama_direct(message, model_str, start_time, cache_key, use_cache_flag)
+                raise Exception(f"LM Studioエラー: {response.status_code} - {response.text}")
         
-        except requests.exceptions.RequestException:
-            # n8nが使えない場合は直接Ollama呼び出し
-            return self._call_ollama_direct(message, model_str, start_time, cache_key, use_cache_flag)
+        except Exception as e:
+            raise Exception(f"LM Studio呼び出し失敗: {e}")
     
     def _call_ollama_direct(
         self,

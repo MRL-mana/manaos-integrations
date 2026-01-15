@@ -6,8 +6,10 @@ ollama_url: "http://localhost:11434"
 routing:
   conversation:
     # 会話（軽量・高速・レスポンス最優先）
-    primary: "llama3.2:3b"
+    # LFM 2.5: 1.2Bパラメータ、GPT-3.5級日本語、CPU前提で超高速
+    primary: "lfm2.5:1.2b"
     fallback:
+      - "llama3.2:3b"
       - "qwen2.5:7b"
       - "llama3.1:8b"
     priority: "latency"
@@ -17,6 +19,23 @@ routing:
       - "日常対話"
       - "雑談"
       - "質問応答"
+  
+  lightweight_conversation:
+    # 常駐軽量LLM（オフライン会話・下書き・整理専用）
+    # LFM 2.5専用タスクタイプ：CPU前提、常時起動、日本語特化
+    primary: "lfm2.5:1.2b"
+    fallback:
+      - "llama3.2:3b"
+      - "llama3.2:1b"
+    priority: "latency"
+    max_tokens: 1024
+    temperature: 0.8
+    use_case:
+      - "オフライン会話"
+      - "下書き作成"
+      - "テキスト整理"
+      - "メモ作成"
+      - "軽量タスク"
   
   reasoning:
     # 推論（重い・強い・品質最優先）

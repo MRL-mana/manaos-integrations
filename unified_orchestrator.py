@@ -641,13 +641,16 @@ class UnifiedOrchestrator:
                         
                         # まだ実行中
                         await asyncio.sleep(2)
+            except asyncio.TimeoutError:
+                logger.debug(f"タスク状態確認タイムアウト: {task_id}")
+                await asyncio.sleep(2)
             except Exception as e:
                 error = error_handler.handle_exception(
                     e,
                     context={"service": "Task Queue", "task_id": task_id},
                     user_message="タスク状態の確認に失敗しました"
                 )
-                logger.warning(f"タスク状態確認エラー: {error.message}")
+                logger.debug(f"タスク状態確認エラー（再試行します）: {error.message}")
                 await asyncio.sleep(2)
         
         return {"status": "timeout", "error": "タイムアウト"}

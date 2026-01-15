@@ -202,3 +202,24 @@ class GitHubIntegration(BaseIntegration):
             self.logger.error(f"ユーザーリポジトリ取得エラー: {error.message}")
             return []
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
