@@ -1,0 +1,259 @@
+{
+  "name": "Obsidian × NotebookLM 週次分析",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 22 * * 0"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "週次トリガー（日曜22時）",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "list",
+        "folderId": {
+          "__rl": true,
+          "value": "Daily",
+          "mode": "name"
+        },
+        "options": {
+          "orderBy": "modifiedTime desc",
+          "pageSize": 14
+        }
+      },
+      "id": "get-daily-notes",
+      "name": "直近14日のDailyノート取得",
+      "type": "n8n-nodes-base.obsidian",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "credentials": {
+        "obsidianApi": {
+          "id": "1",
+          "name": "Obsidian API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 直近14日のDailyノートをまとめる\nconst notes = $input.all();\nconst dateStr = new Date().toISOString().split('T')[0];\n\n// ノート内容を結合\nlet combinedContent = `# 週次分析用データ - ${dateStr}\n\n## 期間: 直近14日\n\n`;\n\nnotes.forEach((note, index) => {\n  const fileName = note.json.name || note.json.path || `note_${index}`;\n  const content = note.json.content || '';\n  \n  combinedContent += `## ${fileName}\n\n${content}\n\n---\n\n`;\n});\n\nreturn {\n  json: {\n    content: combinedContent,\n    date: dateStr,\n    noteCount: notes.length\n  }\n};"
+      },
+      "id": "combine-notes",
+      "name": "ノート結合",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "name": "={{ $json.date }}-notebooklm-input.md",
+        "content": "={{ $json.content }}",
+        "folderId": {
+          "__rl": true,
+          "value": "Review",
+          "mode": "name"
+        }
+      },
+      "id": "save-input",
+      "name": "分析用ファイル保存",
+      "type": "n8n-nodes-base.obsidian",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "credentials": {
+        "obsidianApi": {
+          "id": "1",
+          "name": "Obsidian API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "question-1",
+              "name": "question",
+              "value": "最近の自分の傾向を分析して。特に以下の観点で：\n- 行動パターン（何時に何をしているか）\n- 体調と行動の関係\n- 思考の偏り（同じことばかり考えてないか）\n- 感情の変化パターン\n\n箇条書きで3〜5個のポイントを出して。",
+              "type": "string"
+            },
+            {
+              "id": "question-2",
+              "name": "question",
+              "value": "体調と行動の関係を分析して。以下の観点で：\n- 調子が良い日の行動パターン\n- 調子が悪い日の行動パターン\n- 体調に影響を与えている要因（睡眠、食事、運動など）\n- 改善できるポイント\n\n具体的な改善案を3つ出して。",
+              "type": "string"
+            },
+            {
+              "id": "question-3",
+              "name": "question",
+              "value": "無駄に疲れている原因を分析して。以下の観点で：\n- 時間の使い方（無駄な時間はないか）\n- 思考のループ（同じことを何度も考えてないか）\n- 行動の重複（同じ作業を何度もしてないか）\n- ストレスの原因\n\n改善できるポイントを3つ出して。",
+              "type": "string"
+            },
+            {
+              "id": "question-4",
+              "name": "question",
+              "value": "この週のログを見て、改善できるポイントを3つ出して。以下の形式で：\n1. 【問題】具体的な問題点\n2. 【原因】なぜそれが起きているか\n3. 【改善案】どうすれば改善できるか\n\n実現可能な改善案に絞って。",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-questions",
+      "name": "質問リスト作成",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "name": "={{ $json.date }}-notebooklm-questions.md",
+        "content": "= # NotebookLM質問リスト\n\n{{ $json.question }}\n\n---\n\n## 使い方\n\n1. NotebookLMを開く\n2. Review/{{ $json.date }}-notebooklm-input.md を投入\n3. 上記の質問を順番に実行\n4. 結果をこのファイルに追記",
+        "folderId": {
+          "__rl": true,
+          "value": "Review",
+          "mode": "name"
+        }
+      },
+      "id": "save-questions",
+      "name": "質問リスト保存",
+      "type": "n8n-nodes-base.obsidian",
+      "typeVersion": 1,
+      "position": [1250, 300],
+      "credentials": {
+        "obsidianApi": {
+          "id": "1",
+          "name": "Obsidian API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=📊 週次分析の準備が完了しました\n\n- 分析用ファイル: Review/{{ $('get-daily-notes').item.json.date }}-notebooklm-input.md\n- 質問リスト: Review/{{ $('get-daily-notes').item.json.date }}-notebooklm-questions.md\n\nNotebookLMで分析を開始してください。"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "slack-notification",
+      "name": "Slack通知",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 300]
+    }
+  ],
+  "connections": {
+    "週次トリガー（日曜22時）": {
+      "main": [
+        [
+          {
+            "node": "直近14日のDailyノート取得",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "直近14日のDailyノート取得": {
+      "main": [
+        [
+          {
+            "node": "ノート結合",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ノート結合": {
+      "main": [
+        [
+          {
+            "node": "分析用ファイル保存",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "分析用ファイル保存": {
+      "main": [
+        [
+          {
+            "node": "質問リスト作成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "質問リスト作成": {
+      "main": [
+        [
+          {
+            "node": "質問リスト保存",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "質問リスト保存": {
+      "main": [
+        [
+          {
+            "node": "Slack通知",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2026-01-06T00:00:00.000Z",
+  "versionId": "1"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-01-15T08:16:13.734482",
+  "latency": {
+    "count": 12,
+    "p50": 0.0002680000034160912,
+    "p95": 0.0006404999949154444,
+    "min": 0.0001982000030693598,
+    "max": 0.0006404999949154444,
+    "mean": 0.0002930750003239761
+  },
+  "slot_utilization": {},
+  "write_amplification": {},
+  "write_count": {
+    "count": 12,
+    "mean": 0.0,
+    "max": 0,
+    "min": 0,
+    "current": 0
+  },
+  "gate_block_rate": {},
+  "conflict_detection_rate": {}
+}
