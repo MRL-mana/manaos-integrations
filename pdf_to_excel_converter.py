@@ -600,30 +600,48 @@ class PDFToExcelConverter:
                         # 複数の結果をマージして文字化けを減らす
                         ocr_result = best_result
                         if ocr_result and len(ocr_results) > 1:
-                            # 複数の結果がある場合、文字化けの少ない結果を優先
-                            best_mojibake_count = float('inf')
+                            # 複数の結果がある場合、文字化けの少ない結果を優先（ただし文字数も考慮）
+                            best_score = -1e9
                             best_result_merged = ocr_result
                             
                             for result in ocr_results:
-                                if not result or not result.get('grid_data'):
+                                if not result:
+                                    continue
+                                
+                                grid = result.get('grid_data')
+                                if not grid:
                                     continue
                                 
                                 # 文字化けの数をカウント
-                                grid = result.get('grid_data')
                                 mojibake_count = 0
+                                total_chars = 0
+                                filled_cells = 0
+                                
                                 for row in grid:
                                     for cell in row:
                                         if cell:
-                                            mojibake_count += cell.count('')
-                                            mojibake_count += len([c for c in cell if ord(c) > 0xFFFF])
+                                            cell_str = str(cell).strip()
+                                            if cell_str:
+                                                filled_cells += 1
+                                                total_chars += len(cell_str)
+                                                mojibake_count += cell_str.count('')
+                                                mojibake_count += len([c for c in cell_str if ord(c) > 0xFFFF])
                                 
-                                # 文字化けが少ない結果を選ぶ
-                                if mojibake_count < best_mojibake_count:
-                                    best_mojibake_count = mojibake_count
+                                # スコアリング: 文字数が多い + 文字化けが少ない = 高スコア
+                                # ただし、文字数が極端に少ない場合は除外
+                                if total_chars < 100:  # 100文字未満は除外
+                                    continue
+                                
+                                mojibake_ratio = mojibake_count / max(total_chars, 1)
+                                score = total_chars * 0.6 - mojibake_count * 10 - mojibake_ratio * 1000
+                                
+                                if score > best_score:
+                                    best_score = score
                                     best_result_merged = result
                             
                             ocr_result = best_result_merged
-                            logger.info(f"  文字化けの少ない結果を選択: {ocr_result.get('provider')} (文字化け: {best_mojibake_count}箇所)")
+                            if ocr_result != best_result:
+                                logger.info(f"  最良の結果を選択: {ocr_result.get('provider')} (文字数: {len(ocr_result.get('text', ''))}, スコア: {best_score:.1f})")
                         
                         if ocr_result:
                             # ページごとのデータを保存（後でシート分けに使用）
