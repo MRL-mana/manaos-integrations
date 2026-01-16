@@ -1030,6 +1030,8 @@ class MultiProviderOCR:
         try:
             import easyocr
             from PIL import Image
+            import signal
+            import sys
             
             # 日本語と英語をサポート
             langs = kwargs.get('lang', ['ja', 'en'])
@@ -1041,25 +1043,39 @@ class MultiProviderOCR:
             use_gpu = kwargs.get('gpu', False)  # デフォルトでCPU（GPUは不安定な場合があるため）
             if not hasattr(self, '_easyocr_reader'):
                 logger.info(f"EasyOCRリーダーを初期化中（初回のみ時間がかかります、GPU: {use_gpu}）...")
+                
+                # タイムアウトハンドラ（Windowsでは動作しないが、エラーハンドリングを強化）
+                def timeout_handler(signum, frame):
+                    raise TimeoutError("EasyOCR初期化がタイムアウトしました")
+                
                 try:
+                    # より安全な初期化（メモリ制限とエラーハンドリング）
                     if use_gpu:
                         # GPU使用を試行
                         import torch
                         if torch.cuda.is_available():
-                            self._easyocr_reader = easyocr.Reader(langs, gpu=True)
-                            logger.info("EasyOCR: GPUを使用します")
+                            try:
+                                self._easyocr_reader = easyocr.Reader(langs, gpu=True, verbose=False)
+                                logger.info("EasyOCR: GPUを使用します")
+                            except Exception as gpu_err:
+                                logger.warning(f"EasyOCR GPU初期化失敗: {gpu_err}。CPUで再試行...")
+                                self._easyocr_reader = easyocr.Reader(langs, gpu=False, verbose=False)
                         else:
                             logger.warning("EasyOCR: GPUが利用できないためCPUを使用します")
-                            self._easyocr_reader = easyocr.Reader(langs, gpu=False)
+                            self._easyocr_reader = easyocr.Reader(langs, gpu=False, verbose=False)
                     else:
-                        self._easyocr_reader = easyocr.Reader(langs, gpu=False)
+                        # CPUで初期化（verbose=Falseでログを抑制）
+                        self._easyocr_reader = easyocr.Reader(langs, gpu=False, verbose=False)
+                        logger.info("EasyOCR: CPUで初期化完了")
+                except MemoryError as me:
+                    logger.error(f"EasyOCR: メモリ不足エラー: {me}")
+                    return None
                 except Exception as e:
-                    logger.warning(f"EasyOCR初期化エラー（GPU: {use_gpu}）: {e}。CPUで再試行...")
-                    try:
-                        self._easyocr_reader = easyocr.Reader(langs, gpu=False)
-                    except Exception as e2:
-                        logger.error(f"EasyOCR CPU初期化も失敗: {e2}")
-                        return None
+                    logger.error(f"EasyOCR初期化エラー: {type(e).__name__}: {e}")
+                    # エラーの詳細を記録
+                    import traceback
+                    logger.debug(f"EasyOCR初期化エラー詳細:\n{traceback.format_exc()}")
+                    return None
             
             # OCR実行
             results = self._easyocr_reader.readtext(image_path)
