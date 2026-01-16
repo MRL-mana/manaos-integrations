@@ -984,48 +984,90 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> Sequence[TextConten
                     },
                     timeout=timeout
                 )
-                if response.status_code == 200:
-                    return [TextContent(type="text", text=f"✅ 学習システムに記録しました\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ 記録に失敗しました: HTTP {response.status_code}")]
+                response.raise_for_status()
+                return [TextContent(type="text", text=f"✅ 学習システムに記録しました\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
+            except httpx.TimeoutException as e:
+                logger.error(f"学習システムタイムアウト: {e}")
+                return [TextContent(type="text", text=f"❌ 学習システムへの接続がタイムアウトしました（{timeout}秒）")]
+            except httpx.HTTPStatusError as e:
+                logger.error(f"学習システムHTTPエラー: {e.response.status_code} - {e.response.text}")
+                return [TextContent(type="text", text=f"❌ 学習システムエラー: HTTP {e.response.status_code}")]
+            except httpx.RequestError as e:
+                logger.error(f"学習システム接続エラー: {e}")
+                return [TextContent(type="text", text=f"❌ 学習システムに接続できません（URL: {learning_system_url}）")]
             except Exception as e:
-                return [TextContent(type="text", text=f"❌ 学習システム接続エラー: {e}")]
+                logger.error(f"学習システム予期しないエラー: {e}", exc_info=True)
+                if ERROR_HANDLER_AVAILABLE and error_handler:
+                    try:
+                        manaos_error = error_handler.handle_exception(
+                            e,
+                            context={"tool_name": "learning_record", "url": learning_system_url},
+                            user_message="学習システムへの記録中にエラーが発生しました",
+                        )
+                        return [TextContent(type="text", text=f"❌ {manaos_error.user_message or manaos_error.message}")]
+                    except Exception:
+                        pass
+                return [TextContent(type="text", text=f"❌ 学習システムエラー: {str(e)}")]
 
         elif name == "learning_analyze":
             learning_system_url = LEARNING_SYSTEM_URL
             try:
                 timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
                 response = httpx.get(f"{learning_system_url}/api/analyze", timeout=timeout)
-                if response.status_code == 200:
-                    return [TextContent(type="text", text=f"分析結果:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ 分析に失敗しました: HTTP {response.status_code}")]
+                response.raise_for_status()
+                return [TextContent(type="text", text=f"分析結果:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
+            except httpx.TimeoutException:
+                logger.error(f"学習システムタイムアウト: {learning_system_url}")
+                return [TextContent(type="text", text="❌ 学習システムへの接続がタイムアウトしました")]
+            except httpx.HTTPStatusError as e:
+                logger.error(f"学習システムHTTPエラー: {e.response.status_code} - {e.response.text}")
+                return [TextContent(type="text", text=f"❌ 学習システムエラー: HTTP {e.response.status_code}")]
+            except httpx.RequestError as e:
+                logger.error(f"学習システム接続エラー: {e}")
+                return [TextContent(type="text", text=f"❌ 学習システムに接続できません（URL: {learning_system_url}）")]
             except Exception as e:
-                return [TextContent(type="text", text=f"❌ 学習システム接続エラー: {e}")]
+                logger.error(f"学習システム予期しないエラー: {e}", exc_info=True)
+                return [TextContent(type="text", text=f"❌ 学習システムエラー: {str(e)}")]
 
         elif name == "learning_get_preferences":
             learning_system_url = LEARNING_SYSTEM_URL
             try:
                 timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
                 response = httpx.get(f"{learning_system_url}/api/preferences", timeout=timeout)
-                if response.status_code == 200:
-                    return [TextContent(type="text", text=f"学習された好み:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ 取得に失敗しました: HTTP {response.status_code}")]
+                response.raise_for_status()
+                return [TextContent(type="text", text=f"学習された好み:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
+            except httpx.TimeoutException:
+                logger.error(f"学習システムタイムアウト: {learning_system_url}")
+                return [TextContent(type="text", text="❌ 学習システムへの接続がタイムアウトしました")]
+            except httpx.HTTPStatusError as e:
+                logger.error(f"学習システムHTTPエラー: {e.response.status_code} - {e.response.text}")
+                return [TextContent(type="text", text=f"❌ 学習システムエラー: HTTP {e.response.status_code}")]
+            except httpx.RequestError as e:
+                logger.error(f"学習システム接続エラー: {e}")
+                return [TextContent(type="text", text=f"❌ 学習システムに接続できません（URL: {learning_system_url}）")]
             except Exception as e:
-                return [TextContent(type="text", text=f"❌ 学習システム接続エラー: {e}")]
+                logger.error(f"学習システム予期しないエラー: {e}", exc_info=True)
+                return [TextContent(type="text", text=f"❌ 学習システムエラー: {str(e)}")]
 
         elif name == "learning_get_optimizations":
             learning_system_url = LEARNING_SYSTEM_URL
             try:
                 timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
                 response = httpx.get(f"{learning_system_url}/api/optimizations", timeout=timeout)
-                if response.status_code == 200:
-                    return [TextContent(type="text", text=f"最適化提案:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ 取得に失敗しました: HTTP {response.status_code}")]
+                response.raise_for_status()
+                return [TextContent(type="text", text=f"最適化提案:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
+            except httpx.TimeoutException:
+                logger.error(f"学習システムタイムアウト: {learning_system_url}")
+                return [TextContent(type="text", text="❌ 学習システムへの接続がタイムアウトしました")]
+            except httpx.HTTPStatusError as e:
+                logger.error(f"学習システムHTTPエラー: {e.response.status_code} - {e.response.text}")
+                return [TextContent(type="text", text=f"❌ 学習システムエラー: HTTP {e.response.status_code}")]
+            except httpx.RequestError as e:
+                logger.error(f"学習システム接続エラー: {e}")
+                return [TextContent(type="text", text=f"❌ 学習システムに接続できません（URL: {learning_system_url}）")]
             except Exception as e:
-                return [TextContent(type="text", text=f"❌ 学習システム接続エラー: {e}")]
+                logger.error(f"学習システム予期しないエラー: {e}", exc_info=True)
+                return [TextContent(type="text", text=f"❌ 学習システムエラー: {str(e)}")]
 
         # 人格系（Personality System）
         elif name == "personality_get_persona":
@@ -1033,25 +1075,41 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> Sequence[TextConten
             try:
                 timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
                 response = httpx.get(f"{personality_url}/api/persona", timeout=timeout)
-                if response.status_code == 200:
-                    return [TextContent(type="text", text=f"現在の人格:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ 取得に失敗しました: HTTP {response.status_code}")]
+                response.raise_for_status()
+                return [TextContent(type="text", text=f"現在の人格:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
+            except httpx.TimeoutException:
+                logger.error(f"人格システムタイムアウト: {personality_url}")
+                return [TextContent(type="text", text="❌ 人格システムへの接続がタイムアウトしました")]
+            except httpx.HTTPStatusError as e:
+                logger.error(f"人格システムHTTPエラー: {e.response.status_code} - {e.response.text}")
+                return [TextContent(type="text", text=f"❌ 人格システムエラー: HTTP {e.response.status_code}")]
+            except httpx.RequestError as e:
+                logger.error(f"人格システム接続エラー: {e}")
+                return [TextContent(type="text", text=f"❌ 人格システムに接続できません（URL: {personality_url}）")]
             except Exception as e:
-                return [TextContent(type="text", text=f"❌ 人格システム接続エラー: {e}")]
+                logger.error(f"人格システム予期しないエラー: {e}", exc_info=True)
+                return [TextContent(type="text", text=f"❌ 人格システムエラー: {str(e)}")]
 
         elif name == "personality_get_prompt":
             personality_url = PERSONALITY_SYSTEM_URL
             try:
                 timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
                 response = httpx.get(f"{personality_url}/api/persona/prompt", timeout=timeout)
-                if response.status_code == 200:
-                    data = response.json()
-                    return [TextContent(type="text", text=f"人格プロンプト:\n{data.get('prompt', '')}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ 取得に失敗しました: HTTP {response.status_code}")]
+                response.raise_for_status()
+                data = response.json()
+                return [TextContent(type="text", text=f"人格プロンプト:\n{data.get('prompt', '')}")]
+            except httpx.TimeoutException:
+                logger.error(f"人格システムタイムアウト: {personality_url}")
+                return [TextContent(type="text", text="❌ 人格システムへの接続がタイムアウトしました")]
+            except httpx.HTTPStatusError as e:
+                logger.error(f"人格システムHTTPエラー: {e.response.status_code} - {e.response.text}")
+                return [TextContent(type="text", text=f"❌ 人格システムエラー: HTTP {e.response.status_code}")]
+            except httpx.RequestError as e:
+                logger.error(f"人格システム接続エラー: {e}")
+                return [TextContent(type="text", text=f"❌ 人格システムに接続できません（URL: {personality_url}）")]
             except Exception as e:
-                return [TextContent(type="text", text=f"❌ 人格システム接続エラー: {e}")]
+                logger.error(f"人格システム予期しないエラー: {e}", exc_info=True)
+                return [TextContent(type="text", text=f"❌ 人格システムエラー: {str(e)}")]
 
         elif name == "personality_apply":
             personality_url = PERSONALITY_SYSTEM_URL
@@ -1065,13 +1123,21 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> Sequence[TextConten
                     },
                     timeout=timeout
                 )
-                if response.status_code == 200:
-                    data = response.json()
-                    return [TextContent(type="text", text=f"人格適用後のプロンプト:\n{data.get('enhanced_prompt', '')}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ 適用に失敗しました: HTTP {response.status_code}")]
+                response.raise_for_status()
+                data = response.json()
+                return [TextContent(type="text", text=f"人格適用後のプロンプト:\n{data.get('enhanced_prompt', '')}")]
+            except httpx.TimeoutException:
+                logger.error(f"人格システムタイムアウト: {personality_url}")
+                return [TextContent(type="text", text="❌ 人格システムへの接続がタイムアウトしました")]
+            except httpx.HTTPStatusError as e:
+                logger.error(f"人格システムHTTPエラー: {e.response.status_code} - {e.response.text}")
+                return [TextContent(type="text", text=f"❌ 人格システムエラー: HTTP {e.response.status_code}")]
+            except httpx.RequestError as e:
+                logger.error(f"人格システム接続エラー: {e}")
+                return [TextContent(type="text", text=f"❌ 人格システムに接続できません（URL: {personality_url}）")]
             except Exception as e:
-                return [TextContent(type="text", text=f"❌ 人格システム接続エラー: {e}")]
+                logger.error(f"人格システム予期しないエラー: {e}", exc_info=True)
+                return [TextContent(type="text", text=f"❌ 人格システムエラー: {str(e)}")]
 
         elif name == "personality_update":
             personality_url = PERSONALITY_SYSTEM_URL
@@ -1082,12 +1148,20 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> Sequence[TextConten
                     json=arguments.get("updates", {}),
                     timeout=timeout
                 )
-                if response.status_code == 200:
-                    return [TextContent(type="text", text=f"✅ 人格プロフィールを更新しました\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ 更新に失敗しました: HTTP {response.status_code}")]
+                response.raise_for_status()
+                return [TextContent(type="text", text=f"✅ 人格プロフィールを更新しました\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
+            except httpx.TimeoutException:
+                logger.error(f"人格システムタイムアウト: {personality_url}")
+                return [TextContent(type="text", text="❌ 人格システムへの接続がタイムアウトしました")]
+            except httpx.HTTPStatusError as e:
+                logger.error(f"人格システムHTTPエラー: {e.response.status_code} - {e.response.text}")
+                return [TextContent(type="text", text=f"❌ 人格システムエラー: HTTP {e.response.status_code}")]
+            except httpx.RequestError as e:
+                logger.error(f"人格システム接続エラー: {e}")
+                return [TextContent(type="text", text=f"❌ 人格システムに接続できません（URL: {personality_url}）")]
             except Exception as e:
-                return [TextContent(type="text", text=f"❌ 人格システム接続エラー: {e}")]
+                logger.error(f"人格システム予期しないエラー: {e}", exc_info=True)
+                return [TextContent(type="text", text=f"❌ 人格システムエラー: {str(e)}")]
 
         # 自律系（Autonomy System）
         elif name == "autonomy_add_task":
@@ -1105,49 +1179,81 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> Sequence[TextConten
                     },
                     timeout=timeout
                 )
-                if response.status_code == 200:
-                    return [TextContent(type="text", text=f"✅ 自律タスクを追加しました\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ 追加に失敗しました: HTTP {response.status_code}")]
+                response.raise_for_status()
+                return [TextContent(type="text", text=f"✅ 自律タスクを追加しました\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
+            except httpx.TimeoutException:
+                logger.error(f"自律システムタイムアウト: {autonomy_url}")
+                return [TextContent(type="text", text="❌ 自律システムへの接続がタイムアウトしました")]
+            except httpx.HTTPStatusError as e:
+                logger.error(f"自律システムHTTPエラー: {e.response.status_code} - {e.response.text}")
+                return [TextContent(type="text", text=f"❌ 自律システムエラー: HTTP {e.response.status_code}")]
+            except httpx.RequestError as e:
+                logger.error(f"自律システム接続エラー: {e}")
+                return [TextContent(type="text", text=f"❌ 自律システムに接続できません（URL: {autonomy_url}）")]
             except Exception as e:
-                return [TextContent(type="text", text=f"❌ 自律システム接続エラー: {e}")]
+                logger.error(f"自律システム予期しないエラー: {e}", exc_info=True)
+                return [TextContent(type="text", text=f"❌ 自律システムエラー: {str(e)}")]
 
         elif name == "autonomy_execute_tasks":
             autonomy_url = AUTONOMY_SYSTEM_URL
             try:
                 timeout = timeout_config.get("api_call", 30.0) if timeout_config else 30.0
                 response = httpx.post(f"{autonomy_url}/api/execute", timeout=timeout)
-                if response.status_code == 200:
-                    return [TextContent(type="text", text=f"✅ 自律タスクを実行しました\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ 実行に失敗しました: HTTP {response.status_code}")]
+                response.raise_for_status()
+                return [TextContent(type="text", text=f"✅ 自律タスクを実行しました\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
+            except httpx.TimeoutException:
+                logger.error(f"自律システムタイムアウト: {autonomy_url}")
+                return [TextContent(type="text", text=f"❌ 自律システムへの接続がタイムアウトしました（{timeout}秒）")]
+            except httpx.HTTPStatusError as e:
+                logger.error(f"自律システムHTTPエラー: {e.response.status_code} - {e.response.text}")
+                return [TextContent(type="text", text=f"❌ 自律システムエラー: HTTP {e.response.status_code}")]
+            except httpx.RequestError as e:
+                logger.error(f"自律システム接続エラー: {e}")
+                return [TextContent(type="text", text=f"❌ 自律システムに接続できません（URL: {autonomy_url}）")]
             except Exception as e:
-                return [TextContent(type="text", text=f"❌ 自律システム接続エラー: {e}")]
+                logger.error(f"自律システム予期しないエラー: {e}", exc_info=True)
+                return [TextContent(type="text", text=f"❌ 自律システムエラー: {str(e)}")]
 
         elif name == "autonomy_list_tasks":
             autonomy_url = AUTONOMY_SYSTEM_URL
             try:
                 timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
                 response = httpx.get(f"{autonomy_url}/api/tasks", timeout=timeout)
-                if response.status_code == 200:
-                    return [TextContent(type="text", text=f"自律タスク一覧:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ 取得に失敗しました: HTTP {response.status_code}")]
+                response.raise_for_status()
+                return [TextContent(type="text", text=f"自律タスク一覧:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
+            except httpx.TimeoutException:
+                logger.error(f"自律システムタイムアウト: {autonomy_url}")
+                return [TextContent(type="text", text="❌ 自律システムへの接続がタイムアウトしました")]
+            except httpx.HTTPStatusError as e:
+                logger.error(f"自律システムHTTPエラー: {e.response.status_code} - {e.response.text}")
+                return [TextContent(type="text", text=f"❌ 自律システムエラー: HTTP {e.response.status_code}")]
+            except httpx.RequestError as e:
+                logger.error(f"自律システム接続エラー: {e}")
+                return [TextContent(type="text", text=f"❌ 自律システムに接続できません（URL: {autonomy_url}）")]
             except Exception as e:
-                return [TextContent(type="text", text=f"❌ 自律システム接続エラー: {e}")]
+                logger.error(f"自律システム予期しないエラー: {e}", exc_info=True)
+                return [TextContent(type="text", text=f"❌ 自律システムエラー: {str(e)}")]
 
         elif name == "autonomy_get_level":
             autonomy_url = AUTONOMY_SYSTEM_URL
             try:
                 timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
                 response = httpx.get(f"{autonomy_url}/api/status", timeout=timeout)
-                if response.status_code == 200:
-                    data = response.json()
-                    return [TextContent(type="text", text=f"自律レベル: {data.get('autonomy_level', 'N/A')}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ 取得に失敗しました: HTTP {response.status_code}")]
+                response.raise_for_status()
+                data = response.json()
+                return [TextContent(type="text", text=f"自律レベル: {data.get('autonomy_level', 'N/A')}")]
+            except httpx.TimeoutException:
+                logger.error(f"自律システムタイムアウト: {autonomy_url}")
+                return [TextContent(type="text", text="❌ 自律システムへの接続がタイムアウトしました")]
+            except httpx.HTTPStatusError as e:
+                logger.error(f"自律システムHTTPエラー: {e.response.status_code} - {e.response.text}")
+                return [TextContent(type="text", text=f"❌ 自律システムエラー: HTTP {e.response.status_code}")]
+            except httpx.RequestError as e:
+                logger.error(f"自律システム接続エラー: {e}")
+                return [TextContent(type="text", text=f"❌ 自律システムに接続できません（URL: {autonomy_url}）")]
             except Exception as e:
-                return [TextContent(type="text", text=f"❌ 自律システム接続エラー: {e}")]
+                logger.error(f"自律システム予期しないエラー: {e}", exc_info=True)
+                return [TextContent(type="text", text=f"❌ 自律システムエラー: {str(e)}")]
 
         # VS Code操作
         elif name == "vscode_open_file":

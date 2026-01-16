@@ -1028,6 +1028,43 @@ def status():
         failed = initialization_status["failed"].copy()
         checks = initialization_status.get("checks", {}).copy()
 
+    # 統合モジュールの可用性と「無効な理由」を返す（運用で黙って無効化を避ける）
+    integrations_status = {}
+    missing_dependencies = []
+
+    integration_modules = {
+        "comfyui": ("ComfyUI", COMFYUI_AVAILABLE, ["COMFYUI_URL"]),
+        "svi_wan22": ("SVI × Wan 2.2", SVI_WAN22_AVAILABLE, ["COMFYUI_URL"]),
+        "ltx2": ("LTX-2", LTX2_AVAILABLE, ["COMFYUI_URL"]),
+        "google_drive": ("Google Drive", GOOGLE_DRIVE_AVAILABLE, ["GOOGLE_DRIVE_CREDENTIALS", "GOOGLE_DRIVE_TOKEN"]),
+        "civitai": ("CivitAI", CIVITAI_AVAILABLE, ["CIVITAI_API_KEY"]),
+        "obsidian": ("Obsidian", OBSIDIAN_AVAILABLE, ["OBSIDIAN_VAULT_PATH"]),
+        "local_llm": ("Local LLM", LOCAL_LLM_AVAILABLE, []),
+        "step_deep_research": ("Step-Deep-Research", STEP_DEEP_RESEARCH_AVAILABLE, []),
+    }
+
+    for key, (name, module_available, required_env) in integration_modules.items():
+        missing_env = _missing_env_vars(required_env) if required_env else []
+        env_ok = not missing_env
+        ready = bool(module_available and env_ok)
+        reason = None
+        if not module_available:
+            reason = "モジュール未インストール/未ロード"
+        elif not env_ok:
+            reason = f"環境変数未設定: {', '.join(missing_env)}"
+
+        integrations_status[key] = {
+            "name": name,
+            "module_available": bool(module_available),
+            "environment_configured": env_ok,
+            "missing_env": missing_env,
+            "ready": ready,
+            "reason": reason,
+        }
+
+        if not ready:
+            missing_dependencies.append({"integration": name, "reason": reason})
+
     # 必須チェックの状態を集計（軽量）
     required_checks = ["memory_db", "obsidian_path", "notification_hub", "llm_routing", "image_stock"]
     check_summary = {
@@ -1057,6 +1094,8 @@ def status():
         },
         "readiness_checks": checks,
         "check_summary": check_summary,
+        "integrations": integrations_status,
+        "missing_dependencies": missing_dependencies,
         "ready": (status_val == "ready")
     }), 200
 
