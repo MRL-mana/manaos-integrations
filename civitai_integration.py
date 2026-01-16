@@ -217,8 +217,12 @@ class CivitAIIntegration(BaseIntegration):
             download_path.parent.mkdir(parents=True, exist_ok=True)
             
             # ダウンロード実行
+            # downloadUrlは直接アクセス可能なURL（APIキーはセッションヘッダーに含まれている）
             timeout = self.get_timeout("file_download")
-            response = self.session.get(download_url, stream=True, timeout=timeout)
+            # 新しいセッションを作成してダウンロード（元のセッションのヘッダーを継承）
+            download_session = requests.Session()
+            download_session.headers.update(self.session.headers)
+            response = download_session.get(download_url, stream=True, timeout=timeout)
             response.raise_for_status()
             
             with open(download_path, 'wb') as f:
@@ -236,4 +240,58 @@ class CivitAIIntegration(BaseIntegration):
             )
             self.logger.error(f"モデルダウンロードエラー: {error.message}")
             return None
+    
+    def get_favorite_models(
+        self,
+        limit: int = 100,
+        model_type: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        お気に入り（ブックマーク）したモデルを取得
+        
+        Args:
+            limit: 取得数（最大100）
+            model_type: モデルタイプ（Checkpoint, LoRA, etc.）
+            
+        Returns:
+            お気に入りモデル情報のリスト
+        """
+        if not self.is_available():
+            self.logger.warning("CivitAI統合が利用できません（APIキーが必要です）")
+            return []
+        
+        if not self.api_key:
+            self.logger.warning("お気に入りを取得するにはAPIキーが必要です")
+            return []
+        
+        try:
+            params = {
+                "favorites": "true",
+                "limit": min(limit, 100)  # 最大100件
+            }
+            
+            if model_type:
+                params["types"] = model_type
+            
+            timeout = self.get_timeout("api_call")
+            response = self.session.get(
+                f"{self.api_base}/models",
+                params=params,
+                timeout=timeout
+            )
+            response.raise_for_status()
+            result = response.json()
+            
+            models = result.get("items", [])
+            self.logger.info(f"お気に入りモデル取得完了: {len(models)}件")
+            return models
+            
+        except Exception as e:
+            error = self.error_handler.handle_exception(
+                e,
+                context={"limit": limit, "action": "get_favorite_models"},
+                user_message="お気に入りモデルの取得に失敗しました"
+            )
+            self.logger.error(f"お気に入りモデル取得エラー: {error.message}")
+            return []
 

@@ -33,7 +33,7 @@ class ExcelLLMOCRCorrector:
     
     def __init__(
         self,
-        llm_model: str = "qwen2.5:7b",
+        llm_model: str = None,  # Noneの場合は環境変数またはデフォルトを使用
         batch_size: int = 100,  # 一度に処理するセル数
         max_cell_length: int = 500  # セルあたりの最大文字数
     ):
@@ -41,10 +41,64 @@ class ExcelLLMOCRCorrector:
         初期化
         
         Args:
-            llm_model: 使用するLLMモデル
+            llm_model: 使用するLLMモデル（Noneの場合は環境変数またはデフォルトを使用）
             batch_size: バッチ処理サイズ
             max_cell_length: セルあたりの最大文字数
         """
+        # モデル選択: 環境変数 > 引数 > デフォルト
+        if llm_model is None:
+            llm_model = os.getenv("MANA_OCR_LLM_MODEL", "qwen2.5:7b")
+        
+        # より大きなモデルが利用可能な場合は推奨
+        # 環境変数 MANA_OCR_USE_LARGE_MODEL=1 で自動的に大きなモデルを選択
+        if os.getenv("MANA_OCR_USE_LARGE_MODEL", "0").strip().lower() in ("1", "true", "yes", "y", "on"):
+            # 大きなモデルの優先順位（LM Studio対応）
+            large_models = [
+                "qwen2.5-coder-32b-instruct",  # 32B（LM Studio用、最高精度）
+                "qwen2.5-coder-14b-instruct",  # 14B（LM Studio用、高精度）
+                "qwen3:30b",  # 30B（Ollama用、高精度）
+                "qwen2.5:14b",  # 14B（Ollama用、中規模）
+            ]
+            
+            # 利用可能なモデルを確認
+            try:
+                from local_llm_helper import list_models
+                available_models = list_models()
+                for model in large_models:
+                    if model in available_models:
+                        llm_model = model
+                        print(f"大きなモデルを選択: {model}")
+                        break
+            except:
+                # LM Studioのモデル名を直接試す
+                if os.getenv("USE_LM_STUDIO", "0").strip().lower() in ("1", "true", "yes", "y", "on"):
+                    # LM Studio APIから直接モデル一覧を取得
+                    try:
+                        import requests
+                        r = requests.get('http://localhost:1234/v1/models', timeout=5)
+                        if r.status_code == 200:
+                            models_data = r.json().get('data', [])
+                            available_models = [model.get('id', '') for model in models_data]
+                            
+                            # 優先順位順にモデルを検索（部分一致）
+                            lm_studio_models = [
+                                "qwen2.5-coder-32b-instruct",  # 32B（最高精度）
+                                "qwen2.5-coder-14b-instruct",  # 14B（高精度）
+                                "openai/gpt-oss-20b",  # 20B（高精度）
+                            ]
+                            
+                            for preferred_model in lm_studio_models:
+                                for available in available_models:
+                                    if preferred_model.lower() in available.lower() or available.lower() in preferred_model.lower():
+                                        llm_model = available
+                                        print(f"LM Studioモデルを選択: {available}")
+                                        break
+                                if llm_model != os.getenv("MANA_OCR_LLM_MODEL", "qwen2.5:7b"):
+                                    break
+                    except:
+                        # API取得に失敗した場合はデフォルトモデルを使用
+                        pass
+        
         self.llm_model = llm_model
         self.batch_size = batch_size
         self.max_cell_length = max_cell_length
@@ -94,13 +148,70 @@ class ExcelLLMOCRCorrector:
         (r'５', '5'), (r'６', '6'), (r'７', '7'), (r'８', '8'), (r'９', '9'),
         (r'（', '('), (r'）', ')'), (r'，', ','), (r'．', '.'), (r'：', ':'),
         (r'；', ';'), (r'？', '?'), (r'！', '!'), (r'ー', '-'), (r'～', '~'),
-        # よくある誤認識パターン
+        # よくある誤認識パターン（日報関連）
         (r'ハイオク', 'ハイオク'),
         (r'レギュラー', 'レギュラー'),
         (r'軽油', '軽油'),
         (r'数量', '数量'),
         (r'金額', '金額'),
         (r'合計', '合計'),
+        (r'給油', '給油'),
+        (r'在庫', '在庫'),
+        (r'前日', '前日'),
+        (r'当日', '当日'),
+        (r'総合計', '総合計'),
+        # よくある文字間違いパターン（拡張）
+        (r'文宇', '文字'),
+        (r'読取', '読取'),
+        (r'誤認識', '誤認識'),
+        (r'読み取り', '読み取り'),
+        # 新しく発見された誤認識パターン（拡張版）
+        (r'総一合一計', '総合計'),
+        (r'総一合', '総合'),
+        (r'現釜売上', '現金売上'),
+        (r'現釜', '現金'),
+        (r'レギュラニ', 'レギュラー'),
+        (r'リ挥翠避', '軽油'),
+        (r'揮翠避', '軽油'),
+        (r'揮泰避通一', '軽油通一'),
+        (r'揮泰避', '軽油'),
+        (r'その地避計', 'その他避計'),
+        (r'その地', 'その他'),
+        (r'完料油計一', '完料油計'),
+        (r'完料', '完料'),
+        (r'自動車木通', '自動車用油'),
+        (r'自動車木', '自動車用'),
+        (r'その他自動重囲』遺油一', 'その他自動車用油'),
+        (r'その他自動重囲', 'その他自動車'),
+        (r'亘動用潤滑油計', '自動車用潤滑油計'),
+        (r'亘動用', '自動車用'),
+        (r'その価,冨樹一', 'その他'),
+        (r'その価', 'その他'),
+        (r'研廻', '研修'),
+        (r'金_額', '金額'),
+        (r'数_量', '数量'),
+        (r'金額_', '金額'),
+        (r'数量_', '数量'),
+        (r'数量二', '数量'),
+        (r'金額一', '金額'),
+        (r'粗利金額_', '粗利金額'),
+        (r'トノロ比', '粗利率'),
+        (r'川杉比', '粗利率'),
+        (r'見微し', '見積'),
+        (r'見 微 し', '見積'),
+        (r'乙617', '617'),
+        (r'四9', '49'),
+        (r'辺6', '6'),
+        (r'血4', '4'),
+        (r'山四', '山'),
+        (r'11河', '11'),
+        (r'54,69一', '54,69'),
+        (r'31,29一', '31,29'),
+        (r'33.00_', '33.00'),
+        (r'0 00', '0.00'),
+        (r'0.00_', '0.00'),
+        # 数字の連続誤認識パターン（例: "617.672116,578.2112234.472" → 適切に分割）
+        # ただし、これは文脈依存なのでLLMに任せる
     ]
     
     def _fix_common_ocr_errors(self, text: str) -> str:
@@ -174,23 +285,37 @@ class ExcelLLMOCRCorrector:
         prompt = f"""以下のOCR（光学文字認識）結果を修正してください。
 
 OCR結果には以下の問題がある可能性があります：
-- 文字化け（例: "文字" → "文宇"、"0" → "O"、"1" → "l"、"5" → "S"）
+- 文字化け（例: "文字" → "文宇"、"総合計" → "総一合一計"、"現金" → "現釜"）
 - 読み取り不足（空白や改行の誤認識）
 - 数字や記号の誤認識（例: "1" → "l"、"5" → "S"、"0" → "O"、"8" → "B"）
-- 日本語と英語の混在による誤認識
-- 似た文字の誤認識（例: "O"と"0"、"1"と"l"、"5"と"S"）
+- 日本語の誤認識（例: "レギュラー" → "レギュラニ"、"軽油" → "リ挥翠避"、"自動車用" → "自動車木"、"その他" → "その地"）
+- カンマ位置の誤認識（例: "374,648" → "374,6485"）
+- 似た文字の誤認識（例: "O"と"0"、"1"と"l"、"5"と"S"、"避"と"油"、"木"と"用"、"地"と"他"）
+- 数字の連続誤認識（例: "617.672116,578.2112234.472" → 適切に分割）
 
 {context_prefix}OCR結果:
 {text}
 
 修正指示:
-1. 明らかな誤字・脱字を積極的に修正してください
-2. 文脈から推測できる正しい文字に修正してください（特に数字・記号）
+1. 明らかな誤字・脱字を積極的に修正してください（特に日本語の文字化け）
+2. 文脈から推測できる正しい文字に修正してください（特に数字・記号・日本語）
 3. 数字や記号は正確に保持してください（特に数値データ、金額、数量）
-4. 似た文字の誤認識を修正してください（O/0、1/l、5/S、8/Bなど）
-5. 元の形式（空白、改行）は可能な限り保持してください
-6. 修正できない部分はそのまま残してください
-7. 修正が不要な場合は元のテキストをそのまま返してください
+4. カンマ位置を正しく修正してください（例: "374,6485" → "374,648"）
+5. 日本語の誤認識を積極的に修正してください:
+   - "総一合一計" → "総合計"
+   - "現釜" → "現金"
+   - "レギュラニ" → "レギュラー"
+   - "リ挥翠避" → "軽油"
+   - "揮泰避" → "軽油"
+   - "その地" → "その他"
+   - "自動車木" → "自動車用"
+   - "亘動用" → "自動車用"
+   - "完料油計一" → "完料油計"
+6. 数字の連続誤認識を修正してください（例: "617.672116,578.2112234.472" → 適切に分割）
+7. 似た文字の誤認識を修正してください（O/0、1/l、5/S、8/B、避/油、木/用、地/他など）
+8. 元の形式（空白、改行）は可能な限り保持してください
+9. 修正できない部分はそのまま残してください
+10. 修正が不要な場合は元のテキストをそのまま返してください
 
 修正後のテキストのみを返してください（説明やJSON形式は不要）:"""
         
@@ -372,10 +497,19 @@ def main():
         print(f"[ERROR] ファイルが見つかりません: {input_path}")
         sys.exit(1)
     
+    # モデル選択: 環境変数 MANA_OCR_LLM_MODEL または MANA_OCR_USE_LARGE_MODEL=1 で制御
+    model = os.getenv("MANA_OCR_LLM_MODEL", None)
+    use_large = os.getenv("MANA_OCR_USE_LARGE_MODEL", "0").strip().lower() in ("1", "true", "yes", "y", "on")
+    
     corrector = ExcelLLMOCRCorrector(
-        llm_model="qwen2.5:7b",
+        llm_model=model,  # Noneの場合は内部で自動選択
         batch_size=100
     )
+    
+    if use_large:
+        print(f"大きなモデルモード: {corrector.llm_model}")
+    else:
+        print(f"使用モデル: {corrector.llm_model} (大きなモデルを使う場合は MANA_OCR_USE_LARGE_MODEL=1 を設定)")
     
     try:
         result_path = corrector.correct_excel(input_path, output_path, max_sheets=max_sheets, verbose=True)

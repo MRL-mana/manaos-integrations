@@ -87,7 +87,7 @@ def main():
         from excel_llm_ocr_corrector import ExcelLLMOCRCorrector
         
         corrector = ExcelLLMOCRCorrector()
-        result = corrector.correct_file(str(excel_path), str(corrected_path))
+        result = corrector.correct_excel(str(excel_path), str(corrected_path), verbose=True)
         
         if result:
             print(f"✓ LLM修正が完了しました: {corrected_path}")

@@ -1040,7 +1040,9 @@ class MultiProviderOCR:
             
             # EasyOCRリーダーを初期化（初回のみ時間がかかる）
             # GPU使用を試行（利用可能な場合）
-            use_gpu = kwargs.get('gpu', False)  # デフォルトでCPU（GPUは不安定な場合があるため）
+            # NOTE: EasyOCR(GPU)は環境によってクラッシュすることがあるため、デフォルトはCPU。
+            #       GPUを使いたい場合は呼び出し側から gpu=True を渡す。
+            use_gpu = kwargs.get('gpu', False)
             if not hasattr(self, '_easyocr_reader'):
                 logger.info(f"EasyOCRリーダーを初期化中（初回のみ時間がかかります、GPU: {use_gpu}）...")
                 

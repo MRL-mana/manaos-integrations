@@ -11,7 +11,23 @@ import os
 from typing import Optional, Dict, Any, List
 
 OLLAMA_URL = "http://localhost:11434"
+LM_STUDIO_URL = "http://localhost:1234/v1"
 USE_WSL2 = os.environ.get("OLLAMA_USE_WSL2", "true").lower() == "true"
+
+def _should_use_lm_studio() -> bool:
+    """LM Studioを使用すべきか判定（環境変数と起動状況を確認）"""
+    use_lm_studio_env = os.environ.get("USE_LM_STUDIO", "false").strip().lower() in ("1", "true", "yes", "y", "on")
+    if use_lm_studio_env:
+        return _check_lm_studio()
+    return False
+
+def _check_lm_studio() -> bool:
+    """LM Studioが起動しているか確認"""
+    try:
+        response = requests.get(f"{LM_STUDIO_URL}/models", timeout=2)
+        return response.status_code == 200
+    except:
+        return False
 
 
 def _check_wsl2_ollama() -> bool:
@@ -48,6 +64,15 @@ def _get_ollama_url() -> str:
         return OLLAMA_URL
 
 
+def _check_lm_studio() -> bool:
+    """LM Studioが起動しているか確認"""
+    try:
+        response = requests.get(f"{LM_STUDIO_URL}/models", timeout=2)
+        return response.status_code == 200
+    except:
+        return False
+
+
 def chat(model: str = "qwen3:4b", message: str = "", messages: Optional[List[Dict]] = None,
          stream: bool = False, timeout: int = 120) -> Dict[str, Any]:
     """
@@ -63,16 +88,55 @@ def chat(model: str = "qwen3:4b", message: str = "", messages: Optional[List[Dic
     Returns:
         LLMの応答を含む辞書
     """
+    # LM Studioを優先使用（GPU対応、Windowsネイティブ）
+    if _should_use_lm_studio():
+        # LM Studio OpenAI互換API
+        url = f"{LM_STUDIO_URL}/chat/completions"
+        
+        if messages is None:
+            messages = [{"role": "user", "content": message}]
+        
+        data = {
+            "model": model,
+            "messages": messages,
+            "stream": stream,
+            "temperature": 0.7
+        }
+        
+        try:
+            response = requests.post(url, json=data, timeout=timeout)
+            response.raise_for_status()
+            result = response.json()
+            return {
+                "message": result["choices"][0]["message"]["content"],
+                "model": model,
+                "source": "lm_studio"
+            }
+        except requests.exceptions.Timeout:
+            return {"error": "タイムアウト", "message": "モデルのロードに時間がかかっています。もう一度試してください。"}
+        except Exception as e:
+            return {"error": str(e), "message": "LM Studioへの接続に失敗しました。"}
+    
+    # Ollama（WSL2優先）
     url = f"{_get_ollama_url()}/api/chat"
 
     if messages is None:
         messages = [{"role": "user", "content": message}]
 
+    # GPU使用を強制（環境変数で制御可能）
+    use_gpu = os.environ.get("OLLAMA_USE_GPU", "1").strip().lower() in ("1", "true", "yes", "y", "on")
+    
     data = {
         "model": model,
         "messages": messages,
         "stream": stream
     }
+    
+    # GPU使用を強制する場合、optionsにnum_gpuを指定
+    if use_gpu:
+        data["options"] = {
+            "num_gpu": 99  # 可能な限りGPUを使用
+        }
 
     try:
         response = requests.post(url, json=data, timeout=timeout)
@@ -87,7 +151,7 @@ def chat(model: str = "qwen3:4b", message: str = "", messages: Optional[List[Dic
 def generate(model: str = "qwen3:4b", prompt: str = "", stream: bool = False,
              timeout: int = 120) -> Dict[str, Any]:
     """
-    ローカルLLMでテキスト生成する（WSL2経由でGPUモード対応）
+    ローカルLLMでテキスト生成する（LM Studio優先、WSL2経由でGPUモード対応）
 
     Args:
         model: 使用するモデル名（デフォルト: qwen3:4b）
@@ -98,13 +162,48 @@ def generate(model: str = "qwen3:4b", prompt: str = "", stream: bool = False,
     Returns:
         LLMの応答を含む辞書
     """
+    # LM Studioを優先使用（GPU対応、Windowsネイティブ）
+    if _should_use_lm_studio():
+        # LM Studio OpenAI互換API
+        url = f"{LM_STUDIO_URL}/chat/completions"
+        data = {
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": stream,
+            "temperature": 0.7
+        }
+        
+        try:
+            response = requests.post(url, json=data, timeout=timeout)
+            response.raise_for_status()
+            result = response.json()
+            return {
+                "response": result["choices"][0]["message"]["content"],
+                "model": model,
+                "source": "lm_studio"
+            }
+        except requests.exceptions.Timeout:
+            return {"error": "タイムアウト", "message": "モデルのロードに時間がかかっています。"}
+        except Exception as e:
+            return {"error": str(e), "message": "LM Studioへの接続に失敗しました。"}
+    
+    # Ollama（WSL2優先）
     url = f"{_get_ollama_url()}/api/generate"
 
+    # GPU使用を強制（環境変数で制御可能）
+    use_gpu = os.environ.get("OLLAMA_USE_GPU", "1").strip().lower() in ("1", "true", "yes", "y", "on")
+    
     data = {
         "model": model,
         "prompt": prompt,
         "stream": stream
     }
+    
+    # GPU使用を強制する場合、optionsにnum_gpuを指定
+    if use_gpu:
+        data["options"] = {
+            "num_gpu": 99  # 可能な限りGPUを使用
+        }
 
     try:
         response = requests.post(url, json=data, timeout=timeout)

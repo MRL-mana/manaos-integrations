@@ -7,8 +7,10 @@ import sys
 import os
 import re
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import multiprocessing
 
 logger = logging.getLogger(__name__)
 
@@ -433,6 +435,187 @@ class PDFToExcelConverter:
             logger.error(f"Tesseract OCR（レイアウト付き）エラー: {e}")
             return None
     
+    def _process_single_page(
+        self,
+        doc: Any,
+        page_num: int,
+        selected_provider: str,
+        available_providers: List[str],
+        zoom: float = 6.0
+    ) -> Tuple[int, Optional[Dict[str, Any]]]:
+        """単一ページを処理（並列処理用）"""
+        try:
+            page = doc[page_num]
+            actual_page_num = page_num + 1
+            
+            # ページを画像に変換
+            mat = fitz.Matrix(zoom, zoom)
+            pix = page.get_pixmap(matrix=mat, alpha=False)
+            temp_image_path = f"temp_page_{actual_page_num}_{os.getpid()}.png"
+            pix.save(temp_image_path, output="png")
+            
+            # OCRで認識
+            ocr_results = []
+            providers_to_try = [selected_provider]
+            
+            if selected_provider != "paddleocr" and "paddleocr" in available_providers:
+                providers_to_try.append("paddleocr")
+            if selected_provider != "easyocr" and "easyocr" in available_providers:
+                providers_to_try.append("easyocr")
+            if selected_provider != "tesseract" and "tesseract" in available_providers:
+                providers_to_try.append("tesseract")
+            
+            best_result = None
+            best_score = -1e9
+            
+            for provider in providers_to_try:
+                try:
+                    if provider == "tesseract":
+                        result = self.ocr.recognize(
+                            temp_image_path,
+                            provider="tesseract",
+                            layout=True,
+                            auto=True,
+                            lang="jpn+eng",
+                            max_cols=80,
+                            psm_list=[6, 4, 11, 1, 3, 12, 13],
+                            use_gridlines=True,
+                        )
+                    elif provider in ["easyocr", "paddleocr"]:
+                        def _env_true(name: str, default: str = "0") -> bool:
+                            v = (os.getenv(name, default) or "").strip().lower()
+                            return v in ("1", "true", "yes", "y", "on")
+                        
+                        global_gpu = _env_true("MANA_OCR_USE_GPU", "1")
+                        engine_gpu = (
+                            _env_true("MANA_PADDLEOCR_USE_GPU", "1") if provider == "paddleocr"
+                            else _env_true("MANA_EASYOCR_USE_GPU", "0")
+                        )
+                        
+                        use_gpu = False
+                        if global_gpu and engine_gpu:
+                            try:
+                                import torch
+                                use_gpu = bool(torch.cuda.is_available())
+                            except Exception:
+                                use_gpu = False
+                        
+                        try:
+                            result = self.ocr.recognize(
+                                temp_image_path,
+                                provider=provider,
+                                layout=True,
+                                lang="ja" if provider == "easyocr" else "japan",
+                                gpu=use_gpu,
+                            )
+                            if result is None:
+                                continue
+                        except (MemoryError, OSError, RuntimeError):
+                            continue
+                    else:
+                        result = self.ocr.recognize(temp_image_path, provider=provider)
+                    
+                    if result and result.get('text') and result.get('text').strip():
+                        ocr_results.append(result)
+                        conf = result.get('confidence', 0.0)
+                        text_len = len(result.get('text', ''))
+                        jp_chars = len(re.findall(r"[\u3040-\u30ff\u4e00-\u9fff]", result.get('text', '')))
+                        score = conf * 0.5 + min(text_len / 1000.0, 1.0) * 0.3 + min(jp_chars / max(text_len, 1), 1.0) * 0.2
+                        
+                        if score > best_score:
+                            best_score = score
+                            best_result = result
+                except Exception:
+                    continue
+            
+            # 最良の結果を選択
+            ocr_result = best_result
+            if ocr_result and len(ocr_results) > 1:
+                best_score = -1e9
+                best_result_merged = ocr_result
+                
+                for result in ocr_results:
+                    if not result:
+                        continue
+                    grid = result.get('grid_data')
+                    if not grid:
+                        continue
+                    
+                    mojibake_count = 0
+                    total_chars = 0
+                    for row in grid:
+                        for cell in row:
+                            if cell:
+                                cell_str = str(cell).strip()
+                                if cell_str:
+                                    total_chars += len(cell_str)
+                                    mojibake_count += cell_str.count('')
+                    
+                    if total_chars < 100:
+                        continue
+                    
+                    mojibake_ratio = mojibake_count / max(total_chars, 1)
+                    score = total_chars * 0.6 - mojibake_count * 10 - mojibake_ratio * 1000
+                    
+                    if score > best_score:
+                        best_score = score
+                        best_result_merged = result
+                
+                ocr_result = best_result_merged
+            
+            # 一時ファイルを削除
+            if os.path.exists(temp_image_path):
+                os.remove(temp_image_path)
+            
+            return (page_num, {
+                'page_num': actual_page_num,
+                'text': ocr_result.get('text', '') if ocr_result else '',
+                'grid_data': ocr_result.get('grid_data') if ocr_result else None,
+                'provider': ocr_result.get('provider', selected_provider) if ocr_result else None
+            })
+        except Exception as e:
+            logger.error(f"ページ {page_num + 1} 処理エラー: {e}")
+            return (page_num, None)
+    
+    def _process_pages_parallel(
+        self,
+        doc: Any,
+        start: int,
+        end: int,
+        selected_provider: str,
+        available_providers: List[str],
+        max_workers: int
+    ) -> Dict[int, Dict[str, Any]]:
+        """複数ページを並列処理"""
+        page_results = {}
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(
+                    self._process_single_page,
+                    doc,
+                    page_num,
+                    selected_provider,
+                    available_providers
+                ): page_num
+                for page_num in range(start, end)
+            }
+            
+            completed = 0
+            total = len(futures)
+            
+            for future in as_completed(futures):
+                page_num, result = future.result()
+                if result:
+                    page_results[page_num] = result
+                    completed += 1
+                    logger.info(f"✓ ページ {result['page_num']} 完了 ({completed}/{total})")
+                else:
+                    completed += 1
+                    logger.warning(f"⚠ ページ {page_num + 1} 失敗 ({completed}/{total})")
+        
+        return page_results
+    
     def extract_text(
         self,
         pdf_path: str,
@@ -524,7 +707,31 @@ class PDFToExcelConverter:
                     if max_pages is not None:
                         end = min(doc_pages, start + int(max_pages))
                     total_target = max(end - start, 0)
-                    for idx, page_num in enumerate(range(start, end), start=1):
+                    
+                    # 並列処理の設定（環境変数で制御可能）
+                    use_parallel = os.getenv("MANA_OCR_PARALLEL", "1").strip().lower() in ("1", "true", "yes", "y", "on")
+                    max_workers = int(os.getenv("MANA_OCR_MAX_WORKERS", "0")) or min(4, multiprocessing.cpu_count(), total_target)
+                    
+                    # GPU使用時は並列数を制限（メモリ使用量を考慮）
+                    try:
+                        import torch
+                        if torch.cuda.is_available():
+                            max_workers = min(max_workers, 2)  # GPU使用時は最大2並列
+                            logger.info(f"GPU検出: 並列数を{max_workers}に制限します")
+                    except:
+                        pass
+                    
+                    if use_parallel and total_target > 1:
+                        logger.info(f"並列処理モード: {max_workers}並列で{total_target}ページを処理します")
+                        page_results = self._process_pages_parallel(
+                            doc, start, end, selected_provider, available_providers, max_workers
+                        )
+                        # 結果を順番に処理
+                        for idx, (page_num, page_info) in enumerate(sorted(page_results.items()), start=1):
+                            actual_page_num = page_num + 1
+                    else:
+                        # 順次処理（従来通り）
+                        for idx, page_num in enumerate(range(start, end), start=1):
                         page = doc[page_num]
                         actual_page_num = page_num + 1
                         logger.info(f"ページ {actual_page_num}（範囲 {idx}/{total_target}）をOCR処理中...")
@@ -569,14 +776,46 @@ class PDFToExcelConverter:
                                     )
                                 elif provider in ["easyocr", "paddleocr"]:
                                     # EasyOCR/PaddleOCRは日本語に強い（GPU使用を試行、失敗時はCPU）
-                                    # EasyOCRがクラッシュする可能性があるため、より安全に実行
+                                    # TesseractはGPU非対応なので、GPU化できるのはここだけ。
+                                    #
+                                    # 既定:
+                                    # - PaddleOCR: GPU利用を試行（速い/安定しやすい）
+                                    # - EasyOCR: 以前クラッシュ実績があるため「明示ON」時のみGPU利用
+                                    #
+                                    # 環境変数で切り替え:
+                                    # - MANA_OCR_USE_GPU=1/0 (全体のON/OFF)
+                                    # - MANA_EASYOCR_USE_GPU=1/0
+                                    # - MANA_PADDLEOCR_USE_GPU=1/0
+                                    def _env_true(name: str, default: str = "0") -> bool:
+                                        v = (os.getenv(name, default) or "").strip().lower()
+                                        return v in ("1", "true", "yes", "y", "on")
+
+                                    global_gpu = _env_true("MANA_OCR_USE_GPU", "1")
+                                    engine_gpu = (
+                                        _env_true("MANA_PADDLEOCR_USE_GPU", "1") if provider == "paddleocr"
+                                        else _env_true("MANA_EASYOCR_USE_GPU", "0")
+                                    )
+
+                                    use_gpu = False
+                                    if global_gpu and engine_gpu:
+                                        try:
+                                            import torch
+                                            use_gpu = bool(torch.cuda.is_available())
+                                        except Exception:
+                                            use_gpu = False
+
+                                    if use_gpu:
+                                        logger.info(f"  GPU有効: {provider} をGPUで実行します")
+                                    else:
+                                        logger.info(f"  GPU無効: {provider} はCPUで実行します")
+
                                     try:
                                         result = self.ocr.recognize(
                                             temp_image_path,
                                             provider=provider,
                                             layout=True,
                                             lang="ja" if provider == "easyocr" else "japan",
-                                            gpu=False  # まずはCPUで安定動作（GPUはオプション）
+                                            gpu=use_gpu,
                                         )
                                         # EasyOCRがNoneを返した場合（初期化失敗）はスキップ
                                         if result is None:

@@ -51,7 +51,7 @@ def execute_webhook(payload=None):
                     result = response.json()
                     print("レスポンス:")
                     print(json.dumps(result, indent=2, ensure_ascii=False))
-                except:
+                except (ValueError, json.JSONDecodeError):
                     print(f"レスポンス: {response.text[:500]}")
                 return True
             else:
@@ -75,8 +75,8 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         try:
             payload = json.loads(sys.argv[1])
-        except:
-            print(f"[警告] ペイロードの解析に失敗しました。デフォルトを使用します。")
+        except (ValueError, json.JSONDecodeError) as e:
+            print(f"[警告] ペイロードの解析に失敗しました: {e}。デフォルトを使用します。")
     
     success = execute_webhook(payload)
     sys.exit(0 if success else 1)
