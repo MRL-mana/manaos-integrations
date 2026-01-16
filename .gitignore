@@ -77,6 +77,13 @@ tmp/
 temp/
 *.tmp
 
+# Generated artifacts (local runs)
+gallery_images/
+generated_images/
+organized_images/
+temp_downloaded_*.pdf
+temp_page_*.png
+
 # Crash snapshots
 crash_snapshots/
 
