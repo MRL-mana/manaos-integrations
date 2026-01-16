@@ -1,0 +1,283 @@
+{
+  "tools": [
+    {
+      "name": "memory_store",
+      "description": "記憶に情報を保存します",
+      "url": "http://localhost:9500/api/memory/store",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "parameters": {
+        "content": {
+          "type": "string",
+          "description": "保存する内容",
+          "required": true
+        },
+        "format_type": {
+          "type": "string",
+          "description": "フォーマットタイプ（conversation/memo/research/system/auto）",
+          "default": "auto"
+        }
+      }
+    },
+    {
+      "name": "memory_recall",
+      "description": "記憶から情報を検索します",
+      "url": "http://localhost:9500/api/memory/recall",
+      "method": "GET",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "description": "検索クエリ",
+          "required": true
+        },
+        "scope": {
+          "type": "string",
+          "description": "スコープ（all/today/week/month）",
+          "default": "all"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "取得件数",
+          "default": 10
+        }
+      }
+    },
+    {
+      "name": "learning_record",
+      "description": "学習システムに使用パターンを記録します",
+      "url": "http://localhost:5126/api/record",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "parameters": {
+        "action": {
+          "type": "string",
+          "description": "アクション名",
+          "required": true
+        },
+        "context": {
+          "type": "object",
+          "description": "コンテキスト情報"
+        },
+        "result": {
+          "type": "object",
+          "description": "結果情報"
+        }
+      }
+    },
+    {
+      "name": "learning_analyze",
+      "description": "学習システムでパターンを分析します",
+      "url": "http://localhost:5126/api/analyze",
+      "method": "GET"
+    },
+    {
+      "name": "learning_get_preferences",
+      "description": "学習された好みを取得します",
+      "url": "http://localhost:5126/api/preferences",
+      "method": "GET"
+    },
+    {
+      "name": "learning_get_optimizations",
+      "description": "最適化提案を取得します",
+      "url": "http://localhost:5126/api/optimizations",
+      "method": "GET"
+    },
+    {
+      "name": "personality_get_persona",
+      "description": "現在の人格プロフィールを取得します",
+      "url": "http://localhost:5123/api/persona",
+      "method": "GET"
+    },
+    {
+      "name": "personality_get_prompt",
+      "description": "人格プロンプトを取得します",
+      "url": "http://localhost:5123/api/persona/prompt",
+      "method": "GET"
+    },
+    {
+      "name": "personality_apply",
+      "description": "プロンプトに人格を適用します",
+      "url": "http://localhost:5123/api/persona/apply",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "parameters": {
+        "prompt": {
+          "type": "string",
+          "description": "ベースプロンプト",
+          "required": true
+        },
+        "context": {
+          "type": "string",
+          "description": "コンテキスト（report/conversation）"
+        }
+      }
+    },
+    {
+      "name": "personality_update",
+      "description": "人格プロフィールを更新します",
+      "url": "http://localhost:5123/api/persona",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "parameters": {
+        "updates": {
+          "type": "object",
+          "description": "更新内容",
+          "required": true
+        }
+      }
+    },
+    {
+      "name": "autonomy_add_task",
+      "description": "自律タスクを追加します",
+      "url": "http://localhost:5124/api/tasks",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "parameters": {
+        "task_type": {
+          "type": "string",
+          "description": "タスクタイプ",
+          "required": true
+        },
+        "priority": {
+          "type": "string",
+          "description": "優先度（high/medium/low）",
+          "default": "medium"
+        },
+        "condition": {
+          "type": "object",
+          "description": "実行条件",
+          "required": true
+        },
+        "action": {
+          "type": "object",
+          "description": "実行アクション",
+          "required": true
+        },
+        "schedule": {
+          "type": "string",
+          "description": "スケジュール（cron形式）"
+        }
+      }
+    },
+    {
+      "name": "autonomy_execute_tasks",
+      "description": "条件をチェックして自律タスクを実行します",
+      "url": "http://localhost:5124/api/execute",
+      "method": "POST"
+    },
+    {
+      "name": "autonomy_list_tasks",
+      "description": "自律タスク一覧を取得します",
+      "url": "http://localhost:5124/api/tasks",
+      "method": "GET"
+    },
+    {
+      "name": "autonomy_get_level",
+      "description": "現在の自律レベルを取得します",
+      "url": "http://localhost:5124/api/status",
+      "method": "GET"
+    },
+    {
+      "name": "secretary_morning_routine",
+      "description": "朝のルーチンを実行します",
+      "url": "http://localhost:5125/api/morning",
+      "method": "POST"
+    },
+    {
+      "name": "secretary_noon_routine",
+      "description": "昼のルーチンを実行します",
+      "url": "http://localhost:5125/api/noon",
+      "method": "POST"
+    },
+    {
+      "name": "secretary_evening_routine",
+      "description": "夜のルーチンを実行します",
+      "url": "http://localhost:5125/api/evening",
+      "method": "POST"
+    },
+    {
+      "name": "obsidian_create_note",
+      "description": "Obsidianにノートを作成します",
+      "url": "http://localhost:9500/api/obsidian/create",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "parameters": {
+        "title": {
+          "type": "string",
+          "description": "ノートのタイトル",
+          "required": true
+        },
+        "content": {
+          "type": "string",
+          "description": "ノートの内容",
+          "required": true
+        },
+        "folder": {
+          "type": "string",
+          "description": "フォルダ"
+        }
+      }
+    },
+    {
+      "name": "obsidian_search_notes",
+      "description": "Obsidianでノートを検索します",
+      "url": "http://localhost:9500/api/obsidian/search",
+      "method": "GET",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "description": "検索クエリ",
+          "required": true
+        }
+      }
+    },
+    {
+      "name": "vscode_open_file",
+      "description": "VS Codeでファイルを開きます",
+      "url": "http://localhost:9500/api/vscode/open",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "parameters": {
+        "file_path": {
+          "type": "string",
+          "description": "ファイルパス",
+          "required": true
+        },
+        "line": {
+          "type": "integer",
+          "description": "行番号"
+        }
+      }
+    },
+    {
+      "name": "vscode_open_folder",
+      "description": "VS Codeでフォルダを開きます",
+      "url": "http://localhost:9500/api/vscode/open-folder",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "parameters": {
+        "folder_path": {
+          "type": "string",
+          "description": "フォルダパス",
+          "required": true
+        }
+      }
+    }
+  ]
+}

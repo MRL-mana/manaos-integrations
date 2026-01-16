@@ -1,0 +1,32 @@
+# RunPod MCP Server Requirements
+# 最小限の依存関係のみ
+
+# MCP Protocol
+mcp>=0.9.0
+
+# HTTP Requests (RunPod API呼び出し)
+requests>=2.31.0
+
+# JSON処理
+# (標準ライブラリだが明示的に)
+
+# 日時処理
+# datetime (標準ライブラリ)
+
+# パス処理
+# pathlib (標準ライブラリ)
+
+# ログ処理
+# logging (標準ライブラリ)
+
+# 既存のRunPod Managerに必要なもの（最小限）
+# 注意: 実際のGPU処理はRunPod側で実行されるため、
+# PyTorch等の重いライブラリは不要
+#
+# RunPod Manager/Clientは以下のみ使用:
+# - requests (HTTP通信)
+# - json (標準ライブラリ)
+# - pathlib (標準ライブラリ)
+# - logging (標準ライブラリ)
+# - datetime (標準ライブラリ)
+

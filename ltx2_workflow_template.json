@@ -1,0 +1,51 @@
+{
+  "_comment": "LTX-2 Super設定ワークフローテンプレート（参考用）",
+  "_note": "実際のワークフローは記事のメンバーシップ限定で配布されているため、ここでは基本的な構造のみを示します。",
+  "_usage": "このテンプレートは参考用です。実際のワークフローはComfyUIで作成するか、記事から取得してください。",
+  
+  "template_info": {
+    "name": "LTX-2 Super設定ワークフロー",
+    "description": "NAG、res_2sサンプラー、2段階生成を使用した推奨設定",
+    "version": "1.0",
+    "features": [
+      "NAG (Negative Attention Guidance)",
+      "res_2sサンプラー",
+      "2段階生成（アップスケール）",
+      "Q8 GGUFモデル対応"
+    ]
+  },
+  
+  "required_nodes": [
+    "ComfyUI-KJNodes (NAG機能)",
+    "ComfyUI-GGUF (GGUFモデルサポート)",
+    "ComfyUI-VideoHelperSuite (推奨)"
+  ],
+  
+  "workflow_structure": {
+    "description": "実際のワークフロー構造は、ltx2_video_integration.pyのcreate_ltx2_workflow()メソッドで動的に生成されます。",
+    "main_components": [
+      "画像読み込みノード",
+      "プロンプトエンコードノード（ポジティブ/ネガティブ）",
+      "NAGノード（KJNodes）",
+      "GGUFモデルローダー（ComfyUI-GGUF）",
+      "res_2sサンプラー",
+      "2段階生成ノード（1パス目: 低解像度、2パス目: アップスケール）",
+      "動画保存ノード"
+    ]
+  },
+  
+  "setup_instructions": [
+    "1. 必要なカスタムノードをインストール: python install_ltx2_custom_nodes.py",
+    "2. LTX-2 Q8 GGUFモデルをダウンロードして配置",
+    "3. ComfyUIを再起動",
+    "4. ltx2_video_integration.pyを使用してワークフローを生成",
+    "または、記事からワークフローファイルを取得してComfyUIに読み込み"
+  ],
+  
+  "reference": {
+    "article": "https://note.com/ai_hakase/n/n01d2855d90cd",
+    "model_download": "https://huggingface.co/unsloth/LTX-2-GGUF",
+    "kjnodes": "https://github.com/kijai/ComfyUI-KJNodes",
+    "comfyui_gguf": "https://github.com/city96/ComfyUI-GGUF"
+  }
+}
