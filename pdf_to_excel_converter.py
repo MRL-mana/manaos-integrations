@@ -569,13 +569,22 @@ class PDFToExcelConverter:
                                     )
                                 elif provider in ["easyocr", "paddleocr"]:
                                     # EasyOCR/PaddleOCRは日本語に強い（GPU使用を試行、失敗時はCPU）
-                                    result = self.ocr.recognize(
-                                        temp_image_path,
-                                        provider=provider,
-                                        layout=True,
-                                        lang="ja" if provider == "easyocr" else "japan",
-                                        gpu=False  # まずはCPUで安定動作（GPUはオプション）
-                                    )
+                                    # EasyOCRがクラッシュする可能性があるため、より安全に実行
+                                    try:
+                                        result = self.ocr.recognize(
+                                            temp_image_path,
+                                            provider=provider,
+                                            layout=True,
+                                            lang="ja" if provider == "easyocr" else "japan",
+                                            gpu=False  # まずはCPUで安定動作（GPUはオプション）
+                                        )
+                                        # EasyOCRがNoneを返した場合（初期化失敗）はスキップ
+                                        if result is None:
+                                            logger.warning(f"  {provider}: 初期化失敗、スキップ")
+                                            continue
+                                    except (MemoryError, OSError, RuntimeError) as critical_err:
+                                        logger.error(f"  {provider}: 致命的エラー ({type(critical_err).__name__})、スキップ: {critical_err}")
+                                        continue
                                 else:
                                     result = self.ocr.recognize(temp_image_path, provider=provider)
                                 
@@ -595,6 +604,7 @@ class PDFToExcelConverter:
                             except Exception as e:
                                 error_msg = str(e)
                                 logger.warning(f"プロバイダー '{provider}' でエラー: {error_msg[:100]}")
+                                # 致命的エラーの場合は次のプロバイダーに進む
                                 continue
                         
                         # 複数の結果をマージして文字化けを減らす
