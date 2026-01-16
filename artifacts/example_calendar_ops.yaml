@@ -1,0 +1,40 @@
+# カレンダー操作のサンプルYAML
+
+# 例1: イベント作成
+kind: calendar_ops
+action: create_event
+calendar_id: "primary"
+title: "会議"
+start_time: "2026-01-15T14:00:00"
+end_time: "2026-01-15T15:00:00"
+timezone: "Asia/Tokyo"
+attendees:
+  - "user@example.com"
+description: "会議の説明"
+location: "会議室A"
+notify:
+  slack: false
+idempotency_key: "calendar_event_2026-01-13_001"
+
+# 例2: イベント一覧取得
+# kind: calendar_ops
+# action: list_events
+# calendar_id: "primary"
+# start_time: "2026-01-15T00:00:00Z"
+# end_time: "2026-01-22T23:59:59Z"
+# max_results: 10
+# notify:
+#   slack: false
+# idempotency_key: "calendar_list_2026-01-13_001"
+
+# 例3: イベント更新
+# kind: calendar_ops
+# action: update_event
+# calendar_id: "primary"
+# event_id: "event_id_here"
+# title: "更新された会議"
+# start_time: "2026-01-15T15:00:00"
+# end_time: "2026-01-15T16:00:00"
+# notify:
+#   slack: false
+# idempotency_key: "calendar_update_2026-01-13_001"

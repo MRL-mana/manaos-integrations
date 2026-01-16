@@ -1,0 +1,12 @@
+# Google DriveバックアップのYAML例
+# このファイルを参考に、AIにYAML形式でバックアップ設定を出力させてください
+
+kind: drive_backup
+date: 2026-01-12
+source: "C:/important/data"
+destination: "backup/2026-01-12"
+description: "重要データのバックアップ"
+compress: true
+notify:
+  slack: true
+idempotency_key: "drive_backup_2026-01-12"

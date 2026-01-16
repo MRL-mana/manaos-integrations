@@ -1,0 +1,32 @@
+# データ変換のサンプルYAML
+
+# 例1: CSVからJSONへ変換
+kind: data_transform
+action: convert
+input_file: "data/raw.csv"
+output_file: "data/processed.json"
+input_format: "csv"
+output_format: "json"
+transformation:
+  - type: "sort"
+    columns: ["date"]
+    ascending: true
+notify:
+  slack: false
+idempotency_key: "data_transform_2026-01-13_001"
+
+# 例2: JSONからExcelへ変換
+# kind: data_transform
+# action: convert
+# input_file: "data/data.json"
+# output_file: "data/data.xlsx"
+# input_format: "json"
+# output_format: "excel"
+# transformation:
+#   - type: "filter"
+#     condition: "status == 'active'"
+#   - type: "format"
+#     date_format: "YYYY-MM-DD"
+# notify:
+#   slack: false
+# idempotency_key: "data_transform_excel_2026-01-13_001"

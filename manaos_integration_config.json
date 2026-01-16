@@ -1,0 +1,150 @@
+{
+  "manaos_services": {
+    "intent_router": {
+      "port": 5100,
+      "name": "Intent Router",
+      "description": "ユーザー意図を解析するサービス"
+    },
+    "task_planner": {
+      "port": 5101,
+      "name": "Task Planner",
+      "description": "タスクを計画するサービス"
+    },
+    "task_critic": {
+      "port": 5102,
+      "name": "Task Critic",
+      "description": "タスク計画を評価するサービス"
+    },
+    "rag_memory": {
+      "port": 5103,
+      "name": "RAG Memory",
+      "description": "記憶を管理するサービス"
+    },
+    "task_queue": {
+      "port": 5104,
+      "name": "Task Queue",
+      "description": "タスクキューを管理するサービス"
+    },
+    "ui_operations": {
+      "port": 5105,
+      "name": "UI Operations",
+      "description": "UI操作を管理するサービス"
+    },
+    "unified_orchestrator": {
+      "port": 5106,
+      "name": "Unified Orchestrator",
+      "description": "統合オーケストレーター"
+    },
+    "executor_enhanced": {
+      "port": 5107,
+      "name": "Executor Enhanced",
+      "description": "タスク実行サービス"
+    },
+    "portal_integration": {
+      "port": 5108,
+      "name": "Portal Integration",
+      "description": "ポータル統合サービス"
+    },
+    "content_generation": {
+      "port": 5109,
+      "name": "Content Generation",
+      "description": "コンテンツ生成サービス"
+    },
+    "llm_optimization": {
+      "port": 5110,
+      "name": "LLM Optimization",
+      "description": "LLM最適化サービス"
+    },
+    "service_monitor": {
+      "port": 5111,
+      "name": "Service Monitor",
+      "description": "サービス監視サービス"
+    },
+    "system_status": {
+      "port": 5112,
+      "name": "System Status API",
+      "description": "システムステータスAPI"
+    },
+    "web_voice": {
+      "port": 5115,
+      "name": "Web Voice Interface",
+      "description": "Web音声インターフェース"
+    },
+    "portal_voice": {
+      "port": 5116,
+      "name": "Portal Voice Integration",
+      "description": "Portal統合拡張"
+    },
+    "revenue_tracker": {
+      "port": 5117,
+      "name": "Revenue Tracker",
+      "description": "収益追跡システム"
+    },
+    "product_automation": {
+      "port": 5118,
+      "name": "Product Automation",
+      "description": "成果物自動商品化システム"
+    },
+    "payment_integration": {
+      "port": 5119,
+      "name": "Payment Integration",
+      "description": "決済統合システム"
+    },
+    "ssot_api": {
+      "port": 5120,
+      "name": "SSOT API",
+      "description": "SSOT API"
+    }
+  },
+  "integration_services": {
+    "unified_api": {
+      "port": 9500,
+      "name": "Unified API Server",
+      "description": "統合APIサーバー"
+    },
+    "command_hub": {
+      "port": 9404,
+      "name": "Command Hub",
+      "description": "コマンドハブ"
+    },
+    "enhanced_api": {
+      "port": 9406,
+      "name": "Enhanced API",
+      "description": "拡張API"
+    },
+    "monitoring": {
+      "port": 9407,
+      "name": "Monitoring",
+      "description": "監視サービス"
+    },
+    "ocr_api": {
+      "port": 9409,
+      "name": "OCR API",
+      "description": "OCR API"
+    },
+    "gallery_api": {
+      "port": 5559,
+      "name": "Gallery API",
+      "description": "ギャラリーAPI"
+    },
+    "task_executor": {
+      "port": 5176,
+      "name": "Task Executor",
+      "description": "タスク実行サービス"
+    },
+    "unified_portal": {
+      "port": 9408,
+      "name": "Unified Portal",
+      "description": "統合ポータル"
+    }
+  },
+  "health_check_interval": 60,
+  "optimization_interval": 300,
+  "cache_enabled": true,
+  "parallel_checks": true,
+  "max_workers": 5,
+  "timeout": 5.0,
+  "retry_attempts": 3,
+  "retry_delay": 1.0
+}
+

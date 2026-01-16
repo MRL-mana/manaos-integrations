@@ -1,0 +1,113 @@
+rubric:
+  version: "1.0"
+  total_items: 20
+  min_pass_score: 14
+  
+  citations:                   # 出典・引用（8項目）
+    items:
+      - id: "cite_001"
+        name: "主要主張に出典がある"
+        weight: 1
+        description: "レポート内の主要な主張には必ず出典が付いている"
+      
+      - id: "cite_002"
+        name: "引用が主張に対応している"
+        weight: 1
+        description: "引用された内容が主張を裏付けている"
+      
+      - id: "cite_003"
+        name: "出典が一次情報寄り"
+        weight: 1
+        description: "公式ドキュメント、論文、規格書などの一次情報を優先"
+      
+      - id: "cite_004"
+        name: "出典が少なすぎない"
+        weight: 1
+        description: "最低3件以上の出典がある"
+      
+      - id: "cite_005"
+        name: "出典が偏りすぎない"
+        weight: 1
+        description: "単一のソースに依存していない"
+      
+      - id: "cite_006"
+        name: "日付が古すぎる情報に注意書き"
+        weight: 1
+        description: "3年以上古い情報には注意書きがある"
+      
+      - id: "cite_007"
+        name: "推測と事実を区別"
+        weight: 1
+        description: "推測（inference）と事実（fact）が明確に区別されている"
+      
+      - id: "cite_008"
+        name: "リンク切れ/参照不能なし"
+        weight: 1
+        description: "すべての出典が参照可能である"
+  
+  logic:                        # 論理・整合（7項目）
+    items:
+      - id: "logic_001"
+        name: "結論が明確"
+        weight: 1
+        description: "レポートの結論が明確に述べられている"
+      
+      - id: "logic_002"
+        name: "結論→根拠のつながりが明示"
+        weight: 1
+        description: "結論と根拠の論理的なつながりが明確"
+      
+      - id: "logic_003"
+        name: "反証候補を1つ以上検討"
+        weight: 1
+        description: "反対意見や反証候補が検討されている"
+      
+      - id: "logic_004"
+        name: "矛盾がない"
+        weight: 1
+        description: "レポート内に矛盾する記述がない"
+      
+      - id: "logic_005"
+        name: "用語定義がブレない"
+        weight: 1
+        description: "同じ用語が一貫して使用されている"
+      
+      - id: "logic_006"
+        name: "範囲（スコープ）が明確"
+        weight: 1
+        description: "調査範囲が明確に定義されている"
+      
+      - id: "logic_007"
+        name: "できる/できないが曖昧じゃない"
+        weight: 1
+        description: "可能/不可能が明確に述べられている"
+  
+  practicality:                # 実務性（5項目）
+    items:
+      - id: "prac_001"
+        name: "次アクションが書いてある"
+        weight: 1
+        description: "次のステップやアクションが明確"
+      
+      - id: "prac_002"
+        name: "コスト/時間/リスクの触れ方がある"
+        weight: 1
+        description: "実装時のコスト、時間、リスクが触れられている"
+      
+      - id: "prac_003"
+        name: "実装に落ちる形（手順/設定/構成）"
+        weight: 1
+        description: "具体的な実装手順や設定が含まれている"
+      
+      - id: "prac_004"
+        name: "不確実性の扱いがある"
+        weight: 1
+        description: "不確実な部分が明示されている"
+      
+      - id: "prac_005"
+        name: "読み手の前提（初心者/上級）を合わせてる"
+        weight: 1
+        description: "対象読者に合わせた説明レベル"
+
+
+

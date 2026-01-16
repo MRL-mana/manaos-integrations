@@ -1,0 +1,35 @@
+# ログ分析のサンプルYAML
+
+# 例1: エラーサマリー分析
+kind: log_analysis
+action: analyze
+log_file: "logs/app.log"
+analysis_type: "error_summary"
+output_format: "markdown"
+output_path: "reports/log_analysis_2026-01-13.md"
+notify:
+  slack: false
+idempotency_key: "log_analysis_2026-01-13"
+
+# 例2: パフォーマンス分析
+# kind: log_analysis
+# action: analyze
+# log_file: "logs/app.log"
+# analysis_type: "performance"
+# output_format: "markdown"
+# output_path: "reports/log_performance_2026-01-13.md"
+# notify:
+#   slack: false
+# idempotency_key: "log_performance_2026-01-13"
+
+# 例3: パターン分析
+# kind: log_analysis
+# action: analyze
+# log_file: "logs/app.log"
+# analysis_type: "pattern"
+# pattern: "timeout|connection.*failed"
+# output_format: "markdown"
+# output_path: "reports/log_pattern_2026-01-13.md"
+# notify:
+#   slack: false
+# idempotency_key: "log_pattern_2026-01-13"

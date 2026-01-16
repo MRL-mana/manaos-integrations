@@ -1,0 +1,15 @@
+{
+  "enable_threat_detection": true,
+  "enable_auto_block": true,
+  "enable_pattern_learning": true,
+  "max_failed_attempts": 5,
+  "block_duration_minutes": 60
+}
+
+
+
+
+
+
+
+

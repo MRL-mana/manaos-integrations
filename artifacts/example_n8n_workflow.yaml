@@ -1,0 +1,29 @@
+# n8nワークフロー操作のYAML例
+# このファイルを参考に、AIにYAML形式でワークフロー操作設定を出力させてください
+
+# ワークフロー有効化の例
+kind: n8n_workflow
+action: activate  # activate, deactivate, execute, import
+workflow_id: "2ViGYzDtLBF6H4zn"
+notify:
+  slack: true
+idempotency_key: "n8n_activate_2026-01-12"
+
+# ワークフロー実行の例（コメントアウト）
+# kind: n8n_workflow
+# action: execute
+# workflow_id: "2ViGYzDtLBF6H4zn"
+# execute_payload:
+#   key: "value"
+# notify:
+#   slack: true
+# idempotency_key: "n8n_execute_2026-01-12"
+
+# ワークフローインポートの例（コメントアウト）
+# kind: n8n_workflow
+# action: import
+# workflow_file: "n8n_workflows/my_workflow.json"
+# activate_after_import: true
+# notify:
+#   slack: true
+# idempotency_key: "n8n_import_2026-01-12"

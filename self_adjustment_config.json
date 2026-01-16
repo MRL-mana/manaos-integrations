@@ -1,0 +1,16 @@
+{
+  "enable_auto_adjustment": true,
+  "adjustment_interval_minutes": 30,
+  "enable_timeout_adjustment": true,
+  "enable_rate_limit_adjustment": true,
+  "enable_cache_size_adjustment": true,
+  "max_adjustment_per_hour": 10
+}
+
+
+
+
+
+
+
+

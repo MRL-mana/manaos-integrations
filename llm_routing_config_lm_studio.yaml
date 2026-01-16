@@ -1,0 +1,134 @@
+# LLMルーティング設定（LM Studio用）
+# 難易度に応じた自動モデル選択と複数モデルの使い分け
+
+lm_studio_url: "http://localhost:1234/v1"
+ollama_url: "http://localhost:11434"
+
+# 使用するLLMサーバー（"lm_studio" or "ollama"）
+llm_server: "lm_studio"
+
+# 難易度別モデル設定
+difficulty_routing:
+  # 低難易度（軽量・高速）
+  low:
+    threshold_max: 20
+    models:
+      primary: "qwen2.5-coder-7b-instruct"
+      fallback:
+        - "nvidia/nemotron-3-nano"
+    priority: "speed"
+    max_tokens: 2048
+    temperature: 0.7
+    use_case:
+      - "コード補完"
+      - "簡単な修正"
+      - "タイポ修正"
+      - "フォーマット"
+  
+  # 中難易度（バランス型）
+  medium:
+    threshold_min: 20
+    threshold_max: 50
+    models:
+      primary: "qwen2.5-coder-7b-instruct"
+      fallback:
+        - "openai/gpt-oss-20b"
+    priority: "balanced"
+    max_tokens: 4096
+    temperature: 0.5
+    use_case:
+      - "コード生成"
+      - "リファクタリング"
+      - "バグ修正"
+      - "コードレビュー"
+  
+  # 高難易度（高精度）
+  high:
+    threshold_min: 50
+    models:
+      primary: "qwen2.5-coder-7b-instruct"  # 14Bや32Bがあれば優先
+      fallback:
+        - "openai/gpt-oss-20b"
+    priority: "quality"
+    max_tokens: 8192
+    temperature: 0.3
+    use_case:
+      - "アーキテクチャ設計"
+      - "複雑なリファクタリング"
+      - "パフォーマンス最適化"
+      - "システム設計"
+
+# タスクタイプ別ルーティング（従来の方式もサポート）
+task_type_routing:
+  conversation:
+    # 会話（軽量・高速）
+    models:
+      primary: "qwen2.5-coder-7b-instruct"
+      fallback:
+        - "nvidia/nemotron-3-nano"
+    priority: "speed"
+    max_tokens: 2048
+    temperature: 0.7
+  
+  coding:
+    # コーディング（バランス型）
+    models:
+      primary: "qwen2.5-coder-7b-instruct"
+      fallback:
+        - "openai/gpt-oss-20b"
+    priority: "balanced"
+    max_tokens: 4096
+    temperature: 0.5
+  
+  reasoning:
+    # 推論（高精度）
+    models:
+      primary: "qwen2.5-coder-7b-instruct"
+      fallback:
+        - "openai/gpt-oss-20b"
+    priority: "quality"
+    max_tokens: 8192
+    temperature: 0.3
+
+# 監査ログ設定
+audit_log:
+  enabled: true
+  storage: "local"  # "local" or "obsidian"
+  include_fields:
+    - "request_id"
+    - "timestamp"
+    - "routed_model"
+    - "difficulty_score"
+    - "difficulty_level"
+    - "task_type"
+    - "reasoning"
+    - "response_time_ms"
+    - "fallback_used"
+
+# パフォーマンス設定
+performance:
+  # GPU使用状況チェック
+  check_gpu: true
+  # レスポンスタイムの閾値（ミリ秒）
+  response_time_threshold_ms: 30000
+  # タイムアウト（秒）
+  timeout_seconds: 60
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

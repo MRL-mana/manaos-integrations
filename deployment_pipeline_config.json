@@ -1,0 +1,33 @@
+{
+  "git_repo_path": ".",
+  "git_branch": "main",
+  "target_devices": [
+    "manaos",
+    "mothership"
+  ],
+  "stages": [
+    {
+      "stage_id": "test",
+      "name": "テスト実行",
+      "commands": [
+        "python -m pytest tests/"
+      ],
+      "rollback_commands": [],
+      "timeout": 300,
+      "required": true
+    },
+    {
+      "stage_id": "deploy",
+      "name": "デプロイ",
+      "commands": [
+        "python deploy.py"
+      ],
+      "rollback_commands": [
+        "python rollback.py"
+      ],
+      "timeout": 300,
+      "required": true
+    }
+  ],
+  "history_file": "deployment_history.json"
+}

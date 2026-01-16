@@ -1,0 +1,33 @@
+# 日次運用タスクのYAML例
+# このファイルを参考に、AIにYAML形式で日報を出力させてください
+
+kind: daily_ops
+date: 2026-01-12
+title: "日報 + タスク整理"
+tags: ["ops", "manaos"]
+summary: |
+  今日はSkills化の実装を完了しました。
+  MCPでやっていた雑務をCLI + Pythonスクリプトに置き換えることで、
+  トークン消費を大幅に削減できました。
+
+tasks:
+  - title: "バックアップ確認"
+    status: todo
+    priority: high
+  - title: "n8nワークフロー整理"
+    status: doing
+    priority: medium
+  - title: "Skills実装"
+    status: done
+    priority: high
+
+notes:
+  - "Skills化の効果が予想以上に大きい"
+  - "YAML形式の成果物は後から編集しやすい"
+  - "冪等性の実装で再実行が安全になった"
+
+notify:
+  slack: true
+  obsidian: true
+
+idempotency_key: "daily_ops_2026-01-12"

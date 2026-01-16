@@ -1,0 +1,62 @@
+# FWPKM統合設定
+
+# Ollama設定
+ollama_url: "http://localhost:11434"
+
+# チャンク処理設定
+chunk_processing:
+  enabled: true
+  chunk_size: 2048  # トークン数
+  overlap: 256  # オーバーラップサイズ
+  min_chunk_size: 512  # 最小チャンクサイズ
+
+# メモリ設定
+memory:
+  # 短期記憶（FWPKM）
+  short_term:
+    enabled: true
+    memory_slots: 10000  # メモリスロット数
+    key1_slots: 100  # Key1スロット数
+    key2_slots: 100  # Key2スロット数
+    value_dim: 768  # Value次元
+    update_rate: 0.1  # 更新率
+    learning_rate: 0.01  # 学習率
+  
+  # 長期記憶（RAG）
+  long_term:
+    enabled: true
+    importance_threshold: 0.7  # 長期記憶への保存閾値
+    auto_promote: true  # 自動昇格（短期→長期）
+  
+  # 統合設定
+  unified:
+    enabled: true
+    balance_weight: 0.5  # 長期/短期のバランス重み
+
+# メモリ崩壊防止
+collapse_prevention:
+  enabled: true
+  usage_variance_threshold: 0.8  # 使用頻度分散の閾値
+  rebalance_interval: 100  # リバランス間隔（チャンク数）
+  unused_slot_threshold: 0.1  # 未使用スロットの閾値
+
+# ゲーティング設定
+gating:
+  enabled: true
+  confidence_threshold: 0.7  # 信頼度閾値
+  high_gate_weight: 0.8  # 高ゲート重み
+  low_gate_weight: 0.3  # 低ゲート重み
+  adaptive: true  # 適応的ゲーティング
+
+# 長文処理設定
+long_context:
+  enabled: true
+  max_context_length: 128000  # 最大コンテキスト長（トークン）
+  chunk_processing_threshold: 4096  # チャンク処理開始閾値
+  accumulation_strategy: "important_only"  # コンテキスト蓄積戦略
+
+# 復習効果設定
+review_effect:
+  enabled: true
+  review_threshold: 2  # 復習回数の閾値
+  memory_enhancement_rate: 0.2  # メモリ強化率

@@ -1,0 +1,33 @@
+# Rows操作のサンプルYAML
+
+# 例1: データ送信
+kind: rows_ops
+action: send_data
+spreadsheet_id: "xxx-xxx-xxx"
+sheet_name: "Sheet1"
+data:
+  - name: "項目1"
+    value: 100
+  - name: "項目2"
+    value: 200
+append: true
+notify:
+  slack: false
+idempotency_key: "rows_send_2026-01-13_001"
+
+# 例2: AIクエリ実行
+# kind: rows_ops
+# action: query
+# spreadsheet_id: "xxx-xxx-xxx"
+# sheet_name: "Sheet1"
+# query: "このデータの合計を計算して"
+# notify:
+#   slack: false
+# idempotency_key: "rows_query_2026-01-13_001"
+
+# 例3: スプレッドシート一覧取得
+# kind: rows_ops
+# action: list
+# notify:
+#   slack: false
+# idempotency_key: "rows_list_2026-01-13_001"
