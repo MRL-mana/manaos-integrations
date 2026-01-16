@@ -1,0 +1,112 @@
+---
+name: rows-ops
+description: Rowsスプレッドシート操作をYAMLから実行する（データ送信、クエリ実行、一覧取得など）
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# Rows操作: YAMLからRowsスプレッドシート操作を実行
+
+**目的**: YAML形式のRows操作設定を読み込み、Rowsスプレッドシートにデータを送信、クエリを実行、一覧を取得します。
+
+## 使用方法
+
+### Step 1: YAMLファイルを作成
+
+AIに以下のようなYAML形式でRows操作設定を出力させます：
+
+```yaml
+kind: rows_ops
+action: send_data  # send_data, query, list
+spreadsheet_id: "xxx-xxx-xxx"
+sheet_name: "Sheet1"
+data:
+  - name: "項目1"
+    value: 100
+  - name: "項目2"
+    value: 200
+notify:
+  slack: false
+idempotency_key: "rows_send_2026-01-13_001"
+```
+
+### Step 2: Pythonスクリプトで処理
+
+```bash
+python scripts/apply_skill_rows_ops.py artifacts/rows_ops_2026-01-13.yaml
+```
+
+## YAMLフォーマット仕様
+
+### 必須フィールド
+
+- `kind`: 常に `"rows_ops"` を指定
+- `action`: 操作タイプ（`send_data`, `query`, `list`）
+- `idempotency_key`: 冪等性キー
+
+### アクション別のフィールド
+
+#### send_data
+
+- `spreadsheet_id`: スプレッドシートID（必須）
+- `sheet_name`: シート名（オプション、デフォルト: "Sheet1"）
+- `data`: 送信するデータ（必須、リストまたは辞書形式）
+- `append`: 末尾に追加するか（boolean、デフォルト: true）
+
+#### query
+
+- `spreadsheet_id`: スプレッドシートID（必須）
+- `query`: AI自然言語クエリ（必須）
+- `sheet_name`: シート名（オプション、デフォルト: "Sheet1"）
+- `results`: クエリ結果が返される（出力用）
+
+#### list
+
+- `results`: スプレッドシート一覧が返される（出力用）
+
+### オプションフィールド
+
+- `notify`:
+  - `slack`: Slack通知するか（boolean、デフォルト: false）
+
+## 処理フロー
+
+1. **YAMLファイルを読み込み**
+2. **冪等性チェック**: `idempotency_key`で既に処理済みか確認
+3. **Rows API呼び出し**: 指定されたアクションを実行
+4. **Slack通知**: `notify.slack: true`の場合、結果をSlackに送信
+5. **処理履歴を保存**: 再実行防止のため履歴を記録
+
+## 依存関係
+
+- Rows API
+- 環境変数:
+  - `ROWS_API_KEY`: Rows APIキー（必須）
+  - `SLACK_WEBHOOK_URL`: Slack Webhook URL（オプション）
+
+## 出力先
+
+- **処理履歴**: `data/skill_rows_ops_history.json`
+- **クエリ結果**: YAMLファイルに追記（queryアクションの場合）
+- **スプレッドシート一覧**: YAMLファイルに追記（listアクションの場合）
+
+## エラーハンドリング
+
+- YAML形式エラー: エラーメッセージを表示して終了
+- Rows APIエラー: エラーをログに記録（Slack通知は試行）
+- 既に処理済み: 処理をスキップ（冪等性）
+
+## 注意事項
+
+- Rows APIキーが必要です（[Rows API](https://rows.com/api)で取得）
+- データ送信時、リスト形式の場合は各要素が辞書であることを推奨します
+- クエリ機能は、RowsのAI機能を使用して自然言語でデータを操作できます

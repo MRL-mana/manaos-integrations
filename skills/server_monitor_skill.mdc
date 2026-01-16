@@ -1,0 +1,111 @@
+---
+name: server-monitor
+description: サーバー監視・復旧をYAMLから実行する（サービス状態確認、自動再起動など）
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# サーバー監視・復旧: YAMLからサーバー監視操作を実行
+
+**目的**: YAML形式のサーバー監視設定を読み込み、サービス状態を確認し、必要に応じて自動再起動します。
+
+## 使用方法
+
+### Step 1: YAMLファイルを作成
+
+AIに以下のようなYAML形式でサーバー監視設定を出力させます：
+
+```yaml
+kind: server_monitor
+action: check_and_restart  # check, restart, check_and_restart
+service_name: "unified_api_server"
+port: 9500
+script: "unified_api_server.py"  # 再起動時に使用
+auto_restart: true
+notify:
+  slack: true
+idempotency_key: "server_check_2026-01-13_001"
+```
+
+### Step 2: Pythonスクリプトで処理
+
+```bash
+python scripts/apply_skill_server_monitor.py artifacts/server_monitor_2026-01-13.yaml
+```
+
+## YAMLフォーマット仕様
+
+### 必須フィールド
+
+- `kind`: 常に `"server_monitor"` を指定
+- `action`: 操作タイプ（`check`, `restart`, `check_and_restart`）
+- `idempotency_key`: 冪等性キー
+
+### アクション別のフィールド
+
+#### check
+
+- `service_name`: サービス名（オプション、ログ用）
+- `port`: チェックするポート番号（必須）
+- `status`: チェック結果が返される（出力用）
+
+#### restart
+
+- `service_name`: サービス名（必須）
+- `script`: 起動スクリプト名（必須、例: `unified_api_server.py`）
+- `restart_result`: 再起動結果が返される（出力用）
+
+#### check_and_restart
+
+- `service_name`: サービス名（必須）
+- `port`: チェックするポート番号（必須）
+- `script`: 起動スクリプト名（必須）
+- `auto_restart`: 自動再起動するか（boolean、デフォルト: true）
+- `status`: チェック結果が返される（出力用）
+- `restart_result`: 再起動結果が返される（出力用、再起動した場合のみ）
+
+### オプションフィールド
+
+- `notify`:
+  - `slack`: Slack通知するか（boolean、デフォルト: false）
+
+## 処理フロー
+
+1. **YAMLファイルを読み込み**
+2. **冪等性チェック**: `idempotency_key`で既に処理済みか確認
+3. **サービス状態確認**: `/health`エンドポイントにアクセス
+4. **自動再起動**: `check_and_restart`で停止していた場合、自動再起動
+5. **Slack通知**: `notify.slack: true`の場合、結果をSlackに送信
+6. **処理履歴を保存**: 再実行防止のため履歴を記録
+
+## 依存関係
+
+- 環境変数:
+  - `SLACK_WEBHOOK_URL`: Slack Webhook URL（オプション）
+
+## 出力先
+
+- **処理履歴**: `data/skill_server_monitor_history.json`
+- **チェック結果**: YAMLファイルに追記
+
+## エラーハンドリング
+
+- YAML形式エラー: エラーメッセージを表示して終了
+- サービス接続エラー: エラーをログに記録
+- 再起動失敗: エラーをログに記録（Slack通知は試行）
+- 既に処理済み: 処理をスキップ（冪等性）
+
+## 注意事項
+
+- サービスは `/health` エンドポイントを実装している必要があります
+- 再起動には、スクリプトファイルがプロジェクトルートに存在する必要があります
+- Windows環境では、Pythonプロセスの検出にWMIを使用します

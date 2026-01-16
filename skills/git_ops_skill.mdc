@@ -1,0 +1,132 @@
+---
+name: git-ops
+description: Git操作をYAMLから実行する（commit, push, pull, tag作成など）
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# Git操作: YAMLからGitコマンドを実行
+
+**目的**: YAML形式のGit操作設定を読み込み、Gitコマンドを実行します。
+
+## 使用方法
+
+### Step 1: YAMLファイルを作成
+
+AIに以下のようなYAML形式でGit操作設定を出力させます：
+
+```yaml
+kind: git_ops
+action: commit_and_push  # commit, push, pull, tag, status
+repository_path: "."  # リポジトリのパス（デフォルト: カレントディレクトリ）
+commit_message: "Update: Skills実装"
+branch: "main"
+files:  # commit時の対象ファイル（オプション、未指定時はすべて）
+  - "scripts/*.py"
+  - "skills/*.mdc"
+notify:
+  slack: true
+idempotency_key: "git_commit_2026-01-12_001"
+```
+
+### Step 2: Pythonスクリプトで処理
+
+```bash
+python scripts/apply_skill_git_ops.py artifacts/git_ops_2026-01-12.yaml
+```
+
+## YAMLフォーマット仕様
+
+### 必須フィールド
+
+- `kind`: 常に `"git_ops"` を指定
+- `action`: 操作タイプ（`commit`, `push`, `pull`, `tag`, `status`, `commit_and_push`）
+- `idempotency_key`: 冪等性キー
+
+### アクション別のフィールド
+
+#### commit / commit_and_push
+
+- `commit_message`: コミットメッセージ（必須）
+- `files`: コミット対象のファイル（オプション、未指定時はすべて）
+- `branch`: ブランチ名（オプション、デフォルト: カレントブランチ）
+
+#### push
+
+- `branch`: プッシュするブランチ（オプション、デフォルト: カレントブランチ）
+- `remote`: リモート名（オプション、デフォルト: origin）
+
+#### pull
+
+- `branch`: プルするブランチ（オプション、デフォルト: カレントブランチ）
+- `remote`: リモート名（オプション、デフォルト: origin）
+
+#### tag
+
+- `tag_name`: タグ名（必須）
+- `tag_message`: タグメッセージ（オプション）
+- `push_tag`: タグをプッシュするか（boolean、デフォルト: false）
+
+#### status
+
+- 追加フィールドなし（リポジトリの状態を確認）
+
+### 共通オプションフィールド
+
+- `repository_path`: リポジトリのパス（デフォルト: "."）
+- `notify`:
+  - `slack`: Slack通知するか（boolean）
+
+## 処理フロー
+
+1. **YAMLファイルを読み込み**
+2. **冪等性チェック**: `idempotency_key`で既に処理済みか確認
+3. **リポジトリ確認**: Gitリポジトリが存在するか確認
+4. **アクション実行**:
+   - `commit`: git add → git commit
+   - `push`: git push
+   - `pull`: git pull
+   - `tag`: git tag → (オプション) git push tag
+   - `status`: git status
+   - `commit_and_push`: commit → push
+5. **Slack通知**: `notify.slack: true`の場合、通知を送信
+6. **処理履歴を保存**
+
+## 依存関係
+
+- Git CLIがインストールされていること
+- 環境変数:
+  - `SLACK_WEBHOOK_URL`: Slack Webhook URL（オプション）
+
+## エラーハンドリング
+
+- Gitリポジトリが存在しない場合: エラーメッセージを表示
+- コミット対象ファイルがない場合: エラーをログに記録
+- プッシュ/プル失敗: エラーをログに記録
+
+## 例: AIへの指示
+
+```
+変更をコミットしてプッシュしてください。
+
+```yaml
+kind: git_ops
+action: commit_and_push
+commit_message: "Add: Skills実装"
+branch: "main"
+notify:
+  slack: true
+idempotency_key: "git_commit_2026-01-12_001"
+```
+
+出力後、`python scripts/apply_skill_git_ops.py artifacts/git_ops_2026-01-12.yaml` を実行してください。
+```

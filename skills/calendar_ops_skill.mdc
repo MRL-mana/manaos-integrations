@@ -1,0 +1,135 @@
+---
+name: calendar-ops
+description: カレンダー操作をYAMLから実行する（イベント作成・更新・一覧取得など）
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# カレンダー操作: YAMLからカレンダー操作を実行
+
+**目的**: YAML形式のカレンダー操作設定を読み込み、Google Calendarでイベントを作成・更新・一覧取得します。
+
+## 使用方法
+
+### Step 1: YAMLファイルを作成
+
+AIに以下のようなYAML形式でカレンダー操作設定を出力させます：
+
+```yaml
+kind: calendar_ops
+action: create_event  # create_event, update_event, list_events, delete_event
+calendar_id: "primary"
+title: "会議"
+start_time: "2026-01-15T14:00:00"
+end_time: "2026-01-15T15:00:00"
+timezone: "Asia/Tokyo"
+attendees:
+  - "user@example.com"
+description: "会議の説明"
+location: "会議室A"
+notify:
+  slack: false
+idempotency_key: "calendar_event_2026-01-13_001"
+```
+
+### Step 2: Pythonスクリプトで処理
+
+```bash
+python scripts/apply_skill_calendar_ops.py artifacts/calendar_ops_2026-01-13.yaml
+```
+
+## YAMLフォーマット仕様
+
+### 必須フィールド
+
+- `kind`: 常に `"calendar_ops"` を指定
+- `action`: 操作タイプ（`create_event`, `update_event`, `list_events`, `delete_event`）
+- `idempotency_key`: 冪等性キー
+
+### アクション別のフィールド
+
+#### create_event
+
+- `calendar_id`: カレンダーID（必須、デフォルト: "primary"）
+- `title`: イベントタイトル（必須）
+- `start_time`: 開始時刻（必須、ISO 8601形式: "YYYY-MM-DDTHH:MM:SS"）
+- `end_time`: 終了時刻（必須、ISO 8601形式）
+- `timezone`: タイムゾーン（オプション、デフォルト: "Asia/Tokyo"）
+- `attendees`: 参加者リスト（オプション、メールアドレスリスト）
+- `description`: 説明（オプション）
+- `location`: 場所（オプション）
+- `event_id`: 作成されたイベントIDが返される（出力用）
+
+#### update_event
+
+- `calendar_id`: カレンダーID（必須）
+- `event_id`: イベントID（必須）
+- `title`: イベントタイトル（オプション）
+- `start_time`: 開始時刻（オプション）
+- `end_time`: 終了時刻（オプション）
+- `attendees`: 参加者リスト（オプション）
+- `description`: 説明（オプション）
+- `location`: 場所（オプション）
+
+#### list_events
+
+- `calendar_id`: カレンダーID（必須、デフォルト: "primary"）
+- `start_time`: 開始時刻（オプション、デフォルト: 現在時刻）
+- `end_time`: 終了時刻（オプション、デフォルト: 1週間後）
+- `max_results`: 最大取得件数（オプション、デフォルト: 10）
+- `events`: イベントリストが返される（出力用）
+
+#### delete_event
+
+- `calendar_id`: カレンダーID（必須）
+- `event_id`: イベントID（必須）
+
+### オプションフィールド
+
+- `notify`:
+  - `slack`: Slack通知するか（boolean、デフォルト: false）
+
+## 処理フロー
+
+1. **YAMLファイルを読み込み**
+2. **冪等性チェック**: `idempotency_key`で既に処理済みか確認
+3. **Google Calendar API認証**: 認証情報を使用してAPIに接続
+4. **操作実行**: 指定されたアクションを実行
+5. **Slack通知**: `notify.slack: true`の場合、結果をSlackに送信
+6. **処理履歴を保存**: 再実行防止のため履歴を記録
+
+## 依存関係
+
+- Google Calendar API: `google-api-python-client`, `google-auth-httplib2`, `google-auth-oauthlib`
+- 環境変数:
+  - `GOOGLE_CALENDAR_CREDENTIALS`: Google認証情報（JSON形式、またはcredentials.jsonファイル）
+  - `GOOGLE_CALENDAR_TOKEN`: トークンファイルパス（またはtoken.jsonファイル）
+  - `SLACK_WEBHOOK_URL`: Slack Webhook URL（オプション）
+
+## 出力先
+
+- **処理履歴**: `data/skill_calendar_ops_history.json`
+- **イベントID**: YAMLファイルに追記（create_eventの場合）
+
+## エラーハンドリング
+
+- YAML形式エラー: エラーメッセージを表示して終了
+- 認証エラー: エラーをログに記録
+- API実行エラー: エラーをログに記録（Slack通知は試行）
+- 既に処理済み: 処理をスキップ（冪等性）
+
+## 注意事項
+
+- Google Calendar APIの認証設定が必要です
+- OAuth2認証を使用します（初回実行時に認証フローが必要な場合があります）
+- タイムゾーンはIANAタイムゾーン形式（例: "Asia/Tokyo"）を使用します
+- 時刻形式はISO 8601形式（"YYYY-MM-DDTHH:MM:SS"）を使用します

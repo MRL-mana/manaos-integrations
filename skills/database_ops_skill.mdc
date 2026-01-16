@@ -1,0 +1,126 @@
+---
+name: database-ops
+description: データベース操作をYAMLから実行する（SQLクエリ、データ挿入・更新・削除など）
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# データベース操作: YAMLからデータベース操作を実行
+
+**目的**: YAML形式のデータベース操作設定を読み込み、PostgreSQL/MongoDB/SQLiteでデータベース操作を実行します。
+
+## 使用方法
+
+### Step 1: YAMLファイルを作成
+
+AIに以下のようなYAML形式でデータベース操作設定を出力させます：
+
+```yaml
+kind: database_ops
+action: execute_query  # execute_query, insert, update, delete
+database_type: postgresql  # postgresql, mongodb, sqlite
+connection_string: "postgresql://user:pass@localhost/db"
+query: "SELECT * FROM tasks WHERE status = 'pending'"
+notify:
+  slack: false
+idempotency_key: "db_query_2026-01-13_001"
+```
+
+### Step 2: Pythonスクリプトで処理
+
+```bash
+python scripts/apply_skill_database_ops.py artifacts/database_ops_2026-01-13.yaml
+```
+
+## YAMLフォーマット仕様
+
+### 必須フィールド
+
+- `kind`: 常に `"database_ops"` を指定
+- `action`: 操作タイプ（`execute_query`, `insert`, `update`, `delete`）
+- `database_type`: データベースタイプ（`postgresql`, `mongodb`, `sqlite`）
+- `idempotency_key`: 冪等性キー
+
+### アクション別のフィールド
+
+#### execute_query
+
+- `connection_string`: 接続文字列（必須）
+- `query`: SQLクエリ（必須、PostgreSQL/SQLiteの場合）
+- `params`: パラメータ（オプション、タプル形式）
+- `results`: クエリ結果が返される（出力用）
+
+#### insert
+
+- `connection_string`: 接続文字列（必須）
+- `table`: テーブル名（必須、PostgreSQL/SQLiteの場合）
+- `collection`: コレクション名（必須、MongoDBの場合）
+- `data`: 挿入するデータ（必須、辞書形式）
+- `inserted_id`: 挿入されたIDが返される（出力用、MongoDBの場合）
+
+#### update
+
+- `connection_string`: 接続文字列（必須）
+- `table`: テーブル名（必須、PostgreSQL/SQLiteの場合）
+- `collection`: コレクション名（必須、MongoDBの場合）
+- `filter`: フィルタ条件（必須、更新対象を指定）
+- `data`: 更新データ（必須、辞書形式）
+
+#### delete
+
+- `connection_string`: 接続文字列（必須）
+- `table`: テーブル名（必須、PostgreSQL/SQLiteの場合）
+- `collection`: コレクション名（必須、MongoDBの場合）
+- `filter`: フィルタ条件（必須、削除対象を指定）
+
+### オプションフィールド
+
+- `notify`:
+  - `slack`: Slack通知するか（boolean、デフォルト: false）
+
+## 処理フロー
+
+1. **YAMLファイルを読み込み**
+2. **冪等性チェック**: `idempotency_key`で既に処理済みか確認
+3. **データベース接続**: 接続文字列を使用してデータベースに接続
+4. **操作実行**: 指定されたアクションを実行
+5. **Slack通知**: `notify.slack: true`の場合、結果をSlackに送信
+6. **処理履歴を保存**: 再実行防止のため履歴を記録
+
+## 依存関係
+
+- PostgreSQL: `psycopg2-binary`
+- MongoDB: `pymongo`
+- SQLite: 標準ライブラリ（追加インストール不要）
+- 環境変数:
+  - `SLACK_WEBHOOK_URL`: Slack Webhook URL（オプション）
+
+## 出力先
+
+- **処理履歴**: `data/skill_database_ops_history.json`
+- **クエリ結果**: YAMLファイルに追記（execute_queryの場合）
+
+## エラーハンドリング
+
+- YAML形式エラー: エラーメッセージを表示して終了
+- データベース接続エラー: エラーをログに記録
+- クエリ実行エラー: エラーをログに記録（Slack通知は試行）
+- 既に処理済み: 処理をスキップ（冪等性）
+
+## 注意事項
+
+- 接続文字列の形式:
+  - PostgreSQL: `postgresql://user:password@host:port/database`
+  - MongoDB: `mongodb://user:password@host:port/database`
+  - SQLite: `sqlite:///path/to/database.db`
+- SQLインジェクション対策のため、パラメータ化クエリを使用することを推奨します
+- MongoDBの場合は、フィルタ条件と更新データを辞書形式で指定します

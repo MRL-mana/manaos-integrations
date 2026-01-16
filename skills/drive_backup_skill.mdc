@@ -1,0 +1,107 @@
+---
+name: drive-backup
+description: ファイルやディレクトリをGoogle Driveにバックアップする
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# Google Driveバックアップ: YAMLからバックアップ実行
+
+**目的**: YAML形式のバックアップ設定を読み込み、指定されたファイル/ディレクトリをGoogle Driveにバックアップします。
+
+## 使用方法
+
+### Step 1: YAMLファイルを作成
+
+AIに以下のようなYAML形式でバックアップ設定を出力させます：
+
+```yaml
+kind: drive_backup
+date: 2026-01-12
+source: "C:/backup/data"
+destination: "backup/2026-01-12"
+description: "データバックアップ"
+compress: true
+notify:
+  slack: true
+idempotency_key: "drive_backup_2026-01-12"
+```
+
+### Step 2: Pythonスクリプトで処理
+
+```bash
+python scripts/apply_skill_drive_backup.py artifacts/backup_2026-01-12.yaml
+```
+
+## YAMLフォーマット仕様
+
+### 必須フィールド
+
+- `kind`: 常に `"drive_backup"` を指定
+- `source`: バックアップ元のパス（ファイルまたはディレクトリ）
+- `destination`: Google Drive上の保存先パス
+- `idempotency_key`: 冪等性キー
+
+### オプションフィールド
+
+- `date`: バックアップ日付（YYYY-MM-DD形式）
+- `description`: バックアップの説明
+- `compress`: ZIP圧縮するか（boolean、デフォルト: false）
+- `notify`:
+  - `slack`: Slack通知するか（boolean）
+
+## 処理フロー
+
+1. **YAMLファイルを読み込み**
+2. **冪等性チェック**: `idempotency_key`で既に処理済みか確認
+3. **ソース確認**: バックアップ元が存在するか確認
+4. **圧縮（オプション）**: `compress: true`の場合、ZIPファイルを作成
+5. **Google Driveにアップロード**
+6. **Slack通知**: `notify.slack: true`の場合、通知を送信
+7. **処理履歴を保存**
+
+## 依存関係
+
+- `google_drive_integration.py`: Google Drive統合モジュール
+- 環境変数:
+  - Google Drive認証情報（`credentials.json`, `token.json`）
+  - `SLACK_WEBHOOK_URL`: Slack Webhook URL（オプション）
+
+## 出力先
+
+- **Google Drive**: `{destination}/{ファイル名}`
+- **処理履歴**: `data/skill_drive_backup_history.json`
+
+## エラーハンドリング
+
+- ソースファイル/ディレクトリが存在しない場合: エラーメッセージを表示して終了
+- Google Drive認証失敗: エラーをログに記録
+- アップロード失敗: エラーをログに記録（Slack通知は試行）
+
+## 例: AIへの指示
+
+```
+以下のファイルをGoogle Driveにバックアップしてください。
+
+```yaml
+kind: drive_backup
+source: "C:/important/data"
+destination: "backup/2026-01-12"
+description: "重要データのバックアップ"
+compress: true
+notify:
+  slack: true
+idempotency_key: "drive_backup_2026-01-12"
+```
+
+出力後、`python scripts/apply_skill_drive_backup.py artifacts/backup_2026-01-12.yaml` を実行してください。
+```

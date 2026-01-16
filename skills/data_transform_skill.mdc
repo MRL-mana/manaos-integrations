@@ -1,0 +1,127 @@
+---
+name: data-transform
+description: データ変換をYAMLから実行する（CSV/JSON/Excel変換、データクリーニング、フォーマット変換など）
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# データ変換: YAMLからデータ変換操作を実行
+
+**目的**: YAML形式のデータ変換設定を読み込み、CSV/JSON/Excel形式の変換、データクリーニング、フォーマット変換を実行します。
+
+## 使用方法
+
+### Step 1: YAMLファイルを作成
+
+AIに以下のようなYAML形式でデータ変換設定を出力させます：
+
+```yaml
+kind: data_transform
+action: convert  # convert, clean, format
+input_file: "data/raw.csv"
+output_file: "data/processed.json"
+input_format: "csv"  # csv, json, excel
+output_format: "json"  # csv, json, excel
+transformation:
+  - type: "filter"
+    condition: "status == 'active'"
+  - type: "format"
+    date_format: "YYYY-MM-DD"
+notify:
+  slack: false
+idempotency_key: "data_transform_2026-01-13_001"
+```
+
+### Step 2: Pythonスクリプトで処理
+
+```bash
+python scripts/apply_skill_data_transform.py artifacts/data_transform_2026-01-13.yaml
+```
+
+## YAMLフォーマット仕様
+
+### 必須フィールド
+
+- `kind`: 常に `"data_transform"` を指定
+- `action`: 操作タイプ（`convert`, `clean`, `format`）
+- `idempotency_key`: 冪等性キー
+
+### アクション別のフィールド
+
+#### convert
+
+- `input_file`: 入力ファイルパス（必須）
+- `output_file`: 出力ファイルパス（必須）
+- `input_format`: 入力形式（`csv`, `json`, `excel`、必須）
+- `output_format`: 出力形式（`csv`, `json`, `excel`、必須）
+- `transformation`: 変換ルールリスト（オプション）
+  - `type`: 変換タイプ（`filter`, `format`, `sort`, `rename`など）
+  - その他のパラメータ
+
+#### clean
+
+- `input_file`: 入力ファイルパス（必須）
+- `output_file`: 出力ファイルパス（必須）
+- `input_format`: 入力形式（必須）
+- `cleaning_rules`: クリーニングルール（必須）
+  - `remove_empty`: 空行を削除（boolean）
+  - `remove_duplicates`: 重複を削除（boolean）
+  - `trim_whitespace`: 空白をトリム（boolean）
+
+#### format
+
+- `input_file`: 入力ファイルパス（必須）
+- `output_file`: 出力ファイルパス（必須）
+- `input_format`: 入力形式（必須）
+- `formatting_rules`: フォーマットルール（必須）
+  - `date_format`: 日付フォーマット（例: "YYYY-MM-DD"）
+  - `number_format`: 数値フォーマット
+  - `encoding`: 文字エンコーディング（デフォルト: "utf-8"）
+
+### オプションフィールド
+
+- `notify`:
+  - `slack`: Slack通知するか（boolean、デフォルト: false）
+
+## 処理フロー
+
+1. **YAMLファイルを読み込み**
+2. **冪等性チェック**: `idempotency_key`で既に処理済みか確認
+3. **データ読み込み**: 入力ファイルを指定形式で読み込み
+4. **データ変換**: 指定された変換ルールを適用
+5. **データ書き込み**: 出力ファイルに保存
+6. **Slack通知**: `notify.slack: true`の場合、結果をSlackに送信
+7. **処理履歴を保存**: 再実行防止のため履歴を記録
+
+## 依存関係
+
+- pandas: CSV/Excel処理（`pip install pandas openpyxl`）
+- 環境変数:
+  - `SLACK_WEBHOOK_URL`: Slack Webhook URL（オプション）
+
+## 出力先
+
+- **処理履歴**: `data/skill_data_transform_history.json`
+- **出力ファイル**: 指定された出力ファイルパス
+
+## エラーハンドリング
+
+- YAML形式エラー: エラーメッセージを表示して終了
+- ファイル読み込みエラー: エラーをログに記録
+- データ変換エラー: エラーをログに記録（Slack通知は試行）
+- 既に処理済み: 処理をスキップ（冪等性）
+
+## 注意事項
+
+- pandasが必要です（`pip install pandas openpyxl`）
+- Excelファイルの読み書きには`openpyxl`が必要です
+- 大きなファイルの処理には時間がかかる場合があります

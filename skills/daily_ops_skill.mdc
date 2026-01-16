@@ -1,0 +1,126 @@
+---
+name: daily-ops
+description: 日次運用タスクをYAMLからObsidianノート作成とSlack通知に変換する
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# 日次運用タスク処理: YAMLからObsidian + Slack通知
+
+**目的**: YAML形式の日次運用データ（日報、タスク、メモ）をObsidianノートとして保存し、必要に応じてSlackに通知します。
+
+## 使用方法
+
+### Step 1: YAMLファイルを作成
+
+AIに以下のようなYAML形式で日次運用データを出力させます：
+
+```yaml
+kind: daily_ops
+date: 2026-01-12
+title: "日報 + タスク整理"
+tags: ["ops", "manaos"]
+summary: |
+  今日の要点を3行くらいで。
+tasks:
+  - title: "バックアップ確認"
+    status: todo
+    priority: high
+  - title: "n8nワークフロー整理"
+    status: doing
+notes:
+  - "気づき1"
+  - "気づき2"
+notify:
+  slack: true
+  obsidian: true
+idempotency_key: "daily_ops_2026-01-12"
+```
+
+### Step 2: Pythonスクリプトで処理
+
+```bash
+python scripts/apply_skill_daily_ops.py artifacts/daily_ops_2026-01-12.yaml
+```
+
+## YAMLフォーマット仕様
+
+### 必須フィールド
+
+- `kind`: 常に `"daily_ops"` を指定
+- `date`: 日付（YYYY-MM-DD形式）
+- `title`: ノートタイトル
+- `idempotency_key`: 冪等性キー（同じキーで再実行しても重複しない）
+
+### オプションフィールド
+
+- `tags`: タグリスト（Obsidianのタグとして使用）
+- `summary`: 要約（複数行可）
+- `tasks`: タスクリスト
+  - `title`: タスク名
+  - `status`: `todo`, `doing`, `done`
+  - `priority`: `high`, `medium`, `low`
+- `notes`: メモリスト
+- `notify`:
+  - `slack`: Slack通知するか（boolean）
+  - `obsidian`: Obsidianに保存するか（boolean、デフォルト: true）
+
+## 処理フロー
+
+1. **YAMLファイルを読み込み**
+2. **冪等性チェック**: `idempotency_key`で既に処理済みか確認
+3. **Obsidianノート生成**: Markdown形式でノートを作成
+4. **Slack通知**: `notify.slack: true`の場合、要約をSlackに送信
+5. **処理履歴を保存**: 再実行防止のため履歴を記録
+
+## 依存関係
+
+- `obsidian_integration.py`: Obsidian統合モジュール
+- 環境変数:
+  - `OBSIDIAN_VAULT_PATH`: Obsidian Vaultのパス（デフォルト: `C:/Users/mana4/Documents/Obsidian Vault`）
+  - `SLACK_WEBHOOK_URL`: Slack Webhook URL（オプション）
+
+## 出力先
+
+- **Obsidian**: `{vault_path}/Daily/{date}_{title}.md`
+- **処理履歴**: `data/skill_daily_ops_history.json`
+
+## エラーハンドリング
+
+- YAML形式エラー: エラーメッセージを表示して終了
+- Obsidian保存失敗: エラーをログに記録（Slack通知は試行）
+- Slack通知失敗: 警告をログに記録（Obsidian保存は成功）
+
+## 例: AIへの指示
+
+```
+今日の日報をYAML形式で出力してください。
+以下のフォーマットに従ってください：
+
+```yaml
+kind: daily_ops
+date: 2026-01-12
+title: "日報"
+tags: ["ops"]
+summary: "今日の要点"
+tasks:
+  - title: "タスク1"
+    status: todo
+    priority: high
+notify:
+  slack: true
+  obsidian: true
+idempotency_key: "daily_ops_2026-01-12"
+```
+
+出力後、`python scripts/apply_skill_daily_ops.py artifacts/daily_ops_2026-01-12.yaml` を実行してください。
+```
