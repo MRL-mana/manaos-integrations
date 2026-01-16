@@ -1,0 +1,530 @@
+version: '3.8'
+
+services:
+  # Unified API Server
+  unified-api:
+    build:
+      context: .
+      dockerfile: unified_api_server/Dockerfile
+    container_name: unified-api-server
+    restart: unless-stopped
+    ports:
+      - "9500:9500"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - FLASK_ENV=production
+      - COMFYUI_URL=${COMFYUI_URL:-http://host.docker.internal:8188}
+      - SEARXNG_BASE_URL=${SEARXNG_BASE_URL:-http://host.docker.internal:8080}
+      - OBSIDIAN_VAULT_PATH=${OBSIDIAN_VAULT_PATH:-/app/obsidian_vault}
+    volumes:
+    - ./logs:/app/logs
+    - ./data:/app/data
+    - ./unified_api_server.py:/app/unified_api_server.py:ro
+    - ./manaos_logger.py:/app/manaos_logger.py:ro
+    - ./manaos_error_handler.py:/app/manaos_error_handler.py:ro
+    - ./manaos_timeout_config.py:/app/manaos_timeout_config.py:ro
+    # Windows環境ではdocker.sockをマウントできないため、環境変数でDockerを呼び出す
+    # Linux環境では以下のコメントアウトを解除してdocker.sockをマウント
+    # - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - manaos-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9500/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Step Deep Research Service
+  step-deep-research:
+    build:
+      context: .
+      dockerfile: step_deep_research_service/Dockerfile
+    container_name: step-deep-research-service
+    restart: unless-stopped
+    ports:
+      - "5121:5121"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - FLASK_ENV=production
+    volumes:
+      - ./step_deep_research_config.json:/app/step_deep_research_config.json:ro
+      - ./logs:/app/logs
+      - ./data:/app/data
+    networks:
+      - manaos-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1.5G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5121/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Gallery API Server
+  gallery-api:
+    build:
+      context: .
+      dockerfile: gallery_api_server/Dockerfile
+    container_name: gallery-api-server
+    restart: unless-stopped
+    ports:
+      - "5559:5559"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - FLASK_ENV=production
+      - COMFYUI_URL=${COMFYUI_URL:-http://host.docker.internal:8188}
+      - GALLERY_PORT=5559
+      - GALLERY_IMAGES_DIR=/app/gallery_images
+      - COMFYUI_OUTPUT_DIR=${COMFYUI_OUTPUT_DIR:-/app/comfyui_output}
+    volumes:
+      - ./gallery_images:/app/gallery_images
+      - ./logs:/app/logs
+    networks:
+      - manaos-network
+    depends_on:
+      - unified-api
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1.5G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5559/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # System Status API
+  system-status-api:
+    build:
+      context: .
+      dockerfile: system_status_api/Dockerfile
+    container_name: system-status-api-server
+    restart: unless-stopped
+    ports:
+      - "5112:5112"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - FLASK_ENV=production
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - manaos-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5112/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # SSOT API
+  ssot-api:
+    build:
+      context: .
+      dockerfile: ssot_api/Dockerfile
+    container_name: ssot-api-server
+    restart: unless-stopped
+    ports:
+      - "5120:5120"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - FLASK_ENV=production
+    volumes:
+      - ./data:/app/data
+      - ./manaos_status.json:/app/manaos_status.json:ro
+      - ./logs:/app/logs
+    networks:
+      - manaos-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5120/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Service Monitor
+  service-monitor:
+    build:
+      context: .
+      dockerfile: service_monitor/Dockerfile
+    container_name: service-monitor-server
+    restart: unless-stopped
+    ports:
+      - "5111:5111"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - FLASK_ENV=production
+    volumes:
+      - ./service_monitor_config.json:/app/service_monitor_config.json:ro
+      - ./logs:/app/logs
+    networks:
+      - manaos-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5111/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Web Voice Interface
+  web-voice:
+    build:
+      context: .
+      dockerfile: web_voice_interface/Dockerfile
+    container_name: web-voice-interface
+    restart: unless-stopped
+    ports:
+      - "5115:5115"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - FLASK_ENV=production
+      - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://host.docker.internal:5106}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - manaos-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5115/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Portal Integration API
+  portal-integration:
+    build:
+      context: .
+      dockerfile: portal_integration_api/Dockerfile
+    container_name: portal-integration-api
+    restart: unless-stopped
+    ports:
+      - "5108:5108"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - FLASK_ENV=production
+      - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://host.docker.internal:5106}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - manaos-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5108/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Slack Integration
+  slack-integration:
+    build:
+      context: .
+      dockerfile: slack_integration/Dockerfile
+    container_name: slack-integration-api
+    restart: unless-stopped
+    ports:
+      - "5114:5114"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - FLASK_ENV=production
+      - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://host.docker.internal:5106}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:-}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - manaos-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5114/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Portal Voice Integration
+  portal-voice-integration:
+    build:
+      context: .
+      dockerfile: portal_voice_integration/Dockerfile
+    container_name: portal-voice-integration-api
+    restart: unless-stopped
+    ports:
+      - "5116:5116"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - FLASK_ENV=production
+      - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://host.docker.internal:5106}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - manaos-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5116/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # LLM Routing API
+  llm-routing-api:
+    build:
+      context: .
+      dockerfile: manaos_llm_routing_api/Dockerfile
+    container_name: llm-routing-api
+    restart: unless-stopped
+    ports:
+      - "9501:9501"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - FLASK_ENV=production
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - manaos-network
+    depends_on:
+      - unified-api
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1.5G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9501/api/llm/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # MCP API Server - MCPサーバーのツールをREST API経由で呼び出す
+  mcp-api:
+    build:
+      context: .
+      dockerfile: mcp_api_server/Dockerfile
+    container_name: mcp-api-server
+    restart: unless-stopped
+    ports:
+      - "9502:9502"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - FLASK_ENV=production
+      - MCP_API_PORT=9502
+      - MCP_API_HOST=0.0.0.0
+      - COMFYUI_URL=${COMFYUI_URL:-http://host.docker.internal:8188}
+      - MANAOS_API_URL=${MANAOS_API_URL:-http://host.docker.internal:9500}
+      - OBSIDIAN_VAULT_PATH=${OBSIDIAN_VAULT_PATH:-/app/obsidian_vault}
+      - SEARXNG_BASE_URL=${SEARXNG_BASE_URL:-http://host.docker.internal:8080}
+      - OPENWEBUI_URL=${OPENWEBUI_URL:-http://host.docker.internal:3001}
+      - OPENWEBUI_API_KEY=${OPENWEBUI_API_KEY:-}
+    volumes:
+      - ./logs:/app/logs
+      - ./mcp_api_server.py:/app/mcp_api_server.py:ro
+      - ./manaos_unified_mcp_server:/app/manaos_unified_mcp_server:ro
+      # 統合モジュールをマウント（必要に応じて）
+      - ./comfyui_integration.py:/app/comfyui_integration.py:ro
+      - ./google_drive_integration.py:/app/google_drive_integration.py:ro
+      - ./obsidian_integration.py:/app/obsidian_integration.py:ro
+      - ./svi_wan22_video_integration.py:/app/svi_wan22_video_integration.py:ro
+      - ./searxng_integration.py:/app/searxng_integration.py:ro
+      - ./brave_search_integration.py:/app/brave_search_integration.py:ro
+      - ./base_ai_integration.py:/app/base_ai_integration.py:ro
+    networks:
+      - manaos-network
+    depends_on:
+      unified-api:
+        condition: service_healthy
+      llm-routing-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1.5G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9502/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  manaos-network:
+    driver: bridge

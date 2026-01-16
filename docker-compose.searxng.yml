@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    ports:
+    - 8080:8080
+    volumes:
+    - ./data/searxng:/etc/searxng:rw
+    - ./data/searxng/cache:/var/cache/searxng:rw
+    environment:
+    - SEARXNG_HOSTNAME=localhost
+    - SEARXNG_LOG_LEVEL=INFO
+    - BRAVE_API_KEY=demo_brave_key_12345
+    restart: unless-stopped
+    networks:
+    - searxng-network
+  redis:
+    image: redis:7-alpine
+    container_name: searxng-redis
+    ports:
+    - 6379:6379
+    volumes:
+    - ./data/redis:/data
+    restart: unless-stopped
+    networks:
+    - searxng-network
+    command: redis-server --appendonly yes
+    environment:
+    - BRAVE_API_KEY=demo_brave_key_12345
+networks:
+  searxng-network:
+    driver: bridge
+
+
