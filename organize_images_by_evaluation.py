@@ -469,8 +469,7 @@ def evaluate_and_organize_all_images():
         print("[ERROR] 画像が見つかりません")
         return
     
-    # フォルダ構造を作成
-    create_folder_structure()
+    # フォルダ構造は既にmain関数で作成済み（ここでは作成しない）
     
     # 並列処理で評価・整理
     print(f"\n[2] 画像を評価・整理中（並列処理）...")
