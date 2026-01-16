@@ -1,0 +1,11 @@
+# すべてのサービスを統合したDocker Compose
+# プロファイルを使用して必要なサービスだけを起動可能
+
+version: '3.8'
+
+# 他のdocker-composeファイルを拡張
+include:
+  - docker-compose.manaos-services.yml
+  - docker-compose.ai-services.yml
+
+# 追加の設定やオーバーライドをここに記述

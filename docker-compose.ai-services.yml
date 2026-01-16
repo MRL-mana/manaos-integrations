@@ -1,0 +1,201 @@
+version: '3.8'
+
+services:
+  # Ollama（ローカルLLM）- 既存設定を統合
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-always-ready
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./ollama_models:/models
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_KEEP_ALIVE=5m
+      - OLLAMA_MAX_LOADED_MODELS=2
+      - OLLAMA_NUM_PARALLEL=4
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ai-network
+
+  # ComfyUI（画像生成AI）
+  comfyui:
+    build:
+      context: .
+      dockerfile: comfyui/Dockerfile
+    container_name: comfyui-server
+    restart: unless-stopped
+    ports:
+      - "8188:8188"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+    volumes:
+      - ./comfyui/models:/app/models
+      - ./comfyui/output:/app/output
+      - ./comfyui/input:/app/input
+      - ./comfyui/custom_nodes:/app/custom_nodes
+      - ./comfyui/logs:/app/logs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8188/system_stats"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - ai-network
+    # GPUがない場合はCPUモードで起動
+    command: ["python", "main.py", "--port", "8188"]
+
+  # LM Studio Server（ローカルLLM）
+  # 注意: LM StudioはWindowsアプリなので、APIサーバーモードで使用
+  # 実際のLM Studioはホストで起動し、APIサーバーとしてポート1234で公開
+  lm-studio-api:
+    image: python:3.11-slim
+    container_name: lm-studio-api-proxy
+    restart: unless-stopped
+    ports:
+      - "1234:1234"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+    # LM Studioはホストで起動している前提
+    # このコンテナはAPIプロキシとして機能
+    command: ["python", "-m", "http.server", "1234"]
+    networks:
+      - ai-network
+    profiles:
+      - lm-studio  # プロファイル指定で起動
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # 注意: LM Studioはホストで起動し、http://host.docker.internal:1234/v1 でアクセス
+
+  # Free-personal-AI-Assistant（ローカルLLM）
+  free-assistant:
+    build:
+      context: .
+      dockerfile: free-assistant/Dockerfile
+    container_name: free-assistant-server
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+    volumes:
+      - ./free-assistant/data:/app/data
+      - ./free-assistant/models:/app/models
+      - ./free-assistant/logs:/app/logs
+    networks:
+      - ai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    profiles:
+      - local-llm  # プロファイル指定で起動
+
+  # Sara-AI-Platform（ローカルLLM）
+  sara-ai:
+    build:
+      context: .
+      dockerfile: sara-ai/Dockerfile
+    container_name: sara-ai-server
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+    volumes:
+      - ./sara-ai/data:/app/data
+      - ./sara-ai/models:/app/models
+      - ./sara-ai/logs:/app/logs
+    networks:
+      - ai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    profiles:
+      - local-llm  # プロファイル指定で起動
+
+  # Stable Diffusion WebUI（オプション）
+  # 注意: ComfyUIと同時に起動する場合はGPUメモリに注意
+  sd-webui:
+    build:
+      context: .
+      dockerfile: sd-webui/Dockerfile
+    container_name: sd-webui-server
+    restart: unless-stopped
+    ports:
+      - "7860:7860"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - CLI_ARGS=--listen --port 7860
+    volumes:
+      - ./sd-webui/models:/app/models
+      - ./sd-webui/outputs:/app/outputs
+      - ./sd-webui/extensions:/app/extensions
+      - ./sd-webui/logs:/app/logs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    networks:
+      - ai-network
+    profiles:
+      - sd-webui  # デフォルトでは起動しない（profile指定で起動）
+
+volumes:
+  ollama_data:
+    driver: local
+
+networks:
+  ai-network:
+    driver: bridge
+
+# プロファイル説明:
+# - デフォルト: ollama, comfyui のみ起動
+# - --profile sd-webui: Stable Diffusion WebUIも起動
+# - --profile lm-studio: LM Studio APIプロキシも起動（LM Studioはホストで起動が必要）
+# - --profile local-llm: Free Assistant, Sara AIも起動
+# - --profile all: すべてのサービスを起動
