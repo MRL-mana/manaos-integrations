@@ -1,0 +1,16 @@
+{
+  "enable_auto_diagnosis": true,
+  "diagnosis_interval_minutes": 60,
+  "enable_health_checks": true,
+  "enable_performance_analysis": true,
+  "enable_resource_analysis": true,
+  "enable_configuration_analysis": true
+}
+
+
+
+
+
+
+
+

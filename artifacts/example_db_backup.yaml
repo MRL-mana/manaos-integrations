@@ -1,0 +1,31 @@
+# データベースバックアップのサンプルYAML
+
+# 例1: PostgreSQLバックアップ
+kind: db_backup
+action: backup
+database_type: postgresql
+database_name: "myapp"
+backup_path: "backups/db_backup_2026-01-13.sql"
+compress: true
+notify:
+  slack: false
+idempotency_key: "db_backup_2026-01-13"
+
+# 例2: SQLiteバックアップ
+# kind: db_backup
+# action: backup
+# database_type: sqlite
+# database_name: "data/app.db"
+# backup_path: "backups/db_backup_2026-01-13.db"
+# compress: false
+# notify:
+#   slack: false
+# idempotency_key: "db_backup_sqlite_2026-01-13"
+
+# 例3: バックアップリスト取得
+# kind: db_backup
+# action: list
+# backup_directory: "backups"
+# notify:
+#   slack: false
+# idempotency_key: "db_backup_list_2026-01-13"

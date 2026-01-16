@@ -1,0 +1,35 @@
+{
+  "routing_enabled": true,
+  "routing_endpoint": "http://localhost:9501/api/llm/route",
+  "default_model": "Qwen2.5-Coder-7B-Instruct",
+  "preferences": {
+    "prefer_speed": true,
+    "prefer_quality": false
+  },
+  "models": {
+    "light": "Qwen2.5-Coder-7B-Instruct",
+    "medium": "Qwen2.5-Coder-14B-Instruct",
+    "heavy": "Qwen2.5-Coder-32B-Instruct"
+  },
+  "llm_server": "lm_studio",
+  "lm_studio_url": "http://localhost:1234/v1",
+  "ollama_url": "http://localhost:11434"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

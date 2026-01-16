@@ -1,0 +1,18 @@
+{
+  "enable_degraded_mode": true,
+  "enable_minimal_mode": true,
+  "enable_cache_based_responses": true,
+  "cache_ttl_hours": 24,
+  "degraded_threshold_cpu": 90,
+  "degraded_threshold_memory": 90,
+  "minimal_threshold_cpu": 95,
+  "minimal_threshold_memory": 95
+}
+
+
+
+
+
+
+
+

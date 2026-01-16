@@ -1,0 +1,25 @@
+kind: daily_ops
+date: 2026-01-13
+title: "日報"
+tags: ["ops", "manaos"]
+summary: |
+  プロジェクトのドキュメント整理とクリーンアップ作業を実施。
+  不要なマークダウンファイルの削除、GitHubワークフローの更新、
+  プロジェクト構造の最適化を進めた。
+tasks:
+  - title: "ドキュメントクリーンアップ"
+    status: completed
+    priority: medium
+  - title: "GitHubワークフロー確認"
+    status: completed
+    priority: high
+  - title: "プロジェクト構造の最適化"
+    status: in_progress
+    priority: medium
+  - title: "バックアップ確認"
+    status: todo
+    priority: high
+notify:
+  slack: false
+  obsidian: true
+idempotency_key: "daily_ops_2026-01-13"

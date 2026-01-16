@@ -1,0 +1,40 @@
+# Notion操作のサンプルYAML
+
+# 例1: ページ作成
+kind: notion_ops
+action: create_page
+database_id: "xxx-xxx-xxx"  # NotionデータベースID
+properties:
+  title: "タスク名"
+  status: "進行中"
+  due_date: "2026-01-15"
+  priority: "high"
+notify:
+  slack: false
+idempotency_key: "notion_task_2026-01-13_001"
+
+# 例2: ページ更新
+# kind: notion_ops
+# action: update_page
+# page_id: "yyy-yyy-yyy"  # 更新するページID
+# properties:
+#   status: "完了"
+#   completed_at: "2026-01-13"
+# notify:
+#   slack: true
+# idempotency_key: "notion_update_2026-01-13_001"
+
+# 例3: データベースクエリ
+# kind: notion_ops
+# action: query_database
+# database_id: "xxx-xxx-xxx"
+# filter:
+#   property: "status"
+#   select:
+#     equals: "進行中"
+# sorts:
+#   - property: "due_date"
+#     direction: "ascending"
+# notify:
+#   slack: false
+# idempotency_key: "notion_query_2026-01-13_001"

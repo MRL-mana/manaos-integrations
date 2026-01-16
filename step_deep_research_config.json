@@ -1,0 +1,82 @@
+{
+  "version": "1.4.0",
+  "service_id": "5121",
+  "service_name": "Step Deep Research",
+  "version": "1.4.0",
+  
+  "orchestrator": {
+    "max_budget_tokens": 50000,
+    "max_search_queries": 20,
+    "max_time_minutes": 60,
+    "checkpoint_interval_seconds": 30,
+    "retry_strategy": {
+      "max_retries": 3,
+      "retry_delay_seconds": 5,
+      "backoff_multiplier": 2.0
+    }
+  },
+  
+  "planner": {
+    "ollama_url": "http://localhost:11434",
+    "model": "llama3.2:3b",
+    "max_todo_items": 15,
+    "planning_prompt_template": "step_deep_research/prompts/planner_prompt.txt"
+  },
+  
+  "research_loop": {
+    "max_iterations": 10,
+    "iteration_timeout_seconds": 300,
+    
+    "searcher": {
+      "sources": ["web", "rag", "docs", "pdf"],
+      "max_results_per_query": 10,
+      "web_search_provider": "searxng",
+      "searxng_url": "http://localhost:8080",
+      "rag_api_url": "http://localhost:5103"
+    },
+    
+    "reader": {
+      "ollama_url": "http://localhost:11434",
+      "model": "llama3.2:3b",
+      "max_chunk_size": 2000,
+      "extraction_prompt_template": "step_deep_research/prompts/reader_prompt.txt"
+    },
+    
+    "verifier": {
+      "ollama_url": "http://localhost:11434",
+      "model": "llama3.2:3b",
+      "contradiction_threshold": 0.7,
+      "verification_prompt_template": "step_deep_research/prompts/verifier_prompt.txt"
+    },
+    
+    "writer": {
+      "ollama_url": "http://localhost:11434",
+      "model": "qwen2.5:7b",
+      "report_template": "step_deep_research/templates/report_template.md",
+      "citation_format": "markdown"
+    }
+  },
+  
+  "critic": {
+    "ollama_url": "http://localhost:11434",
+    "model": "llama3.2:3b",
+    "rubric_file": "step_deep_research/rubric_20_items.yaml",
+    "min_pass_score": 14,
+    "max_iterations": 3,
+    "critic_prompt_template": "step_deep_research/prompts/critic_prompt.txt"
+  },
+  
+  "trinity_integration": {
+    "remi_role": ["planner", "writer"],
+    "luna_role": ["searcher", "reader"],
+    "mina_role": ["verifier", "critic_assistant"]
+  },
+  
+  "memory_integration": {
+    "rag_api_url": "http://localhost:5103",
+    "auto_save_reports": true,
+    "auto_save_failures": true,
+    "learning_data_path": "logs/step_deep_research/learning_data/"
+  }
+}
+

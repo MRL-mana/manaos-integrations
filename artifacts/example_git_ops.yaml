@@ -1,0 +1,32 @@
+# Git操作のYAML例
+# このファイルを参考に、AIにYAML形式でGit操作設定を出力させてください
+
+# コミット&プッシュの例
+kind: git_ops
+action: commit_and_push
+repository_path: "."
+commit_message: "Add: Skills実装"
+branch: "main"
+files:
+  - "scripts/*.py"
+  - "skills/*.mdc"
+notify:
+  slack: true
+idempotency_key: "git_commit_2026-01-12_001"
+
+# 状態確認の例（コメントアウト）
+# kind: git_ops
+# action: status
+# repository_path: "."
+# idempotency_key: "git_status_2026-01-12"
+
+# タグ作成の例（コメントアウト）
+# kind: git_ops
+# action: tag
+# repository_path: "."
+# tag_name: "v1.0.0"
+# tag_message: "リリース v1.0.0"
+# push_tag: true
+# notify:
+#   slack: true
+# idempotency_key: "git_tag_2026-01-12"

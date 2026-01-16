@@ -1,0 +1,76 @@
+# OH MY OPENCODE統合設定
+
+# API設定
+# 注意: OH MY OPENCODEは既存のLLMプロバイダのAPIキーを使用します
+# OpenRouter / OpenAI / Anthropic などのAPIキーを設定してください
+api:
+  # OpenRouterを使用する場合（推奨）
+  base_url: "https://openrouter.ai/api/v1"
+  api_key: "${OPENROUTER_API_KEY}"  # 環境変数から取得
+  
+  # OpenAIを使用する場合
+  # base_url: "https://api.openai.com/v1"
+  # api_key: "${OPENAI_API_KEY}"
+  
+  # Anthropicを使用する場合
+  # base_url: "https://api.anthropic.com/v1"
+  # api_key: "${ANTHROPIC_API_KEY}"
+  
+  timeout: 300.0
+
+# 実行モード設定
+execution:
+  default_mode: "normal"  # "normal" or "ultra_work"
+  max_iterations: 10  # Ralph Wiggum Loopの最大反復回数
+  max_execution_time: 3600  # 最大実行時間（秒）
+
+# Ultra Workモード設定
+ultra_work:
+  enabled: false  # デフォルト無効
+  allowed_task_types:
+    - "specification"  # 仕様策定
+    - "complex_bug"  # 難解バグ
+    - "architecture_design"  # 初期アーキ設計
+  require_approval: true  # 承認が必要
+  cost_limit_per_task: 100.0  # タスクあたりのコスト上限
+  # Ultra Work途中降格設定
+  downgrade_enabled: true  # 途中降格を有効にする
+  downgrade_cost_threshold: 0.7  # コストが70%に達したら降格
+  downgrade_time_threshold: 0.8  # 実行時間が80%に達したら降格
+  downgrade_iteration_threshold: 0.75  # 反復回数が75%に達したら降格
+
+# コスト管理
+cost_management:
+  enabled: true
+  daily_limit: 100.0  # 日次コスト上限
+  monthly_limit: 2000.0  # 月次コスト上限
+  warning_threshold: 0.8  # 警告閾値（80%）
+  auto_stop: true  # 上限到達時に自動停止
+
+# Kill Switch設定
+kill_switch:
+  enabled: true
+  max_execution_time: 3600  # 最大実行時間（秒）
+  max_iterations: 20  # 最大反復回数
+  detect_infinite_loop: true  # 無限ループ検知
+  auto_kill_on_error: false  # エラー時の自動停止（デフォルト: false）
+
+# Trinity統合
+trinity:
+  enabled: true
+  remi_integration: true  # Remi統合
+  luna_integration: true  # Luna統合
+  mina_integration: true  # Mina統合
+
+# LLMルーティング統合
+llm_routing:
+  enabled: true
+  use_manaos_routing: true  # ManaOSルーティングを使用
+  fallback_to_local: true  # ローカルモデルにフォールバック
+
+# ログ・監視
+logging:
+  enabled: true
+  level: "INFO"
+  save_to_obsidian: true
+  save_to_notion: false

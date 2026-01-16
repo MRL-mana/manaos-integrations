@@ -1,0 +1,30 @@
+# メール送信のサンプルYAML
+
+# 例1: 単一メール送信
+kind: email_ops
+action: send
+to: "user@example.com"
+subject: "日報"
+body: "今日の作業内容..."
+attachments:
+  - "reports/daily_report.pdf"
+notify:
+  slack: false
+idempotency_key: "email_send_2026-01-13_001"
+
+# 例2: バッチメール送信
+# kind: email_ops
+# action: batch_send
+# to:
+#   - "user1@example.com"
+#   - "user2@example.com"
+# subject: "お知らせ"
+# body: "こんにちは、{name}さん"
+# template_variables:
+#   "user1@example.com":
+#     name: "山田"
+#   "user2@example.com":
+#     name: "佐藤"
+# notify:
+#   slack: false
+# idempotency_key: "email_batch_2026-01-13_001"

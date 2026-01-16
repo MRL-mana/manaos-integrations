@@ -1,0 +1,26 @@
+# ファイル整理のサンプルYAML
+
+# 例1: ファイル整理（パターンに基づいて移動）
+kind: file_organize
+action: organize
+source_directory: "Downloads"
+rules:
+  - pattern: "*.pdf"
+    destination: "Documents/PDFs"
+  - pattern: "*.jpg"
+    destination: "Pictures"
+  - pattern: "*.png"
+    destination: "Pictures"
+move_files: true
+notify:
+  slack: false
+idempotency_key: "file_organize_2026-01-13"
+
+# 例2: 重複ファイル削除
+# kind: file_organize
+# action: deduplicate
+# source_directory: "Downloads"
+# keep_oldest: true
+# notify:
+#   slack: false
+# idempotency_key: "file_deduplicate_2026-01-13"
