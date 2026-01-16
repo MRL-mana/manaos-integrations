@@ -1044,12 +1044,9 @@ class MultiProviderOCR:
             if not hasattr(self, '_easyocr_reader'):
                 logger.info(f"EasyOCRリーダーを初期化中（初回のみ時間がかかります、GPU: {use_gpu}）...")
                 
-                # タイムアウトハンドラ（Windowsでは動作しないが、エラーハンドリングを強化）
-                def timeout_handler(signum, frame):
-                    raise TimeoutError("EasyOCR初期化がタイムアウトしました")
-                
                 try:
                     # より安全な初期化（メモリ制限とエラーハンドリング）
+                    # verbose=Falseでログを抑制、モデルダウンロードの進捗を抑制
                     if use_gpu:
                         # GPU使用を試行
                         import torch
@@ -1057,7 +1054,7 @@ class MultiProviderOCR:
                             try:
                                 self._easyocr_reader = easyocr.Reader(langs, gpu=True, verbose=False)
                                 logger.info("EasyOCR: GPUを使用します")
-                            except Exception as gpu_err:
+                            except (MemoryError, OSError, RuntimeError) as gpu_err:
                                 logger.warning(f"EasyOCR GPU初期化失敗: {gpu_err}。CPUで再試行...")
                                 self._easyocr_reader = easyocr.Reader(langs, gpu=False, verbose=False)
                         else:
@@ -1069,6 +1066,13 @@ class MultiProviderOCR:
                         logger.info("EasyOCR: CPUで初期化完了")
                 except MemoryError as me:
                     logger.error(f"EasyOCR: メモリ不足エラー: {me}")
+                    # メモリ不足の場合はNoneを返してTesseractにフォールバック
+                    return None
+                except OSError as ose:
+                    logger.error(f"EasyOCR: OSエラー（モデルダウンロード失敗の可能性）: {ose}")
+                    return None
+                except RuntimeError as re:
+                    logger.error(f"EasyOCR: ランタイムエラー: {re}")
                     return None
                 except Exception as e:
                     logger.error(f"EasyOCR初期化エラー: {type(e).__name__}: {e}")
@@ -1077,8 +1081,12 @@ class MultiProviderOCR:
                     logger.debug(f"EasyOCR初期化エラー詳細:\n{traceback.format_exc()}")
                     return None
             
-            # OCR実行
-            results = self._easyocr_reader.readtext(image_path)
+            # OCR実行（エラーハンドリングを強化）
+            try:
+                results = self._easyocr_reader.readtext(image_path)
+            except Exception as e:
+                logger.error(f"EasyOCR実行エラー: {type(e).__name__}: {e}")
+                return None
             
             # テキストを結合
             text_lines = []
