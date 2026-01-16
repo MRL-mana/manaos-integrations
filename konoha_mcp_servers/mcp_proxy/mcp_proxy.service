@@ -1,0 +1,25 @@
+[Unit]
+Description=MCP-Proxy: 安全で高性能なMCPサーバープロキシ
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/mcp_proxy
+Environment="PYTHONPATH=/root"
+Environment="MCP_PROXY_PORT=3011"
+Environment="MCP_PROXY_RATE_LIMIT=60"
+Environment="MCP_PROXY_AUTH_TOKEN="
+ExecStart=/usr/bin/python3 /root/mcp_proxy/mcp_proxy_server.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# リソース制限
+MemoryLimit=512M
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target
+
