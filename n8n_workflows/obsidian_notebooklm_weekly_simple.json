@@ -1,0 +1,110 @@
+{
+  "name": "Obsidian × NotebookLM 週次分析（簡易版）",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 22 * * 0"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "週次トリガー（日曜22時）",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "command": "python",
+        "arguments": "manaos_obsidian_integration.py",
+        "options": {
+          "cwd": "C:\\Users\\mana4\\Desktop\\manaos_integrations"
+        }
+      },
+      "id": "prepare-input",
+      "name": "NotebookLM入力ファイル準備",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=📊 週次分析の準備が完了しました\n\n- 分析用ファイル: Review/{{ $now.toISO().split('T')[0] }}-notebooklm-input.md\n- 質問リスト: notebooklm_question_templates.md を参照\n\nNotebookLMで分析を開始してください。"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "slack-notification",
+      "name": "Slack通知",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "週次トリガー（日曜22時）": {
+      "main": [
+        [
+          {
+            "node": "NotebookLM入力ファイル準備",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NotebookLM入力ファイル準備": {
+      "main": [
+        [
+          {
+            "node": "Slack通知",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2026-01-06T00:00:00.000Z",
+  "versionId": "1"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

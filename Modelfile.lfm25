@@ -1,0 +1,5 @@
+FROM liquidai/lfm2.5:1.2b
+TEMPLATE """{{ .Prompt }}"""
+PARAMETER temperature 0.8
+PARAMETER top_p 0.9
+PARAMETER top_k 40

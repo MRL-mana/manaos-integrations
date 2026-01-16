@@ -1,0 +1,150 @@
+{
+  "name": "SearXNG Web検索",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "searxng-search"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SEARXNG_BASE_URL || 'http://localhost:8080' }}/search",
+        "options": {
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "={{ $json.body.query }}"
+              },
+              {
+                "name": "format",
+                "value": "json"
+              },
+              {
+                "name": "language",
+                "value": "={{ $json.body.language || 'ja' }}"
+              },
+              {
+                "name": "safesearch",
+                "value": "1"
+              }
+            ]
+          }
+        }
+      },
+      "id": "http-request",
+      "name": "SearXNG検索実行",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "results",
+              "name": "results",
+              "value": "={{ $json.results }}",
+              "type": "array"
+            },
+            {
+              "id": "query",
+              "name": "query",
+              "value": "={{ $json.query }}",
+              "type": "string"
+            },
+            {
+              "id": "count",
+              "name": "count",
+              "value": "={{ $json.results.length }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-results",
+      "name": "結果を整形",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"query\": $json.query, \"results\": $json.results, \"count\": $json.count } }}"
+      },
+      "id": "respond",
+      "name": "結果を返す",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "SearXNG検索実行",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SearXNG検索実行": {
+      "main": [
+        [
+          {
+            "node": "結果を整形",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "結果を整形": {
+      "main": [
+        [
+          {
+            "node": "結果を返す",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,196 @@
+{
+  "name": "Excel/LLM処理ワークフロー",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "excel-llm-process",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhookトリガー",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "excel-llm-process"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:9500/api/excel/process",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"file_path\": $json.file_path,\n  \"task\": $json.task || \"異常値検出\"\n} }}",
+        "options": {}
+      },
+      "id": "manaos-excel-process",
+      "name": "ManaOS Excel/LLM処理",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.success }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "success-check",
+      "name": "成功判定",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "postMessage",
+        "channel": "#manaos-notifications",
+        "text": "=📊 Excel/LLM分析完了\n\nファイル: {{ $json.output_file }}\nタスク: {{ $('ManaOS Excel/LLM処理').item.json.task }}\nモデル: {{ $json.model }}\n行数: {{ $json.rows }}\n列数: {{ $json.columns }}\n\n{{ $json.response }}",
+        "options": {}
+      },
+      "id": "slack-notify",
+      "name": "Slack通知",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [850, 200],
+      "credentials": {
+        "slackApi": {
+          "id": "1",
+          "name": "Slack API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "name": "=Excel分析_{{ $now.toISO() }}.md",
+        "content": "=# Excel/LLM分析結果\n\n- ファイル: {{ $('ManaOS Excel/LLM処理').item.json.output_file }}\n- タスク: {{ $('ManaOS Excel/LLM処理').item.json.task }}\n- モデル: {{ $json.model }}\n- 行数: {{ $json.rows }}\n- 列数: {{ $json.columns }}\n- 分析日時: {{ $now.toISO() }}\n\n## 分析結果\n\n{{ $json.response }}",
+        "options": {}
+      },
+      "id": "obsidian-create",
+      "name": "Obsidian記録",
+      "type": "n8n-nodes-base.obsidian",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  \"status\": \"success\",\n  \"message\": \"Excel分析完了\",\n  \"output_file\": $json.output_file\n} }}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook応答",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  \"status\": \"error\",\n  \"error\": $json.error || \"処理に失敗しました\"\n} }}"
+      },
+      "id": "error-response",
+      "name": "エラー応答",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 400]
+    }
+  ],
+  "connections": {
+    "Webhookトリガー": {
+      "main": [
+        [
+          {
+            "node": "ManaOS Excel/LLM処理",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ManaOS Excel/LLM処理": {
+      "main": [
+        [
+          {
+            "node": "成功判定",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "成功判定": {
+      "main": [
+        [
+          {
+            "node": "Slack通知",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Obsidian記録",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "エラー応答",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack通知": {
+      "main": [
+        [
+          {
+            "node": "Webhook応答",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obsidian記録": {
+      "main": [
+        [
+          {
+            "node": "Webhook応答",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-01-13T00:00:00.000Z",
+      "updatedAt": "2025-01-13T00:00:00.000Z",
+      "id": "1",
+      "name": "excel"
+    },
+    {
+      "createdAt": "2025-01-13T00:00:00.000Z",
+      "updatedAt": "2025-01-13T00:00:00.000Z",
+      "id": "2",
+      "name": "llm"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2025-01-13T00:00:00.000Z",
+  "versionId": "1"
+}
