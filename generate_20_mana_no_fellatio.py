@@ -20,25 +20,116 @@ COMFYUI_URL = "http://localhost:8188"
 # 利用可能なモデル（複数モデル対応）
 COMFYUI_MODELS_DIR = Path(os.getenv("COMFYUI_MODELS_DIR", "C:/ComfyUI/models/checkpoints"))
 MANA_MODELS_DIR = Path(os.getenv("MANA_MODELS_DIR", "C:/mana_workspace/models"))
+DOWNLOADS_DIR = Path(os.getenv("DOWNLOADS_DIR", str(Path.home() / "Downloads")))
+PROJECT_MODELS_DIR = Path(__file__).parent / "models"  # プロジェクトルートのmodelsディレクトリ
 
-# 利用可能なモデル（確実に動作するモデルのみ使用）
-# 現在はrealisian_v60.safetensorsのみ使用（他のモデルでエラーが発生しているため）
-available_models = [
-    "realisian_v60.safetensors"  # 確実に動作するモデル
+# 利用可能なモデルを自動検出（複数ディレクトリから検索）
+available_models = []
+model_paths = {}  # モデル名 -> フルパスのマッピング
+
+def add_models_from_dir(directory, description=""):
+    """指定ディレクトリからモデルを追加"""
+    if not directory.exists():
+        return
+    count = 0
+    for model_file in directory.glob("*.safetensors"):
+        model_name = model_file.name
+        if model_name not in model_paths:
+            available_models.append(model_name)
+            model_paths[model_name] = str(model_file)
+            count += 1
+    for model_file in directory.glob("*.ckpt"):
+        model_name = model_file.name
+        if model_name not in model_paths:
+            available_models.append(model_name)
+            model_paths[model_name] = str(model_file)
+            count += 1
+    if count > 0 and description:
+        print(f"  {description}: {count}件のモデルを検出")
+
+# 1. ComfyUIのcheckpointsディレクトリから検出
+add_models_from_dir(COMFYUI_MODELS_DIR, "ComfyUI checkpoints")
+
+# 2. MANA_MODELS_DIRからも検出（シンボリックリンクやコピーがある場合）
+add_models_from_dir(MANA_MODELS_DIR, "Mana workspace")
+
+# 3. Downloadsフォルダから検出（CivitAIからダウンロードしたモデル）
+add_models_from_dir(DOWNLOADS_DIR, "Downloads")
+
+# 4. プロジェクトルートのmodelsディレクトリから検出
+add_models_from_dir(PROJECT_MODELS_DIR, "Project models")
+
+# 3. ComfyUI APIから利用可能なモデルリストを取得（オプション）
+try:
+    response = requests.get(f"{COMFYUI_URL}/object_info", timeout=5)
+    if response.status_code == 200:
+        object_info = response.json()
+        checkpoint_loader = object_info.get("CheckpointLoaderSimple", {})
+        if checkpoint_loader and "input" in checkpoint_loader:
+            input_info = checkpoint_loader["input"]
+            if "required" in input_info and "ckpt_name" in input_info["required"]:
+                ckpt_info = input_info["required"]["ckpt_name"]
+                if isinstance(ckpt_info, list) and len(ckpt_info) > 0:
+                    api_models = ckpt_info[0]  # 通常はリストの最初の要素がモデルリスト
+                    if isinstance(api_models, list):
+                        for api_model in api_models:
+                            if api_model not in available_models:
+                                available_models.append(api_model)
+except:
+    pass  # APIが利用できない場合は無視
+
+# 問題のあるモデルを除外（エラーが発生するモデル）
+problematic_models = [
+    "0482 dildo masturbation_v1_pony.safetensors",
+    "0687 public indecency_v1_pony.safetensors",
+    "ltx-2-19b-distilled.safetensors",  # LTX2は別のワークフローが必要な可能性
+    "LTX-Video\\ltx-2-19b-distilled.safetensors",  # パス形式の問題
+    "qqq-BDSM-v3-000010.safetensors",  # HTTP 400エラーが発生
+    "ZIT_Amateur_Nudes_V2.safetensors",  # HTTP 400エラー
+    "wan2.2_t2v_highnoise_masturbation_v1.0.safetensors",  # HTTP 400エラー（動画生成モデル）
+    "waiIllustriousSDXL_v160.safetensors"  # HTTP 400エラー
 ]
+# パス区切り文字を含むモデル名も除外
+available_models = [m for m in available_models if m not in problematic_models and "\\" not in m and "/" not in m]
 
-# 利用可能なLoRAを自動検出
+# モデルが見つからない場合はデフォルトを使用
+if not available_models:
+    available_models = ["realisian_v60.safetensors"]
+
+# SD1.5/SDXL/SD3モデルを識別（モデル名から判定）
+def is_sd15_model(model_name):
+    """SD1.5モデルかどうかを判定"""
+    # SDXL/SD3でない場合、デフォルトでSD1.5とみなす
+    # ただし、明示的にSD1.5を示すキーワードがある場合は確実にSD1.5
+    sd15_keywords = ["sd15", "sd-1.5", "sd 1.5", "1.5", "v1-5", "v1.5"]
+    if any(keyword.lower() in model_name.lower() for keyword in sd15_keywords):
+        return True
+    # SDXL/SD3でなければSD1.5とみなす
+    return not (is_sdxl_model(model_name) or is_sd3_model(model_name))
+
+def is_sdxl_model(model_name):
+    """SDXLモデルかどうかを判定"""
+    sdxl_keywords = ["sdxl", "xl", "xlarge", "1024", "speciosa25D", "uwazumimix"]
+    return any(keyword.lower() in model_name.lower() for keyword in sdxl_keywords)
+
+def is_sd3_model(model_name):
+    """SD3モデルかどうかを判定"""
+    sd3_keywords = ["sd3", "sd-3", "flux", "stable-diffusion-3"]
+    return any(keyword.lower() in model_name.lower() for keyword in sd3_keywords)
+
+# 利用可能なLoRAを自動検出（画像生成用LoRAのみ）
 COMFYUI_LORA_DIR = Path("C:/ComfyUI/models/loras")
 available_loras = []
 if COMFYUI_LORA_DIR.exists():
     for lora_file in COMFYUI_LORA_DIR.glob("*.safetensors"):
-        available_loras.append(lora_file.name)
+        lora_name = lora_file.name
+        # Qwen系LoRA（画像生成用ではない）を除外
+        if not any(keyword in lora_name.lower() for keyword in ["qwen", "llm", "text"]):
+            available_loras.append(lora_name)
     for lora_file in COMFYUI_LORA_DIR.glob("*.ckpt"):
-        available_loras.append(lora_file.name)
-
-# LoRAを使用するか（オプション、空の場合は使用しない）
-use_lora = random.choice([True, False]) if available_loras else False
-selected_lora = random.choice(available_loras) if use_lora and available_loras else None
+        lora_name = lora_file.name
+        if not any(keyword in lora_name.lower() for keyword in ["qwen", "llm", "text"]):
+            available_loras.append(lora_name)
 
 MUFUFU_NEGATIVE_PROMPT = "clothes, clothing, dress, shirt, pants, skirt, underwear, bra, panties, swimsuit, bikini, uniform, costume, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, bad feet, bad proportions, duplicate, ugly, deformed, poorly drawn, bad body, out of frame, extra limbs, disfigured, mutation, mutated, mutilated, bad art, bad structure, malformed body, distorted body, broken body, twisted body, unnatural body, wrong proportions, asymmetrical body, bad body structure, malformed breasts, distorted breasts, wrong breast size, unnatural breasts, bad torso, malformed torso, distorted torso, bad waist, malformed waist, bad hips, malformed hips, bad legs, malformed legs, distorted legs, bad arms, malformed arms, distorted arms, extra fingers, missing fingers, bad fingers, extra toes, missing toes, bad toes, fused fingers, too many fingers, missing limbs, extra limbs, floating limbs, disconnected limbs, malformed hands, extra hands, missing hands, bad hands, malformed feet, extra feet, missing feet, bad feet, multiple people, other people, group, couple, oral sex, fellatio, blowjob, giving head, sucking cock, deep throat, performing oral, mouth sex, cock in mouth, penis in mouth"
 
@@ -108,26 +199,50 @@ def create_workflow(prompt, negative_prompt, model, lora_name=None, lora_strengt
 
 print("=" * 60)
 print("マナ好みのリアル系清楚系ギャル30枚生成")
-print("（女性一人・美しさ・魅力・引き締まった体・Dカップ・性行為・フェラなし）")
+print("（女性一人・美しさ・魅力・引き締まった体・Dカップ・性行為・フェラなし・複数モデル・LoRA対応）")
 print("=" * 60)
 print()
 
 print(f"利用可能なモデル数: {len(available_models)}")
 if available_models:
     print("モデル一覧:")
-    for model in available_models[:5]:
-        print(f"  - {model}")
-    if len(available_models) > 5:
-        print(f"  ... 他 {len(available_models) - 5} 件")
+    sd15_count = 0
+    sdxl_count = 0
+    sd3_count = 0
+    for model in available_models[:10]:
+        model_type = ""
+        if is_sd3_model(model):
+            model_type = " [SD3]"
+            sd3_count += 1
+        elif is_sdxl_model(model):
+            model_type = " [SDXL]"
+            sdxl_count += 1
+        elif is_sd15_model(model):
+            model_type = " [SD1.5]"
+            sd15_count += 1
+        print(f"  - {model}{model_type}")
+    if len(available_models) > 10:
+        print(f"  ... 他 {len(available_models) - 10} 件")
+    print()
+    print(f"モデルタイプ内訳: SD1.5={sum(1 for m in available_models if is_sd15_model(m))}件, "
+          f"SDXL={sum(1 for m in available_models if is_sdxl_model(m))}件, "
+          f"SD3={sum(1 for m in available_models if is_sd3_model(m))}件")
 
 print()
 print(f"利用可能なLoRA数: {len(available_loras)}")
 if available_loras:
-    print("LoRA一覧:")
-    for lora in available_loras[:5]:
+    print("LoRA一覧（画像生成用）:")
+    for lora in available_loras[:10]:
         print(f"  - {lora}")
-    if len(available_loras) > 5:
-        print(f"  ... 他 {len(available_loras) - 5} 件")
+    if len(available_loras) > 10:
+        print(f"  ... 他 {len(available_loras) - 10} 件")
+    print()
+    print("※ LoRAは30%の確率でランダムに適用されます")
+else:
+    print("  （画像生成用LoRAが見つかりませんでした）")
+print()
+print("注意: A1111は別のソフトウェアです。ComfyUIでは使用できません。")
+print("      SDXL/SD3モデルは自動的に検出され、適切な解像度で生成されます。")
 print()
 
 # マナ好みの清楚系ギャルの要素（美しさと魅力を強調・この子がタイプのスタイル）
@@ -151,10 +266,12 @@ prompt_ids = []
 for i in range(30):
     model = random.choice(available_models)
     
-    # LoRAは一旦無効化（Qwen系LoRAは画像生成用ではないため）
-    # 将来的に画像生成用LoRAが追加されたら有効化
+    # LoRAをランダムに使用（30%の確率で使用）
     lora_name = None
     lora_strength = None
+    if available_loras and random.random() < 0.3:
+        lora_name = random.choice(available_loras)
+        lora_strength = round(random.uniform(0.5, 1.0), 2)
     
     # マナ好みのリアル系清楚系ギャルプロンプト（女性一人・美しさ・魅力・身体崩れ防止・引き締まった体・Dカップ・性行為・フェラなし・この子がタイプのスタイル）
     prompt_parts = [
@@ -187,11 +304,18 @@ for i in range(30):
     prompt = ", ".join(prompt_parts)
     
     # マナ好みの高品質パラメータ（身体崩れ防止・美しさ重視）
-    steps = random.choice([60, 65, 70, 75])
-    width, height = random.choice([
-        (768, 1024), (1024, 768), (832, 1216), (896, 1152), 
-        (960, 1280), (1024, 1024), (896, 1280)
-    ])
+    # SDXL/SD3モデルの場合は解像度を調整
+    if is_sdxl_model(model) or is_sd3_model(model):
+        steps = random.choice([50, 55, 60, 65])
+        width, height = random.choice([
+            (1024, 1024), (1024, 1280), (1280, 1024), (1152, 1344), (1344, 1152)
+        ])
+    else:
+        steps = random.choice([60, 65, 70, 75])
+        width, height = random.choice([
+            (768, 1024), (1024, 768), (832, 1216), (896, 1152), 
+            (960, 1280), (1024, 1024), (896, 1280)
+        ])
     
     guidance_scale = round(random.uniform(8.0, 9.5), 1)
     sampler = random.choice(["euler", "euler_ancestral", "dpm_2", "dpm_2_ancestral", "dpmpp_2m"])

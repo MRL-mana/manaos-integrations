@@ -311,7 +311,9 @@ def find_all_images_in_system():
             "windows", "program files", "programdata", 
             "$recycle", "system volume", "recovery",
             "appdata\\local\\temp", "appdata\\local\\cache",
-            "node_modules", ".git", "__pycache__"
+            "node_modules", ".git", "__pycache__",
+            "organized_images",  # 既に整理済みのフォルダを除外
+            "画像評価整理"  # 整理先フォルダを除外
         ]
         return any(keyword in path_str for keyword in exclude_keywords)
     
