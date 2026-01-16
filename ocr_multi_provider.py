@@ -25,7 +25,9 @@ class MultiProviderOCR:
             "tesseract": False,
             "google": False,
             "microsoft": False,
-            "amazon": False
+            "amazon": False,
+            "easyocr": False,
+            "paddleocr": False
         }
         self.ocr_scripts_path = Path("repos/OCR_Python-Scripts")
         self._check_providers()
@@ -106,6 +108,22 @@ class MultiProviderOCR:
                 logger.info(f"Amazon Textractは初期化に失敗したため無効化しました: {e}")
         except ImportError:
             logger.debug("Amazon Textractが利用できません")
+        
+        # EasyOCR（日本語に強い）
+        try:
+            import easyocr
+            self.providers["easyocr"] = True
+            logger.info("EasyOCRが利用可能です")
+        except ImportError:
+            logger.debug("EasyOCRがインストールされていません（pip install easyocr でインストール可能）")
+        
+        # PaddleOCR（日本語に非常に強い）
+        try:
+            from paddleocr import PaddleOCR
+            self.providers["paddleocr"] = True
+            logger.info("PaddleOCRが利用可能です")
+        except ImportError:
+            logger.debug("PaddleOCRがインストールされていません（pip install paddlepaddle paddleocr でインストール可能）")
     
     def get_available_providers(self) -> List[str]:
         """利用可能なプロバイダー一覧を取得"""
@@ -148,6 +166,10 @@ class MultiProviderOCR:
                 return self._recognize_microsoft(image_path, **kwargs)
             elif provider == "amazon":
                 return self._recognize_amazon(image_path, **kwargs)
+            elif provider == "easyocr":
+                return self._recognize_easyocr(image_path, **kwargs)
+            elif provider == "paddleocr":
+                return self._recognize_paddleocr(image_path, **kwargs)
         except Exception as e:
             logger.error(f"OCR実行エラー ({provider}): {e}")
             return None
@@ -262,16 +284,17 @@ class MultiProviderOCR:
         col_sum = vertical.sum(axis=0)
         row_sum = horizontal.sum(axis=1)
 
-        # 閾値（最大値に対する比）- 高解像度では少し下げる
-        col_thr = float(col_sum.max()) * (0.4 if scale_factor > 1.2 else 0.5)
-        row_thr = float(row_sum.max()) * (0.4 if scale_factor > 1.2 else 0.5)
+        # 閾値（最大値に対する比）- より多くの列を検出するために閾値を下げる
+        # 0.3に下げて、より細かい罫線も検出できるようにする
+        col_thr = float(col_sum.max()) * 0.3  # 0.4/0.5 → 0.3に下げる
+        row_thr = float(row_sum.max()) * 0.3  # 0.4/0.5 → 0.3に下げる
 
         x_mask = col_sum > col_thr
         y_mask = row_sum > row_thr
 
-        # min_gapも解像度に応じて調整
-        x_lines = self._cluster_line_positions(x_mask, min_gap=max(int(8 * scale_factor), w // 200))
-        y_lines = self._cluster_line_positions(y_mask, min_gap=max(int(8 * scale_factor), h // 200))
+        # min_gapも解像度に応じて調整（より細かい列も検出できるように小さくする）
+        x_lines = self._cluster_line_positions(x_mask, min_gap=max(int(5 * scale_factor), w // 300))  # 200 → 300に変更
+        y_lines = self._cluster_line_positions(y_mask, min_gap=max(int(5 * scale_factor), h // 300))  # 200 → 300に変更
 
         # 端の境界も追加（外枠が途切れてもセル割当できるように）
         if 0 not in x_lines:
@@ -348,7 +371,7 @@ class MultiProviderOCR:
             # 複数のコントラスト値で試行（auto時）
             contrast_values = [2.0]  # デフォルト
             if auto:
-                contrast_values = [1.8, 2.2, 2.5, 3.0, 3.5]  # より強力なコントラスト調整を追加
+                contrast_values = [1.5, 1.8, 2.0, 2.2, 2.5, 3.0, 3.5, 4.0, 5.0]  # より広範囲のコントラスト調整（薄い文字も拾う）
             
             variants = []
             for contrast_val in contrast_values:
@@ -360,20 +383,33 @@ class MultiProviderOCR:
                 variants.append((f"base_c{contrast_val:.1f}", img))
             
             if auto:
-                # 二値化（複数の閾値で試行）
-                for thr in [160, 180, 200]:
+                # 二値化（複数の閾値で試行・薄い文字も拾うために低閾値も追加）
+                for thr in [120, 140, 150, 160, 180, 200]:
                     bin_img = base.point(lambda p: 255 if p > thr else 0)
                     variants.append((f"bin_{thr}", bin_img))
                 
-                # 適応的閾値処理（簡易版）
+                # 適応的閾値処理（複数パターン）
                 try:
                     import cv2
                     img_array = np.array(base)
+                    # 通常の適応的閾値
                     adaptive = cv2.adaptiveThreshold(
                         img_array, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                         cv2.THRESH_BINARY, 11, 2
                     )
                     variants.append(("adaptive", Image.fromarray(adaptive)))
+                    # より敏感な適応的閾値（薄い文字用）
+                    adaptive2 = cv2.adaptiveThreshold(
+                        img_array, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                        cv2.THRESH_BINARY, 15, 5
+                    )
+                    variants.append(("adaptive2", Image.fromarray(adaptive2)))
+                    # Otsu閾値（自動最適化）
+                    _, otsu = cv2.threshold(img_array, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                    variants.append(("otsu", Image.fromarray(otsu)))
+                    # ヒストグラム均一化（コントラスト改善）
+                    equalized = cv2.equalizeHist(img_array)
+                    variants.append(("equalized", Image.fromarray(equalized)))
                 except ImportError:
                     pass  # OpenCVが無い場合はスキップ
                 
@@ -476,14 +512,17 @@ class MultiProviderOCR:
             max_cols = int(kwargs.pop("max_cols", 80))
             use_gridlines = bool(kwargs.pop("use_gridlines", True))
 
-            # 前処理（精度向上）
+            # 前処理（精度向上・薄い文字も拾う）
             base = Image.open(image_path)
             if base.mode != "L":
                 base = base.convert("L")
-            base = ImageEnhance.Contrast(base).enhance(2.0)
-            base = ImageEnhance.Sharpness(base).enhance(2.0)
-            base = base.filter(ImageFilter.MedianFilter(size=3))
-
+            
+            # 傾き補正
+            try:
+                base = self._deskew_image(base)
+            except Exception:
+                pass
+            
             # 罫線（枠線）からグリッド線を推定（1回だけ）
             grid_lines = None
             if use_gridlines:
@@ -492,12 +531,44 @@ class MultiProviderOCR:
                 except Exception:
                     grid_lines = None
 
-            variants = [("base", base)]
+            # 複数の前処理パターン（薄い文字も拾う）
+            variants = []
+            # ベース（複数のコントラスト値）
+            for cval in [1.5, 2.0, 2.5, 3.0, 3.5, 4.0]:
+                img = ImageEnhance.Contrast(base).enhance(cval)
+                img = ImageEnhance.Sharpness(img).enhance(2.5)
+                img = img.filter(ImageFilter.MedianFilter(size=3))
+                variants.append((f"base_c{cval:.1f}", img))
+            
             if auto:
-                thr = 180
-                variants.append(("bin", base.point(lambda p: 255 if p > thr else 0)))
+                # 二値化（低閾値も追加・薄い文字用）
+                for thr in [120, 140, 150, 160, 180, 200]:
+                    bin_img = base.point(lambda p: 255 if p > thr else 0)
+                    variants.append((f"bin_{thr}", bin_img))
+                
+                # 適応的閾値処理
+                try:
+                    import cv2
+                    img_array = np.array(base)
+                    adaptive = cv2.adaptiveThreshold(
+                        img_array, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                        cv2.THRESH_BINARY, 11, 2
+                    )
+                    variants.append(("adaptive", Image.fromarray(adaptive)))
+                    # Otsu閾値
+                    _, otsu = cv2.threshold(img_array, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                    variants.append(("otsu", Image.fromarray(otsu)))
+                    # ヒストグラム均一化
+                    equalized = cv2.equalizeHist(img_array)
+                    variants.append(("equalized", Image.fromarray(equalized)))
+                except ImportError:
+                    pass
+                
                 variants.append(("invert", ImageOps.invert(base)))
-                variants.append(("sharp", base.filter(ImageFilter.UnsharpMask(radius=2, percent=150, threshold=3))))
+                variants.append(("sharp", base.filter(ImageFilter.UnsharpMask(radius=1.5, percent=200, threshold=2))))
+                # より強力なシャープ
+                extra_sharp = ImageEnhance.Sharpness(base).enhance(4.0)
+                variants.append(("extra_sharp", extra_sharp))
 
             tess_kwargs = {k: v for k, v in kwargs.items() if k not in ("lang",)}
 
@@ -520,6 +591,9 @@ class MultiProviderOCR:
                 except Exception:
                     logger.warning("日本語OCRデータの確認に失敗。英語のみで試行します（レイアウト版）...")
 
+            # アンサンブル方式：複数の結果をマージして空欄を埋める
+            all_grid_results: List[Dict[str, Any]] = []  # グリッド結果をすべて保持
+            
             best = None
             best_score = -1e9
 
@@ -650,6 +724,17 @@ class MultiProviderOCR:
                             score -= max(0.0, (len(grid2) - 200) / 400.0)
                             score -= max(0.0, (len(grid2[0]) - 60) / 80.0) if grid2 else 0.0
 
+                            # すべての結果を保持（マージ用）
+                            all_grid_results.append({
+                                "grid_data": grid2,
+                                "score": score,
+                                "confidence": conf,
+                                "variant": vname,
+                                "psm": psm,
+                                "cols": len(grid2[0]) if grid2 else 0,
+                                "rows": len(grid2),
+                            })
+                            
                             if score > best_score:
                                 best_score = score
                                 best = {
@@ -797,6 +882,58 @@ class MultiProviderOCR:
                     "confidence": 0.0,
                     "raw_data": {},
                 }
+            
+            # アンサンブル方式：複数の結果をマージして空欄を埋める
+            if all_grid_results and best.get("grid_data"):
+                base_grid = best["grid_data"]
+                rows_base = len(base_grid)
+                cols_base = len(base_grid[0]) if base_grid else 0
+                
+                # すべての結果から空欄を埋める
+                merged_grid = [row[:] for row in base_grid]  # コピー
+                
+                for result in all_grid_results:
+                    other_grid = result.get("grid_data")
+                    if not other_grid:
+                        continue
+                    
+                    # グリッドサイズが異なる場合はスキップ（安全のため）
+                    if len(other_grid) != rows_base or (other_grid and len(other_grid[0]) != cols_base):
+                        continue
+                    
+                    # 空欄を埋める（信頼度が高い結果を優先）
+                    for r in range(min(rows_base, len(other_grid))):
+                        for c in range(min(cols_base, len(other_grid[r]) if other_grid[r] else 0)):
+                            base_val = (merged_grid[r][c] or "").strip()
+                            other_val = (other_grid[r][c] or "").strip()
+                            
+                            # 空欄を埋める（信頼度が高い結果を優先、ただし空欄を埋める場合は採用）
+                            if not base_val and other_val:
+                                # 空欄を埋める
+                                merged_grid[r][c] = other_val
+                            elif base_val and other_val and base_val != other_val:
+                                # 両方に値がある場合、文字化けの少ない方を選ぶ
+                                base_mojibake = base_val.count('') + len([c for c in base_val if ord(c) > 0xFFFF])
+                                other_mojibake = other_val.count('') + len([c for c in other_val if ord(c) > 0xFFFF])
+                                
+                                # 文字化けが少ない方を優先
+                                if other_mojibake < base_mojibake:
+                                    merged_grid[r][c] = other_val
+                                elif other_mojibake == base_mojibake:
+                                    # 文字化けが同じ場合は信頼度が高い方を採用
+                                    base_conf = best.get("confidence", 0.0)
+                                    other_conf = result.get("confidence", 0.0)
+                                    if other_conf > base_conf + 3.0:  # 3%以上の差があれば採用
+                                        merged_grid[r][c] = other_val
+                                # 文字数が多い方を優先（読み取り不足を防ぐ）
+                                if len(other_val) > len(base_val) * 1.2:  # 20%以上多い場合
+                                    merged_grid[r][c] = other_val
+                
+                # マージ結果を反映
+                best["grid_data"] = merged_grid
+                # テキストも更新
+                best["text"] = "\n".join([" ".join(row) for row in merged_grid])
+            
             best.pop("_meta", None)
             return best
         except Exception as e:
@@ -886,6 +1023,223 @@ class MultiProviderOCR:
             }
         except Exception as e:
             logger.error(f"Amazon Textractエラー: {e}")
+            return None
+    
+    def _recognize_easyocr(self, image_path: str, **kwargs) -> Optional[Dict[str, Any]]:
+        """EasyOCRで認識（日本語に強い）"""
+        try:
+            import easyocr
+            from PIL import Image
+            
+            # 日本語と英語をサポート
+            langs = kwargs.get('lang', ['ja', 'en'])
+            if isinstance(langs, str):
+                langs = [langs]
+            
+            # EasyOCRリーダーを初期化（初回のみ時間がかかる）
+            # GPU使用を試行（利用可能な場合）
+            use_gpu = kwargs.get('gpu', True)  # デフォルトでGPUを試行
+            if not hasattr(self, '_easyocr_reader'):
+                logger.info(f"EasyOCRリーダーを初期化中（初回のみ時間がかかります、GPU: {use_gpu}）...")
+                try:
+                    self._easyocr_reader = easyocr.Reader(langs, gpu=use_gpu)
+                except Exception as e:
+                    logger.warning(f"GPU初期化失敗、CPUで再試行: {e}")
+                    self._easyocr_reader = easyocr.Reader(langs, gpu=False)
+            
+            # OCR実行
+            results = self._easyocr_reader.readtext(image_path)
+            
+            # テキストを結合
+            text_lines = []
+            for (bbox, text, conf) in results:
+                if text.strip():
+                    text_lines.append(text)
+            
+            text = "\n".join(text_lines)
+            
+            # グリッドデータも作成（レイアウト情報がある場合）
+            grid_data = None
+            layout = kwargs.get('layout', False)
+            if layout and results:
+                try:
+                    # 罫線検出と組み合わせてグリッドを作成
+                    from PIL import Image
+                    img = Image.open(image_path)
+                    grid_lines = self._detect_table_grid_lines(img)
+                    
+                    if grid_lines:
+                        x_lines = grid_lines["x"]
+                        y_lines = grid_lines["y"]
+                        cols_n = len(x_lines) - 1
+                        rows_n = len(y_lines) - 1
+                        
+                        if 2 <= cols_n <= 100 and 2 <= rows_n <= 500:
+                            grid2: List[List[str]] = [[""] * cols_n for _ in range(rows_n)]
+                            
+                            # EasyOCRの結果をグリッドに割り当て
+                            for (bbox, text, conf) in results:
+                                if not text.strip():
+                                    continue
+                                # bboxは4点の座標 [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
+                                if len(bbox) >= 4:
+                                    # 中心座標を計算
+                                    cx = sum([p[0] for p in bbox]) / len(bbox)
+                                    cy = sum([p[1] for p in bbox]) / len(bbox)
+                                    
+                                    c = bisect_right(x_lines, cx) - 1
+                                    r = bisect_right(y_lines, cy) - 1
+                                    
+                                    if 0 <= r < rows_n and 0 <= c < cols_n:
+                                        if grid2[r][c]:
+                                            grid2[r][c] += " " + text
+                                        else:
+                                            grid2[r][c] = text
+                            
+                            # 空の末尾行/列をトリム
+                            last_row = -1
+                            for ri, row in enumerate(grid2):
+                                if any((v or "").strip() for v in row):
+                                    last_row = ri
+                            if last_row >= 0:
+                                grid2 = grid2[: last_row + 1]
+                            
+                            last_col = -1
+                            for ci in range(cols_n):
+                                if any((row[ci] or "").strip() for row in grid2):
+                                    last_col = ci
+                            if last_col >= 0:
+                                grid2 = [row[: last_col + 1] for row in grid2]
+                            
+                            grid_data = grid2
+                except Exception as e:
+                    logger.debug(f"EasyOCRグリッド作成エラー: {e}")
+            
+            return {
+                "provider": "easyocr",
+                "text": text.strip(),
+                "confidence": sum([conf for _, _, conf in results]) / len(results) if results else 0.0,
+                "grid_data": grid_data,
+                "raw_data": results
+            }
+        except Exception as e:
+            logger.error(f"EasyOCRエラー: {e}")
+            return None
+    
+    def _recognize_paddleocr(self, image_path: str, **kwargs) -> Optional[Dict[str, Any]]:
+        """PaddleOCRで認識（日本語に非常に強い）"""
+        try:
+            from paddleocr import PaddleOCR
+            import numpy as np
+            from PIL import Image
+            
+            # 日本語と英語をサポート
+            use_angle_cls = kwargs.get('use_angle_cls', True)
+            lang = kwargs.get('lang', 'japan')  # 'japan'は日本語+英語
+            
+            # PaddleOCRを初期化（初回のみ時間がかかる）
+            # GPU使用を試行（利用可能な場合）
+            use_gpu = kwargs.get('gpu', True)  # デフォルトでGPUを試行
+            if not hasattr(self, '_paddleocr_reader'):
+                logger.info(f"PaddleOCRリーダーを初期化中（初回のみ時間がかかります、GPU: {use_gpu}）...")
+                try:
+                    self._paddleocr_reader = PaddleOCR(
+                        use_angle_cls=use_angle_cls,
+                        lang=lang,
+                        use_gpu=use_gpu
+                    )
+                except Exception as e:
+                    logger.warning(f"GPU初期化失敗、CPUで再試行: {e}")
+                    self._paddleocr_reader = PaddleOCR(
+                        use_angle_cls=use_angle_cls,
+                        lang=lang,
+                        use_gpu=False
+                    )
+            
+            # OCR実行
+            results = self._paddleocr_reader.ocr(image_path, cls=use_angle_cls)
+            
+            # テキストを結合
+            text_lines = []
+            confs = []
+            if results and results[0]:
+                for line in results[0]:
+                    if line and len(line) >= 2:
+                        bbox, (text, conf) = line[0], line[1]
+                        if text.strip():
+                            text_lines.append(text)
+                            confs.append(conf)
+            
+            text = "\n".join(text_lines)
+            
+            # グリッドデータも作成（レイアウト情報がある場合）
+            grid_data = None
+            layout = kwargs.get('layout', False)
+            if layout and results and results[0]:
+                try:
+                    # 罫線検出と組み合わせてグリッドを作成
+                    from PIL import Image
+                    img = Image.open(image_path)
+                    grid_lines = self._detect_table_grid_lines(img)
+                    
+                    if grid_lines:
+                        x_lines = grid_lines["x"]
+                        y_lines = grid_lines["y"]
+                        cols_n = len(x_lines) - 1
+                        rows_n = len(y_lines) - 1
+                        
+                        if 2 <= cols_n <= 100 and 2 <= rows_n <= 500:
+                            grid2: List[List[str]] = [[""] * cols_n for _ in range(rows_n)]
+                            
+                            # PaddleOCRの結果をグリッドに割り当て
+                            for line in results[0]:
+                                if line and len(line) >= 2:
+                                    bbox, (text, conf) = line[0], line[1]
+                                    if not text.strip():
+                                        continue
+                                    # bboxは4点の座標 [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
+                                    if len(bbox) >= 4:
+                                        # 中心座標を計算
+                                        cx = sum([p[0] for p in bbox]) / len(bbox)
+                                        cy = sum([p[1] for p in bbox]) / len(bbox)
+                                        
+                                        c = bisect_right(x_lines, cx) - 1
+                                        r = bisect_right(y_lines, cy) - 1
+                                        
+                                        if 0 <= r < rows_n and 0 <= c < cols_n:
+                                            if grid2[r][c]:
+                                                grid2[r][c] += " " + text
+                                            else:
+                                                grid2[r][c] = text
+                            
+                            # 空の末尾行/列をトリム
+                            last_row = -1
+                            for ri, row in enumerate(grid2):
+                                if any((v or "").strip() for v in row):
+                                    last_row = ri
+                            if last_row >= 0:
+                                grid2 = grid2[: last_row + 1]
+                            
+                            last_col = -1
+                            for ci in range(cols_n):
+                                if any((row[ci] or "").strip() for row in grid2):
+                                    last_col = ci
+                            if last_col >= 0:
+                                grid2 = [row[: last_col + 1] for row in grid2]
+                            
+                            grid_data = grid2
+                except Exception as e:
+                    logger.debug(f"PaddleOCRグリッド作成エラー: {e}")
+            
+            return {
+                "provider": "paddleocr",
+                "text": text.strip(),
+                "confidence": sum(confs) / len(confs) if confs else 0.0,
+                "grid_data": grid_data,
+                "raw_data": results
+            }
+        except Exception as e:
+            logger.error(f"PaddleOCRエラー: {e}")
             return None
     
     def _calculate_confidence(self, data: Dict) -> float:
