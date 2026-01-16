@@ -264,8 +264,8 @@ def submit_to_comfyui(workflow: Dict[str, Any]) -> Optional[str]:
             try:
                 error_json = response.json()
                 logger.error(f"エラー詳細: {json.dumps(error_json, indent=2, ensure_ascii=False)}")
-            except:
-                pass
+            except (ValueError, json.JSONDecodeError):
+                logger.debug(f"エラーレスポンスのJSON解析失敗: {error_detail[:200]}")
             return None
 
         result = response.json()

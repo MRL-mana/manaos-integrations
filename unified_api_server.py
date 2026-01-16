@@ -1907,7 +1907,8 @@ def integrations_status():
         try:
             llm_status = integrations["local_llm"].get_status()
             status["local_llm_systems"] = llm_status
-        except:
+        except (AttributeError, KeyError, Exception) as e:
+            logger.debug(f"ローカルLLM状態取得エラー: {e}")
             pass
 
     return jsonify({"integrations": status})
