@@ -43,9 +43,20 @@ FOLDER_STRUCTURE = {
     # needs_improvement はフォルダから削除（改善提案はタグ化）
 }
 
-def create_folder_structure():
+def create_folder_structure(clear_existing=False):
     """フォルダ構造を作成"""
     ORGANIZED_DIR.mkdir(exist_ok=True)
+    
+    # 既存のフォルダをクリア
+    if clear_existing:
+        print(f"[INFO] 既存の整理フォルダをクリア中...")
+        for folder_path in ORGANIZED_DIR.iterdir():
+            if folder_path.is_dir():
+                try:
+                    shutil.rmtree(folder_path)
+                    print(f"[OK] 削除: {folder_path.name}")
+                except Exception as e:
+                    print(f"[WARN] 削除失敗 ({folder_path.name}): {e}")
     
     for folder_name, config in FOLDER_STRUCTURE.items():
         folder_path = ORGANIZED_DIR / folder_name

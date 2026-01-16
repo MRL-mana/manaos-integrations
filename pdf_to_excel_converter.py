@@ -494,8 +494,8 @@ class PDFToExcelConverter:
                 logger.info(f"利用可能なOCRプロバイダー: {available_providers}")
                 
                 # プロバイダーの優先順位（日本語に強い順）
-                # PaddleOCR > EasyOCR > Tesseract > AIベース（認証が必要）
-                provider_priority = ["paddleocr", "easyocr", "tesseract", "amazon", "google", "microsoft"]
+                # Tesseractを優先（EasyOCRは不安定なため一旦スキップ）
+                provider_priority = ["tesseract", "paddleocr", "easyocr", "amazon", "google", "microsoft"]
                 selected_provider = None
                 for provider in provider_priority:
                     if provider in available_providers:
@@ -568,13 +568,13 @@ class PDFToExcelConverter:
                                         use_gridlines=True,  # 罫線（枠線）からセル境界を推定
                                     )
                                 elif provider in ["easyocr", "paddleocr"]:
-                                    # EasyOCR/PaddleOCRは日本語に強い（GPU使用）
+                                    # EasyOCR/PaddleOCRは日本語に強い（GPU使用を試行、失敗時はCPU）
                                     result = self.ocr.recognize(
                                         temp_image_path,
                                         provider=provider,
                                         layout=True,
                                         lang="ja" if provider == "easyocr" else "japan",
-                                        gpu=True  # GPUを使用
+                                        gpu=False  # まずはCPUで安定動作（GPUはオプション）
                                     )
                                 else:
                                     result = self.ocr.recognize(temp_image_path, provider=provider)
