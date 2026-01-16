@@ -1038,14 +1038,28 @@ class MultiProviderOCR:
             
             # EasyOCRリーダーを初期化（初回のみ時間がかかる）
             # GPU使用を試行（利用可能な場合）
-            use_gpu = kwargs.get('gpu', True)  # デフォルトでGPUを試行
+            use_gpu = kwargs.get('gpu', False)  # デフォルトでCPU（GPUは不安定な場合があるため）
             if not hasattr(self, '_easyocr_reader'):
                 logger.info(f"EasyOCRリーダーを初期化中（初回のみ時間がかかります、GPU: {use_gpu}）...")
                 try:
-                    self._easyocr_reader = easyocr.Reader(langs, gpu=use_gpu)
+                    if use_gpu:
+                        # GPU使用を試行
+                        import torch
+                        if torch.cuda.is_available():
+                            self._easyocr_reader = easyocr.Reader(langs, gpu=True)
+                            logger.info("EasyOCR: GPUを使用します")
+                        else:
+                            logger.warning("EasyOCR: GPUが利用できないためCPUを使用します")
+                            self._easyocr_reader = easyocr.Reader(langs, gpu=False)
+                    else:
+                        self._easyocr_reader = easyocr.Reader(langs, gpu=False)
                 except Exception as e:
-                    logger.warning(f"GPU初期化失敗、CPUで再試行: {e}")
-                    self._easyocr_reader = easyocr.Reader(langs, gpu=False)
+                    logger.warning(f"EasyOCR初期化エラー（GPU: {use_gpu}）: {e}。CPUで再試行...")
+                    try:
+                        self._easyocr_reader = easyocr.Reader(langs, gpu=False)
+                    except Exception as e2:
+                        logger.error(f"EasyOCR CPU初期化も失敗: {e2}")
+                        return None
             
             # OCR実行
             results = self._easyocr_reader.readtext(image_path)
