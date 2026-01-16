@@ -701,17 +701,8 @@ def main():
     print(f"整理先: {ORGANIZED_DIR.absolute()}")
     print("="*60)
     
-    # 既存の整理済み画像をクリア（オプション）
-    if clear_existing:
-        print("\n[クリア] 既存の整理済み画像をクリア中...")
-        if ORGANIZED_DIR.exists():
-            for folder_name in FOLDER_STRUCTURE.keys():
-                folder_path = ORGANIZED_DIR / folder_name
-                if folder_path.exists():
-                    import shutil
-                    shutil.rmtree(folder_path)
-                    print(f"  削除: {folder_path}")
-        print("[OK] クリア完了")
+    # フォルダ構造を作成（クリアオプションを渡す）
+    create_folder_structure(clear_existing=clear_existing)
     
     # すべての画像を評価して整理（新機能・マナより版）
     print("\n[方法1] システム内のすべての画像を評価・整理（マナより版）")
