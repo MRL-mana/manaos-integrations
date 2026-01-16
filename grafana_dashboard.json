@@ -1,0 +1,139 @@
+{
+  "dashboard": {
+    "title": "ManaOS統合システムダッシュボード",
+    "tags": ["manaos", "monitoring"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "リクエスト数",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(manaos_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "レスポンス時間",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(manaos_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "p95"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(manaos_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "p50"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "CPU使用率",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "manaos_cpu_usage_percent",
+            "legendFormat": "CPU"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "メモリ使用率",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "manaos_memory_usage_bytes / 1024 / 1024 / 1024",
+            "legendFormat": "Memory (GB)"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 6, "x": 6, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "GPU使用率",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "manaos_gpu_usage_percent",
+            "legendFormat": "GPU {{gpu_id}}"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 8}
+      },
+      {
+        "id": 6,
+        "title": "キャッシュヒット率",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "manaos_cache_hit_rate",
+            "legendFormat": "Hit Rate"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 6, "x": 18, "y": 8}
+      },
+      {
+        "id": 7,
+        "title": "エラー数",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(manaos_errors_total[5m])",
+            "legendFormat": "{{error_type}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14}
+      },
+      {
+        "id": 8,
+        "title": "サービスヘルス",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "manaos_service_health",
+            "legendFormat": "{{service_name}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14}
+      },
+      {
+        "id": 9,
+        "title": "LLM呼び出し時間",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(manaos_llm_call_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{model}} p95"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 22}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["10s", "30s", "1m", "5m", "15m", "30m", "1h"]
+    }
+  }
+}
+
+
+
+
+
+
+
+

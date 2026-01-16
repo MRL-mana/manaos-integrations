@@ -1,0 +1,111 @@
+---
+name: file-organize
+description: ファイル整理・分類をYAMLから実行する（ファイル移動、分類、重複削除など）
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# ファイル整理: YAMLからファイル整理操作を実行
+
+**目的**: YAML形式のファイル整理設定を読み込み、ファイルを分類・移動・整理します。
+
+## 使用方法
+
+### Step 1: YAMLファイルを作成
+
+AIに以下のようなYAML形式でファイル整理設定を出力させます：
+
+```yaml
+kind: file_organize
+action: organize  # organize, classify, deduplicate
+source_directory: "Downloads"
+rules:
+  - pattern: "*.pdf"
+    destination: "Documents/PDFs"
+  - pattern: "*.jpg"
+    destination: "Pictures"
+notify:
+  slack: false
+idempotency_key: "file_organize_2026-01-13"
+```
+
+### Step 2: Pythonスクリプトで処理
+
+```bash
+python scripts/apply_skill_file_organize.py artifacts/file_organize_2026-01-13.yaml
+```
+
+## YAMLフォーマット仕様
+
+### 必須フィールド
+
+- `kind`: 常に `"file_organize"` を指定
+- `action`: 操作タイプ（`organize`, `classify`, `deduplicate`）
+- `idempotency_key`: 冪等性キー
+
+### アクション別のフィールド
+
+#### organize
+
+- `source_directory`: ソースディレクトリ（必須）
+- `rules`: 整理ルールリスト（必須）
+  - `pattern`: ファイルパターン（例: "*.pdf", "*.jpg"）
+  - `destination`: 移動先ディレクトリ（相対パスまたは絶対パス）
+- `move_files`: ファイルを移動するか（boolean、デフォルト: true、falseの場合はコピー）
+- `results`: 整理結果が返される（出力用）
+
+#### classify
+
+- `source_directory`: ソースディレクトリ（必須）
+- `classification_rules`: 分類ルール（必須、ファイル名や拡張子に基づく分類）
+- `results`: 分類結果が返される（出力用）
+
+#### deduplicate
+
+- `source_directory`: ソースディレクトリ（必須）
+- `keep_oldest`: 古いファイルを保持するか（boolean、デフォルト: true）
+- `results`: 重複ファイル削除結果が返される（出力用）
+
+### オプションフィールド
+
+- `notify`:
+  - `slack`: Slack通知するか（boolean、デフォルト: false）
+
+## 処理フロー
+
+1. **YAMLファイルを読み込み**
+2. **冪等性チェック**: `idempotency_key`で既に処理済みか確認
+3. **ファイル整理実行**: 指定されたアクションを実行
+4. **Slack通知**: `notify.slack: true`の場合、結果をSlackに送信
+5. **処理履歴を保存**: 再実行防止のため履歴を記録
+
+## 依存関係
+
+- 環境変数:
+  - `SLACK_WEBHOOK_URL`: Slack Webhook URL（オプション）
+
+## 出力先
+
+- **処理履歴**: `data/skill_file_organize_history.json`
+- **整理結果**: YAMLファイルに追記
+
+## エラーハンドリング
+
+- YAML形式エラー: エラーメッセージを表示して終了
+- ファイル操作エラー: エラーをログに記録
+- 既に処理済み: 処理をスキップ（冪等性）
+
+## 注意事項
+
+- ファイル移動は破壊的操作のため、実行前に確認することを推奨します
+- 重複ファイル削除は、ファイルハッシュを使用して重複を検出します
+- 相対パスの場合は、プロジェクトルートから見たパスとして扱われます

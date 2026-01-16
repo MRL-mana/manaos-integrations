@@ -1,0 +1,113 @@
+---
+name: notion-ops
+description: Notionデータベースへのページ作成・更新・クエリをYAMLから実行する
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# Notion操作: YAMLからNotionデータベース操作を実行
+
+**目的**: YAML形式のNotion操作設定を読み込み、Notion APIを使用してデータベースにページを作成・更新・クエリします。
+
+## 使用方法
+
+### Step 1: YAMLファイルを作成
+
+AIに以下のようなYAML形式でNotion操作設定を出力させます：
+
+```yaml
+kind: notion_ops
+action: create_page  # create_page, update_page, query_database
+database_id: "xxx-xxx-xxx"
+properties:
+  title: "タスク名"
+  status: "進行中"
+  due_date: "2026-01-15"
+notify:
+  slack: false
+idempotency_key: "notion_task_2026-01-13_001"
+```
+
+### Step 2: Pythonスクリプトで処理
+
+```bash
+python scripts/apply_skill_notion_ops.py artifacts/notion_ops_2026-01-13.yaml
+```
+
+## YAMLフォーマット仕様
+
+### 必須フィールド
+
+- `kind`: 常に `"notion_ops"` を指定
+- `action`: 操作タイプ（`create_page`, `update_page`, `query_database`）
+- `database_id`: NotionデータベースID（必須、create_page/query_databaseの場合）
+- `idempotency_key`: 冪等性キー
+
+### アクション別のフィールド
+
+#### create_page
+
+- `database_id`: データベースID（必須）
+- `properties`: ページのプロパティ（必須）
+  - プロパティ名と値のマッピング
+  - 例: `title: "ページタイトル"`, `status: "進行中"`
+- `page_id`: 作成されたページIDが返される（出力用）
+
+#### update_page
+
+- `page_id`: 更新するページID（必須）
+- `properties`: 更新するプロパティ（必須）
+  - プロパティ名と値のマッピング
+
+#### query_database
+
+- `database_id`: クエリするデータベースID（必須）
+- `filter`: フィルタ条件（オプション）
+- `sorts`: ソート条件（オプション）
+- `results`: クエリ結果が返される（出力用）
+
+### オプションフィールド
+
+- `notify`:
+  - `slack`: Slack通知するか（boolean、デフォルト: false）
+
+## 処理フロー
+
+1. **YAMLファイルを読み込み**
+2. **冪等性チェック**: `idempotency_key`で既に処理済みか確認
+3. **Notion API呼び出し**: 指定されたアクションを実行
+4. **Slack通知**: `notify.slack: true`の場合、結果をSlackに送信
+5. **処理履歴を保存**: 再実行防止のため履歴を記録
+
+## 依存関係
+
+- Notion API
+- 環境変数:
+  - `NOTION_API_KEY`: Notion Integration Token（必須）
+  - `SLACK_WEBHOOK_URL`: Slack Webhook URL（オプション）
+
+## 出力先
+
+- **処理履歴**: `data/skill_notion_ops_history.json`
+- **作成されたページID**: YAMLファイルに追記（create_pageの場合）
+
+## エラーハンドリング
+
+- YAML形式エラー: エラーメッセージを表示して終了
+- Notion APIエラー: エラーをログに記録（Slack通知は試行）
+- 既に処理済み: 処理をスキップ（冪等性）
+
+## 注意事項
+
+- Notion Integration Tokenが必要です（[Notion Integrations](https://www.notion.so/my-integrations)で作成）
+- データベースをIntegrationに共有する必要があります
+- データベースIDは、NotionデータベースのURLから取得できます（`https://www.notion.so/{workspace}/{database_id}`）

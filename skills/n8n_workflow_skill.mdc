@@ -1,0 +1,109 @@
+---
+name: n8n-workflow
+description: n8nワークフローを操作する（有効化、無効化、実行、インポート）
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# n8nワークフロー操作: YAMLからワークフローを操作
+
+**目的**: YAML形式のワークフロー操作設定を読み込み、n8nワークフローを有効化・無効化・実行・インポートします。
+
+## 使用方法
+
+### Step 1: YAMLファイルを作成
+
+AIに以下のようなYAML形式でワークフロー操作設定を出力させます：
+
+```yaml
+kind: n8n_workflow
+action: activate  # activate, deactivate, execute, import
+workflow_id: "2ViGYzDtLBF6H4zn"  # activate/deactivate/execute時
+workflow_file: "n8n_workflows/my_workflow.json"  # import時
+notify:
+  slack: true
+idempotency_key: "n8n_activate_2026-01-12"
+```
+
+### Step 2: Pythonスクリプトで処理
+
+```bash
+python scripts/apply_skill_n8n_workflow.py artifacts/n8n_workflow_2026-01-12.yaml
+```
+
+## YAMLフォーマット仕様
+
+### 必須フィールド
+
+- `kind`: 常に `"n8n_workflow"` を指定
+- `action`: 操作タイプ（`activate`, `deactivate`, `execute`, `import`）
+- `idempotency_key`: 冪等性キー
+
+### アクション別の必須フィールド
+
+#### activate / deactivate / execute
+
+- `workflow_id`: ワークフローID
+
+#### import
+
+- `workflow_file`: ワークフローファイルのパス
+- `activate_after_import`: インポート後に有効化するか（boolean、デフォルト: true）
+
+### オプションフィールド
+
+- `execute_payload`: 実行時のペイロード（executeアクション時）
+- `notify`:
+  - `slack`: Slack通知するか（boolean）
+
+## 処理フロー
+
+1. **YAMLファイルを読み込み**
+2. **冪等性チェック**: `idempotency_key`で既に処理済みか確認
+3. **アクション実行**:
+   - `activate`: ワークフローを有効化
+   - `deactivate`: ワークフローを無効化
+   - `execute`: ワークフローを実行
+   - `import`: ワークフローをインポート
+4. **Slack通知**: `notify.slack: true`の場合、通知を送信
+5. **処理履歴を保存**
+
+## 依存関係
+
+- n8n API アクセス
+- 環境変数:
+  - `N8N_BASE_URL`: n8nのベースURL（デフォルト: http://localhost:5678）
+  - `N8N_API_KEY`: n8n APIキー
+  - `SLACK_WEBHOOK_URL`: Slack Webhook URL（オプション）
+
+## エラーハンドリング
+
+- ワークフローIDが存在しない場合: エラーメッセージを表示
+- API認証失敗: エラーをログに記録
+- ワークフローインポート失敗: エラーをログに記録
+
+## 例: AIへの指示
+
+```
+n8nワークフローを有効化してください。
+
+```yaml
+kind: n8n_workflow
+action: activate
+workflow_id: "2ViGYzDtLBF6H4zn"
+notify:
+  slack: true
+idempotency_key: "n8n_activate_2026-01-12"
+```
+
+出力後、`python scripts/apply_skill_n8n_workflow.py artifacts/n8n_workflow_2026-01-12.yaml` を実行してください。
+```

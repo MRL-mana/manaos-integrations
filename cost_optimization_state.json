@@ -1,0 +1,45 @@
+{
+  "resource_costs": {
+    "cpu_per_hour": 0.01,
+    "memory_per_gb_hour": 0.005,
+    "disk_per_gb_hour": 0.001,
+    "network_per_gb": 0.01
+  },
+  "usage_history": [
+    {
+      "timestamp": "2026-01-07T00:20:58.540086",
+      "cpu_percent": 24.8,
+      "memory_gb": 125.6567497253418,
+      "disk_gb": 1212.1526374816895,
+      "network_gb": 65.49935333430767,
+      "duration_hours": 0.1
+    }
+  ],
+  "cost_history": [
+    {
+      "timestamp": "2026-01-07T00:20:58.540086",
+      "cpu_percent": 24.8,
+      "memory_gb": 125.6567497253418,
+      "disk_gb": 1212.1526374816895,
+      "network_gb": 65.49935333430767,
+      "duration_hours": 0.1,
+      "costs": {
+        "cpu": 0.000248,
+        "memory": 0.0628283748626709,
+        "disk": 0.12121526374816896,
+        "network": 0.6549935333430768,
+        "total": 0.8392851719539166
+      }
+    }
+  ],
+  "suggestions": [
+    {
+      "type": "reduce_network",
+      "priority": "medium",
+      "current_cost": 0.6549935333430768,
+      "suggestion": "ネットワーク使用量が高いです。データの圧縮やキャッシュを検討してください。",
+      "potential_savings": 0.09824903000146151
+    }
+  ],
+  "last_updated": "2026-01-07T00:20:58.541556"
+}

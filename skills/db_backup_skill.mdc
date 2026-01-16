@@ -1,0 +1,116 @@
+---
+name: db-backup
+description: データベースバックアップをYAMLから実行する（ダンプ、リストア、バックアップ管理など）
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# データベースバックアップ: YAMLからデータベースバックアップ操作を実行
+
+**目的**: YAML形式のデータベースバックアップ設定を読み込み、PostgreSQL/MongoDB/SQLiteのバックアップとリストアを実行します。
+
+## 使用方法
+
+### Step 1: YAMLファイルを作成
+
+AIに以下のようなYAML形式でデータベースバックアップ設定を出力させます：
+
+```yaml
+kind: db_backup
+action: backup  # backup, restore, list
+database_type: postgresql  # postgresql, mongodb, sqlite
+database_name: "myapp"
+backup_path: "backups/db_backup_2026-01-13.sql"
+compress: true
+notify:
+  slack: false
+idempotency_key: "db_backup_2026-01-13"
+```
+
+### Step 2: Pythonスクリプトで処理
+
+```bash
+python scripts/apply_skill_db_backup.py artifacts/db_backup_2026-01-13.yaml
+```
+
+## YAMLフォーマット仕様
+
+### 必須フィールド
+
+- `kind`: 常に `"db_backup"` を指定
+- `action`: 操作タイプ（`backup`, `restore`, `list`）
+- `database_type`: データベースタイプ（`postgresql`, `mongodb`, `sqlite`）
+- `idempotency_key`: 冪等性キー
+
+### アクション別のフィールド
+
+#### backup
+
+- `database_type`: データベースタイプ（必須）
+- `database_name`: データベース名（必須）
+- `backup_path`: バックアップファイルパス（必須）
+- `compress`: 圧縮するか（boolean、オプション、デフォルト: false）
+- `connection_string`: 接続文字列（オプション、環境変数から取得も可能）
+- `backup_size`: バックアップサイズが返される（出力用）
+
+#### restore
+
+- `database_type`: データベースタイプ（必須）
+- `database_name`: データベース名（必須）
+- `backup_path`: バックアップファイルパス（必須）
+- `connection_string`: 接続文字列（オプション、環境変数から取得も可能）
+
+#### list
+
+- `backup_directory`: バックアップディレクトリ（必須）
+- `backups`: バックアップリストが返される（出力用）
+
+### オプションフィールド
+
+- `notify`:
+  - `slack`: Slack通知するか（boolean、デフォルト: false）
+
+## 処理フロー
+
+1. **YAMLファイルを読み込み**
+2. **冪等性チェック**: `idempotency_key`で既に処理済みか確認
+3. **データベースバックアップ/リストア**: 指定された操作を実行
+4. **Slack通知**: `notify.slack: true`の場合、結果をSlackに送信
+5. **処理履歴を保存**: 再実行防止のため履歴を記録
+
+## 依存関係
+
+- PostgreSQL: `pg_dump`, `psql`コマンド（システムにインストール済みであること）
+- MongoDB: `mongodump`, `mongorestore`コマンド（システムにインストール済みであること）
+- SQLite: 標準ライブラリ（追加インストール不要）
+- 環境変数:
+  - `SLACK_WEBHOOK_URL`: Slack Webhook URL（オプション）
+  - データベース接続情報（必要に応じて）
+
+## 出力先
+
+- **処理履歴**: `data/skill_db_backup_history.json`
+- **バックアップファイル**: 指定されたバックアップパス
+
+## エラーハンドリング
+
+- YAML形式エラー: エラーメッセージを表示して終了
+- データベース接続エラー: エラーをログに記録
+- バックアップ/リストアエラー: エラーをログに記録（Slack通知は試行）
+- 既に処理済み: 処理をスキップ（冪等性）
+
+## 注意事項
+
+- PostgreSQL/MongoDBの場合は、システムに`pg_dump`/`mongodump`コマンドがインストールされている必要があります
+- バックアップファイルの保存先ディレクトリが存在する必要があります
+- リストア操作は既存のデータを上書きする可能性があります
+- 大きなデータベースのバックアップには時間がかかる場合があります

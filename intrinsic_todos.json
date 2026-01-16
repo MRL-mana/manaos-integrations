@@ -1,0 +1,43 @@
+{
+  "todos": [
+    {
+      "id": "im-20260104-0001",
+      "title": "RAG failuresの上位エラー分類を更新",
+      "reason": "過去24hで同種エラーが増加",
+      "impact": "成功率向上/再試行削減",
+      "risk": "low",
+      "autonomy_level_required": 1,
+      "estimated_minutes": 8,
+      "tags": [
+        "maintenance",
+        "rag",
+        "learning"
+      ],
+      "state": "EXPIRED",
+      "created_at": "2026-01-04T21:49:56.209883",
+      "approved_at": null,
+      "executed_at": null,
+      "rejected_at": null,
+      "rejection_reason": null
+    },
+    {
+      "id": "test_todo_001",
+      "title": "テストタスク",
+      "reason": "動作確認のため",
+      "impact": "システム動作確認",
+      "risk": "low",
+      "autonomy_level_required": 1,
+      "estimated_minutes": 1,
+      "tags": [
+        "test"
+      ],
+      "state": "APPROVED",
+      "created_at": "2026-01-10T18:32:34.534514",
+      "approved_at": null,
+      "executed_at": null,
+      "rejected_at": null,
+      "rejection_reason": null
+    }
+  ],
+  "last_updated": "2026-01-10T18:32:34.537209"
+}

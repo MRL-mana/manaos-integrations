@@ -1,0 +1,113 @@
+---
+name: log-analysis
+description: ログ分析・レポートをYAMLから実行する（ログファイル解析、エラーレポート生成、パフォーマンス分析など）
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# ログ分析: YAMLからログ分析操作を実行
+
+**目的**: YAML形式のログ分析設定を読み込み、ログファイルを解析し、エラーレポートやパフォーマンス分析を生成します。
+
+## 使用方法
+
+### Step 1: YAMLファイルを作成
+
+AIに以下のようなYAML形式でログ分析設定を出力させます：
+
+```yaml
+kind: log_analysis
+action: analyze  # analyze, report, alert
+log_file: "logs/app.log"
+analysis_type: "error_summary"  # error_summary, performance, pattern
+output_format: "markdown"
+output_path: "reports/log_analysis_2026-01-13.md"
+notify:
+  slack: false
+idempotency_key: "log_analysis_2026-01-13"
+```
+
+### Step 2: Pythonスクリプトで処理
+
+```bash
+python scripts/apply_skill_log_analysis.py artifacts/log_analysis_2026-01-13.yaml
+```
+
+## YAMLフォーマット仕様
+
+### 必須フィールド
+
+- `kind`: 常に `"log_analysis"` を指定
+- `action`: 操作タイプ（`analyze`, `report`, `alert`）
+- `log_file`: ログファイルパス（必須）
+- `idempotency_key`: 冪等性キー
+
+### アクション別のフィールド
+
+#### analyze
+
+- `log_file`: ログファイルパス（必須）
+- `analysis_type`: 分析タイプ（`error_summary`, `performance`, `pattern`、必須）
+- `output_format`: 出力形式（`markdown`, `json`, `text`、デフォルト: "markdown"）
+- `output_path`: 出力ファイルパス（必須）
+- `results`: 分析結果が返される（出力用）
+
+#### report
+
+- `log_file`: ログファイルパス（必須）
+- `report_type`: レポートタイプ（`summary`, `detailed`, `timeline`、デフォルト: "summary"）
+- `output_path`: 出力ファイルパス（必須）
+
+#### alert
+
+- `log_file`: ログファイルパス（必須）
+- `alert_rules`: アラートルール（必須）
+  - `error_threshold`: エラー数の閾値
+  - `pattern`: 検出するパターン（正規表現）
+
+### オプションフィールド
+
+- `notify`:
+  - `slack`: Slack通知するか（boolean、デフォルト: false）
+
+## 処理フロー
+
+1. **YAMLファイルを読み込み**
+2. **冪等性チェック**: `idempotency_key`で既に処理済みか確認
+3. **ログファイル読み込み**: ログファイルを読み込み
+4. **分析実行**: 指定された分析タイプで解析
+5. **レポート生成**: 結果を指定形式で出力
+6. **Slack通知**: `notify.slack: true`の場合、結果をSlackに送信
+7. **処理履歴を保存**: 再実行防止のため履歴を記録
+
+## 依存関係
+
+- 環境変数:
+  - `SLACK_WEBHOOK_URL`: Slack Webhook URL（オプション）
+
+## 出力先
+
+- **処理履歴**: `data/skill_log_analysis_history.json`
+- **分析レポート**: 指定された出力ファイルパス
+
+## エラーハンドリング
+
+- YAML形式エラー: エラーメッセージを表示して終了
+- ログファイル読み込みエラー: エラーをログに記録
+- 分析エラー: エラーをログに記録（Slack通知は試行）
+- 既に処理済み: 処理をスキップ（冪等性）
+
+## 注意事項
+
+- 大きなログファイルの処理には時間がかかる場合があります
+- 正規表現パターンのマッチングには時間がかかる場合があります
+- メモリ使用量に注意してください（大きなファイルの場合はストリーミング処理を推奨）

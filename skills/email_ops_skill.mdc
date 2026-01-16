@@ -1,0 +1,115 @@
+---
+name: email-ops
+description: メール送信をYAMLから実行する（メール送信、バッチ送信、テンプレート使用など）
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# メール送信: YAMLからメール送信操作を実行
+
+**目的**: YAML形式のメール送信設定を読み込み、メールを送信します。
+
+## 使用方法
+
+### Step 1: YAMLファイルを作成
+
+AIに以下のようなYAML形式でメール送信設定を出力させます：
+
+```yaml
+kind: email_ops
+action: send  # send, batch_send
+to: "user@example.com"
+subject: "日報"
+body: "今日の作業内容..."
+attachments:
+  - "reports/daily_report.pdf"
+notify:
+  slack: false
+idempotency_key: "email_send_2026-01-13_001"
+```
+
+### Step 2: Pythonスクリプトで処理
+
+```bash
+python scripts/apply_skill_email_ops.py artifacts/email_ops_2026-01-13.yaml
+```
+
+## YAMLフォーマット仕様
+
+### 必須フィールド
+
+- `kind`: 常に `"email_ops"` を指定
+- `action`: 操作タイプ（`send`, `batch_send`）
+- `to`: 送信先メールアドレス（必須、batch_sendの場合はリスト）
+- `subject`: 件名（必須）
+- `body`: 本文（必須）
+- `idempotency_key`: 冪等性キー
+
+### アクション別のフィールド
+
+#### send
+
+- `to`: 送信先メールアドレス（必須）
+- `subject`: 件名（必須）
+- `body`: 本文（必須）
+- `from`: 送信元メールアドレス（オプション、環境変数から取得）
+- `cc`: CC（オプション、リスト形式）
+- `bcc`: BCC（オプション、リスト形式）
+- `attachments`: 添付ファイル（オプション、リスト形式）
+
+#### batch_send
+
+- `to`: 送信先メールアドレスリスト（必須）
+- `subject`: 件名（必須、テンプレート可）
+- `body`: 本文（必須、テンプレート可）
+- `template_variables`: テンプレート変数（オプション、各送信先ごと）
+
+### オプションフィールド
+
+- `notify`:
+  - `slack`: Slack通知するか（boolean、デフォルト: false）
+
+## 処理フロー
+
+1. **YAMLファイルを読み込み**
+2. **冪等性チェック**: `idempotency_key`で既に処理済みか確認
+3. **メール送信**: SMTPサーバーを使用してメール送信
+4. **Slack通知**: `notify.slack: true`の場合、結果をSlackに送信
+5. **処理履歴を保存**: 再実行防止のため履歴を記録
+
+## 依存関係
+
+- smtplib: 標準ライブラリ（追加インストール不要）
+- email: 標準ライブラリ（追加インストール不要）
+- 環境変数:
+  - `SMTP_HOST`: SMTPサーバーホスト（デフォルト: "localhost"）
+  - `SMTP_PORT`: SMTPサーバーポート（デフォルト: 25）
+  - `SMTP_USER`: SMTPユーザー名（オプション）
+  - `SMTP_PASSWORD`: SMTPパスワード（オプション）
+  - `EMAIL_FROM`: 送信元メールアドレス（オプション）
+  - `SLACK_WEBHOOK_URL`: Slack Webhook URL（オプション）
+
+## 出力先
+
+- **処理履歴**: `data/skill_email_ops_history.json`
+
+## エラーハンドリング
+
+- YAML形式エラー: エラーメッセージを表示して終了
+- メール送信エラー: エラーをログに記録
+- 既に処理済み: 処理をスキップ（冪等性）
+
+## 注意事項
+
+- SMTPサーバーの設定が必要です
+- 認証が必要な場合は、SMTP_USERとSMTP_PASSWORDを設定してください
+- Gmailなどの場合は、アプリパスワードを使用することを推奨します
