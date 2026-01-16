@@ -84,6 +84,28 @@ organized_images/
 temp_downloaded_*.pdf
 temp_page_*.png
 
+# Completion/status reports (temporary documentation)
+*_COMPLETE.md
+*_STATUS.md
+*_SUMMARY.md
+*_REPORT.md
+*_FIX.md
+*_PROGRESS.md
+*_CURRENT*.md
+*_FINAL*.md
+*_ALL_*.md
+
+# Test/check scripts (temporary utilities)
+test_*.py
+check_*.py
+check_*.ps1
+
+# Setup scripts (temporary setup utilities, keep important ones manually)
+setup_*.py
+setup_*.ps1
+setup_*.sh
+setup_*.bat
+
 # Crash snapshots
 crash_snapshots/
 
