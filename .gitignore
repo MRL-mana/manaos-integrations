@@ -81,6 +81,8 @@ temp/
 gallery_images/
 generated_images/
 organized_images/
+out/
+outputs/
 temp_downloaded_*.pdf
 temp_page_*.png
 
@@ -114,6 +116,18 @@ data/
 *.csv
 *.xlsx
 *.xls
+*.jsonl
+snapshots/
+vendor/
+
+# Generated evaluation / stats artifacts
+evaluation_*.json
+test_*_stats.json
+test_*_reject_stats.json
+training_summary*.txt
+*_stats.json
+*_reject_stats.json
+castle_ex_schedule_*.json
 
 # Cache
 .cache/

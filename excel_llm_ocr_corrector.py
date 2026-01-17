@@ -14,11 +14,9 @@ import json
 import re
 import unicodedata
 
-# Windowsでのエンコーディング修正
-if sys.platform == 'win32':
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+# Windowsのエンコーディングは呼び出し側（.bat の chcp 65001 など）で統一する。
+# ここで sys.stdout/sys.stderr を差し替えると、実行形態によっては
+# "ValueError: I/O operation on closed file." の原因になるため行わない。
 
 try:
     from local_llm_helper import generate, chat
@@ -74,27 +72,23 @@ class ExcelLLMOCRCorrector:
                 if os.getenv("USE_LM_STUDIO", "0").strip().lower() in ("1", "true", "yes", "y", "on"):
                     # LM Studio APIから直接モデル一覧を取得
                     try:
-                        import requests
-                        r = requests.get('http://localhost:1234/v1/models', timeout=5)
-                        if r.status_code == 200:
-                            models_data = r.json().get('data', [])
-                            available_models = [model.get('id', '') for model in models_data]
-                            
-                            # 優先順位順にモデルを検索（部分一致）
-                            lm_studio_models = [
-                                "qwen2.5-coder-32b-instruct",  # 32B（最高精度）
-                                "qwen2.5-coder-14b-instruct",  # 14B（高精度）
-                                "openai/gpt-oss-20b",  # 20B（高精度）
-                            ]
-                            
-                            for preferred_model in lm_studio_models:
-                                for available in available_models:
-                                    if preferred_model.lower() in available.lower() or available.lower() in preferred_model.lower():
-                                        llm_model = available
-                                        print(f"LM Studioモデルを選択: {available}")
-                                        break
-                                if llm_model != os.getenv("MANA_OCR_LLM_MODEL", "qwen2.5:7b"):
-                                    break
+                        from tools.lm_studio_model_selector import ModelSelectionConfig, select_models
+                        cfg = ModelSelectionConfig(
+                            preferred_models=[
+                                # まずは安定して起動しやすい順（精度重視なら32Bを事前ロード推奨）
+                                "qwen2.5-coder-7b-instruct",
+                                "qwen/qwen2.5-coder-14b-instruct",
+                                "openai/gpt-oss-20b",
+                                "qwen2.5-coder-32b-instruct",
+                                "qwen2.5-coder-14b-instruct",
+                            ],
+                            skip_substrings=["ggml-org/qwen2.5-coder-14b-instruct"],
+                            max_models=1,
+                        )
+                        picked = select_models(cfg)
+                        if picked:
+                            llm_model = picked[0]
+                            print(f"LM Studioモデルを選択（キャッシュ/テスト済み）: {llm_model}")
                     except:
                         # API取得に失敗した場合はデフォルトモデルを使用
                         pass
@@ -199,6 +193,7 @@ class ExcelLLMOCRCorrector:
         (r'川杉比', '粗利率'),
         (r'見微し', '見積'),
         (r'見 微 し', '見積'),
+        (r'見微', '見積'),
         (r'乙617', '617'),
         (r'四9', '49'),
         (r'辺6', '6'),
@@ -210,8 +205,27 @@ class ExcelLLMOCRCorrector:
         (r'33.00_', '33.00'),
         (r'0 00', '0.00'),
         (r'0.00_', '0.00'),
+        # アンダースコアの誤認識（拡張）
+        (r'_$', ''),  # 末尾のアンダースコアを削除
+        (r'金額_', '金額'),
+        (r'数量_', '数量'),
+        (r'粗利金額_', '粗利金額'),
+        (r'合計_', '合計'),
+        (r'売上_', '売上'),
+        # よくある誤認識パターン（拡張）
+        (r'トノロ比', '粗利率'),
+        (r'川杉比', '粗利率'),
+        (r'粗利比', '粗利率'),
+        (r'研廻', '研修'),
+        (r'完料', '完料'),
+        (r'完料油', '完料油'),
         # 数字の連続誤認識パターン（例: "617.672116,578.2112234.472" → 適切に分割）
         # ただし、これは文脈依存なのでLLMに任せる
+        # より積極的な修正パターン
+        (r'一$', ''),  # 末尾の「一」を削除（誤認識の可能性）
+        (r'二$', ''),  # 末尾の「二」を削除（誤認識の可能性）
+        (r'計一$', '計'),  # 「計一」→「計」
+        (r'計二$', '計'),  # 「計二」→「計」
     ]
     
     def _fix_common_ocr_errors(self, text: str) -> str:
@@ -242,6 +256,79 @@ class ExcelLLMOCRCorrector:
 
     def _has_japanese(self, s: str) -> bool:
         return bool(re.search(r"[\u3040-\u30ff\u4e00-\u9fff]", s))
+
+    def _has_mojibake_like(self, s: str) -> bool:
+        """
+        文字化けっぽさの簡易判定。
+        - U+FFFD（replacement char）が含まれる
+        - 制御文字が混ざる（改行/タブ除く）
+        """
+        if not s:
+            return False
+        if "\ufffd" in s:
+            return True
+        for ch in s:
+            o = ord(ch)
+            if o < 32 and ch not in ("\n", "\r", "\t"):
+                return True
+        return False
+
+    def _build_col_headers(self, df: pd.DataFrame, top_n: int = 6) -> Dict[int, str]:
+        """列ごとに上側から見出しっぽい値を拾う（なければ空）"""
+        headers: Dict[int, str] = {}
+        n = min(len(df), top_n)
+        for col_idx in range(len(df.columns)):
+            header = ""
+            for r in range(n):
+                v = df.iat[r, col_idx]
+                if pd.isna(v):
+                    continue
+                s = str(v).strip()
+                if s:
+                    header = s[:40]
+                    break
+            headers[col_idx] = header
+        return headers
+
+    def _build_cell_context(self, df: pd.DataFrame, row_idx: int, col_idx: int, col_headers: Dict[int, str]) -> str:
+        """近傍・列見出し・行スニペットを短くまとめてLLMに渡す"""
+        def _s(v) -> str:
+            if v is None or (isinstance(v, float) and pd.isna(v)) or pd.isna(v):
+                return ""
+            return str(v).strip()
+
+        left = _s(df.iat[row_idx, col_idx - 1]) if col_idx - 1 >= 0 else ""
+        right = _s(df.iat[row_idx, col_idx + 1]) if col_idx + 1 < len(df.columns) else ""
+        up = _s(df.iat[row_idx - 1, col_idx]) if row_idx - 1 >= 0 else ""
+        down = _s(df.iat[row_idx + 1, col_idx]) if row_idx + 1 < len(df) else ""
+
+        c0 = max(0, col_idx - 2)
+        c1 = min(len(df.columns) - 1, col_idx + 2)
+        row_snip_vals = []
+        for c in range(c0, c1 + 1):
+            if c == col_idx:
+                continue
+            sv = _s(df.iat[row_idx, c])
+            if sv:
+                row_snip_vals.append(sv[:30])
+        row_snip = " | ".join(row_snip_vals[:5])
+
+        header = (col_headers.get(col_idx) or "").strip()
+
+        parts = []
+        if header:
+            parts.append(f"列: {header}")
+        if up:
+            parts.append(f"上: {up[:40]}")
+        if left:
+            parts.append(f"左: {left[:40]}")
+        if right:
+            parts.append(f"右: {right[:40]}")
+        if down:
+            parts.append(f"下: {down[:40]}")
+        if row_snip:
+            parts.append(f"同行: {row_snip}")
+        return " / ".join(parts)
     
     def correct_cell_text(self, text: str, context: str = "") -> Optional[str]:
         """
@@ -270,7 +357,7 @@ class ExcelLLMOCRCorrector:
             return text
 
         # 文字化けがある場合は修正対象（日本語がなくても）
-        has_mojibake = '' in text or len([c for c in text if ord(c) > 0xFFFF]) > 0
+        has_mojibake = self._has_mojibake_like(text)
         if not self._has_japanese(text) and not has_mojibake:
             # 日本語も文字化けもない場合はスキップ
             self.stats['skipped_cells'] += 1
@@ -285,22 +372,26 @@ class ExcelLLMOCRCorrector:
         prompt = f"""以下のOCR（光学文字認識）結果を修正してください。
 
 OCR結果には以下の問題がある可能性があります：
-- 文字化け（例: "文字" → "文宇"、"総合計" → "総一合一計"、"現金" → "現釜"）
+- 文字化け（例: "文字" → "文宇"、"総合計" → "総一合一計"、"現金" → "現釜"、"金額" → "金_額"、"数量" → "数_量"）
 - 読み取り不足（空白や改行の誤認識）
-- 数字や記号の誤認識（例: "1" → "l"、"5" → "S"、"0" → "O"、"8" → "B"）
-- 日本語の誤認識（例: "レギュラー" → "レギュラニ"、"軽油" → "リ挥翠避"、"自動車用" → "自動車木"、"その他" → "その地"）
-- カンマ位置の誤認識（例: "374,648" → "374,6485"）
-- 似た文字の誤認識（例: "O"と"0"、"1"と"l"、"5"と"S"、"避"と"油"、"木"と"用"、"地"と"他"）
+- 数字や記号の誤認識（例: "1" → "l"、"5" → "S"、"0" → "O"、"8" → "B"、"617" → "乙617"、"49" → "四9"）
+- 日本語の誤認識（例: "レギュラー" → "レギュラニ"、"軽油" → "リ挥翠避"、"自動車用" → "自動車木"、"その他" → "その地"、"見積" → "見微し"、"粗利率" → "トノロ比"）
+- カンマ位置の誤認識（例: "374,648" → "374,6485"、"54,69" → "54,69一"）
+- 似た文字の誤認識（例: "O"と"0"、"1"と"l"、"5"と"S"、"避"と"油"、"木"と"用"、"地"と"他"、"微"と"積"）
 - 数字の連続誤認識（例: "617.672116,578.2112234.472" → 適切に分割）
+- アンダースコアや特殊文字の誤認識（例: "金額_" → "金額"、"数量_" → "数量"、"33.00_" → "33.00"）
+- 漢字の誤認識（例: "研廻" → "研修"、"完料" → "完料"）
 
 {context_prefix}OCR結果:
 {text}
 
-修正指示:
-1. 明らかな誤字・脱字を積極的に修正してください（特に日本語の文字化け）
-2. 文脈から推測できる正しい文字に修正してください（特に数字・記号・日本語）
+修正指示（より積極的に）:
+1. 明らかな誤字・脱字を積極的に修正してください（特に日本語の文字化け、アンダースコア、特殊文字）
+2. 文脈から推測できる正しい文字に修正してください（特に数字・記号・日本語・漢字）
 3. 数字や記号は正確に保持してください（特に数値データ、金額、数量）
-4. カンマ位置を正しく修正してください（例: "374,6485" → "374,648"）
+4. カンマ位置を正しく修正してください（例: "374,6485" → "374,648"、"54,69一" → "54,69"）
+5. アンダースコアや末尾の余分な文字を削除してください（例: "金額_" → "金額"、"33.00_" → "33.00"）
+6. よくある誤認識パターンを積極的に修正してください（例: "見微し" → "見積"、"トノロ比" → "粗利率"）
 5. 日本語の誤認識を積極的に修正してください:
    - "総一合一計" → "総合計"
    - "現釜" → "現金"
@@ -311,6 +402,20 @@ OCR結果には以下の問題がある可能性があります：
    - "自動車木" → "自動車用"
    - "亘動用" → "自動車用"
    - "完料油計一" → "完料油計"
+   - "見微し" → "見積"
+   - "トノロ比" → "粗利率"
+   - "川杉比" → "粗利率"
+   - "研廻" → "研修"
+6. アンダースコアや末尾の余分な文字を削除してください:
+   - "金額_" → "金額"
+   - "数量_" → "数量"
+   - "33.00_" → "33.00"
+   - "54,69一" → "54,69"
+   - "計一" → "計"
+7. 数字の誤認識を積極的に修正してください:
+   - "乙617" → "617"
+   - "四9" → "49"
+   - "11河" → "11"
 6. 数字の連続誤認識を修正してください（例: "617.672116,578.2112234.472" → 適切に分割）
 7. 似た文字の誤認識を修正してください（O/0、1/l、5/S、8/B、避/油、木/用、地/他など）
 8. 元の形式（空白、改行）は可能な限り保持してください
@@ -359,14 +464,13 @@ OCR結果には以下の問題がある可能性があります：
         corrected_df = df.copy()
         total_cells = len(df) * len(df.columns)
         processed = 0
+
+        col_headers = self._build_col_headers(df, top_n=6)
         
         # 行ごとに処理（コンテキストを保持）
         for idx, row in df.iterrows():
             if verbose and (idx + 1) % 10 == 0:
                 print(f"    行 {idx + 1}/{len(df)} を処理中...")
-            
-            # 行のコンテキストを作成
-            row_context = " | ".join([str(val)[:50] for val in row.values[:5] if pd.notna(val)])
             
             for col_idx, col_name in enumerate(df.columns):
                 cell_value = row[col_name]
@@ -402,8 +506,8 @@ OCR結果には以下の問題がある可能性があります：
                     continue
                 
                 # LLMで修正（より積極的に適用）
-                # 文字化けの可能性をチェック（ や異常な文字が含まれている場合）
-                has_mojibake = '' in cell_str or len([c for c in cell_str if ord(c) > 0xFFFF]) > 0
+                # 文字化けの可能性をチェック（� や制御文字が含まれている場合）
+                has_mojibake = self._has_mojibake_like(cell_str)
                 # 日本語が含まれている、または文字化けの可能性がある、または長い文字列の場合
                 should_correct = (
                     self._has_japanese(cell_str) or 
@@ -412,7 +516,8 @@ OCR結果には以下の問題がある可能性があります：
                 )
                 
                 if should_correct:
-                    corrected = self.correct_cell_text(cell_str, row_context)
+                    context = self._build_cell_context(df, idx, col_idx, col_headers)
+                    corrected = self.correct_cell_text(cell_str, context)
                     if corrected != cell_str:
                         corrected_df.at[idx, col_name] = corrected
                 
@@ -420,7 +525,7 @@ OCR結果には以下の問題がある可能性があります：
                 self.stats['total_cells'] += 1
         
         if verbose:
-            print(f"  ✅ シート '{sheet_name}' の処理完了")
+            print(f"  [OK] シート '{sheet_name}' の処理完了")
         
         return corrected_df
     
@@ -472,7 +577,7 @@ OCR結果には以下の問題がある可能性があります：
                 safe_sheet_name = sheet_name[:31] if len(sheet_name) > 31 else sheet_name
                 df.to_excel(writer, sheet_name=safe_sheet_name, index=False, header=False)
         
-        print(f"\n✅ 修正完了: {output_excel_path}")
+        print(f"\n[OK] 修正完了: {output_excel_path}")
         print(f"\n📊 統計:")
         print(f"  - 処理セル数: {self.stats['total_cells']}")
         print(f"  - 修正セル数: {self.stats['corrected_cells']}")

@@ -319,6 +319,10 @@ def create_snapshot(output_path: Path = None, baseline_path: Path = None) -> dic
         snapshot["storage_delta"] = storage_delta
     
     if output_path:
+        # ディレクトリが存在しない場合は作成
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(snapshot, f, ensure_ascii=False, indent=2)
         print(f"スナップショットを保存: {output_path}")

@@ -1,0 +1,17 @@
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+extend-exclude = '''
+/(
+  LLaMA-Factory
+  |\.venv
+  |venv
+  |\.pytest_cache
+  |node_modules
+  |data
+  |out
+  |outputs
+  |snapshots
+)/
+'''
+
