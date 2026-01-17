@@ -64,15 +64,6 @@ def _get_ollama_url() -> str:
         return OLLAMA_URL
 
 
-def _check_lm_studio() -> bool:
-    """LM Studioが起動しているか確認"""
-    try:
-        response = requests.get(f"{LM_STUDIO_URL}/models", timeout=2)
-        return response.status_code == 200
-    except:
-        return False
-
-
 def chat(model: str = "qwen3:4b", message: str = "", messages: Optional[List[Dict]] = None,
          stream: bool = False, timeout: int = 120) -> Dict[str, Any]:
     """
@@ -103,19 +94,40 @@ def chat(model: str = "qwen3:4b", message: str = "", messages: Optional[List[Dic
             "temperature": 0.7
         }
         
+        extended_timeout = max(timeout, 60)  # 大きいモデルの初回ロードを考慮
         try:
-            response = requests.post(url, json=data, timeout=timeout)
-            response.raise_for_status()
+            response = requests.post(url, json=data, timeout=extended_timeout)
+
+            if response.status_code != 200:
+                # dict/str両対応でエラー抽出
+                error_msg = ""
+                try:
+                    ed = response.json()
+                    if isinstance(ed, dict):
+                        err = ed.get("error", {})
+                        if isinstance(err, dict):
+                            error_msg = str(err.get("message", ""))[:200]
+                        else:
+                            error_msg = str(err)[:200]
+                    else:
+                        error_msg = str(ed)[:200]
+                except Exception:
+                    error_msg = (response.text or "")[:200]
+
+                if "load" in error_msg.lower() or "not found" in error_msg.lower():
+                    return {"error": "モデル未ロード", "message": f"モデル '{model}' がロードされていません。LM Studioでモデルをロードしてください。"}
+                return {"error": f"HTTP {response.status_code}", "message": f"LM Studio APIエラー: {error_msg}"}
+
             result = response.json()
-            return {
-                "message": result["choices"][0]["message"]["content"],
-                "model": model,
-                "source": "lm_studio"
-            }
+            if not isinstance(result, dict) or "choices" not in result:
+                return {"error": "不正なレスポンス", "message": "LM Studioからの応答が不正です。"}
+
+            content = result["choices"][0]["message"]["content"]
+            return {"message": content, "model": model, "source": "lm_studio"}
         except requests.exceptions.Timeout:
-            return {"error": "タイムアウト", "message": "モデルのロードに時間がかかっています。もう一度試してください。"}
+            return {"error": "タイムアウト", "message": f"モデルのロード/推論に時間がかかっています（タイムアウト: {extended_timeout}秒）。LM Studioでモデルを事前にロードしてください。"}
         except Exception as e:
-            return {"error": str(e), "message": "LM Studioへの接続に失敗しました。"}
+            return {"error": str(e), "message": f"LM Studioへの接続に失敗しました: {str(e)[:200]}"}
     
     # Ollama（WSL2優先）
     url = f"{_get_ollama_url()}/api/chat"
@@ -174,18 +186,64 @@ def generate(model: str = "qwen3:4b", prompt: str = "", stream: bool = False,
         }
         
         try:
-            response = requests.post(url, json=data, timeout=timeout)
-            response.raise_for_status()
+            # タイムアウトを延長（大きなモデルの読み込みに対応）
+            extended_timeout = max(timeout, 60)  # 最低60秒
+            response = requests.post(url, json=data, timeout=extended_timeout)
+            
+            # HTTPエラーチェック
+            if response.status_code != 200:
+                try:
+                    error_data = response.json()
+                    if isinstance(error_data, dict):
+                        error_msg = error_data.get('error', {})
+                        if isinstance(error_msg, dict):
+                            error_msg = error_msg.get('message', '')
+                        elif isinstance(error_msg, str):
+                            pass  # 既に文字列
+                        else:
+                            error_msg = str(error_msg)
+                    else:
+                        error_msg = str(error_data)
+                except:
+                    error_msg = response.text[:200] if response.text else f"HTTP {response.status_code}"
+                
+                if 'load' in error_msg.lower() or 'not found' in error_msg.lower():
+                    return {"error": "モデル未ロード", "message": f"モデル '{model}' がロードされていません。LM Studioでモデルをロードしてください。"}
+                return {"error": f"HTTP {response.status_code}", "message": f"LM Studio APIエラー: {error_msg[:200]}"}
+            
             result = response.json()
+            if not isinstance(result, dict) or 'choices' not in result:
+                return {"error": "不正なレスポンス", "message": "LM Studioからの応答が不正です。"}
+            
             return {
                 "response": result["choices"][0]["message"]["content"],
                 "model": model,
                 "source": "lm_studio"
             }
         except requests.exceptions.Timeout:
-            return {"error": "タイムアウト", "message": "モデルのロードに時間がかかっています。"}
+            return {"error": "タイムアウト", "message": f"モデルのロードに時間がかかっています（タイムアウト: {extended_timeout}秒）。モデルが大きすぎるか、LM Studioでモデルを事前にロードしてください。"}
+        except requests.exceptions.HTTPError as e:
+            try:
+                error_data = e.response.json() if e.response and e.response.content else {}
+                if isinstance(error_data, dict):
+                    error_msg = error_data.get('error', {})
+                    if isinstance(error_msg, dict):
+                        error_msg = error_msg.get('message', '')
+                    elif isinstance(error_msg, str):
+                        pass  # 既に文字列
+                    else:
+                        error_msg = str(error_msg)
+                else:
+                    error_msg = str(error_data)
+            except:
+                error_msg = str(e)
+            
+            if e.response and e.response.status_code == 400:
+                if 'load' in error_msg.lower() or 'not found' in error_msg.lower():
+                    return {"error": "モデル未ロード", "message": f"モデル '{model}' がロードされていません。LM Studioでモデルをロードしてください。"}
+            return {"error": str(e), "message": f"LM Studioへの接続に失敗しました（HTTP {e.response.status_code if e.response else 'unknown'}）。"}
         except Exception as e:
-            return {"error": str(e), "message": "LM Studioへの接続に失敗しました。"}
+            return {"error": str(e), "message": f"LM Studioへの接続に失敗しました: {str(e)[:200]}"}
     
     # Ollama（WSL2優先）
     url = f"{_get_ollama_url()}/api/generate"
@@ -297,8 +355,15 @@ def ask(question: str, model: str = "qwen3:4b") -> str:
     if "error" in result:
         return f"エラー: {result.get('message', result.get('error', '不明なエラー'))}"
 
-    if "message" in result and "content" in result["message"]:
-        return result["message"]["content"]
+    # LM Studio: {"message": "<text>", ...}
+    if isinstance(result.get("message"), str):
+        return result["message"]
+    # Ollama: {"message": {"content": "..."}}
+    if isinstance(result.get("message"), dict) and "content" in result["message"]:
+        return str(result["message"]["content"])
+    # generate系の互換
+    if isinstance(result.get("response"), str):
+        return result["response"]
 
     return json.dumps(result, indent=2, ensure_ascii=False)
 

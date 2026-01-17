@@ -15,6 +15,7 @@ import pandas as pd
 
 from excel_llm_ocr_corrector import ExcelLLMOCRCorrector
 from local_llm_helper import generate
+from tools.lm_studio_model_selector import ModelSelectionConfig, select_models
 
 class EnsembleOCRCorrector:
     """複数モデルでアンサンブル修正"""
@@ -52,29 +53,30 @@ class EnsembleOCRCorrector:
         # LM Studioが利用可能な場合
         if os.getenv("USE_LM_STUDIO", "0").strip().lower() in ("1", "true", "yes", "y", "on"):
             try:
-                import requests
-                r = requests.get('http://localhost:1234/v1/models', timeout=5)
-                if r.status_code == 200:
-                    models_data = r.json().get('data', [])
-                    available_models = [model.get('id', '') for model in models_data]
-                    
-                    # 優先順位順にモデルを選択
-                    preferred_models = [
+                max_models_env = os.getenv("MANA_ENSEMBLE_MAX_MODELS", "").strip()
+                try:
+                    max_models = int(max_models_env) if max_models_env else 3
+                except Exception:
+                    max_models = 3
+                max_models = max(1, min(max_models, 3))
+
+                cfg = ModelSelectionConfig(
+                    preferred_models=[
+                        # 速い/安定を先に（ただし精度重視なら32Bを手動で事前ロード推奨）
+                        "qwen2.5-coder-7b-instruct",
+                        "qwen/qwen2.5-coder-14b-instruct",
+                        "openai/gpt-oss-20b",
                         "qwen2.5-coder-32b-instruct",
                         "qwen2.5-coder-14b-instruct",
-                        "openai/gpt-oss-20b",
-                        "qwen2.5-coder-7b-instruct",
-                    ]
-                    
-                    for preferred in preferred_models:
-                        for available in available_models:
-                            if preferred.lower() in available.lower() or available.lower() in preferred.lower():
-                                if available not in models:
-                                    models.append(available)
-                                break
-                    
-                    # 最大3モデルまで使用
-                    return models[:3]
+                    ],
+                    skip_substrings=["ggml-org/qwen2.5-coder-14b-instruct"],
+                    max_models=max_models,
+                )
+                models = select_models(cfg)
+                if models:
+                    for m in models:
+                        print(f"アンサンブル用モデル選択（キャッシュ/テスト済み）: {m}")
+                    return models[:max_models]
             except:
                 pass
         
@@ -83,6 +85,64 @@ class EnsembleOCRCorrector:
             models = ["qwen2.5-coder-14b-instruct"]
         
         return models
+
+    def _build_col_headers(self, df: pd.DataFrame, top_n: int = 6) -> Dict[int, str]:
+        """列ごとに上側から見出しっぽい値を拾う（なければ空）"""
+        headers: Dict[int, str] = {}
+        n = min(len(df), top_n)
+        for col_idx in range(len(df.columns)):
+            header = ""
+            for r in range(n):
+                v = df.iat[r, col_idx]
+                if pd.isna(v):
+                    continue
+                s = str(v).strip()
+                if s:
+                    header = s[:40]
+                    break
+            headers[col_idx] = header
+        return headers
+
+    def _build_cell_context(self, df: pd.DataFrame, row_idx: int, col_idx: int, col_headers: Dict[int, str]) -> str:
+        """近傍・列見出し・行スニペットを短くまとめてLLMに渡す"""
+        def _s(v) -> str:
+            if v is None or (isinstance(v, float) and pd.isna(v)) or pd.isna(v):
+                return ""
+            return str(v).strip()
+
+        left = _s(df.iat[row_idx, col_idx - 1]) if col_idx - 1 >= 0 else ""
+        right = _s(df.iat[row_idx, col_idx + 1]) if col_idx + 1 < len(df.columns) else ""
+        up = _s(df.iat[row_idx - 1, col_idx]) if row_idx - 1 >= 0 else ""
+        down = _s(df.iat[row_idx + 1, col_idx]) if row_idx + 1 < len(df) else ""
+
+        # 行の周辺2セルずつ
+        c0 = max(0, col_idx - 2)
+        c1 = min(len(df.columns) - 1, col_idx + 2)
+        row_snip_vals = []
+        for c in range(c0, c1 + 1):
+            if c == col_idx:
+                continue
+            sv = _s(df.iat[row_idx, c])
+            if sv:
+                row_snip_vals.append(sv[:30])
+        row_snip = " | ".join(row_snip_vals[:5])
+
+        header = (col_headers.get(col_idx) or "").strip()
+
+        parts = []
+        if header:
+            parts.append(f"列: {header}")
+        if up:
+            parts.append(f"上: {up[:40]}")
+        if left:
+            parts.append(f"左: {left[:40]}")
+        if right:
+            parts.append(f"右: {right[:40]}")
+        if down:
+            parts.append(f"下: {down[:40]}")
+        if row_snip:
+            parts.append(f"同行: {row_snip}")
+        return " / ".join(parts)
     
     def correct_cell_ensemble(self, text: str, context: str = "") -> str:
         """
@@ -164,17 +224,17 @@ class EnsembleOCRCorrector:
                 
                 df = pd.read_excel(excel_file, sheet_name=sheet_name, header=None)
                 corrected_df = df.copy()
+
+                base_corrector = next(iter(self.correctors.values()))
+                col_headers = self._build_col_headers(df, top_n=6)
                 
                 total_cells = len(df) * len(df.columns)
-                processed = 0
+                corrected_count = 0
                 
                 # 各セルをアンサンブル修正
                 for idx, row in df.iterrows():
                     if verbose and (idx + 1) % 10 == 0:
                         print(f"  行 {idx + 1}/{len(df)} を処理中...")
-                    
-                    # 行のコンテキストを作成
-                    row_context = " | ".join([str(val)[:50] for val in row.values[:5] if pd.notna(val)])
                     
                     for col_idx, col_name in enumerate(df.columns):
                         cell_value = row[col_name]
@@ -183,28 +243,48 @@ class EnsembleOCRCorrector:
                             continue
                         
                         cell_str = str(cell_value)
+
+                        # まず軽量な正規化＆ルール補正（全モデル共通で同じ前処理）
+                        cell_norm = base_corrector._normalize_text(cell_str)
+                        if cell_norm != cell_str:
+                            corrected_df.at[idx, col_name] = cell_norm
+                            cell_str = cell_norm
+                        fixed = base_corrector._fix_common_ocr_errors(cell_str)
+                        if fixed != cell_str:
+                            corrected_df.at[idx, col_name] = fixed
+                            cell_str = fixed
+
+                        # 数値のみは絶対に触らない（高速化＆事故防止）
+                        if base_corrector._looks_numeric(cell_str) and not base_corrector._has_japanese(cell_str):
+                            continue
+
+                        # 1文字は効果薄いので基本スキップ（ただし日本語や文字化けっぽいものは対象）
+                        if len(cell_str.strip()) < 2 and not base_corrector._has_japanese(cell_str):
+                            continue
+
+                        context = self._build_cell_context(df, idx, col_idx, col_headers)
                         
                         # アンサンブル修正
-                        corrected = self.correct_cell_ensemble(cell_str, row_context)
+                        corrected = self.correct_cell_ensemble(cell_str, context)
                         if corrected != cell_str:
                             corrected_df.at[idx, col_name] = corrected
-                            processed += 1
+                            corrected_count += 1
                 
                 corrected_data[sheet_name] = corrected_df
                 
                 if verbose:
-                    print(f"  シート '{sheet_name}': {processed}/{total_cells}セル修正")
+                    print(f"  シート '{sheet_name}': {corrected_count}/{total_cells}セル修正")
             
             # 結果を保存
             with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
                 for sheet_name, df in corrected_data.items():
                     df.to_excel(writer, sheet_name=sheet_name, index=False, header=False)
             
-            print(f"\n✓ アンサンブル修正完了: {output_file}")
+            print(f"\n[OK] アンサンブル修正完了: {output_file}")
             return True
             
         except Exception as e:
-            print(f"\n✗ エラー: {e}")
+            print(f"\n[NG] エラー: {e}")
             import traceback
             traceback.print_exc()
             return False

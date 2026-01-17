@@ -10,9 +10,10 @@ ExcelファイルのOCR結果を超強力に修正
 import sys
 import os
 
-if sys.platform == 'win32':
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+# Windowsでのエンコーディング処理はバッチファイルでchcp 65001を使用するため削除
+# if sys.platform == 'win32':
+#     import io
+#     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 from excel_llm_ensemble_corrector import EnsembleOCRCorrector
 
@@ -35,6 +36,9 @@ def ultra_correct(input_file: str, output_file: str, num_ensemble_passes: int = 
     os.environ['MANA_OCR_USE_LARGE_MODEL'] = '1'
     
     current_file = input_file
+
+    # モデル検出・初期化は1回だけ（各パスでの無駄な再検出を防ぐ）
+    corrector = EnsembleOCRCorrector()
     
     for pass_num in range(1, num_ensemble_passes + 1):
         print(f"\n{'=' * 60}")
@@ -48,8 +52,6 @@ def ultra_correct(input_file: str, output_file: str, num_ensemble_passes: int = 
             temp_file = output_file
         
         # アンサンブル修正を実行
-        corrector = EnsembleOCRCorrector()
-        
         result = corrector.correct_excel(
             current_file,
             temp_file,
@@ -57,10 +59,10 @@ def ultra_correct(input_file: str, output_file: str, num_ensemble_passes: int = 
         )
         
         if result:
-            print(f"\n✓ パス {pass_num} 完了")
+            print(f"\n[OK] パス {pass_num} 完了")
             current_file = temp_file
         else:
-            print(f"\n✗ パス {pass_num} 失敗")
+            print(f"\n[NG] パス {pass_num} 失敗")
             break
     
     print(f"\n{'=' * 60}")
