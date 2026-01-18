@@ -12,6 +12,7 @@ extend-exclude = '''
   |out
   |outputs
   |snapshots
+  |vendor
 )/
 '''
 

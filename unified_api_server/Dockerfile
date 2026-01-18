@@ -26,6 +26,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # アプリケーションコードのコピー
 COPY unified_api_server.py /app/
+COPY unified_api /app/unified_api
 COPY manaos_logger.py /app/
 COPY manaos_error_handler.py /app/
 COPY manaos_timeout_config.py /app/
