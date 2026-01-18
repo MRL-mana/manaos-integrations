@@ -13,6 +13,12 @@ ManaOS と外部システム（ComfyUI / n8n / Slack / Rows / Google Drive / ロ
 pip install -r requirements.txt
 ```
 
+再現性を重視する場合（推奨）はロックファイルを使います：
+
+```bash
+pip install -r requirements.lock.txt
+```
+
 ### 2) 環境変数を設定（推奨: `.env`）
 
 - `env.example` をコピーして `.env` を作成し、必要な値を設定してください
