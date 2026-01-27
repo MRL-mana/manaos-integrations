@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-01-17T07:42:39.269428",
-  "phase": "readonly",
+  "timestamp": "2026-01-22T15:30:51.580311",
+  "phase": "sampled",
   "security": {
     "auth": "enabled",
     "rate_limit": "enabled",

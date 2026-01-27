@@ -171,10 +171,16 @@ class ComfyUIIntegration(BaseIntegration):
         negative_prompt: str = "",
         width: int = 512,
         height: int = 512,
-        model: str = "sd_xl_base_1.0.safetensors"
+        model: str = "sd_xl_base_1.0.safetensors",
+        loras: Optional[List[tuple]] = None,
+        steps: int = 70,
+        guidance_scale: float = 8.5,
+        sampler: str = "euler_ancestral",
+        scheduler: str = "karras",
+        seed: int = -1
     ) -> Optional[str]:
         """
-        画像を生成
+        画像を生成（複数LoRA対応）
         
         Args:
             prompt: プロンプト
@@ -182,26 +188,85 @@ class ComfyUIIntegration(BaseIntegration):
             width: 画像幅
             height: 画像高さ
             model: 使用するモデル
+            loras: LoRAのリスト [(lora_name, strength), ...]
+            steps: ステップ数
+            guidance_scale: CFGスケール
+            sampler: サンプラー名
+            scheduler: スケジューラー名
+            seed: シード（-1の場合はランダム）
             
         Returns:
             プロンプトID（成功時）、None（失敗時）
         """
         try:
-            # 簡易ワークフロー（実際の実装では完全なワークフローが必要）
             workflow = {
                 "1": {
-                    "inputs": {
-                        "text": prompt,
-                        "clip": ["4", 0]
-                    },
-                    "class_type": "CLIPTextEncode"
-                },
-                "4": {
-                    "inputs": {
-                        "ckpt_name": model
-                    },
+                    "inputs": {"ckpt_name": model},
                     "class_type": "CheckpointLoaderSimple"
                 }
+            }
+            
+            # 複数LoRAを順次適用
+            current_model = ["1", 0]
+            current_clip = ["1", 1]
+            node_id = 8
+            
+            if loras:
+                for lora_name, lora_strength in loras:
+                    workflow[str(node_id)] = {
+                        "inputs": {
+                            "lora_name": lora_name,
+                            "strength_model": lora_strength,
+                            "strength_clip": lora_strength,
+                            "model": current_model,
+                            "clip": current_clip
+                        },
+                        "class_type": "LoraLoader"
+                    }
+                    current_model = [str(node_id), 0]
+                    current_clip = [str(node_id), 1]
+                    node_id += 1
+            
+            # テキストエンコーダー
+            workflow["2"] = {
+                "inputs": {"text": prompt, "clip": current_clip},
+                "class_type": "CLIPTextEncode"
+            }
+            workflow["3"] = {
+                "inputs": {"text": negative_prompt, "clip": current_clip},
+                "class_type": "CLIPTextEncode"
+            }
+            
+            # サンプラー
+            workflow["4"] = {
+                "inputs": {
+                    "seed": seed if seed >= 0 else int(time.time() * 1000) % (2**32),
+                    "steps": steps,
+                    "cfg": guidance_scale,
+                    "sampler_name": sampler,
+                    "scheduler": scheduler,
+                    "denoise": 1.0,
+                    "model": current_model,
+                    "positive": ["2", 0],
+                    "negative": ["3", 0],
+                    "latent_image": ["5", 0]
+                },
+                "class_type": "KSampler"
+            }
+            
+            workflow["5"] = {
+                "inputs": {"width": width, "height": height, "batch_size": 1},
+                "class_type": "EmptyLatentImage"
+            }
+            
+            workflow["6"] = {
+                "inputs": {"samples": ["4", 0], "vae": ["1", 2]},
+                "class_type": "VAEDecode"
+            }
+            
+            workflow["7"] = {
+                "inputs": {"filename_prefix": "ComfyUI", "images": ["6", 0]},
+                "class_type": "SaveImage"
             }
             
             return self.submit_workflow(workflow, prompt)

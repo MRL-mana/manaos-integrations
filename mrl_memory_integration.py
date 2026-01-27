@@ -356,8 +356,14 @@ try:
     # メトリクス（APIプロセス内で記録・保存）
     api_metrics = MRLMemoryMetrics()
     
+    # .envファイルを再読み込み（Flask初期化時に確実に読み込む）
+    _load_dotenv()
+    
     # セキュリティインスタンス（グローバル）
     security = APISecurity()
+    
+    # セキュリティ設定をログ出力（デバッグ用）
+    logger.info(f"Security initialized: require_auth={security.require_auth}, api_key={'SET' if security.api_key else 'NOT SET'}")
     
     # Rollout Manager
     try:
@@ -375,7 +381,10 @@ try:
                 # request.json はGET等で415を投げることがあるので、silent=Trueで安全に読む
                 data = request.get_json(silent=True) or {}
                 api_key = request.headers.get("X-API-Key") or data.get("api_key")
+                
+                # デバッグ用ログ（本番では削除可能）
                 if not security.authenticate(api_key):
+                    logger.debug(f"認証失敗: 提供されたキー={api_key[:20] if api_key else None}..., サーバー側キー={'SET' if security.api_key else 'NOT SET'}")
                     return jsonify({"error": "認証に失敗しました"}), 401
             return func(*args, **kwargs)
         return wrapper
@@ -594,6 +603,14 @@ if __name__ == "__main__":
     # テスト
     if FLASK_AVAILABLE:
         import os
+        # .envファイルを再読み込み（起動時に確実に読み込む）
+        _load_dotenv()
+        
+        # セキュリティ設定を確認（デバッグ用）
+        api_key = os.getenv("MRL_MEMORY_API_KEY") or os.getenv("API_KEY")
+        require_auth = os.getenv("REQUIRE_AUTH", "1")
+        logger.info(f"API起動時設定: require_auth={require_auth}, api_key={'SET' if api_key else 'NOT SET'}")
+        
         port = int(os.getenv("PORT", 5105))
         logger.info(f"🚀 MRL Memory API起動中... (ポート: {port})")
         app.run(host='0.0.0.0', port=port, debug=os.getenv("DEBUG", "False").lower() == "true")

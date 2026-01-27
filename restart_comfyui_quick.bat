@@ -9,9 +9,12 @@ echo.
 echo 環境変数を設定してComfyUIを起動します...
 set PYTHONIOENCODING=utf-8
 set PYTHONLEGACYWINDOWSSTDIO=1
+set PYTHONUTF8=1
 cd C:\ComfyUI
 start "ComfyUI" python main.py
 echo.
 echo ComfyUIを起動しました。
 echo 数秒待ってから画像生成を再試行してください。
+echo.
+echo ※ PowerShellから起動する場合は .\restart_comfyui_quick.bat のように先頭に .\ が必要です
 pause

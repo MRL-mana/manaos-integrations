@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 from typing import List, Dict, Any
 import pandas as pd
+import re
 
 # Windowsでのエンコーディング設定（バッチファイルで設定されるため削除）
 
@@ -171,14 +172,14 @@ class EnsembleOCRCorrector:
         if not results:
             return text
         
-        # 最良の結果を選択（最も長い、または最も変更が多い）
+        # 最良の結果を選択（情報量を保持）
         if len(results) == 1:
             return list(results.values())[0]
         
         # 複数の結果がある場合、投票方式で選択
         # 1. 最も多くのモデルが一致した結果
-        # 2. 最も長い結果（より詳細な修正）
-        # 3. 元のテキストとの差が大きい結果（より積極的な修正）
+        # 2. 情報量を保持（元のテキストの長さを考慮）
+        # 3. 数値データを含む場合は保持を優先
         
         # 結果の頻度をカウント
         result_counts = {}
@@ -188,9 +189,37 @@ class EnsembleOCRCorrector:
         # 最も多く一致した結果を選択
         best_result = max(result_counts.items(), key=lambda x: x[1])[0]
         
-        # 同数の場合は、最も長い結果を選択
+        # 同数の場合は、情報量を保持する結果を選択
         if result_counts[best_result] == 1:
-            best_result = max(results.values(), key=len)
+            # 元のテキストの長さを考慮
+            original_len = len(text)
+            # 元のテキストに近い長さで、かつ改善されている結果を優先
+            candidates = list(results.values())
+            
+            # 数値データを含む場合は、数値を保持している結果を優先
+            has_numbers = bool(re.search(r'\d', text))
+            
+            if has_numbers:
+                # 数値を保持している結果を優先
+                for candidate in candidates:
+                    if re.search(r'\d', candidate):
+                        # 元のテキストの数値が含まれているか確認
+                        original_numbers = set(re.findall(r'\d+', text))
+                        candidate_numbers = set(re.findall(r'\d+', candidate))
+                        if original_numbers.issubset(candidate_numbers) or len(candidate_numbers) >= len(original_numbers) * 0.8:
+                            best_result = candidate
+                            break
+                else:
+                    # 数値を保持している結果が見つからない場合は、最も長い結果
+                    best_result = max(candidates, key=len)
+            else:
+                # 数値がない場合は、元の長さに近く、かつ改善されている結果
+                # 元の長さの80%以上を保持している結果を優先
+                filtered = [r for r in candidates if len(r) >= original_len * 0.8]
+                if filtered:
+                    best_result = max(filtered, key=lambda r: (len(r), -abs(len(r) - original_len)))
+                else:
+                    best_result = max(candidates, key=len)
         
         return best_result
     

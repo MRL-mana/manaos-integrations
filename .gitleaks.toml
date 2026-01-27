@@ -1,0 +1,13 @@
+title = "ManaOS Integrations gitleaks config"
+
+[allowlist]
+description = "Ignore generated/temporary dirs and logs"
+paths = [
+  '''^logs/''',
+  '''^artifacts/''',
+  '''^docs/temp_reports/''',
+  '''^\.brv\.bak\..*''',
+  '''^snapshots/''',
+  '''^outputs?/''',
+]
+

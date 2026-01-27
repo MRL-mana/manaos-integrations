@@ -33,6 +33,7 @@ env/
 *.swo
 *~
 .DS_Store
+.cursor/
 
 # Environment variables
 .env
@@ -40,6 +41,8 @@ env/
 .env.*.local
 .env.*.env
 .env.konoha
+.env.backup.*
+.env.*.backup
 
 # Database
 *.db
@@ -78,6 +81,7 @@ temp/
 *.tmp
 
 # Generated artifacts (local runs)
+artifacts/
 gallery_images/
 generated_images/
 organized_images/
@@ -86,16 +90,74 @@ outputs/
 temp_downloaded_*.pdf
 temp_page_*.png
 
-# Completion/status reports (temporary documentation)
-*_COMPLETE.md
-*_STATUS.md
-*_SUMMARY.md
-*_REPORT.md
-*_FIX.md
-*_PROGRESS.md
-*_CURRENT*.md
-*_FINAL*.md
-*_ALL_*.md
+# Generated reports/docs (keep explicit and scoped)
+docs/temp_reports/
+docs/**/temp_reports/
+
+# Generated completion reports (keep only curated index files)
+docs/completion_reports/**
+!docs/completion_reports/
+!docs/completion_reports/INCOMPLETE_IMPLEMENTATIONS.md
+
+# Large auto-generated docs (keep curated docs elsewhere)
+docs/status/
+docs/unclassified/
+docs/optimization/
+
+# Auto-generated guides/integration/troubleshooting notes (keep key curated docs)
+docs/guides/*_SUMMARY*.md
+docs/guides/*SUMMARY*.md
+docs/guides/*STATUS*.md
+docs/guides/*PROGRESS*.md
+docs/guides/*COMPLETE*.md
+docs/guides/*FIX*.md
+docs/guides/SETUP_*.md
+!docs/guides/SECURITY_HARDENING.md
+!docs/guides/NGINX_REVERSE_PROXY_EXAMPLE.conf
+
+docs/integration/*SUMMARY*.md
+docs/integration/*PROGRESS*.md
+
+docs/troubleshooting/*SUMMARY*.md
+docs/troubleshooting/*PROBLEM*.md
+docs/troubleshooting/*FIX*.md
+
+docs/ORGANIZATION_REPORT.md
+
+# Step deep research generated reports
+step_deep_research/*_STATUS.md
+step_deep_research/*_COMPLETE.md
+step_deep_research/*_SUMMARY.md
+
+# Konoha migration/report markdowns (often generated)
+konoha_mcp_servers/**/*.md
+
+# Local ComfyUI installs can be huge (repo has integration code elsewhere)
+comfyui
+comfyui/
+
+# Local maintenance scripts (typically machine-specific / one-off)
+# NOTE: anchor to repo root to avoid hiding useful tooling under scripts/
+/cleanup_*.ps1
+/cleanup_*.py
+/move_*.ps1
+/move_*.py
+/scan_*.py
+/find_*.py
+/report_*.ps1
+/dedupe_*.ps1
+/restore_*_report*.ps1
+/remove_*.ps1
+/remove_*.py
+/run_move_*.*
+/run_remove_*.*
+
+# Keep lightweight repo-wide security tooling
+!scripts/security/scan_secrets.py
+
+# One-off summary docs at repo root
+*CLEANUP_SUMMARY*.md
+*STORAGE_CLEANUP*.md
 
 # Test/check scripts (temporary utilities)
 test_*.py
@@ -129,6 +191,19 @@ training_summary*.txt
 *_reject_stats.json
 castle_ex_schedule_*.json
 
+# Metrics and monitoring data
+mrl_memory/metrics/*.json
+metrics_*.json
+*_metrics.json
+
+# Training logs and outputs
+training.log
+*.log
+logs/
+outputs/
+checkpoint-*/
+checkpoint-*/
+
 # Cache
 .cache/
 *.cache
@@ -136,6 +211,10 @@ config_cache.py
 
 # Node modules (if any)
 node_modules/
+
+# ByteRover (context/memory – versioned remotely)
+.brv/
+.brv.bak.*/
 
 # Archives
 archive/
@@ -151,24 +230,28 @@ learning_system_state.json
 auto_optimization_state.json
 backup_history.json
 
+# Training checkpoints and outputs (D drive)
+D:/castle_ex_training/
+D:/huggingface_cache/
 
+# Generated images and outputs
+gallery_images/
+generated_images/
+organized_images/
+comfyui/output/
+comfyui/input/
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# ComfyUI custom nodes (vendor領域 - サードパーティコード)
+# これらのディレクトリは外部リポジトリから取得されるため、Git管理から除外
+comfyui/custom_nodes/
+comfyui/models/
+comfyui/output/
+comfyui/input/
+.clinerules/byterover-rules.md
+.kilocode/rules/byterover-rules.md
+.roo/rules/byterover-rules.md
+.windsurf/rules/byterover-rules.md
+.cursor/rules/byterover-rules.mdc
+.kiro/steering/byterover-rules.md
+.qoder/rules/byterover-rules.md
+.augment/rules/byterover-rules.md
