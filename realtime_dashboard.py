@@ -141,7 +141,7 @@ DASHBOARD_HTML = """
             <h1>🚀 ManaOS統合システムダッシュボード</h1>
             <p>リアルタイム監視と制御</p>
         </div>
-        
+
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">統合システム</div>
@@ -160,24 +160,24 @@ DASHBOARD_HTML = """
                 <div class="stat-value" id="goal-count">0</div>
             </div>
         </div>
-        
+
         <div class="grid">
             <div class="card">
                 <h2>統合システム状態</h2>
                 <div id="integrations-status"></div>
             </div>
-            
+
             <div class="card">
                 <h2>ManaOSサービス状態</h2>
                 <div id="manaos-services-status"></div>
             </div>
-            
+
             <div class="card">
                 <h2>AIエージェント状態</h2>
                 <div id="agent-status"></div>
             </div>
         </div>
-        
+
         <div class="card">
             <h2>パフォーマンスメトリクス</h2>
             <div class="chart-container">
@@ -185,11 +185,11 @@ DASHBOARD_HTML = """
             </div>
         </div>
     </div>
-    
+
     <script>
         const socket = io();
         let performanceChart;
-        
+
         // パフォーマンスチャートの初期化
         const ctx = document.getElementById('performance-chart').getContext('2d');
         performanceChart = new Chart(ctx, {
@@ -215,23 +215,23 @@ DASHBOARD_HTML = """
                 }
             }
         });
-        
+
         // ステータス更新
         socket.on('status_update', function(data) {
             updateDashboard(data);
         });
-        
+
         function updateDashboard(data) {
             // 統計更新
-            document.getElementById('total-integrations').textContent = 
+            document.getElementById('total-integrations').textContent =
                 Object.keys(data.integrations || {}).length;
-            document.getElementById('online-count').textContent = 
+            document.getElementById('online-count').textContent =
                 Object.values(data.integrations || {}).filter(v => v).length;
-            document.getElementById('task-count').textContent = 
+            document.getElementById('task-count').textContent =
                 data.agent?.tasks_count || 0;
-            document.getElementById('goal-count').textContent = 
+            document.getElementById('goal-count').textContent =
                 data.agent?.goals_count || 0;
-            
+
             // 統合システム状態
             const integrationsDiv = document.getElementById('integrations-status');
             integrationsDiv.innerHTML = '';
@@ -246,7 +246,7 @@ DASHBOARD_HTML = """
                 `;
                 integrationsDiv.appendChild(item);
             }
-            
+
             // ManaOSサービス状態
             const servicesDiv = document.getElementById('manaos-services-status');
             servicesDiv.innerHTML = '';
@@ -261,7 +261,7 @@ DASHBOARD_HTML = """
                 `;
                 servicesDiv.appendChild(item);
             }
-            
+
             // AIエージェント状態
             const agentDiv = document.getElementById('agent-status');
             if (data.agent) {
@@ -284,22 +284,22 @@ DASHBOARD_HTML = """
                     </div>
                 `;
             }
-            
+
             // パフォーマンスチャート更新
             const now = new Date().toLocaleTimeString();
             performanceChart.data.labels.push(now);
             performanceChart.data.datasets[0].data.push(
                 Object.values(data.integrations || {}).filter(v => v).length
             );
-            
+
             if (performanceChart.data.labels.length > 20) {
                 performanceChart.data.labels.shift();
                 performanceChart.data.datasets[0].data.shift();
             }
-            
+
             performanceChart.update();
         }
-        
+
         // 初期データ取得
         fetch('/api/dashboard/status')
             .then(response => response.json())
@@ -325,21 +325,21 @@ def get_status():
             integration_status[name] = integration.is_available()
         else:
             integration_status[name] = False
-    
+
     manaos_status = {}
     if bridge:
         try:
             manaos_status = bridge.check_manaos_services()
         except Exception as e:
             print(f"Error checking manaos services: {e}")
-            
+
     agent_status = {}
     if agent:
         try:
             agent_status = agent.get_status()
         except Exception as e:
             print(f"Error checking agent status: {e}")
-    
+
     return jsonify({
         "integrations": integration_status,
         "manaos_services": manaos_status,
@@ -358,7 +358,7 @@ def background_task():
                     manaos_services = bridge.check_manaos_services()
                 except:
                     pass
-                    
+
             agent_status = {}
             if agent:
                 try:
@@ -372,16 +372,16 @@ def background_task():
                 "agent": agent_status,
                 "timestamp": datetime.now().isoformat()
             }
-            
+
             for name, integration in integrations.items():
                 if hasattr(integration, "is_available"):
                     status["integrations"][name] = integration.is_available()
                 else:
                     status["integrations"][name] = False
-            
+
             socketio.emit('status_update', status)
             time.sleep(5)  # 5秒ごとに更新
-            
+
         except Exception as e:
             print(f"バックグラウンドタスクエラー: {e}")
             time.sleep(5)
@@ -390,30 +390,13 @@ def background_task():
 if __name__ == '__main__':
     print("ManaOSリアルタイムダッシュボードを起動中...")
     initialize_integrations()
-    
+
     # バックグラウンドタスクを開始
     thread = threading.Thread(target=background_task, daemon=True)
     thread.start()
-    
+
     print("ダッシュボード: http://localhost:9600")
-    socketio.run(app, host='0.0.0.0', port=9600, debug=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    # Flask-SocketIO は debug=True の際に Werkzeug を弾くことがあるため、
+    # 開発/ローカル用途では allow_unsafe_werkzeug=True で明示的に許可する。
+    # （本番運用は eventlet/gevent 等の本番用サーバー推奨）
+    socketio.run(app, host='0.0.0.0', port=9600, debug=True, allow_unsafe_werkzeug=True)

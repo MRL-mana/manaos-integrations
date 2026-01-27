@@ -10,8 +10,8 @@ import subprocess
 import re
 from pathlib import Path
 from datetime import datetime, timedelta
+import sys
 from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
 
 
 def _load_dotenv(env_path: str = ".env") -> None:
@@ -33,17 +33,17 @@ def _load_dotenv(env_path: str = ".env") -> None:
 _load_dotenv()
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:5105")
-API_KEY = os.getenv("API_KEY", "")
+API_KEY = os.getenv("MRL_MEMORY_API_KEY") or os.getenv("API_KEY", "")
 
 def get_security_status() -> dict:
     """SECURITY設定の状態を取得（罠②対策：PIIマスキングの実際の状態を確認）"""
     from mrl_memory_api_security import APISecurity
-    
+
     security = APISecurity()
-    
+
     # PIIマスキングの実際の状態を確認（環境変数から）
     pii_mask_enabled = os.getenv("PII_MASK_ENABLED", "1").lower() in ["1", "true", "yes"]
-    
+
     return {
         "auth": "enabled" if security.require_auth else "disabled",
         "rate_limit": "enabled" if security.rate_limit_per_minute > 0 else "disabled",
@@ -54,7 +54,7 @@ def get_security_status() -> dict:
 def get_metrics_snapshot() -> dict:
     """
     メトリクスのスナップショットを取得（罠①対策：ダッシュボードJSONをソースにする）
-    
+
     注意: メトリクスがメモリ内のみの場合、別プロセスからは取得できません。
     その場合は、APIサーバーのプロセスから直接取得するか、メトリクスを永続化する必要があります。
     """
@@ -87,7 +87,7 @@ def get_metrics_snapshot() -> dict:
     # 方法1: ダッシュボードJSONを読む（推奨）
     try:
         result = subprocess.run(
-            ["python", "mrl_memory_dashboard.py", "--json"],
+            [sys.executable, "mrl_memory_dashboard.py", "--json"],
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -106,45 +106,43 @@ def get_metrics_snapshot() -> dict:
             }
     except Exception as e:
         print(f"[WARN] ダッシュボードJSONの読み込みに失敗: {e}")
-    
+
     # 方法2: 永続化されたメトリクスを読む（フォールバック）
     try:
         from mrl_memory_metrics import MRLMemoryMetrics
         metrics = MRLMemoryMetrics()
-        
+
         # 最新のメトリクスファイルを探す
         metrics_dir = metrics.metrics_dir
         today = datetime.now().strftime('%Y%m%d')
         metrics_file = metrics_dir / f"metrics_{today}.json"
-        
+
         if metrics_file.exists():
-            with open(metrics_file, 'r', encoding='utf-8') as f:
-                saved_metrics = json.load(f)
-                # 最新の統計を計算
-                # （簡易実装：最新のエントリから統計を計算）
-                # 実際の実装では、保存されたメトリクスから統計を再計算する必要があります
-                pass
-        
+            # 将来的に永続化メトリクスからの再計算を実装する余地を残しつつ、
+            # 現状は Method0(/api/metrics) が優先のため、ここでは読み取りのみ行う。
+            # （flake8対策: 未使用変数を作らない）
+            pass
+
         # 方法3: 直接メトリクスインスタンスから読む（メモリ内のみの場合、0になる可能性がある）
         latency_stats = metrics.get_latency_stats()
         p95 = latency_stats.get("p95", 0) if latency_stats else 0
-        
+
         gate_stats = metrics.get_gate_block_rate_stats()
         gate_block_rate = gate_stats.get("current", 0) if gate_stats else 0
-        
+
         conflict_stats = metrics.get_conflict_detection_rate_stats()
         conflict_rate = conflict_stats.get("current", 0) if conflict_stats else 0
-        
+
         slot_stats = metrics.get_slot_utilization_stats()
         variance = slot_stats.get("mean_variance", 0) if slot_stats else 0
-        
+
         write_stats = metrics.get_write_count_stats()
         writes_per_min = write_stats.get("current", 0) if write_stats else 0
-        
+
         # 警告: メモリ内のみの場合、値が0になる可能性がある
         if p95 == 0 and gate_block_rate == 0 and conflict_rate == 0:
             print("[WARN] メトリクスが0の可能性があります。APIサーバーのプロセスから直接取得するか、メトリクスを永続化してください。")
-        
+
         return {
             "e2e_p95_sec": p95,
             "gate_block_rate": gate_block_rate,
@@ -169,7 +167,7 @@ def get_storage_health() -> dict:
     """
     # メモリディレクトリを環境変数またはデフォルトから取得
     memory_dir = Path(os.getenv("MRL_MEMORY_DIR", Path(__file__).parent / "mrl_memory"))
-    
+
     # Scratchpadの行数をカウント
     scratchpad_path = memory_dir / "scratchpad.jsonl"
     scratchpad_count = 0
@@ -179,7 +177,7 @@ def get_storage_health() -> dict:
                 scratchpad_count = sum(1 for line in f if line.strip())
         except Exception as e:
             print(f"[WARN] Scratchpadの読み込みエラー: {e}")
-    
+
     # Quarantineの行数をカウント
     quarantine_path = memory_dir / "quarantine.jsonl"
     quarantine_count = 0
@@ -189,7 +187,7 @@ def get_storage_health() -> dict:
                 quarantine_count = sum(1 for line in f if line.strip())
         except Exception as e:
             print(f"[WARN] Quarantineの読み込みエラー: {e}")
-    
+
     # Promotedの行数をカウント（存在する場合）
     promoted_path = memory_dir / "promoted.jsonl"
     promoted_count = 0
@@ -199,7 +197,7 @@ def get_storage_health() -> dict:
                 promoted_count = sum(1 for line in f if line.strip())
         except Exception as e:
             print(f"[WARN] Promotedの読み込みエラー: {e}")
-    
+
     return {
         "scratchpad_entries": scratchpad_count,
         "quarantine_entries": quarantine_count,
@@ -211,8 +209,7 @@ def get_error_count() -> dict:
     エラーカウントを取得（罠③対策：ログから5xxエラーを実際にカウント）
     """
     error_count = 0
-    cutoff_time = datetime.now() - timedelta(minutes=60)
-    
+
     # 方法1: systemd journalから取得（Linux）
     try:
         result = subprocess.run(
@@ -230,7 +227,7 @@ def get_error_count() -> dict:
     except (FileNotFoundError, subprocess.TimeoutExpired):
         # journalctlが使えない場合、ログファイルを探す
         pass
-    
+
     # 方法2: ログファイルから取得（フォールバック）
     if error_count == 0:
         log_paths = [
@@ -238,7 +235,7 @@ def get_error_count() -> dict:
             Path("logs/mrl_memory.log"),
             Path(__file__).parent / "logs" / "mrl_memory.log"
         ]
-        
+
         for log_path in log_paths:
             if log_path.exists():
                 try:
@@ -250,7 +247,7 @@ def get_error_count() -> dict:
                 except Exception as e:
                     print(f"[WARN] ログファイルの読み込みエラー: {e}")
                     break
-    
+
     return {
         "http_5xx_last_60min": error_count
     }
@@ -258,11 +255,11 @@ def get_error_count() -> dict:
 def create_snapshot(output_path: Path = None, baseline_path: Path = None) -> dict:
     """
     スナップショットを作成
-    
+
     Args:
         output_path: 出力先パス（Noneの場合は返すだけ）
         baseline_path: ベースラインスナップショットのパス（差分計算用）
-    
+
     Returns:
         スナップショット（辞書形式）
     """
@@ -284,10 +281,10 @@ def create_snapshot(output_path: Path = None, baseline_path: Path = None) -> dic
             }
     except Exception as e:
         api_status = {"reachable": False, "error": str(e)}
-    
+
     # ストレージ健康状態を取得
     storage = get_storage_health()
-    
+
     # ベースラインとの差分を計算（オプション）
     storage_delta = None
     if baseline_path and baseline_path.exists():
@@ -302,7 +299,7 @@ def create_snapshot(output_path: Path = None, baseline_path: Path = None) -> dic
                 }
         except Exception as e:
             print(f"[WARN] ベースラインとの差分計算に失敗: {e}")
-    
+
     snapshot = {
         "timestamp": datetime.now().isoformat(),
         "phase": "Phase 1: Read-only",
@@ -313,47 +310,47 @@ def create_snapshot(output_path: Path = None, baseline_path: Path = None) -> dic
         "errors": get_error_count(),
         "api_status": api_status,
     }
-    
+
     # ストレージ差分を追加（存在する場合）
     if storage_delta:
         snapshot["storage_delta"] = storage_delta
-    
+
     if output_path:
         # ディレクトリが存在しない場合は作成
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(snapshot, f, ensure_ascii=False, indent=2)
         print(f"スナップショットを保存: {output_path}")
-    
+
     return snapshot
 
 def main():
     """メイン処理"""
     import sys
-    
+
     # 出力先を指定（コマンドライン引数）
     output_path = None
     baseline_path = None
-    
+
     if len(sys.argv) > 1:
         output_path = Path(sys.argv[1])
-    
+
     # ベースラインスナップショットのパス（オプション）
     if len(sys.argv) > 2:
         baseline_path = Path(sys.argv[2])
-    
+
     if output_path is None:
         # デフォルト: phase1_metrics_snapshot.json
         output_path = Path("phase1_metrics_snapshot.json")
-    
+
     # スナップショットを作成
     snapshot = create_snapshot(output_path, baseline_path)
-    
+
     # 標準出力にもJSONを出力（判定スクリプト用）
     print(json.dumps(snapshot, ensure_ascii=False, indent=2))
-    
+
     return snapshot
 
 if __name__ == "__main__":

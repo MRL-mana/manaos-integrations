@@ -64,6 +64,7 @@ class ManaOSCoreAPI:
         self._llm_router = None
         self._notification_hub = None
         self._unified_memory = None
+        self._mrl_memory = None  # MRL Memory System統合
         self._hf_integration = None
         self._searxng_integration = None
         self._brave_search_integration = None
@@ -98,6 +99,40 @@ class ManaOSCoreAPI:
             except ImportError:
                 logger.warning("統一記憶システムが利用できません")
         return self._unified_memory
+    
+    def _get_mrl_memory(self):
+        """MRL Memory Systemを取得（遅延インポート・API経由）"""
+        if self._mrl_memory is None:
+            try:
+                import requests
+                import os
+                # MRL Memory APIのURL
+                api_url = os.getenv("MRL_MEMORY_API_URL", "http://localhost:5105")
+                # APIキーは環境変数から取得（MRL_MEMORY_API_KEY または API_KEY）
+                api_key = os.getenv("MRL_MEMORY_API_KEY") or os.getenv("API_KEY", "")
+                
+                # ヘルスチェック（認証不要）
+                try:
+                    response = requests.get(f"{api_url}/health", timeout=2)
+                    if response.status_code == 200:
+                        # 認証が必要かどうかを確認（/healthは認証不要なので、実際のAPI呼び出しで確認）
+                        self._mrl_memory = {
+                            "api_url": api_url,
+                            "api_key": api_key,
+                            "available": True,
+                            "auth_required": bool(api_key)  # APIキーが設定されている場合は認証が必要と仮定
+                        }
+                        logger.info("MRL Memory Systemが利用可能です")
+                    else:
+                        self._mrl_memory = {"available": False}
+                        logger.warning("MRL Memory APIが応答しません")
+                except requests.exceptions.RequestException:
+                    self._mrl_memory = {"available": False}
+                    logger.debug("MRL Memory APIに接続できません（未起動の可能性）")
+            except Exception as e:
+                logger.warning(f"MRL Memory Systemの初期化エラー: {e}")
+                self._mrl_memory = {"available": False}
+        return self._mrl_memory
     
     def _get_hf_integration(self):
         """Hugging Face統合を取得（遅延インポート）"""
@@ -178,38 +213,8 @@ class ManaOSCoreAPI:
         if priority in ["critical", "important"]:
             self._auto_save_event(event)
         
-        # 自動保存: 重要なイベントを記憶システムに保存
-        if priority in ["critical", "important"]:
-            self._auto_save_event(event)
-        
         logger.info(f"[Emit] {event_type} ({priority}): {payload}")
         return event
-    
-    def _auto_save_event(self, event: Dict[str, Any]):
-        """
-        重要なイベントを自動的に記憶システムに保存
-        
-        Args:
-            event: イベント情報
-        """
-        try:
-            event_content = {
-                "content": f"イベント: {event.get('event_type')} - {str(event.get('payload', {}))[:200]}",
-                "metadata": {
-                    "event_id": event.get("event_id"),
-                    "event_type": event.get("event_type"),
-                    "priority": event.get("priority"),
-                    "timestamp": event.get("timestamp"),
-                    "source": "manaos_event"
-                }
-            }
-            
-            unified_memory = self._get_unified_memory()
-            if unified_memory:
-                unified_memory.store(event_content, format_type="system")
-                logger.debug(f"[Auto Save] イベントを保存: {event.get('event_type')}")
-        except Exception as e:
-            logger.warning(f"イベント自動保存エラー: {e}")
     
     def _auto_save_event(self, event: Dict[str, Any]):
         """
@@ -262,6 +267,43 @@ class ManaOSCoreAPI:
             except Exception as e:
                 logger.error(f"記憶保存エラー: {e}")
         
+        # MRL Memory Systemに保存（API経由）
+        mrl_memory = self._get_mrl_memory()
+        if mrl_memory and mrl_memory.get("available"):
+            try:
+                import requests
+                text_content = input_data.get("content", str(input_data))
+                if isinstance(text_content, dict):
+                    text_content = str(text_content)
+                
+                api_url = mrl_memory["api_url"]
+                api_key = mrl_memory.get("api_key", "")
+                headers = {"Content-Type": "application/json"}
+                # APIキーが設定されている場合のみヘッダーに追加
+                if api_key:
+                    headers["X-API-Key"] = api_key
+                
+                response = requests.post(
+                    f"{api_url}/api/memory/process",
+                    json={
+                        "text": text_content,
+                        "source": "manaos",
+                        "enable_rehearsal": True,
+                        "enable_promotion": False
+                    },
+                    headers=headers,
+                    timeout=5
+                )
+                if response.status_code == 200:
+                    logger.debug(f"[MRL Memory] 保存成功: {format_type}")
+                elif response.status_code == 401:
+                    # 認証エラーの場合、APIキーが未設定の可能性
+                    logger.debug(f"[MRL Memory] 認証エラー（APIキー未設定の可能性）: HTTP 401")
+                else:
+                    logger.debug(f"[MRL Memory] 保存失敗: HTTP {response.status_code}")
+            except Exception as e:
+                logger.debug(f"MRL Memory保存エラー（無視）: {e}")
+        
         logger.info(f"[Remember] {format_type}: {input_data.get('content', str(input_data))[:50]}...")
         return memory_entry
     
@@ -297,8 +339,53 @@ class ManaOSCoreAPI:
             except Exception as e:
                 logger.error(f"記憶検索エラー: {e}")
         
+        # MRL Memory Systemから検索（API経由）
+        mrl_memory = self._get_mrl_memory()
+        if mrl_memory and mrl_memory.get("available"):
+            try:
+                import requests
+                api_url = mrl_memory["api_url"]
+                api_key = mrl_memory.get("api_key", "")
+                headers = {"Content-Type": "application/json"}
+                # APIキーが設定されている場合のみヘッダーに追加
+                if api_key:
+                    headers["X-API-Key"] = api_key
+                
+                response = requests.post(
+                    f"{api_url}/api/memory/search",
+                    json={
+                        "query": query,
+                        "limit": limit
+                    },
+                    headers=headers,
+                    timeout=5
+                )
+                if response.status_code == 200:
+                    mrl_results = response.json()
+                    if isinstance(mrl_results, dict) and "results" in mrl_results:
+                        # MRL Memoryの結果を統一フォーマットに変換
+                        for item in mrl_results["results"]:
+                            results.append({
+                                "memory_id": item.get("id", str(uuid.uuid4())),
+                                "format_type": "mrl_memory",
+                                "input_data": {"content": item.get("content", ""), "metadata": item.get("metadata", {})},
+                                "timestamp": item.get("timestamp", datetime.now().isoformat()),
+                                "score": item.get("score", 0.0)
+                            })
+                        logger.debug(f"[MRL Memory] 検索成功: {len(mrl_results.get('results', []))}件")
+                elif response.status_code == 401:
+                    # 認証エラーの場合、APIキーが未設定の可能性
+                    logger.debug(f"[MRL Memory] 認証エラー（APIキー未設定の可能性）: HTTP 401")
+                else:
+                    logger.debug(f"[MRL Memory] 検索失敗: HTTP {response.status_code}")
+            except Exception as e:
+                logger.debug(f"MRL Memory検索エラー（無視）: {e}")
+        
+        # スコアでソート（MRL Memoryの結果が含まれる場合）
+        results = sorted(results, key=lambda x: x.get("score", 0.0), reverse=True)[:limit]
+        
         logger.info(f"[Recall] query: {query}, results: {len(results)}")
-        return results[:limit]
+        return results
     
     def _check_safety(self, action_type: str, args: Dict[str, Any]) -> tuple[bool, Optional[str]]:
         """

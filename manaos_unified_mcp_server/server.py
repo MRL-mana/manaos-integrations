@@ -66,6 +66,10 @@ PERSONALITY_SYSTEM_URL = os.getenv("PERSONALITY_SYSTEM_URL", "http://localhost:5
 AUTONOMY_SYSTEM_URL = os.getenv("AUTONOMY_SYSTEM_URL", "http://localhost:5124")
 SECRETARY_SYSTEM_URL = os.getenv("SECRETARY_SYSTEM_URL", "http://localhost:5125")
 
+# 危険度の高いツール（VS Code操作など）の有効/無効
+def _vscode_tools_enabled() -> bool:
+    return os.getenv("MANAOS_ENABLE_VSCODE_TOOLS", "false").strip().lower() in ("1", "true", "yes", "y", "on")
+
 # 統合モジュール（遅延インポート）
 _integrations = {}
 
@@ -111,6 +115,10 @@ def get_integration(name: str):
             elif name == "brave_search":
                 from brave_search_integration import BraveSearchIntegration
                 _integrations[name] = BraveSearchIntegration()
+            elif name == "civitai":
+                from civitai_integration import CivitAIIntegration
+                # APIキーはCivitAIIntegration内でも環境変数から取得できる
+                _integrations[name] = CivitAIIntegration(api_key=os.getenv("CIVITAI_API_KEY"))
             elif name == "base_ai":
                 from base_ai_integration import BaseAIIntegration
                 use_free = os.getenv("BASE_AI_USE_FREE", "false").lower() == "true"
@@ -173,7 +181,7 @@ async def list_tools() -> list[Tool]:
     tools.extend([
         Tool(
             name="comfyui_generate_image",
-            description="ComfyUIで画像を生成します",
+            description="ComfyUIで画像を生成します（複数LoRA対応）",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -181,9 +189,82 @@ async def list_tools() -> list[Tool]:
                     "negative_prompt": {"type": "string", "description": "ネガティブプロンプト"},
                     "width": {"type": "integer", "description": "画像幅（デフォルト: 512）", "default": 512},
                     "height": {"type": "integer", "description": "画像高さ（デフォルト: 512）", "default": 512},
-                    "steps": {"type": "integer", "description": "ステップ数（デフォルト: 20）", "default": 20}
+                    "steps": {"type": "integer", "description": "ステップ数（デフォルト: 70）", "default": 70},
+                    "cfg_scale": {"type": "number", "description": "CFGスケール（デフォルト: 8.5）", "default": 8.5},
+                    "model": {"type": "string", "description": "使用するモデル名"},
+                    "loras": {"type": "array", "description": "LoRAのリスト [{\"name\": \"lora_name\", \"strength\": 0.8}, ...]", "items": {"type": "object"}},
+                    "sampler": {"type": "string", "description": "サンプラー（デフォルト: euler_ancestral）", "default": "euler_ancestral"},
+                    "scheduler": {"type": "string", "description": "スケジューラー（デフォルト: karras）", "default": "karras"},
+                    "seed": {"type": "integer", "description": "シード（-1の場合はランダム）", "default": -1}
                 },
                 "required": ["prompt"]
+            }
+        )
+    ])
+
+    # ========================================
+    # CivitAI
+    # ========================================
+    tools.extend([
+        Tool(
+            name="civitai_get_favorites",
+            description="CivitAIのお気に入りモデル一覧を取得します",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "description": "取得数（デフォルト: 100）", "default": 100},
+                    "model_type": {"type": "string", "description": "モデルタイプ（Checkpoint, LORA等）"}
+                }
+            }
+        ),
+        Tool(
+            name="civitai_download_favorites",
+            description="CivitAIのお気に入りモデルを自動ダウンロードします",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "auto": {"type": "boolean", "description": "自動モード（確認なし）", "default": false},
+                    "model_type": {"type": "string", "description": "モデルタイプ（Checkpoint, LORA等）"}
+                }
+            }
+        ),
+        Tool(
+            name="civitai_get_images",
+            description="CivitAIで画像を取得します（プロンプト情報含む）",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "description": "取得数（最大200、デフォルト: 20）", "default": 20},
+                    "model_id": {"type": "integer", "description": "モデルIDでフィルタ"},
+                    "model_version_id": {"type": "integer", "description": "モデルバージョンIDでフィルタ"},
+                    "username": {"type": "string", "description": "ユーザー名でフィルタ"},
+                    "nsfw": {"type": "boolean", "description": "NSFWフラグ"},
+                    "sort": {"type": "string", "description": "ソート方法（Most Reactions, Most Comments, Newest）", "default": "Most Reactions"},
+                    "period": {"type": "string", "description": "期間（AllTime, Year, Month, Week, Day）", "default": "AllTime"},
+                    "page": {"type": "integer", "description": "ページ番号（デフォルト: 1）", "default": 1}
+                }
+            }
+        ),
+        Tool(
+            name="civitai_get_image_details",
+            description="CivitAIで画像の詳細情報を取得します（プロンプト情報含む）",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "image_id": {"type": "integer", "description": "画像ID（必須）"}
+                },
+                "required": ["image_id"]
+            }
+        ),
+        Tool(
+            name="civitai_get_creators",
+            description="CivitAIでクリエイター一覧を取得します",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "username": {"type": "string", "description": "ユーザー名でフィルタ"},
+                    "limit": {"type": "integer", "description": "取得数（デフォルト: 20）", "default": 20}
+                }
             }
         )
     ])
@@ -514,56 +595,57 @@ async def list_tools() -> list[Tool]:
     # ========================================
     # VS Code操作
     # ========================================
-    tools.extend([
-        Tool(
-            name="vscode_open_file",
-            description="VS Codeでファイルを開きます",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "file_path": {"type": "string", "description": "ファイルパス（必須）"},
-                    "line": {"type": "integer", "description": "行番号（オプション）"}
-                },
-                "required": ["file_path"]
-            }
-        ),
-        Tool(
-            name="vscode_open_folder",
-            description="VS Codeでフォルダを開きます",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "folder_path": {"type": "string", "description": "フォルダパス（必須）"}
-                },
-                "required": ["folder_path"]
-            }
-        ),
-        Tool(
-            name="vscode_execute_command",
-            description="VS Codeでコマンドを実行します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "command": {"type": "string", "description": "コマンド（必須）"},
-                    "args": {"type": "array", "description": "コマンド引数（オプション）", "items": {"type": "string"}}
-                },
-                "required": ["command"]
-            }
-        ),
-        Tool(
-            name="vscode_search_files",
-            description="VS Codeでファイルを検索します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "検索クエリ（必須）"},
-                    "include": {"type": "string", "description": "検索対象ファイル（例: *.py）"},
-                    "exclude": {"type": "string", "description": "除外ファイル（例: node_modules/**）"}
-                },
-                "required": ["query"]
-            }
-        )
-    ])
+    if _vscode_tools_enabled():
+        tools.extend([
+            Tool(
+                name="vscode_open_file",
+                description="VS Codeでファイルを開きます",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "file_path": {"type": "string", "description": "ファイルパス（必須）"},
+                        "line": {"type": "integer", "description": "行番号（オプション）"}
+                    },
+                    "required": ["file_path"]
+                }
+            ),
+            Tool(
+                name="vscode_open_folder",
+                description="VS Codeでフォルダを開きます",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "folder_path": {"type": "string", "description": "フォルダパス（必須）"}
+                    },
+                    "required": ["folder_path"]
+                }
+            ),
+            Tool(
+                name="vscode_execute_command",
+                description="VS Codeでコマンドを実行します（危険: 明示的に有効化された場合のみ表示）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "command": {"type": "string", "description": "コマンド（必須）"},
+                        "args": {"type": "array", "description": "コマンド引数（オプション）", "items": {"type": "string"}}
+                    },
+                    "required": ["command"]
+                }
+            ),
+            Tool(
+                name="vscode_search_files",
+                description="VS Codeでファイルを検索します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "検索クエリ（必須）"},
+                        "include": {"type": "string", "description": "検索対象ファイル（例: *.py）"},
+                        "exclude": {"type": "string", "description": "除外ファイル（例: node_modules/**）"}
+                    },
+                    "required": ["query"]
+                }
+            )
+        ])
 
     # ========================================
     # SearXNG Web検索
@@ -759,24 +841,221 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> Sequence[TextConten
             queue = svi.get_queue_status()
             return [TextContent(type="text", text=f"キュー状態:\n{json.dumps(queue, indent=2, ensure_ascii=False)}")]
 
-        # ComfyUI画像生成
+        # ComfyUI画像生成（複数LoRA対応）
         elif name == "comfyui_generate_image":
             comfyui = get_integration("comfyui")
             if not comfyui:
                 return [TextContent(type="text", text="❌ ComfyUI統合が利用できません")]
+
+            # LoRAを変換
+            loras = None
+            loras_data = arguments.get("loras")
+            if loras_data:
+                loras = [(lora.get("name"), lora.get("strength", 0.8)) for lora in loras_data]
 
             prompt_id = comfyui.generate_image(
                 prompt=arguments.get("prompt"),
                 negative_prompt=arguments.get("negative_prompt", ""),
                 width=arguments.get("width", 512),
                 height=arguments.get("height", 512),
-                steps=arguments.get("steps", 20)
+                model=arguments.get("model"),
+                loras=loras,
+                steps=arguments.get("steps", 70),
+                guidance_scale=arguments.get("cfg_scale", 8.5),
+                sampler=arguments.get("sampler", "euler_ancestral"),
+                scheduler=arguments.get("scheduler", "karras"),
+                seed=arguments.get("seed", -1)
             )
 
             if prompt_id:
-                return [TextContent(type="text", text=f"✅ 画像生成が開始されました\n実行ID: {prompt_id}")]
+                lora_info = f" (LoRA: {len(loras)}個)" if loras else ""
+                return [TextContent(type="text", text=f"✅ 画像生成が開始されました{lora_info}\n実行ID: {prompt_id}")]
             else:
                 return [TextContent(type="text", text="❌ 画像生成に失敗しました")]
+
+        # CivitAI
+        elif name == "civitai_get_favorites":
+            civitai = get_integration("civitai")
+            if not civitai:
+                return [TextContent(type="text", text="❌ CivitAI統合が利用できません")]
+            
+            if not civitai.is_available():
+                return [TextContent(type="text", text="❌ CivitAI APIキーが設定されていません")]
+            
+            favorites = civitai.get_favorite_models(
+                limit=arguments.get("limit", 100),
+                model_type=arguments.get("model_type")
+            )
+            
+            if favorites:
+                summary = f"お気に入りモデル: {len(favorites)}件\n"
+                for model in favorites[:10]:
+                    model_type = model.get("type", "Unknown")
+                    summary += f"- {model.get('name')} ({model_type})\n"
+                if len(favorites) > 10:
+                    summary += f"... 他 {len(favorites) - 10}件"
+                return [TextContent(type="text", text=summary)]
+            else:
+                return [TextContent(type="text", text="お気に入りモデルが見つかりませんでした")]
+        
+        elif name == "civitai_download_favorites":
+            civitai = get_integration("civitai")
+            if not civitai:
+                return [TextContent(type="text", text="❌ CivitAI統合が利用できません")]
+            
+            if not civitai.is_available():
+                return [TextContent(type="text", text="❌ CivitAI APIキーが設定されていません")]
+            
+            # お気に入りモデルを取得
+            favorites = civitai.get_favorite_models(
+                limit=100,
+                model_type=arguments.get("model_type")
+            )
+            
+            if not favorites:
+                return [TextContent(type="text", text="お気に入りモデルが見つかりませんでした")]
+            
+            # ダウンロード処理（簡易版）
+            from pathlib import Path
+            COMFYUI_MODELS_DIR = Path("C:/ComfyUI/models/checkpoints")
+            COMFYUI_LORA_DIR = Path("C:/ComfyUI/models/loras")
+            
+            downloaded = []
+            failed = []
+            
+            for model in favorites[:5]:  # 最初の5件のみ（時間がかかるため）
+                try:
+                    versions = model.get("modelVersions", [])
+                    if versions:
+                        latest_version = versions[0]
+                        files = latest_version.get("files", [])
+                        if files:
+                            file_name = files[0].get("name", "")
+                            model_type = model.get("type", "")
+                            
+                            if model_type == "Checkpoint":
+                                download_path = str(COMFYUI_MODELS_DIR / file_name)
+                            elif model_type in ["LORA", "LoCon"]:
+                                download_path = str(COMFYUI_LORA_DIR / file_name)
+                            else:
+                                continue
+                            
+                            result = civitai.download_model(
+                                model_id=model.get("id"),
+                                version_id=latest_version.get("id"),
+                                download_path=download_path
+                            )
+                            
+                            if result:
+                                downloaded.append(model.get("name"))
+                            else:
+                                failed.append(model.get("name"))
+                except Exception as e:
+                    failed.append(model.get("name", "Unknown"))
+            
+            result_text = f"ダウンロード完了: {len(downloaded)}件\n"
+            if downloaded:
+                result_text += f"成功: {', '.join(downloaded)}\n"
+            if failed:
+                result_text += f"失敗: {', '.join(failed)}"
+            
+            return [TextContent(type="text", text=result_text)]
+        
+        elif name == "civitai_get_images":
+            civitai = get_integration("civitai")
+            if not civitai:
+                return [TextContent(type="text", text="❌ CivitAI統合が利用できません")]
+            
+            if not civitai.is_available():
+                return [TextContent(type="text", text="❌ CivitAI APIキーが設定されていません")]
+            
+            images = civitai.get_images(
+                limit=arguments.get("limit", 20),
+                model_id=arguments.get("model_id"),
+                model_version_id=arguments.get("model_version_id"),
+                username=arguments.get("username"),
+                nsfw=arguments.get("nsfw"),
+                sort=arguments.get("sort", "Most Reactions"),
+                period=arguments.get("period", "AllTime"),
+                page=arguments.get("page", 1)
+            )
+            
+            if images:
+                summary = f"画像取得: {len(images)}件\n\n"
+                for img in images[:5]:  # 最初の5件を表示
+                    meta = img.get("meta", {})
+                    prompt = meta.get("prompt", "N/A")
+                    negative_prompt = meta.get("negativePrompt", "N/A")
+                    model_name = img.get("model", {}).get("name", "Unknown")
+                    summary += f"📷 {img.get('id')} - {model_name}\n"
+                    summary += f"   プロンプト: {prompt[:50]}...\n"
+                    summary += f"   ネガティブ: {negative_prompt[:50]}...\n\n"
+                if len(images) > 5:
+                    summary += f"... 他 {len(images) - 5}件"
+                return [TextContent(type="text", text=summary)]
+            else:
+                return [TextContent(type="text", text="画像が見つかりませんでした")]
+        
+        elif name == "civitai_get_image_details":
+            civitai = get_integration("civitai")
+            if not civitai:
+                return [TextContent(type="text", text="❌ CivitAI統合が利用できません")]
+            
+            if not civitai.is_available():
+                return [TextContent(type="text", text="❌ CivitAI APIキーが設定されていません")]
+            
+            image_id = arguments.get("image_id")
+            if not image_id:
+                return [TextContent(type="text", text="❌ image_idが必要です")]
+            
+            image = civitai.get_image_details(image_id)
+            if image:
+                meta = image.get("meta", {})
+                prompt = meta.get("prompt", "N/A")
+                negative_prompt = meta.get("negativePrompt", "N/A")
+                model = image.get("model", {})
+                model_name = model.get("name", "Unknown")
+                
+                details = f"📷 画像詳細 (ID: {image_id})\n"
+                details += f"モデル: {model_name}\n"
+                details += f"URL: {image.get('url', 'N/A')}\n\n"
+                details += f"プロンプト:\n{prompt}\n\n"
+                details += f"ネガティブプロンプト:\n{negative_prompt}\n\n"
+                
+                # その他のメタデータ
+                if "steps" in meta:
+                    details += f"ステップ数: {meta.get('steps')}\n"
+                if "cfgScale" in meta:
+                    details += f"CFGスケール: {meta.get('cfgScale')}\n"
+                if "sampler" in meta:
+                    details += f"サンプラー: {meta.get('sampler')}\n"
+                
+                return [TextContent(type="text", text=details)]
+            else:
+                return [TextContent(type="text", text="画像が見つかりませんでした")]
+        
+        elif name == "civitai_get_creators":
+            civitai = get_integration("civitai")
+            if not civitai:
+                return [TextContent(type="text", text="❌ CivitAI統合が利用できません")]
+            
+            if not civitai.is_available():
+                return [TextContent(type="text", text="❌ CivitAI APIキーが設定されていません")]
+            
+            creators = civitai.get_creators(
+                username=arguments.get("username"),
+                limit=arguments.get("limit", 20)
+            )
+            
+            if creators:
+                summary = f"クリエイター: {len(creators)}件\n"
+                for creator in creators[:10]:
+                    summary += f"- {creator.get('username', 'Unknown')} (ID: {creator.get('id')})\n"
+                if len(creators) > 10:
+                    summary += f"... 他 {len(creators) - 10}件"
+                return [TextContent(type="text", text=summary)]
+            else:
+                return [TextContent(type="text", text="クリエイターが見つかりませんでした")]
 
         # Google Drive
         elif name == "google_drive_upload":
@@ -1257,6 +1536,8 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> Sequence[TextConten
 
         # VS Code操作
         elif name == "vscode_open_file":
+            if not _vscode_tools_enabled():
+                return [TextContent(type="text", text="❌ VS Code操作ツールは無効です（MANAOS_ENABLE_VSCODE_TOOLS=true で明示的に有効化してください）")]
             file_path = arguments.get("file_path")
             line = arguments.get("line")
             try:
@@ -1270,6 +1551,8 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> Sequence[TextConten
                 return [TextContent(type="text", text=f"❌ VS Code起動エラー: {e}\nVS Codeがインストールされていないか、PATHに追加されていない可能性があります")]
 
         elif name == "vscode_open_folder":
+            if not _vscode_tools_enabled():
+                return [TextContent(type="text", text="❌ VS Code操作ツールは無効です（MANAOS_ENABLE_VSCODE_TOOLS=true で明示的に有効化してください）")]
             folder_path = arguments.get("folder_path")
             try:
                 import subprocess
@@ -1279,6 +1562,8 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> Sequence[TextConten
                 return [TextContent(type="text", text=f"❌ VS Code起動エラー: {e}\nVS Codeがインストールされていないか、PATHに追加されていない可能性があります")]
 
         elif name == "vscode_execute_command":
+            if not _vscode_tools_enabled():
+                return [TextContent(type="text", text="❌ VS Code操作ツールは無効です（MANAOS_ENABLE_VSCODE_TOOLS=true で明示的に有効化してください）")]
             command = arguments.get("command")
             args = arguments.get("args", [])
             try:
@@ -1293,6 +1578,8 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> Sequence[TextConten
                 return [TextContent(type="text", text=f"❌ VS Codeコマンド実行エラー: {e}")]
 
         elif name == "vscode_search_files":
+            if not _vscode_tools_enabled():
+                return [TextContent(type="text", text="❌ VS Code操作ツールは無効です（MANAOS_ENABLE_VSCODE_TOOLS=true で明示的に有効化してください）")]
             query = arguments.get("query")
             include = arguments.get("include")
             exclude = arguments.get("exclude")

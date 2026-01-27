@@ -1,0 +1,20 @@
+# ManaOS 音声機能統合依存パッケージ
+# 音声認識・合成・ストリーミングに必要なパッケージ
+
+# コア依存をインストール済みであることを前提とします
+# インストール: pip install -r requirements-core.txt -r requirements-voice.txt
+
+# 音声認識（STT）
+faster-whisper>=1.0.0  # 高速Whisper（推奨）
+openai-whisper>=20231117  # OpenAI Whisper（フォールバック）
+
+# マイク入力
+pyaudio>=0.2.14  # Windows: pipwin install pyaudio または conda install pyaudio
+
+# 音声区間検出
+webrtcvad>=2.0.10  # WebRTC VAD（高精度音声区間検出）
+
+# WebSocket（リアルタイムストリーミング）
+websockets>=11.0
+
+# 音声データ処理（numpyはコア依存に含まれています）

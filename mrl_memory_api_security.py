@@ -49,7 +49,7 @@ class APISecurity:
         
         # 環境変数から読み込み（本番設定）
         self.require_auth = os.getenv("REQUIRE_AUTH", "1" if require_auth else "0").lower() in ["1", "true", "yes"]
-        self.api_key = api_key or os.getenv("API_KEY")
+        self.api_key = api_key or os.getenv("MRL_MEMORY_API_KEY") or os.getenv("API_KEY")
         self.rate_limit_per_minute = int(os.getenv("RATE_LIMIT_PER_MIN", str(rate_limit_per_minute)))
         self.max_input_size = int(os.getenv("MAX_INPUT_CHARS", str(max_input_size)))
         
@@ -82,6 +82,9 @@ class APISecurity:
             if self.api_key is None:
                 logger.warning("認証必須ですがAPIキーが設定されていません")
                 return False
+            # デバッグ用ログ（本番では削除可能）
+            if api_key != self.api_key:
+                logger.debug(f"認証失敗: 提供されたキー={api_key[:20] if api_key else None}..., 期待されるキー={self.api_key[:20] if self.api_key else None}...")
             return api_key == self.api_key
         
         # 認証なしモード

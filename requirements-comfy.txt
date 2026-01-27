@@ -1,0 +1,10 @@
+# ManaOS ComfyUI統合依存パッケージ
+# ComfyUI API連携に必要なパッケージ
+
+# コア依存をインストール済みであることを前提とします
+# インストール: pip install -r requirements-core.txt -r requirements-comfy.txt
+
+# HTTPリクエスト（requests, httpxはコア依存に含まれています）
+# 追加の依存は基本的に不要ですが、必要に応じて以下を追加:
+
+# 画像処理（Pillowはコア依存に含まれています）

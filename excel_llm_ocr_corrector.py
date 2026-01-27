@@ -28,7 +28,7 @@ except ImportError:
 
 class ExcelLLMOCRCorrector:
     """ExcelファイルのOCR結果をLLMで修正"""
-    
+
     def __init__(
         self,
         llm_model: str = None,  # Noneの場合は環境変数またはデフォルトを使用
@@ -37,7 +37,7 @@ class ExcelLLMOCRCorrector:
     ):
         """
         初期化
-        
+
         Args:
             llm_model: 使用するLLMモデル（Noneの場合は環境変数またはデフォルトを使用）
             batch_size: バッチ処理サイズ
@@ -46,7 +46,7 @@ class ExcelLLMOCRCorrector:
         # モデル選択: 環境変数 > 引数 > デフォルト
         if llm_model is None:
             llm_model = os.getenv("MANA_OCR_LLM_MODEL", "qwen2.5:7b")
-        
+
         # より大きなモデルが利用可能な場合は推奨
         # 環境変数 MANA_OCR_USE_LARGE_MODEL=1 で自動的に大きなモデルを選択
         if os.getenv("MANA_OCR_USE_LARGE_MODEL", "0").strip().lower() in ("1", "true", "yes", "y", "on"):
@@ -57,7 +57,7 @@ class ExcelLLMOCRCorrector:
                 "qwen3:30b",  # 30B（Ollama用、高精度）
                 "qwen2.5:14b",  # 14B（Ollama用、中規模）
             ]
-            
+
             # 利用可能なモデルを確認
             try:
                 from local_llm_helper import list_models
@@ -92,7 +92,7 @@ class ExcelLLMOCRCorrector:
                     except:
                         # API取得に失敗した場合はデフォルトモデルを使用
                         pass
-        
+
         self.llm_model = llm_model
         self.batch_size = batch_size
         self.max_cell_length = max_cell_length
@@ -120,7 +120,7 @@ class ExcelLLMOCRCorrector:
         # 余計な連続空白を整理
         t = re.sub(r"[ \t]{2,}", " ", t)
         return t.strip()
-    
+
     # よくあるOCR誤認識パターン（文字化け・文字間違い）
     _OCR_FIX_PATTERNS = [
         # 数字と文字の誤認識（より積極的に）
@@ -227,7 +227,7 @@ class ExcelLLMOCRCorrector:
         (r'計一$', '計'),  # 「計一」→「計」
         (r'計二$', '計'),  # 「計二」→「計」
     ]
-    
+
     def _fix_common_ocr_errors(self, text: str) -> str:
         """よくあるOCR誤認識を自動修正"""
         if not text:
@@ -329,11 +329,11 @@ class ExcelLLMOCRCorrector:
         if row_snip:
             parts.append(f"同行: {row_snip}")
         return " / ".join(parts)
-    
+
     def correct_cell_text(self, text: str, context: str = "") -> Optional[str]:
         """
         セルのテキストをLLMで修正
-        
+
         Args:
             text: 修正するテキスト
             context: 周辺コンテキスト（同じ行・列の情報）
@@ -345,12 +345,12 @@ class ExcelLLMOCRCorrector:
         normalized = self._normalize_text(str(text))
         if normalized != str(text):
             text = normalized
-        
+
         # よくあるOCR誤認識を自動修正
         fixed = self._fix_common_ocr_errors(text)
         if fixed != text:
             text = fixed
-        
+
         # 数値セルは絶対に触らない
         if self._looks_numeric(text):
             self.stats['skipped_cells'] += 1
@@ -366,7 +366,7 @@ class ExcelLLMOCRCorrector:
         # 長すぎる場合は切り詰め
         if len(text) > self.max_cell_length:
             text = text[:self.max_cell_length]
-        
+
         context_prefix = f"周辺コンテキスト: {context}\n" if context else ""
 
         prompt = f"""以下のOCR（光学文字認識）結果を修正してください。
@@ -385,14 +385,16 @@ OCR結果には以下の問題がある可能性があります：
 {context_prefix}OCR結果:
 {text}
 
-修正指示（より積極的に）:
-1. 明らかな誤字・脱字を積極的に修正してください（特に日本語の文字化け、アンダースコア、特殊文字）
+修正指示（情報を保持しながら修正）:
+1. 明らかな誤字・脱字を修正してください（特に日本語の文字化け、アンダースコア、特殊文字）
 2. 文脈から推測できる正しい文字に修正してください（特に数字・記号・日本語・漢字）
-3. 数字や記号は正確に保持してください（特に数値データ、金額、数量）
-4. カンマ位置を正しく修正してください（例: "374,6485" → "374,648"、"54,69一" → "54,69"）
-5. アンダースコアや末尾の余分な文字を削除してください（例: "金額_" → "金額"、"33.00_" → "33.00"）
-6. よくある誤認識パターンを積極的に修正してください（例: "見微し" → "見積"、"トノロ比" → "粗利率"）
-5. 日本語の誤認識を積極的に修正してください:
+3. **重要**: 数字や数値データは絶対に削除しないでください（金額、数量、日付など）
+4. **重要**: 複数の値が含まれている場合は、すべて保持してください（例: "2,797.45 | 374,648" はそのまま保持）
+5. **重要**: 元のテキストの情報量を保持してください（短くしすぎない）
+6. カンマ位置を正しく修正してください（例: "374,6485" → "374,648"、"54,69一" → "54,69"）
+7. アンダースコアや末尾の余分な文字を削除してください（例: "金額_" → "金額"、"33.00_" → "33.00"）
+8. よくある誤認識パターンを修正してください（例: "見微し" → "見積"、"トノロ比" → "粗利率"）
+8. 日本語の誤認識を修正してください:
    - "総一合一計" → "総合計"
    - "現釜" → "現金"
    - "レギュラニ" → "レギュラー"
@@ -406,29 +408,32 @@ OCR結果には以下の問題がある可能性があります：
    - "トノロ比" → "粗利率"
    - "川杉比" → "粗利率"
    - "研廻" → "研修"
-6. アンダースコアや末尾の余分な文字を削除してください:
+7. アンダースコアや末尾の余分な文字を削除してください:
    - "金額_" → "金額"
    - "数量_" → "数量"
    - "33.00_" → "33.00"
    - "54,69一" → "54,69"
    - "計一" → "計"
-7. 数字の誤認識を積極的に修正してください:
+9. 数字の誤認識を修正してください:
    - "乙617" → "617"
    - "四9" → "49"
    - "11河" → "11"
-6. 数字の連続誤認識を修正してください（例: "617.672116,578.2112234.472" → 適切に分割）
-7. 似た文字の誤認識を修正してください（O/0、1/l、5/S、8/B、避/油、木/用、地/他など）
-8. 元の形式（空白、改行）は可能な限り保持してください
-9. 修正できない部分はそのまま残してください
-10. 修正が不要な場合は元のテキストをそのまま返してください
+10. **重要**: 複数の値が含まれている場合は、すべて保持してください（例: "2,797.45 | 374,648" はそのまま保持）
+11. **重要**: 数値データ（金額、数量、日付など）は絶対に削除しないでください
+12. **重要**: 元のテキストの長さや情報量を保持してください（短くしすぎない）
+13. 数字の連続誤認識を修正してください（例: "617.672116,578.2112234.472" → 適切に分割）
+14. 似た文字の誤認識を修正してください（O/0、1/l、5/S、8/B、避/油、木/用、地/他など）
+15. 元の形式（空白、改行、区切り文字）は可能な限り保持してください
+16. 修正できない部分はそのまま残してください
+17. 修正が不要な場合は元のテキストをそのまま返してください
 
 修正後のテキストのみを返してください（説明やJSON形式は不要）:"""
-        
+
         try:
             result = generate(self.llm_model, prompt, timeout=30)
             if result and result.get('response'):
                 corrected = result['response'].strip()
-                
+
                 # プロンプトの繰り返しや説明を削除
                 lines = corrected.split('\n')
                 # 最初の実質的なテキスト行を取得
@@ -437,7 +442,40 @@ OCR結果には以下の問題がある可能性があります：
                     if line and not line.startswith('修正') and not line.startswith('OCR'):
                         corrected = line
                         break
-                
+
+                # 情報量チェック: 元のテキストが長い場合、修正後が短すぎないか確認
+                original_len = len(text)
+                corrected_len = len(corrected)
+
+                # 元のテキストに数値が含まれている場合、修正後にも数値が含まれているか確認
+                original_has_numbers = bool(re.search(r'\d', text))
+                corrected_has_numbers = bool(re.search(r'\d', corrected))
+
+                # 情報が大幅に失われている場合は、元のテキストを保持
+                if original_has_numbers and not corrected_has_numbers:
+                    # 数値が含まれていたのに削除された場合は元のテキストを保持
+                    print(f"  [WARNING] 数値データが失われたため、元のテキストを保持: {text[:50]}...")
+                    return text
+
+                # カンマを含む数値が失われた場合も保持
+                original_has_comma_numbers = bool(re.search(r'\d+,\d+', text))
+                corrected_has_comma_numbers = bool(re.search(r'\d+,\d+', corrected))
+                if original_has_comma_numbers and not corrected_has_comma_numbers:
+                    print(f"  [WARNING] カンマ付き数値が失われたため、元のテキストを保持: {text[:50]}...")
+                    return text
+
+                # 元のテキストの70%未満に短縮された場合は元のテキストを保持（50%から70%に変更）
+                if corrected_len < original_len * 0.7 and original_len > 10:
+                    print(f"  [WARNING] 情報が大幅に失われたため、元のテキストを保持: {text[:50]}...")
+                    return text
+
+                # 複数の値が含まれている場合（| や / で区切られている）、それらが失われた場合は保持
+                original_separators = text.count('|') + text.count('/') + text.count(' / ')
+                corrected_separators = corrected.count('|') + corrected.count('/') + corrected.count(' / ')
+                if original_separators > 0 and corrected_separators < original_separators * 0.5:
+                    print(f"  [WARNING] 複数の値が失われたため、元のテキストを保持: {text[:50]}...")
+                    return text
+
                 # 元のテキストと異なる場合のみ修正としてカウント
                 if corrected != text:
                     self.stats['corrected_cells'] += 1
@@ -446,13 +484,13 @@ OCR結果には以下の問題がある可能性があります：
                     return text
         except Exception as e:
             print(f"  [WARNING] LLM修正エラー: {e}")
-        
+
         return text
-    
+
     def correct_sheet(self, df: pd.DataFrame, sheet_name: str, verbose: bool = True) -> pd.DataFrame:
         """
         シート全体を修正
-        
+
         Args:
             df: データフレーム
             sheet_name: シート名
@@ -460,33 +498,33 @@ OCR結果には以下の問題がある可能性があります：
         """
         if verbose:
             print(f"  シート '{sheet_name}': {len(df)}行 × {len(df.columns)}列を処理中...")
-        
+
         corrected_df = df.copy()
         total_cells = len(df) * len(df.columns)
         processed = 0
 
         col_headers = self._build_col_headers(df, top_n=6)
-        
+
         # 行ごとに処理（コンテキストを保持）
         for idx, row in df.iterrows():
             if verbose and (idx + 1) % 10 == 0:
                 print(f"    行 {idx + 1}/{len(df)} を処理中...")
-            
+
             for col_idx, col_name in enumerate(df.columns):
                 cell_value = row[col_name]
-                
+
                 # 空セルや数値のみのセルはスキップ
                 if pd.isna(cell_value):
                     continue
-                
+
                 cell_str = str(cell_value)
-                
+
                 # 正規化
                 cell_str_norm = self._normalize_text(cell_str)
                 if cell_str_norm != cell_str:
                     corrected_df.at[idx, col_name] = cell_str_norm
                     cell_str = cell_str_norm
-                
+
                 # よくあるOCR誤認識を自動修正（ルールベース）
                 fixed = self._fix_common_ocr_errors(cell_str)
                 if fixed != cell_str:
@@ -500,35 +538,35 @@ OCR結果には以下の問題がある可能性があります：
                 if is_pure_numeric:
                     self.stats['skipped_cells'] += 1
                     continue
-                
+
                 # 短すぎるセルもスキップ（修正の必要性が低い）
                 if len(cell_str) < 2:  # 2文字以上に変更（"0"→"O"などの修正のため）
                     continue
-                
+
                 # LLMで修正（より積極的に適用）
                 # 文字化けの可能性をチェック（� や制御文字が含まれている場合）
                 has_mojibake = self._has_mojibake_like(cell_str)
                 # 日本語が含まれている、または文字化けの可能性がある、または長い文字列の場合
                 should_correct = (
-                    self._has_japanese(cell_str) or 
-                    has_mojibake or 
+                    self._has_japanese(cell_str) or
+                    has_mojibake or
                     len(cell_str) >= 5  # 5文字以上は修正対象に
                 )
-                
+
                 if should_correct:
                     context = self._build_cell_context(df, idx, col_idx, col_headers)
                     corrected = self.correct_cell_text(cell_str, context)
                     if corrected != cell_str:
                         corrected_df.at[idx, col_name] = corrected
-                
+
                 processed += 1
                 self.stats['total_cells'] += 1
-        
+
         if verbose:
             print(f"  [OK] シート '{sheet_name}' の処理完了")
-        
+
         return corrected_df
-    
+
     def correct_excel(
         self,
         input_excel_path: str,
@@ -539,7 +577,7 @@ OCR結果には以下の問題がある可能性があります：
     ) -> str:
         """
         Excelファイル全体を修正
-        
+
         Args:
             input_excel_path: 入力Excelファイルパス
             output_excel_path: 出力Excelファイルパス
@@ -548,27 +586,27 @@ OCR結果には以下の問題がある可能性があります：
         """
         if not LLM_AVAILABLE:
             raise RuntimeError("LLMが利用できません。local_llm_helperをインストールしてください。")
-        
+
         print(f"Excelファイルを読み込み中: {input_excel_path}")
         df_dict = pd.read_excel(input_excel_path, sheet_name=None)
-        
+
         if sheet_names:
             df_dict = {name: df_dict[name] for name in sheet_names if name in df_dict}
-        
+
         # 最大シート数制限
         if max_sheets and len(df_dict) > max_sheets:
             print(f"  注意: {len(df_dict)}シート中、最初の{max_sheets}シートのみ処理します")
             df_dict = dict(list(df_dict.items())[:max_sheets])
-        
+
         print(f"  {len(df_dict)}シートを処理します")
-        
+
         corrected_dict = {}
-        
+
         for sheet_name, df in df_dict.items():
             print(f"\nシート '{sheet_name}' を処理中...")
             corrected_df = self.correct_sheet(df, sheet_name, verbose=verbose)
             corrected_dict[sheet_name] = corrected_df
-        
+
         # Excelに書き込み
         print(f"\n修正済みExcelファイルを保存中: {output_excel_path}")
         with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
@@ -576,13 +614,13 @@ OCR結果には以下の問題がある可能性があります：
                 # シート名制限（31文字）
                 safe_sheet_name = sheet_name[:31] if len(sheet_name) > 31 else sheet_name
                 df.to_excel(writer, sheet_name=safe_sheet_name, index=False, header=False)
-        
+
         print(f"\n[OK] 修正完了: {output_excel_path}")
         print(f"\n📊 統計:")
         print(f"  - 処理セル数: {self.stats['total_cells']}")
         print(f"  - 修正セル数: {self.stats['corrected_cells']}")
         print(f"  - 修正率: {self.stats['corrected_cells'] / max(self.stats['total_cells'], 1) * 100:.1f}%")
-        
+
         return output_excel_path
 
 
@@ -593,29 +631,29 @@ def main():
         print("例: python excel_llm_ocr_corrector.py input.xlsx output_corrected.xlsx")
         print("例（最初の3シートのみ）: python excel_llm_ocr_corrector.py input.xlsx output.xlsx 3")
         sys.exit(1)
-    
+
     input_path = sys.argv[1]
     output_path = sys.argv[2] if len(sys.argv) > 2 else input_path.replace('.xlsx', '_LLM_CORRECTED.xlsx')
     max_sheets = int(sys.argv[3]) if len(sys.argv) > 3 else None
-    
+
     if not os.path.exists(input_path):
         print(f"[ERROR] ファイルが見つかりません: {input_path}")
         sys.exit(1)
-    
+
     # モデル選択: 環境変数 MANA_OCR_LLM_MODEL または MANA_OCR_USE_LARGE_MODEL=1 で制御
     model = os.getenv("MANA_OCR_LLM_MODEL", None)
     use_large = os.getenv("MANA_OCR_USE_LARGE_MODEL", "0").strip().lower() in ("1", "true", "yes", "y", "on")
-    
+
     corrector = ExcelLLMOCRCorrector(
         llm_model=model,  # Noneの場合は内部で自動選択
         batch_size=100
     )
-    
+
     if use_large:
         print(f"大きなモデルモード: {corrector.llm_model}")
     else:
         print(f"使用モデル: {corrector.llm_model} (大きなモデルを使う場合は MANA_OCR_USE_LARGE_MODEL=1 を設定)")
-    
+
     try:
         result_path = corrector.correct_excel(input_path, output_path, max_sheets=max_sheets, verbose=True)
         print(f"\n完了！修正済みファイル: {result_path}")

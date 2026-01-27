@@ -14,6 +14,10 @@ from typing import Dict
 import hashlib
 import pandas as pd
 
+# バッファリングを無効化（リアルタイム出力のため）
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', line_buffering=True)
+
 # どのディレクトリから実行しても動くように、リポジトリルートを import パスに追加
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
@@ -129,41 +133,116 @@ def optimize_excel_correction(
     optimized = OptimizedCorrector(base_corrector)
 
     # Excelファイルを読み込み
-    df = pd.read_excel(input_file, header=None)
-    corrected_df = df.copy()
+    try:
+        excel_file = pd.ExcelFile(input_file)
+        sheet_names = excel_file.sheet_names
+    except Exception as e:
+        print(f"[NG] Excelファイル読み込みエラー: {e}")
+        return False
+    
+    if verbose:
+        print(f"シート数: {len(sheet_names)}")
+        for sheet_name in sheet_names:
+            print(f"  - {sheet_name}")
+    
+    corrected_data = {}
+    total_cells_all = 0
+    corrected_cells_all = 0
+    
+    for sheet_name in sheet_names:
+        if verbose:
+            print(f"\nシート '{sheet_name}' を処理中...")
+        
+        df = pd.read_excel(excel_file, sheet_name=sheet_name, header=None)
+        corrected_df = df.copy()
 
-    total_cells = len(df) * len(df.columns)
-    corrected_cells = 0
+        total_cells = len(df) * len(df.columns)
+        total_cells_all += total_cells
+        corrected_cells = 0
 
-    # 各セルを修正（キャッシュ付き）
-    for idx, row in df.iterrows():
-        if verbose and (idx + 1) % 10 == 0:
-            stats = optimized.get_stats()
-            print(f"  行 {idx + 1}/{len(df)} 処理中... (キャッシュヒット率: {stats['cache_hit_rate']:.1%})")
+        # 各セルを修正（キャッシュ付き）
+        for idx, row in df.iterrows():
+            if verbose and (idx + 1) % 10 == 0:
+                stats = optimized.get_stats()
+                print(f"  行 {idx + 1}/{len(df)} 処理中... (キャッシュヒット率: {stats['cache_hit_rate']:.1%})")
+                sys.stdout.flush()  # バッファをフラッシュ
 
         for col_idx, col_name in enumerate(df.columns):
             cell_value = row[col_name]
-            if pd.isna(cell_value) or cell_value == "":
+            if pd.isna(cell_value):
                 continue
 
             cell_str = str(cell_value)
-
-            # 簡易スキップ条件（明らかに不要なもの）
-            if len(cell_str.strip()) < 2:
-                continue
-
-            # コンテキスト（簡易）
-            row_context = " | ".join(
-                [str(val)[:50] for val in row.values[:5] if pd.notna(val)]
-            )
-
-            corrected = optimized.correct_cell(cell_str, row_context)
-            if corrected != cell_str:
-                corrected_df.at[idx, col_name] = corrected
+            
+            # ベース修正器のメソッドを使用
+            if isinstance(base_corrector, EnsembleOCRCorrector):
+                base = next(iter(base_corrector.correctors.values()))
+            else:
+                base = base_corrector
+            
+            # 正規化とルールベース修正
+            cell_norm = base._normalize_text(cell_str)
+            if cell_norm != cell_str:
+                corrected_df.at[idx, col_name] = cell_norm
+                cell_str = cell_norm
+            
+            fixed = base._fix_common_ocr_errors(cell_str)
+            if fixed != cell_str:
+                corrected_df.at[idx, col_name] = fixed
+                cell_str = fixed
                 corrected_cells += 1
 
+            # 数値のみはスキップ
+            if base._looks_numeric(cell_str) and not base._has_japanese(cell_str):
+                continue
+
+            # 1文字はスキップ（ただし日本語や文字化けっぽいものは対象）
+            if len(cell_str.strip()) < 2 and not base._has_japanese(cell_str):
+                continue
+
+            # コンテキスト構築（アンサンブルの場合は高度なコンテキスト）
+            if isinstance(base_corrector, EnsembleOCRCorrector):
+                col_headers = base_corrector._build_col_headers(df, top_n=6)
+                context = base_corrector._build_cell_context(df, idx, col_idx, col_headers)
+            else:
+                # ExcelLLMOCRCorrectorの場合も同様のコンテキスト構築
+                if hasattr(base_corrector, '_build_cell_context'):
+                    col_headers = base_corrector._build_col_headers(df, top_n=6)
+                    context = base_corrector._build_cell_context(df, idx, col_idx, col_headers)
+                else:
+                    row_context = " | ".join(
+                        [str(val)[:50] for val in row.values[:5] if pd.notna(val)]
+                    )
+                    context = row_context
+
+            # 文字化けチェック
+            has_mojibake = base._has_mojibake_like(cell_str) if hasattr(base, '_has_mojibake_like') else False
+            should_correct = (
+                base._has_japanese(cell_str) or 
+                has_mojibake or 
+                len(cell_str) >= 5
+            )
+            
+            if should_correct:
+                corrected = optimized.correct_cell(cell_str, context)
+                if corrected != cell_str:
+                    corrected_df.at[idx, col_name] = corrected
+                    corrected_cells += 1
+        
+        corrected_data[sheet_name] = corrected_df
+        corrected_cells_all += corrected_cells
+        
+        if verbose:
+            print(f"  シート '{sheet_name}': {corrected_cells}/{total_cells}セル修正")
+
     # 保存
-    corrected_df.to_excel(output_file, index=False, header=False)
+    try:
+        with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
+            for sheet_name, df in corrected_data.items():
+                df.to_excel(writer, sheet_name=sheet_name, index=False, header=False)
+    except Exception as e:
+        print(f"[NG] Excelファイル保存エラー: {e}")
+        return False
 
     # 結果表示
     stats = optimized.get_stats()
@@ -171,8 +250,8 @@ def optimize_excel_correction(
         print("\n" + "=" * 60)
         print("修正完了")
         print("=" * 60)
-        print(f"総セル数: {total_cells}")
-        print(f"修正セル数: {corrected_cells}")
+        print(f"総セル数: {total_cells_all}")
+        print(f"修正セル数: {corrected_cells_all}")
         print(f"キャッシュヒット: {stats['cache_hits']}")
         print(f"キャッシュミス: {stats['cache_misses']}")
         print(f"キャッシュヒット率: {stats['cache_hit_rate']:.1%}")

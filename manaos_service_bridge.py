@@ -91,6 +91,7 @@ class ManaOSServiceBridge:
         self.monitoring_url = "http://localhost:9407"
         self.ocr_api_url = "http://localhost:9409"
         self.gallery_api_url = "http://localhost:5559"
+        self.mrl_memory_url = "http://localhost:5105"  # MRL Memory System API
         
         # 統一キャッシュシステム（オプション）
         self.cache = None
@@ -163,6 +164,7 @@ class ManaOSServiceBridge:
             {"url": f"{self.monitoring_url}/health", "name": "monitoring"},
             {"url": f"{self.ocr_api_url}/health", "name": "ocr_api"},
             {"url": f"{self.gallery_api_url}/health", "name": "gallery_api"},
+            {"url": f"{self.mrl_memory_url}/health", "name": "mrl_memory"},  # MRL Memory System
         ]
         
         if use_parallel:
@@ -218,7 +220,8 @@ class ManaOSServiceBridge:
             "enhanced_api": False,
             "monitoring": False,
             "ocr_api": False,
-            "gallery_api": False
+            "gallery_api": False,
+            "mrl_memory": False  # MRL Memory System
         }
         
         if not ASYNC_CLIENT_AVAILABLE:
@@ -232,6 +235,7 @@ class ManaOSServiceBridge:
             {"url": f"{self.monitoring_url}/health", "name": "monitoring"},
             {"url": f"{self.ocr_api_url}/health", "name": "ocr_api"},
             {"url": f"{self.gallery_api_url}/health", "name": "gallery_api"},
+            {"url": f"{self.mrl_memory_url}/health", "name": "mrl_memory"},  # MRL Memory System
         ]
         
         async def check_service_async(check_item: Dict[str, str]) -> tuple[str, bool]:

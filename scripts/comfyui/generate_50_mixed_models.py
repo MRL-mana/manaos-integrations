@@ -249,4 +249,3 @@ print("=" * 60)
 print(f"生成リクエスト完了: {len(prompt_ids)}件")
 print("=" * 60)
 print("画像はComfyUIの出力フォルダに保存されます。")
-

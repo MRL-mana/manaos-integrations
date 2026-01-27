@@ -32,8 +32,17 @@ export OBSIDIAN_VAULT_PATH=C:/Users/mana4/Documents/Obsidian Vault
 
 # ManaOS統合APIサーバー
 export MANAOS_INTEGRATION_PORT=9500
-export MANAOS_INTEGRATION_HOST=0.0.0.0
+export MANAOS_INTEGRATION_HOST=127.0.0.1
+export MANAOS_DEBUG=false
+
+# 推奨: 3段階キー（Admin / Ops / Read-only）
+# export MANAOS_INTEGRATION_API_KEY=...
+# export MANAOS_INTEGRATION_OPS_API_KEY=...
+# export MANAOS_INTEGRATION_READONLY_API_KEY=...
 ```
+
+より安全な運用（CORS/IP制御/監査ログ/Confirm Token/Rate limit など）は
+`docs/guides/SECURITY_HARDENING.md` を参照してください。
 
 ## 🚀 使用方法
 
@@ -41,6 +50,12 @@ export MANAOS_INTEGRATION_HOST=0.0.0.0
 
 ```bash
 python unified_api_server.py
+```
+
+本番運用は Flask 開発サーバではなく Waitress を推奨します：
+
+```bat
+start_unified_api_server_prod.bat
 ```
 
 ### 個別の統合モジュールを使用
@@ -150,5 +165,3 @@ python test_all_integrations.py
 ## 📚 詳細ドキュメント
 
 各統合モジュールの詳細は、各ファイルのdocstringを参照してください。
-
-

@@ -1,0 +1,23 @@
+# ManaOS 学習関連依存パッケージ
+# CASTLE-EX学習に必要なパッケージ
+
+# コア依存をインストール済みであることを前提とします
+# インストール: pip install -r requirements-core.txt -r requirements-training.txt
+
+# PyTorch（CUDA対応版を推奨）
+# Windows + CUDA 12.1の場合:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# CPU版の場合:
+# pip install torch torchvision torchaudio
+
+# Transformers（Hugging Face）
+transformers>=4.35.0
+datasets>=2.14.0
+accelerate>=0.24.0
+
+# 学習効率化
+bitsandbytes>=0.41.0  # 量子化（オプション、CUDA必須）
+
+# 評価・可視化
+tensorboard>=2.14.0
+scikit-learn>=1.3.0  # 評価メトリクス計算用

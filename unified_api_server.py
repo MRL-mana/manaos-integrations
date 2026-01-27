@@ -3,17 +3,27 @@ ManaOS統合APIサーバー（修正版）
 すべての外部システム統合を管理する統合API
 """
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, g
 from flask_cors import CORS
 import os
 import sys
 import warnings
+import hmac
+import json
+import time
+import uuid
+import re
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 import logging
 from datetime import datetime
 import subprocess
 import threading
+
+try:
+    from werkzeug.exceptions import HTTPException
+except Exception:  # pragma: no cover
+    HTTPException = Exception  # type: ignore
 
 # Pythonバージョン警告を抑制（将来のアップグレード推奨だが、現状は動作するため）
 warnings.filterwarnings("ignore", category=FutureWarning, message=".*Python version.*")
@@ -145,6 +155,20 @@ try:
 except ImportError:
     logger.warning("LTX-2動画生成統合モジュールが見つかりません")
     LTX2_AVAILABLE = False
+
+# LTX-2 Infinity統合（オプション）
+LTX2_INFINITY_AVAILABLE = False
+try:
+    from ltx2_infinity_integration import LTX2InfinityIntegration
+    from ltx2_workflow_generator import LTX2WorkflowGenerator
+    from ltx2_template_manager import LTX2TemplateManager
+    from ltx2_nsfw_config import LTX2NSFWConfig
+    from ltx2_storage_manager import LTX2StorageManager
+    LTX2_INFINITY_AVAILABLE = True
+    logger.info("✅ LTX-2 Infinity統合モジュールが利用可能です")
+except ImportError as e:
+    logger.warning(f"⚠️ LTX-2 Infinity統合モジュールが見つかりません: {e}")
+    LTX2_INFINITY_AVAILABLE = False
 
 # GoogleDrive統合（オプション）
 try:
@@ -319,13 +343,827 @@ except ImportError:
     logger.warning("Excel/LLM処理統合モジュールが見つかりません")
     EXCEL_LLM_AVAILABLE = False
 
+# 音声機能統合（オプション）
+VOICE_INTEGRATION_AVAILABLE = False
+try:
+    from voice_integration import (
+        STTEngine, TTSEngine, VoiceConversationLoop,
+        create_stt_engine, create_tts_engine, create_voice_conversation_loop
+    )
+    VOICE_INTEGRATION_AVAILABLE = True
+    logger.info("✅ 音声機能統合モジュールが利用可能です")
+except ImportError as e:
+    logger.warning(f"⚠️ 音声機能統合モジュールが見つかりません: {e}")
+    VOICE_INTEGRATION_AVAILABLE = False
+
 app = Flask(__name__)
-CORS(app)
+
+# =========================================================
+# Security: CORS (allowlist) + API key auth guard
+# =========================================================
+
+def _strtobool(value: str, default: bool = False) -> bool:
+    v = (value or "").strip().lower()
+    if v in ("1", "true", "yes", "y", "on"):
+        return True
+    if v in ("0", "false", "no", "n", "off"):
+        return False
+    return default
+
+
+def _get_admin_api_key() -> str:
+    """Admin key: full access (read + ops)."""
+    return (os.getenv("MANAOS_INTEGRATION_API_KEY") or "").strip()
+
+
+def _get_ops_api_key() -> str:
+    """Ops key: privileged endpoints / write actions."""
+    return (os.getenv("MANAOS_INTEGRATION_OPS_API_KEY") or "").strip()
+
+
+def _get_readonly_api_key() -> str:
+    """Read-only key: safe read endpoints (non-sensitive GET)."""
+    return (os.getenv("MANAOS_INTEGRATION_READONLY_API_KEY") or "").strip()
+
+
+def _get_provided_api_key() -> str:
+    # Accept either X-API-Key or Authorization: Bearer <token>
+    provided = (request.headers.get("X-API-Key") or "").strip()
+    if provided:
+        return provided
+    auth = (request.headers.get("Authorization") or "").strip()
+    if auth.lower().startswith("bearer "):
+        return auth.split(" ", 1)[1].strip()
+    return ""
+
+
+def _get_client_ip() -> str:
+    """
+    Client IP resolver.
+    - Default: use Flask's `request.remote_addr`
+    - Optional: trust `X-Forwarded-For` if explicitly enabled (dangerous if misconfigured)
+    """
+    if _strtobool(os.getenv("MANAOS_TRUST_X_FORWARDED_FOR", "false"), default=False):
+        xff = (request.headers.get("X-Forwarded-For") or "").strip()
+        if xff:
+            # first IP is the original client in standard setups
+            return xff.split(",")[0].strip()
+    return (request.remote_addr or "").strip()
+
+
+def _is_local_request() -> bool:
+    return _get_client_ip() in ("127.0.0.1", "::1")
+
+
+def _parse_csv_set(value: str) -> set[str]:
+    return {v.strip() for v in (value or "").split(",") if v.strip()}
+
+
+def _ip_access_check() -> Optional[tuple[dict, int]]:
+    """
+    Optional IP allow/block.
+    - If MANAOS_IP_BLOCKLIST contains client IP => block (403)
+    - If MANAOS_IP_ALLOWLIST is set and client IP not in it => block (403)
+    """
+    client_ip = _get_client_ip()
+    block = _parse_csv_set(os.getenv("MANAOS_IP_BLOCKLIST", ""))
+    allow = _parse_csv_set(os.getenv("MANAOS_IP_ALLOWLIST", ""))
+
+    if client_ip and client_ip in block:
+        return {"error": "forbidden", "message": f"IP blocked: {client_ip}"}, 403
+
+    if allow and client_ip not in allow:
+        return {"error": "forbidden", "message": f"IP not allowlisted: {client_ip}"}, 403
+
+    return None
+
+
+def _parse_csv_list(value: str) -> list[str]:
+    return [v.strip() for v in (value or "").split(",") if v.strip()]
+
+
+def _get_sensitive_read_prefixes() -> tuple[str, ...]:
+    """
+    GETでもOps扱いにする危険なパスPrefix。
+    運用で増やせるように環境変数で上書き可能。
+    """
+    raw = os.getenv("MANAOS_SENSITIVE_PATH_PREFIXES", "").strip()
+    if raw:
+        return tuple(_parse_csv_list(raw))
+    return (
+        "/emergency",
+        "/api/emergency",
+        "/api/system/docker",
+    )
+
+
+def _get_readonly_path_prefixes() -> tuple[str, ...]:
+    """
+    Read-onlyキーでアクセス可能なパスPrefix（GET/HEADのみ）。
+    デフォルトは「稼働確認・仕様取得」だけに絞って安全側に倒す。
+    """
+    raw = os.getenv("MANAOS_READONLY_PATH_PREFIXES", "").strip()
+    if raw:
+        return tuple(_parse_csv_list(raw))
+    return (
+        "/health",
+        "/ready",
+        "/status",
+        "/openapi.json",
+        "/api/integrations/status",
+    )
+
+
+def _get_admin_only_path_prefixes() -> tuple[str, ...]:
+    """
+    Adminキーのみ許可するパスPrefix（最重要・危険領域）。
+    未設定時は安全側として「緊急/システム操作系」をデフォルトでAdmin専用にする。
+    """
+    raw = os.getenv("MANAOS_ADMIN_ONLY_PATH_PREFIXES", "").strip()
+    if raw:
+        return tuple(_parse_csv_list(raw))
+    return (
+        "/emergency",
+        "/api/emergency",
+        "/api/system/docker",
+        # Data-handling endpoints (recommended default)
+        "/api/llm",
+        "/api/memory",
+        # External systems / data exfiltration surfaces (recommended default)
+        "/api/google_drive",
+        "/api/rows",
+        "/api/n8n",
+        "/api/civitai",
+        "/api/voice",
+        "/api/slack",
+    )
+
+
+def _get_confirm_token() -> str:
+    # Second factor: only active when set
+    return (os.getenv("MANAOS_CONFIRM_TOKEN") or "").strip()
+
+
+def _get_confirm_token_secret() -> str:
+    # Time-based HMAC mode: only active when set
+    return (os.getenv("MANAOS_CONFIRM_TOKEN_SECRET") or "").strip()
+
+
+def _confirm_token_period_seconds() -> int:
+    raw = (os.getenv("MANAOS_CONFIRM_TOKEN_PERIOD_SECONDS") or "").strip()
+    try:
+        v = int(raw) if raw else 30
+        return max(5, v)
+    except Exception:
+        return 30
+
+
+def _confirm_token_accept_previous_window() -> bool:
+    return _strtobool(os.getenv("MANAOS_CONFIRM_TOKEN_ACCEPT_PREVIOUS", "true"), default=True)
+
+
+def _confirm_token_bind_path() -> bool:
+    """
+    If true, include a stable scope (path prefix) in the HMAC message.
+    This prevents replay across different protected endpoint groups.
+    """
+    return _strtobool(os.getenv("MANAOS_CONFIRM_TOKEN_BIND_PATH", "false"), default=False)
+
+
+def _confirm_token_scope() -> str:
+    """
+    Returns the most specific matching prefix for current request.
+    Used only when path-binding is enabled.
+    """
+    prefixes = _get_confirm_token_path_prefixes()
+    matches = [p for p in prefixes if request.path.startswith(p)]
+    if not matches:
+        return request.path
+    # choose the longest match (most specific)
+    return max(matches, key=len)
+
+
+def _compute_time_hmac_token(secret: str, message: str) -> str:
+    # Hex digest (64 chars). Simple and tool-friendly.
+    return hmac.new(secret.encode("utf-8"), message.encode("utf-8"), digestmod="sha256").hexdigest()
+
+
+def _get_confirm_token_path_prefixes() -> tuple[str, ...]:
+    raw = (os.getenv("MANAOS_CONFIRM_TOKEN_PATH_PREFIXES") or "").strip()
+    if raw:
+        return tuple(_parse_csv_list(raw))
+    # Default: extremely sensitive operational endpoints
+    return (
+        "/api/emergency",
+        "/api/system/docker",
+    )
+
+
+def _get_provided_confirm_token() -> str:
+    return (request.headers.get("X-Confirm-Token") or "").strip()
+
+
+def _confirm_token_required() -> bool:
+    # Required if either static token or secret is configured
+    if not (_get_confirm_token() or _get_confirm_token_secret()):
+        return False
+    if request.method.upper() == "OPTIONS":
+        return False
+    return request.path.startswith(_get_confirm_token_path_prefixes())
+
+
+def _enforce_confirm_token_if_needed() -> Optional[tuple[dict, int]]:
+    if not _confirm_token_required():
+        g.manaos_confirm_required = False
+        g.manaos_confirm_ok = None
+        g.manaos_confirm_mode = "disabled"
+        return None
+    provided = _get_provided_confirm_token()
+
+    g.manaos_confirm_required = True
+
+    # Prefer time-based mode if secret is set (safer)
+    secret = _get_confirm_token_secret()
+    if secret:
+        g.manaos_confirm_mode = "time_hmac"
+        period = _confirm_token_period_seconds()
+        window = int(time.time() // period)
+
+        if _confirm_token_bind_path():
+            scope = _confirm_token_scope()
+            msg_now = f"{window}:{scope}"
+            msg_prev = f"{window - 1}:{scope}"
+        else:
+            msg_now = str(window)
+            msg_prev = str(window - 1)
+
+        expected_now = _compute_time_hmac_token(secret, msg_now)
+        expected_prev = _compute_time_hmac_token(secret, msg_prev) if _confirm_token_accept_previous_window() else None
+
+        ok = bool(provided and (hmac.compare_digest(provided, expected_now) or (expected_prev and hmac.compare_digest(provided, expected_prev))))
+        g.manaos_confirm_ok = ok
+        if ok:
+            return None
+        return {"error": "forbidden", "message": "Confirmation token required (time-based HMAC via X-Confirm-Token)."}, 403
+
+    # Fallback: static token
+    expected = _get_confirm_token()
+    g.manaos_confirm_mode = "static"
+    ok = bool(provided and expected and hmac.compare_digest(provided, expected))
+    g.manaos_confirm_ok = ok
+    if ok:
+        return None
+    return {"error": "forbidden", "message": "Confirmation token required (X-Confirm-Token)."}, 403
+
+
+def _required_scope() -> str:
+    """
+    Scope decision:
+    - ops: any non-GET/HEAD request, or sensitive GET endpoints
+    - read: normal GET/HEAD requests
+    """
+    if request.method.upper() not in ("GET", "HEAD", "OPTIONS"):
+        return "ops"
+    if request.path.startswith(_get_sensitive_read_prefixes()):
+        return "ops"
+    # Safe default: require ops for most GET endpoints unless explicitly allowlisted
+    if request.path.startswith(_get_readonly_path_prefixes()):
+        return "read"
+    return "ops"
+
+
+_PUBLIC_PATHS = {
+    "/health",
+    "/ready",
+}
+
+@app.before_request
+def _init_request_context():
+    """Initialize request-scoped fields used by logs/errors."""
+    try:
+        if not getattr(g, "manaos_request_id", None):
+            g.manaos_request_id = uuid.uuid4().hex
+        if not getattr(g, "manaos_request_start", None):
+            g.manaos_request_start = time.perf_counter()
+        # Defaults for confirm-token audit fields
+        if not hasattr(g, "manaos_confirm_required"):
+            g.manaos_confirm_required = False
+        if not hasattr(g, "manaos_confirm_ok"):
+            g.manaos_confirm_ok = None
+        if not hasattr(g, "manaos_confirm_mode"):
+            g.manaos_confirm_mode = "disabled"
+    except Exception:
+        pass
+
+
+# =========================================================
+# Rate limit & concurrency guards (in-process, best-effort)
+# =========================================================
+
+_rate_lock = threading.Lock()
+_rate_counters: dict[tuple[str, str, int], int] = {}
+_rate_last_cleanup = 0.0
+
+_sem_lock = threading.Lock()
+_semaphores: dict[str, threading.Semaphore] = {}
+
+
+def _rate_window_seconds() -> int:
+    raw = (os.getenv("MANAOS_RATE_LIMIT_WINDOW_SECONDS") or "").strip()
+    try:
+        v = int(raw) if raw else 60
+        return max(10, v)
+    except Exception:
+        return 60
+
+
+def _default_rpm() -> int:
+    raw = (os.getenv("MANAOS_RATE_LIMIT_RPM") or "").strip()
+    try:
+        v = int(raw) if raw else 60
+        return max(1, v)
+    except Exception:
+        return 60
+
+
+def _parse_kv_csv(raw: str) -> dict[str, int]:
+    """
+    Parse: "/api/llm=10,/api/system/docker=5"
+    """
+    out: dict[str, int] = {}
+    for item in (raw or "").split(","):
+        item = item.strip()
+        if not item or "=" not in item:
+            continue
+        k, v = item.split("=", 1)
+        k = k.strip()
+        v = v.strip()
+        if not k:
+            continue
+        try:
+            out[k] = max(1, int(v))
+        except Exception:
+            continue
+    return out
+
+
+def _rate_limit_rules() -> dict[str, int]:
+    raw = (os.getenv("MANAOS_RATE_LIMIT_RULES") or "").strip()
+    if not raw:
+        return {
+            "/api/llm": 20,
+            "/api/comfyui": 10,
+            "/api/system/docker": 10,
+            "/api/emergency": 10,
+        }
+    return _parse_kv_csv(raw)
+
+
+def _concurrency_rules() -> dict[str, int]:
+    raw = (os.getenv("MANAOS_CONCURRENCY_LIMITS") or "").strip()
+    if not raw:
+        return {
+            "/api/llm": 2,
+            "/api/comfyui": 1,
+            "/api/system/docker": 1,
+            "/api/emergency": 1,
+        }
+    return _parse_kv_csv(raw)
+
+
+def _best_prefix_match(path: str, prefixes: list[str]) -> Optional[str]:
+    matches = [p for p in prefixes if path.startswith(p)]
+    return max(matches, key=len) if matches else None
+
+
+def _rate_limit_check() -> Optional[tuple[dict, int]]:
+    if request.method.upper() == "OPTIONS":
+        return None
+    if request.path in _PUBLIC_PATHS:
+        return None
+    if not _strtobool(os.getenv("MANAOS_RATE_LIMIT_ENABLED", "true"), default=True):
+        return None
+
+    ip = _get_client_ip() or "unknown"
+    window = _rate_window_seconds()
+    now = time.time()
+    window_id = int(now // window)
+
+    rules = _rate_limit_rules()
+    prefix = _best_prefix_match(request.path, list(rules.keys())) or "*"
+    limit = rules.get(prefix, _default_rpm())
+
+    # key: (ip, prefix, window_id)
+    key = (ip, prefix, window_id)
+    global _rate_last_cleanup
+
+    with _rate_lock:
+        count = _rate_counters.get(key, 0) + 1
+        _rate_counters[key] = count
+
+        # periodic cleanup (best-effort)
+        if now - _rate_last_cleanup > (window * 2):
+            _rate_last_cleanup = now
+            cutoff = window_id - 2
+            for k in list(_rate_counters.keys()):
+                if k[2] < cutoff:
+                    _rate_counters.pop(k, None)
+
+    if count > limit:
+        return (
+            {
+                "error": "rate_limited",
+                "message": "Too many requests",
+                "limit_rpm": limit,
+                "scope": prefix,
+                "request_id": getattr(g, "manaos_request_id", None),
+            },
+            429,
+        )
+    return None
+
+
+def _concurrency_acquire() -> Optional[tuple[dict, int]]:
+    if request.method.upper() == "OPTIONS":
+        return None
+    if request.path in _PUBLIC_PATHS:
+        return None
+    if not _strtobool(os.getenv("MANAOS_CONCURRENCY_ENABLED", "true"), default=True):
+        return None
+
+    rules = _concurrency_rules()
+    prefix = _best_prefix_match(request.path, list(rules.keys()))
+    if not prefix:
+        return None
+
+    limit = rules.get(prefix, 1)
+    if limit <= 0:
+        return None
+
+    with _sem_lock:
+        sem = _semaphores.get(prefix)
+        if not sem:
+            sem = threading.Semaphore(limit)
+            _semaphores[prefix] = sem
+
+    acquired = sem.acquire(blocking=False)
+    if not acquired:
+        return (
+            {
+                "error": "busy",
+                "message": "Server is busy for this endpoint group",
+                "scope": prefix,
+                "request_id": getattr(g, "manaos_request_id", None),
+            },
+            503,
+        )
+
+    # release later
+    g.manaos_concurrency_prefix = prefix
+    return None
+
+
+@app.before_request
+def _rate_and_concurrency_guard():
+    # Best-effort guard (in-process)
+    rl = _rate_limit_check()
+    if rl:
+        payload, code = rl
+        return jsonify(payload), code
+    cc = _concurrency_acquire()
+    if cc:
+        payload, code = cc
+        return jsonify(payload), code
+    return None
+
+
+@app.teardown_request
+def _concurrency_release(_err):
+    try:
+        prefix = getattr(g, "manaos_concurrency_prefix", None)
+        if prefix:
+            sem = _semaphores.get(prefix)
+            if sem:
+                sem.release()
+    except Exception:
+        pass
+
+
+@app.before_request
+def _api_auth_guard():
+    """
+    Default policy:
+    - If `MANAOS_INTEGRATION_API_KEY` is set: require it for all non-public endpoints.
+    - If not set: allow only local requests (127.0.0.1/::1) unless explicitly disabled.
+    """
+    # Default auth context (used for response redaction)
+    g.manaos_auth_level = "none"  # "admin" | "ops" | "read" | "local" | "none"
+    g.manaos_required_scope = None
+
+    # Allow liveness/readiness without forcing clients to attach keys.
+    if request.path in _PUBLIC_PATHS:
+        return None
+
+    # Always allow CORS preflight without forcing auth.
+    if request.method.upper() == "OPTIONS":
+        return None
+
+    ip_check = _ip_access_check()
+    if ip_check:
+        payload, code = ip_check
+        return jsonify(payload), code
+
+    admin_key = _get_admin_api_key()
+    ops_key = _get_ops_api_key()
+    ro_key = _get_readonly_api_key()
+    provided = _get_provided_api_key()
+    scope = _required_scope()
+    g.manaos_required_scope = scope
+    admin_only = request.path.startswith(_get_admin_only_path_prefixes())
+
+    # If any key configured -> require matching key based on scope (admin always works)
+    if admin_key or ops_key or ro_key:
+        if provided and admin_key and hmac.compare_digest(provided, admin_key):
+            g.manaos_auth_level = "admin"
+            confirm = _enforce_confirm_token_if_needed()
+            if confirm:
+                payload, code = confirm
+                return jsonify(payload), code
+            return None
+        if admin_only:
+            return jsonify(
+                {
+                    "error": "unauthorized",
+                    "message": "Admin API key is required for this endpoint.",
+                }
+            ), 401
+        if scope == "ops":
+            if provided and ops_key and hmac.compare_digest(provided, ops_key):
+                g.manaos_auth_level = "ops"
+                confirm = _enforce_confirm_token_if_needed()
+                if confirm:
+                    payload, code = confirm
+                    return jsonify(payload), code
+                return None
+        else:  # read
+            if provided and ro_key and hmac.compare_digest(provided, ro_key):
+                g.manaos_auth_level = "read"
+                confirm = _enforce_confirm_token_if_needed()
+                if confirm:
+                    payload, code = confirm
+                    return jsonify(payload), code
+                return None
+            # ops key can also read
+            if provided and ops_key and hmac.compare_digest(provided, ops_key):
+                g.manaos_auth_level = "ops"
+                confirm = _enforce_confirm_token_if_needed()
+                if confirm:
+                    payload, code = confirm
+                    return jsonify(payload), code
+                return None
+
+        return jsonify(
+            {
+                "error": "unauthorized",
+                "message": (
+                    "Missing or invalid API key. Provide `X-API-Key` or `Authorization: Bearer ...`. "
+                    f"Required scope: {scope}"
+                ),
+            }
+        ), 401
+
+    # No key configured -> local-only (safe default)
+    allow_local_noauth = _strtobool(os.getenv("MANAOS_ALLOW_NOAUTH_LOCAL", "true"), default=True)
+    if allow_local_noauth and _is_local_request():
+        g.manaos_auth_level = "local"
+        confirm = _enforce_confirm_token_if_needed()
+        if confirm:
+            payload, code = confirm
+            return jsonify(payload), code
+        return None
+
+    return jsonify(
+        {
+            "error": "unauthorized",
+            "message": (
+                "This server is running without API keys. Requests are restricted to localhost. "
+                "Set `MANAOS_INTEGRATION_API_KEY` (admin) or "
+                "`MANAOS_INTEGRATION_OPS_API_KEY` / `MANAOS_INTEGRATION_READONLY_API_KEY` to enable remote access."
+            ),
+        }
+    ), 401
+
+
+def _get_cors_origins() -> List[str]:
+    raw = (os.getenv("MANAOS_CORS_ORIGINS") or "").strip()
+    if raw:
+        return [o.strip() for o in raw.split(",") if o.strip()]
+    # Safe default for local UI tools (Open WebUI etc.)
+    return [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+    ]
+
+
+_enable_cors = _strtobool(os.getenv("MANAOS_ENABLE_CORS", "true"), default=True)
+if _enable_cors:
+    CORS(app, resources={r"/*": {"origins": _get_cors_origins()}}, supports_credentials=True)
+
+
+def _audit_log_enabled() -> bool:
+    return _strtobool(os.getenv("MANAOS_AUDIT_LOG", "true"), default=True)
+
+
+def _audit_log_path() -> Optional[Path]:
+    raw = (os.getenv("MANAOS_AUDIT_LOG_FILE") or "").strip()
+    # Default: write to repo-local logs/audit (ignored by .gitignore)
+    if not raw:
+        raw = str(Path(__file__).parent / "logs" / "audit" / "manaos_audit_{date}.jsonl")
+    try:
+        # Optional token substitution: {date} -> YYYYMMDD
+        if "{date}" in raw:
+            raw = raw.replace("{date}", datetime.now().strftime("%Y%m%d"))
+        return Path(raw)
+    except Exception:
+        return None
+
+
+def _audit_log_format() -> str:
+    fmt = (os.getenv("MANAOS_AUDIT_LOG_FORMAT") or "json").strip().lower()
+    return "json" if fmt not in ("json", "text") else fmt
+
+
+def _security_headers_enabled() -> bool:
+    return _strtobool(os.getenv("MANAOS_SECURITY_HEADERS", "true"), default=True)
+
+
+def _debug_errors_enabled() -> bool:
+    return _strtobool(os.getenv("MANAOS_DEBUG_ERRORS", "false"), default=False)
+
+
+def _json_error(message: str, status_code: int = 500, error: str = "error", details: Optional[dict] = None):
+    payload: dict = {
+        "error": error,
+        "message": message,
+        "request_id": getattr(g, "manaos_request_id", None),
+    }
+    if details:
+        payload["details"] = details
+    return jsonify(payload), status_code
+
+
+@app.errorhandler(404)
+def _handle_404(_e):
+    return _json_error("not_found", 404, error="not_found")
+
+
+@app.errorhandler(405)
+def _handle_405(_e):
+    return _json_error("method_not_allowed", 405, error="method_not_allowed")
+
+
+@app.errorhandler(Exception)
+def _handle_unexpected_error(e):
+    # Avoid leaking sensitive info by default.
+    if isinstance(e, HTTPException):
+        code = getattr(e, "code", 500) or 500
+        desc = getattr(e, "description", "error")
+        return _json_error(str(desc), int(code), error="http_error")
+
+    logger.error(f"Unhandled error: {e}", exc_info=True)
+    if _debug_errors_enabled():
+        return _json_error("internal_error", 500, error="internal_error", details={"exception": str(e)})
+    return _json_error("internal_error", 500, error="internal_error")
+
+
+def _audit_log_max_bytes() -> int:
+    # Default: 5MB (small, safe)
+    raw = (os.getenv("MANAOS_AUDIT_LOG_MAX_BYTES") or "").strip()
+    try:
+        v = int(raw) if raw else 5 * 1024 * 1024
+        return max(0, v)
+    except Exception:
+        return 5 * 1024 * 1024
+
+
+def _audit_log_backups() -> int:
+    raw = (os.getenv("MANAOS_AUDIT_LOG_BACKUPS") or "").strip()
+    try:
+        v = int(raw) if raw else 5
+        return max(0, v)
+    except Exception:
+        return 5
+
+
+def _rotate_file(path: Path):
+    """
+    Simple size-based rotation:
+    - path -> path.1
+    - path.1 -> path.2 ... up to backups
+    """
+    backups = _audit_log_backups()
+    if backups <= 0:
+        return
+
+    # Shift old backups
+    for i in range(backups - 1, 0, -1):
+        src = Path(f"{path}.{i}")
+        dst = Path(f"{path}.{i+1}")
+        if src.exists():
+            try:
+                if dst.exists():
+                    dst.unlink()
+                src.replace(dst)
+            except Exception:
+                pass
+
+    # Move current to .1
+    if path.exists():
+        try:
+            dst1 = Path(f"{path}.1")
+            if dst1.exists():
+                dst1.unlink()
+            path.replace(dst1)
+        except Exception:
+            pass
+
+
+@app.after_request
+def _audit_log_response(response):
+    # Minimal, secret-safe audit log
+    try:
+        if not _audit_log_enabled():
+            return response
+
+        latency_ms = None
+        try:
+            start = getattr(g, "manaos_request_start", None)
+            if isinstance(start, (int, float)):
+                latency_ms = int((time.perf_counter() - start) * 1000)
+        except Exception:
+            latency_ms = None
+
+        entry = {
+            "ts": datetime.now().isoformat(),
+            "ip": _get_client_ip(),
+            "method": request.method,
+            "path": request.path,
+            "status": response.status_code,
+            "auth_level": getattr(g, "manaos_auth_level", "none"),
+            "required_scope": getattr(g, "manaos_required_scope", None),
+            "latency_ms": latency_ms,
+            "request_id": getattr(g, "manaos_request_id", None),
+            "user_agent": (request.headers.get("User-Agent") or "")[:200],
+            "confirm_required": getattr(g, "manaos_confirm_required", False),
+            "confirm_ok": getattr(g, "manaos_confirm_ok", None),
+            "confirm_mode": getattr(g, "manaos_confirm_mode", "disabled"),
+        }
+
+        line = json.dumps(entry, ensure_ascii=False) if _audit_log_format() == "json" else str(entry)
+        target = _audit_log_path()
+        if target:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            max_bytes = _audit_log_max_bytes()
+            if max_bytes > 0:
+                try:
+                    current_size = target.stat().st_size if target.exists() else 0
+                    if current_size + len(line.encode("utf-8")) + 1 > max_bytes:
+                        _rotate_file(target)
+                except Exception:
+                    pass
+            with target.open("a", encoding="utf-8", errors="replace") as f:
+                f.write(line + "\n")
+        else:
+            logger.info(f"[AUDIT] {line}")
+    except Exception:
+        # Never break responses due to logging
+        pass
+
+    # Security headers (do not include secrets)
+    try:
+        if _security_headers_enabled():
+            response.headers.setdefault("X-Content-Type-Options", "nosniff")
+            response.headers.setdefault("X-Frame-Options", "DENY")
+            response.headers.setdefault("Referrer-Policy", "no-referrer")
+            response.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+            # For API responses: avoid caching by intermediaries
+            response.headers.setdefault("Cache-Control", "no-store")
+        # Always expose request id for debugging
+        rid = getattr(g, "manaos_request_id", None)
+        if rid:
+            response.headers.setdefault("X-Request-Id", str(rid))
+    except Exception:
+        pass
+    return response
 
 # OpenAPI仕様を提供（Open WebUI External Tools対応）
 @app.route("/openapi.json", methods=["GET"])
 def openapi_spec():
     """OpenAPI仕様を返す（Open WebUI External Tools対応）"""
+    if not _strtobool(os.getenv("MANAOS_EXPOSE_OPENAPI", "true"), default=True):
+        return jsonify({"error": "not_found"}), 404
     from unified_api.openapi import build_openapi_spec
 
     return jsonify(build_openapi_spec())
@@ -529,6 +1367,16 @@ def initialize_integrations():
         init_tasks.append(("ltx2", lambda: LTX2VideoIntegration(
             base_url=os.getenv("COMFYUI_URL", "http://localhost:8188")
         )))
+    
+    # LTX-2 Infinity統合（オプション）
+    if LTX2_INFINITY_AVAILABLE:
+        init_tasks.append(("ltx2_infinity", lambda: LTX2InfinityIntegration(
+            base_url=os.getenv("COMFYUI_URL", "http://localhost:8188")
+        )))
+        init_tasks.append(("ltx2_workflow_generator", lambda: LTX2WorkflowGenerator()))
+        init_tasks.append(("ltx2_template_manager", lambda: LTX2TemplateManager()))
+        init_tasks.append(("ltx2_nsfw_config", lambda: LTX2NSFWConfig()))
+        init_tasks.append(("ltx2_storage_manager", lambda: LTX2StorageManager()))
 
     # Google Drive統合（オプション）
     if GOOGLE_DRIVE_AVAILABLE:
@@ -640,6 +1488,43 @@ def initialize_integrations():
                 )))
         except Exception as e:
             logger.warning(f"Step-Deep-Research統合の初期化準備エラー: {e}")
+
+    # 音声機能統合（オプション）
+    if VOICE_INTEGRATION_AVAILABLE:
+        try:
+            # STTエンジン初期化（環境変数から設定を読み込み）
+            stt_model_size = os.getenv("VOICE_STT_MODEL", "large-v3")
+            stt_device = os.getenv("VOICE_STT_DEVICE", "cuda")
+            stt_compute_type = os.getenv("VOICE_STT_COMPUTE_TYPE", "float16")
+            
+            stt_engine = create_stt_engine(
+                model_size=stt_model_size,
+                device=stt_device,
+                compute_type=stt_compute_type
+            )
+            
+            # TTSエンジン初期化
+            tts_engine_name = os.getenv("VOICE_TTS_ENGINE", "voicevox")
+            voicevox_url = os.getenv("VOICEVOX_URL", "http://127.0.0.1:50021")
+            speaker_id = int(os.getenv("VOICEVOX_SPEAKER_ID", "3"))
+            
+            tts_engine = create_tts_engine(
+                engine=tts_engine_name,
+                voicevox_url=voicevox_url,
+                speaker_id=speaker_id
+            )
+            
+            # 音声統合オブジェクトを作成
+            voice_integration = {
+                "stt_engine": stt_engine,
+                "tts_engine": tts_engine,
+                "available": True
+            }
+            
+            init_tasks.append(("voice", lambda: voice_integration))
+            logger.info("✅ 音声機能統合を初期化タスクに追加しました")
+        except Exception as e:
+            logger.warning(f"⚠️ 音声機能統合の初期化準備エラー: {e}")
 
     # 統一キャッシュシステム（オプション）
     if UNIFIED_CACHE_AVAILABLE:
@@ -852,6 +1737,41 @@ def status():
     Returns:
         常に200（進捗情報を返す、軽量）
     """
+    # read-onlyの場合は情報を最小化（環境変数名/内部詳細を出さない）
+    if getattr(g, "manaos_auth_level", "none") == "read":
+        with initialization_lock:
+            status_val = initialization_status["status"]
+            pending = initialization_status["pending"].copy()
+            completed = initialization_status["completed"].copy()
+            failed = initialization_status["failed"].copy()
+            checks = initialization_status.get("checks", {}).copy()
+
+        required_checks = ["memory_db", "obsidian_path", "notification_hub", "llm_routing", "image_stock"]
+        check_summary = {"ok": 0, "warning": 0, "error": 0, "not_available": 0}
+        for check_name in required_checks:
+            check_status = checks.get(check_name, {}).get("status", "not_available")
+            if check_status in check_summary:
+                check_summary[check_status] = check_summary[check_status] + 1
+
+        return jsonify(
+            {
+                "status": status_val,
+                "ready": (status_val == "ready"),
+                "initialization": {
+                    "pending_count": len(pending),
+                    "completed_count": len(completed),
+                    "failed_count": len(failed),
+                    "progress": {
+                        "total": len(pending) + len(completed) + len(failed),
+                        "completed": len(completed),
+                        "failed": len(failed),
+                        "pending": len(pending),
+                    },
+                },
+                "check_summary": check_summary,
+            }
+        ), 200
+
     # ロックを最小限に（重い処理はしない）
     with initialization_lock:
         status_val = initialization_status["status"]
@@ -934,7 +1854,7 @@ def status():
 
 @app.route("/api/comfyui/generate", methods=["POST"])
 def comfyui_generate():
-    """ComfyUIで画像生成"""
+    """ComfyUIで画像生成（複数LoRA対応）"""
     data = request.json
     prompt = data.get("prompt", "")
     negative_prompt = data.get("negative_prompt", "")
@@ -943,6 +1863,10 @@ def comfyui_generate():
     steps = data.get("steps", 20)
     cfg_scale = data.get("cfg_scale", 7.0)
     seed = data.get("seed", -1)
+    model = data.get("model")
+    loras = data.get("loras")  # [(lora_name, strength), ...] 形式
+    sampler = data.get("sampler", "euler_ancestral")
+    scheduler = data.get("scheduler", "karras")
 
     comfyui = integrations.get("comfyui")
     if not comfyui or not comfyui.is_available():
@@ -953,8 +1877,12 @@ def comfyui_generate():
         negative_prompt=negative_prompt,
         width=width,
         height=height,
+        model=model if model else "sd_xl_base_1.0.safetensors",
+        loras=loras,
         steps=steps,
-        cfg_scale=cfg_scale,
+        guidance_scale=cfg_scale,
+        sampler=sampler,
+        scheduler=scheduler,
         seed=seed
     )
 
@@ -972,6 +1900,8 @@ def comfyui_generate():
                     "steps": steps,
                     "cfg_scale": cfg_scale,
                     "seed": seed,
+                    "model": model,
+                    "loras": loras,
                     "status": "generated",
                     "timestamp": datetime.now().isoformat()
                 }, timeout=5)
@@ -1310,6 +2240,185 @@ def ltx2_get_status(prompt_id):
 
 
 # ========================================
+# LTX-2 Infinity API エンドポイント
+# ========================================
+
+@app.route("/api/ltx2-infinity/generate", methods=["POST"])
+def ltx2_infinity_generate():
+    """LTX-2 Infinityで無限動画生成"""
+    if not LTX2_INFINITY_AVAILABLE:
+        return jsonify({"error": "LTX-2 Infinity統合が利用できません"}), 503
+    
+    data = request.json
+    image_path = data.get("image_path", "")
+    base_prompt = data.get("base_prompt", "")
+    ext_prompts = data.get("ext_prompts", [])
+    negative_prompt = data.get("negative_prompt", "")
+    base_seconds = data.get("base_seconds", 5)
+    ext_seconds = data.get("ext_seconds", 5)
+    fps = data.get("fps", 24)
+    nsfw_allowed = data.get("nsfw_allowed", False)
+    use_vlm_base = data.get("use_vlm_base", True)
+    use_api_llm_ext = data.get("use_api_llm_ext", True)
+    max_extensions = data.get("max_extensions")
+    
+    ltx2_infinity = integrations.get("ltx2_infinity")
+    if not ltx2_infinity or not ltx2_infinity.is_available():
+        return jsonify({"error": "LTX-2 Infinityが利用できません"}), 503
+    
+    try:
+        result = ltx2_infinity.generate_infinite_video(
+            image_path=image_path,
+            base_prompt=base_prompt,
+            ext_prompts=ext_prompts,
+            negative_prompt=negative_prompt,
+            base_seconds=base_seconds,
+            ext_seconds=ext_seconds,
+            fps=fps,
+            nsfw_allowed=nsfw_allowed,
+            use_vlm_base=use_vlm_base,
+            use_api_llm_ext=use_api_llm_ext,
+            max_extensions=max_extensions
+        )
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"LTX-2 Infinity生成エラー: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/ltx2-infinity/templates", methods=["GET", "POST"])
+def ltx2_infinity_templates():
+    """LTX-2 Infinityテンプレート管理"""
+    if not LTX2_INFINITY_AVAILABLE:
+        return jsonify({"error": "LTX-2 Infinity統合が利用できません"}), 503
+    
+    template_manager = integrations.get("ltx2_template_manager")
+    if not template_manager:
+        return jsonify({"error": "テンプレートマネージャーが利用できません"}), 503
+    
+    try:
+        if request.method == "GET":
+            genre = request.args.get("genre")
+            templates = template_manager.list_templates(genre=genre)
+            return jsonify({"templates": templates})
+        else:
+            # POST: テンプレート作成
+            data = request.json
+            template_id = template_manager.create_template(
+                genre=data.get("genre", ""),
+                name=data.get("name", ""),
+                anchor_image_path=data.get("anchor_image_path"),
+                base_prompt_template=data.get("base_prompt_template", ""),
+                ext_prompt_templates=data.get("ext_prompt_templates", []),
+                negative_prompt=data.get("negative_prompt", ""),
+                settings=data.get("settings")
+            )
+            return jsonify({"template_id": template_id, "status": "created"})
+    except Exception as e:
+        logger.error(f"テンプレート操作エラー: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/ltx2-infinity/templates/<genre>/<template_id>", methods=["GET", "PUT", "DELETE"])
+def ltx2_infinity_template_detail(genre, template_id):
+    """LTX-2 Infinityテンプレート詳細操作"""
+    if not LTX2_INFINITY_AVAILABLE:
+        return jsonify({"error": "LTX-2 Infinity統合が利用できません"}), 503
+    
+    template_manager = integrations.get("ltx2_template_manager")
+    if not template_manager:
+        return jsonify({"error": "テンプレートマネージャーが利用できません"}), 503
+    
+    try:
+        if request.method == "GET":
+            template = template_manager.get_template(genre, template_id)
+            if template:
+                return jsonify(template)
+            return jsonify({"error": "テンプレートが見つかりません"}), 404
+        elif request.method == "PUT":
+            data = request.json
+            success = template_manager.update_template(genre, template_id, data)
+            if success:
+                return jsonify({"status": "updated"})
+            return jsonify({"error": "テンプレートの更新に失敗しました"}), 500
+        else:  # DELETE
+            success = template_manager.delete_template(genre, template_id)
+            if success:
+                return jsonify({"status": "deleted"})
+            return jsonify({"error": "テンプレートの削除に失敗しました"}), 500
+    except Exception as e:
+        logger.error(f"テンプレート操作エラー: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/ltx2-infinity/storage/stats", methods=["GET"])
+def ltx2_infinity_storage_stats():
+    """LTX-2 Infinityストレージ統計"""
+    if not LTX2_INFINITY_AVAILABLE:
+        return jsonify({"error": "LTX-2 Infinity統合が利用できません"}), 503
+    
+    storage_manager = integrations.get("ltx2_storage_manager")
+    if not storage_manager:
+        return jsonify({"error": "ストレージマネージャーが利用できません"}), 503
+    
+    try:
+        stats = storage_manager.get_storage_stats()
+        return jsonify(stats)
+    except Exception as e:
+        logger.error(f"ストレージ統計取得エラー: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/ltx2-infinity/storage/cleanup", methods=["POST"])
+def ltx2_infinity_storage_cleanup():
+    """LTX-2 Infinityストレージクリーンアップ"""
+    if not LTX2_INFINITY_AVAILABLE:
+        return jsonify({"error": "LTX-2 Infinity統合が利用できません"}), 503
+    
+    storage_manager = integrations.get("ltx2_storage_manager")
+    if not storage_manager:
+        return jsonify({"error": "ストレージマネージャーが利用できません"}), 503
+    
+    try:
+        data = request.json or {}
+        cleanup_type = data.get("type", "all")  # all, generations, cache, temp
+        
+        if cleanup_type == "all":
+            gen_result = storage_manager.cleanup_old_generations(
+                days=data.get("days", 30),
+                keep_recent=data.get("keep_recent", 10)
+            )
+            cache_result = storage_manager.cleanup_cache(
+                max_age_hours=data.get("cache_hours", 24)
+            )
+            temp_result = storage_manager.cleanup_temp()
+            return jsonify({
+                "generations": gen_result,
+                "cache": cache_result,
+                "temp": temp_result
+            })
+        elif cleanup_type == "generations":
+            result = storage_manager.cleanup_old_generations(
+                days=data.get("days", 30),
+                keep_recent=data.get("keep_recent", 10)
+            )
+            return jsonify(result)
+        elif cleanup_type == "cache":
+            result = storage_manager.cleanup_cache(
+                max_age_hours=data.get("cache_hours", 24)
+            )
+            return jsonify(result)
+        elif cleanup_type == "temp":
+            result = storage_manager.cleanup_temp()
+            return jsonify(result)
+        else:
+            return jsonify({"error": "無効なクリーンアップタイプ"}), 400
+    except Exception as e:
+        logger.error(f"ストレージクリーンアップエラー: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# ========================================
 # SVI自動化 API エンドポイント
 # ========================================
 
@@ -1469,6 +2578,160 @@ def civitai_search():
 
     models = civitai.search_models(query=query, limit=limit, model_type=model_type)
     return jsonify({"models": models, "count": len(models)})
+
+
+@app.route("/api/civitai/favorites", methods=["GET"])
+def civitai_favorites():
+    """CivitAIのお気に入りモデル一覧を取得"""
+    missing_resp = _require_env_for_integration("CivitAI", ["CIVITAI_API_KEY"])
+    if missing_resp:
+        return missing_resp
+
+    limit = int(request.args.get("limit", 100))
+    model_type = request.args.get("type")
+
+    civitai = integrations.get("civitai")
+    if not civitai or not civitai.is_available():
+        return jsonify({"error": "CivitAIが利用できません"}), 503
+
+    favorites = civitai.get_favorite_models(limit=limit, model_type=model_type)
+    return jsonify({"favorites": favorites, "count": len(favorites)})
+
+
+@app.route("/api/civitai/images", methods=["GET"])
+def civitai_images():
+    """CivitAIで画像を取得（プロンプト情報含む）"""
+    missing_resp = _require_env_for_integration("CivitAI", ["CIVITAI_API_KEY"])
+    if missing_resp:
+        return missing_resp
+
+    limit = int(request.args.get("limit", 20))
+    model_id = request.args.get("model_id", type=int)
+    model_version_id = request.args.get("model_version_id", type=int)
+    username = request.args.get("username")
+    nsfw = request.args.get("nsfw", type=bool)
+    sort = request.args.get("sort", "Most Reactions")
+    period = request.args.get("period", "AllTime")
+    page = int(request.args.get("page", 1))
+
+    civitai = integrations.get("civitai")
+    if not civitai or not civitai.is_available():
+        return jsonify({"error": "CivitAIが利用できません"}), 503
+
+    images = civitai.get_images(
+        limit=limit,
+        model_id=model_id,
+        model_version_id=model_version_id,
+        username=username,
+        nsfw=nsfw,
+        sort=sort,
+        period=period,
+        page=page
+    )
+    return jsonify({"images": images, "count": len(images)})
+
+
+@app.route("/api/civitai/images/<int:image_id>", methods=["GET"])
+def civitai_image_details(image_id):
+    """CivitAIで画像の詳細情報を取得（プロンプト情報含む）"""
+    missing_resp = _require_env_for_integration("CivitAI", ["CIVITAI_API_KEY"])
+    if missing_resp:
+        return missing_resp
+
+    civitai = integrations.get("civitai")
+    if not civitai or not civitai.is_available():
+        return jsonify({"error": "CivitAIが利用できません"}), 503
+
+    image = civitai.get_image_details(image_id)
+    if image:
+        return jsonify(image)
+    else:
+        return jsonify({"error": "画像が見つかりませんでした"}), 404
+
+
+@app.route("/api/civitai/creators", methods=["GET"])
+def civitai_creators():
+    """CivitAIでクリエイター一覧を取得"""
+    missing_resp = _require_env_for_integration("CivitAI", ["CIVITAI_API_KEY"])
+    if missing_resp:
+        return missing_resp
+
+    username = request.args.get("username")
+    limit = int(request.args.get("limit", 20))
+
+    civitai = integrations.get("civitai")
+    if not civitai or not civitai.is_available():
+        return jsonify({"error": "CivitAIが利用できません"}), 503
+
+    creators = civitai.get_creators(username=username, limit=limit)
+    return jsonify({"creators": creators, "count": len(creators)})
+
+
+@app.route("/api/civitai/favorites/download", methods=["POST"])
+def civitai_download_favorites():
+    """CivitAIのお気に入りモデルを自動ダウンロード"""
+    missing_resp = _require_env_for_integration("CivitAI", ["CIVITAI_API_KEY"])
+    if missing_resp:
+        return missing_resp
+
+    data = request.json or {}
+    auto_mode = data.get("auto", False)
+    model_type = data.get("model_type")
+
+    civitai = integrations.get("civitai")
+    if not civitai or not civitai.is_available():
+        return jsonify({"error": "CivitAIが利用できません"}), 503
+
+    # お気に入りモデルを取得
+    favorites = civitai.get_favorite_models(limit=100, model_type=model_type)
+    if not favorites:
+        return jsonify({"error": "お気に入りモデルが見つかりませんでした"}), 404
+
+    # ダウンロード処理（簡易版 - 実際の実装では非同期処理を推奨）
+    from pathlib import Path
+    COMFYUI_MODELS_DIR = Path("C:/ComfyUI/models/checkpoints")
+    COMFYUI_LORA_DIR = Path("C:/ComfyUI/models/loras")
+    
+    downloaded = []
+    failed = []
+    
+    for model in favorites[:10]:  # 最初の10件のみ（時間がかかるため）
+        try:
+            versions = model.get("modelVersions", [])
+            if versions:
+                latest_version = versions[0]
+                files = latest_version.get("files", [])
+                if files:
+                    file_name = files[0].get("name", "")
+                    model_type = model.get("type", "")
+                    
+                    if model_type == "Checkpoint":
+                        download_path = str(COMFYUI_MODELS_DIR / file_name)
+                    elif model_type in ["LORA", "LoCon"]:
+                        download_path = str(COMFYUI_LORA_DIR / file_name)
+                    else:
+                        continue
+                    
+                    result = civitai.download_model(
+                        model_id=model.get("id"),
+                        version_id=latest_version.get("id"),
+                        download_path=download_path
+                    )
+                    
+                    if result:
+                        downloaded.append(model.get("name"))
+                    else:
+                        failed.append(model.get("name"))
+        except Exception as e:
+            logger.error(f"モデルダウンロードエラー: {e}")
+            failed.append(model.get("name", "Unknown"))
+    
+    return jsonify({
+        "downloaded": downloaded,
+        "failed": failed,
+        "downloaded_count": len(downloaded),
+        "failed_count": len(failed)
+    })
 
 
 @app.route("/api/langchain/chat", methods=["POST"])
@@ -1720,6 +2983,19 @@ def oh_my_opencode_execute():
 @app.route("/api/integrations/status", methods=["GET"])
 def integrations_status():
     """すべての統合システムの状態を取得"""
+    # read-onlyの場合は情報を最小化（type名や詳細状態を出さない）
+    if getattr(g, "manaos_auth_level", "none") == "read":
+        safe_status: Dict[str, Any] = {}
+        for name, integration in integrations.items():
+            available = False
+            try:
+                if hasattr(integration, "is_available"):
+                    available = bool(integration.is_available())
+            except Exception:
+                available = False
+            safe_status[name] = {"available": available}
+        return jsonify({"integrations": safe_status})
+
     status = {}
 
     for name, integration in integrations.items():
@@ -2131,6 +3407,232 @@ def lfm25_status():
             "available": False,
             "error": str(e)
         }), 500
+
+
+# ========================================
+# 音声機能統合 API
+# ========================================
+
+@app.route("/api/voice/transcribe", methods=["POST"])
+def voice_transcribe():
+    """音声を文字起こし（STT）"""
+    if not VOICE_INTEGRATION_AVAILABLE:
+        return jsonify({
+            "error": "音声機能統合が利用できません"
+        }), 503
+    
+    voice_integration = integrations.get("voice")
+    if not voice_integration or not voice_integration.get("available"):
+        return jsonify({
+            "error": "音声機能統合が初期化されていません"
+        }), 503
+    
+    try:
+        # 音声データを取得
+        if "audio" not in request.files:
+            return jsonify({"error": "audioファイルが必要です"}), 400
+        
+        audio_file = request.files["audio"]
+        audio_data = audio_file.read()
+        
+        # サンプリングレート（デフォルト: 16000）
+        sample_rate = int(request.form.get("sample_rate", 16000))
+        
+        # STT実行
+        stt_engine = voice_integration["stt_engine"]
+        result = stt_engine.transcribe(audio_data, sample_rate=sample_rate)
+        
+        return jsonify({
+            "success": True,
+            "text": result["text"],
+            "language": result.get("language", "ja"),
+            "segments": result.get("segments", [])
+        })
+    
+    except Exception as e:
+        logger.error(f"音声認識エラー: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/voice/synthesize", methods=["POST"])
+def voice_synthesize():
+    """テキストを音声に変換（TTS）"""
+    if not VOICE_INTEGRATION_AVAILABLE:
+        return jsonify({
+            "error": "音声機能統合が利用できません"
+        }), 503
+    
+    voice_integration = integrations.get("voice")
+    if not voice_integration or not voice_integration.get("available"):
+        return jsonify({
+            "error": "音声機能統合が初期化されていません"
+        }), 503
+    
+    try:
+        data = request.get_json()
+        if not data or "text" not in data:
+            return jsonify({"error": "textパラメータが必要です"}), 400
+        
+        text = data["text"]
+        speaker_id = data.get("speaker_id")
+        speed = float(data.get("speed", 1.0))
+        pitch = float(data.get("pitch", 0.0))
+        intonation = float(data.get("intonation", 1.0))
+        
+        # TTS実行
+        tts_engine = voice_integration["tts_engine"]
+        audio_data = tts_engine.synthesize(
+            text=text,
+            speaker_id=speaker_id,
+            speed=speed,
+            pitch=pitch,
+            intonation=intonation
+        )
+        
+        # 音声データを返す
+        from flask import Response
+        return Response(
+            audio_data,
+            mimetype="audio/wav",
+            headers={
+                "Content-Disposition": "attachment; filename=voice.wav"
+            }
+        )
+    
+    except Exception as e:
+        logger.error(f"音声合成エラー: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/voice/conversation", methods=["POST"])
+def voice_conversation():
+    """音声会話（STT → Intent Router → LLM → TTS）"""
+    if not VOICE_INTEGRATION_AVAILABLE:
+        return jsonify({
+            "error": "音声機能統合が利用できません"
+        }), 503
+    
+    voice_integration = integrations.get("voice")
+    if not voice_integration or not voice_integration.get("available"):
+        return jsonify({
+            "error": "音声機能統合が初期化されていません"
+        }), 503
+    
+    try:
+        # 音声データを取得
+        if "audio" not in request.files:
+            return jsonify({"error": "audioファイルが必要です"}), 400
+        
+        audio_file = request.files["audio"]
+        audio_data = audio_file.read()
+        sample_rate = int(request.form.get("sample_rate", 16000))
+        hotword = request.form.get("hotword", "レミ")
+        
+        # STT: 音声をテキストに変換
+        stt_engine = voice_integration["stt_engine"]
+        stt_result = stt_engine.transcribe(audio_data, sample_rate=sample_rate)
+        user_text = stt_result["text"]
+        
+        if not user_text.strip():
+            return jsonify({"error": "音声認識結果が空です"}), 400
+        
+        # ホットワードチェック
+        intent_result = None
+        if hotword and hotword in user_text:
+            user_text = user_text.replace(hotword, "").strip()
+            
+            # Intent Router: 意図分類（オプション）
+            try:
+                import httpx
+                intent_router_url = os.getenv("INTENT_ROUTER_URL", "http://localhost:5100")
+                with httpx.Client(timeout=10.0) as client:
+                    response = client.post(
+                        f"{intent_router_url}/api/classify",
+                        json={"text": user_text}
+                    )
+                    if response.status_code == 200:
+                        intent_result = response.json()
+            except Exception as e:
+                logger.debug(f"Intent Router呼び出しエラー: {e}")
+        
+        # LLM: 応答を生成（既存のLLMルーティングを使用）
+        llm_response_text = ""
+        if LLM_ROUTING_AVAILABLE:
+            llm_router = integrations.get("llm_routing")
+            if llm_router:
+                llm_result = llm_router.route(
+                    task_type="conversation",
+                    prompt=user_text
+                )
+                llm_response_text = llm_result.get("response", "")
+        elif LFM25_AVAILABLE:
+            # フォールバック: LFM 2.5
+            client = AlwaysReadyLLMClient()
+            response = client.chat(
+                message=user_text,
+                model=ModelType.ULTRA_LIGHT,
+                task_type=TaskType.CONVERSATION
+            )
+            llm_response_text = response.response
+        else:
+            # 最終フォールバック: シンプルな応答
+            llm_response_text = f"「{user_text}」についてですね。確認しました。"
+        
+        if not llm_response_text.strip():
+            return jsonify({"error": "LLM応答が空です"}), 500
+        
+        # TTS: テキストを音声に変換
+        tts_engine = voice_integration["tts_engine"]
+        audio_response = tts_engine.synthesize(llm_response_text)
+        
+        # 結果を返す
+        from flask import Response
+        headers = {
+            "Content-Disposition": "attachment; filename=response.wav",
+            "X-User-Text": user_text,
+            "X-Response-Text": llm_response_text
+        }
+        if intent_result:
+            headers["X-Intent-Type"] = intent_result.get("intent_type", "unknown")
+            headers["X-Intent-Confidence"] = str(intent_result.get("confidence", 0.0))
+        
+        return Response(
+            audio_response,
+            mimetype="audio/wav",
+            headers=headers
+        )
+    
+    except Exception as e:
+        logger.error(f"音声会話エラー: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/voice/speakers", methods=["GET"])
+def voice_speakers():
+    """利用可能なスピーカー一覧を取得"""
+    if not VOICE_INTEGRATION_AVAILABLE:
+        return jsonify({
+            "error": "音声機能統合が利用できません"
+        }), 503
+    
+    voice_integration = integrations.get("voice")
+    if not voice_integration or not voice_integration.get("available"):
+        return jsonify({
+            "error": "音声機能統合が初期化されていません"
+        }), 503
+    
+    try:
+        tts_engine = voice_integration["tts_engine"]
+        speakers = tts_engine.get_speakers()
+        
+        return jsonify({
+            "success": True,
+            "speakers": speakers
+        })
+    
+    except Exception as e:
+        logger.error(f"スピーカー一覧取得エラー: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/cache/get", methods=["GET"])
@@ -3802,10 +5304,23 @@ def get_docker_logs():
         import subprocess
 
         container_name = request.args.get("container", "")
-        lines = int(request.args.get("lines", 100))
+        try:
+            lines = int(request.args.get("lines", 100))
+        except Exception:
+            lines = 100
 
         if not container_name:
             return jsonify({"error": "containerパラメータが必要です"}), 400
+
+        # Hard limits (avoid abuse)
+        if lines < 1:
+            lines = 1
+        if lines > 500:
+            lines = 500
+
+        # Validate container name (avoid weird shells / args)
+        if not re.fullmatch(r"[A-Za-z0-9._-]{1,128}", container_name):
+            return jsonify({"error": "containerパラメータが不正です"}), 400
 
         # docker logsコマンドでログを取得
         result = subprocess.run(
@@ -3822,7 +5337,7 @@ def get_docker_logs():
                 "stderr": result.stderr
             }), 500
 
-        logs = result.stdout.split('\n')
+        logs = result.stdout.splitlines()
 
         # エラーパターンを検索
         errors = []
@@ -3846,7 +5361,7 @@ def get_docker_logs():
         return jsonify({
             "status": "success",
             "container": container_name,
-            "logs": logs[-100:],  # 最新100行
+            "logs": logs[-min(100, len(logs)):],  # 最新100行
             "errors": errors[:50],  # 最大50件
             "error_count": len(errors),
             "total_lines": len(logs)
@@ -3878,7 +5393,13 @@ if __name__ == "__main__":
     init_thread = start_initialization_background()
 
     port = int(os.getenv("MANAOS_INTEGRATION_PORT", 9500))
-    host = os.getenv("MANAOS_INTEGRATION_HOST", "0.0.0.0")
+    # Safe default: bind to localhost unless explicitly overridden
+    host = os.getenv("MANAOS_INTEGRATION_HOST", "127.0.0.1")
+    debug = os.getenv("MANAOS_DEBUG", "false").strip().lower() in ("1", "true", "yes", "y", "on")
+
+    # Warn on risky configuration
+    if host == "0.0.0.0" and not (os.getenv("MANAOS_INTEGRATION_API_KEY") or "").strip():
+        print("⚠️ WARNING: host=0.0.0.0 かつ MANAOS_INTEGRATION_API_KEY 未設定です。外部アクセスを許可するなら必ずAPIキーを設定してください。")
 
     print(f"サーバー起動: http://{host}:{port}")
     print("利用可能なエンドポイント:")
@@ -3902,6 +5423,15 @@ if __name__ == "__main__":
     print("  GET  /api/ltx2/queue - LTX-2キュー状態取得")
     print("  GET  /api/ltx2/history - LTX-2実行履歴取得")
     print("  GET  /api/ltx2/status/<prompt_id> - LTX-2実行状態取得")
+    print("\n【LTX-2 Infinity API】")
+    print("  POST /api/ltx2-infinity/generate - 無限動画生成")
+    print("  GET  /api/ltx2-infinity/templates - テンプレート一覧取得")
+    print("  POST /api/ltx2-infinity/templates - テンプレート作成")
+    print("  GET  /api/ltx2-infinity/templates/<genre>/<id> - テンプレート取得")
+    print("  PUT  /api/ltx2-infinity/templates/<genre>/<id> - テンプレート更新")
+    print("  DELETE /api/ltx2-infinity/templates/<genre>/<id> - テンプレート削除")
+    print("  GET  /api/ltx2-infinity/storage/stats - ストレージ統計")
+    print("  POST /api/ltx2-infinity/storage/cleanup - ストレージクリーンアップ")
     print("  GET  /api/svi/status/<prompt_id> - 実行状態取得")
     print("\n【SVI自動化 API】")
     print("  POST /api/svi/automation/watch - フォルダ監視開始")
@@ -3934,6 +5464,11 @@ if __name__ == "__main__":
     print("  POST /api/lfm25/lightweight - LFM 2.5軽量会話（オフライン会話・下書き・整理専用）")
     print("  POST /api/lfm25/batch - LFM 2.5バッチチャット")
     print("  GET  /api/lfm25/status - LFM 2.5の状態を取得")
+    print("\n【音声機能統合 API】")
+    print("  POST /api/voice/transcribe - 音声を文字起こし（STT）")
+    print("  POST /api/voice/synthesize - テキストを音声に変換（TTS）")
+    print("  POST /api/voice/conversation - 音声会話（STT → LLM → TTS）")
+    print("  GET  /api/voice/speakers - 利用可能なスピーカー一覧")
     print("\n【Rows統合 API】")
     print("  GET  /api/rows/spreadsheets - スプレッドシート一覧")
     print("  POST /api/rows/spreadsheets - スプレッドシート作成")
@@ -3954,4 +5489,4 @@ if __name__ == "__main__":
     print("  POST /api/rows/sync/auto - 自動同期")
     print("  POST /api/rows/dashboard/create - ダッシュボード作成")
 
-    app.run(host=host, port=port, debug=True)
+    app.run(host=host, port=port, debug=debug)
