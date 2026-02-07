@@ -1,0 +1,22 @@
+[
+  {
+    "key": "ctrl+shift+b",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Python: 依存関係インストール"
+  },
+  {
+    "key": "ctrl+shift+t",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Python: テスト実行"
+  },
+  {
+    "key": "ctrl+shift+f",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Python: コードフォーマット（Black）"
+  },
+  {
+    "key": "ctrl+shift+l",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Python: Lint（Flake8）"
+  }
+]

@@ -1,0 +1,125 @@
+{
+  // Python設定
+  "python.defaultInterpreterPath": "python",
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.completeFunctionParens": true,
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": false,
+  "python.linting.flake8Enabled": true,
+  "python.formatting.provider": "black",
+  "python.formatting.blackArgs": [
+    "--line-length=100"
+  ],
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+
+  // ファイルエンコーディング
+  "files.encoding": "utf8",
+  "files.autoGuessEncoding": true,
+  "files.eol": "\n",
+
+  // エディタ設定
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+  "editor.rulers": [100],
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+
+  // ファイル除外設定
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    "**/.venv": true,
+    "**/venv": true,
+    "**/ENV": true,
+    "**/env": true,
+    "**/node_modules": true
+  },
+
+  // 検索除外設定
+  "search.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    "**/node_modules": true,
+    "**/.venv": true,
+    "**/venv": true,
+    "**/*.db": true,
+    "**/*.log": true
+  },
+
+  // PowerShell設定
+  "powershell.enableProfileLoading": true,
+  "powershell.scriptAnalysis.enable": true,
+  "powershell.codeFormatting.preset": "OTBS",
+  "powershell.codeFormatting.openBraceOnSameLine": false,
+  "powershell.codeFormatting.newLineAfterOpenBrace": true,
+  "powershell.codeFormatting.newLineAfterCloseBrace": true,
+  "powershell.codeFormatting.whitespaceBeforeOpenBrace": true,
+  "powershell.codeFormatting.whitespaceBeforeOpenParen": true,
+  "powershell.codeFormatting.whitespaceAroundOperator": true,
+  "powershell.codeFormatting.whitespaceAfterSeparator": true,
+  "powershell.codeFormatting.whitespaceBetweenParameters": false,
+  "powershell.codeFormatting.whitespaceInsideBrace": true,
+  "powershell.codeFormatting.alignPropertyValuePairs": true,
+  "powershell.codeFormatting.newLineAfterPipeline": true,
+
+  // JSON設定
+  "json.schemas": [
+    {
+      "fileMatch": ["**/config.json", "**/*_config.json"],
+      "schema": {}
+    }
+  ],
+
+  // Markdown設定
+  "markdown.preview.fontSize": 14,
+  "markdown.preview.lineHeight": 1.6,
+
+  // ワークスペース設定
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/__pycache__/**": true,
+    "**/*.db": true,
+    "**/*.log": true
+  },
+
+  // ターミナル設定
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.profiles.windows": {
+    "PowerShell": {
+      "source": "PowerShell",
+      "icon": "terminal-powershell"
+    }
+  },
+
+  // その他
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+
+  // 問題パネルの除外設定
+  "problems.exclude": {
+    "**/node_modules/**": true,
+    "**/__pycache__/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.mypy_cache/**": true
+  },
+
+  // TypeScript/JavaScript設定
+  "typescript.preferences.excludePackageJsonAutoImports": "on",
+  "typescript.suggest.autoImports": true,
+  "javascript.preferences.excludePackageJsonAutoImports": "on",
+"javascript.suggest.autoImports": true,
+"cursorpyright.analysis.autoImportCompletions": true,
+"cursorpyright.analysis.typeCheckingMode": "basic"
+}

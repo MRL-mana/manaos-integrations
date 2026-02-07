@@ -1,0 +1,92 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: 現在のファイル",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    },
+    {
+      "name": "Python: 統合APIサーバー",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/unified_api_server.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "name": "Python: Gallery APIサーバー",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/gallery_api_server.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "name": "Python: LLMルーティングAPI",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/manaos_llm_routing_api.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "name": "Python: マスターコントロール",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/master_control.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "name": "PowerShell: 現在のスクリプト",
+      "type": "PowerShell",
+      "request": "launch",
+      "script": "${file}",
+      "cwd": "${workspaceFolder}",
+      "createTemporaryIntegratedConsole": true
+    },
+    {
+      "name": "PowerShell: サービスチェック",
+      "type": "PowerShell",
+      "request": "launch",
+      "script": "${workspaceFolder}/check_all_services.ps1",
+      "cwd": "${workspaceFolder}",
+      "createTemporaryIntegratedConsole": true
+    },
+    {
+      "name": "Python: pytest",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "${workspaceFolder}",
+        "-v"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}
