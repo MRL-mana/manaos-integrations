@@ -1,0 +1,93 @@
+### VS Code REST Client - ManaOS API テスト用
+
+### 統合APIサーバー - ヘルスチェック
+GET http://localhost:5000/health
+Content-Type: application/json
+
+### 統合APIサーバー - ステータス取得
+GET http://localhost:5000/api/status
+Content-Type: application/json
+
+### Gallery API - ヘルスチェック
+GET http://localhost:5001/health
+Content-Type: application/json
+
+### Gallery API - 画像一覧取得
+GET http://localhost:5001/api/gallery/images
+Content-Type: application/json
+
+### LLMルーティングAPI - ヘルスチェック
+GET http://localhost:5002/health
+Content-Type: application/json
+
+### LLMルーティングAPI - ルーティング分析
+POST http://localhost:5002/api/routing/analyze
+Content-Type: application/json
+
+{
+  "prompt": "複雑なコードレビューを実行してください",
+  "code_context": "def example(): pass"
+}
+
+### SSOT API - SSOT取得
+GET http://localhost:5120/api/ssot
+Content-Type: application/json
+
+### システムステータスAPI - 全サービスステータス
+GET http://localhost:5112/api/system/status
+Content-Type: application/json
+
+### システムステータスAPI - ヘルスチェック
+GET http://localhost:5112/health
+Content-Type: application/json
+
+### マスターコントロール - ステータス取得
+GET http://localhost:5200/api/status
+Content-Type: application/json
+
+### マスターコントロール - サービス一覧
+GET http://localhost:5200/api/services
+Content-Type: application/json
+
+### マスターコントロール - サービス起動
+POST http://localhost:5200/api/services/start
+Content-Type: application/json
+
+{
+  "service_name": "unified_api_server"
+}
+
+### マスターコントロール - サービス停止
+POST http://localhost:5200/api/services/stop
+Content-Type: application/json
+
+{
+  "service_name": "unified_api_server"
+}
+
+### n8n - ワークフロー一覧（MCP経由で使用）
+# n8n APIはMCPサーバー経由でアクセスしてください
+
+### テスト用 - POSTリクエスト例
+POST http://localhost:5000/api/test
+Content-Type: application/json
+
+{
+  "message": "テストメッセージ",
+  "data": {
+    "key": "value"
+  }
+}
+
+### テスト用 - PUTリクエスト例
+PUT http://localhost:5000/api/test/123
+Content-Type: application/json
+
+{
+  "name": "更新された名前",
+  "status": "active"
+}
+
+### テスト用 - DELETEリクエスト例
+DELETE http://localhost:5000/api/test/123
+Content-Type: application/json

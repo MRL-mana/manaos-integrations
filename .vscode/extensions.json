@@ -1,0 +1,39 @@
+{
+  "recommendations": [
+    // Python開発
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.black-formatter",
+    "ms-python.flake8",
+    "ms-python.debugpy",
+    
+    // PowerShell開発
+    "ms-vscode.powershell",
+    
+    // Git
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+    
+    // Markdown
+    "yzhang.markdown-all-in-one",
+    "shd101wyy.markdown-preview-enhanced",
+    
+    // JSON/YAML
+    "redhat.vscode-yaml",
+    "mohsen1.prettify-json",
+    
+    // その他便利ツール
+    "ms-vscode.vscode-json",
+    "streetsidesoftware.code-spell-checker",
+    "usernamehw.errorlens",
+    "visualstudioexptteam.vscodeintellicode",
+    "ms-vscode.hexeditor",
+    
+    // Docker（必要に応じて）
+    "ms-azuretools.vscode-docker",
+    
+    // REST Client（APIテスト用）
+    "humao.rest-client"
+  ]
+}
+

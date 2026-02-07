@@ -1,0 +1,158 @@
+{
+  "Flask Route": {
+    "prefix": "flask-route",
+    "body": [
+      "@app.route('${1:/api/endpoint}', methods=['${2|GET,POST,PUT,DELETE|}'])",
+      "def ${3:endpoint_name}():",
+      "    \"\"\"${4:エンドポイントの説明}\"\"\"",
+      "    try:",
+      "        ${5:# 処理を記述}",
+      "        return jsonify({\"status\": \"success\", \"data\": ${6:result}})",
+      "    except Exception as e:",
+      "        logger.error(f\"${3}エラー: {e}\")",
+      "        return jsonify({\"error\": str(e)}), 500",
+      "$0"
+    ],
+    "description": "Flask APIエンドポイント"
+  },
+  "Flask Route with Request": {
+    "prefix": "flask-route-json",
+    "body": [
+      "@app.route('${1:/api/endpoint}', methods=['POST'])",
+      "def ${2:endpoint_name}():",
+      "    \"\"\"${3:エンドポイントの説明}\"\"\"",
+      "    try:",
+      "        data = request.json",
+      "        ${4:param} = data.get('${4:param}', ${5:default})",
+      "        ",
+      "        ${6:# 処理を記述}",
+      "        return jsonify({\"status\": \"success\", \"data\": ${7:result}})",
+      "    except Exception as e:",
+      "        logger.error(f\"${2}エラー: {e}\")",
+      "        return jsonify({\"error\": str(e)}), 500",
+      "$0"
+    ],
+    "description": "Flask APIエンドポイント（JSONリクエスト）"
+  },
+  "MCP Server Tool": {
+    "prefix": "mcp-tool",
+    "body": [
+      "@server.call_tool()",
+      "async def ${1:tool_name}(arguments: dict[str, Any]) -> list[TextContent | ImageContent]:",
+      "    \"\"\"${2:ツールの説明}\"\"\"",
+      "    try:",
+      "        ${3:param} = arguments.get('${3:param}', ${4:default})",
+      "        ",
+      "        ${5:# 処理を記述}",
+      "        ",
+      "        return [TextContent(",
+      "            type=\"text\",",
+      "            text=json.dumps({\"status\": \"success\", \"result\": ${6:result}}, ensure_ascii=False)",
+      "        )]",
+      "    except Exception as e:",
+      "        logger.error(f\"${1}エラー: {e}\")",
+      "        return [TextContent(",
+      "            type=\"text\",",
+      "            text=json.dumps({\"error\": str(e)}, ensure_ascii=False)",
+      "        )]",
+      "$0"
+    ],
+    "description": "MCPサーバーツール定義"
+  },
+  "MCP List Tools": {
+    "prefix": "mcp-list-tools",
+    "body": [
+      "@server.list_tools()",
+      "async def list_tools() -> list[Tool]:",
+      "    \"\"\"利用可能なツールの一覧を返す\"\"\"",
+      "    return [",
+      "        Tool(",
+      "            name=\"${1:tool_name}\",",
+      "            description=\"${2:ツールの説明}\",",
+      "            inputSchema={",
+      "                \"type\": \"object\",",
+      "                \"properties\": {",
+      "                    \"${3:param}\": {",
+      "                        \"type\": \"${4|string,number,boolean,object,array|}\",",
+      "                        \"description\": \"${5:パラメータの説明}\"",
+      "                    }",
+      "                },",
+      "                \"required\": [\"${3:param}\"]",
+      "            }",
+      "        )",
+      "    ]",
+      "$0"
+    ],
+    "description": "MCPサーバーツール一覧定義"
+  },
+  "Python Class with Logger": {
+    "prefix": "py-class-logger",
+    "body": [
+      "class ${1:ClassName}:",
+      "    \"\"\"${2:クラスの説明}\"\"\"",
+      "    ",
+      "    def __init__(self${3:, param}):",
+      "        \"\"\"初期化\"\"\"",
+      "        self.logger = get_logger(__name__)",
+      "        ${4:self.param = param}",
+      "        ",
+      "    def ${5:method_name}(self${6:, param}):",
+      "        \"\"\"${7:メソッドの説明}\"\"\"",
+      "        try:",
+      "            ${8:# 処理を記述}",
+      "            return ${9:result}",
+      "        except Exception as e:",
+      "            self.logger.error(f\"${5}エラー: {e}\")",
+      "            raise",
+      "$0"
+    ],
+    "description": "ロガー付きPythonクラス"
+  },
+  "Error Handler": {
+    "prefix": "error-handler",
+    "body": [
+      "try:",
+      "    ${1:# 処理を記述}",
+      "except ${2:Exception} as e:",
+      "    error_handler.handle_error(",
+      "        error=e,",
+      "        category=ErrorCategory.${3|SYSTEM,NETWORK,DATABASE,VALIDATION,EXTERNAL_API|},",
+      "        severity=ErrorSeverity.${4|LOW,MEDIUM,HIGH,CRITICAL|},",
+      "        context={\"${5:key}\": \"${6:value}\"}",
+      "    )",
+      "    ${7:# エラー処理}",
+      "$0"
+    ],
+    "description": "統一エラーハンドラー"
+  },
+  "Async Function": {
+    "prefix": "async-def",
+    "body": [
+      "async def ${1:function_name}(${2:param}):",
+      "    \"\"\"${3:関数の説明}\"\"\"",
+      "    try:",
+      "        ${4:# 処理を記述}",
+      "        return ${5:result}",
+      "    except Exception as e:",
+      "        logger.error(f\"${1}エラー: {e}\")",
+      "        raise",
+      "$0"
+    ],
+    "description": "非同期関数"
+  },
+  "HTTP Request": {
+    "prefix": "http-request",
+    "body": [
+      "async with httpx.AsyncClient(timeout=${1:30.0}) as client:",
+      "    response = await client.${2|get,post,put,delete|}(",
+      "        \"${3:url}\",",
+      "        ${4:json=${5:data}},",
+      "        headers={\"${6:Content-Type}\": \"${7:application/json}\"}",
+      "    )",
+      "    response.raise_for_status()",
+      "    return response.json()",
+      "$0"
+    ],
+    "description": "HTTPリクエスト（httpx）"
+  }
+}

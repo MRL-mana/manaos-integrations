@@ -1,0 +1,296 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Python: 依存関係インストール",
+      "type": "shell",
+      "command": "pip install -r requirements.txt",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Python: テスト実行",
+      "type": "shell",
+      "command": "python -m pytest",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "PowerShell: 全サービスチェック",
+      "type": "shell",
+      "command": "powershell.exe -ExecutionPolicy Bypass -File ${workspaceFolder}/check_all_services.ps1",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "PowerShell: MCP設定更新",
+      "type": "shell",
+      "command": "powershell.exe -ExecutionPolicy Bypass -File ${workspaceFolder}/update_mcp_settings.ps1",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Python: 統合APIサーバー起動",
+      "type": "shell",
+      "command": "python unified_api_server.py",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": ".*Running.*"
+        }
+      }
+    },
+    {
+      "label": "Python: コードフォーマット（Black）",
+      "type": "shell",
+      "command": "python -m black .",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Python: Lint（Flake8）",
+      "type": "shell",
+      "command": "python -m flake8 .",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": {
+        "owner": "python",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+):(\\d+):(\\d+):\\s+(\\w+)\\s+(.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    },
+    {
+      "label": "Python: Gallery APIサーバー起動",
+      "type": "shell",
+      "command": "python gallery_api_server.py",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": ".*Running.*"
+        }
+      }
+    },
+    {
+      "label": "Python: LLMルーティングAPI起動",
+      "type": "shell",
+      "command": "python manaos_llm_routing_api.py",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": ".*Running.*"
+        }
+      }
+    },
+    {
+      "label": "Python: クリーンアップ（キャッシュ削除）",
+      "type": "shell",
+      "command": "powershell.exe -Command \"Get-ChildItem -Path . -Include __pycache__,*.pyc -Recurse -Force | Remove-Item -Force -Recurse\"",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Python: 型チェック（mypy）",
+      "type": "shell",
+      "command": "python -m mypy .",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": {
+        "owner": "python",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+):(\\d+):\\s+(error|warning|note):\\s+(.+)$",
+          "file": 1,
+          "line": 2,
+          "severity": 3,
+          "message": 4
+        }
+      }
+    },
+    {
+      "label": "Moltbot: Gateway 起動",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/moltbot_gateway/deploy/run_gateway_wrapper_production.ps1",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
+      "isBackground": true,
+      "problemMatcher": { "pattern": { "regexp": ".*" }, "background": { "activeOnStart": true, "beginsPattern": ".*", "endsPattern": ".*" } }
+    },
+    {
+      "label": "Moltbot: list_only（フォルダ一覧）",
+      "type": "shell",
+      "command": "python manaos_moltbot_runner.py list_only",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Moltbot: list_only（パス指定）",
+      "type": "shell",
+      "command": "python manaos_moltbot_runner.py list_only --path ${input:moltbotPath}",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Moltbot: read_only（ファイル読取）",
+      "type": "shell",
+      "command": "python manaos_moltbot_runner.py read_only --path ${input:moltbotPath}",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Moltbot: 統一API疎通確認",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/moltbot_gateway/deploy/check_unified_api_moltbot.ps1",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new" },
+      "problemMatcher": []
+    },
+    {
+      "label": "ManaOS: Start all services",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/manaos_integrations/start_all_services.ps1",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared", "focus": true },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": ".*Running.*"
+        }
+      }
+    },
+    {
+      "label": "ManaOS: Cursor webhook",
+      "type": "shell",
+      "command": "python ${workspaceFolder}/manaos_integrations/cursor_webhook.py",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared", "focus": true },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": ".*Running.*"
+        }
+      }
+    },
+    {
+      "label": "ManaOS: Stop all services",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/manaos_integrations/stop_all_services.ps1",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "ManaOS: Open logs",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"Start-Process powershell -ArgumentList '-NoExit','-Command','Get-ChildItem -Path ${workspaceFolder} -Filter *.log -Recurse | Out-Host'\"",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "new" },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "moltbotPath",
+      "type": "promptString",
+      "description": "パス（例: ~/Downloads または C:\\Users\\mana4\\Documents）",
+      "default": "~/Downloads"
+    }
+  ]
+}

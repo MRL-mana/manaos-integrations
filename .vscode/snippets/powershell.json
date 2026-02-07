@@ -1,0 +1,154 @@
+{
+  "PowerShell Function": {
+    "prefix": "ps-function",
+    "body": [
+      "function ${1:Function-Name} {",
+      "    <#",
+      "    .SYNOPSIS",
+      "        ${2:関数の概要}",
+      "    ",
+      "    .DESCRIPTION",
+      "        ${3:関数の詳細説明}",
+      "    ",
+      "    .PARAMETER ${4:ParamName}",
+      "        ${5:パラメータの説明}",
+      "    ",
+      "    .EXAMPLE",
+      "        ${1} -${4} ${6:value}",
+      "    #>",
+      "    [CmdletBinding()]",
+      "    param(",
+      "        [Parameter(Mandatory = ${7:$true})]",
+      "        [string]$${4:ParamName}",
+      "    )",
+      "    ",
+      "    try {",
+      "        ${8:# 処理を記述}",
+      "        Write-Host \"${1}完了\" -ForegroundColor Green",
+      "    }",
+      "    catch {",
+      "        Write-Error \"${1}エラー: $_\"",
+      "        exit 1",
+      "    }",
+      "}",
+      "$0"
+    ],
+    "description": "PowerShell関数テンプレート"
+  },
+  "PowerShell Script Header": {
+    "prefix": "ps-header",
+    "body": [
+      "#Requires -Version 5.1",
+      "#Requires -RunAsAdministrator",
+      "",
+      "<#",
+      ".SYNOPSIS",
+      "    ${1:スクリプトの概要}",
+      "",
+      ".DESCRIPTION",
+      "    ${2:スクリプトの詳細説明}",
+      "",
+      ".PARAMETER ${3:ParamName}",
+      "    ${4:パラメータの説明}",
+      "",
+      ".EXAMPLE",
+      "    .\\${TM_FILENAME_BASE}.ps1 -${3} ${5:value}",
+      "#>",
+      "",
+      "[CmdletBinding()]",
+      "param(",
+      "    [Parameter(Mandatory = ${6:$false})]",
+      "    [string]$${3:ParamName} = ${7:\"default\"}",
+      ")",
+      "",
+      "$ErrorActionPreference = \"Stop\"",
+      "",
+      "try {",
+      "    ${8:# スクリプトの処理}",
+      "    Write-Host \"完了\" -ForegroundColor Green",
+      "}",
+      "catch {",
+      "    Write-Error \"エラー: $_\"",
+      "    exit 1",
+      "}",
+      "$0"
+    ],
+    "description": "PowerShellスクリプトヘッダー"
+  },
+  "Service Check": {
+    "prefix": "ps-service-check",
+    "body": [
+      "$${1:serviceName} = Get-Service -Name \"${2:ServiceName}\" -ErrorAction SilentlyContinue",
+      "if ($${1:serviceName}) {",
+      "    if ($${1:serviceName}.Status -eq 'Running') {",
+      "        Write-Host \"${2:ServiceName}は実行中です\" -ForegroundColor Green",
+      "    }",
+      "    else {",
+      "        Write-Host \"${2:ServiceName}は停止しています\" -ForegroundColor Yellow",
+      "        Start-Service -Name \"${2:ServiceName}\"",
+      "    }",
+      "}",
+      "else {",
+      "    Write-Host \"${2:ServiceName}が見つかりません\" -ForegroundColor Red",
+      "}",
+      "$0"
+    ],
+    "description": "サービス状態チェック"
+  },
+  "File Check": {
+    "prefix": "ps-file-check",
+    "body": [
+      "$${1:filePath} = \"${2:C:\\\\Path\\\\To\\\\File}\"",
+      "if (Test-Path $${1:filePath}) {",
+      "    Write-Host \"ファイルが存在します: $${1:filePath}\" -ForegroundColor Green",
+      "    ${3:# ファイル処理}",
+      "}",
+      "else {",
+      "    Write-Host \"ファイルが見つかりません: $${1:filePath}\" -ForegroundColor Red",
+      "    exit 1",
+      "}",
+      "$0"
+    ],
+    "description": "ファイル存在チェック"
+  },
+  "HTTP Request": {
+    "prefix": "ps-http-request",
+    "body": [
+      "try {",
+      "    $${1:response} = Invoke-RestMethod -Uri \"${2:https://api.example.com}\" -Method ${3|Get,Post,Put,Delete|} ${4:-Body ($${5:body} | ConvertTo-Json) -ContentType 'application/json'}",
+      "    Write-Host \"成功: $${1:response}\" -ForegroundColor Green",
+      "    return $${1:response}",
+      "}",
+      "catch {",
+      "    Write-Error \"HTTPリクエストエラー: $_\"",
+      "    exit 1",
+      "}",
+      "$0"
+    ],
+    "description": "HTTPリクエスト（PowerShell）"
+  },
+  "Write Colored Output": {
+    "prefix": "ps-write-color",
+    "body": [
+      "Write-Host \"${1:メッセージ}\" -ForegroundColor ${2|Black,DarkBlue,DarkGreen,DarkCyan,DarkRed,DarkMagenta,DarkYellow,Gray,DarkGray,Blue,Green,Cyan,Red,Magenta,Yellow,White|}",
+      "$0"
+    ],
+    "description": "色付き出力"
+  },
+  "Error Handling": {
+    "prefix": "ps-try-catch",
+    "body": [
+      "try {",
+      "    ${1:# 処理を記述}",
+      "}",
+      "catch {",
+      "    Write-Error \"エラー: $_\"",
+      "    Write-Host \"エラー詳細: $($_.Exception.Message)\" -ForegroundColor Red",
+      "    ${2:# エラー処理}",
+      "    exit 1",
+      "}",
+      "$0"
+    ],
+    "description": "エラーハンドリング"
+  }
+}
