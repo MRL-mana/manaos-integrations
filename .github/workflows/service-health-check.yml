@@ -1,0 +1,127 @@
+name: サービスヘルスチェック（モック）
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - '**/*.py'
+      - 'requirements*.txt'
+  pull_request:
+    branches: [ master, main ]
+  schedule:
+    # 毎日午前3時（JST 12:00）に実行
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  health-check-mock:
+    name: サービススクリプト動作確認
+    runs-on: windows-latest
+    
+    steps:
+    - name: チェックアウト
+      uses: actions/checkout@v4
+      
+    - name: Python環境セットアップ
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        
+    - name: 依存関係インストール
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests fastapi uvicorn pydantic pytest pytest-asyncio
+        if (Test-Path requirements-core.txt) {
+          pip install -r requirements-core.txt
+        }
+      shell: pwsh
+      continue-on-error: true
+      
+    - name: Pythonスクリプト構文チェック
+      run: |
+        $scripts = @(
+          "start_vscode_cursor_services.py",
+          "autonomous_operations.py",
+          "check_services_health.py",
+          "emergency_stop.py",
+          "vscode_cursor_integration.py"
+        )
+        
+        Write-Host "Python構文チェック開始" -ForegroundColor Cyan
+        $errors = 0
+        
+        foreach ($script in $scripts) {
+          if (Test-Path $script) {
+            Write-Host "Checking: $script" -ForegroundColor Yellow
+            python -m py_compile $script 2>&1
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "  ✅ $script - OK" -ForegroundColor Green
+            } else {
+              Write-Host "  ❌ $script - FAILED" -ForegroundColor Red
+              $errors++
+            }
+          } else {
+            Write-Host "  ⚠️ $script - NOT FOUND" -ForegroundColor Yellow
+          }
+        }
+        
+        if ($errors -gt 0) {
+          Write-Error "Found $errors syntax errors"
+          exit 1
+        }
+        
+        Write-Host "`n✅ All Python scripts are syntactically valid" -ForegroundColor Green
+      shell: pwsh
+      
+    - name: ヘルスチェックスクリプトドライラン
+      run: |
+        Write-Host "ヘルスチェックスクリプトの構文確認（実際のサービスは起動しない）" -ForegroundColor Cyan
+        
+        # スクリプトが存在するか確認
+        if (Test-Path "check_services_health.py") {
+          # 構文チェックのみ（実行はしない）
+          python -c "import ast; ast.parse(open('check_services_health.py').read())"
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ check_services_health.py is valid" -ForegroundColor Green
+          } else {
+            Write-Error "❌ check_services_health.py has syntax errors"
+            exit 1
+          }
+        }
+      shell: pwsh
+      
+    - name: 自律監視スクリプト検証
+      run: |
+        if (Test-Path "autonomous_operations.py") {
+          python -c "import ast; ast.parse(open('autonomous_operations.py').read())"
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ autonomous_operations.py is valid" -ForegroundColor Green
+          } else {
+            Write-Error "❌ autonomous_operations.py has syntax errors"
+            exit 1
+          }
+        }
+      shell: pwsh
+      
+    - name: 緊急停止スクリプト検証
+      run: |
+        if (Test-Path "emergency_stop.py") {
+          python -c "import ast; ast.parse(open('emergency_stop.py').read())"
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ emergency_stop.py is valid" -ForegroundColor Green
+          } else {
+            Write-Error "❌ emergency_stop.py has syntax errors"
+            exit 1
+          }
+        }
+      shell: pwsh
+      
+    - name: 検証結果サマリー
+      run: |
+        Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+        Write-Host " サービススクリプト検証完了 ✅" -ForegroundColor Green
+        Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+        Write-Host "`n📝 注意: 実際のサービス起動テストはローカル環境で実行してください" -ForegroundColor Yellow
+        Write-Host "   ローカルテスト: .\validation_script.ps1`n" -ForegroundColor Gray
+      shell: pwsh

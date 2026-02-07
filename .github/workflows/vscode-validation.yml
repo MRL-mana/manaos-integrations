@@ -1,0 +1,175 @@
+name: VSCode設定検証
+
+on:
+  push:
+    branches: [ master, main, develop ]
+    paths:
+      - '.vscode/**'
+      - '**.py'
+      - '**.md'
+      - 'validation_script.ps1'
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  validate-vscode-setup:
+    name: VSCode設定ファイル検証
+    runs-on: windows-latest
+    
+    steps:
+    - name: チェックアウト
+      uses: actions/checkout@v4
+      
+    - name: Python環境セットアップ
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        
+    - name: 依存関係インストール
+      run: |
+        python -m pip install --upgrade pip
+        if (Test-Path requirements-core.txt) {
+          pip install -r requirements-core.txt
+        }
+      shell: pwsh
+      
+    - name: 必須ファイル存在確認
+      run: |
+        $files = @(
+          ".vscode/extensions.json",
+          ".vscode/tasks.json",
+          ".vscode/launch.json",
+          ".vscode/settings.json",
+          "VSCODE_SETUP_GUIDE.md",
+          "VSCODE_CHECKLIST.md",
+          "validation_script.ps1"
+        )
+        
+        $missing = @()
+        foreach ($file in $files) {
+          if (-not (Test-Path $file)) {
+            $missing += $file
+            Write-Error "Missing file: $file"
+          } else {
+            Write-Host "✅ Found: $file" -ForegroundColor Green
+          }
+        }
+        
+        if ($missing.Count -gt 0) {
+          Write-Error "Missing $($missing.Count) required files"
+          exit 1
+        }
+      shell: pwsh
+      
+    - name: JSON構文検証
+      run: |
+        $jsonFiles = @(
+          ".vscode/extensions.json",
+          ".vscode/tasks.json",
+          ".vscode/launch.json"
+        )
+        
+        $errors = 0
+        foreach ($file in $jsonFiles) {
+          try {
+            $content = Get-Content $file -Raw | ConvertFrom-Json -ErrorAction Stop
+            Write-Host "✅ Valid JSON: $file" -ForegroundColor Green
+          } catch {
+            Write-Error "❌ Invalid JSON: $file - $($_.Exception.Message)"
+            $errors++
+          }
+        }
+        
+        if ($errors -gt 0) {
+          Write-Error "Found $errors JSON syntax errors"
+          exit 1
+        }
+      shell: pwsh
+      
+    - name: Pythonコード構文確認
+      run: |
+        $pyFiles = @(
+          "start_vscode_cursor_services.py",
+          "autonomous_operations.py",
+          "check_services_health.py",
+          "emergency_stop.py"
+        )
+        
+        $errors = 0
+        foreach ($file in $pyFiles) {
+          if (Test-Path $file) {
+            python -m py_compile $file 2>&1
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "❌ Syntax error in: $file"
+              $errors++
+            } else {
+              Write-Host "✅ Valid Python syntax: $file" -ForegroundColor Green
+            }
+          }
+        }
+        
+        if ($errors -gt 0) {
+          Write-Error "Found $errors Python syntax errors"
+          exit 1
+        }
+      shell: pwsh
+      
+    - name: ドキュメントリンク検証
+      run: |
+        $docs = @(
+          "VSCODE_SETUP_GUIDE.md",
+          "VSCODE_VS_CURSOR.md",
+          "VSCODE_CHECKLIST.md",
+          "VSCODE_TEST_CHECKLIST.md",
+          "SNIPPETS_GUIDE.md",
+          "QUICKREF.md",
+          "STARTUP_GUIDE.md",
+          "SYSTEM3_GUIDE.md",
+          "EMERGENCY_STOP_GUIDE.md"
+        )
+        
+        $broken = @()
+        foreach ($doc in $docs) {
+          if (-not (Test-Path $doc)) {
+            Write-Warning "⚠️ Missing documentation: $doc"
+            $broken += $doc
+          } else {
+            Write-Host "✅ Found: $doc" -ForegroundColor Green
+          }
+        }
+        
+        if ($broken.Count -gt 3) {
+          Write-Error "Too many missing documentation files: $($broken.Count)"
+          exit 1
+        }
+      shell: pwsh
+      
+    - name: スニペット検証
+      run: |
+        if (Test-Path ".vscode/python.code-snippets") {
+          try {
+            $snippets = Get-Content ".vscode/python.code-snippets" -Raw | ConvertFrom-Json
+            $count = ($snippets | Get-Member -MemberType NoteProperty).Count
+            Write-Host "✅ Found $count code snippets" -ForegroundColor Green
+            
+            if ($count -lt 5) {
+              Write-Warning "⚠️ Only $count snippets found (expected at least 5)"
+            }
+          } catch {
+            Write-Error "❌ Invalid snippets file: $($_.Exception.Message)"
+            exit 1
+          }
+        } else {
+          Write-Warning "⚠️ python.code-snippets not found"
+        }
+      shell: pwsh
+      
+    - name: 検証結果サマリー
+      run: |
+        Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+        Write-Host " VSCode設定検証完了 ✅" -ForegroundColor Green
+        Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+        Write-Host "`n✅ すべての検証に合格しました`n" -ForegroundColor Green
+      shell: pwsh
