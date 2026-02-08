@@ -74,6 +74,91 @@ class ConfigSchema:
                     "default": []
                 },
                 "last_optimization": {"type": ["str", "null"], "required": False, "default": None}
+            },
+            "oh_my_opencode_config.yaml": {
+                "api": {
+                    "type": "dict",
+                    "required": True,
+                    "fields": {
+                        "base_url": {"type": "str", "required": True},
+                        "api_key": {"type": "str", "required": True},
+                        "timeout": {"type": "float", "required": False, "default": 300.0}
+                    }
+                },
+                "execution": {
+                    "type": "dict",
+                    "required": True,
+                    "fields": {
+                        "default_mode": {"type": "str", "required": False, "default": "normal"},
+                        "max_iterations": {"type": "int", "required": False, "default": 10},
+                        "max_execution_time": {"type": "int", "required": False, "default": 3600}
+                    }
+                },
+                "ultra_work": {
+                    "type": "dict",
+                    "required": False,
+                    "fields": {
+                        "enabled": {"type": "bool", "required": False, "default": False},
+                        "allowed_task_types": {"type": "list", "required": False, "default": []},
+                        "require_approval": {"type": "bool", "required": False, "default": True},
+                        "cost_limit_per_task": {"type": "float", "required": False, "default": 100.0},
+                        "downgrade_enabled": {"type": "bool", "required": False, "default": True},
+                        "downgrade_cost_threshold": {"type": "float", "required": False, "default": 0.7},
+                        "downgrade_time_threshold": {"type": "float", "required": False, "default": 0.8},
+                        "downgrade_iteration_threshold": {"type": "float", "required": False, "default": 0.75}
+                    }
+                },
+                "cost_management": {
+                    "type": "dict",
+                    "required": False,
+                    "fields": {
+                        "enabled": {"type": "bool", "required": False, "default": True},
+                        "daily_limit": {"type": "float", "required": False, "default": 100.0},
+                        "monthly_limit": {"type": "float", "required": False, "default": 2000.0},
+                        "warning_threshold": {"type": "float", "required": False, "default": 0.8},
+                        "auto_stop": {"type": "bool", "required": False, "default": True}
+                    }
+                },
+                "kill_switch": {
+                    "type": "dict",
+                    "required": False,
+                    "fields": {
+                        "enabled": {"type": "bool", "required": False, "default": True},
+                        "max_execution_time": {"type": "int", "required": False, "default": 3600},
+                        "max_iterations": {"type": "int", "required": False, "default": 20},
+                        "detect_infinite_loop": {"type": "bool", "required": False, "default": True},
+                        "auto_kill_on_error": {"type": "bool", "required": False, "default": False}
+                    }
+                },
+                "trinity": {
+                    "type": "dict",
+                    "required": False,
+                    "fields": {
+                        "enabled": {"type": "bool", "required": False, "default": True},
+                        "remi_integration": {"type": "bool", "required": False, "default": True},
+                        "luna_integration": {"type": "bool", "required": False, "default": True},
+                        "mina_integration": {"type": "bool", "required": False, "default": True}
+                    }
+                },
+                "llm_routing": {
+                    "type": "dict",
+                    "required": False,
+                    "fields": {
+                        "enabled": {"type": "bool", "required": False, "default": True},
+                        "use_manaos_routing": {"type": "bool", "required": False, "default": True},
+                        "fallback_to_local": {"type": "bool", "required": False, "default": True}
+                    }
+                },
+                "logging": {
+                    "type": "dict",
+                    "required": False,
+                    "fields": {
+                        "enabled": {"type": "bool", "required": False, "default": True},
+                        "level": {"type": "str", "required": False, "default": "INFO"},
+                        "save_to_obsidian": {"type": "bool", "required": False, "default": True},
+                        "save_to_notion": {"type": "bool", "required": False, "default": False}
+                    }
+                }
             }
         }
     
