@@ -6,6 +6,7 @@ ManaOS統合MCPサーバー
 import asyncio
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any, Optional, Sequence
@@ -15,8 +16,8 @@ import httpx
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -24,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
+from autonomy_gates import get_action_class_for_tool, ActionClass, get_usage_key_for_tool
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -31,7 +33,8 @@ logger = logging.getLogger(__name__)
 # 環境変数の読み込み（python-dotenvを使用）
 try:
     from dotenv import load_dotenv
-    env_path = Path(__file__).parent.parent / '.env'
+
+    env_path = Path(__file__).parent.parent / ".env"
     if env_path.exists():
         load_dotenv(env_path)
         logger.info(".envファイルを読み込みました")
@@ -41,16 +44,20 @@ except ImportError:
 # 統一エラーハンドリングのインポート
 try:
     from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
+
     error_handler = ManaOSErrorHandler("manaos-unified-mcp-server")
     ERROR_HANDLER_AVAILABLE = True
 except ImportError:
-    logger.warning("統一エラーハンドリングモジュールが見つかりません。基本的なエラーハンドリングを使用します。")
+    logger.warning(
+        "統一エラーハンドリングモジュールが見つかりません。基本的なエラーハンドリングを使用します。"
+    )
     ERROR_HANDLER_AVAILABLE = False
     error_handler = None
 
 # タイムアウト設定のインポート
 try:
     from manaos_timeout_config import get_timeout_config
+
     timeout_config = get_timeout_config()
     TIMEOUT_CONFIG_AVAILABLE = True
 except ImportError:
@@ -61,17 +68,68 @@ except ImportError:
 # 環境変数から設定を読み込み
 COMFYUI_URL = os.getenv("COMFYUI_URL", "http://localhost:8188")
 MANAOS_API_URL = os.getenv("MANAOS_INTEGRATION_API_URL", "http://localhost:9500")
+PORTAL_INTEGRATION_URL = os.getenv("PORTAL_INTEGRATION_URL", "http://localhost:5108")
+ROOT = Path(__file__).resolve().parent.parent
 LEARNING_SYSTEM_URL = os.getenv("LEARNING_SYSTEM_URL", "http://localhost:5126")
 PERSONALITY_SYSTEM_URL = os.getenv("PERSONALITY_SYSTEM_URL", "http://localhost:5123")
 AUTONOMY_SYSTEM_URL = os.getenv("AUTONOMY_SYSTEM_URL", "http://localhost:5124")
 SECRETARY_SYSTEM_URL = os.getenv("SECRETARY_SYSTEM_URL", "http://localhost:5125")
 
+
 # 危険度の高いツール（VS Code操作など）の有効/無効
 def _vscode_tools_enabled() -> bool:
-    return os.getenv("MANAOS_ENABLE_VSCODE_TOOLS", "false").strip().lower() in ("1", "true", "yes", "y", "on")
+    return os.getenv("MANAOS_ENABLE_VSCODE_TOOLS", "false").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "y",
+        "on",
+    )
+
+
+# Autonomy System 連携ユーティリティ
+def _autonomy_check_tool(tool_name: str) -> tuple[bool, str]:
+    """
+    自律ゲートにツール実行可否を問い合わせる。
+    Autonomy System が落ちている場合は許可（ログのみ）。
+    """
+    try:
+        timeout = timeout_config.get("api_call", 5.0) if TIMEOUT_CONFIG_AVAILABLE else 5.0
+        resp = httpx.post(
+            f"{AUTONOMY_SYSTEM_URL}/api/check-tool",
+            json={"tool_name": tool_name},
+            timeout=timeout,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return bool(data.get("allowed", True)), data.get("reason", "")
+    except Exception as e:
+        logger.debug(f"Autonomy check-tool エラー（許可で継続）: {e}")
+        return True, ""
+
+
+def _autonomy_record_cost(tool_name: str) -> None:
+    """
+    C3 ツール実行後にコスト使用量を Autonomy System に記録。
+    Autonomy System が落ちている場合は無視。
+    """
+    usage_key = get_usage_key_for_tool(tool_name)
+    if not usage_key:
+        return
+    try:
+        timeout = timeout_config.get("api_call", 5.0) if TIMEOUT_CONFIG_AVAILABLE else 5.0
+        httpx.post(
+            f"{AUTONOMY_SYSTEM_URL}/api/record-cost",
+            json={"usage_key": usage_key, "period": "per_hour", "amount": 1},
+            timeout=timeout,
+        )
+    except Exception as e:
+        logger.debug(f"Autonomy record-cost エラー（無視）: {e}")
+
 
 # 統合モジュール（遅延インポート）
 _integrations = {}
+
 
 def get_integration(name: str):
     """統合モジュールを取得（遅延インポート）"""
@@ -79,57 +137,199 @@ def get_integration(name: str):
         try:
             if name == "svi":
                 from svi_wan22_video_integration import SVIWan22VideoIntegration
+
                 _integrations[name] = SVIWan22VideoIntegration(base_url=COMFYUI_URL)
             elif name == "comfyui":
                 from comfyui_integration import ComfyUIIntegration
+
                 _integrations[name] = ComfyUIIntegration(base_url=COMFYUI_URL)
             elif name == "google_drive":
                 from google_drive_integration import GoogleDriveIntegration
+
                 _integrations[name] = GoogleDriveIntegration()
             elif name == "rows":
                 from rows_integration import RowsIntegration
+
                 _integrations[name] = RowsIntegration()
             elif name == "obsidian":
-                vault_path = os.getenv("OBSIDIAN_VAULT_PATH", "C:/Users/mana4/Documents/Obsidian Vault")
+                vault_path = os.getenv(
+                    "OBSIDIAN_VAULT_PATH", "C:/Users/mana4/Documents/Obsidian Vault"
+                )
                 from obsidian_integration import ObsidianIntegration
+
                 _integrations[name] = ObsidianIntegration(vault_path=vault_path)
             elif name == "image_stock":
                 from image_stock import ImageStock
+
                 _integrations[name] = ImageStock()
             elif name == "notification":
                 from notification_hub import NotificationHub
+
                 _integrations[name] = NotificationHub()
             elif name == "memory":
                 from memory_unified import UnifiedMemory
+
                 _integrations[name] = UnifiedMemory()
             elif name == "llm_routing":
                 from llm_routing import LLMRouter
+
                 _integrations[name] = LLMRouter()
             elif name == "secretary":
                 from secretary_routines import SecretaryRoutines
+
                 _integrations[name] = SecretaryRoutines()
             elif name == "searxng":
                 from searxng_integration import SearXNGIntegration
+
                 searxng_url = os.getenv("SEARXNG_BASE_URL", "http://localhost:8080")
                 _integrations[name] = SearXNGIntegration(base_url=searxng_url)
             elif name == "brave_search":
                 from brave_search_integration import BraveSearchIntegration
+
                 _integrations[name] = BraveSearchIntegration()
             elif name == "civitai":
                 from civitai_integration import CivitAIIntegration
+
                 # APIキーはCivitAIIntegration内でも環境変数から取得できる
                 _integrations[name] = CivitAIIntegration(api_key=os.getenv("CIVITAI_API_KEY"))
             elif name == "base_ai":
                 from base_ai_integration import BaseAIIntegration
+
                 use_free = os.getenv("BASE_AI_USE_FREE", "false").lower() == "true"
                 _integrations[name] = BaseAIIntegration(use_free=use_free)
+            elif name == "device_orchestrator":
+                from device_orchestrator import DeviceOrchestrator
+
+                config_path = os.getenv(
+                    "DEVICE_ORCHESTRATOR_CONFIG", "device_orchestrator_config.json"
+                )
+                _integrations[name] = DeviceOrchestrator(config_path=config_path)
         except ImportError as e:
             logger.warning(f"{name}統合のインポートに失敗: {e}")
             return None
     return _integrations.get(name)
 
+
 # MCPサーバーの作成
 server = Server("manaos-unified")
+
+# MCP_DOMAIN による分割: media | productivity | ai | devices | moltbot | (空=全ツール)
+MCP_DOMAIN = (os.getenv("MCP_DOMAIN") or "").strip().lower()
+DOMAIN_TOOLS = {
+    "media": [
+        "svi_generate_video",
+        "svi_extend_video",
+        "svi_get_queue_status",
+        "comfyui_generate_image",
+        "generate_sd_prompt",
+        "civitai_get_favorites",
+        "civitai_download_favorites",
+        "civitai_get_images",
+        "civitai_get_image_details",
+        "civitai_get_creators",
+        "image_stock_add",
+        "image_stock_search",
+    ],
+    "productivity": [
+        "google_drive_upload",
+        "google_drive_list_files",
+        "rows_query",
+        "rows_send_data",
+        "rows_list_spreadsheets",
+        "obsidian_create_note",
+        "obsidian_search_notes",
+        "notification_send",
+    ],
+    "ai": [
+        "memory_store",
+        "memory_recall",
+        "llm_chat",
+        "secretary_morning_routine",
+        "secretary_noon_routine",
+        "secretary_evening_routine",
+        "learning_record",
+        "learning_analyze",
+        "learning_get_preferences",
+        "learning_get_optimizations",
+        "phase1_run_off_3rounds",
+        "phase1_run_on_rounds",
+        "phase1_save_run",
+        "phase1_aggregate",
+        "phase1_compare_on_off",
+        "phase1_phase2_full_run",
+        "phase1_low_sat_archive",
+        "phase1_low_sat_history_view",
+        "phase1_weekly_report",
+        "phase2_backfill_memos",
+        "phase2_get_memos",
+        "phase2_memo_summary",
+        "phase2_auto_cleanup",
+        "personality_get_persona",
+        "personality_get_prompt",
+        "personality_apply",
+        "personality_update",
+        "autonomy_add_task",
+        "autonomy_execute_tasks",
+        "autonomy_list_tasks",
+        "autonomy_get_level",
+        "web_search",
+        "web_search_simple",
+        "brave_search",
+        "brave_search_simple",
+        "base_ai_chat",
+        "openwebui_create_chat",
+        "openwebui_list_chats",
+        "openwebui_send_message",
+        "openwebui_get_chat",
+        "openwebui_list_models",
+        "openwebui_update_settings",
+        "research_quick",
+        "research_status",
+        "voice_health",
+        "voice_synthesize",
+        "n8n_list_workflows",
+        "n8n_execute_workflow",
+        "secretary_file_organize",
+        "github_search",
+        "github_commits",
+        "cache_stats",
+        "performance_stats",
+    ],
+    "devices": [
+        "device_discover",
+        "device_get_status",
+        "device_get_health",
+        "device_get_resources",
+        "device_get_alerts",
+        "pixel7_execute",
+        "pixel7_get_resources",
+        "pixel7_screenshot",
+        "pixel7_get_apps",
+        "pixel7_push_file",
+        "pixel7_pull_file",
+        "mothership_get_resources",
+        "mothership_execute",
+        "x280_get_resources",
+        "x280_execute",
+        "konoha_health",
+        "nanokvm_console_url",
+        "nanokvm_health",
+        "pixel7_tts",
+        "pixel7_transcribe",
+    ],
+    "moltbot": ["moltbot_submit_plan", "moltbot_get_result", "moltbot_health"],
+    "file_secretary": ["file_secretary_inbox_status", "file_secretary_organize"],
+    "research": ["research_quick", "research_status"],
+}
+
+
+def _filter_tools_by_domain(tools_list: list) -> list:
+    """MCP_DOMAIN が設定されていれば該当ツールのみ返す"""
+    if not MCP_DOMAIN or MCP_DOMAIN not in DOMAIN_TOOLS:
+        return tools_list
+    allowed = set(DOMAIN_TOOLS[MCP_DOMAIN])
+    return [t for t in tools_list if t.name in allowed]
+
 
 @server.list_tools()
 async def list_tools() -> list[Tool]:
@@ -139,1840 +339,1400 @@ async def list_tools() -> list[Tool]:
     # ========================================
     # SVI動画生成
     # ========================================
-    tools.extend([
-        Tool(
-            name="svi_generate_video",
-            description="SVI × Wan 2.2で動画を生成します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "start_image_path": {"type": "string", "description": "開始画像のパス（必須）"},
-                    "prompt": {"type": "string", "description": "プロンプト（日本語可、必須）"},
-                    "video_length_seconds": {"type": "integer", "description": "動画の長さ（秒、デフォルト: 5）", "default": 5},
-                    "steps": {"type": "integer", "description": "ステップ数（デフォルト: 6）", "default": 6},
-                    "motion_strength": {"type": "number", "description": "モーション強度（デフォルト: 1.3）", "default": 1.3}
+    tools.extend(
+        [
+            Tool(
+                name="svi_generate_video",
+                description="SVI × Wan 2.2で動画を生成します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "start_image_path": {
+                            "type": "string",
+                            "description": "開始画像のパス（必須）",
+                        },
+                        "prompt": {"type": "string", "description": "プロンプト（日本語可、必須）"},
+                        "video_length_seconds": {
+                            "type": "integer",
+                            "description": "動画の長さ（秒、デフォルト: 5）",
+                            "default": 5,
+                        },
+                        "steps": {
+                            "type": "integer",
+                            "description": "ステップ数（デフォルト: 6）",
+                            "default": 6,
+                        },
+                        "motion_strength": {
+                            "type": "number",
+                            "description": "モーション強度（デフォルト: 1.3）",
+                            "default": 1.3,
+                        },
+                    },
+                    "required": ["start_image_path", "prompt"],
                 },
-                "required": ["start_image_path", "prompt"]
-            }
-        ),
-        Tool(
-            name="svi_extend_video",
-            description="既存の動画を延長します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "previous_video_path": {"type": "string", "description": "前の動画のパス（必須）"},
-                    "prompt": {"type": "string", "description": "延長部分のプロンプト（必須）"},
-                    "extend_seconds": {"type": "integer", "description": "延長する秒数（デフォルト: 5）", "default": 5}
+            ),
+            Tool(
+                name="svi_extend_video",
+                description="既存の動画を延長します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "previous_video_path": {
+                            "type": "string",
+                            "description": "前の動画のパス（必須）",
+                        },
+                        "prompt": {"type": "string", "description": "延長部分のプロンプト（必須）"},
+                        "extend_seconds": {
+                            "type": "integer",
+                            "description": "延長する秒数（デフォルト: 5）",
+                            "default": 5,
+                        },
+                    },
+                    "required": ["previous_video_path", "prompt"],
                 },
-                "required": ["previous_video_path", "prompt"]
-            }
-        ),
-        Tool(
-            name="svi_get_queue_status",
-            description="ComfyUIのキュー状態を取得します",
-            inputSchema={"type": "object", "properties": {}}
-        )
-    ])
+            ),
+            Tool(
+                name="svi_get_queue_status",
+                description="ComfyUIのキュー状態を取得します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+        ]
+    )
 
     # ========================================
     # ComfyUI画像生成
     # ========================================
-    tools.extend([
-        Tool(
-            name="comfyui_generate_image",
-            description="ComfyUIで画像を生成します（複数LoRA対応）",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "prompt": {"type": "string", "description": "プロンプト（必須）"},
-                    "negative_prompt": {"type": "string", "description": "ネガティブプロンプト"},
-                    "width": {"type": "integer", "description": "画像幅（デフォルト: 512）", "default": 512},
-                    "height": {"type": "integer", "description": "画像高さ（デフォルト: 512）", "default": 512},
-                    "steps": {"type": "integer", "description": "ステップ数（デフォルト: 70）", "default": 70},
-                    "cfg_scale": {"type": "number", "description": "CFGスケール（デフォルト: 8.5）", "default": 8.5},
-                    "model": {"type": "string", "description": "使用するモデル名"},
-                    "loras": {"type": "array", "description": "LoRAのリスト [{\"name\": \"lora_name\", \"strength\": 0.8}, ...]", "items": {"type": "object"}},
-                    "sampler": {"type": "string", "description": "サンプラー（デフォルト: euler_ancestral）", "default": "euler_ancestral"},
-                    "scheduler": {"type": "string", "description": "スケジューラー（デフォルト: karras）", "default": "karras"},
-                    "seed": {"type": "integer", "description": "シード（-1の場合はランダム）", "default": -1}
+    tools.extend(
+        [
+            Tool(
+                name="comfyui_generate_image",
+                description="ComfyUIで画像を生成します（複数LoRA対応）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "prompt": {"type": "string", "description": "プロンプト（必須）"},
+                        "negative_prompt": {
+                            "type": "string",
+                            "description": "ネガティブプロンプト",
+                        },
+                        "width": {
+                            "type": "integer",
+                            "description": "画像幅（デフォルト: 512）",
+                            "default": 512,
+                        },
+                        "height": {
+                            "type": "integer",
+                            "description": "画像高さ（デフォルト: 512）",
+                            "default": 512,
+                        },
+                        "steps": {
+                            "type": "integer",
+                            "description": "ステップ数（デフォルト: 70）",
+                            "default": 70,
+                        },
+                        "cfg_scale": {
+                            "type": "number",
+                            "description": "CFGスケール（デフォルト: 8.5）",
+                            "default": 8.5,
+                        },
+                        "model": {"type": "string", "description": "使用するモデル名"},
+                        "loras": {
+                            "type": "array",
+                            "description": 'LoRAのリスト [{"name": "lora_name", "strength": 0.8}, ...]',
+                            "items": {"type": "object"},
+                        },
+                        "sampler": {
+                            "type": "string",
+                            "description": "サンプラー（デフォルト: euler_ancestral）",
+                            "default": "euler_ancestral",
+                        },
+                        "scheduler": {
+                            "type": "string",
+                            "description": "スケジューラー（デフォルト: karras）",
+                            "default": "karras",
+                        },
+                        "seed": {
+                            "type": "integer",
+                            "description": "シード（-1の場合はランダム）",
+                            "default": -1,
+                        },
+                    },
+                    "required": ["prompt"],
                 },
-                "required": ["prompt"]
-            }
-        )
-    ])
+            ),
+            Tool(
+                name="generate_sd_prompt",
+                description="日本語の説明からStable Diffusion用の英語プロンプトを生成します（Ollama llama3-uncensored使用）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "description": {
+                            "type": "string",
+                            "description": "画像の日本語説明（必須）",
+                        },
+                        "model": {
+                            "type": "string",
+                            "description": "Ollamaモデル名（デフォルト: llama3-uncensored）",
+                            "default": "llama3-uncensored",
+                        },
+                        "temperature": {
+                            "type": "number",
+                            "description": "温度 0.0-1.0（デフォルト: 0.9）",
+                            "default": 0.9,
+                        },
+                        "with_negative": {
+                            "type": "boolean",
+                            "description": "デフォルトのネガティブプロンプトも返す",
+                            "default": False,
+                        },
+                    },
+                    "required": ["description"],
+                },
+            ),
+        ]
+    )
 
     # ========================================
     # CivitAI
     # ========================================
-    tools.extend([
-        Tool(
-            name="civitai_get_favorites",
-            description="CivitAIのお気に入りモデル一覧を取得します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "limit": {"type": "integer", "description": "取得数（デフォルト: 100）", "default": 100},
-                    "model_type": {"type": "string", "description": "モデルタイプ（Checkpoint, LORA等）"}
-                }
-            }
-        ),
-        Tool(
-            name="civitai_download_favorites",
-            description="CivitAIのお気に入りモデルを自動ダウンロードします",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "auto": {"type": "boolean", "description": "自動モード（確認なし）", "default": false},
-                    "model_type": {"type": "string", "description": "モデルタイプ（Checkpoint, LORA等）"}
-                }
-            }
-        ),
-        Tool(
-            name="civitai_get_images",
-            description="CivitAIで画像を取得します（プロンプト情報含む）",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "limit": {"type": "integer", "description": "取得数（最大200、デフォルト: 20）", "default": 20},
-                    "model_id": {"type": "integer", "description": "モデルIDでフィルタ"},
-                    "model_version_id": {"type": "integer", "description": "モデルバージョンIDでフィルタ"},
-                    "username": {"type": "string", "description": "ユーザー名でフィルタ"},
-                    "nsfw": {"type": "boolean", "description": "NSFWフラグ"},
-                    "sort": {"type": "string", "description": "ソート方法（Most Reactions, Most Comments, Newest）", "default": "Most Reactions"},
-                    "period": {"type": "string", "description": "期間（AllTime, Year, Month, Week, Day）", "default": "AllTime"},
-                    "page": {"type": "integer", "description": "ページ番号（デフォルト: 1）", "default": 1}
-                }
-            }
-        ),
-        Tool(
-            name="civitai_get_image_details",
-            description="CivitAIで画像の詳細情報を取得します（プロンプト情報含む）",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "image_id": {"type": "integer", "description": "画像ID（必須）"}
+    tools.extend(
+        [
+            Tool(
+                name="civitai_get_favorites",
+                description="CivitAIのお気に入りモデル一覧を取得します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "limit": {
+                            "type": "integer",
+                            "description": "取得数（デフォルト: 100）",
+                            "default": 100,
+                        },
+                        "model_type": {
+                            "type": "string",
+                            "description": "モデルタイプ（Checkpoint, LORA等）",
+                        },
+                    },
                 },
-                "required": ["image_id"]
-            }
-        ),
-        Tool(
-            name="civitai_get_creators",
-            description="CivitAIでクリエイター一覧を取得します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "username": {"type": "string", "description": "ユーザー名でフィルタ"},
-                    "limit": {"type": "integer", "description": "取得数（デフォルト: 20）", "default": 20}
-                }
-            }
-        )
-    ])
+            ),
+            Tool(
+                name="civitai_download_favorites",
+                description="CivitAIのお気に入りモデルを自動ダウンロードします",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "auto": {
+                            "type": "boolean",
+                            "description": "自動モード（確認なし）",
+                            "default": False,
+                        },
+                        "model_type": {
+                            "type": "string",
+                            "description": "モデルタイプ（Checkpoint, LORA等）",
+                        },
+                    },
+                },
+            ),
+            Tool(
+                name="civitai_get_images",
+                description="CivitAIで画像を取得します（プロンプト情報含む）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "limit": {
+                            "type": "integer",
+                            "description": "取得数（最大200、デフォルト: 20）",
+                            "default": 20,
+                        },
+                        "model_id": {"type": "integer", "description": "モデルIDでフィルタ"},
+                        "model_version_id": {
+                            "type": "integer",
+                            "description": "モデルバージョンIDでフィルタ",
+                        },
+                        "username": {"type": "string", "description": "ユーザー名でフィルタ"},
+                        "nsfw": {"type": "boolean", "description": "NSFWフラグ"},
+                        "sort": {
+                            "type": "string",
+                            "description": "ソート方法（Most Reactions, Most Comments, Newest）",
+                            "default": "Most Reactions",
+                        },
+                        "period": {
+                            "type": "string",
+                            "description": "期間（AllTime, Year, Month, Week, Day）",
+                            "default": "AllTime",
+                        },
+                        "page": {
+                            "type": "integer",
+                            "description": "ページ番号（デフォルト: 1）",
+                            "default": 1,
+                        },
+                    },
+                },
+            ),
+            Tool(
+                name="civitai_get_image_details",
+                description="CivitAIで画像の詳細情報を取得します（プロンプト情報含む）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "image_id": {"type": "integer", "description": "画像ID（必須）"}
+                    },
+                    "required": ["image_id"],
+                },
+            ),
+            Tool(
+                name="civitai_get_creators",
+                description="CivitAIでクリエイター一覧を取得します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "username": {"type": "string", "description": "ユーザー名でフィルタ"},
+                        "limit": {
+                            "type": "integer",
+                            "description": "取得数（デフォルト: 20）",
+                            "default": 20,
+                        },
+                    },
+                },
+            ),
+        ]
+    )
 
     # ========================================
     # Google Drive
     # ========================================
-    tools.extend([
-        Tool(
-            name="google_drive_upload",
-            description="Google Driveにファイルをアップロードします",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "file_path": {"type": "string", "description": "アップロードするファイルのパス（必須）"},
-                    "folder_id": {"type": "string", "description": "フォルダID（オプション）"}
+    tools.extend(
+        [
+            Tool(
+                name="google_drive_upload",
+                description="Google Driveにファイルをアップロードします",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "file_path": {
+                            "type": "string",
+                            "description": "アップロードするファイルのパス（必須）",
+                        },
+                        "folder_id": {"type": "string", "description": "フォルダID（オプション）"},
+                    },
+                    "required": ["file_path"],
                 },
-                "required": ["file_path"]
-            }
-        ),
-        Tool(
-            name="google_drive_list_files",
-            description="Google Driveのファイル一覧を取得します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "folder_id": {"type": "string", "description": "フォルダID（オプション）"},
-                    "query": {"type": "string", "description": "検索クエリ（オプション）"}
-                }
-            }
-        )
-    ])
+            ),
+            Tool(
+                name="google_drive_list_files",
+                description="Google Driveのファイル一覧を取得します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "folder_id": {"type": "string", "description": "フォルダID（オプション）"},
+                        "query": {"type": "string", "description": "検索クエリ（オプション）"},
+                    },
+                },
+            ),
+        ]
+    )
 
     # ========================================
     # Rows（スプレッドシート）
     # ========================================
-    tools.extend([
-        Tool(
-            name="rows_query",
-            description="RowsスプレッドシートにAI自然言語クエリを実行します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "spreadsheet_id": {"type": "string", "description": "スプレッドシートID（必須）"},
-                    "query": {"type": "string", "description": "自然言語クエリ（必須）"},
-                    "sheet_name": {"type": "string", "description": "シート名（デフォルト: Sheet1）", "default": "Sheet1"}
+    tools.extend(
+        [
+            Tool(
+                name="rows_query",
+                description="RowsスプレッドシートにAI自然言語クエリを実行します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "spreadsheet_id": {
+                            "type": "string",
+                            "description": "スプレッドシートID（必須）",
+                        },
+                        "query": {"type": "string", "description": "自然言語クエリ（必須）"},
+                        "sheet_name": {
+                            "type": "string",
+                            "description": "シート名（デフォルト: Sheet1）",
+                            "default": "Sheet1",
+                        },
+                    },
+                    "required": ["spreadsheet_id", "query"],
                 },
-                "required": ["spreadsheet_id", "query"]
-            }
-        ),
-        Tool(
-            name="rows_send_data",
-            description="Rowsスプレッドシートにデータを送信します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "spreadsheet_id": {"type": "string", "description": "スプレッドシートID（必須）"},
-                    "data": {"type": "array", "description": "送信するデータ（必須）"},
-                    "sheet_name": {"type": "string", "description": "シート名（デフォルト: Sheet1）", "default": "Sheet1"}
+            ),
+            Tool(
+                name="rows_send_data",
+                description="Rowsスプレッドシートにデータを送信します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "spreadsheet_id": {
+                            "type": "string",
+                            "description": "スプレッドシートID（必須）",
+                        },
+                        "data": {"type": "array", "description": "送信するデータ（必須）"},
+                        "sheet_name": {
+                            "type": "string",
+                            "description": "シート名（デフォルト: Sheet1）",
+                            "default": "Sheet1",
+                        },
+                    },
+                    "required": ["spreadsheet_id", "data"],
                 },
-                "required": ["spreadsheet_id", "data"]
-            }
-        ),
-        Tool(
-            name="rows_list_spreadsheets",
-            description="Rowsスプレッドシート一覧を取得します",
-            inputSchema={"type": "object", "properties": {}}
-        )
-    ])
+            ),
+            Tool(
+                name="rows_list_spreadsheets",
+                description="Rowsスプレッドシート一覧を取得します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+        ]
+    )
 
     # ========================================
     # Obsidian
     # ========================================
-    tools.extend([
-        Tool(
-            name="obsidian_create_note",
-            description="Obsidianにノートを作成します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "title": {"type": "string", "description": "ノートのタイトル（必須）"},
-                    "content": {"type": "string", "description": "ノートの内容（必須）"},
-                    "folder": {"type": "string", "description": "フォルダ（オプション）"}
+    tools.extend(
+        [
+            Tool(
+                name="obsidian_create_note",
+                description="Obsidianにノートを作成します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string", "description": "ノートのタイトル（必須）"},
+                        "content": {"type": "string", "description": "ノートの内容（必須）"},
+                        "folder": {"type": "string", "description": "フォルダ（オプション）"},
+                    },
+                    "required": ["title", "content"],
                 },
-                "required": ["title", "content"]
-            }
-        ),
-        Tool(
-            name="obsidian_search_notes",
-            description="Obsidianでノートを検索します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "検索クエリ（必須）"}
+            ),
+            Tool(
+                name="obsidian_search_notes",
+                description="Obsidianでノートを検索します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "検索クエリ（必須）"}
+                    },
+                    "required": ["query"],
                 },
-                "required": ["query"]
-            }
-        )
-    ])
+            ),
+        ]
+    )
 
     # ========================================
     # 画像ストック
     # ========================================
-    tools.extend([
-        Tool(
-            name="image_stock_add",
-            description="画像をストックに追加します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "image_path": {"type": "string", "description": "画像のパス（必須）"},
-                    "tags": {"type": "array", "description": "タグ（オプション）", "items": {"type": "string"}},
-                    "description": {"type": "string", "description": "説明（オプション）"}
+    tools.extend(
+        [
+            Tool(
+                name="image_stock_add",
+                description="画像をストックに追加します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "image_path": {"type": "string", "description": "画像のパス（必須）"},
+                        "tags": {
+                            "type": "array",
+                            "description": "タグ（オプション）",
+                            "items": {"type": "string"},
+                        },
+                        "description": {"type": "string", "description": "説明（オプション）"},
+                    },
+                    "required": ["image_path"],
                 },
-                "required": ["image_path"]
-            }
-        ),
-        Tool(
-            name="image_stock_search",
-            description="画像ストックから画像を検索します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "検索クエリ（必須）"}
+            ),
+            Tool(
+                name="image_stock_search",
+                description="画像ストックから画像を検索します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "検索クエリ（必須）"}
+                    },
+                    "required": ["query"],
                 },
-                "required": ["query"]
-            }
-        )
-    ])
+            ),
+        ]
+    )
 
     # ========================================
     # 通知
     # ========================================
-    tools.extend([
-        Tool(
-            name="notification_send",
-            description="通知を送信します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "message": {"type": "string", "description": "通知メッセージ（必須）"},
-                    "priority": {"type": "string", "description": "優先度（critical/important/normal/low、デフォルト: normal）", "default": "normal"}
+    tools.extend(
+        [
+            Tool(
+                name="notification_send",
+                description="通知を送信します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "message": {"type": "string", "description": "通知メッセージ（必須）"},
+                        "priority": {
+                            "type": "string",
+                            "description": "優先度（critical/important/normal/low、デフォルト: normal）",
+                            "default": "normal",
+                        },
+                    },
+                    "required": ["message"],
                 },
-                "required": ["message"]
-            }
-        )
-    ])
+            )
+        ]
+    )
 
     # ========================================
     # 記憶システム
     # ========================================
-    tools.extend([
-        Tool(
-            name="memory_store",
-            description="記憶に情報を保存します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "content": {"type": "string", "description": "保存する内容（必須）"},
-                    "format_type": {"type": "string", "description": "フォーマットタイプ（conversation/memo/research/system、デフォルト: auto）", "default": "auto"}
+    tools.extend(
+        [
+            Tool(
+                name="memory_store",
+                description="記憶に情報を保存します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "content": {"type": "string", "description": "保存する内容（必須）"},
+                        "format_type": {
+                            "type": "string",
+                            "description": "フォーマットタイプ（conversation/memo/research/system、デフォルト: auto）",
+                            "default": "auto",
+                        },
+                    },
+                    "required": ["content"],
                 },
-                "required": ["content"]
-            }
-        ),
-        Tool(
-            name="memory_recall",
-            description="記憶から情報を検索します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "検索クエリ（必須）"},
-                    "scope": {"type": "string", "description": "スコープ（all/today/week/month、デフォルト: all）", "default": "all"},
-                    "limit": {"type": "integer", "description": "取得件数（デフォルト: 10）", "default": 10}
+            ),
+            Tool(
+                name="memory_recall",
+                description="記憶から情報を検索します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "検索クエリ（必須）"},
+                        "scope": {
+                            "type": "string",
+                            "description": "スコープ（all/today/week/month、デフォルト: all）",
+                            "default": "all",
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "取得件数（デフォルト: 10）",
+                            "default": 10,
+                        },
+                    },
+                    "required": ["query"],
                 },
-                "required": ["query"]
-            }
-        )
-    ])
+            ),
+        ]
+    )
 
     # ========================================
     # LLMルーティング
     # ========================================
-    tools.extend([
-        Tool(
-            name="llm_chat",
-            description="LLMとチャットします（最適なモデルを自動選択）",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "prompt": {"type": "string", "description": "プロンプト（必須）"},
-                    "task_type": {"type": "string", "description": "タスクタイプ（conversation/code/analysis/generation、デフォルト: conversation）", "default": "conversation"}
+    tools.extend(
+        [
+            Tool(
+                name="llm_chat",
+                description="LLMとチャットします（最適なモデルを自動選択）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "prompt": {"type": "string", "description": "プロンプト（必須）"},
+                        "task_type": {
+                            "type": "string",
+                            "description": "タスクタイプ（conversation/code/analysis/generation、デフォルト: conversation）",
+                            "default": "conversation",
+                        },
+                    },
+                    "required": ["prompt"],
                 },
-                "required": ["prompt"]
-            }
-        )
-    ])
+            )
+        ]
+    )
 
     # ========================================
     # 秘書機能
     # ========================================
-    tools.extend([
-        Tool(
-            name="secretary_morning_routine",
-            description="朝のルーチンを実行します",
-            inputSchema={"type": "object", "properties": {}}
-        ),
-        Tool(
-            name="secretary_noon_routine",
-            description="昼のルーチンを実行します",
-            inputSchema={"type": "object", "properties": {}}
-        ),
-        Tool(
-            name="secretary_evening_routine",
-            description="夜のルーチンを実行します",
-            inputSchema={"type": "object", "properties": {}}
-        )
-    ])
+    tools.extend(
+        [
+            Tool(
+                name="secretary_morning_routine",
+                description="朝のルーチンを実行します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="secretary_noon_routine",
+                description="昼のルーチンを実行します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="secretary_evening_routine",
+                description="夜のルーチンを実行します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="secretary_file_organize",
+                description="秘書のファイル整理 Plan を送信します（MoltBot 経由）。path と intent（list_only/read_only）、user_hint を指定。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "対象パス（例: ~/Downloads）", "default": "~/Downloads"},
+                        "intent": {"type": "string", "description": "list_only または read_only", "default": "list_only"},
+                        "user_hint": {"type": "string", "description": "ユーザーからのヒント（例: Downloads 一覧）"},
+                    },
+                },
+            ),
+        ]
+    )
 
     # ========================================
     # 学習系（Learning System）
     # ========================================
-    tools.extend([
-        Tool(
-            name="learning_record",
-            description="学習システムに使用パターンを記録します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "action": {"type": "string", "description": "アクション名（必須）"},
-                    "context": {"type": "object", "description": "コンテキスト情報"},
-                    "result": {"type": "object", "description": "結果情報"}
+    tools.extend(
+        [
+            Tool(
+                name="learning_record",
+                description="学習システムに使用パターンを記録します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "action": {"type": "string", "description": "アクション名（必須）"},
+                        "context": {"type": "object", "description": "コンテキスト情報"},
+                        "result": {"type": "object", "description": "結果情報"},
+                    },
+                    "required": ["action"],
                 },
-                "required": ["action"]
-            }
-        ),
-        Tool(
-            name="learning_analyze",
-            description="学習システムでパターンを分析します",
-            inputSchema={"type": "object", "properties": {}}
-        ),
-        Tool(
-            name="learning_get_preferences",
-            description="学習された好みを取得します",
-            inputSchema={"type": "object", "properties": {}}
-        ),
-        Tool(
-            name="learning_get_optimizations",
-            description="最適化提案を取得します",
-            inputSchema={"type": "object", "properties": {}}
-        )
-    ])
+            ),
+            Tool(
+                name="learning_analyze",
+                description="学習システムでパターンを分析します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="learning_get_preferences",
+                description="学習された好みを取得します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="learning_get_optimizations",
+                description="最適化提案を取得します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+        ]
+    )
+
+    # ========================================
+    # Phase1 自己観察実験
+    # ========================================
+    tools.extend(
+        [
+            Tool(
+                name="phase1_run_off_3rounds",
+                description="Phase1 OFF 3往復テストを実行。unified_api_server が PHASE1_REFLECTION=off で起動している必要あり。API (localhost:9500) に接続してログを採取し、集計結果を返す。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="phase1_run_on_rounds",
+                description="Phase1 ON N往復テストを実行。unified_api_server が PHASE1_REFLECTION=on で起動している必要あり。デフォルト15往復。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "rounds": {
+                            "type": "integer",
+                            "description": "往復数（デフォルト: 15）",
+                            "default": 15,
+                        }
+                    },
+                },
+            ),
+            Tool(
+                name="phase1_run_extended",
+                description="Phase1 拡張実験（30往復）。condition=on/off, rounds=30。API起動後実行。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "condition": {
+                            "type": "string",
+                            "description": "on または off",
+                            "enum": ["on", "off"],
+                        },
+                        "rounds": {"type": "integer", "description": "往復数", "default": 30},
+                    },
+                },
+            ),
+            Tool(
+                name="phase1_save_run",
+                description="現在の phase1 ログを phase1_runs/ にスナップショット保存する。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "condition": {
+                            "type": "string",
+                            "description": "on または off",
+                            "enum": ["on", "off"],
+                        },
+                        "tag": {"type": "string", "description": "任意タグ（例: round3, round15）"},
+                    },
+                    "required": ["condition"],
+                },
+            ),
+            Tool(
+                name="phase1_aggregate",
+                description="現在の phase1 ログを集計し、継続率・テーマ再訪・満足度を返す。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="phase1_compare_on_off",
+                description="phase1_runs/ 内の ON/OFF スナップショットを比較して差分を表示する。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="phase1_phase2_full_run",
+                description="Phase1/Phase2 を一気に全部実行（集計・低満足度・バックフィル・メモ概要・アーカイブ・履歴表示）。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "save": {
+                            "type": "boolean",
+                            "description": "先にログをスナップショット保存する",
+                            "default": False,
+                        },
+                        "condition": {
+                            "type": "string",
+                            "description": "save 時の条件（on/off）",
+                            "enum": ["on", "off"],
+                            "default": "on",
+                        },
+                        "tag": {
+                            "type": "string",
+                            "description": "save 時のタグ",
+                            "default": "full",
+                        },
+                        "history_tail": {
+                            "type": "integer",
+                            "description": "履歴表示の直近件数",
+                            "default": 10,
+                        },
+                    },
+                },
+            ),
+            Tool(
+                name="phase1_run_multi_thread",
+                description="複数スレッドで異なるテーマの会話を実行し、同一テーマ再訪を計測する。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="phase1_low_satisfaction",
+                description="振り返りログから満足度1〜2の行を抽出し、理由を集約して表示する。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="phase1_low_sat_archive",
+                description="低満足度の件数と理由トップ5を phase1_low_sat_history.jsonl に1行追記する。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="phase1_low_sat_history_view",
+                description="低満足度履歴（phase1_low_sat_history.jsonl）の直近N件を一覧表示する。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "tail": {
+                            "type": "integer",
+                            "description": "表示する直近件数",
+                            "default": 10,
+                        },
+                    },
+                },
+            ),
+            Tool(
+                name="phase1_weekly_report",
+                description="Phase1 週次レポート（集計＋低満足度を一括実行）。オプションでログをスナップショット保存してから集計。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "save": {
+                            "type": "boolean",
+                            "description": "先に phase1_save_run でログを保存する",
+                            "default": False,
+                        },
+                        "condition": {
+                            "type": "string",
+                            "description": "save 時の条件（on/off）",
+                            "enum": ["on", "off"],
+                            "default": "on",
+                        },
+                        "tag": {
+                            "type": "string",
+                            "description": "save 時のタグ（例: weekly）",
+                            "default": "weekly",
+                        },
+                        "phase2": {
+                            "type": "boolean",
+                            "description": "Phase2 メモ概要を末尾に追加",
+                            "default": False,
+                        },
+                    },
+                },
+            ),
+            Tool(
+                name="phase2_backfill_memos",
+                description="phase1 ログから振り返りメモを phase2_reflection_memos.jsonl に投入する。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="phase2_get_memos",
+                description="テーマIDで振り返りメモを取得する（第三層 PoC）。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "theme_id": {
+                            "type": "string",
+                            "description": "テーマID（例: 今日/気/明日 または python/プ/ミ）",
+                        },
+                    },
+                    "required": ["theme_id"],
+                },
+            ),
+            Tool(
+                name="phase2_memo_summary",
+                description="Phase2 メモのテーマ別件数・満足度平均を一覧表示する。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="phase2_auto_cleanup",
+                description="Phase2 メモを自動整理（dedup→ZIP退避→.bak削除）する。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+        ]
+    )
 
     # ========================================
     # 人格系（Personality System）
     # ========================================
-    tools.extend([
-        Tool(
-            name="personality_get_persona",
-            description="現在の人格プロフィールを取得します",
-            inputSchema={"type": "object", "properties": {}}
-        ),
-        Tool(
-            name="personality_get_prompt",
-            description="人格プロンプトを取得します",
-            inputSchema={"type": "object", "properties": {}}
-        ),
-        Tool(
-            name="personality_apply",
-            description="プロンプトに人格を適用します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "prompt": {"type": "string", "description": "ベースプロンプト（必須）"},
-                    "context": {"type": "string", "description": "コンテキスト（report/conversation）"}
+    tools.extend(
+        [
+            Tool(
+                name="personality_get_persona",
+                description="現在の人格プロフィールを取得します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="personality_get_prompt",
+                description="人格プロンプトを取得します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="personality_apply",
+                description="プロンプトに人格を適用します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "prompt": {"type": "string", "description": "ベースプロンプト（必須）"},
+                        "context": {
+                            "type": "string",
+                            "description": "コンテキスト（report/conversation）",
+                        },
+                    },
+                    "required": ["prompt"],
                 },
-                "required": ["prompt"]
-            }
-        ),
-        Tool(
-            name="personality_update",
-            description="人格プロフィールを更新します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "updates": {"type": "object", "description": "更新内容（必須）"}
+            ),
+            Tool(
+                name="personality_update",
+                description="人格プロフィールを更新します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "updates": {"type": "object", "description": "更新内容（必須）"}
+                    },
+                    "required": ["updates"],
                 },
-                "required": ["updates"]
-            }
-        )
-    ])
+            ),
+        ]
+    )
 
     # ========================================
     # 自律系（Autonomy System）
     # ========================================
-    tools.extend([
-        Tool(
-            name="autonomy_add_task",
-            description="自律タスクを追加します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "task_type": {"type": "string", "description": "タスクタイプ（必須）"},
-                    "priority": {"type": "string", "description": "優先度（high/medium/low、デフォルト: medium）", "default": "medium"},
-                    "condition": {"type": "object", "description": "実行条件（必須）"},
-                    "action": {"type": "object", "description": "実行アクション（必須）"},
-                    "schedule": {"type": "string", "description": "スケジュール（cron形式、オプション）"}
+    tools.extend(
+        [
+            Tool(
+                name="autonomy_add_task",
+                description="自律タスクを追加します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "task_type": {"type": "string", "description": "タスクタイプ（必須）"},
+                        "priority": {
+                            "type": "string",
+                            "description": "優先度（high/medium/low、デフォルト: medium）",
+                            "default": "medium",
+                        },
+                        "condition": {"type": "object", "description": "実行条件（必須）"},
+                        "action": {"type": "object", "description": "実行アクション（必須）"},
+                        "schedule": {
+                            "type": "string",
+                            "description": "スケジュール（cron形式、オプション）",
+                        },
+                    },
+                    "required": ["task_type", "condition", "action"],
                 },
-                "required": ["task_type", "condition", "action"]
-            }
-        ),
-        Tool(
-            name="autonomy_execute_tasks",
-            description="条件をチェックして自律タスクを実行します",
-            inputSchema={"type": "object", "properties": {}}
-        ),
-        Tool(
-            name="autonomy_list_tasks",
-            description="自律タスク一覧を取得します",
-            inputSchema={"type": "object", "properties": {}}
-        ),
-        Tool(
-            name="autonomy_get_level",
-            description="現在の自律レベルを取得します",
-            inputSchema={"type": "object", "properties": {}}
-        )
-    ])
+            ),
+            Tool(
+                name="autonomy_execute_tasks",
+                description="条件をチェックして自律タスクを実行します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="autonomy_list_tasks",
+                description="自律タスク一覧を取得します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="autonomy_get_level",
+                description="現在の自律レベルを取得します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+        ]
+    )
+
+    # ========================================
+    # Device Orchestrator（デバイス監視）
+    # ========================================
+    tools.extend(
+        [
+            Tool(
+                name="device_discover",
+                description="全デバイス（母艦・このは・X280・Pixel7）を検出し、オンライン状態を更新します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="device_get_status",
+                description="デバイスオーケストレーターの状態（全デバイス・キュー・統計）を取得します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="device_get_health",
+                description="Portal API経由で特定デバイスの詳細ヘルス（CPU/メモリ/ディスク等）を取得します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "device_name": {
+                            "type": "string",
+                            "description": "デバイス名（例: mothership, konoha, x280）",
+                        },
+                    },
+                    "required": ["device_name"],
+                },
+            ),
+            Tool(
+                name="device_get_resources",
+                description="Portal API経由で全デバイスのリソース使用状況を取得します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="device_get_alerts",
+                description="Portal API経由で全デバイスのアラートを取得します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="pixel7_execute",
+                description="Pixel 7（USB接続・ADBブリッジ経由）でAndroidコマンドを実行します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "command": {
+                            "type": "string",
+                            "description": "実行するAndroid shellコマンド（例: getprop ro.product.model, dumpsys battery）",
+                        },
+                        "timeout": {
+                            "type": "integer",
+                            "description": "タイムアウト秒（省略時60）",
+                            "default": 60,
+                        },
+                    },
+                    "required": ["command"],
+                },
+            ),
+            Tool(
+                name="pixel7_get_resources",
+                description="Pixel 7のリソース情報（メモリ・バッテリー・システム情報）を取得します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="pixel7_screenshot",
+                description="Pixel 7の画面のスクリーンショットを取得し、保存パスを返します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="pixel7_get_apps",
+                description="Pixel 7にインストールされているアプリ（パッケージ名）一覧を取得します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="pixel7_push_file",
+                description="母艦のファイルをPixel 7に送ります（ADB push）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "local_path": {"type": "string", "description": "母艦上のファイルパス"},
+                        "remote_path": {"type": "string", "description": "Pixel 7上の保存先（例: /sdcard/Download/）"},
+                    },
+                    "required": ["local_path", "remote_path"],
+                },
+            ),
+            Tool(
+                name="pixel7_pull_file",
+                description="Pixel 7のファイルを母艦に取得します（ADB pull）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "remote_path": {"type": "string", "description": "Pixel 7上のファイルパス（例: /sdcard/DCIM/xxx.jpg）"},
+                        "local_path": {"type": "string", "description": "母艦上の保存先パス"},
+                    },
+                    "required": ["remote_path", "local_path"],
+                },
+            ),
+            Tool(
+                name="mothership_get_resources",
+                description="母艦（このPC）のリソース情報（CPU・メモリ・ディスク）を取得します。統合API経由。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="mothership_execute",
+                description="母艦（このPC）でコマンドを実行します。統合API経由。PowerShell/CMD 等。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "command": {"type": "string", "description": "実行するコマンド（例: dir, Get-Date）"},
+                        "timeout": {"type": "integer", "description": "タイムアウト秒（省略時60）", "default": 60},
+                    },
+                    "required": ["command"],
+                },
+            ),
+            Tool(
+                name="x280_get_resources",
+                description="X280（ThinkPad）のリソース情報（CPU・メモリ・ディスク）を取得します。統合API経由。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="x280_execute",
+                description="X280 でコマンドを実行します（PowerShell/CMD）。統合API経由。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "command": {"type": "string", "description": "実行するコマンド"},
+                        "timeout": {"type": "integer", "description": "タイムアウト秒（省略時60）", "default": 60},
+                    },
+                    "required": ["command"],
+                },
+            ),
+            Tool(
+                name="konoha_health",
+                description="Konoha（このはサーバー 5106）のヘルスチェック。統合API経由。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="nanokvm_console_url",
+                description="NanoKVM のログイン画面 URL を取得。ManaOS からブラウザで開く・Browser MCP でスナップショット取得に使う。統合API経由。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="nanokvm_health",
+                description="NanoKVM の到達性チェック（母艦から）。統合API経由。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="pixel7_tts",
+                description="Pixel 7 で音声再生（TTS）。テキストをサーバーで合成し、端末に転送して再生。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "text": {"type": "string", "description": "読み上げるテキスト（必須）"},
+                        "speed": {"type": "number", "description": "速度", "default": 1.0},
+                    },
+                    "required": ["text"],
+                },
+            ),
+            Tool(
+                name="pixel7_transcribe",
+                description="Pixel 7 上の音声ファイルを文字起こし。remote_path で録音ファイルを指定（例: /sdcard/Download/rec.wav）。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "remote_path": {
+                            "type": "string",
+                            "description": "Pixel 7 上のファイルパス（必須）。例: /sdcard/Download/recording.wav",
+                        },
+                        "sample_rate": {"type": "integer", "description": "サンプリングレート", "default": 16000},
+                    },
+                    "required": ["remote_path"],
+                },
+            ),
+        ]
+    )
+
+    # ========================================
+    # MoltBot（Plan 実行・監査）
+    # ========================================
+    tools.extend(
+        [
+            Tool(
+                name="moltbot_submit_plan",
+                description="MoltBot に Plan を送信して実行します。統合API経由。intent=list_only で指定パスの一覧、read_only で読み取りのみ。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "intent": {
+                            "type": "string",
+                            "description": "list_only（一覧取得）または read_only（読み取りのみ）",
+                            "default": "list_only",
+                        },
+                        "path": {
+                            "type": "string",
+                            "description": "対象パス（例: ~/Downloads）",
+                            "default": "~/Downloads",
+                        },
+                        "user_hint": {
+                            "type": "string",
+                            "description": "ユーザーからの追加ヒント",
+                        },
+                    },
+                },
+            ),
+            Tool(
+                name="moltbot_get_result",
+                description="MoltBot Plan の実行結果を取得します",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "plan_id": {"type": "string", "description": "Plan ID（必須）"},
+                    },
+                    "required": ["plan_id"],
+                },
+            ),
+            Tool(
+                name="moltbot_health",
+                description="MoltBot Gateway のヘルスチェック",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="file_secretary_inbox_status",
+                description="File Secretary の INBOX 状況を取得します。統合API経由。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "source": {"type": "string", "description": "ソースでフィルタ"},
+                        "status": {"type": "string", "description": "ステータスでフィルタ"},
+                        "days": {"type": "integer", "description": "何日分（デフォルト1）", "default": 1},
+                    },
+                },
+            ),
+            Tool(
+                name="file_secretary_organize",
+                description="File Secretary でファイル整理を実行します。targets に file_id のリストを指定。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "targets": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "整理対象の file_id リスト",
+                        },
+                        "thread_ref": {"type": "string"},
+                        "user": {"type": "string"},
+                        "auto_tag": {"type": "boolean", "default": True},
+                        "auto_alias": {"type": "boolean", "default": True},
+                    },
+                    "required": ["targets"],
+                },
+            ),
+            Tool(
+                name="research_quick",
+                description="Step Deep Research でクイック調査を実行します（作成→実行を一括）。統合API経由。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "調査クエリ（必須）"},
+                        "use_cache": {"type": "boolean", "description": "キャッシュ利用", "default": True},
+                    },
+                    "required": ["query"],
+                },
+            ),
+            Tool(
+                name="research_status",
+                description="Step Deep Research のジョブ状態を取得します。job_id を指定。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "job_id": {"type": "string", "description": "ジョブID（必須）"},
+                    },
+                    "required": ["job_id"],
+                },
+            ),
+            Tool(
+                name="voice_health",
+                description="音声機能（STT/TTS）の稼働状態を取得します。統合API経由。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="voice_synthesize",
+                description="テキストを音声に変換（TTS）します。統合API経由。text を指定。音声バイナリはAPIから取得。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "text": {"type": "string", "description": "読み上げるテキスト（必須）"},
+                        "speaker_id": {"type": "string"},
+                        "speed": {"type": "number", "default": 1.0},
+                    },
+                    "required": ["text"],
+                },
+            ),
+            Tool(
+                name="n8n_list_workflows",
+                description="n8n のワークフロー一覧を取得します。統合API経由。N8N_BASE_URL と N8N_API_KEY 要。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="n8n_execute_workflow",
+                description="n8n のワークフローを実行します。workflow_id を指定。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "workflow_id": {"type": "string", "description": "ワークフローID（必須）"},
+                        "data": {"type": "object", "description": "実行時に渡すデータ（任意）"},
+                    },
+                    "required": ["workflow_id"],
+                },
+            ),
+            Tool(
+                name="github_search",
+                description="GitHub でリポジトリを検索します。統合API経由。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "検索クエリ（必須）"},
+                        "limit": {"type": "integer", "description": "取得件数", "default": 10},
+                    },
+                    "required": ["query"],
+                },
+            ),
+            Tool(
+                name="github_commits",
+                description="GitHub リポジトリの直近コミットを取得します。owner と repo を指定。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "owner": {"type": "string", "description": "オーナー（必須）"},
+                        "repo": {"type": "string", "description": "リポジトリ名（必須）"},
+                        "limit": {"type": "integer", "description": "取得件数", "default": 10},
+                    },
+                    "required": ["owner", "repo"],
+                },
+            ),
+            Tool(
+                name="cache_stats",
+                description="統合API のキャッシュ統計を取得します。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="performance_stats",
+                description="統合API のパフォーマンス統計を取得します。",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+        ]
+    )
 
     # ========================================
     # VS Code操作
     # ========================================
     if _vscode_tools_enabled():
-        tools.extend([
-            Tool(
-                name="vscode_open_file",
-                description="VS Codeでファイルを開きます",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "file_path": {"type": "string", "description": "ファイルパス（必須）"},
-                        "line": {"type": "integer", "description": "行番号（オプション）"}
+        tools.extend(
+            [
+                Tool(
+                    name="vscode_open_file",
+                    description="VS Codeでファイルを開きます",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "file_path": {"type": "string", "description": "ファイルパス（必須）"},
+                            "line": {"type": "integer", "description": "行番号（オプション）"},
+                        },
+                        "required": ["file_path"],
                     },
-                    "required": ["file_path"]
-                }
-            ),
-            Tool(
-                name="vscode_open_folder",
-                description="VS Codeでフォルダを開きます",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "folder_path": {"type": "string", "description": "フォルダパス（必須）"}
+                ),
+                Tool(
+                    name="vscode_open_folder",
+                    description="VS Codeでフォルダを開きます",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "folder_path": {"type": "string", "description": "フォルダパス（必須）"}
+                        },
+                        "required": ["folder_path"],
                     },
-                    "required": ["folder_path"]
-                }
-            ),
-            Tool(
-                name="vscode_execute_command",
-                description="VS Codeでコマンドを実行します（危険: 明示的に有効化された場合のみ表示）",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "command": {"type": "string", "description": "コマンド（必須）"},
-                        "args": {"type": "array", "description": "コマンド引数（オプション）", "items": {"type": "string"}}
+                ),
+                Tool(
+                    name="vscode_execute_command",
+                    description="VS Codeでコマンドを実行します（危険: 明示的に有効化された場合のみ表示）",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "command": {"type": "string", "description": "コマンド（必須）"},
+                            "args": {
+                                "type": "array",
+                                "description": "コマンド引数（オプション）",
+                                "items": {"type": "string"},
+                            },
+                        },
+                        "required": ["command"],
                     },
-                    "required": ["command"]
-                }
-            ),
-            Tool(
-                name="vscode_search_files",
-                description="VS Codeでファイルを検索します",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "query": {"type": "string", "description": "検索クエリ（必須）"},
-                        "include": {"type": "string", "description": "検索対象ファイル（例: *.py）"},
-                        "exclude": {"type": "string", "description": "除外ファイル（例: node_modules/**）"}
+                ),
+                Tool(
+                    name="vscode_search_files",
+                    description="VS Codeでファイルを検索します",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string", "description": "検索クエリ（必須）"},
+                            "include": {
+                                "type": "string",
+                                "description": "検索対象ファイル（例: *.py）",
+                            },
+                            "exclude": {
+                                "type": "string",
+                                "description": "除外ファイル（例: node_modules/**）",
+                            },
+                        },
+                        "required": ["query"],
                     },
-                    "required": ["query"]
-                }
-            )
-        ])
+                ),
+            ]
+        )
 
     # ========================================
     # SearXNG Web検索
     # ========================================
-    tools.extend([
-        Tool(
-            name="web_search",
-            description="SearXNGを使用してWeb検索を実行します（実質無制限の検索が可能）",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "検索クエリ（必須）"},
-                    "max_results": {"type": "integer", "description": "最大結果数（デフォルト: 10）", "default": 10},
-                    "language": {"type": "string", "description": "言語コード（デフォルト: ja）", "default": "ja"},
-                    "categories": {"type": "array", "description": "検索カテゴリ（例: [\"general\", \"images\"]）", "items": {"type": "string"}},
-                    "time_range": {"type": "string", "description": "時間範囲フィルタ（day/week/month/year）"}
-                },
-                "required": ["query"]
-            }
-        ),
-        Tool(
-            name="web_search_simple",
-            description="シンプルなWeb検索（結果のみ返す）",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "検索クエリ（必須）"},
-                    "max_results": {"type": "integer", "description": "最大結果数（デフォルト: 5）", "default": 5}
-                },
-                "required": ["query"]
-            }
-        ),
-        Tool(
-            name="brave_search",
-            description="Brave Search APIを使用してWeb検索を実行します（高品質な検索結果）",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "検索クエリ（必須）"},
-                    "count": {"type": "integer", "description": "取得件数（デフォルト: 10、最大: 20）", "default": 10},
-                    "search_lang": {"type": "string", "description": "検索言語（デフォルト: ja）", "default": "ja"},
-                    "country": {"type": "string", "description": "国コード（デフォルト: JP）", "default": "JP"},
-                    "freshness": {"type": "string", "description": "時間範囲フィルタ（pd: 過去1日、pw: 過去1週間、pm: 過去1ヶ月、py: 過去1年）"}
-                },
-                "required": ["query"]
-            }
-        ),
-        Tool(
-            name="brave_search_simple",
-            description="Brave Search APIを使用したシンプルな検索（結果のみ返す）",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "検索クエリ（必須）"},
-                    "count": {"type": "integer", "description": "取得件数（デフォルト: 5）", "default": 5}
-                },
-                "required": ["query"]
-            }
-        ),
-        Tool(
-            name="base_ai_chat",
-            description="Base AI APIを使用してチャットを実行します（無料のAI APIも利用可能）",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "prompt": {"type": "string", "description": "ユーザープロンプト（必須）"},
-                    "system_prompt": {"type": "string", "description": "システムプロンプト（オプション）"},
-                    "use_free": {"type": "boolean", "description": "無料のAI APIを使用するか（デフォルト: false）", "default": False},
-                    "temperature": {"type": "number", "description": "温度パラメータ（デフォルト: 0.7）", "default": 0.7},
-                    "max_tokens": {"type": "integer", "description": "最大トークン数（オプション）"}
-                },
-                "required": ["prompt"]
-            }
-        )
-    ])
-
-    # ========================================
-    # Open WebUI操作
-    # ========================================
-    tools.extend([
-        Tool(
-            name="openwebui_create_chat",
-            description="Open WebUIでチャットを作成します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "message": {"type": "string", "description": "最初のメッセージ（必須）"},
-                    "model": {"type": "string", "description": "使用するモデル（例: qwen2.5-coder-7b-instruct）"},
-                    "context_length": {"type": "integer", "description": "コンテキスト長（オプション）"}
-                },
-                "required": ["message"]
-            }
-        ),
-        Tool(
-            name="openwebui_list_chats",
-            description="Open WebUIのチャット一覧を取得します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "limit": {"type": "integer", "description": "取得件数（デフォルト: 20）", "default": 20},
-                    "offset": {"type": "integer", "description": "オフセット（デフォルト: 0）", "default": 0}
-                }
-            }
-        ),
-        Tool(
-            name="openwebui_send_message",
-            description="Open WebUIの既存チャットにメッセージを送信します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "chat_id": {"type": "string", "description": "チャットID（必須）"},
-                    "message": {"type": "string", "description": "送信するメッセージ（必須）"}
-                },
-                "required": ["chat_id", "message"]
-            }
-        ),
-        Tool(
-            name="openwebui_get_chat",
-            description="Open WebUIの特定チャットの情報を取得します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "chat_id": {"type": "string", "description": "チャットID（必須）"}
-                },
-                "required": ["chat_id"]
-            }
-        ),
-        Tool(
-            name="openwebui_list_models",
-            description="Open WebUIで利用可能なモデル一覧を取得します",
-            inputSchema={"type": "object", "properties": {}}
-        ),
-        Tool(
-            name="openwebui_update_settings",
-            description="Open WebUIの設定を更新します",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "enable_signup": {"type": "boolean", "description": "ユーザー登録を有効化するか"},
-                    "default_model": {"type": "string", "description": "デフォルトモデル"},
-                    "context_length": {"type": "integer", "description": "デフォルトコンテキスト長"}
-                }
-            }
-        )
-    ])
-
-    return tools
-
-@server.call_tool()
-async def call_tool(name: str, arguments: dict[str, Any]) -> Sequence[TextContent]:
-    """ツールを実行"""
-    try:
-        # SVI動画生成
-        if name == "svi_generate_video":
-            svi = get_integration("svi")
-            if not svi:
-                return [TextContent(type="text", text="❌ SVI統合が利用できません")]
-
-            prompt_id = svi.generate_video(
-                start_image_path=arguments.get("start_image_path"),
-                prompt=arguments.get("prompt"),
-                video_length_seconds=arguments.get("video_length_seconds", 5),
-                steps=arguments.get("steps", 6),
-                motion_strength=arguments.get("motion_strength", 1.3)
-            )
-
-            if prompt_id:
-                return [TextContent(type="text", text=f"✅ 動画生成が開始されました\n実行ID: {prompt_id}")]
-            else:
-                return [TextContent(type="text", text="❌ 動画生成に失敗しました")]
-
-        elif name == "svi_extend_video":
-            svi = get_integration("svi")
-            if not svi:
-                return [TextContent(type="text", text="❌ SVI統合が利用できません")]
-
-            prompt_id = svi.extend_video(
-                previous_video_path=arguments.get("previous_video_path"),
-                prompt=arguments.get("prompt"),
-                extend_seconds=arguments.get("extend_seconds", 5)
-            )
-
-            if prompt_id:
-                return [TextContent(type="text", text=f"✅ 動画延長が開始されました\n実行ID: {prompt_id}")]
-            else:
-                return [TextContent(type="text", text="❌ 動画延長に失敗しました")]
-
-        elif name == "svi_get_queue_status":
-            svi = get_integration("svi")
-            if not svi:
-                return [TextContent(type="text", text="❌ SVI統合が利用できません")]
-
-            queue = svi.get_queue_status()
-            return [TextContent(type="text", text=f"キュー状態:\n{json.dumps(queue, indent=2, ensure_ascii=False)}")]
-
-        # ComfyUI画像生成（複数LoRA対応）
-        elif name == "comfyui_generate_image":
-            comfyui = get_integration("comfyui")
-            if not comfyui:
-                return [TextContent(type="text", text="❌ ComfyUI統合が利用できません")]
-
-            # LoRAを変換
-            loras = None
-            loras_data = arguments.get("loras")
-            if loras_data:
-                loras = [(lora.get("name"), lora.get("strength", 0.8)) for lora in loras_data]
-
-            prompt_id = comfyui.generate_image(
-                prompt=arguments.get("prompt"),
-                negative_prompt=arguments.get("negative_prompt", ""),
-                width=arguments.get("width", 512),
-                height=arguments.get("height", 512),
-                model=arguments.get("model"),
-                loras=loras,
-                steps=arguments.get("steps", 70),
-                guidance_scale=arguments.get("cfg_scale", 8.5),
-                sampler=arguments.get("sampler", "euler_ancestral"),
-                scheduler=arguments.get("scheduler", "karras"),
-                seed=arguments.get("seed", -1)
-            )
-
-            if prompt_id:
-                lora_info = f" (LoRA: {len(loras)}個)" if loras else ""
-                return [TextContent(type="text", text=f"✅ 画像生成が開始されました{lora_info}\n実行ID: {prompt_id}")]
-            else:
-                return [TextContent(type="text", text="❌ 画像生成に失敗しました")]
-
-        # CivitAI
-        elif name == "civitai_get_favorites":
-            civitai = get_integration("civitai")
-            if not civitai:
-                return [TextContent(type="text", text="❌ CivitAI統合が利用できません")]
-            
-            if not civitai.is_available():
-                return [TextContent(type="text", text="❌ CivitAI APIキーが設定されていません")]
-            
-            favorites = civitai.get_favorite_models(
-                limit=arguments.get("limit", 100),
-                model_type=arguments.get("model_type")
-            )
-            
-            if favorites:
-                summary = f"お気に入りモデル: {len(favorites)}件\n"
-                for model in favorites[:10]:
-                    model_type = model.get("type", "Unknown")
-                    summary += f"- {model.get('name')} ({model_type})\n"
-                if len(favorites) > 10:
-                    summary += f"... 他 {len(favorites) - 10}件"
-                return [TextContent(type="text", text=summary)]
-            else:
-                return [TextContent(type="text", text="お気に入りモデルが見つかりませんでした")]
-        
-        elif name == "civitai_download_favorites":
-            civitai = get_integration("civitai")
-            if not civitai:
-                return [TextContent(type="text", text="❌ CivitAI統合が利用できません")]
-            
-            if not civitai.is_available():
-                return [TextContent(type="text", text="❌ CivitAI APIキーが設定されていません")]
-            
-            # お気に入りモデルを取得
-            favorites = civitai.get_favorite_models(
-                limit=100,
-                model_type=arguments.get("model_type")
-            )
-            
-            if not favorites:
-                return [TextContent(type="text", text="お気に入りモデルが見つかりませんでした")]
-            
-            # ダウンロード処理（簡易版）
-            from pathlib import Path
-            COMFYUI_MODELS_DIR = Path("C:/ComfyUI/models/checkpoints")
-            COMFYUI_LORA_DIR = Path("C:/ComfyUI/models/loras")
-            
-            downloaded = []
-            failed = []
-            
-            for model in favorites[:5]:  # 最初の5件のみ（時間がかかるため）
-                try:
-                    versions = model.get("modelVersions", [])
-                    if versions:
-                        latest_version = versions[0]
-                        files = latest_version.get("files", [])
-                        if files:
-                            file_name = files[0].get("name", "")
-                            model_type = model.get("type", "")
-                            
-                            if model_type == "Checkpoint":
-                                download_path = str(COMFYUI_MODELS_DIR / file_name)
-                            elif model_type in ["LORA", "LoCon"]:
-                                download_path = str(COMFYUI_LORA_DIR / file_name)
-                            else:
-                                continue
-                            
-                            result = civitai.download_model(
-                                model_id=model.get("id"),
-                                version_id=latest_version.get("id"),
-                                download_path=download_path
-                            )
-                            
-                            if result:
-                                downloaded.append(model.get("name"))
-                            else:
-                                failed.append(model.get("name"))
-                except Exception as e:
-                    failed.append(model.get("name", "Unknown"))
-            
-            result_text = f"ダウンロード完了: {len(downloaded)}件\n"
-            if downloaded:
-                result_text += f"成功: {', '.join(downloaded)}\n"
-            if failed:
-                result_text += f"失敗: {', '.join(failed)}"
-            
-            return [TextContent(type="text", text=result_text)]
-        
-        elif name == "civitai_get_images":
-            civitai = get_integration("civitai")
-            if not civitai:
-                return [TextContent(type="text", text="❌ CivitAI統合が利用できません")]
-            
-            if not civitai.is_available():
-                return [TextContent(type="text", text="❌ CivitAI APIキーが設定されていません")]
-            
-            images = civitai.get_images(
-                limit=arguments.get("limit", 20),
-                model_id=arguments.get("model_id"),
-                model_version_id=arguments.get("model_version_id"),
-                username=arguments.get("username"),
-                nsfw=arguments.get("nsfw"),
-                sort=arguments.get("sort", "Most Reactions"),
-                period=arguments.get("period", "AllTime"),
-                page=arguments.get("page", 1)
-            )
-            
-            if images:
-                summary = f"画像取得: {len(images)}件\n\n"
-                for img in images[:5]:  # 最初の5件を表示
-                    meta = img.get("meta", {})
-                    prompt = meta.get("prompt", "N/A")
-                    negative_prompt = meta.get("negativePrompt", "N/A")
-                    model_name = img.get("model", {}).get("name", "Unknown")
-                    summary += f"📷 {img.get('id')} - {model_name}\n"
-                    summary += f"   プロンプト: {prompt[:50]}...\n"
-                    summary += f"   ネガティブ: {negative_prompt[:50]}...\n\n"
-                if len(images) > 5:
-                    summary += f"... 他 {len(images) - 5}件"
-                return [TextContent(type="text", text=summary)]
-            else:
-                return [TextContent(type="text", text="画像が見つかりませんでした")]
-        
-        elif name == "civitai_get_image_details":
-            civitai = get_integration("civitai")
-            if not civitai:
-                return [TextContent(type="text", text="❌ CivitAI統合が利用できません")]
-            
-            if not civitai.is_available():
-                return [TextContent(type="text", text="❌ CivitAI APIキーが設定されていません")]
-            
-            image_id = arguments.get("image_id")
-            if not image_id:
-                return [TextContent(type="text", text="❌ image_idが必要です")]
-            
-            image = civitai.get_image_details(image_id)
-            if image:
-                meta = image.get("meta", {})
-                prompt = meta.get("prompt", "N/A")
-                negative_prompt = meta.get("negativePrompt", "N/A")
-                model = image.get("model", {})
-                model_name = model.get("name", "Unknown")
-                
-                details = f"📷 画像詳細 (ID: {image_id})\n"
-                details += f"モデル: {model_name}\n"
-                details += f"URL: {image.get('url', 'N/A')}\n\n"
-                details += f"プロンプト:\n{prompt}\n\n"
-                details += f"ネガティブプロンプト:\n{negative_prompt}\n\n"
-                
-                # その他のメタデータ
-                if "steps" in meta:
-                    details += f"ステップ数: {meta.get('steps')}\n"
-                if "cfgScale" in meta:
-                    details += f"CFGスケール: {meta.get('cfgScale')}\n"
-                if "sampler" in meta:
-                    details += f"サンプラー: {meta.get('sampler')}\n"
-                
-                return [TextContent(type="text", text=details)]
-            else:
-                return [TextContent(type="text", text="画像が見つかりませんでした")]
-        
-        elif name == "civitai_get_creators":
-            civitai = get_integration("civitai")
-            if not civitai:
-                return [TextContent(type="text", text="❌ CivitAI統合が利用できません")]
-            
-            if not civitai.is_available():
-                return [TextContent(type="text", text="❌ CivitAI APIキーが設定されていません")]
-            
-            creators = civitai.get_creators(
-                username=arguments.get("username"),
-                limit=arguments.get("limit", 20)
-            )
-            
-            if creators:
-                summary = f"クリエイター: {len(creators)}件\n"
-                for creator in creators[:10]:
-                    summary += f"- {creator.get('username', 'Unknown')} (ID: {creator.get('id')})\n"
-                if len(creators) > 10:
-                    summary += f"... 他 {len(creators) - 10}件"
-                return [TextContent(type="text", text=summary)]
-            else:
-                return [TextContent(type="text", text="クリエイターが見つかりませんでした")]
-
-        # Google Drive
-        elif name == "google_drive_upload":
-            gd = get_integration("google_drive")
-            if not gd:
-                return [TextContent(type="text", text="❌ Google Drive統合が利用できません")]
-
-            file_id = gd.upload_file(
-                arguments.get("file_path"),
-                arguments.get("folder_id")
-            )
-
-            if file_id:
-                return [TextContent(type="text", text=f"✅ アップロード完了\nファイルID: {file_id}")]
-            else:
-                return [TextContent(type="text", text="❌ アップロードに失敗しました")]
-
-        elif name == "google_drive_list_files":
-            gd = get_integration("google_drive")
-            if not gd:
-                return [TextContent(type="text", text="❌ Google Drive統合が利用できません")]
-
-            files = gd.list_files(
-                folder_id=arguments.get("folder_id"),
-                query=arguments.get("query")
-            )
-
-            return [TextContent(type="text", text=f"ファイル一覧 ({len(files)}件):\n{json.dumps(files, indent=2, ensure_ascii=False)}")]
-
-        # Rows
-        elif name == "rows_query":
-            rows = get_integration("rows")
-            if not rows:
-                return [TextContent(type="text", text="❌ Rows統合が利用できません")]
-
-            result = rows.ai_query(
-                arguments.get("spreadsheet_id"),
-                arguments.get("query"),
-                arguments.get("sheet_name", "Sheet1")
-            )
-
-            return [TextContent(type="text", text=f"クエリ結果:\n{json.dumps(result, indent=2, ensure_ascii=False)}")]
-
-        elif name == "rows_send_data":
-            rows = get_integration("rows")
-            if not rows:
-                return [TextContent(type="text", text="❌ Rows統合が利用できません")]
-
-            result = rows.send_to_rows(
-                arguments.get("spreadsheet_id"),
-                arguments.get("data"),
-                arguments.get("sheet_name", "Sheet1"),
-                append=True
-            )
-
-            return [TextContent(type="text", text=f"✅ データ送信完了\n{json.dumps(result, indent=2, ensure_ascii=False)}")]
-
-        elif name == "rows_list_spreadsheets":
-            rows = get_integration("rows")
-            if not rows:
-                return [TextContent(type="text", text="❌ Rows統合が利用できません")]
-
-            spreadsheets = rows.list_spreadsheets()
-            return [TextContent(type="text", text=f"スプレッドシート一覧 ({len(spreadsheets)}件):\n{json.dumps(spreadsheets, indent=2, ensure_ascii=False)}")]
-
-        # Obsidian
-        elif name == "obsidian_create_note":
-            obsidian = get_integration("obsidian")
-            if not obsidian:
-                return [TextContent(type="text", text="❌ Obsidian統合が利用できません")]
-
-            note_path = obsidian.create_note(
-                arguments.get("title"),
-                arguments.get("content"),
-                arguments.get("folder")
-            )
-
-            if note_path:
-                return [TextContent(type="text", text=f"✅ ノートを作成しました\nパス: {note_path}")]
-            else:
-                return [TextContent(type="text", text="❌ ノート作成に失敗しました")]
-
-        elif name == "obsidian_search_notes":
-            obsidian = get_integration("obsidian")
-            if not obsidian:
-                return [TextContent(type="text", text="❌ Obsidian統合が利用できません")]
-
-            results = obsidian.search_notes(arguments.get("query"))
-            return [TextContent(type="text", text=f"検索結果 ({len(results)}件):\n{json.dumps(results, indent=2, ensure_ascii=False)}")]
-
-        # 画像ストック
-        elif name == "image_stock_add":
-            image_stock = get_integration("image_stock")
-            if not image_stock:
-                return [TextContent(type="text", text="❌ 画像ストック統合が利用できません")]
-
-            from pathlib import Path
-            result = image_stock.store(
-                Path(arguments.get("image_path")),
-                prompt=arguments.get("description"),
-                category=None
-            )
-
-            if result:
-                return [TextContent(type="text", text=f"✅ 画像をストックに追加しました\n{json.dumps(result, indent=2, ensure_ascii=False)}")]
-            else:
-                return [TextContent(type="text", text="❌ 画像追加に失敗しました")]
-
-        elif name == "image_stock_search":
-            image_stock = get_integration("image_stock")
-            if not image_stock:
-                return [TextContent(type="text", text="❌ 画像ストック統合が利用できません")]
-
-            results = image_stock.search(arguments.get("query"), limit=20)
-            return [TextContent(type="text", text=f"検索結果 ({len(results)}件):\n{json.dumps(results, indent=2, ensure_ascii=False)}")]
-
-        # 通知
-        elif name == "notification_send":
-            notification = get_integration("notification")
-            if not notification:
-                return [TextContent(type="text", text="❌ 通知ハブ統合が利用できません")]
-
-            notification.notify(
-                arguments.get("message"),
-                arguments.get("priority", "normal")
-            )
-
-            return [TextContent(type="text", text=f"✅ 通知を送信しました\nメッセージ: {arguments.get('message')}")]
-
-        # 記憶システム
-        elif name == "memory_store":
-            memory = get_integration("memory")
-            if not memory:
-                return [TextContent(type="text", text="❌ 統一記憶システムが利用できません")]
-
-            result = memory.store(
-                {"content": arguments.get("content")},
-                arguments.get("format_type", "auto")
-            )
-
-            return [TextContent(type="text", text=f"✅ 記憶に保存しました\n{json.dumps(result, indent=2, ensure_ascii=False)}")]
-
-        elif name == "memory_recall":
-            memory = get_integration("memory")
-            if not memory:
-                return [TextContent(type="text", text="❌ 統一記憶システムが利用できません")]
-
-            results = memory.recall(
-                arguments.get("query"),
-                arguments.get("scope", "all"),
-                arguments.get("limit", 10)
-            )
-
-            return [TextContent(type="text", text=f"検索結果 ({len(results)}件):\n{json.dumps(results, indent=2, ensure_ascii=False)}")]
-
-        # LLMルーティング
-        elif name == "llm_chat":
-            llm = get_integration("llm_routing")
-            if not llm:
-                return [TextContent(type="text", text="❌ LLMルーティングが利用できません")]
-
-            result = llm.route(
-                task_type=arguments.get("task_type", "conversation"),
-                prompt=arguments.get("prompt")
-            )
-
-            return [TextContent(type="text", text=f"LLM応答:\nモデル: {result.get('model', 'N/A')}\n応答: {result.get('response', 'N/A')}")]
-
-        # 秘書機能
-        elif name == "secretary_morning_routine":
-            secretary = get_integration("secretary")
-            if not secretary:
-                return [TextContent(type="text", text="❌ 秘書機能が利用できません")]
-
-            result = secretary.morning_routine()
-            return [TextContent(type="text", text=f"✅ 朝のルーチンを実行しました\n{json.dumps(result, indent=2, ensure_ascii=False)}")]
-
-        elif name == "secretary_noon_routine":
-            secretary = get_integration("secretary")
-            if not secretary:
-                return [TextContent(type="text", text="❌ 秘書機能が利用できません")]
-
-            result = secretary.noon_routine()
-            return [TextContent(type="text", text=f"✅ 昼のルーチンを実行しました\n{json.dumps(result, indent=2, ensure_ascii=False)}")]
-
-        elif name == "secretary_evening_routine":
-            secretary = get_integration("secretary")
-            if not secretary:
-                return [TextContent(type="text", text="❌ 秘書機能が利用できません")]
-
-            result = secretary.evening_routine()
-            return [TextContent(type="text", text=f"✅ 夜のルーチンを実行しました\n{json.dumps(result, indent=2, ensure_ascii=False)}")]
-
-        # 学習系（Learning System）
-        elif name == "learning_record":
-            learning_system_url = LEARNING_SYSTEM_URL
-            try:
-                timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
-                response = httpx.post(
-                    f"{learning_system_url}/api/record",
-                    json={
-                        "action": arguments.get("action"),
-                        "context": arguments.get("context", {}),
-                        "result": arguments.get("result", {})
+    tools.extend(
+        [
+            Tool(
+                name="web_search",
+                description="SearXNGを使用してWeb検索を実行します（実質無制限の検索が可能）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "検索クエリ（必須）"},
+                        "max_results": {
+                            "type": "integer",
+                            "description": "最大結果数（デフォルト: 10）",
+                            "default": 10,
+                        },
+                        "language": {
+                            "type": "string",
+                            "description": "言語コード（デフォルト: ja）",
+                            "default": "ja",
+                        },
+                        "categories": {
+                            "type": "array",
+                            "description": '検索カテゴリ（例: ["general", "images"]）',
+                            "items": {"type": "string"},
+                        },
+                        "time_range": {
+                            "type": "string",
+                            "description": "時間範囲フィルタ（day/week/month/year）",
+                        },
                     },
-                    timeout=timeout
-                )
-                response.raise_for_status()
-                return [TextContent(type="text", text=f"✅ 学習システムに記録しました\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-            except httpx.TimeoutException as e:
-                logger.error(f"学習システムタイムアウト: {e}")
-                return [TextContent(type="text", text=f"❌ 学習システムへの接続がタイムアウトしました（{timeout}秒）")]
-            except httpx.HTTPStatusError as e:
-                logger.error(f"学習システムHTTPエラー: {e.response.status_code} - {e.response.text}")
-                return [TextContent(type="text", text=f"❌ 学習システムエラー: HTTP {e.response.status_code}")]
-            except httpx.RequestError as e:
-                logger.error(f"学習システム接続エラー: {e}")
-                return [TextContent(type="text", text=f"❌ 学習システムに接続できません（URL: {learning_system_url}）")]
-            except Exception as e:
-                logger.error(f"学習システム予期しないエラー: {e}", exc_info=True)
-                if ERROR_HANDLER_AVAILABLE and error_handler:
-                    try:
-                        manaos_error = error_handler.handle_exception(
-                            e,
-                            context={"tool_name": "learning_record", "url": learning_system_url},
-                            user_message="学習システムへの記録中にエラーが発生しました",
-                        )
-                        return [TextContent(type="text", text=f"❌ {manaos_error.user_message or manaos_error.message}")]
-                    except Exception:
-                        pass
-                return [TextContent(type="text", text=f"❌ 学習システムエラー: {str(e)}")]
-
-        elif name == "learning_analyze":
-            learning_system_url = LEARNING_SYSTEM_URL
-            try:
-                timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
-                response = httpx.get(f"{learning_system_url}/api/analyze", timeout=timeout)
-                response.raise_for_status()
-                return [TextContent(type="text", text=f"分析結果:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-            except httpx.TimeoutException:
-                logger.error(f"学習システムタイムアウト: {learning_system_url}")
-                return [TextContent(type="text", text="❌ 学習システムへの接続がタイムアウトしました")]
-            except httpx.HTTPStatusError as e:
-                logger.error(f"学習システムHTTPエラー: {e.response.status_code} - {e.response.text}")
-                return [TextContent(type="text", text=f"❌ 学習システムエラー: HTTP {e.response.status_code}")]
-            except httpx.RequestError as e:
-                logger.error(f"学習システム接続エラー: {e}")
-                return [TextContent(type="text", text=f"❌ 学習システムに接続できません（URL: {learning_system_url}）")]
-            except Exception as e:
-                logger.error(f"学習システム予期しないエラー: {e}", exc_info=True)
-                return [TextContent(type="text", text=f"❌ 学習システムエラー: {str(e)}")]
-
-        elif name == "learning_get_preferences":
-            learning_system_url = LEARNING_SYSTEM_URL
-            try:
-                timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
-                response = httpx.get(f"{learning_system_url}/api/preferences", timeout=timeout)
-                response.raise_for_status()
-                return [TextContent(type="text", text=f"学習された好み:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-            except httpx.TimeoutException:
-                logger.error(f"学習システムタイムアウト: {learning_system_url}")
-                return [TextContent(type="text", text="❌ 学習システムへの接続がタイムアウトしました")]
-            except httpx.HTTPStatusError as e:
-                logger.error(f"学習システムHTTPエラー: {e.response.status_code} - {e.response.text}")
-                return [TextContent(type="text", text=f"❌ 学習システムエラー: HTTP {e.response.status_code}")]
-            except httpx.RequestError as e:
-                logger.error(f"学習システム接続エラー: {e}")
-                return [TextContent(type="text", text=f"❌ 学習システムに接続できません（URL: {learning_system_url}）")]
-            except Exception as e:
-                logger.error(f"学習システム予期しないエラー: {e}", exc_info=True)
-                return [TextContent(type="text", text=f"❌ 学習システムエラー: {str(e)}")]
-
-        elif name == "learning_get_optimizations":
-            learning_system_url = LEARNING_SYSTEM_URL
-            try:
-                timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
-                response = httpx.get(f"{learning_system_url}/api/optimizations", timeout=timeout)
-                response.raise_for_status()
-                return [TextContent(type="text", text=f"最適化提案:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-            except httpx.TimeoutException:
-                logger.error(f"学習システムタイムアウト: {learning_system_url}")
-                return [TextContent(type="text", text="❌ 学習システムへの接続がタイムアウトしました")]
-            except httpx.HTTPStatusError as e:
-                logger.error(f"学習システムHTTPエラー: {e.response.status_code} - {e.response.text}")
-                return [TextContent(type="text", text=f"❌ 学習システムエラー: HTTP {e.response.status_code}")]
-            except httpx.RequestError as e:
-                logger.error(f"学習システム接続エラー: {e}")
-                return [TextContent(type="text", text=f"❌ 学習システムに接続できません（URL: {learning_system_url}）")]
-            except Exception as e:
-                logger.error(f"学習システム予期しないエラー: {e}", exc_info=True)
-                return [TextContent(type="text", text=f"❌ 学習システムエラー: {str(e)}")]
-
-        # 人格系（Personality System）
-        elif name == "personality_get_persona":
-            personality_url = PERSONALITY_SYSTEM_URL
-            try:
-                timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
-                response = httpx.get(f"{personality_url}/api/persona", timeout=timeout)
-                response.raise_for_status()
-                return [TextContent(type="text", text=f"現在の人格:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-            except httpx.TimeoutException:
-                logger.error(f"人格システムタイムアウト: {personality_url}")
-                return [TextContent(type="text", text="❌ 人格システムへの接続がタイムアウトしました")]
-            except httpx.HTTPStatusError as e:
-                logger.error(f"人格システムHTTPエラー: {e.response.status_code} - {e.response.text}")
-                return [TextContent(type="text", text=f"❌ 人格システムエラー: HTTP {e.response.status_code}")]
-            except httpx.RequestError as e:
-                logger.error(f"人格システム接続エラー: {e}")
-                return [TextContent(type="text", text=f"❌ 人格システムに接続できません（URL: {personality_url}）")]
-            except Exception as e:
-                logger.error(f"人格システム予期しないエラー: {e}", exc_info=True)
-                return [TextContent(type="text", text=f"❌ 人格システムエラー: {str(e)}")]
-
-        elif name == "personality_get_prompt":
-            personality_url = PERSONALITY_SYSTEM_URL
-            try:
-                timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
-                response = httpx.get(f"{personality_url}/api/persona/prompt", timeout=timeout)
-                response.raise_for_status()
-                data = response.json()
-                return [TextContent(type="text", text=f"人格プロンプト:\n{data.get('prompt', '')}")]
-            except httpx.TimeoutException:
-                logger.error(f"人格システムタイムアウト: {personality_url}")
-                return [TextContent(type="text", text="❌ 人格システムへの接続がタイムアウトしました")]
-            except httpx.HTTPStatusError as e:
-                logger.error(f"人格システムHTTPエラー: {e.response.status_code} - {e.response.text}")
-                return [TextContent(type="text", text=f"❌ 人格システムエラー: HTTP {e.response.status_code}")]
-            except httpx.RequestError as e:
-                logger.error(f"人格システム接続エラー: {e}")
-                return [TextContent(type="text", text=f"❌ 人格システムに接続できません（URL: {personality_url}）")]
-            except Exception as e:
-                logger.error(f"人格システム予期しないエラー: {e}", exc_info=True)
-                return [TextContent(type="text", text=f"❌ 人格システムエラー: {str(e)}")]
-
-        elif name == "personality_apply":
-            personality_url = PERSONALITY_SYSTEM_URL
-            try:
-                timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
-                response = httpx.post(
-                    f"{personality_url}/api/persona/apply",
-                    json={
-                        "prompt": arguments.get("prompt"),
-                        "context": arguments.get("context")
+                    "required": ["query"],
+                },
+            ),
+            Tool(
+                name="web_search_simple",
+                description="シンプルなWeb検索（結果のみ返す）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "検索クエリ（必須）"},
+                        "max_results": {
+                            "type": "integer",
+                            "description": "最大結果数（デフォルト: 5）",
+                            "default": 5,
+                        },
                     },
-                    timeout=timeout
-                )
-                response.raise_for_status()
-                data = response.json()
-                return [TextContent(type="text", text=f"人格適用後のプロンプト:\n{data.get('enhanced_prompt', '')}")]
-            except httpx.TimeoutException:
-                logger.error(f"人格システムタイムアウト: {personality_url}")
-                return [TextContent(type="text", text="❌ 人格システムへの接続がタイムアウトしました")]
-            except httpx.HTTPStatusError as e:
-                logger.error(f"人格システムHTTPエラー: {e.response.status_code} - {e.response.text}")
-                return [TextContent(type="text", text=f"❌ 人格システムエラー: HTTP {e.response.status_code}")]
-            except httpx.RequestError as e:
-                logger.error(f"人格システム接続エラー: {e}")
-                return [TextContent(type="text", text=f"❌ 人格システムに接続できません（URL: {personality_url}）")]
-            except Exception as e:
-                logger.error(f"人格システム予期しないエラー: {e}", exc_info=True)
-                return [TextContent(type="text", text=f"❌ 人格システムエラー: {str(e)}")]
-
-        elif name == "personality_update":
-            personality_url = PERSONALITY_SYSTEM_URL
-            try:
-                timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
-                response = httpx.post(
-                    f"{personality_url}/api/persona",
-                    json=arguments.get("updates", {}),
-                    timeout=timeout
-                )
-                response.raise_for_status()
-                return [TextContent(type="text", text=f"✅ 人格プロフィールを更新しました\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-            except httpx.TimeoutException:
-                logger.error(f"人格システムタイムアウト: {personality_url}")
-                return [TextContent(type="text", text="❌ 人格システムへの接続がタイムアウトしました")]
-            except httpx.HTTPStatusError as e:
-                logger.error(f"人格システムHTTPエラー: {e.response.status_code} - {e.response.text}")
-                return [TextContent(type="text", text=f"❌ 人格システムエラー: HTTP {e.response.status_code}")]
-            except httpx.RequestError as e:
-                logger.error(f"人格システム接続エラー: {e}")
-                return [TextContent(type="text", text=f"❌ 人格システムに接続できません（URL: {personality_url}）")]
-            except Exception as e:
-                logger.error(f"人格システム予期しないエラー: {e}", exc_info=True)
-                return [TextContent(type="text", text=f"❌ 人格システムエラー: {str(e)}")]
-
-        # 自律系（Autonomy System）
-        elif name == "autonomy_add_task":
-            autonomy_url = AUTONOMY_SYSTEM_URL
-            try:
-                timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
-                response = httpx.post(
-                    f"{autonomy_url}/api/tasks",
-                    json={
-                        "task_type": arguments.get("task_type"),
-                        "priority": arguments.get("priority", "medium"),
-                        "condition": arguments.get("condition"),
-                        "action": arguments.get("action"),
-                        "schedule": arguments.get("schedule")
+                    "required": ["query"],
+                },
+            ),
+            Tool(
+                name="brave_search",
+                description="Brave Search APIを使用してWeb検索を実行します（高品質な検索結果）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "検索クエリ（必須）"},
+                        "count": {
+                            "type": "integer",
+                            "description": "取得件数（デフォルト: 10、最大: 20）",
+                            "default": 10,
+                        },
+                        "search_lang": {
+                            "type": "string",
+                            "description": "検索言語（デフォルト: ja）",
+                            "default": "ja",
+                        },
+                        "country": {
+                            "type": "string",
+                            "description": "国コード（デフォルト: JP）",
+                            "default": "JP",
+                        },
+                        "freshness": {
+                            "type": "string",
+                            "description": "時間範囲フィルタ（pd: 過去1日、pw: 過去1週間、pm: 過去1ヶ月、py: 過去1年）",
+                        },
                     },
-                    timeout=timeout
-                )
-                response.raise_for_status()
-                return [TextContent(type="text", text=f"✅ 自律タスクを追加しました\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-            except httpx.TimeoutException:
-                logger.error(f"自律システムタイムアウト: {autonomy_url}")
-                return [TextContent(type="text", text="❌ 自律システムへの接続がタイムアウトしました")]
-            except httpx.HTTPStatusError as e:
-                logger.error(f"自律システムHTTPエラー: {e.response.status_code} - {e.response.text}")
-                return [TextContent(type="text", text=f"❌ 自律システムエラー: HTTP {e.response.status_code}")]
-            except httpx.RequestError as e:
-                logger.error(f"自律システム接続エラー: {e}")
-                return [TextContent(type="text", text=f"❌ 自律システムに接続できません（URL: {autonomy_url}）")]
-            except Exception as e:
-                logger.error(f"自律システム予期しないエラー: {e}", exc_info=True)
-                return [TextContent(type="text", text=f"❌ 自律システムエラー: {str(e)}")]
-
-        elif name == "autonomy_execute_tasks":
-            autonomy_url = AUTONOMY_SYSTEM_URL
-            try:
-                timeout = timeout_config.get("api_call", 30.0) if timeout_config else 30.0
-                response = httpx.post(f"{autonomy_url}/api/execute", timeout=timeout)
-                response.raise_for_status()
-                return [TextContent(type="text", text=f"✅ 自律タスクを実行しました\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-            except httpx.TimeoutException:
-                logger.error(f"自律システムタイムアウト: {autonomy_url}")
-                return [TextContent(type="text", text=f"❌ 自律システムへの接続がタイムアウトしました（{timeout}秒）")]
-            except httpx.HTTPStatusError as e:
-                logger.error(f"自律システムHTTPエラー: {e.response.status_code} - {e.response.text}")
-                return [TextContent(type="text", text=f"❌ 自律システムエラー: HTTP {e.response.status_code}")]
-            except httpx.RequestError as e:
-                logger.error(f"自律システム接続エラー: {e}")
-                return [TextContent(type="text", text=f"❌ 自律システムに接続できません（URL: {autonomy_url}）")]
-            except Exception as e:
-                logger.error(f"自律システム予期しないエラー: {e}", exc_info=True)
-                return [TextContent(type="text", text=f"❌ 自律システムエラー: {str(e)}")]
-
-        elif name == "autonomy_list_tasks":
-            autonomy_url = AUTONOMY_SYSTEM_URL
-            try:
-                timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
-                response = httpx.get(f"{autonomy_url}/api/tasks", timeout=timeout)
-                response.raise_for_status()
-                return [TextContent(type="text", text=f"自律タスク一覧:\n{json.dumps(response.json(), indent=2, ensure_ascii=False)}")]
-            except httpx.TimeoutException:
-                logger.error(f"自律システムタイムアウト: {autonomy_url}")
-                return [TextContent(type="text", text="❌ 自律システムへの接続がタイムアウトしました")]
-            except httpx.HTTPStatusError as e:
-                logger.error(f"自律システムHTTPエラー: {e.response.status_code} - {e.response.text}")
-                return [TextContent(type="text", text=f"❌ 自律システムエラー: HTTP {e.response.status_code}")]
-            except httpx.RequestError as e:
-                logger.error(f"自律システム接続エラー: {e}")
-                return [TextContent(type="text", text=f"❌ 自律システムに接続できません（URL: {autonomy_url}）")]
-            except Exception as e:
-                logger.error(f"自律システム予期しないエラー: {e}", exc_info=True)
-                return [TextContent(type="text", text=f"❌ 自律システムエラー: {str(e)}")]
-
-        elif name == "autonomy_get_level":
-            autonomy_url = AUTONOMY_SYSTEM_URL
-            try:
-                timeout = timeout_config.get("api_call", 10.0) if timeout_config else 10.0
-                response = httpx.get(f"{autonomy_url}/api/status", timeout=timeout)
-                response.raise_for_status()
-                data = response.json()
-                return [TextContent(type="text", text=f"自律レベル: {data.get('autonomy_level', 'N/A')}")]
-            except httpx.TimeoutException:
-                logger.error(f"自律システムタイムアウト: {autonomy_url}")
-                return [TextContent(type="text", text="❌ 自律システムへの接続がタイムアウトしました")]
-            except httpx.HTTPStatusError as e:
-                logger.error(f"自律システムHTTPエラー: {e.response.status_code} - {e.response.text}")
-                return [TextContent(type="text", text=f"❌ 自律システムエラー: HTTP {e.response.status_code}")]
-            except httpx.RequestError as e:
-                logger.error(f"自律システム接続エラー: {e}")
-                return [TextContent(type="text", text=f"❌ 自律システムに接続できません（URL: {autonomy_url}）")]
-            except Exception as e:
-                logger.error(f"自律システム予期しないエラー: {e}", exc_info=True)
-                return [TextContent(type="text", text=f"❌ 自律システムエラー: {str(e)}")]
-
-        # VS Code操作
-        elif name == "vscode_open_file":
-            if not _vscode_tools_enabled():
-                return [TextContent(type="text", text="❌ VS Code操作ツールは無効です（MANAOS_ENABLE_VSCODE_TOOLS=true で明示的に有効化してください）")]
-            file_path = arguments.get("file_path")
-            line = arguments.get("line")
-            try:
-                import subprocess
-                cmd = ["code", file_path]
-                if line:
-                    cmd.extend(["--goto", f"{file_path}:{line}"])
-                subprocess.Popen(cmd, shell=True)
-                return [TextContent(type="text", text=f"✅ VS Codeでファイルを開きました\nパス: {file_path}" + (f"\n行: {line}" if line else ""))]
-            except Exception as e:
-                return [TextContent(type="text", text=f"❌ VS Code起動エラー: {e}\nVS Codeがインストールされていないか、PATHに追加されていない可能性があります")]
-
-        elif name == "vscode_open_folder":
-            if not _vscode_tools_enabled():
-                return [TextContent(type="text", text="❌ VS Code操作ツールは無効です（MANAOS_ENABLE_VSCODE_TOOLS=true で明示的に有効化してください）")]
-            folder_path = arguments.get("folder_path")
-            try:
-                import subprocess
-                subprocess.Popen(["code", folder_path], shell=True)
-                return [TextContent(type="text", text=f"✅ VS Codeでフォルダを開きました\nパス: {folder_path}")]
-            except Exception as e:
-                return [TextContent(type="text", text=f"❌ VS Code起動エラー: {e}\nVS Codeがインストールされていないか、PATHに追加されていない可能性があります")]
-
-        elif name == "vscode_execute_command":
-            if not _vscode_tools_enabled():
-                return [TextContent(type="text", text="❌ VS Code操作ツールは無効です（MANAOS_ENABLE_VSCODE_TOOLS=true で明示的に有効化してください）")]
-            command = arguments.get("command")
-            args = arguments.get("args", [])
-            try:
-                import subprocess
-                cmd = ["code", "--command", command] + args
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-                if result.returncode == 0:
-                    return [TextContent(type="text", text=f"✅ VS Codeコマンドを実行しました\nコマンド: {command}\n出力: {result.stdout}")]
-                else:
-                    return [TextContent(type="text", text=f"⚠️ VS Codeコマンド実行完了（エラーコード: {result.returncode}）\nコマンド: {command}\nエラー: {result.stderr}")]
-            except Exception as e:
-                return [TextContent(type="text", text=f"❌ VS Codeコマンド実行エラー: {e}")]
-
-        elif name == "vscode_search_files":
-            if not _vscode_tools_enabled():
-                return [TextContent(type="text", text="❌ VS Code操作ツールは無効です（MANAOS_ENABLE_VSCODE_TOOLS=true で明示的に有効化してください）")]
-            query = arguments.get("query")
-            include = arguments.get("include")
-            exclude = arguments.get("exclude")
-            try:
-                import subprocess
-                # VS Codeのクイックオープンで検索
-                cmd = ["code", "--command", "workbench.action.quickOpen"]
-                subprocess.Popen(cmd, shell=True)
-                # 実際の検索はVS CodeのUIで行う必要があるため、検索クエリを返す
-                search_info = f"検索クエリ: {query}"
-                if include:
-                    search_info += f"\n対象: {include}"
-                if exclude:
-                    search_info += f"\n除外: {exclude}"
-                return [TextContent(type="text", text=f"✅ VS Codeの検索を開きました\n{search_info}\n\n注意: 実際の検索はVS CodeのUIで行ってください")]
-            except Exception as e:
-                return [TextContent(type="text", text=f"❌ VS Code検索エラー: {e}")]
-
-        # SearXNG Web検索
-        elif name == "web_search":
-            searxng = get_integration("searxng")
-            if not searxng:
-                return [TextContent(type="text", text="❌ SearXNG統合が利用できません")]
-
-            result = searxng.search(
-                query=arguments.get("query"),
-                max_results=arguments.get("max_results", 10),
-                language=arguments.get("language", "ja"),
-                categories=arguments.get("categories"),
-                time_range=arguments.get("time_range")
-            )
-
-            if result.get("error"):
-                return [TextContent(type="text", text=f"❌ 検索エラー: {result.get('error')}")]
-
-            # 結果を整形して返す
-            results_text = f"🔍 検索結果: {result.get('query', '')}\n"
-            results_text += f"総結果数: {result.get('total_results', 0)}件\n"
-            results_text += f"表示件数: {result.get('count', 0)}件\n\n"
-
-            for i, item in enumerate(result.get("results", []), 1):
-                results_text += f"{i}. {item.get('title', '')}\n"
-                results_text += f"   URL: {item.get('url', '')}\n"
-                if item.get('content'):
-                    content = item.get('content', '')[:200]
-                    results_text += f"   概要: {content}...\n"
-                results_text += "\n"
-
-            return [TextContent(type="text", text=results_text)]
-
-        elif name == "web_search_simple":
-            searxng = get_integration("searxng")
-            if not searxng:
-                return [TextContent(type="text", text="❌ SearXNG統合が利用できません")]
-
-            results = searxng.search_simple(
-                query=arguments.get("query"),
-                max_results=arguments.get("max_results", 5)
-            )
-
-            if not results:
-                return [TextContent(type="text", text="❌ 検索結果が見つかりませんでした")]
-
-        # Brave Search API
-        elif name == "brave_search":
-            brave = get_integration("brave_search")
-            if not brave:
-                return [TextContent(type="text", text="❌ Brave Search統合が利用できません")]
-
-            if not brave.is_available():
-                return [TextContent(type="text", text="❌ Brave Search APIキーが設定されていません")]
-
-            result = brave.search_with_summary(
-                query=arguments.get("query"),
-                count=arguments.get("count", 10)
-            )
-
-            if not result.get("results"):
-                return [TextContent(type="text", text="❌ 検索結果が見つかりませんでした")]
-
-            # 結果を整形して返す
-            results_text = f"🔍 Brave Search結果: {result.get('query', '')}\n"
-            results_text += f"総結果数: {result.get('total_results', 0)}件\n\n"
-
-            for i, item in enumerate(result.get("results", []), 1):
-                results_text += f"{i}. {item.get('title', '')}\n"
-                results_text += f"   URL: {item.get('url', '')}\n"
-                if item.get('description'):
-                    results_text += f"   概要: {item.get('description', '')}\n"
-                if item.get('age'):
-                    results_text += f"   公開日: {item.get('age', '')}\n"
-                results_text += "\n"
-
-            return [TextContent(type="text", text=results_text)]
-
-        elif name == "brave_search_simple":
-            brave = get_integration("brave_search")
-            if not brave:
-                return [TextContent(type="text", text="❌ Brave Search統合が利用できません")]
-
-            if not brave.is_available():
-                return [TextContent(type="text", text="❌ Brave Search APIキーが設定されていません")]
-
-            results = brave.search_simple(
-                query=arguments.get("query"),
-                count=arguments.get("count", 5)
-            )
-
-            if not results:
-                return [TextContent(type="text", text="❌ 検索結果が見つかりませんでした")]
-
-            results_text = f"🔍 検索結果 ({len(results)}件):\n\n"
-            for i, item in enumerate(results, 1):
-                results_text += f"{i}. {item.get('title', '')}\n"
-                results_text += f"   {item.get('url', '')}\n\n"
-
-            return [TextContent(type="text", text=results_text)]
-
-        # Base AI API
-        elif name == "base_ai_chat":
-            base_ai = get_integration("base_ai")
-            if not base_ai:
-                return [TextContent(type="text", text="❌ Base AI統合が利用できません")]
-
-            if not base_ai.is_available():
-                return [TextContent(type="text", text="❌ Base AI APIキーが設定されていません")]
-
-            try:
-                # use_freeパラメータに応じて統合を再初期化
-                use_free = arguments.get("use_free", False)
-                from base_ai_integration import BaseAIIntegration
-                if use_free != (os.getenv("BASE_AI_USE_FREE", "false").lower() == "true"):
-                    base_ai = BaseAIIntegration(use_free=use_free)
-
-                response = base_ai.chat_simple(
-                    prompt=arguments.get("prompt"),
-                    system_prompt=arguments.get("system_prompt")
-                )
-
-                result_text = f"🤖 Base AI レスポンス:\n\n{response}"
-
-                if base_ai.api_key:
-                    api_type = "無料のAI" if use_free else "無料"
-                    result_text += f"\n\n[使用API: {api_type}]"
-
-                return [TextContent(type="text", text=result_text)]
-            except Exception as e:
-                logger.error(f"Base AIチャットエラー: {e}", exc_info=True)
-                # 統一エラーハンドリングを使用
-                if ERROR_HANDLER_AVAILABLE and error_handler:
-                    try:
-                        manaos_error = error_handler.handle_exception(
-                            e,
-                            context={"tool_name": "base_ai_chat", "arguments": arguments},
-                            user_message="Base AIチャット中にエラーが発生しました"
-                        )
-                        error_message = manaos_error.user_message or manaos_error.message
-                        return [TextContent(type="text", text=f"❌ {error_message}")]
-                    except Exception as handler_error:
-                        logger.warning(f"エラーハンドラーでの処理中にエラーが発生: {handler_error}")
-                return [TextContent(type="text", text=f"❌ Base AIチャットエラー: {str(e)}")]
-
-        # Open WebUI操作
-        elif name == "openwebui_create_chat":
-            from manaos_unified_mcp_server.error_helper import requests_with_retry, format_error_response
-            openwebui_url = os.getenv("OPENWEBUI_URL", "http://localhost:3001")
-            api_key = os.getenv("OPENWEBUI_API_KEY", "")
-
-            try:
-                headers = {"Content-Type": "application/json"}
-                if api_key:
-                    headers["Authorization"] = f"Bearer {api_key}"
-
-                data = {
-                    "message": arguments.get("message"),
-                    "model": arguments.get("model", "qwen2.5-coder-7b-instruct"),
-                    "context_length": arguments.get("context_length")
-                }
-
-                response = requests_with_retry(
-                    "post",
-                    f"{openwebui_url}/api/v1/chats/new",
-                    json=data,
-                    headers=headers,
-                    timeout_key="external_service"
-                )
-
-                if response.status_code == 200:
-                    chat_data = response.json()
-                    return [TextContent(type="text", text=f"✅ チャットを作成しました\nチャットID: {chat_data.get('id', 'N/A')}\nモデル: {data.get('model', 'N/A')}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ チャット作成に失敗しました: {response.text}")]
-            except Exception as e:
-                logger.error(f"Open WebUIチャット作成エラー: {e}", exc_info=True)
-                return format_error_response(e, tool_name="openwebui_create_chat")
-
-        elif name == "openwebui_list_chats":
-            from manaos_unified_mcp_server.error_helper import requests_with_retry, format_error_response
-            openwebui_url = os.getenv("OPENWEBUI_URL", "http://localhost:3001")
-            api_key = os.getenv("OPENWEBUI_API_KEY", "")
-
-            try:
-                headers = {}
-                if api_key:
-                    headers["Authorization"] = f"Bearer {api_key}"
-
-                params = {
-                    "limit": arguments.get("limit", 20),
-                    "offset": arguments.get("offset", 0)
-                }
-
-                response = requests_with_retry(
-                    "get",
-                    f"{openwebui_url}/api/v1/chats",
-                    params=params,
-                    headers=headers,
-                    timeout_key="external_service"
-                )
-
-                if response.status_code == 200:
-                    chats = response.json()
-                    if isinstance(chats, list):
-                        result_text = f"📋 チャット一覧 ({len(chats)}件):\n\n"
-                        for i, chat in enumerate(chats[:10], 1):  # 最大10件表示
-                            result_text += f"{i}. {chat.get('title', 'Untitled')}\n"
-                            result_text += f"   ID: {chat.get('id', 'N/A')}\n"
-                            if chat.get('model'):
-                                result_text += f"   モデル: {chat.get('model')}\n"
-                            result_text += "\n"
-                        return [TextContent(type="text", text=result_text)]
-                    else:
-                        return [TextContent(type="text", text=f"✅ チャット一覧を取得しました\n{json.dumps(chats, indent=2, ensure_ascii=False)}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ チャット一覧取得に失敗しました: {response.text}")]
-            except Exception as e:
-                logger.error(f"Open WebUIチャット一覧取得エラー: {e}", exc_info=True)
-                return format_error_response(e, tool_name="openwebui_list_chats")
-
-        elif name == "openwebui_send_message":
-            from manaos_unified_mcp_server.error_helper import requests_with_retry, format_error_response
-            openwebui_url = os.getenv("OPENWEBUI_URL", "http://localhost:3001")
-            api_key = os.getenv("OPENWEBUI_API_KEY", "")
-
-            try:
-                headers = {"Content-Type": "application/json"}
-                if api_key:
-                    headers["Authorization"] = f"Bearer {api_key}"
-
-                data = {
-                    "message": arguments.get("message")
-                }
-
-                response = requests_with_retry(
-                    "post",
-                    f"{openwebui_url}/api/v1/chats/{arguments.get('chat_id')}/messages",
-                    json=data,
-                    headers=headers,
-                    timeout_key="external_service"
-                )
-
-                if response.status_code == 200:
-                    return [TextContent(type="text", text=f"✅ メッセージを送信しました\n{response.text}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ メッセージ送信に失敗しました: {response.text}")]
-            except Exception as e:
-                logger.error(f"Open WebUIメッセージ送信エラー: {e}", exc_info=True)
-                return format_error_response(e, tool_name="openwebui_send_message")
-
-        elif name == "openwebui_get_chat":
-            from manaos_unified_mcp_server.error_helper import requests_with_retry, format_error_response
-            openwebui_url = os.getenv("OPENWEBUI_URL", "http://localhost:3001")
-            api_key = os.getenv("OPENWEBUI_API_KEY", "")
-
-            try:
-                headers = {}
-                if api_key:
-                    headers["Authorization"] = f"Bearer {api_key}"
-
-                response = requests_with_retry(
-                    "get",
-                    f"{openwebui_url}/api/v1/chats/{arguments.get('chat_id')}",
-                    headers=headers,
-                    timeout_key="external_service"
-                )
-
-                if response.status_code == 200:
-                    chat_data = response.json()
-                    return [TextContent(type="text", text=f"✅ チャット情報を取得しました\n{json.dumps(chat_data, indent=2, ensure_ascii=False)}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ チャット情報取得に失敗しました: {response.text}")]
-            except Exception as e:
-                logger.error(f"Open WebUIチャット情報取得エラー: {e}", exc_info=True)
-                return format_error_response(e, tool_name="openwebui_get_chat")
-
-        elif name == "openwebui_list_models":
-            from manaos_unified_mcp_server.error_helper import requests_with_retry, format_error_response
-            openwebui_url = os.getenv("OPENWEBUI_URL", "http://localhost:3001")
-            api_key = os.getenv("OPENWEBUI_API_KEY", "")
-
-            try:
-                headers = {}
-                if api_key:
-                    headers["Authorization"] = f"Bearer {api_key}"
-
-                response = requests_with_retry(
-                    "get",
-                    f"{openwebui_url}/api/v1/models",
-                    headers=headers,
-                    timeout_key="external_service"
-                )
-
-                if response.status_code == 200:
-                    models = response.json()
-                    if isinstance(models, list):
-                        result_text = f"🤖 利用可能なモデル ({len(models)}件):\n\n"
-                        for i, model in enumerate(models, 1):
-                            result_text += f"{i}. {model.get('id', 'N/A')}\n"
-                            if model.get('name'):
-                                result_text += f"   名前: {model.get('name')}\n"
-                            result_text += "\n"
-                        return [TextContent(type="text", text=result_text)]
-                    else:
-                        return [TextContent(type="text", text=f"✅ モデル一覧を取得しました\n{json.dumps(models, indent=2, ensure_ascii=False)}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ モデル一覧取得に失敗しました: {response.text}")]
-            except Exception as e:
-                logger.error(f"Open WebUIモデル一覧取得エラー: {e}", exc_info=True)
-                return format_error_response(e, tool_name="openwebui_list_models")
-
-        elif name == "openwebui_update_settings":
-            from manaos_unified_mcp_server.error_helper import requests_with_retry, format_error_response
-            openwebui_url = os.getenv("OPENWEBUI_URL", "http://localhost:3001")
-            api_key = os.getenv("OPENWEBUI_API_KEY", "")
-
-            try:
-                headers = {"Content-Type": "application/json"}
-                if api_key:
-                    headers["Authorization"] = f"Bearer {api_key}"
-
-                data = {}
-                if "enable_signup" in arguments:
-                    data["enable_signup"] = arguments.get("enable_signup")
-                if "default_model" in arguments:
-                    data["default_model"] = arguments.get("default_model")
-                if "context_length" in arguments:
-                    data["context_length"] = arguments.get("context_length")
-
-                response = requests_with_retry(
-                    "put",
-                    f"{openwebui_url}/api/v1/settings",
-                    json=data,
-                    headers=headers,
-                    timeout_key="external_service"
-                )
-
-                if response.status_code == 200:
-                    return [TextContent(type="text", text=f"✅ 設定を更新しました\n{response.text}")]
-                else:
-                    return [TextContent(type="text", text=f"❌ 設定更新に失敗しました: {response.text}")]
-            except Exception as e:
-                logger.error(f"Open WebUI設定更新エラー: {e}", exc_info=True)
-                return format_error_response(e, tool_name="openwebui_update_settings")
-
-        else:
-            return [TextContent(type="text", text=f"❌ 未知のツール: {name}")]
-
-    except Exception as e:
-        logger.error(f"ツール実行エラー: {e}", exc_info=True)
-        
-        # 統一エラーハンドリングを使用
-        if ERROR_HANDLER_AVAILABLE and error_handler:
-            try:
-                manaos_error = error_handler.handle_exception(
-                    e,
-                    context={"tool_name": name, "arguments": arguments},
-                    user_message=f"ツール '{name}' の実行中にエラーが発生しました"
-                )
-                error_message = manaos_error.user_message or manaos_error.message
-                return [TextContent(type="text", text=f"❌ {error_message}")]
-            except Exception as handler_error:
-                logger.warning(f"エラーハンドラーでの処理中にエラーが発生: {handler_error}")
-        
-        # フォールバック: 基本的なエラーメッセージ
-        return [TextContent(type="text", text=f"❌ エラーが発生しました: {str(e)}")]
-
-async def main():
-    """メイン関数"""
-    async with stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            server.create_initialization_options()
-        )
-
-if __name__ == "__main__":
-    asyncio.run(main())
+                    "required": ["query"],
+                },
+            ),
+            Tool(
+                name="brave_search_simple",
+                description="Brave Search APIを使用したシンプルな検索（結果のみ返す）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "検索クエリ（必須）"},
+                        "count": {
+                            "type": "integer",
+                            "description": "取得件数（デフォルト: 5）",
+                            "default": 5,
+                        },
+                    },
+                    "required": ["query"],
+                },
+            ),
+            Tool(
+                name="base_ai_chat",
+                description="Base AI APIを使用してチャットを実行します（無料のAI APIも利用可能）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "prompt": {"type": "string", "description": "ユーザープロンプト（必須）"},
+                        "system_prompt": {
+                            "type": "string",
+                            "description": "システムプロンプト（オプション）",
+                        },
+                        "use_free": {
+                            "type": "boolean",
+                            "description": "無料のAI APIを使用するか（デフォルト: false）",
+                            "default": False,
+                        },
+                        "temperature": {
+                            "type": "number",
+                            "description": "温度パラメータ（デフォルト: 0.7）",
+                            "default": 0.7,
+                        },
+                        "max_tokens": {
+                            "type": "integer",
+                            "description": "最大トークン数（オプション）",
+                        },
+                    },
+                    "required": ["prompt"],
+                },
+            ),
+        ]
+    )
+
+    return _filter_tools_by_domain(tools)
