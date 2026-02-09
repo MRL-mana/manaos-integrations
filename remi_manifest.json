@@ -1,0 +1,32 @@
+{
+    "name": "Remi Dashboard",
+    "short_name": "Remi",
+    "description": "Local AI Companion",
+    "start_url": "/dashboard",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#0a0a0f",
+    "theme_color": "#667eea",
+    "orientation": "portrait",
+    "categories": ["utilities", "productivity"],
+    "icons": [
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Status Check",
+            "url": "/dashboard",
+            "icons": [{"src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>", "sizes": "any"}]
+        },
+        {
+            "name": "Chat",
+            "url": "/dashboard#actions",
+            "icons": [{"src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>", "sizes": "any"}]
+        }
+    ]
+}

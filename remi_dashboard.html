@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0f">
+<link rel="manifest" href="/manifest.json">
+<title>Remi Dashboard</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #0a0a0f;
+    color: #e0e0e0;
+    min-height: 100vh;
+    padding: 12px 12px 100px 12px;
+    -webkit-tap-highlight-color: transparent;
+}
+.header { text-align:center; padding:8px 0 12px; }
+.header h1 {
+    font-size: 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.conn { font-size:11px; padding:3px 8px; border-radius:6px; display:inline-block; margin-top:4px; }
+.conn-ok { background:#1b3a1b; color:#4CAF50; }
+.conn-ng { background:#3a1b1b; color:#f44336; }
+
+/* Tabs */
+.tabs { display:flex; gap:4px; margin-bottom:12px; overflow-x:auto; }
+.tab {
+    padding:8px 16px; border:none; border-radius:20px;
+    background:#1a1a2e; color:#888; font-size:13px; font-weight:600;
+    cursor:pointer; white-space:nowrap; transition: all 0.2s;
+}
+.tab.active { background: linear-gradient(135deg,#667eea,#764ba2); color:#fff; }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* Cards */
+.card {
+    background:#1a1a2e; border-radius:14px; padding:14px;
+    margin-bottom:10px; border:1px solid #2a2a3e;
+}
+.card-title { font-size:12px; color:#666; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.big-num { font-size:42px; font-weight:700; line-height:1; }
+.unit { font-size:16px; color:#666; }
+.bar-bg { height:6px; background:#2a2a3e; border-radius:3px; margin-top:6px; overflow:hidden; }
+.bar { height:100%; border-radius:3px; transition:width 0.5s; }
+.bar-gpu { background:linear-gradient(90deg,#4CAF50,#FF9800,#f44336); }
+.bar-cpu { background:linear-gradient(90deg,#2196F3,#FF5722); }
+.bar-ram { background:linear-gradient(90deg,#9C27B0,#E91E63); }
+.flex { display:flex; gap:10px; }
+.flex .card { flex:1; }
+
+/* Items */
+.item { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid #1a1a2e; }
+.item:last-child { border-bottom:none; }
+.dot { width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px; }
+.d-g { background:#4CAF50;box-shadow:0 0 4px #4CAF50; }
+.d-y { background:#FF9800;box-shadow:0 0 4px #FF9800; }
+.d-r { background:#f44336;box-shadow:0 0 4px #f44336; }
+
+/* Actions */
+.actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.act {
+    padding:14px 8px; border:none; border-radius:12px;
+    color:#fff; font-size:13px; font-weight:600; cursor:pointer;
+    text-align:center; transition:transform 0.1s;
+}
+.act:active { transform:scale(0.95); }
+.a1 { background:linear-gradient(135deg,#667eea,#764ba2); }
+.a2 { background:linear-gradient(135deg,#11998e,#38ef7d); }
+.a3 { background:linear-gradient(135deg,#FC466B,#3F5EFB); }
+.a4 { background:linear-gradient(135deg,#f44336,#e91e63); }
+.a5 { background:linear-gradient(135deg,#FF9800,#F44336); }
+.a6 { background:linear-gradient(135deg,#00BCD4,#2196F3); }
+
+/* Notifications */
+.notif {
+    padding:10px 12px; border-radius:10px; margin-bottom:6px;
+    font-size:12px; border-left:3px solid;
+}
+.notif-system { background:#1a2a1a; border-color:#4CAF50; }
+.notif-warning { background:#2a2a1a; border-color:#FF9800; }
+.notif-action { background:#1a1a2a; border-color:#2196F3; }
+.notif-emergency { background:#2a1a1a; border-color:#f44336; }
+.notif-time { color:#555; font-size:10px; margin-top:2px; }
+
+/* Ollama models */
+.model-tag {
+    display:inline-block; padding:4px 10px; border-radius:12px;
+    background:#2a2a3e; color:#aaa; font-size:11px; margin:3px;
+}
+
+.footer { text-align:center; color:#333; font-size:10px; margin-top:12px; }
+
+/* Bottom nav */
+.bottom-nav {
+    position:fixed; bottom:0; left:0; right:0;
+    background:#0d0d15; border-top:1px solid #1a1a2e;
+    display:flex; justify-content:space-around;
+    padding:8px 0 env(safe-area-inset-bottom, 8px);
+}
+.nav-item {
+    text-align:center; color:#555; font-size:10px;
+    cursor:pointer; padding:4px 12px;
+}
+.nav-item.active { color:#667eea; }
+.nav-icon { font-size:20px; display:block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Remi Dashboard</h1>
+    <span class="conn conn-ng" id="conn">connecting...</span>
+</div>
+
+<!-- Tab Content: Status -->
+<div class="tab-content active" id="page-status">
+    <!-- GPU -->
+    <div class="card">
+        <div class="card-title">GPU</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <div><span class="big-num" id="g-use">--</span><span class="unit">%</span></div>
+            <div style="text-align:right;">
+                <div style="font-size:12px;" id="g-name">--</div>
+                <div style="color:#666;font-size:11px;" id="g-mem">--</div>
+                <div style="color:#666;font-size:11px;" id="g-temp">--</div>
+            </div>
+        </div>
+        <div class="bar-bg"><div class="bar bar-gpu" id="g-bar" style="width:0%"></div></div>
+    </div>
+
+    <div class="flex">
+        <div class="card">
+            <div class="card-title">CPU</div>
+            <div><span class="big-num" id="c-use">--</span><span class="unit">%</span></div>
+            <div class="bar-bg"><div class="bar bar-cpu" id="c-bar" style="width:0%"></div></div>
+        </div>
+        <div class="card">
+            <div class="card-title">RAM</div>
+            <div><span class="big-num" id="r-use">--</span><span class="unit">%</span></div>
+            <div style="color:#666;font-size:11px;" id="r-det">--</div>
+            <div class="bar-bg"><div class="bar bar-ram" id="r-bar" style="width:0%"></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Ollama Models</div>
+        <div id="models"><span style="color:#555">Loading...</span></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Docker (<span id="docker-count">0</span>)</div>
+        <div id="docker" style="max-height:200px;overflow-y:auto;"></div>
+    </div>
+</div>
+
+<!-- Tab Content: Actions -->
+<div class="tab-content" id="page-actions">
+    <div class="actions">
+        <button class="act a1" onclick="openChat()">Chat</button>
+        <button class="act a2" onclick="refreshAll()">Refresh</button>
+        <button class="act a3" onclick="runAction('comfyui_start')">ComfyUI Start</button>
+        <button class="act a5" onclick="runAction('comfyui_stop')">ComfyUI Stop</button>
+        <button class="act a6" onclick="runAction('docker_cleanup')">Docker Cleanup</button>
+        <button class="act a4" onclick="emergencyStop()">STOP ALL</button>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+        <div class="card-title">Quick Chat</div>
+        <div style="display:flex;gap:8px;">
+            <input id="chat-input" type="text" placeholder="Ask Remi..."
+                style="flex:1;padding:10px;border:1px solid #2a2a3e;border-radius:10px;background:#0d0d15;color:#e0e0e0;font-size:14px;">
+            <button onclick="sendChat()" style="padding:10px 16px;border:none;border-radius:10px;background:#667eea;color:white;font-weight:600;cursor:pointer;">Send</button>
+        </div>
+        <div id="chat-reply" style="margin-top:8px;font-size:13px;color:#aaa;max-height:300px;overflow-y:auto;"></div>
+    </div>
+
+    <div class="card" style="margin-top:8px;">
+        <div class="card-title">Available Actions</div>
+        <div id="action-list" style="font-size:12px;color:#888;">Loading...</div>
+    </div>
+</div>
+
+<!-- Tab Content: Notifications -->
+<div class="tab-content" id="page-notif">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="font-size:14px;font-weight:600;">Notifications</span>
+        <button onclick="markRead()" style="padding:6px 12px;border:none;border-radius:8px;background:#2a2a3e;color:#888;font-size:11px;cursor:pointer;">Mark all read</button>
+    </div>
+    <div id="notif-list"></div>
+</div>
+
+<!-- Bottom Navigation -->
+<div class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('status')">
+        <span class="nav-icon">&#128200;</span>Status
+    </div>
+    <div class="nav-item" onclick="switchTab('actions')">
+        <span class="nav-icon">&#9889;</span>Actions
+    </div>
+    <div class="nav-item" onclick="switchTab('notif')">
+        <span class="nav-icon">&#128276;</span>
+        <span id="notif-badge"></span>Alerts
+    </div>
+</div>
+
+<div class="footer" id="footer">--</div>
+
+<script>
+const API = window.location.origin;
+const CHAT_URL = window.location.origin.replace(/:\d+$/, ':3001');
+
+function switchTab(name) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if (name === 'notif') fetchNotifications();
+}
+
+async function fetchStatus() {
+    try {
+        const [sRes, tRes] = await Promise.all([
+            fetch(API + '/status'), fetch(API + '/tasks')
+        ]);
+        const s = await sRes.json(), t = await tRes.json();
+
+        // GPU
+        document.getElementById('g-use').textContent = Math.round(s.gpu.usage_percent);
+        document.getElementById('g-name').textContent = s.gpu.name || 'N/A';
+        document.getElementById('g-mem').textContent = Math.round(s.gpu.memory_used_mb) + ' / ' + Math.round(s.gpu.memory_total_mb) + ' MB';
+        document.getElementById('g-temp').textContent = Math.round(s.gpu.temperature_c) + '\u00B0C';
+        document.getElementById('g-bar').style.width = s.gpu.usage_percent + '%';
+
+        // CPU / RAM
+        document.getElementById('c-use').textContent = Math.round(s.cpu.usage_percent);
+        document.getElementById('c-bar').style.width = s.cpu.usage_percent + '%';
+        document.getElementById('r-use').textContent = Math.round(s.ram.usage_percent);
+        document.getElementById('r-det').textContent = s.ram.used_gb + ' / ' + s.ram.total_gb + ' GB';
+        document.getElementById('r-bar').style.width = s.ram.usage_percent + '%';
+
+        // Ollama Models
+        if (t.ollama && t.ollama.models) {
+            document.getElementById('models').innerHTML = t.ollama.models.map(m =>
+                '<span class="model-tag">' + m + '</span>'
+            ).join('');
+        }
+
+        // Docker
+        const dc = t.docker_containers || [];
+        document.getElementById('docker-count').textContent = dc.length;
+        const important = dc.filter(c => !c.name.match(/^(crazy|priceless|determined|magical|relaxed|charming|hardcore)_/));
+        document.getElementById('docker').innerHTML = important.map(c =>
+            '<div class="item"><span><span class="dot ' +
+            (c.status.includes('Up') ? (c.status.includes('unhealthy') ? 'd-y' : 'd-g') : 'd-r') +
+            '"></span><span style="font-size:12px">' + c.name + '</span></span>' +
+            '<span style="color:#555;font-size:10px">' + c.status.replace(/^Up /, '').substring(0, 15) + '</span></div>'
+        ).join('') || '<div style="color:#555;text-align:center;padding:8px">No containers</div>';
+
+        // Connection
+        const cn = document.getElementById('conn');
+        cn.textContent = 'Connected \u2022 ' + s.uptime_hours + 'h uptime';
+        cn.className = 'conn conn-ok';
+        document.getElementById('footer').textContent = new Date().toLocaleTimeString('ja-JP');
+    } catch (e) {
+        document.getElementById('conn').textContent = 'Disconnected';
+        document.getElementById('conn').className = 'conn conn-ng';
+    }
+}
+
+async function fetchNotifications() {
+    try {
+        const res = await fetch(API + '/notifications');
+        const notifs = await res.json();
+        const list = document.getElementById('notif-list');
+        if (notifs.length === 0) {
+            list.innerHTML = '<div style="color:#555;text-align:center;padding:20px">No notifications</div>';
+            return;
+        }
+        list.innerHTML = notifs.reverse().map(n =>
+            '<div class="notif notif-' + n.category + '">' +
+            '<div>' + n.message + '</div>' +
+            '<div class="notif-time">' + new Date(n.timestamp).toLocaleString('ja-JP') + '</div></div>'
+        ).join('');
+        const unread = notifs.filter(n => !n.read).length;
+        document.getElementById('notif-badge').textContent = unread > 0 ? '(' + unread + ')' : '';
+    } catch (e) {}
+}
+
+async function fetchActions() {
+    try {
+        const res = await fetch(API + '/actions');
+        const actions = await res.json();
+        document.getElementById('action-list').innerHTML = Object.entries(actions).map(([k, v]) =>
+            '<div class="item"><span>' + v.name + '</span><span style="color:#555">' + k + '</span></div>'
+        ).join('');
+    } catch (e) {}
+}
+
+function openChat() { window.location.href = CHAT_URL; }
+
+function refreshAll() {
+    fetchStatus();
+    fetchNotifications();
+}
+
+async function runAction(name) {
+    try {
+        const res = await fetch(API + '/action/' + name, { method: 'POST' });
+        const data = await res.json();
+        alert(JSON.stringify(data, null, 2));
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function emergencyStop() {
+    if (!confirm('Stop all GPU tasks?')) return;
+    try {
+        await fetch(API + '/emergency-stop', { method: 'POST' });
+        alert('Emergency stop sent');
+    } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function sendChat() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    const reply = document.getElementById('chat-reply');
+    reply.innerHTML = '<div style="color:#667eea">Thinking...</div>';
+    input.value = '';
+    try {
+        const res = await fetch(API + '/chat?message=' + encodeURIComponent(msg), { method: 'POST' });
+        const data = await res.json();
+        if (data.reply) {
+            reply.innerHTML = '<div style="white-space:pre-wrap">' + data.reply + '</div>';
+        } else {
+            reply.innerHTML = '<div style="color:#f44336">' + (data.error || 'No reply') + '</div>';
+        }
+    } catch (e) {
+        reply.innerHTML = '<div style="color:#f44336">' + e.message + '</div>';
+    }
+}
+
+async function markRead() {
+    await fetch(API + '/notifications/read', { method: 'POST' });
+    fetchNotifications();
+}
+
+document.getElementById('chat-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendChat();
+});
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
+// Vibrate on emergency actions
+function vib() { if (navigator.vibrate) navigator.vibrate(50); }
+document.querySelectorAll('.act').forEach(b => b.addEventListener('click', vib));
+
+// Init
+fetchStatus();
+fetchActions();
+fetchNotifications();
+setInterval(fetchStatus, 3000);
+setInterval(fetchNotifications, 30000);
+</script>
+</body>
+</html>
