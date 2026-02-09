@@ -1,9 +1,7 @@
-"""
-Local Remi API - Phase 2+3 Status, Voice & Quick Actions
-Pixel 7 companion AI backend
+"""Local Remi API - Pixel 7 Companion AI Backend
 
 Endpoints:
-  GET  /status         - System status (GPU, CPU, RAM, tasks)
+  GET  /status         - System status (GPU, CPU, RAM, Disk)
   GET  /tasks          - Running tasks detail
   GET  /health         - Health check
   POST /tts            - VOICEVOX text-to-speech
@@ -11,13 +9,19 @@ Endpoints:
   GET  /dashboard      - Status dashboard HTML (PWA)
   POST /action/{name}  - Quick actions (comfyui, ollama, etc.)
   POST /emergency-stop - Kill GPU processes
-  POST /chat           - Send message to Open WebUI
-  GET  /notifications  - Push notification status
+  POST /chat           - Send message via Ollama (direct)
+  DELETE /chat/history  - Clear chat history
+  GET  /notifications  - Notification list
+  POST /notifications/read - Mark all read
+
+Security: Bearer token via REMI_API_TOKEN env var
 """
 
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, Query, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, Response
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from contextlib import asynccontextmanager
 import psutil
 import subprocess
 import json
@@ -26,10 +30,57 @@ import asyncio
 import httpx
 import io
 import os
+import logging
+import secrets
 from datetime import datetime
 from typing import Optional, List
 
-app = FastAPI(title="Local Remi API", version="3.0.0")
+# ============================================================
+# Security
+# ============================================================
+API_TOKEN = os.getenv("REMI_API_TOKEN", "")
+if not API_TOKEN:
+    API_TOKEN = secrets.token_hex(32)
+    print(f"[Remi] Generated API token: {API_TOKEN}")
+    print(f"[Remi] Set REMI_API_TOKEN env var to persist this token")
+
+security = HTTPBearer(auto_error=False)
+
+async def verify_token(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
+    """Verify Bearer token. Dashboard/manifest/sw.js/health are exempt."""
+    if not credentials or credentials.credentials != API_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid or missing API token")
+    return credentials
+
+# ============================================================
+# Audit Log
+# ============================================================
+LOG_DIR = os.path.join(os.path.dirname(__file__), "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+
+audit_logger = logging.getLogger("remi_audit")
+audit_logger.setLevel(logging.INFO)
+_handler = logging.FileHandler(os.path.join(LOG_DIR, "remi_api_audit.log"), encoding="utf-8")
+_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+audit_logger.addHandler(_handler)
+
+# ============================================================
+# Lifespan (replaces deprecated @app.on_event)
+# ============================================================
+_monitor_task = None
+
+@asynccontextmanager
+async def lifespan(app):
+    global _monitor_task
+    _monitor_task = asyncio.create_task(background_monitor())
+    add_notification("system", "Remi API started")
+    audit_logger.info("Remi API started")
+    yield
+    if _monitor_task:
+        _monitor_task.cancel()
+    audit_logger.info("Remi API stopped")
+
+app = FastAPI(title="Local Remi API", version="4.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,13 +94,14 @@ app.add_middleware(
 # ============================================================
 notification_log: List[dict] = []
 MAX_NOTIFICATIONS = 50
+_last_notif_messages: dict = {}  # category -> (message, timestamp) for dedup
 
 # ============================================================
 # System Status
 # ============================================================
 
 def get_gpu_info():
-    """GPU情報を取得（nvidia-smi使用）"""
+    """Get GPU info via nvidia-smi"""
     try:
         result = subprocess.run(
             ["nvidia-smi", "--query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu,name",
@@ -73,7 +125,7 @@ def get_gpu_info():
 
 
 def get_docker_containers():
-    """実行中のDockerコンテナ一覧"""
+    """List running Docker containers"""
     try:
         result = subprocess.run(
             ["docker", "ps", "--format", "{{.Names}}\t{{.Status}}\t{{.Ports}}"],
@@ -96,7 +148,7 @@ def get_docker_containers():
 
 
 def check_comfyui_queue():
-    """ComfyUIのキュー状況"""
+    """Check ComfyUI queue status"""
     try:
         import urllib.request
         req = urllib.request.urlopen("http://127.0.0.1:8188/prompt", timeout=2)
@@ -107,7 +159,7 @@ def check_comfyui_queue():
 
 
 def check_ollama_models():
-    """Ollamaの読み込み済みモデル"""
+    """List loaded Ollama models"""
     try:
         import urllib.request
         req = urllib.request.urlopen("http://127.0.0.1:11434/api/tags", timeout=3)
@@ -120,12 +172,13 @@ def check_ollama_models():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "local-remi-api", "timestamp": datetime.now().isoformat()}
+    return {"status": "ok", "service": "local-remi-api", "version": "4.0.0",
+            "timestamp": datetime.now().isoformat()}
 
 
-@app.get("/status")
+@app.get("/status", dependencies=[Depends(verify_token)])
 async def get_status():
-    """システム全体のステータス"""
+    """Full system status (GPU, CPU, RAM, Disk)"""
     gpu = get_gpu_info()
     cpu_percent = psutil.cpu_percent(interval=0.5)
     ram = psutil.virtual_memory()
@@ -151,9 +204,9 @@ async def get_status():
     }
 
 
-@app.get("/tasks")
+@app.get("/tasks", dependencies=[Depends(verify_token)])
 async def get_tasks():
-    """実行中のタスク一覧"""
+    """List running tasks and containers"""
     containers = get_docker_containers()
     comfyui = check_comfyui_queue()
     ollama = check_ollama_models()
@@ -188,13 +241,13 @@ async def get_tasks():
 
 VOICEVOX_URL = "http://127.0.0.1:50021"
 
-@app.post("/tts")
+@app.post("/tts", dependencies=[Depends(verify_token)])
 async def text_to_speech(
     text: str = Query(..., description="Text to speak"),
     speaker: int = Query(0, description="VOICEVOX speaker ID (0=Zundamon, 1=Shikoku Metan)"),
     speed: float = Query(1.1, description="Speech speed")
 ):
-    """VOICEVOX音声合成 - WAVデータを返す"""
+    """VOICEVOX TTS - returns WAV audio"""
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             # Step 1: Audio query
@@ -228,9 +281,9 @@ async def text_to_speech(
         return {"error": str(e)}
 
 
-@app.get("/tts/speakers")
+@app.get("/tts/speakers", dependencies=[Depends(verify_token)])
 async def get_speakers():
-    """利用可能なVOICEVOX話者一覧"""
+    """List available VOICEVOX speakers"""
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(f"{VOICEVOX_URL}/speakers")
@@ -251,7 +304,7 @@ async def get_speakers():
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard():
-    """Pixel 7向けステータスダッシュボード（PWA対応）"""
+    """Pixel 7 status dashboard (PWA)"""
     dashboard_path = os.path.join(os.path.dirname(__file__), "remi_dashboard.html")
     try:
         with open(dashboard_path, "r", encoding="utf-8") as f:
@@ -285,9 +338,10 @@ async def service_worker():
 # Emergency Stop
 # ============================================================
 
-@app.post("/emergency-stop")
+@app.post("/emergency-stop", dependencies=[Depends(verify_token)])
 async def emergency_stop():
-    """緊急停止 - GPU重いプロセスを止める"""
+    """Emergency stop - kill GPU-heavy processes"""
+    audit_logger.warning("EMERGENCY STOP triggered")
     stopped = []
     for proc in psutil.process_iter(["name", "cpu_percent"]):
         try:
@@ -332,9 +386,10 @@ ACTIONS = {
 }
 
 
-@app.post("/action/{action_name}")
+@app.post("/action/{action_name}", dependencies=[Depends(verify_token)])
 async def run_action(action_name: str, arg: Optional[str] = Query(None)):
-    """クイックアクション実行"""
+    """Execute a quick action"""
+    audit_logger.info(f"Action: {action_name} (arg={arg})")
     if action_name not in ACTIONS:
         return JSONResponse(
             status_code=404,
@@ -358,10 +413,12 @@ async def run_action(action_name: str, arg: Optional[str] = Query(None)):
                     pass
             # Also try to clear CUDA cache via a quick Python call
             try:
-                subprocess.run(["python", "-c", "import torch; torch.cuda.empty_cache()" if True else ""],
-                             capture_output=True, timeout=10)
+                subprocess.run(
+                    ["python", "-c", "import torch; torch.cuda.empty_cache(); print('CUDA cache cleared')"],
+                    capture_output=True, timeout=10
+                )
             except Exception:
-                pass
+                pass  # torch may not be installed in this env
             add_notification("action", f"VRAM cleared: {len(cleared)} processes stopped")
             return {"action": action_name, "cleared_processes": cleared}
 
@@ -406,9 +463,9 @@ async def run_action(action_name: str, arg: Optional[str] = Query(None)):
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 
-@app.get("/actions")
+@app.get("/actions", dependencies=[Depends(verify_token)])
 async def list_actions():
-    """利用可能なアクション一覧"""
+    """List available actions"""
     return {name: {"name": a["name"], "needs_arg": a.get("needs_arg", False)}
             for name, a in ACTIONS.items()}
 
@@ -423,10 +480,11 @@ OLLAMA_URL = "http://127.0.0.1:11434"
 chat_history: List[dict] = []
 MAX_CHAT_HISTORY = 20
 
-@app.post("/chat")
+@app.post("/chat", dependencies=[Depends(verify_token)])
 async def send_chat(message: str = Query(...), model: str = Query("llama3:8b"),
                     system: str = Query("You are Remi, a helpful AI companion. Reply concisely in the user's language.")):
-    """Ollamaに直接チャット送信（Pixel 7から）"""
+    """Send chat via Ollama direct (from Pixel 7)"""
+    audit_logger.info(f"Chat: model={model} msg_len={len(message)}")
     chat_history.append({"role": "user", "content": message})
     if len(chat_history) > MAX_CHAT_HISTORY:
         chat_history.pop(0)
@@ -456,9 +514,9 @@ async def send_chat(message: str = Query(...), model: str = Query("llama3:8b"),
         return {"error": str(e)}
 
 
-@app.delete("/chat/history")
+@app.delete("/chat/history", dependencies=[Depends(verify_token)])
 async def clear_chat_history():
-    """チャット履歴クリア"""
+    """Clear chat history"""
     chat_history.clear()
     return {"status": "cleared"}
 
@@ -468,29 +526,36 @@ async def clear_chat_history():
 # ============================================================
 
 def add_notification(category: str, message: str):
-    """通知を追加"""
+    """Add notification (dedup same message within 5 min)"""
+    now = datetime.now()
+    key = f"{category}:{message}"
+    last = _last_notif_messages.get(key)
+    if last and (now - last).total_seconds() < 300:
+        return  # 5分以内の重複はスキップ
+    _last_notif_messages[key] = now
+
     notification_log.append({
         "id": len(notification_log) + 1,
         "category": category,
         "message": message,
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": now.isoformat(),
         "read": False
     })
     if len(notification_log) > MAX_NOTIFICATIONS:
         notification_log.pop(0)
 
 
-@app.get("/notifications")
+@app.get("/notifications", dependencies=[Depends(verify_token)])
 async def get_notifications(unread_only: bool = Query(False)):
-    """通知一覧取得"""
+    """Get notification list"""
     if unread_only:
         return [n for n in notification_log if not n["read"]]
     return notification_log[-20:]
 
 
-@app.post("/notifications/read")
+@app.post("/notifications/read", dependencies=[Depends(verify_token)])
 async def mark_notifications_read():
-    """全通知を既読にする"""
+    """Mark all notifications as read"""
     for n in notification_log:
         n["read"] = True
     return {"marked": len(notification_log)}
@@ -501,7 +566,7 @@ async def mark_notifications_read():
 # ============================================================
 
 async def background_monitor():
-    """バックグラウンドでシステムを監視し、異常時に通知"""
+    """Background system monitor - proactive alerts"""
     while True:
         try:
             gpu = get_gpu_info()
@@ -523,10 +588,21 @@ async def background_monitor():
         await asyncio.sleep(60)  # Check every 60 seconds
 
 
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(background_monitor())
-    add_notification("system", "Remi API started")
+# ============================================================
+# Request Logging Middleware
+# ============================================================
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = time.time()
+    response = await call_next(request)
+    duration = round((time.time() - start) * 1000, 1)
+    # Skip noisy health/status polling
+    path = request.url.path
+    if path not in ("/health", "/status", "/tasks", "/sw.js"):
+        client = request.client.host if request.client else "unknown"
+        audit_logger.info(f"{client} {request.method} {path} -> {response.status_code} ({duration}ms)")
+    return response
 
 
 # ============================================================

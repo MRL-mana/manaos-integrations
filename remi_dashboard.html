@@ -229,9 +229,42 @@ body {
 
 <div class="footer" id="footer">--</div>
 
+<!-- Token Setup Modal -->
+<div id="token-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:100;display:flex;align-items:center;justify-content:center;">
+    <div style="background:#1a1a2e;padding:24px;border-radius:16px;width:90%;max-width:360px;">
+        <h2 style="font-size:18px;margin-bottom:12px;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Remi API Token</h2>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">APIトークンを入力してください。<br>サーバー起動時にコンソールに表示されます。</p>
+        <input id="token-input" type="password" placeholder="Token..."
+            style="width:100%;padding:12px;border:1px solid #2a2a3e;border-radius:10px;background:#0d0d15;color:#e0e0e0;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
+        <button onclick="saveToken()" style="width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;font-weight:600;font-size:14px;cursor:pointer;">Connect</button>
+    </div>
+</div>
+
 <script>
 const API = window.location.origin;
-const CHAT_URL = window.location.origin.replace(/:\d+$/, ':3001');
+let TOKEN = localStorage.getItem('remi_token') || '';
+
+function getHeaders() {
+    return TOKEN ? { 'Authorization': 'Bearer ' + TOKEN } : {};
+}
+
+function saveToken() {
+    TOKEN = document.getElementById('token-input').value.trim();
+    if (TOKEN) {
+        localStorage.setItem('remi_token', TOKEN);
+        document.getElementById('token-modal').style.display = 'none';
+        fetchStatus();
+        fetchNotifications();
+        fetchActions();
+    }
+}
+
+function showTokenModal() {
+    document.getElementById('token-modal').style.display = 'flex';
+}
+
+// Check token on load
+if (!TOKEN) { showTokenModal(); } else { document.getElementById('token-modal').style.display = 'none'; }
 
 function switchTab(name) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -244,8 +277,10 @@ function switchTab(name) {
 async function fetchStatus() {
     try {
         const [sRes, tRes] = await Promise.all([
-            fetch(API + '/status'), fetch(API + '/tasks')
+            fetch(API + '/status', {headers: getHeaders()}),
+            fetch(API + '/tasks', {headers: getHeaders()})
         ]);
+        if (sRes.status === 401) { showTokenModal(); return; }
         const s = await sRes.json(), t = await tRes.json();
 
         // GPU
@@ -301,7 +336,7 @@ async function fetchStatus() {
 
 async function fetchNotifications() {
     try {
-        const res = await fetch(API + '/notifications');
+        const res = await fetch(API + '/notifications', {headers: getHeaders()});
         const notifs = await res.json();
         const list = document.getElementById('notif-list');
         if (notifs.length === 0) {
@@ -320,7 +355,7 @@ async function fetchNotifications() {
 
 async function fetchActions() {
     try {
-        const res = await fetch(API + '/actions');
+        const res = await fetch(API + '/actions', {headers: getHeaders()});
         const actions = await res.json();
         document.getElementById('action-list').innerHTML = Object.entries(actions).map(([k, v]) =>
             '<div class="item"><span>' + v.name + '</span><span style="color:#555">' + k + '</span></div>'
@@ -328,7 +363,11 @@ async function fetchActions() {
     } catch (e) {}
 }
 
-function openChat() { window.location.href = CHAT_URL; }
+function openChat() {
+    // Focus on Quick Chat instead of Open WebUI (which requires auth)
+    switchTab('actions');
+    document.getElementById('chat-input').focus();
+}
 
 function refreshAll() {
     fetchStatus();
@@ -337,7 +376,7 @@ function refreshAll() {
 
 async function runAction(name) {
     try {
-        const res = await fetch(API + '/action/' + name, { method: 'POST' });
+        const res = await fetch(API + '/action/' + name, { method: 'POST', headers: getHeaders() });
         const data = await res.json();
         alert(JSON.stringify(data, null, 2));
     } catch (e) { alert('Error: ' + e.message); }
@@ -346,7 +385,7 @@ async function runAction(name) {
 async function emergencyStop() {
     if (!confirm('Stop all GPU tasks?')) return;
     try {
-        await fetch(API + '/emergency-stop', { method: 'POST' });
+        await fetch(API + '/emergency-stop', { method: 'POST', headers: getHeaders() });
         alert('Emergency stop sent');
     } catch (e) { alert('Failed: ' + e.message); }
 }
@@ -361,7 +400,7 @@ async function sendChat() {
     reply.innerHTML = '<div style="color:#667eea">Thinking...</div>';
     input.value = '';
     try {
-        const res = await fetch(API + '/chat?message=' + encodeURIComponent(msg), { method: 'POST' });
+        const res = await fetch(API + '/chat?message=' + encodeURIComponent(msg), { method: 'POST', headers: getHeaders() });
         const data = await res.json();
         if (data.reply) {
             lastReply = data.reply;
@@ -390,13 +429,13 @@ async function speakReply() {
 }
 
 async function clearHistory() {
-    await fetch(API + '/chat/history', { method: 'DELETE' });
+    await fetch(API + '/chat/history', { method: 'DELETE', headers: getHeaders() });
     document.getElementById('chat-reply').innerHTML = '<div style="color:#555">History cleared</div>';
     lastReply = '';
 }
 
 async function markRead() {
-    await fetch(API + '/notifications/read', { method: 'POST' });
+    await fetch(API + '/notifications/read', { method: 'POST', headers: getHeaders() });
     fetchNotifications();
 }
 

@@ -56,10 +56,13 @@ def start_docker_services():
 
 def start_remi_api():
     print("[*] Starting Local Remi API...")
+    env = os.environ.copy()
+    env["REMI_API_TOKEN"] = os.getenv("REMI_API_TOKEN", "remi-pixel7-2026")
     subprocess.Popen(
         [sys.executable, os.path.join(os.path.dirname(__file__), "local_remi_api.py")],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        env=env,
         creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
     )
     print("[+] Remi API started on port 5050")
