@@ -15,7 +15,7 @@ Endpoints:
   GET  /notifications  - Push notification status
 """
 
-from fastapi import FastAPI, Response, Query, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, Response
 import psutil
@@ -322,8 +322,7 @@ ACTIONS = {
     },
     "clear_vram": {
         "name": "Clear VRAM",
-        "cmd": ["nvidia-smi", "--gpu-reset"],
-        "background": False
+        "special": "clear_vram"
     },
     "docker_cleanup": {
         "name": "Docker Cleanup",
@@ -343,6 +342,28 @@ async def run_action(action_name: str, arg: Optional[str] = Query(None)):
         )
 
     action = ACTIONS[action_name]
+
+    # Special actions
+    if "special" in action:
+        if action["special"] == "clear_vram":
+            # Kill GPU-heavy python processes (not essential ones)
+            cleared = []
+            for proc in psutil.process_iter(["name", "cmdline", "cpu_percent"]):
+                try:
+                    cmdline = " ".join(proc.info.get("cmdline") or [])
+                    if any(k in cmdline.lower() for k in ["comfy", "kohya", "stable-diffusion", "train"]):
+                        proc.terminate()
+                        cleared.append(proc.info["name"])
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+            # Also try to clear CUDA cache via a quick Python call
+            try:
+                subprocess.run(["python", "-c", "import torch; torch.cuda.empty_cache()" if True else ""],
+                             capture_output=True, timeout=10)
+            except Exception:
+                pass
+            add_notification("action", f"VRAM cleared: {len(cleared)} processes stopped")
+            return {"action": action_name, "cleared_processes": cleared}
 
     # Kill process type
     if "kill" in action:
@@ -396,30 +417,50 @@ async def list_actions():
 # Chat Proxy (Phase 3)
 # ============================================================
 
-OPENWEBUI_URL = "http://127.0.0.1:3001"
+OLLAMA_URL = "http://127.0.0.1:11434"
+
+# Chat history per session (simple in-memory)
+chat_history: List[dict] = []
+MAX_CHAT_HISTORY = 20
 
 @app.post("/chat")
-async def send_chat(message: str = Query(...), model: str = Query("llama3:8b")):
-    """Open WebUIにチャットを送信（Pixel 7から直接API呼び出し用）"""
+async def send_chat(message: str = Query(...), model: str = Query("llama3:8b"),
+                    system: str = Query("You are Remi, a helpful AI companion. Reply concisely in the user's language.")):
+    """Ollamaに直接チャット送信（Pixel 7から）"""
+    chat_history.append({"role": "user", "content": message})
+    if len(chat_history) > MAX_CHAT_HISTORY:
+        chat_history.pop(0)
+
+    messages = [{"role": "system", "content": system}] + chat_history[-10:]
+
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
             resp = await client.post(
-                f"{OPENWEBUI_URL}/api/chat/completions",
+                f"{OLLAMA_URL}/api/chat",
                 json={
                     "model": model,
-                    "messages": [{"role": "user", "content": message}],
+                    "messages": messages,
                     "stream": False
-                },
-                headers={"Content-Type": "application/json"}
+                }
             )
             if resp.status_code == 200:
                 data = resp.json()
-                reply = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+                reply = data.get("message", {}).get("content", "")
+                chat_history.append({"role": "assistant", "content": reply})
                 return {"reply": reply, "model": model}
             else:
-                return {"error": f"Open WebUI returned {resp.status_code}", "detail": resp.text[:300]}
+                return {"error": f"Ollama returned {resp.status_code}", "detail": resp.text[:300]}
+    except httpx.ConnectError:
+        return {"error": "Ollama not running", "hint": "Start Ollama on port 11434"}
     except Exception as e:
         return {"error": str(e)}
+
+
+@app.delete("/chat/history")
+async def clear_chat_history():
+    """チャット履歴クリア"""
+    chat_history.clear()
+    return {"status": "cleared"}
 
 
 # ============================================================
