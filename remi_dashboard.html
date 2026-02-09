@@ -110,6 +110,47 @@ body {
 }
 .nav-item.active { color:#667eea; }
 .nav-icon { font-size:20px; display:block; }
+
+/* Floating Mic Button */
+.mic-fab {
+    position:fixed; bottom:72px; right:16px; z-index:50;
+    width:56px; height:56px; border-radius:50%; border:none;
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    color:white; font-size:24px; cursor:pointer;
+    box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+    transition: all 0.3s; display:flex; align-items:center; justify-content:center;
+}
+.mic-fab:active { transform:scale(0.9); }
+.mic-fab.listening {
+    background:linear-gradient(135deg,#f44336,#e91e63);
+    animation: mic-pulse 1.5s ease-in-out infinite;
+}
+@keyframes mic-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(244,67,54,0.5); }
+    50% { box-shadow: 0 0 0 15px rgba(244,67,54,0); }
+}
+.mic-status {
+    position:fixed; bottom:134px; right:16px; z-index:50;
+    background:#1a1a2e; color:#aaa; padding:6px 12px;
+    border-radius:10px; font-size:11px; display:none;
+    border:1px solid #2a2a3e; max-width:200px;
+}
+
+/* Suggestion item */
+.suggestion-item {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px; margin-bottom:6px; border-radius:10px;
+    background:#0d0d15; border:1px solid #2a2a3e;
+}
+.suggestion-item .sug-text { font-size:13px; flex:1; }
+.suggestion-item .sug-icon { font-size:20px; margin-right:8px; }
+.suggestion-item .sug-actions { display:flex; gap:4px; }
+.sug-btn {
+    padding:6px 10px; border:none; border-radius:8px;
+    font-size:11px; cursor:pointer; font-weight:600;
+}
+.sug-btn-go { background:#667eea; color:white; }
+.sug-btn-no { background:#2a2a3e; color:#666; }
 </style>
 </head>
 <body>
@@ -184,6 +225,12 @@ body {
         <button class="act a4" onclick="emergencyStop()">STOP ALL</button>
     </div>
 
+    <!-- Proactive Suggestions -->
+    <div id="suggestions-panel" class="card" style="margin-top:12px;display:none;">
+        <div class="card-title">&#128161; Remi's Suggestions</div>
+        <div id="suggestion-list"></div>
+    </div>
+
     <div class="card" style="margin-top:12px;">
         <div class="card-title">Quick Chat</div>
         <div style="display:flex;gap:8px;">
@@ -229,6 +276,10 @@ body {
 
 <div class="footer" id="footer">--</div>
 
+<!-- Floating Mic Button -->
+<button class="mic-fab" id="mic-btn" onclick="toggleVoice()" title="Voice Command">&#127908;</button>
+<div class="mic-status" id="mic-status">Listening...</div>
+
 <!-- Token Setup Modal -->
 <div id="token-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:100;display:flex;align-items:center;justify-content:center;">
     <div style="background:#1a1a2e;padding:24px;border-radius:16px;width:90%;max-width:360px;">
@@ -243,6 +294,7 @@ body {
 <script>
 const API = window.location.origin;
 let TOKEN = localStorage.getItem('remi_token') || '';
+let _prevNotifCount = 0;
 
 function getHeaders() {
     return TOKEN ? { 'Authorization': 'Bearer ' + TOKEN } : {};
@@ -256,6 +308,8 @@ function saveToken() {
         fetchStatus();
         fetchNotifications();
         fetchActions();
+        fetchSuggestions();
+        requestNotificationPermission();
     }
 }
 
@@ -266,12 +320,233 @@ function showTokenModal() {
 // Check token on load
 if (!TOKEN) { showTokenModal(); } else { document.getElementById('token-modal').style.display = 'none'; }
 
-function switchTab(name) {
+// ============================================================
+// Notification Permission (Browser Push)
+// ============================================================
+function requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+}
+requestNotificationPermission();
+
+function sendBrowserNotification(title, body) {
+    if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+        new Notification(title, { body: body, icon: '/manifest.json', tag: 'remi-alert' });
+    }
+}
+
+// ============================================================
+// Voice Command Recognition
+// ============================================================
+let recognition = null;
+let isListening = false;
+
+const VOICE_COMMANDS = {
+    // Image generation
+    'comfyui': 'comfyui_start', 'コンフィ': 'comfyui_start', '画像生成': 'comfyui_start',
+    '画像': 'comfyui_start', 'イメージ': 'comfyui_start',
+    // Stop
+    '停止': 'emergency', 'ストップ': 'emergency', 'やめて': 'emergency', '止めて': 'emergency',
+    // Status
+    'ステータス': 'tab_status', 'GPU': 'tab_status', '状態': 'tab_status', 'じょうたい': 'tab_status',
+    // VRAM
+    'メモリクリア': 'clear_vram', 'VRAMクリア': 'clear_vram', 'メモリ解放': 'clear_vram',
+    // Cleanup
+    'クリーンアップ': 'docker_cleanup', '掃除': 'docker_cleanup', 'そうじ': 'docker_cleanup',
+    // Refresh
+    '更新': 'refresh', 'リフレッシュ': 'refresh',
+    // ComfyUI stop
+    'コンフィ停止': 'comfyui_stop', 'コンフィストップ': 'comfyui_stop',
+};
+
+function initVoiceRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        document.getElementById('mic-btn').style.display = 'none';
+        return;
+    }
+    recognition = new SpeechRecognition();
+    recognition.lang = 'ja-JP';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 3;
+
+    recognition.onstart = () => {
+        isListening = true;
+        document.getElementById('mic-btn').classList.add('listening');
+        document.getElementById('mic-status').style.display = 'block';
+        document.getElementById('mic-status').textContent = 'Listening...';
+        if (navigator.vibrate) navigator.vibrate(30);
+    };
+
+    recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript = event.results[i][0].transcript;
+            document.getElementById('mic-status').textContent = transcript;
+        }
+        if (event.results[event.results.length - 1].isFinal) {
+            handleVoiceCommand(transcript.trim());
+        }
+    };
+
+    recognition.onerror = (event) => {
+        if (event.error !== 'no-speech') {
+            document.getElementById('mic-status').textContent = 'Error: ' + event.error;
+        }
+        stopListening();
+    };
+
+    recognition.onend = () => {
+        stopListening();
+    };
+}
+
+function stopListening() {
+    isListening = false;
+    document.getElementById('mic-btn').classList.remove('listening');
+    setTimeout(() => {
+        document.getElementById('mic-status').style.display = 'none';
+    }, 2000);
+}
+
+function toggleVoice() {
+    if (!recognition) initVoiceRecognition();
+    if (!recognition) { alert('Voice not supported'); return; }
+    if (isListening) {
+        recognition.stop();
+    } else {
+        recognition.start();
+    }
+}
+
+function handleVoiceCommand(text) {
+    document.getElementById('mic-status').textContent = '> ' + text;
+    const lower = text.toLowerCase();
+
+    // Check keyword commands
+    for (const [keyword, action] of Object.entries(VOICE_COMMANDS)) {
+        if (text.includes(keyword) || lower.includes(keyword.toLowerCase())) {
+            executeVoiceAction(action, text);
+            return;
+        }
+    }
+
+    // No command matched -> treat as chat message
+    document.getElementById('chat-input').value = text;
+    switchTabDirect('actions');
+    sendChat();
+    speakFeedback('チャットに送信したよ');
+}
+
+function executeVoiceAction(action, originalText) {
+    switch (action) {
+        case 'comfyui_start':
+            runAction('comfyui_start');
+            speakFeedback('ComfyUI起動するね');
+            break;
+        case 'comfyui_stop':
+            runAction('comfyui_stop');
+            speakFeedback('ComfyUI停止するね');
+            break;
+        case 'emergency':
+            emergencyStop();
+            speakFeedback('緊急停止実行');
+            break;
+        case 'tab_status':
+            switchTabDirect('status');
+            speakFeedback('ステータス表示');
+            break;
+        case 'clear_vram':
+            runAction('clear_vram');
+            speakFeedback('VRAMクリアするね');
+            break;
+        case 'docker_cleanup':
+            runAction('docker_cleanup');
+            speakFeedback('Dockerクリーンアップ開始');
+            break;
+        case 'refresh':
+            refreshAll();
+            speakFeedback('更新したよ');
+            break;
+    }
+}
+
+function speakFeedback(text) {
+    try {
+        const audio = new Audio(API + '/tts?text=' + encodeURIComponent(text) + '&speaker=0&speed=1.3');
+        audio.play().catch(() => {
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'ja-JP'; u.rate = 1.2;
+            speechSynthesis.speak(u);
+        });
+    } catch (e) {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'ja-JP'; u.rate = 1.2;
+        speechSynthesis.speak(u);
+    }
+}
+
+// Tab switch without event dependency
+function switchTabDirect(name) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     document.getElementById('page-' + name).classList.add('active');
-    event.currentTarget.classList.add('active');
+    const navItems = document.querySelectorAll('.nav-item');
+    const tabs = ['status', 'actions', 'notif'];
+    const idx = tabs.indexOf(name);
+    if (idx >= 0 && navItems[idx]) navItems[idx].classList.add('active');
+}
+
+function switchTab(name) {
+    switchTabDirect(name);
     if (name === 'notif') fetchNotifications();
+    if (name === 'actions') fetchSuggestions();
+}
+
+// ============================================================
+// Proactive Suggestions
+// ============================================================
+async function fetchSuggestions() {
+    try {
+        const res = await fetch(API + '/suggestions', {headers: getHeaders()});
+        if (res.status === 401) return;
+        const suggestions = await res.json();
+        const panel = document.getElementById('suggestions-panel');
+        const list = document.getElementById('suggestion-list');
+        if (suggestions.length === 0) {
+            panel.style.display = 'none';
+            return;
+        }
+        panel.style.display = 'block';
+        list.innerHTML = suggestions.map(s =>
+            '<div class="suggestion-item">' +
+            '<span class="sug-icon">' + s.icon + '</span>' +
+            '<span class="sug-text">' + s.message + '</span>' +
+            '<span class="sug-actions">' +
+            (s.action ? '<button class="sug-btn sug-btn-go" onclick="acceptSuggestion(\'' + s.action + '\',' + s.id + ')">OK!</button>' : '') +
+            '<button class="sug-btn sug-btn-no" onclick="dismissSuggestion(' + s.id + ')">&#10005;</button>' +
+            '</span></div>'
+        ).join('');
+    } catch (e) {}
+}
+
+async function acceptSuggestion(action, id) {
+    if (action === 'chat') {
+        switchTabDirect('actions');
+        document.getElementById('chat-input').focus();
+    } else if (action) {
+        runAction(action);
+    }
+    dismissSuggestion(id);
+}
+
+async function dismissSuggestion(id) {
+    try {
+        await fetch(API + '/suggestions/' + id + '/dismiss', { method: 'POST', headers: getHeaders() });
+        fetchSuggestions();
+    } catch (e) {}
 }
 
 async function fetchStatus() {
@@ -350,6 +625,14 @@ async function fetchNotifications() {
         ).join('');
         const unread = notifs.filter(n => !n.read).length;
         document.getElementById('notif-badge').textContent = unread > 0 ? '(' + unread + ')' : '';
+
+        // New notification -> vibrate + browser push
+        if (unread > _prevNotifCount && _prevNotifCount >= 0) {
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            const newest = notifs.find(n => !n.read);
+            if (newest) sendBrowserNotification('Remi Alert', newest.message);
+        }
+        _prevNotifCount = unread;
     } catch (e) {}
 }
 
@@ -365,13 +648,14 @@ async function fetchActions() {
 
 function openChat() {
     // Focus on Quick Chat instead of Open WebUI (which requires auth)
-    switchTab('actions');
+    switchTabDirect('actions');
     document.getElementById('chat-input').focus();
 }
 
 function refreshAll() {
     fetchStatus();
     fetchNotifications();
+    fetchSuggestions();
 }
 
 async function runAction(name) {
@@ -387,6 +671,7 @@ async function emergencyStop() {
     try {
         await fetch(API + '/emergency-stop', { method: 'POST', headers: getHeaders() });
         alert('Emergency stop sent');
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
     } catch (e) { alert('Failed: ' + e.message); }
 }
 
@@ -452,12 +737,17 @@ if ('serviceWorker' in navigator) {
 function vib() { if (navigator.vibrate) navigator.vibrate(50); }
 document.querySelectorAll('.act').forEach(b => b.addEventListener('click', vib));
 
+// Init voice recognition
+initVoiceRecognition();
+
 // Init
 fetchStatus();
 fetchActions();
 fetchNotifications();
+fetchSuggestions();
 setInterval(fetchStatus, 3000);
 setInterval(fetchNotifications, 30000);
+setInterval(fetchSuggestions, 60000);
 </script>
 </body>
 </html>

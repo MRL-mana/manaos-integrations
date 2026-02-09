@@ -13,6 +13,7 @@ Endpoints:
   DELETE /chat/history  - Clear chat history
   GET  /notifications  - Notification list
   POST /notifications/read - Mark all read
+  GET  /suggestions    - Proactive AI suggestions
 
 Security: Bearer token via REMI_API_TOKEN env var
 """
@@ -95,6 +96,13 @@ app.add_middleware(
 notification_log: List[dict] = []
 MAX_NOTIFICATIONS = 50
 _last_notif_messages: dict = {}  # category -> (message, timestamp) for dedup
+
+# ============================================================
+# Proactive Suggestions Store
+# ============================================================
+suggestion_log: List[dict] = []
+MAX_SUGGESTIONS = 10
+_last_suggestion_keys: dict = {}  # key -> timestamp for dedup (15 min)
 
 # ============================================================
 # System Status
@@ -562,14 +570,64 @@ async def mark_notifications_read():
 
 
 # ============================================================
-# Background Monitor (proactive notifications)
+# Proactive Suggestions
+# ============================================================
+
+def add_suggestion(key: str, message: str, action: str = "", icon: str = "💡"):
+    """Add a proactive suggestion (dedup same key within 15 min)"""
+    now = datetime.now()
+    last = _last_suggestion_keys.get(key)
+    if last and (now - last).total_seconds() < 900:
+        return
+    _last_suggestion_keys[key] = now
+
+    # Remove old suggestion with same key
+    for i, s in enumerate(suggestion_log):
+        if s.get("key") == key:
+            suggestion_log.pop(i)
+            break
+
+    suggestion_log.append({
+        "id": len(suggestion_log) + 1,
+        "key": key,
+        "message": message,
+        "action": action,
+        "icon": icon,
+        "timestamp": now.isoformat(),
+        "dismissed": False
+    })
+    if len(suggestion_log) > MAX_SUGGESTIONS:
+        suggestion_log.pop(0)
+
+
+@app.get("/suggestions", dependencies=[Depends(verify_token)])
+async def get_suggestions():
+    """Get proactive suggestions based on system state"""
+    return [s for s in suggestion_log if not s["dismissed"]]
+
+
+@app.post("/suggestions/{suggestion_id}/dismiss", dependencies=[Depends(verify_token)])
+async def dismiss_suggestion(suggestion_id: int):
+    """Dismiss a suggestion"""
+    for s in suggestion_log:
+        if s["id"] == suggestion_id:
+            s["dismissed"] = True
+            return {"status": "dismissed"}
+    return JSONResponse(status_code=404, content={"error": "Suggestion not found"})
+
+
+# ============================================================
+# Background Monitor (proactive alerts + suggestions)
 # ============================================================
 
 async def background_monitor():
-    """Background system monitor - proactive alerts"""
+    """Background system monitor - proactive alerts and smart suggestions"""
+    _last_chat_time = time.time()
     while True:
         try:
             gpu = get_gpu_info()
+
+            # === Alerts ===
             if gpu["available"]:
                 if gpu["temperature_c"] > 85:
                     add_notification("warning", f"GPU temp high: {gpu['temperature_c']}C")
@@ -583,6 +641,79 @@ async def background_monitor():
             disk = psutil.disk_usage("C:\\")
             if disk.percent > 95:
                 add_notification("warning", f"Disk almost full: {disk.percent}%")
+
+            # === Proactive Suggestions ===
+            # GPU idle + VRAM free -> suggest image generation
+            if gpu["available"]:
+                vram_pct = gpu["memory_used_mb"] / max(gpu["memory_total_mb"], 1) * 100
+                if gpu["usage_percent"] < 10 and vram_pct < 30:
+                    add_suggestion(
+                        "gpu_idle_create",
+                        "GPUが空いてるよ！画像生成する？",
+                        action="comfyui_start",
+                        icon="🎨"
+                    )
+                elif gpu["usage_percent"] > 90:
+                    add_suggestion(
+                        "gpu_busy_wait",
+                        "GPU使用中...完了したら通知するね",
+                        action="",
+                        icon="⏳"
+                    )
+
+            # VRAM almost full -> suggest clear
+            if gpu["available"] and gpu["memory_used_mb"] / max(gpu["memory_total_mb"], 1) > 0.80:
+                add_suggestion(
+                    "vram_high_clear",
+                    f"VRAM {gpu['memory_used_mb']:.0f}MB使用中。クリアする？",
+                    action="clear_vram",
+                    icon="🧹"
+                )
+
+            # Disk getting full -> suggest cleanup
+            if disk.percent > 85:
+                add_suggestion(
+                    "disk_cleanup",
+                    f"ディスク{disk.percent}%使用中。Docker cleanupする？",
+                    action="docker_cleanup",
+                    icon="💾"
+                )
+
+            # RAM high + many Docker containers -> suggest pruning
+            if ram.percent > 80:
+                containers = get_docker_containers()
+                if len(containers) > 15:
+                    add_suggestion(
+                        "too_many_docker",
+                        f"RAM{ram.percent}% + Docker{len(containers)}台。不要なもの止める？",
+                        action="docker_cleanup",
+                        icon="🐳"
+                    )
+
+            # Ollama available + no recent chat -> suggest chatting
+            ollama = check_ollama_models()
+            if ollama["status"] == "online" and len(chat_history) == 0:
+                time_since_chat = time.time() - _last_chat_time
+                if time_since_chat > 1800:  # 30 min no chat
+                    add_suggestion(
+                        "ollama_idle_chat",
+                        "暇？何か話そうよ！",
+                        action="chat",
+                        icon="💬"
+                    )
+
+            # Check if GPU task just finished (was busy, now idle)
+            if gpu["available"] and gpu["usage_percent"] < 5:
+                # Check ComfyUI status
+                comfyui = check_comfyui_queue()
+                if comfyui.get("queue_remaining", 0) == 0 and comfyui.get("status") != "offline":
+                    add_suggestion(
+                        "comfyui_done",
+                        "ComfyUIのキューが空になったよ！",
+                        action="",
+                        icon="✅"
+                    )
+
         except Exception:
             pass
         await asyncio.sleep(60)  # Check every 60 seconds
