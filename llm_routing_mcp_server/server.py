@@ -9,6 +9,13 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 import requests
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+try:
+    from manaos_logger import get_logger
+except ImportError:
+    from logging import getLogger as get_logger
 
 # MCP SDKのインポート
 try:
@@ -18,14 +25,38 @@ try:
     MCP_AVAILABLE = True
 except ImportError:
     MCP_AVAILABLE = False
-    logging.warning("MCP SDKがインストールされていません。pip install mcp を実行してください。")
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+if not MCP_AVAILABLE:
+    logger.warning("MCP SDKがインストールされていません。pip install mcp を実行してください。")
 
 # APIエンドポイント
 UNIFIED_API_URL = os.getenv("MANAOS_INTEGRATION_API_URL", "http://localhost:9500")
 ROUTING_API_URL = os.getenv("LLM_ROUTING_API_URL", "http://localhost:9501")
+
+# ヘルスチェック用HTTPサーバー
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == "/health":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"status": "healthy", "service": "llm-routing"}).encode())
+        else:
+            self.send_error(404)
+    
+    def log_message(self, format, *args):
+        # ログを抑制
+        pass
+
+def start_health_server(port: int = 5111):
+    """ヘルスチェック用HTTPサーバーを起動"""
+    try:
+        server = HTTPServer(("127.0.0.1", port), HealthCheckHandler)
+        logger.info(f"ヘルスチェックサーバー起動: ポート {port}")
+        server.serve_forever()
+    except Exception as e:
+        logger.error(f"ヘルスチェックサーバー起動エラー: {e}")
 
 # MCPサーバーの初期化
 if MCP_AVAILABLE:
@@ -243,6 +274,11 @@ async def main():
     if not MCP_AVAILABLE:
         logger.error("MCP SDKがインストールされていません。pip install mcp を実行してください。")
         sys.exit(1)
+    
+    # ヘルスチェックサーバーをバックグラウンドで起動
+    health_port = int(os.getenv("PORT", "5111"))
+    health_thread = threading.Thread(target=start_health_server, args=(health_port,), daemon=True)
+    health_thread.start()
     
     async with stdio_server() as (read_stream, write_stream):
         await app.run(read_stream, write_stream, app.create_initialization_options())

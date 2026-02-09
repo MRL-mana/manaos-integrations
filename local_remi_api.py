@@ -596,7 +596,30 @@ async def send_chat(message: str = Query(...), model: str = Query("qwen2.5:7b"),
         chat_history.pop(0)
     _save_chat_history()
 
-    messages = [{"role": "system", "content": system}] + chat_history[-10:]
+    # Inject real-time PC status into context so Remi can answer system questions
+    gpu = get_gpu_info()
+    cpu_pct = psutil.cpu_percent(interval=0.3)
+    ram = psutil.virtual_memory()
+    disk = psutil.disk_usage("C:\\")
+    ollama = check_ollama_models()
+    docker_count = len(get_docker_containers())
+    uptime_h = round((time.time() - psutil.boot_time()) / 3600, 1)
+
+    status_context = (
+        f"\n[Current PC Status] "
+        f"GPU: {gpu.get('name','N/A')} usage={gpu.get('usage_percent',0)}% "
+        f"VRAM={gpu.get('memory_used_mb',0):.0f}/{gpu.get('memory_total_mb',0):.0f}MB "
+        f"temp={gpu.get('temperature_c',0)}C | "
+        f"CPU: {cpu_pct}% ({psutil.cpu_count()} cores) | "
+        f"RAM: {ram.percent}% ({round(ram.used/(1024**3),1)}/{round(ram.total/(1024**3),1)}GB) | "
+        f"Disk: {round(disk.percent,1)}% (free {round(disk.free/(1024**3),1)}GB) | "
+        f"Docker: {docker_count} containers | "
+        f"Ollama: {ollama.get('count',0)} models ({', '.join(ollama.get('models',[]))}) | "
+        f"Uptime: {uptime_h}h"
+    )
+
+    full_system = system + status_context
+    messages = [{"role": "system", "content": full_system}] + chat_history[-10:]
 
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:

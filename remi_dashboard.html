@@ -233,8 +233,9 @@ body {
 
     <div class="card" style="margin-top:12px;">
         <div class="card-title">Quick Chat</div>
+        <div id="chat-history" style="max-height:200px;overflow-y:auto;margin-bottom:8px;font-size:12px;"></div>
         <div style="display:flex;gap:8px;">
-            <input id="chat-input" type="text" placeholder="Ask Remi..."
+            <input id="chat-input" type="text" placeholder="レミに話しかける..."
                 style="flex:1;padding:10px;border:1px solid #2a2a3e;border-radius:10px;background:#0d0d15;color:#e0e0e0;font-size:14px;">
             <button onclick="sendChat()" style="padding:10px 16px;border:none;border-radius:10px;background:#667eea;color:white;font-weight:600;cursor:pointer;">Send</button>
         </div>
@@ -704,20 +705,48 @@ async function emergencyStop() {
 
 let lastReply = '';
 
+async function loadChatHistory() {
+    try {
+        const res = await fetch(API + '/chat/history', {headers: getHeaders()});
+        const data = await res.json();
+        const el = document.getElementById('chat-history');
+        if (data.history && data.history.length > 0) {
+            const recent = data.history.slice(-10);
+            el.innerHTML = recent.map(m => {
+                const isUser = m.role === 'user';
+                const align = isUser ? 'flex-end' : 'flex-start';
+                const bg = isUser ? '#667eea' : '#2a2a3e';
+                const color = isUser ? '#fff' : '#ccc';
+                const label = isUser ? '\uD83D\uDC68\u200D\u2708\uFE0F' : '\uD83E\uDD16';
+                return `<div style="display:flex;justify-content:${align};margin:3px 0"><div style="max-width:80%;padding:6px 10px;border-radius:10px;background:${bg};color:${color};font-size:12px">${label} ${m.content}</div></div>`;
+            }).join('');
+            el.scrollTop = el.scrollHeight;
+            lastReply = recent.filter(m => m.role === 'assistant').pop()?.content || '';
+        } else {
+            el.innerHTML = '<div style="color:#444;text-align:center;padding:8px">\u4F1A\u8A71\u5C65\u6B74\u304C\u3042\u308A\u307E\u305B\u3093</div>';
+        }
+    } catch(e) {}
+}
+
 async function sendChat() {
     const input = document.getElementById('chat-input');
     const msg = input.value.trim();
     if (!msg) return;
+    const histEl = document.getElementById('chat-history');
     const reply = document.getElementById('chat-reply');
-    reply.innerHTML = '<div style="color:#667eea">Thinking...</div>';
+    // Add user message to history UI
+    histEl.innerHTML += `<div style="display:flex;justify-content:flex-end;margin:3px 0"><div style="max-width:80%;padding:6px 10px;border-radius:10px;background:#667eea;color:#fff;font-size:12px">\uD83D\uDC68\u200D\u2708\uFE0F ${msg}</div></div>`;
+    histEl.scrollTop = histEl.scrollHeight;
+    reply.innerHTML = '<div style="color:#667eea">\u8003\u3048\u4E2D...</div>';
     input.value = '';
     try {
         const res = await fetch(API + '/chat?message=' + encodeURIComponent(msg), { method: 'POST', headers: getHeaders() });
         const data = await res.json();
         if (data.reply) {
             lastReply = data.reply;
-            reply.innerHTML = '<div style="white-space:pre-wrap">' + data.reply + '</div>';
-            // Auto-speak short replies
+            reply.innerHTML = '';
+            histEl.innerHTML += `<div style="display:flex;justify-content:flex-start;margin:3px 0"><div style="max-width:80%;padding:6px 10px;border-radius:10px;background:#2a2a3e;color:#ccc;font-size:12px">\uD83E\uDD16 ${data.reply}</div></div>`;
+            histEl.scrollTop = histEl.scrollHeight;
             if (data.reply.length < 200) speakReply();
         } else {
             reply.innerHTML = '<div style="color:#f44336">' + (data.error || 'No reply') + '</div>';
@@ -742,7 +771,8 @@ async function speakReply() {
 
 async function clearHistory() {
     await fetch(API + '/chat/history', { method: 'DELETE', headers: getHeaders() });
-    document.getElementById('chat-reply').innerHTML = '<div style="color:#555">History cleared</div>';
+    document.getElementById('chat-history').innerHTML = '<div style="color:#444;text-align:center;padding:8px">\u5C65\u6B74\u3092\u30AF\u30EA\u30A2\u3057\u307E\u3057\u305F</div>';
+    document.getElementById('chat-reply').innerHTML = '';
     lastReply = '';
 }
 
@@ -772,6 +802,7 @@ fetchStatus();
 fetchActions();
 fetchNotifications();
 fetchSuggestions();
+loadChatHistory();
 setInterval(fetchStatus, 5000);     // 5s (was 3s, reduce load)
 setInterval(fetchNotifications, 30000);
 setInterval(fetchSuggestions, 60000);
