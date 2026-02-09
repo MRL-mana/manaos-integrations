@@ -293,6 +293,9 @@ body {
 
 <script>
 const API = window.location.origin;
+// Auto-set token from URL param: /dashboard?token=xxx
+const _urlToken = new URLSearchParams(window.location.search).get('token');
+if (_urlToken) { localStorage.setItem('remi_token', _urlToken); }
 let TOKEN = localStorage.getItem('remi_token') || '';
 let _prevNotifCount = 0;
 
