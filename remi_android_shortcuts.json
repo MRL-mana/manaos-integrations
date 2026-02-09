@@ -1,0 +1,83 @@
+{
+  "info": "Remi - Pixel 7 Android Shortcuts",
+  "version": 1,
+  "setup_guide": {
+    "ja": [
+      "1. Google Playから「HTTP Shortcuts」をインストール",
+      "   https://play.google.com/store/apps/details?id=ch.rmy.android.http_shortcuts",
+      "2. アプリを開く → 右上メニュー → Import/Export → Import",
+      "3. このファイルを選択してインポート",
+      "4. ホーム画面長押し → ウィジェット → HTTP Shortcuts を選択",
+      "5. 好きなショートカットを選んでウィジェット配置完了！"
+    ]
+  },
+  "categories": [
+    {
+      "name": "Remi Controls",
+      "shortcuts": [
+        {
+          "name": "📊 Remi Status",
+          "description": "GPU/CPU/RAM/Disk status widget",
+          "method": "GET",
+          "url": "http://100.73.247.100:5050/widget?token=remi-pixel7-2026",
+          "responseHandling": "window",
+          "iconName": "chart_bar"
+        },
+        {
+          "name": "🎨 ComfyUI Start",
+          "description": "Start ComfyUI for image generation",
+          "method": "POST",
+          "url": "http://100.73.247.100:5050/action/comfyui_start",
+          "headers": {"Authorization": "Bearer remi-pixel7-2026"},
+          "responseHandling": "toast",
+          "iconName": "photo"
+        },
+        {
+          "name": "⏹️ ComfyUI Stop",
+          "description": "Stop ComfyUI",
+          "method": "POST",
+          "url": "http://100.73.247.100:5050/action/comfyui_stop",
+          "headers": {"Authorization": "Bearer remi-pixel7-2026"},
+          "responseHandling": "toast",
+          "iconName": "stop"
+        },
+        {
+          "name": "🧹 Clear VRAM",
+          "description": "Free GPU memory",
+          "method": "POST",
+          "url": "http://100.73.247.100:5050/action/clear_vram",
+          "headers": {"Authorization": "Bearer remi-pixel7-2026"},
+          "responseHandling": "toast",
+          "iconName": "delete"
+        },
+        {
+          "name": "🐳 Docker Cleanup",
+          "description": "Clean unused Docker resources",
+          "method": "POST",
+          "url": "http://100.73.247.100:5050/action/docker_cleanup",
+          "headers": {"Authorization": "Bearer remi-pixel7-2026"},
+          "responseHandling": "toast",
+          "iconName": "refresh"
+        },
+        {
+          "name": "🚨 Emergency Stop",
+          "description": "Kill all GPU processes immediately",
+          "method": "POST",
+          "url": "http://100.73.247.100:5050/emergency-stop",
+          "headers": {"Authorization": "Bearer remi-pixel7-2026"},
+          "responseHandling": "dialog",
+          "requireConfirmation": true,
+          "iconName": "warning"
+        },
+        {
+          "name": "🏠 Remi Dashboard",
+          "description": "Open full dashboard in browser",
+          "method": "GET",
+          "url": "http://100.73.247.100:5050/dashboard",
+          "responseHandling": "browser",
+          "iconName": "home"
+        }
+      ]
+    }
+  ]
+}

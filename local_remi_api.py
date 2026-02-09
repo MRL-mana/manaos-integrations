@@ -14,6 +14,7 @@ Endpoints:
   GET  /notifications  - Notification list
   POST /notifications/read - Mark all read
   GET  /suggestions    - Proactive AI suggestions
+  GET  /widget         - Compact widget view for Android home screen
 
 Security: Bearer token via REMI_API_TOKEN env var
 """
@@ -340,6 +341,58 @@ async def service_worker():
             return Response(content=f.read(), media_type="application/javascript")
     except FileNotFoundError:
         return Response(content="// SW not found", media_type="application/javascript")
+
+
+@app.get("/widget", response_class=HTMLResponse)
+async def widget(token: str = Query("")):
+    """Compact widget view for Android home screen (token via query param)"""
+    if token != API_TOKEN:
+        return HTMLResponse("<h3 style='color:red'>Auth Error</h3>", status_code=401)
+    gpu = get_gpu_info()
+    cpu_pct = psutil.cpu_percent(interval=0.3)
+    ram = psutil.virtual_memory()
+    disk = psutil.disk_usage("C:\\")
+    # Latest suggestion
+    active_sug = [s for s in suggestion_log if not s["dismissed"]]
+    sug_html = ""
+    if active_sug:
+        s = active_sug[-1]
+        sug_html = f'<div style="margin-top:6px;font-size:11px;color:#ffd54f">{s["icon"]} {s["message"]}</div>'
+    # Unread notifications count
+    unread = sum(1 for n in notification_log if not n["read"])
+    notif_dot = f'<span style="color:#f44336"> ({unread})</span>' if unread > 0 else ''
+    html = f"""<!DOCTYPE html><html><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  *{{margin:0;padding:0;box-sizing:border-box}}
+  body{{font-family:system-ui;background:#0a0a0f;color:#e0e0e0;padding:8px;min-width:180px}}
+  .row{{display:flex;justify-content:space-between;padding:3px 0;font-size:13px}}
+  .label{{color:#888}}
+  .val{{font-weight:700}}
+  .bar{{height:4px;border-radius:2px;margin:2px 0 4px;background:#1a1a2e;overflow:hidden}}
+  .fill{{height:100%;border-radius:2px}}
+  .gpu{{background:linear-gradient(90deg,#4CAF50,#FF9800)}}
+  .cpu{{background:linear-gradient(90deg,#2196F3,#FF5722)}}
+  .ram{{background:linear-gradient(90deg,#9C27B0,#E91E63)}}
+  .dsk{{background:linear-gradient(90deg,#00BCD4,#FF5722)}}
+  .hdr{{text-align:center;font-size:14px;font-weight:700;padding:2px 0 6px;
+        background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}}
+  a{{color:#667eea;text-decoration:none;font-size:11px;display:block;text-align:center;margin-top:6px}}
+</style></head><body>
+<div class="hdr">Remi{notif_dot}</div>
+<div class="row"><span class="label">GPU</span><span class="val">{gpu['usage_percent']:.0f}% {gpu['temperature_c']:.0f}C</span></div>
+<div class="bar"><div class="fill gpu" style="width:{gpu['usage_percent']}%"></div></div>
+<div class="row"><span class="label">CPU</span><span class="val">{cpu_pct:.0f}%</span></div>
+<div class="bar"><div class="fill cpu" style="width:{cpu_pct}%"></div></div>
+<div class="row"><span class="label">RAM</span><span class="val">{ram.percent:.0f}%</span></div>
+<div class="bar"><div class="fill ram" style="width:{ram.percent}%"></div></div>
+<div class="row"><span class="label">Disk</span><span class="val">{disk.percent:.0f}%</span></div>
+<div class="bar"><div class="fill dsk" style="width:{disk.percent}%"></div></div>
+{sug_html}
+<a href="/dashboard">Open Dashboard</a>
+<script>setTimeout(()=>location.reload(),10000)</script>
+</body></html>"""
+    return html
 
 
 # ============================================================
