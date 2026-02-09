@@ -154,6 +154,19 @@ body {
         <div id="models"><span style="color:#555">Loading...</span></div>
     </div>
 
+    <div class="flex">
+        <div class="card">
+            <div class="card-title">Disk</div>
+            <div><span class="big-num" id="d-use">--</span><span class="unit">%</span></div>
+            <div style="color:#666;font-size:11px;" id="d-free">-- GB free</div>
+            <div class="bar-bg"><div class="bar" id="d-bar" style="width:0%;background:linear-gradient(90deg,#00BCD4,#FF5722)"></div></div>
+        </div>
+        <div class="card">
+            <div class="card-title">Uptime</div>
+            <div><span class="big-num" id="uptime">--</span><span class="unit">h</span></div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-title">Docker (<span id="docker-count">0</span>)</div>
         <div id="docker" style="max-height:200px;overflow-y:auto;"></div>
@@ -179,6 +192,10 @@ body {
             <button onclick="sendChat()" style="padding:10px 16px;border:none;border-radius:10px;background:#667eea;color:white;font-weight:600;cursor:pointer;">Send</button>
         </div>
         <div id="chat-reply" style="margin-top:8px;font-size:13px;color:#aaa;max-height:300px;overflow-y:auto;"></div>
+        <div style="margin-top:6px;display:flex;gap:6px">
+            <button onclick="speakReply()" style="flex:1;padding:8px;border:none;border-radius:8px;background:#2a2a3e;color:#aaa;font-size:11px;cursor:pointer;">&#128264; Read Aloud</button>
+            <button onclick="clearHistory()" style="flex:1;padding:8px;border:none;border-radius:8px;background:#2a2a3e;color:#888;font-size:11px;cursor:pointer;">Clear History</button>
+        </div>
     </div>
 
     <div class="card" style="margin-top:8px;">
@@ -244,6 +261,14 @@ async function fetchStatus() {
         document.getElementById('r-use').textContent = Math.round(s.ram.usage_percent);
         document.getElementById('r-det').textContent = s.ram.used_gb + ' / ' + s.ram.total_gb + ' GB';
         document.getElementById('r-bar').style.width = s.ram.usage_percent + '%';
+
+        // Disk & Uptime
+        if (s.disk) {
+            document.getElementById('d-use').textContent = Math.round(s.disk.usage_percent);
+            document.getElementById('d-free').textContent = s.disk.free_gb + ' GB free';
+            document.getElementById('d-bar').style.width = s.disk.usage_percent + '%';
+        }
+        document.getElementById('uptime').textContent = s.uptime_hours;
 
         // Ollama Models
         if (t.ollama && t.ollama.models) {
@@ -326,6 +351,8 @@ async function emergencyStop() {
     } catch (e) { alert('Failed: ' + e.message); }
 }
 
+let lastReply = '';
+
 async function sendChat() {
     const input = document.getElementById('chat-input');
     const msg = input.value.trim();
@@ -337,13 +364,35 @@ async function sendChat() {
         const res = await fetch(API + '/chat?message=' + encodeURIComponent(msg), { method: 'POST' });
         const data = await res.json();
         if (data.reply) {
+            lastReply = data.reply;
             reply.innerHTML = '<div style="white-space:pre-wrap">' + data.reply + '</div>';
+            // Auto-speak short replies
+            if (data.reply.length < 200) speakReply();
         } else {
             reply.innerHTML = '<div style="color:#f44336">' + (data.error || 'No reply') + '</div>';
         }
     } catch (e) {
         reply.innerHTML = '<div style="color:#f44336">' + e.message + '</div>';
     }
+}
+
+async function speakReply() {
+    if (!lastReply) return;
+    try {
+        const audio = new Audio(API + '/tts?text=' + encodeURIComponent(lastReply.substring(0, 300)) + '&speaker=0&speed=1.2');
+        audio.play();
+    } catch (e) {
+        // Fallback to Web Speech API
+        const u = new SpeechSynthesisUtterance(lastReply);
+        u.lang = 'ja-JP'; u.rate = 1.1;
+        speechSynthesis.speak(u);
+    }
+}
+
+async function clearHistory() {
+    await fetch(API + '/chat/history', { method: 'DELETE' });
+    document.getElementById('chat-reply').innerHTML = '<div style="color:#555">History cleared</div>';
+    lastReply = '';
 }
 
 async function markRead() {
