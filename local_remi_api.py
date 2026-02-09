@@ -587,8 +587,8 @@ def _save_chat_history():
 chat_history: List[dict] = _load_chat_history()
 
 @app.post("/chat", dependencies=[Depends(verify_token)])
-async def send_chat(message: str = Query(...), model: str = Query("llama3:8b"),
-                    system: str = Query("You are Remi, a helpful AI companion. Reply concisely in the user's language.")):
+async def send_chat(message: str = Query(...), model: str = Query("qwen2.5:7b"),
+                    system: str = Query("You are Remi, a cheerful AI companion for your commander. You MUST reply in Japanese only. Never mix Chinese or other languages. Be concise, friendly, and helpful. Use casual Japanese like a close friend.")):
     """Send chat via Ollama direct (from Pixel 7)"""
     audit_logger.info(f"Chat: model={model} msg_len={len(message)}")
     chat_history.append({"role": "user", "content": message, "ts": datetime.now().isoformat()})
