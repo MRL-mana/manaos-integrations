@@ -275,13 +275,13 @@ async def verify_token_or_query(request: Request):
     raise HTTPException(status_code=401, detail="Invalid or missing API token")
 
 
-@app.post("/tts", dependencies=[Depends(verify_token_or_query)])
+@app.api_route("/tts", methods=["GET", "POST"], dependencies=[Depends(verify_token_or_query)])
 async def text_to_speech(
     text: str = Query(..., description="Text to speak"),
     speaker: int = Query(0, description="VOICEVOX speaker ID (0=Zundamon, 1=Shikoku Metan)"),
     speed: float = Query(1.1, description="Speech speed")
 ):
-    """VOICEVOX TTS - returns WAV audio"""
+    """VOICEVOX TTS - returns WAV audio (GET for browser Audio(), POST for API)"""
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             # Step 1: Audio query
