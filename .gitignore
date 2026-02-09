@@ -26,6 +26,9 @@ ENV/
 env/
 .venv
 
+# Pixel 7 スクリーンショット保存先
+pixel7_screenshots/
+
 # IDE
 .vscode/
 .idea/
@@ -55,6 +58,9 @@ env/
 *.log
 logs/
 *.log.*
+phase1_runs/
+phase2_reflection_memos.jsonl
+phase1_low_sat_history.jsonl
 
 # Credentials and secrets
 credentials.json
@@ -159,8 +165,10 @@ comfyui/
 *CLEANUP_SUMMARY*.md
 *STORAGE_CLEANUP*.md
 
-# Test/check scripts (temporary utilities)
+# Test/check scripts (temporary utilities at root, NOT tests/ directory)
 test_*.py
+!tests/test_*.py
+!tests/conftest.py
 check_*.py
 check_*.ps1
 
@@ -181,6 +189,18 @@ data/
 *.jsonl
 snapshots/
 vendor/
+
+# Runtime / generated databases (catch-all for any new .db files)
+*.db-journal
+response_cache.db
+
+# Token / credential files (additional patterns)
+token_sheets.json
+
+# Temporary Excel processing artifacts
+SKM_*.xlsx
+temp_downloaded*.xlsx
+test.xlsx
 
 # Generated evaluation / stats artifacts
 evaluation_*.json

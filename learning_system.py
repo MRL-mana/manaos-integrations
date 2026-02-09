@@ -80,6 +80,7 @@ class LearningSystem:
         self.usage_patterns = defaultdict(list)
         self.preferences = {}
         self.optimizations = []
+        self._feedback_history = []
         self.storage_path = storage_path or Path(__file__).parent / "learning_system_state.json"
         self._load_state()
         
@@ -94,6 +95,7 @@ class LearningSystem:
                     self.usage_patterns = defaultdict(list, state.get("usage_patterns", {}))
                     self.preferences = state.get("preferences", {})
                     self.optimizations = state.get("optimizations", [])
+                    self._feedback_history = state.get("feedback_history", [])
             except Exception as e:
                 error = error_handler.handle_exception(
                     e,
@@ -104,10 +106,12 @@ class LearningSystem:
                 self.usage_patterns = defaultdict(list)
                 self.preferences = {}
                 self.optimizations = []
+                self._feedback_history = []
         else:
             self.usage_patterns = defaultdict(list)
             self.preferences = {}
             self.optimizations = []
+            self._feedback_history = []
     
     def _save_state(self, max_retries: int = 3):
         """状態を保存（リトライ機能付き）"""
@@ -123,6 +127,7 @@ class LearningSystem:
                         "usage_patterns": dict(self.usage_patterns),
                         "preferences": self.preferences,
                         "optimizations": self.optimizations,
+                        "feedback_history": self._feedback_history,
                         "last_updated": datetime.now().isoformat()
                     }, f, ensure_ascii=False, indent=2)
                 
@@ -386,6 +391,184 @@ class LearningSystem:
                 optimized_params["steps"] = prefs.get("preferred_steps", 20)
         
         return optimized_params
+
+    # =========================================================================
+    # 自動フィードバックループ（v2追加）
+    # =========================================================================
+
+    def auto_apply_optimizations(self) -> Dict[str, Any]:
+        """
+        学習結果を実際のシステム設定に自動適用する。
+        
+        以下の自動調整を行う:
+        1. 成功率が低いアクションのリトライ回数を増加
+        2. 頻繁に使われるアクションのタイムアウトを延長
+        3. 時間パターンに基づくレート制限の動的調整
+        
+        Returns:
+            適用された変更のサマリー
+        """
+        analysis = self.analyze_patterns()
+        changes_applied = []
+
+        # --- 1. 成功率ベースのリトライ調整 ---
+        retry_adjustments = self._adjust_retry_config(analysis)
+        if retry_adjustments:
+            changes_applied.extend(retry_adjustments)
+
+        # --- 2. 頻出アクションのタイムアウト延長 ---
+        timeout_adjustments = self._adjust_timeouts(analysis)
+        if timeout_adjustments:
+            changes_applied.extend(timeout_adjustments)
+
+        # --- 3. LLMルーティング成功率の改善 ---
+        routing_adjustments = self._adjust_llm_routing(analysis)
+        if routing_adjustments:
+            changes_applied.extend(routing_adjustments)
+
+        # 適用履歴を記録
+        if changes_applied:
+            self._feedback_history.append({
+                "timestamp": datetime.now().isoformat(),
+                "changes": changes_applied,
+                "trigger": "auto_apply"
+            })
+            # 直近20件の適用履歴のみ保持
+            self._feedback_history = self._feedback_history[-20:]
+            self._save_state()
+            logger.info(f"✅ フィードバックループ: {len(changes_applied)}件の最適化を適用")
+        else:
+            logger.info("フィードバックループ: 調整不要（現在の設定で十分）")
+
+        return {
+            "changes_applied": changes_applied,
+            "analysis_summary": {
+                "actions_analyzed": len(analysis.get("success_rates", {})),
+                "recommendations": len(analysis.get("recommendations", []))
+            },
+            "timestamp": datetime.now().isoformat()
+        }
+
+    def _adjust_retry_config(self, analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """成功率が低いアクションのリトライ設定を調整"""
+        changes = []
+        retry_config_path = self.storage_path.parent / "manaos_timeout_config.json"
+
+        if not retry_config_path.exists():
+            return changes
+
+        try:
+            with open(retry_config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        except Exception:
+            return changes
+
+        modified = False
+        for action, stats in analysis.get("success_rates", {}).items():
+            if stats["rate"] < 50 and stats["total"] >= 5:
+                # 成功率50%未満 → リトライ回数を+1（上限5）
+                current_retries = config.get("retries", {}).get(action, 2)
+                new_retries = min(current_retries + 1, 5)
+                if new_retries != current_retries:
+                    config.setdefault("retries", {})[action] = new_retries
+                    modified = True
+                    changes.append({
+                        "type": "retry_increase",
+                        "action": action,
+                        "old_value": current_retries,
+                        "new_value": new_retries,
+                        "reason": f"成功率 {stats['rate']:.0f}% (< 50%)"
+                    })
+
+        if modified:
+            try:
+                with open(retry_config_path, 'w', encoding='utf-8') as f:
+                    json.dump(config, f, ensure_ascii=False, indent=2)
+            except Exception as e:
+                logger.warning(f"リトライ設定の保存に失敗: {e}")
+                return []
+
+        return changes
+
+    def _adjust_timeouts(self, analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """頻出アクションのタイムアウトを調整"""
+        changes = []
+        timeout_config_path = self.storage_path.parent / "manaos_timeout_config.json"
+
+        if not timeout_config_path.exists():
+            return changes
+
+        try:
+            with open(timeout_config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        except Exception:
+            return changes
+
+        modified = False
+        for item in analysis.get("most_used_actions", [])[:5]:
+            action = item["action"]
+            action_stats = analysis.get("success_rates", {}).get(action, {})
+            # 高頻度かつ成功率が中途半端（50-80%）→ タイムアウト延長
+            if item["count"] > 15 and 50 <= action_stats.get("rate", 100) < 80:
+                current_timeout = config.get("timeouts", {}).get(action, 10)
+                new_timeout = min(current_timeout + 5, 60)
+                if new_timeout != current_timeout:
+                    config.setdefault("timeouts", {})[action] = new_timeout
+                    modified = True
+                    changes.append({
+                        "type": "timeout_increase",
+                        "action": action,
+                        "old_value": current_timeout,
+                        "new_value": new_timeout,
+                        "reason": f"高頻度({item['count']}回) + 成功率{action_stats.get('rate', 0):.0f}%"
+                    })
+
+        if modified:
+            try:
+                with open(timeout_config_path, 'w', encoding='utf-8') as f:
+                    json.dump(config, f, ensure_ascii=False, indent=2)
+            except Exception as e:
+                logger.warning(f"タイムアウト設定の保存に失敗: {e}")
+                return []
+
+        return changes
+
+    def _adjust_llm_routing(self, analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """LLMルーティングの成功率に基づいて優先モデルを調整"""
+        changes = []
+        routing_config_path = self.storage_path.parent / "llm_routing_config.yaml"
+
+        # LLM関連アクションの成功率を確認
+        llm_actions = {
+            action: stats
+            for action, stats in analysis.get("success_rates", {}).items()
+            if "llm" in action.lower() or "chat" in action.lower() or "generate" in action.lower()
+        }
+
+        if not llm_actions:
+            return changes
+
+        # 成功率が高いモデル/アクションを記録（設定ファイルへの直接書き込みはしない）
+        # 代わりに preferences に学習結果を保存
+        for action, stats in llm_actions.items():
+            if stats["total"] >= 3:
+                self.preferences.setdefault("llm_routing", {})[action] = {
+                    "success_rate": stats["rate"],
+                    "sample_size": stats["total"],
+                    "last_updated": datetime.now().isoformat()
+                }
+                changes.append({
+                    "type": "llm_preference_update",
+                    "action": action,
+                    "success_rate": stats["rate"],
+                    "reason": f"LLM成功率学習 ({stats['total']}回中{stats['success']}回成功)"
+                })
+
+        return changes
+
+    def get_feedback_history(self) -> List[Dict[str, Any]]:
+        """フィードバックループの適用履歴を取得"""
+        return list(self._feedback_history)
     
     def get_status(self) -> Dict[str, Any]:
         """状態を取得"""

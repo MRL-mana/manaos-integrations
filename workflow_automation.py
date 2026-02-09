@@ -9,6 +9,11 @@ from typing import Dict, List, Any, Optional, Callable
 from datetime import datetime
 from pathlib import Path
 
+try:
+    from manaos_logger import get_logger
+except ImportError:
+    from logging import getLogger as get_logger
+
 from comfyui_integration import ComfyUIIntegration
 from google_drive_integration import GoogleDriveIntegration
 from civitai_integration import CivitAIIntegration
@@ -26,6 +31,7 @@ class WorkflowAutomation:
     
     def __init__(self):
         """初期化"""
+        self.logger = get_logger(f"{__name__}.WorkflowAutomation")
         self.comfyui = ComfyUIIntegration()
         self.drive = GoogleDriveIntegration()
         self.civitai = CivitAIIntegration()

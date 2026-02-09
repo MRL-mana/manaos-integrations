@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, asdict
 import hashlib
+import threading
 
 # 統一モジュールのインポート
 try:
@@ -93,6 +94,7 @@ class MRLMemoryExtractor:
             ],
         }
         
+        self._scratchpad_lock = threading.Lock()
         logger.info(f"✅ MRL Memory Extractor初期化完了: {self.memory_dir}")
     
     def extract(self, text: str, source: str = "unknown") -> List[MemoryEntry]:
@@ -216,14 +218,15 @@ class MRLMemoryExtractor:
     
     def append_to_scratchpad(self, entries: List[MemoryEntry]):
         """
-        Scratchpadに追記
+        Scratchpadに追記（スレッドセーフ）
         
         Args:
             entries: メモリエントリのリスト
         """
-        with open(self.scratchpad_path, 'a', encoding='utf-8') as f:
-            for entry in entries:
-                f.write(json.dumps(asdict(entry), ensure_ascii=False) + '\n')
+        with self._scratchpad_lock:
+            with open(self.scratchpad_path, 'a', encoding='utf-8') as f:
+                for entry in entries:
+                    f.write(json.dumps(asdict(entry), ensure_ascii=False) + '\n')
         
         logger.info(f"Scratchpadに{len(entries)}件を追記")
     
@@ -264,20 +267,21 @@ class MRLMemoryExtractor:
         cutoff_time = datetime.now() - timedelta(hours=hours)
         entries = []
         
-        with open(self.scratchpad_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                try:
-                    entry_dict = json.loads(line.strip())
-                    entry_time = datetime.fromisoformat(entry_dict['timestamp'])
-                    
-                    if entry_time >= cutoff_time:
-                        entries.append(entry_dict)
+        with self._scratchpad_lock:
+            with open(self.scratchpad_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    try:
+                        entry_dict = json.loads(line.strip())
+                        entry_time = datetime.fromisoformat(entry_dict['timestamp'])
                         
-                        if len(entries) >= limit:
-                            break
-                except Exception as e:
-                    logger.warning(f"エントリ読み込みエラー: {e}")
-                    continue
+                        if entry_time >= cutoff_time:
+                            entries.append(entry_dict)
+                            
+                            if len(entries) >= limit:
+                                break
+                    except Exception as e:
+                        logger.warning(f"エントリ読み込みエラー: {e}")
+                        continue
         
         # 新しい順にソート
         entries.sort(key=lambda x: x['timestamp'], reverse=True)
@@ -303,6 +307,9 @@ class MRLMemoryRetriever:
         self.memory_dir = Path(memory_dir)
         self.scratchpad_path = self.memory_dir / "scratchpad.jsonl"
         self.working_memory_path = self.memory_dir / "working_memory.md"
+        
+        # 読み取り時のロック
+        self._scratchpad_lock = threading.Lock()
     
     def retrieve(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """
@@ -321,29 +328,30 @@ class MRLMemoryRetriever:
         query_lower = query.lower()
         matches = []
         
-        # Scratchpadから検索
-        with open(self.scratchpad_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                try:
-                    entry_dict = json.loads(line.strip())
-                    
-                    # キーまたは値にクエリが含まれるかチェック
-                    key = entry_dict.get('key', '').lower()
-                    value = entry_dict.get('value', '').lower()
-                    
-                    if query_lower in key or query_lower in value:
-                        # 関連度スコアを計算（簡易実装）
-                        score = 0
-                        if query_lower in key:
-                            score += 2
-                        if query_lower in value:
-                            score += 1
+        # Scratchpadから検索（スレッドセーフ）
+        with self._scratchpad_lock:
+            with open(self.scratchpad_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    try:
+                        entry_dict = json.loads(line.strip())
                         
-                        entry_dict['relevance_score'] = score
-                        matches.append(entry_dict)
-                except Exception as e:
-                    logger.warning(f"エントリ読み込みエラー: {e}")
-                    continue
+                        # キーまたは値にクエリが含まれるかチェック
+                        key = entry_dict.get('key', '').lower()
+                        value = entry_dict.get('value', '').lower()
+                        
+                        if query_lower in key or query_lower in value:
+                            # 関連度スコアを計算（簡易実装）
+                            score = 0
+                            if query_lower in key:
+                                score += 2
+                            if query_lower in value:
+                                score += 1
+                            
+                            entry_dict['relevance_score'] = score
+                            matches.append(entry_dict)
+                    except Exception as e:
+                        logger.warning(f"エントリ読み込みエラー: {e}")
+                        continue
         
         # 関連度でソート
         matches.sort(key=lambda x: x.get('relevance_score', 0), reverse=True)

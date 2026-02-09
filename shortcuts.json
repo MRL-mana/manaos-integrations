@@ -1,0 +1,184 @@
+{
+  "version": 91,
+  "compatibilityVersion": 90,
+  "categories": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Remi Controls",
+      "layoutType": "medium_grid",
+      "shortcuts": [
+        {
+          "id": "b1111111-1111-1111-1111-111111111111",
+          "executionType": "app",
+          "name": "\ud83d\udcca Remi Status",
+          "description": "GPU/CPU/RAM widget",
+          "method": "GET",
+          "url": "http://100.73.247.100:5050/widget?token=remi-pixel7-2026",
+          "authentication": "none",
+          "requestBodyType": "custom_text",
+          "contentType": "text/plain",
+          "timeout": 10000,
+          "responseHandling": {
+            "uiType": "window",
+            "successOutput": "response",
+            "failureOutput": "detailed",
+            "successMessage": "",
+            "includeMetaInfo": false,
+            "actions": ["rerun", "share"]
+          },
+          "headers": [],
+          "parameters": []
+        },
+        {
+          "id": "b2222222-2222-2222-2222-222222222222",
+          "executionType": "app",
+          "name": "\ud83c\udfa8 ComfyUI Start",
+          "description": "Start image generation",
+          "method": "POST",
+          "url": "http://100.73.247.100:5050/action/comfyui_start",
+          "authentication": "bearer",
+          "authToken": "remi-pixel7-2026",
+          "requestBodyType": "custom_text",
+          "contentType": "text/plain",
+          "timeout": 10000,
+          "responseHandling": {
+            "uiType": "toast",
+            "successOutput": "response",
+            "failureOutput": "simple",
+            "successMessage": "",
+            "includeMetaInfo": false,
+            "actions": []
+          },
+          "headers": [],
+          "parameters": []
+        },
+        {
+          "id": "b3333333-3333-3333-3333-333333333333",
+          "executionType": "app",
+          "name": "\u23f9\ufe0f ComfyUI Stop",
+          "description": "Stop ComfyUI",
+          "method": "POST",
+          "url": "http://100.73.247.100:5050/action/comfyui_stop",
+          "authentication": "bearer",
+          "authToken": "remi-pixel7-2026",
+          "requestBodyType": "custom_text",
+          "contentType": "text/plain",
+          "timeout": 10000,
+          "responseHandling": {
+            "uiType": "toast",
+            "successOutput": "response",
+            "failureOutput": "simple",
+            "successMessage": "",
+            "includeMetaInfo": false,
+            "actions": []
+          },
+          "headers": [],
+          "parameters": []
+        },
+        {
+          "id": "b4444444-4444-4444-4444-444444444444",
+          "executionType": "app",
+          "name": "\ud83e\uddf9 Clear VRAM",
+          "description": "Free GPU memory",
+          "method": "POST",
+          "url": "http://100.73.247.100:5050/action/clear_vram",
+          "authentication": "bearer",
+          "authToken": "remi-pixel7-2026",
+          "requestBodyType": "custom_text",
+          "contentType": "text/plain",
+          "timeout": 10000,
+          "responseHandling": {
+            "uiType": "toast",
+            "successOutput": "response",
+            "failureOutput": "simple",
+            "successMessage": "",
+            "includeMetaInfo": false,
+            "actions": []
+          },
+          "headers": [],
+          "parameters": []
+        },
+        {
+          "id": "b5555555-5555-5555-5555-555555555555",
+          "executionType": "app",
+          "name": "\ud83d\udc33 Docker Cleanup",
+          "description": "Clean unused Docker resources",
+          "method": "POST",
+          "url": "http://100.73.247.100:5050/action/docker_cleanup",
+          "authentication": "bearer",
+          "authToken": "remi-pixel7-2026",
+          "requestBodyType": "custom_text",
+          "contentType": "text/plain",
+          "timeout": 30000,
+          "responseHandling": {
+            "uiType": "toast",
+            "successOutput": "response",
+            "failureOutput": "simple",
+            "successMessage": "",
+            "includeMetaInfo": false,
+            "actions": []
+          },
+          "headers": [],
+          "parameters": []
+        },
+        {
+          "id": "b6666666-6666-6666-6666-666666666666",
+          "executionType": "app",
+          "name": "\ud83d\udea8 Emergency Stop",
+          "description": "Kill all GPU processes",
+          "method": "POST",
+          "url": "http://100.73.247.100:5050/emergency-stop",
+          "authentication": "bearer",
+          "authToken": "remi-pixel7-2026",
+          "confirmation": "simple",
+          "requestBodyType": "custom_text",
+          "contentType": "text/plain",
+          "timeout": 10000,
+          "responseHandling": {
+            "uiType": "dialog",
+            "successOutput": "response",
+            "failureOutput": "detailed",
+            "successMessage": "",
+            "includeMetaInfo": false,
+            "actions": []
+          },
+          "headers": [],
+          "parameters": []
+        },
+        {
+          "id": "b7777777-7777-7777-7777-777777777777",
+          "executionType": "browser",
+          "name": "\ud83c\udfe0 Dashboard",
+          "description": "Open Remi Dashboard",
+          "url": "http://100.73.247.100:5050/dashboard?token=remi-pixel7-2026",
+          "headers": [],
+          "parameters": []
+        },
+        {
+          "id": "b8888888-8888-8888-8888-888888888888",
+          "executionType": "app",
+          "name": "\ud83d\udcac Chat Remi",
+          "description": "Talk to Remi AI",
+          "method": "POST",
+          "url": "http://100.73.247.100:5050/chat?message={%prompt}",
+          "authentication": "bearer",
+          "authToken": "remi-pixel7-2026",
+          "requestBodyType": "custom_text",
+          "contentType": "text/plain",
+          "timeout": 60000,
+          "responseHandling": {
+            "uiType": "dialog",
+            "successOutput": "response",
+            "failureOutput": "detailed",
+            "successMessage": "",
+            "includeMetaInfo": false,
+            "actions": ["rerun", "share"]
+          },
+          "headers": [],
+          "parameters": []
+        }
+      ]
+    }
+  ],
+  "variables": []
+}
