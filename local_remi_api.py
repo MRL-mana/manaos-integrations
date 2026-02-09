@@ -82,7 +82,7 @@ async def lifespan(app):
         _monitor_task.cancel()
     audit_logger.info("Remi API stopped")
 
-app = FastAPI(title="Local Remi API", version="4.0.0", lifespan=lifespan)
+app = FastAPI(title="Local Remi API", version="4.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -181,7 +181,7 @@ def check_ollama_models():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "local-remi-api", "version": "4.0.0",
+    return {"status": "ok", "service": "local-remi-api", "version": "4.1.0",
             "timestamp": datetime.now().isoformat()}
 
 
@@ -197,18 +197,29 @@ async def get_status():
         "timestamp": datetime.now().isoformat(),
         "gpu": gpu,
         "cpu": {
+            "percent": cpu_percent,
             "usage_percent": cpu_percent,
             "cores": psutil.cpu_count()
         },
+        "memory": {
+            "percent": ram.percent,
+            "usage_percent": ram.percent,
+            "used_gb": round(ram.used / (1024**3), 1),
+            "total_gb": round(ram.total / (1024**3), 1)
+        },
         "ram": {
+            "percent": ram.percent,
             "usage_percent": ram.percent,
             "used_gb": round(ram.used / (1024**3), 1),
             "total_gb": round(ram.total / (1024**3), 1)
         },
         "disk": {
+            "percent": round(disk.percent, 1),
             "usage_percent": round(disk.percent, 1),
             "free_gb": round(disk.free / (1024**3), 1)
         },
+        "docker": {"containers": get_docker_containers()},
+        "ollama": check_ollama_models(),
         "uptime_hours": round((time.time() - psutil.boot_time()) / 3600, 1)
     }
 
@@ -250,7 +261,21 @@ async def get_tasks():
 
 VOICEVOX_URL = "http://127.0.0.1:50021"
 
-@app.post("/tts", dependencies=[Depends(verify_token)])
+
+async def verify_token_or_query(request: Request):
+    """Verify Bearer token OR query param token (for audio src= tags)"""
+    # Check Authorization header first
+    auth = request.headers.get("authorization", "")
+    if auth.startswith("Bearer ") and auth[7:] == API_TOKEN:
+        return True
+    # Fallback: check query param (for <audio src= direct access)
+    qt = request.query_params.get("token", "")
+    if qt == API_TOKEN:
+        return True
+    raise HTTPException(status_code=401, detail="Invalid or missing API token")
+
+
+@app.post("/tts", dependencies=[Depends(verify_token_or_query)])
 async def text_to_speech(
     text: str = Query(..., description="Text to speak"),
     speaker: int = Query(0, description="VOICEVOX speaker ID (0=Zundamon, 1=Shikoku Metan)"),
@@ -537,18 +562,39 @@ async def list_actions():
 
 OLLAMA_URL = "http://127.0.0.1:11434"
 
-# Chat history per session (simple in-memory)
-chat_history: List[dict] = []
-MAX_CHAT_HISTORY = 20
+# Chat history (persisted to file)
+CHAT_HISTORY_FILE = os.path.join(os.path.dirname(__file__), "logs", "chat_history.json")
+MAX_CHAT_HISTORY = 50
+
+def _load_chat_history() -> List[dict]:
+    """Load chat history from disk"""
+    try:
+        if os.path.exists(CHAT_HISTORY_FILE):
+            with open(CHAT_HISTORY_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return []
+
+def _save_chat_history():
+    """Save chat history to disk"""
+    try:
+        with open(CHAT_HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(chat_history[-MAX_CHAT_HISTORY:], f, ensure_ascii=False, indent=1)
+    except Exception:
+        pass
+
+chat_history: List[dict] = _load_chat_history()
 
 @app.post("/chat", dependencies=[Depends(verify_token)])
 async def send_chat(message: str = Query(...), model: str = Query("llama3:8b"),
                     system: str = Query("You are Remi, a helpful AI companion. Reply concisely in the user's language.")):
     """Send chat via Ollama direct (from Pixel 7)"""
     audit_logger.info(f"Chat: model={model} msg_len={len(message)}")
-    chat_history.append({"role": "user", "content": message})
+    chat_history.append({"role": "user", "content": message, "ts": datetime.now().isoformat()})
     if len(chat_history) > MAX_CHAT_HISTORY:
         chat_history.pop(0)
+    _save_chat_history()
 
     messages = [{"role": "system", "content": system}] + chat_history[-10:]
 
@@ -565,7 +611,8 @@ async def send_chat(message: str = Query(...), model: str = Query("llama3:8b"),
             if resp.status_code == 200:
                 data = resp.json()
                 reply = data.get("message", {}).get("content", "")
-                chat_history.append({"role": "assistant", "content": reply})
+                chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+                _save_chat_history()
                 return {"reply": reply, "model": model}
             else:
                 return {"error": f"Ollama returned {resp.status_code}", "detail": resp.text[:300]}
@@ -585,6 +632,7 @@ async def get_chat_history():
 async def clear_chat_history():
     """Clear chat history"""
     chat_history.clear()
+    _save_chat_history()
     return {"status": "cleared"}
 
 
@@ -682,9 +730,11 @@ async def dismiss_suggestion(suggestion_id: int):
 async def background_monitor():
     """Background system monitor - proactive alerts and smart suggestions"""
     _last_chat_time = time.time()
+    _consecutive_errors = 0
     while True:
         try:
             gpu = get_gpu_info()
+            _consecutive_errors = 0  # Reset on success
 
             # === Alerts ===
             if gpu["available"]:
@@ -773,9 +823,12 @@ async def background_monitor():
                         icon="✅"
                     )
 
-        except Exception:
-            pass
-        await asyncio.sleep(60)  # Check every 60 seconds
+        except Exception as e:
+            _consecutive_errors += 1
+            if _consecutive_errors <= 3:
+                audit_logger.error(f"Background monitor error ({_consecutive_errors}): {e}")
+            # Back off on repeated errors
+        await asyncio.sleep(60 if _consecutive_errors < 5 else 120)
 
 
 # ============================================================
@@ -801,4 +854,15 @@ async def log_requests(request: Request, call_next):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5050, log_level="info")
+    # HTTPS via Tailscale certs (if available)
+    cert_dir = os.path.expanduser("~/.tailscale-certs")
+    ssl_cert = os.path.join(cert_dir, "cert.pem")
+    ssl_key = os.path.join(cert_dir, "key.pem")
+    ssl_kwargs = {}
+    if os.path.exists(ssl_cert) and os.path.exists(ssl_key):
+        ssl_kwargs = {"ssl_certfile": ssl_cert, "ssl_keyfile": ssl_key}
+        print(f"[Remi] HTTPS enabled with Tailscale certs")
+    else:
+        print(f"[Remi] Running HTTP (no Tailscale certs at {cert_dir})")
+        print(f"[Remi] To enable HTTPS: tailscale cert <hostname> && copy to {cert_dir}")
+    uvicorn.run(app, host="0.0.0.0", port=5050, log_level="info", **ssl_kwargs)

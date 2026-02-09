@@ -295,7 +295,13 @@ body {
 const API = window.location.origin;
 // Auto-set token from URL param: /dashboard?token=xxx
 const _urlToken = new URLSearchParams(window.location.search).get('token');
-if (_urlToken) { localStorage.setItem('remi_token', _urlToken); }
+if (_urlToken) {
+    localStorage.setItem('remi_token', _urlToken);
+    // Clean URL to prevent token leakage in browser history/referrer
+    if (window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
 let TOKEN = localStorage.getItem('remi_token') || '';
 let _prevNotifCount = 0;
 
@@ -478,7 +484,7 @@ function executeVoiceAction(action, originalText) {
 
 function speakFeedback(text) {
     try {
-        const audio = new Audio(API + '/tts?text=' + encodeURIComponent(text) + '&speaker=0&speed=1.3');
+        const audio = new Audio(API + '/tts?text=' + encodeURIComponent(text) + '&speaker=0&speed=1.3&token=' + encodeURIComponent(TOKEN));
         audio.play().catch(() => {
             const u = new SpeechSynthesisUtterance(text);
             u.lang = 'ja-JP'; u.rate = 1.2;
@@ -665,8 +671,26 @@ async function runAction(name) {
     try {
         const res = await fetch(API + '/action/' + name, { method: 'POST', headers: getHeaders() });
         const data = await res.json();
-        alert(JSON.stringify(data, null, 2));
-    } catch (e) { alert('Error: ' + e.message); }
+        // Show friendly toast instead of raw JSON
+        const msg = data.error || data.message || data.status || 'Done';
+        showToast(name + ': ' + msg);
+        refreshAll();
+    } catch (e) { showToast('Error: ' + e.message, true); }
+}
+
+function showToast(msg, isError) {
+    let t = document.getElementById('toast');
+    if (!t) {
+        t = document.createElement('div');
+        t.id = 'toast';
+        t.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:200;transition:opacity 0.3s;pointer-events:none;max-width:90%;text-align:center;';
+        document.body.appendChild(t);
+    }
+    t.style.background = isError ? '#f44336' : '#667eea';
+    t.style.color = '#fff';
+    t.textContent = msg;
+    t.style.opacity = '1';
+    setTimeout(() => { t.style.opacity = '0'; }, 3000);
 }
 
 async function emergencyStop() {
@@ -706,7 +730,7 @@ async function sendChat() {
 async function speakReply() {
     if (!lastReply) return;
     try {
-        const audio = new Audio(API + '/tts?text=' + encodeURIComponent(lastReply.substring(0, 300)) + '&speaker=0&speed=1.2');
+        const audio = new Audio(API + '/tts?text=' + encodeURIComponent(lastReply.substring(0, 300)) + '&speaker=0&speed=1.2&token=' + encodeURIComponent(TOKEN));
         audio.play();
     } catch (e) {
         // Fallback to Web Speech API
@@ -748,7 +772,7 @@ fetchStatus();
 fetchActions();
 fetchNotifications();
 fetchSuggestions();
-setInterval(fetchStatus, 3000);
+setInterval(fetchStatus, 5000);     // 5s (was 3s, reduce load)
 setInterval(fetchNotifications, 30000);
 setInterval(fetchSuggestions, 60000);
 </script>
