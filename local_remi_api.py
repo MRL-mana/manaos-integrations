@@ -575,6 +575,12 @@ async def send_chat(message: str = Query(...), model: str = Query("llama3:8b"),
         return {"error": str(e)}
 
 
+@app.get("/chat/history", dependencies=[Depends(verify_token)])
+async def get_chat_history():
+    """Get chat history"""
+    return {"history": chat_history, "count": len(chat_history)}
+
+
 @app.delete("/chat/history", dependencies=[Depends(verify_token)])
 async def clear_chat_history():
     """Clear chat history"""
