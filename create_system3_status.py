@@ -620,7 +620,7 @@ def get_todo_metrics() -> Dict[str, Any]:
 
 def count_recent_improvements(hours: int = 24) -> Dict[str, int]:
     """直近の改善数をカウントする（未実装 — 現在はゼロ値を返す）"""
-    # TODO: 実際の改善データソースから集計する
+    # NOTE: stub — not yet implemented (returns zero values)
 
     return {
         "playbooks_created": 0,

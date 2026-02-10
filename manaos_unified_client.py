@@ -281,7 +281,7 @@ class UnifiedAPIClient:
     def _call_parallel(self, calls: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """並列実行（簡易実装）"""
         # 実際の実装ではasyncioを使用するが、簡易版では順次実行
-        # TODO: asyncioを使用した真の並列実行を実装
+        # TODO(mana): asyncioを使用した真の並列実行を実装
         return self._call_sequential(calls)
     
     def check_service_health(self, service: str) -> Dict[str, Any]:

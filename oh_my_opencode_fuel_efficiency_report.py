@@ -211,7 +211,7 @@ class OHMyOpenCodeFuelEfficiencyReport:
                 cause=cause_name,
                 impact_percent=impact_percent,
                 occurrence_count=count,
-                avg_cost=0.0,  # TODO: 実際のデータから計算
+                avg_cost=0.0,  # NOTE: stub — not yet implemented
                 recommended_actions=actions[:3],  # 最大3件
                 expected_impact="コストを10-30%削減"
             ))
@@ -291,8 +291,6 @@ class OHMyOpenCodeFuelEfficiencyReport:
             template = "# 燃費レポート\n\n[レポート内容]\n"
         
         # データを埋め込む（簡易実装）
-        # TODO: より高度なテンプレートエンジンを使用
-        
         return template
 
 

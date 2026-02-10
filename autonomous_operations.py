@@ -133,7 +133,7 @@ class AutonomousOperations:
             
             if self.enable_auto_recovery:
                 logger.info("🔧 自動復旧を試みます...")
-                # TODO: 自動復旧ロジックを実装
+                # NOTE: stub — auto-recovery not yet implemented
                 logger.warning("   （自動復旧機能は開発中）")
             else:
                 logger.info("💡 手動での対処が必要です:")

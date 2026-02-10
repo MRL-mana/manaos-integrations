@@ -159,7 +159,7 @@ class RewardLoop:
             response = httpx.get(f"{metrics_collector_url}/api/metrics/summary", timeout=5)
             if response.status_code == 200:
                 metrics_stats = response.json()
-                # TODO: 週次比較で成功率向上をチェック
+                # TODO(mana): metrics_statsを使い週次比較で成功率向上をチェック
         except Exception:
             logger.debug("メトリクスサマリーAPIの取得に失敗")
 

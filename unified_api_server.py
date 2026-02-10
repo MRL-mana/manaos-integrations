@@ -12,11 +12,9 @@ import hmac
 import json
 import time
 import uuid
-import re
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-import subprocess
 import threading
 
 try:

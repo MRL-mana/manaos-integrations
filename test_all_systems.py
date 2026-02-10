@@ -1,9 +1,10 @@
 """Remi API quick system check."""
 import urllib.request
 import json
+import os
 
-BASE = "http://127.0.0.1:5050"
-TOKEN = "remi-pixel7-2026"
+BASE = os.getenv("REMI_API_URL", "http://127.0.0.1:5050")
+TOKEN = os.getenv("REMI_API_TOKEN", "")
 results = []
 VERSION = "4.1.0"  # Updated with security fixes
 
