@@ -279,10 +279,62 @@ class UnifiedAPIClient:
         return results
     
     def _call_parallel(self, calls: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """並列実行（簡易実装）"""
-        # 実際の実装ではasyncioを使用するが、簡易版では順次実行
-        # TODO(mana): asyncioを使用した真の並列実行を実装
-        return self._call_sequential(calls)
+        """asyncioを使用した並列実行"""
+
+        async def _run_all() -> List[Dict[str, Any]]:
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(timeout_config.get("api_call", 10.0)),
+                limits=httpx.Limits(max_keepalive_connections=20, max_connections=100),
+            ) as async_client:
+                tasks = [self._async_call(async_client, c) for c in calls]
+                return list(await asyncio.gather(*tasks, return_exceptions=False))
+
+        try:
+            return asyncio.run(_run_all())
+        except RuntimeError:
+            # イベントループが既に実行中の場合は順次実行にフォールバック
+            logger.debug("イベントループ実行中のためsequentialにフォールバック")
+            return self._call_sequential(calls)
+
+    async def _async_call(
+        self,
+        client: httpx.AsyncClient,
+        call: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """単一の非同期API呼び出し"""
+        service = call.get("service", "")
+        endpoint = call.get("endpoint", "/")
+        method = call.get("method", "GET").upper()
+        data = call.get("data")
+        params = call.get("params")
+        timeout = call.get("timeout")
+
+        service_info = self.services.get(service)
+        if not service_info:
+            return {"error": f"不明なサービス: {service}", "status": "error"}
+
+        url = f"{service_info['url']}{endpoint}"
+        req_timeout = timeout or timeout_config.get("api_call", 10.0)
+
+        try:
+            if method == "GET":
+                resp = await client.get(url, params=params, timeout=req_timeout)
+            elif method == "POST":
+                resp = await client.post(url, json=data, params=params, timeout=req_timeout)
+            elif method == "PUT":
+                resp = await client.put(url, json=data, params=params, timeout=req_timeout)
+            elif method == "DELETE":
+                resp = await client.delete(url, params=params, timeout=req_timeout)
+            else:
+                return {"error": f"サポートされていないHTTPメソッド: {method}", "status": "error"}
+
+            resp.raise_for_status()
+            if resp.headers.get("content-type", "").startswith("application/json"):
+                return resp.json()
+            return {"text": resp.text, "status_code": resp.status_code}
+        except Exception as e:
+            logger.warning(f"並列呼び出し失敗 ({service}{endpoint}): {e}")
+            return {"error": str(e), "status": "error"}
     
     def check_service_health(self, service: str) -> Dict[str, Any]:
         """サービスのヘルスチェック"""

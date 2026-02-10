@@ -186,15 +186,20 @@ class IntrinsicMotivationMetrics:
             tasks_generated = 0
 
         # Learning Systemから学習統計を取得
+        tasks_executed = 0
+        learning_actions = 0
         try:
             response = httpx.get(f"{self.learning_system_url}/api/analyze", timeout=5)
             if response.status_code == 200:
                 learning_stats = response.json()
                 learning_actions = learning_stats.get("total_actions_recorded", 0)
-            else:
-                learning_actions = 0
+                # 成功率データからタスク実行数を集計
+                success_rates = learning_stats.get("success_rates", {})
+                tasks_executed = sum(
+                    v.get("total", 0) for v in success_rates.values()
+                )
         except Exception:
-            learning_actions = 0
+            pass
 
         # Playbook数を取得（Obsidianから）
         playbooks_count = self._count_playbooks()
@@ -204,7 +209,7 @@ class IntrinsicMotivationMetrics:
             improvement_desire_score=improvement_desire_score,
             self_improvement_execution_rate=execution_rate,
             tasks_generated=tasks_generated,
-            tasks_executed=0,  # TODO(mana): 実行履歴から取得
+            tasks_executed=tasks_executed,
             playbooks_created=playbooks_count,
             learning_actions=learning_actions
         )

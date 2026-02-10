@@ -155,11 +155,17 @@ class RewardLoop:
             logger.debug("失敗パターンのAPI取得に失敗")
 
         try:
-            # Metrics Collectorから統計を取得
+            # Metrics Collectorから統計を取得し、週次成功率向上を判定
             response = httpx.get(f"{metrics_collector_url}/api/metrics/summary", timeout=5)
             if response.status_code == 200:
                 metrics_stats = response.json()
-                # TODO(mana): metrics_statsを使い週次比較で成功率向上をチェック
+                current_rate = metrics_stats.get("success_rate", 0)
+                previous_rate = metrics_stats.get("previous_week_success_rate", 0)
+                if current_rate > 0 and current_rate - previous_rate >= 5:
+                    hard_success_rate_improvement = True
+                    logger.info(
+                        f"週次成功率向上を検出: {previous_rate:.1f}% → {current_rate:.1f}%"
+                    )
         except Exception:
             logger.debug("メトリクスサマリーAPIの取得に失敗")
 
