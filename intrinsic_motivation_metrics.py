@@ -204,7 +204,7 @@ class IntrinsicMotivationMetrics:
             improvement_desire_score=improvement_desire_score,
             self_improvement_execution_rate=execution_rate,
             tasks_generated=tasks_generated,
-            tasks_executed=0,  # TODO: 実行履歴から取得
+            tasks_executed=0,  # TODO(mana): 実行履歴から取得
             playbooks_created=playbooks_count,
             learning_actions=learning_actions
         )

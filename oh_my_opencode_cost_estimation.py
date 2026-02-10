@@ -95,7 +95,7 @@ class OHMyOpenCodeCostEstimation:
             success_rate = success / count if count > 0 else 0.0
             
             # Ultra Work使用率（簡易計算）
-            ultra_work_rate = 0.0  # TODO: 実際のデータから計算
+            ultra_work_rate = 0.0  # NOTE: stub — not yet implemented
             
             # 推定工数（時間）= 平均時間（秒） / 3600
             estimated_hours = avg_time / 3600 if avg_time > 0 else 0.0

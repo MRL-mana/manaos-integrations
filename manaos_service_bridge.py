@@ -4,6 +4,7 @@ ManaOS既存サービスとの統合ブリッジ
 """
 
 import json
+import os
 import asyncio
 from typing import Dict, List, Any, Optional
 from datetime import datetime
@@ -86,12 +87,12 @@ class ManaOSServiceBridge:
         self.client = get_unified_client()
         
         # ManaOS既存サービスのエンドポイント（統合APIクライアント経由でアクセス）
-        self.command_hub_url = "http://localhost:9404"
-        self.enhanced_api_url = "http://localhost:9406"
-        self.monitoring_url = "http://localhost:9407"
-        self.ocr_api_url = "http://localhost:9409"
-        self.gallery_api_url = "http://localhost:5559"
-        self.mrl_memory_url = "http://localhost:5105"  # MRL Memory System API
+        self.command_hub_url = os.getenv("COMMAND_HUB_URL", "http://localhost:9404")
+        self.enhanced_api_url = os.getenv("ENHANCED_API_URL", "http://localhost:9406")
+        self.monitoring_url = os.getenv("MONITORING_URL", "http://localhost:9407")
+        self.ocr_api_url = os.getenv("OCR_API_URL", "http://localhost:9409")
+        self.gallery_api_url = os.getenv("GALLERY_API_URL", "http://localhost:5559")
+        self.mrl_memory_url = os.getenv("MRL_MEMORY_API_URL", "http://localhost:5105")
         
         # 統一キャッシュシステム（オプション）
         self.cache = None

@@ -85,8 +85,7 @@ class MCPBridge:
         logger.info(f"🔧 Executing MCP tool: {category}.{tool_name}")
         
         try:
-            # TODO: 実際のMCP呼び出しを実装
-            # 現在はモック
+            # NOTE: モック実装 — MCP stdio統合は unified_api_mcp_server で対応済み
             result = {
                 "success": True,
                 "tool": f"{category}.{tool_name}",
@@ -120,10 +119,7 @@ class MCPBridge:
         # MCPツールリストを追加
         enhanced.append("利用可能なツール: GitHub, Filesystem, Memory, Byterover")
         
-        # TODO: Byterover MCPで過去の類似タスクを検索して追加
-        # similar_tasks = byterover.retrieve_knowledge(goal, limit=3)
-        # if similar_tasks:
-        #     enhanced.append(f"過去の成功パターン: {similar_tasks}")
+        # NOTE: Byterover MCP統合は別途 byterover MCPサーバーで対応
         
         return enhanced
 

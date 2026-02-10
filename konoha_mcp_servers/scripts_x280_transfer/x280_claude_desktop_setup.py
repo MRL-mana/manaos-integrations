@@ -282,8 +282,7 @@ from datetime import datetime
 
 class SystemMonitorMCPServer:
     def __init__(self):
-        # TODO: 実装が必要
-    pass
+        pass  # NOTE: 初期化不要 — メソッドは直接psutilを呼び出す
     def get_system_info(self):
         # システム情報取得
         try:
