@@ -67,11 +67,11 @@ routing:
 
   creative_writing:
     # クリエイティブ・コンテンツ生成（無検閲・自由表現・感情豊か）
-    # Dolphin/Uncensored系モデル: ユーザー意図を最大限尊重
-    primary: "llama3-uncensored:latest"
+    # Dolphin系モデル: ユーザー意図を最大限尊重
+    primary: "dolphin-llama3:8b"
     fallback:
       - "dolphin-mistral:7b"
-      - "llama3:8b"
+      - "qwen2.5:7b"
     priority: "quality"
     max_tokens: 4096
     temperature: 0.85
@@ -88,7 +88,7 @@ routing:
     # Dolphin-Mistral: 爆速レスポンス
     primary: "dolphin-mistral:7b"
     fallback:
-      - "llama3-uncensored:latest"
+      - "dolphin-llama3:8b"
       - "qwen2.5:7b"
     priority: "latency"
     max_tokens: 512

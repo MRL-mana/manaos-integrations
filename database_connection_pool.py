@@ -118,8 +118,8 @@ class DatabaseConnectionPool:
             if conn:
                 try:
                     conn.close()
-                except:
-                    pass
+                except Exception:
+                    logger.debug("接続のクローズに失敗")
                 with self.lock:
                     self.active_connections -= 1
                 conn = self._create_connection()
@@ -137,12 +137,12 @@ class DatabaseConnectionPool:
                     # 接続が有効かチェック
                     conn.execute("SELECT 1")
                     self.pool.put(conn)
-                except:
+                except Exception:
                     # 接続が無効な場合、閉じて新しい接続を作成
                     try:
                         conn.close()
-                    except:
-                        pass
+                    except Exception:
+                        logger.debug("無効な接続のクローズに失敗")
                     with self.lock:
                         self.active_connections -= 1
     

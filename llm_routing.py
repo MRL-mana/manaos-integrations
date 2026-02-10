@@ -253,8 +253,8 @@ class LLMRouter:
                             if "100% CPU" in ps_result.stdout:
                                 logger.debug(f"OllamaがCPUモードで実行中（GPU利用可能）")
                                 return False, metrics  # GPUが利用可能
-                    except:
-                        pass
+                    except Exception:
+                        logger.debug("ollama ps の実行に失敗")
                     logger.info(f"GPUが他のプロセスで使用中と判断（ollamaプロセス: {len(lines)}個）")
                     return True, metrics
 

@@ -8,6 +8,7 @@ import time
 import requests
 import sys
 import io
+from pathlib import Path
 
 if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
@@ -37,7 +38,7 @@ print("2. Gallery APIサーバーの再起動:")
 print("   以下のコマンドで再起動してください:")
 print()
 print("   新しいコマンドプロンプトで:")
-integrations_dir = os.getenv("MANAOS_INTEGRATIONS_DIR", r"C:\Users\mana4\Desktop\manaos_integrations")
+integrations_dir = os.getenv("MANAOS_INTEGRATIONS_DIR", str(Path(__file__).resolve().parent))
 print(f"     cd {integrations_dir}")
 print("     python gallery_api_server.py")
 print()
