@@ -261,6 +261,28 @@ body {
     <div id="notif-list"></div>
 </div>
 
+<!-- Tab Content: Secretary -->
+<div class="tab-content" id="page-secretary">
+    <div class="card">
+        <div class="card-title">&#128221; ManaOS Services</div>
+        <div id="manaos-services" style="font-size:12px;"><span style="color:#555">Loading...</span></div>
+    </div>
+    <div class="card" style="margin-top:8px;">
+        <div class="card-title">&#128203; Reminders</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <input id="reminder-input" type="text" placeholder="\u30EA\u30DE\u30A4\u30F3\u30C0\u30FC\u3092\u8FFD\u52A0..."
+                style="flex:1;padding:8px;border:1px solid #2a2a3e;border-radius:8px;background:#0d0d15;color:#e0e0e0;font-size:12px;">
+            <button onclick="addReminder()" style="padding:8px 12px;border:none;border-radius:8px;background:#667eea;color:white;font-size:11px;font-weight:600;cursor:pointer;">Add</button>
+        </div>
+        <div id="reminder-list" style="font-size:12px;"><span style="color:#555">Loading...</span></div>
+    </div>
+    <div class="card" style="margin-top:8px;">
+        <div class="card-title">&#128196; Reports</div>
+        <button onclick="generateReport()" style="padding:8px 16px;border:none;border-radius:8px;background:#667eea;color:white;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:8px;">\u65E5\u5831\u751F\u6210</button>
+        <div id="report-list" style="font-size:12px;"><span style="color:#555">Loading...</span></div>
+    </div>
+</div>
+
 <!-- Bottom Navigation -->
 <div class="bottom-nav">
     <div class="nav-item active" onclick="switchTab('status')">
@@ -268,6 +290,9 @@ body {
     </div>
     <div class="nav-item" onclick="switchTab('actions')">
         <span class="nav-icon">&#9889;</span>Actions
+    </div>
+    <div class="nav-item" onclick="switchTab('secretary')">
+        <span class="nav-icon">&#128221;</span>Secretary
     </div>
     <div class="nav-item" onclick="switchTab('notif')">
         <span class="nav-icon">&#128276;</span>
@@ -504,7 +529,7 @@ function switchTabDirect(name) {
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     document.getElementById('page-' + name).classList.add('active');
     const navItems = document.querySelectorAll('.nav-item');
-    const tabs = ['status', 'actions', 'notif'];
+    const tabs = ['status', 'actions', 'secretary', 'notif'];
     const idx = tabs.indexOf(name);
     if (idx >= 0 && navItems[idx]) navItems[idx].classList.add('active');
 }
@@ -513,6 +538,7 @@ function switchTab(name) {
     switchTabDirect(name);
     if (name === 'notif') fetchNotifications();
     if (name === 'actions') fetchSuggestions();
+    if (name === 'secretary') fetchSecretary();
 }
 
 // ============================================================
@@ -781,8 +807,84 @@ async function markRead() {
     fetchNotifications();
 }
 
+// ============ Secretary Functions ============
+
+async function fetchManaOSServices() {
+    try {
+        const res = await fetch(API + '/manaos/services', {headers: getHeaders()});
+        const data = await res.json();
+        const el = document.getElementById('manaos-services');
+        el.innerHTML = Object.entries(data.services).map(([name, info]) => {
+            const dot = info.status === 'online' ? '&#128994;' : '&#128308;';
+            return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1a1a2e"><span>${dot} ${name}</span><span style="color:#555">:${info.port}</span></div>`;
+        }).join('') + `<div style="margin-top:6px;color:#667eea;font-weight:600">${data.online}/${data.total} online</div>`;
+    } catch(e) { document.getElementById('manaos-services').innerHTML = '<span style="color:#f44336">Error loading</span>'; }
+}
+
+async function fetchReminders() {
+    try {
+        const res = await fetch(API + '/secretary/reminders', {headers: getHeaders()});
+        const data = await res.json();
+        const el = document.getElementById('reminder-list');
+        if (data.error) { el.innerHTML = `<span style="color:#888">${data.error}</span>`; return; }
+        const reminders = data.reminders || data || [];
+        if (Array.isArray(reminders) && reminders.length > 0) {
+            el.innerHTML = reminders.map(r => `<div class="item"><span>${r.title || r.content || JSON.stringify(r)}</span><span style="color:#555;font-size:10px">${r.due_date || ''}</span></div>`).join('');
+        } else {
+            el.innerHTML = '<span style="color:#555">\u30EA\u30DE\u30A4\u30F3\u30C0\u30FC\u306A\u3057</span>';
+        }
+    } catch(e) { document.getElementById('reminder-list').innerHTML = '<span style="color:#888">\u63A5\u7D9A\u3067\u304D\u307E\u305B\u3093</span>'; }
+}
+
+async function addReminder() {
+    const input = document.getElementById('reminder-input');
+    const title = input.value.trim();
+    if (!title) return;
+    try {
+        await fetch(API + '/secretary/reminders?title=' + encodeURIComponent(title), { method: 'POST', headers: getHeaders() });
+        input.value = '';
+        showToast('\u30EA\u30DE\u30A4\u30F3\u30C0\u30FC\u8FFD\u52A0');
+        fetchReminders();
+    } catch(e) { showToast('Error: ' + e.message, true); }
+}
+
+async function generateReport() {
+    showToast('\u65E5\u5831\u751F\u6210\u4E2D...');
+    try {
+        const res = await fetch(API + '/secretary/report', { method: 'POST', headers: getHeaders() });
+        const data = await res.json();
+        if (data.error) { showToast(data.error, true); return; }
+        showToast('\u65E5\u5831\u751F\u6210\u5B8C\u4E86');
+        fetchReports();
+    } catch(e) { showToast('Error: ' + e.message, true); }
+}
+
+async function fetchReports() {
+    try {
+        const res = await fetch(API + '/secretary/reports?limit=3', {headers: getHeaders()});
+        const data = await res.json();
+        const el = document.getElementById('report-list');
+        if (data.error) { el.innerHTML = `<span style="color:#888">${data.error}</span>`; return; }
+        const reports = data.reports || data || [];
+        if (Array.isArray(reports) && reports.length > 0) {
+            el.innerHTML = reports.map(r => `<div class="item" style="white-space:pre-wrap;font-size:11px;margin-bottom:6px;padding:8px;background:#0d0d15;border-radius:8px;">${r.content || r.summary || JSON.stringify(r).substring(0,200)}</div>`).join('');
+        } else {
+            el.innerHTML = '<span style="color:#555">\u30EC\u30DD\u30FC\u30C8\u306A\u3057</span>';
+        }
+    } catch(e) { document.getElementById('report-list').innerHTML = '<span style="color:#888">\u63A5\u7D9A\u3067\u304D\u307E\u305B\u3093</span>'; }
+}
+
+function fetchSecretary() {
+    fetchManaOSServices();
+    fetchReminders();
+    fetchReports();
+}
+
 document.getElementById('chat-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') sendChat();
+});
+document.getElementById('reminder-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addReminder();
 });
 
 // Service Worker
