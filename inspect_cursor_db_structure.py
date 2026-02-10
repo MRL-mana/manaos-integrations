@@ -55,7 +55,7 @@ def inspect_db_structure(db_path: Path):
                             print(f"   JSON keys: {list(parsed.keys())[:10]}")
                         elif isinstance(parsed, list):
                             print(f"   JSON list length: {len(parsed)}")
-                    except:
+                    except Exception:
                         pass
         
         conn.close()

@@ -27,7 +27,7 @@ class LLMRoutingOptimizer:
                 for line in f:
                     try:
                         self.performance_logs.append(json.loads(line.strip()))
-                    except:
+                    except Exception:
                         pass
     
     def analyze_performance(self) -> Dict[str, Any]:

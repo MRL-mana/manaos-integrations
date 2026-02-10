@@ -38,7 +38,7 @@ class CostOptimization:
                     self.usage_history = state.get("usage_history", [])[-1000:]
                     self.cost_history = state.get("cost_history", [])[-1000:]
                     self.optimization_suggestions = state.get("suggestions", [])[-100:]
-            except:
+            except Exception:
                 pass
     
     def _save_state(self):

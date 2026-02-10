@@ -1760,7 +1760,7 @@ if not evaluation_web_file.exists():
                 ip = s.getsockname()[0]
                 s.close()
                 return ip
-            except:
+            except Exception:
                 return "localhost"
 
         local_ip = get_local_ip()

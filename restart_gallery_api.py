@@ -28,7 +28,7 @@ try:
         print("   [OK] Gallery APIは起動しています")
     else:
         print(f"   [WARN] Gallery API応答異常: {response.status_code}")
-except:
+except Exception:
     print("   [WARN] Gallery APIに接続できません")
 
 print()

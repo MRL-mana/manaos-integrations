@@ -625,7 +625,7 @@ def health():
         # ComfyUIの接続確認
         response = requests.get(f"{COMFYUI_URL}/system_stats", timeout=5.0)
         comfyui_available = response.status_code == 200
-    except:
+    except Exception:
         comfyui_available = False
 
     return jsonify({

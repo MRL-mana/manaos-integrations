@@ -40,7 +40,7 @@ class SVIWan22VideoIntegration:
         try:
             response = self.session.get(f"{self.base_url}/system_stats", timeout=5)
             return response.status_code == 200
-        except:
+        except Exception:
             return False
     
     def translate_prompt_to_english(self, japanese_prompt: str) -> str:

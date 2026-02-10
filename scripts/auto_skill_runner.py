@@ -33,7 +33,7 @@ except ImportError:
     try:
         # unified_api_server経由を試行
         LLM_TYPE = "api"
-    except:
+    except Exception:
         LLM_TYPE = None
 
 # Skillsマッピング（全14個のSkillsに対応）

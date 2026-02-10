@@ -125,21 +125,21 @@ def integrations_status():
     try:
         response = httpx.get(f"{ORCHESTRATOR_URL}/health", timeout=2)
         status["orchestrator"] = "healthy" if response.status_code == 200 else "unhealthy"
-    except:
+    except Exception:
         status["orchestrator"] = "down"
     
     # Slack Integration
     try:
         response = httpx.get(f"{SLACK_INTEGRATION_URL}/health", timeout=2)
         status["slack_integration"] = "healthy" if response.status_code == 200 else "unhealthy"
-    except:
+    except Exception:
         status["slack_integration"] = "down"
     
     # Web Voice
     try:
         response = httpx.get(f"{WEB_VOICE_URL}/health", timeout=2)
         status["web_voice"] = "healthy" if response.status_code == 200 else "unhealthy"
-    except:
+    except Exception:
         status["web_voice"] = "down"
     
     return jsonify({

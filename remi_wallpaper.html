@@ -591,7 +591,8 @@ const tokenFromPath = (() => {
   const m = location.pathname.match(/\/remi-wallpaper\/([^\/?#]+)/);
   return m ? decodeURIComponent(m[1]) : '';
 })();
-const TOKEN = tokenFromQuery || tokenFromPath || '';
+const injectedToken = (window && window.REMI_TOKEN) ? String(window.REMI_TOKEN) : '';
+const TOKEN = injectedToken || tokenFromQuery || tokenFromPath || '';
 const body = document.body;
 const charBody = document.getElementById('charBody');
 const speech = document.getElementById('speech');

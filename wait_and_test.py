@@ -26,7 +26,7 @@ def wait_for_server():
             if response.status_code == 200:
                 print(f"[OK] サーバーが起動しました！（{elapsed}秒後）")
                 return True
-        except:
+        except Exception:
             pass
         
         if elapsed % 10 == 0:

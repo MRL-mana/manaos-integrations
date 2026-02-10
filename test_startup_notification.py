@@ -25,7 +25,7 @@ def test_startup_notification():
         if response.status_code != 200:
             print("❌ サーバーが起動していません")
             return False
-    except:
+    except Exception:
         print("❌ サーバーに接続できません")
         return False
     

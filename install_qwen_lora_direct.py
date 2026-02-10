@@ -41,7 +41,7 @@ def main():
     try:
         subprocess.run(["hf", "--version"], capture_output=True, timeout=2, env=env)
         cmd_base = "hf"
-    except:
+    except Exception:
         cmd_base = "huggingface-cli"
     
     print(f"[2] 使用コマンド: {cmd_base}")

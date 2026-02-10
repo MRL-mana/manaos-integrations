@@ -36,7 +36,7 @@ class NotificationSystem:
                     self.discord_webhook_url = state.get("discord_webhook_url")
                     self.email_config = state.get("email_config", {})
                     self.notification_history = state.get("history", [])[-100:]
-            except:
+            except Exception:
                 pass
     
     def _save_state(self):

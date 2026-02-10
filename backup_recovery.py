@@ -38,7 +38,7 @@ class BackupRecovery:
                     state = json.load(f)
                     self.backup_config = state.get("config", {})
                     self.backup_history = state.get("history", [])[-100:]
-            except:
+            except Exception:
                 self.backup_config = {}
                 self.backup_history = []
         else:

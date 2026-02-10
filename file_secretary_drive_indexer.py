@@ -262,13 +262,13 @@ class GoogleDriveIndexer:
             try:
                 created_dt = datetime.fromisoformat(created_time.replace('Z', '+00:00'))
                 created_at = created_dt.isoformat()
-            except:
+            except Exception:
                 created_at = datetime.now().isoformat()
             
             try:
                 modified_dt = datetime.fromisoformat(modified_time.replace('Z', '+00:00'))
                 modified_at = modified_dt.isoformat()
-            except:
+            except Exception:
                 modified_at = None
             
             # FileRecord作成

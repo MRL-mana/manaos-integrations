@@ -119,7 +119,7 @@ class IntrinsicMotivationMetrics:
                     learning_score = min(patterns_learned * 2, 20.0)
                 else:
                     learning_score = 0.0
-            except:
+            except Exception:
                 learning_score = 0.0
 
             total_score = base_score + task_score + learning_score
@@ -182,7 +182,7 @@ class IntrinsicMotivationMetrics:
                 tasks_generated = tasks_data.get("count", 0)
             else:
                 tasks_generated = 0
-        except:
+        except Exception:
             tasks_generated = 0
 
         # Learning Systemから学習統計を取得
@@ -193,7 +193,7 @@ class IntrinsicMotivationMetrics:
                 learning_actions = learning_stats.get("total_actions_recorded", 0)
             else:
                 learning_actions = 0
-        except:
+        except Exception:
             learning_actions = 0
 
         # Playbook数を取得（Obsidianから）
@@ -236,7 +236,7 @@ class IntrinsicMotivationMetrics:
             # .mdファイルをカウント
             playbook_files = list(playbooks_dir.glob("*.md"))
             return len(playbook_files)
-        except:
+        except Exception:
             return 0
 
     def get_weekly_trend(self) -> Dict[str, Any]:

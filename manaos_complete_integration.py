@@ -383,7 +383,7 @@ class ManaOSCompleteIntegration:
                     "total_entries": stats.get("total_entries", 0),
                     "total_importance": stats.get("total_importance", 0)
                 }
-            except:
+            except Exception:
                 status["memory_learning"]["rag_memory"] = {"available": False}
         
         if self.learning_system:
@@ -393,7 +393,7 @@ class ManaOSCompleteIntegration:
                     "available": True,
                     "total_actions": len(self.learning_system.usage_patterns) if hasattr(self.learning_system, "usage_patterns") else 0
                 }
-            except:
+            except Exception:
                 status["memory_learning"]["learning_system"] = {"available": False}
         
         if self.learning_memory:
@@ -403,7 +403,7 @@ class ManaOSCompleteIntegration:
                     "available": True,
                     "stats": stats
                 }
-            except:
+            except Exception:
                 status["memory_learning"]["learning_memory_integration"] = {"available": False}
         
         # 人格系・自律系・秘書系の状態
@@ -411,7 +411,7 @@ class ManaOSCompleteIntegration:
             try:
                 pas_status = self.pas_integration.get_integrated_status()
                 status["personality_autonomy_secretary"] = pas_status
-            except:
+            except Exception:
                 status["personality_autonomy_secretary"] = {"available": False}
         
         # ローカルLLMシステムの状態
@@ -443,7 +443,7 @@ class ManaOSCompleteIntegration:
                     "total_systems": llm_status.get("total_systems", 0),
                     "available_systems": llm_status.get("available_systems", [])
                 }
-            except:
+            except Exception:
                 status["local_llm"]["local_llm_unified"] = {"available": False}
         
         # GitHub統合の状態
@@ -453,7 +453,7 @@ class ManaOSCompleteIntegration:
                     "available": self.github.is_available(),
                     "token_set": bool(os.getenv("GITHUB_TOKEN"))
                 }
-            except:
+            except Exception:
                 status["github"]["github_integration"] = {"available": False}
         else:
             status["github"]["github_integration"] = {"available": False, "token_set": False}
@@ -469,7 +469,7 @@ class ManaOSCompleteIntegration:
                     "base_url": self.n8n.base_url,
                     "workflows_count": len(workflows)
                 }
-            except:
+            except Exception:
                 status["n8n"]["n8n_integration"] = {"available": False}
         else:
             status["n8n"]["n8n_integration"] = {

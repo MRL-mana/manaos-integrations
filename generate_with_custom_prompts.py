@@ -436,7 +436,7 @@ if generation_metadata:
         try:
             with open(GENERATION_METADATA_DB, 'r', encoding='utf-8') as f:
                 existing_metadata = json.load(f)
-        except:
+        except Exception:
             pass
 
     existing_metadata.update(generation_metadata)

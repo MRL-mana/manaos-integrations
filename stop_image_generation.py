@@ -20,7 +20,7 @@ def check_comfyui_running():
     try:
         response = requests.get(f"{COMFYUI_URL}/system_stats", timeout=3)
         return response.status_code == 200
-    except:
+    except Exception:
         return False
 
 def stop_comfyui_by_port():

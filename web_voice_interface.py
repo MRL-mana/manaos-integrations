@@ -142,7 +142,7 @@ def get_status():
             timeout=2
         )
         orchestrator_status = "healthy" if response.status_code == 200 else "unhealthy"
-    except:
+    except Exception:
         orchestrator_status = "down"
     
     return jsonify({

@@ -302,7 +302,7 @@ def process_yaml_file(yaml_file: Path) -> bool:
         try:
             error_detail = e.response.json()
             error_msg += f" - {error_detail}"
-        except:
+        except Exception:
             error_msg += f" - {e.response.text}"
         result = {"success": False, "error": error_msg}
         print(f"❌ Notion APIエラー: {error_msg}")

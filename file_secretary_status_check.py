@@ -27,7 +27,7 @@ def check_processes():
             print(result.stdout)
         else:
             print("⚠️ Pythonプロセスが見つかりません")
-    except:
+    except Exception:
         print("⚠️ プロセス確認失敗")
 
 def check_api():

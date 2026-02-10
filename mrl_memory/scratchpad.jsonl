@@ -1,4 +1,4 @@
-{"timestamp": "2026-02-04T09:45:00.425758", "source": "llm_chat", "key": "proper_noun:Mana", "value": "Mana", "confidence": "med", "ttl": "1d", "access_count": 99, "last_accessed": "2026-02-04T14:45:10.390997"}
+{"timestamp": "2026-02-04T09:45:00.425758", "source": "llm_chat", "key": "proper_noun:Mana", "value": "Mana", "confidence": "med", "ttl": "1d", "access_count": 100, "last_accessed": "2026-02-10T12:26:00.573442"}
 {"timestamp": "2026-02-04T09:45:00.425758", "source": "llm_chat", "key": "proper_noun:どのような情報をお探しですか", "value": "どのような情報をお探しですか", "confidence": "med", "ttl": "1d", "access_count": 0, "last_accessed": null}
 {"timestamp": "2026-02-04T09:45:00.425758", "source": "llm_chat", "key": "proper_noun:こんにちは", "value": "こんにちは", "confidence": "med", "ttl": "1d", "access_count": 0, "last_accessed": null}
 {"timestamp": "2026-02-04T09:45:00.425758", "source": "llm_chat", "key": "proper_noun:統合システムについてのお手伝いが必要であれば何でもお尋ねください", "value": "統合システムについてのお手伝いが必要であれば何でもお尋ねください", "confidence": "med", "ttl": "1d", "access_count": 0, "last_accessed": null}
@@ -54,7 +54,7 @@
 {"timestamp": "2026-02-04T10:01:22.321788", "source": "llm_chat", "key": "proper_noun:Solution", "value": "Solution", "confidence": "med", "ttl": "1d", "access_count": 1, "last_accessed": "2026-02-04T10:03:40.410625"}
 {"timestamp": "2026-02-04T10:01:22.321788", "source": "llm_chat", "key": "proper_noun:Add", "value": "Add", "confidence": "med", "ttl": "1d", "access_count": 5, "last_accessed": "2026-02-04T10:14:58.533032"}
 {"timestamp": "2026-02-04T10:01:22.321788", "source": "llm_chat", "key": "proper_noun:Type", "value": "Type", "confidence": "med", "ttl": "1d", "access_count": 1, "last_accessed": "2026-02-04T10:03:40.410625"}
-{"timestamp": "2026-02-04T10:01:22.321788", "source": "llm_chat", "key": "number:10", "value": "10", "confidence": "high", "ttl": "1d", "access_count": 104, "last_accessed": "2026-02-04T14:45:04.523481"}
+{"timestamp": "2026-02-04T10:01:22.321788", "source": "llm_chat", "key": "number:10", "value": "10", "confidence": "high", "ttl": "1d", "access_count": 106, "last_accessed": "2026-02-10T12:26:00.586142"}
 {"timestamp": "2026-02-04T10:01:22.321788", "source": "llm_chat", "key": "number:18", "value": "18", "confidence": "high", "ttl": "1d", "access_count": 56, "last_accessed": "2026-02-04T13:12:49.415612"}
 {"timestamp": "2026-02-04T10:01:22.321788", "source": "llm_chat", "key": "number:7", "value": "7", "confidence": "high", "ttl": "1d", "access_count": 128, "last_accessed": "2026-02-04T14:45:04.513120"}
 {"timestamp": "2026-02-04T10:01:22.321788", "source": "llm_chat", "key": "number:8", "value": "8", "confidence": "high", "ttl": "1d", "access_count": 121, "last_accessed": "2026-02-04T14:45:04.493016"}
@@ -120,7 +120,7 @@
 {"timestamp": "2026-02-04T10:09:29.707710", "source": "llm_chat", "key": "proper_noun:Insert", "value": "Insert", "confidence": "med", "ttl": "1d", "access_count": 3, "last_accessed": "2026-02-04T10:14:58.431893"}
 {"timestamp": "2026-02-04T10:09:29.707710", "source": "llm_chat", "key": "proper_noun:Set", "value": "Set", "confidence": "med", "ttl": "1d", "access_count": 4, "last_accessed": "2026-02-04T12:25:17.323789"}
 {"timestamp": "2026-02-04T10:09:29.707710", "source": "llm_chat", "key": "proper_noun:Solutions", "value": "Solutions", "confidence": "med", "ttl": "1d", "access_count": 3, "last_accessed": "2026-02-04T10:14:58.445581"}
-{"timestamp": "2026-02-04T10:09:29.707710", "source": "llm_chat", "key": "proper_noun:Code", "value": "Code", "confidence": "med", "ttl": "1d", "access_count": 3, "last_accessed": "2026-02-04T10:14:58.445581"}
+{"timestamp": "2026-02-04T10:09:29.707710", "source": "llm_chat", "key": "proper_noun:Code", "value": "Code", "confidence": "med", "ttl": "1d", "access_count": 5, "last_accessed": "2026-02-10T12:26:08.873106"}
 {"timestamp": "2026-02-04T10:09:29.707710", "source": "llm_chat", "key": "proper_noun:Use", "value": "Use", "confidence": "med", "ttl": "1d", "access_count": 4, "last_accessed": "2026-02-04T12:25:17.306293"}
 {"timestamp": "2026-02-04T10:09:29.707710", "source": "llm_chat", "key": "proper_noun:Install Media", "value": "Install Media", "confidence": "med", "ttl": "1d", "access_count": 3, "last_accessed": "2026-02-04T10:14:58.457647"}
 {"timestamp": "2026-02-04T10:09:29.707710", "source": "llm_chat", "key": "proper_noun:Create", "value": "Create", "confidence": "med", "ttl": "1d", "access_count": 5, "last_accessed": "2026-02-04T12:25:17.277713"}
@@ -166,8 +166,8 @@
 {"timestamp": "2026-02-04T10:18:51.864548", "source": "llm_chat", "key": "proper_noun:Finding", "value": "Finding", "confidence": "med", "ttl": "1d", "access_count": 13, "last_accessed": "2026-02-04T10:35:00.621962"}
 {"timestamp": "2026-02-04T10:18:51.864548", "source": "llm_chat", "key": "proper_noun:Project Management", "value": "Project Management", "confidence": "med", "ttl": "1d", "access_count": 13, "last_accessed": "2026-02-04T10:35:00.621962"}
 {"timestamp": "2026-02-04T10:18:51.864548", "source": "llm_chat", "key": "proper_noun:Programming Help", "value": "Programming Help", "confidence": "med", "ttl": "1d", "access_count": 13, "last_accessed": "2026-02-04T10:35:00.625091"}
-{"timestamp": "2026-02-04T10:28:19.677111", "source": "llm_chat", "key": "number:11", "value": "11", "confidence": "high", "ttl": "1d", "access_count": 95, "last_accessed": "2026-02-04T13:12:49.418628"}
-{"timestamp": "2026-02-04T10:29:58.311695", "source": "llm_chat", "key": "number:12", "value": "12", "confidence": "high", "ttl": "1d", "access_count": 89, "last_accessed": "2026-02-04T13:12:49.422165"}
+{"timestamp": "2026-02-04T10:28:19.677111", "source": "llm_chat", "key": "number:11", "value": "11", "confidence": "high", "ttl": "1d", "access_count": 96, "last_accessed": "2026-02-10T11:59:04.052607"}
+{"timestamp": "2026-02-04T10:29:58.311695", "source": "llm_chat", "key": "number:12", "value": "12", "confidence": "high", "ttl": "1d", "access_count": 91, "last_accessed": "2026-02-10T12:26:08.876188"}
 {"timestamp": "2026-02-04T10:31:34.997441", "source": "llm_chat", "key": "number:13", "value": "13", "confidence": "high", "ttl": "1d", "access_count": 82, "last_accessed": "2026-02-04T13:12:49.447699"}
 {"timestamp": "2026-02-04T10:33:11.477375", "source": "llm_chat", "key": "number:14", "value": "14", "confidence": "high", "ttl": "1d", "access_count": 76, "last_accessed": "2026-02-04T13:12:49.427201"}
 {"timestamp": "2026-02-04T10:35:00.591013", "source": "llm_chat", "key": "number:15", "value": "15", "confidence": "high", "ttl": "1d", "access_count": 70, "last_accessed": "2026-02-04T13:12:49.404062"}
@@ -256,8 +256,8 @@
 {"timestamp": "2026-02-04T12:34:40.562051", "source": "llm_chat", "key": "number:22", "value": "22", "confidence": "high", "ttl": "1d", "access_count": 35, "last_accessed": "2026-02-04T13:12:49.439001"}
 {"timestamp": "2026-02-04T12:34:43.549711", "source": "llm_chat", "key": "number:23", "value": "23", "confidence": "high", "ttl": "1d", "access_count": 31, "last_accessed": "2026-02-04T13:12:49.416622"}
 {"timestamp": "2026-02-04T12:34:46.599525", "source": "llm_chat", "key": "number:24", "value": "24", "confidence": "high", "ttl": "1d", "access_count": 27, "last_accessed": "2026-02-04T13:12:49.432285"}
-{"timestamp": "2026-02-04T12:35:12.279174", "source": "llm_chat", "key": "number:25", "value": "25", "confidence": "high", "ttl": "1d", "access_count": 23, "last_accessed": "2026-02-04T13:12:49.422165"}
-{"timestamp": "2026-02-04T12:35:16.150307", "source": "llm_chat", "key": "number:26", "value": "26", "confidence": "high", "ttl": "1d", "access_count": 19, "last_accessed": "2026-02-04T13:12:49.443649"}
+{"timestamp": "2026-02-04T12:35:12.279174", "source": "llm_chat", "key": "number:25", "value": "25", "confidence": "high", "ttl": "1d", "access_count": 24, "last_accessed": "2026-02-10T12:26:00.579154"}
+{"timestamp": "2026-02-04T12:35:16.150307", "source": "llm_chat", "key": "number:26", "value": "26", "confidence": "high", "ttl": "1d", "access_count": 20, "last_accessed": "2026-02-10T12:26:08.878739"}
 {"timestamp": "2026-02-04T12:35:19.808010", "source": "llm_chat", "key": "number:27", "value": "27", "confidence": "high", "ttl": "1d", "access_count": 15, "last_accessed": "2026-02-04T13:12:49.402509"}
 {"timestamp": "2026-02-04T12:35:47.036204", "source": "llm_chat", "key": "number:28", "value": "28", "confidence": "high", "ttl": "1d", "access_count": 11, "last_accessed": "2026-02-04T13:12:49.433840"}
 {"timestamp": "2026-02-04T12:36:17.166356", "source": "llm_chat", "key": "number:29", "value": "29", "confidence": "high", "ttl": "1d", "access_count": 7, "last_accessed": "2026-02-04T13:12:49.410688"}
@@ -422,3 +422,17 @@
 {"timestamp": "2026-02-06T07:06:34.808941", "source": "test", "key": "number:8080", "value": "8080", "confidence": "high", "ttl": "1d", "access_count": 9, "last_accessed": "2026-02-09T17:36:35.789690"}
 {"timestamp": "2026-02-06T07:06:34.808941", "source": "test", "key": "number:2024", "value": "2024", "confidence": "high", "ttl": "1d", "access_count": 9, "last_accessed": "2026-02-09T17:36:35.794333"}
 {"timestamp": "2026-02-06T07:06:34.808941", "source": "test", "key": "decision", "value": "今日の会議で、プロジェクトXの開始日を2024年2月1日に決定しました。\n    API_KEYは環境変数に設定する必要があります。\n    ポート番号は8080を", "confidence": "high", "ttl": "7d", "access_count": 9, "last_accessed": "2026-02-09T17:36:35.798980"}
+{"timestamp": "2026-02-10T11:59:04.046520", "source": "vscode-copilot-test", "key": "proper_noun:モードで動作していることを確認", "value": "モードで動作していることを確認", "confidence": "med", "ttl": "1d", "access_count": 0, "last_accessed": null}
+{"timestamp": "2026-02-10T11:59:04.046520", "source": "vscode-copilot-test", "key": "proper_noun:Memory", "value": "Memory", "confidence": "med", "ttl": "1d", "access_count": 0, "last_accessed": null}
+{"timestamp": "2026-02-10T11:59:04.046520", "source": "vscode-copilot-test", "key": "proper_noun:が正常に", "value": "が正常に", "confidence": "med", "ttl": "1d", "access_count": 0, "last_accessed": null}
+{"timestamp": "2026-02-10T11:59:04.046520", "source": "vscode-copilot-test", "key": "proper_noun:メモリ書き込みテスト", "value": "メモリ書き込みテスト", "confidence": "med", "ttl": "1d", "access_count": 0, "last_accessed": null}
+{"timestamp": "2026-02-10T11:59:04.046520", "source": "vscode-copilot-test", "key": "number:59", "value": "59", "confidence": "high", "ttl": "1d", "access_count": 0, "last_accessed": null}
+{"timestamp": "2026-02-10T11:59:04.046520", "source": "vscode-copilot-test", "key": "number::59", "value": ":59", "confidence": "high", "ttl": "1d", "access_count": 0, "last_accessed": null}
+{"timestamp": "2026-02-10T11:59:04.046520", "source": "vscode-copilot-test", "key": "number:2026", "value": "2026", "confidence": "high", "ttl": "1d", "access_count": 1, "last_accessed": "2026-02-10T12:26:00.576443"}
+{"timestamp": "2026-02-10T11:59:04.046520", "source": "vscode-copilot-test", "key": "number:02", "value": "02", "confidence": "high", "ttl": "1d", "access_count": 1, "last_accessed": "2026-02-10T12:26:00.583790"}
+{"timestamp": "2026-02-10T11:59:04.046520", "source": "vscode-copilot-test", "key": "number:01", "value": "01", "confidence": "high", "ttl": "1d", "access_count": 0, "last_accessed": null}
+{"timestamp": "2026-02-10T11:59:04.046520", "source": "vscode-copilot-test", "key": "number::01", "value": ":01", "confidence": "high", "ttl": "1d", "access_count": 0, "last_accessed": null}
+{"timestamp": "2026-02-10T12:26:00.567914", "source": "vscode-integration-check", "key": "proper_noun:統合テスト", "value": "統合テスト", "confidence": "med", "ttl": "1d", "access_count": 0, "last_accessed": null}
+{"timestamp": "2026-02-10T12:26:00.567914", "source": "vscode-integration-check", "key": "proper_noun:全サービス正常稼働確認", "value": "全サービス正常稼働確認", "confidence": "med", "ttl": "1d", "access_count": 0, "last_accessed": null}
+{"timestamp": "2026-02-10T12:26:00.567914", "source": "vscode-integration-check", "key": "number::25", "value": ":25", "confidence": "high", "ttl": "1d", "access_count": 0, "last_accessed": null}
+{"timestamp": "2026-02-10T12:26:08.871660", "source": "check", "key": "number::26", "value": ":26", "confidence": "high", "ttl": "1d", "access_count": 0, "last_accessed": null}

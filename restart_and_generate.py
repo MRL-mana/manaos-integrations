@@ -118,7 +118,7 @@ try:
                                         error_data = msg[1]
                                         print(f"   エラー: {error_data.get('exception_message', 'N/A')}")
                                 break
-                except:
+                except Exception:
                     pass
                 
                 if i % 5 == 0:

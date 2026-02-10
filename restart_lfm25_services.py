@@ -28,7 +28,7 @@ def check_port(port):
             timeout=5
         )
         return f":{port} " in result.stdout
-    except:
+    except Exception:
         return False
 
 def get_process_by_port(port):
@@ -46,9 +46,9 @@ def get_process_by_port(port):
                 if len(parts) > 0:
                     try:
                         return int(parts[-1])
-                    except:
+                    except Exception:
                         pass
-    except:
+    except Exception:
         pass
     return None
 
@@ -62,7 +62,7 @@ def kill_process(pid):
             subprocess.run(["kill", "-9", str(pid)], 
                          capture_output=True, timeout=5)
         return True
-    except:
+    except Exception:
         return False
 
 def start_service(script_name):
@@ -90,7 +90,7 @@ def check_health(port, name):
         response = requests.get(f"http://localhost:{port}/health", timeout=3)
         if response.status_code == 200:
             return True
-    except:
+    except Exception:
         pass
     return False
 

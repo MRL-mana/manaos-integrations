@@ -28,7 +28,7 @@ for i in range(30):
         if response.status_code == 200:
             print("[OK] ComfyUI起動確認")
             break
-    except:
+    except Exception:
         pass
     
     if i % 5 == 0 and i > 0:

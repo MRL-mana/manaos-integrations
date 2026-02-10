@@ -238,7 +238,7 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
                     "available": True,
                     "total_entries": stats.get("total_entries", 0)
                 }
-            except:
+            except Exception:
                 base_status["enhanced_systems"]["rag_memory"] = {"available": False}
         
         if self.learning_system_enhanced:
@@ -247,7 +247,7 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
                     "available": True,
                     "total_actions": len(self.learning_system_enhanced.usage_patterns) if hasattr(self.learning_system_enhanced, "usage_patterns") else 0
                 }
-            except:
+            except Exception:
                 base_status["enhanced_systems"]["learning_system"] = {"available": False}
         
         # 人格系・自律系・秘書系の状態
@@ -258,7 +258,7 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
                     "available": True,
                     "current_persona": stats.get("current_persona", {}).get("name")
                 }
-            except:
+            except Exception:
                 base_status["enhanced_systems"]["personality"] = {"available": False}
         
         if self.autonomy_enhanced:
@@ -268,7 +268,7 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
                     "available": True,
                     "autonomy_level": stats.get("autonomy_level")
                 }
-            except:
+            except Exception:
                 base_status["enhanced_systems"]["autonomy"] = {"available": False}
         
         if self.secretary_optimized:
@@ -278,7 +278,7 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
                     "available": True,
                     "pending_reminders": len(pending)
                 }
-            except:
+            except Exception:
                 base_status["enhanced_systems"]["secretary"] = {"available": False}
         
         return base_status

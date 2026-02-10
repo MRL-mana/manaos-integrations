@@ -133,7 +133,7 @@ class SSOTGenerator:
                         "memory_total_mb": gpu.memoryTotal,
                         "temperature": gpu.temperature
                     }
-            except:
+            except Exception:
                 pass
             
             return {
@@ -174,7 +174,7 @@ class SSOTGenerator:
                     "running": data.get("status_counts", {}).get("running", 0),
                     "total": data.get("total_tasks", 0)
                 }
-        except:
+        except Exception:
             pass
         
         return {
@@ -202,7 +202,7 @@ class SSOTGenerator:
                         "timestamp": result.get("created_at", "")
                     })
                 return inputs
-        except:
+        except Exception:
             pass
         
         return self.recent_inputs[-5:] if self.recent_inputs else []
@@ -225,7 +225,7 @@ class SSOTGenerator:
                         "error_message": snapshot.get("error_message", ""),
                         "timestamp": snapshot.get("timestamp", "")
                     }
-        except:
+        except Exception:
             pass
         
         return self.last_error

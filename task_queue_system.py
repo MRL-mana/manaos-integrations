@@ -387,7 +387,7 @@ class TaskQueueSystem:
                 # キューからタスクを取得（タイムアウト付き）
                 try:
                     task = self.priority_queue.get(timeout=1)
-                except:
+                except Exception:
                     continue
                 
                 # タスクを実行

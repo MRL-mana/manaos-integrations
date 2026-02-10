@@ -82,7 +82,7 @@ try:
                 print(f"  ✓ {model}")
         else:
             print("\n現在、32Bモデルはダウンロードされていません")
-except:
+except Exception:
     pass
 
 print("\n" + "=" * 60)

@@ -399,7 +399,7 @@ if __name__ == '__main__':
                 context={"port": port},
                 user_message="Personality Systemの起動に失敗しました"
             )
-        except:
+        except Exception:
             pass
         raise
 

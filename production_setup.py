@@ -135,7 +135,7 @@ class ProductionSetup:
                     timeout=2
                 )
                 results[service["name"]] = response.status_code == 200
-            except:
+            except Exception:
                 results[service["name"]] = False
         
         if not all(results.values()):

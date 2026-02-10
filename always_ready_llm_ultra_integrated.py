@@ -105,10 +105,10 @@ class UltraIntegratedLLMClient(IntegratedLLMClient):
         if enable_notification_hub and NOTIFICATION_HUB_AVAILABLE:
             try:
                 self.notification_hub = NotificationHubEnhanced()
-            except:
+            except Exception:
                 try:
                     self.notification_hub = NotificationHub()
-                except:
+                except Exception:
                     pass
         
         if enable_file_organization and FILE_SECRETARY_AVAILABLE:

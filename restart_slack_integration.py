@@ -49,7 +49,7 @@ def stop_slack_integration():
                     if "slack_integration" in proc.stdout.lower():
                         print(f"  プロセス {pid} を停止中...")
                         subprocess.run(["taskkill", "/F", "/PID", pid], capture_output=True)
-                except:
+                except Exception:
                     pass
             
             time.sleep(2)

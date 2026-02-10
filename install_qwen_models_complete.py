@@ -43,7 +43,7 @@ def check_huggingface_cli():
         )
         if result.returncode == 0:
             return True
-    except:
+    except Exception:
         pass
     
     # フォールバック: huggingface-cli
@@ -56,7 +56,7 @@ def check_huggingface_cli():
             env={**os.environ, "PYTHONIOENCODING": "utf-8"}
         )
         return result.returncode == 0
-    except:
+    except Exception:
         return False
 
 def install_huggingface_cli():
@@ -92,7 +92,7 @@ def download_model_with_cli(model_name, target_path, file_patterns=None):
     try:
         subprocess.run(["hf", "--version"], capture_output=True, timeout=2, env=env)
         cmd_base = "hf"
-    except:
+    except Exception:
         cmd_base = "huggingface-cli"
     
     # コマンドを構築

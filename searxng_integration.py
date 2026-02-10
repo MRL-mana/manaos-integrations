@@ -433,7 +433,7 @@ class SearXNGIntegration(BaseIntegration):
         engines = []
         try:
             engines = self.get_engines()
-        except:
+        except Exception:
             pass
         
         base_status.update({

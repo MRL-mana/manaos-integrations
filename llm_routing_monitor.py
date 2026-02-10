@@ -70,7 +70,7 @@ class ServiceMonitor:
                         "response_time_ms": response_time_ms,
                         "data": data
                     }
-                except:
+                except Exception:
                     return {
                         "status": "healthy",
                         "response_time_ms": response_time_ms

@@ -21,7 +21,7 @@ def check_service(port, name):
         response = requests.get(f"http://localhost:{port}/health", timeout=2)
         if response.status_code == 200:
             return True
-    except:
+    except Exception:
         pass
     return False
 

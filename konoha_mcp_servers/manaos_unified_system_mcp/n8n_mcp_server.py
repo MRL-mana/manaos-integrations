@@ -214,7 +214,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
                     )]
             try:
                 error_text = response.text[:200] if response.text else "No error message"
-            except:
+            except Exception:
                 error_text = "Unknown error"
             return [TextContent(
                 type="text",
@@ -251,7 +251,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
                 )]
             try:
                 error_text = response.text[:200] if response.text else "No error message"
-            except:
+            except Exception:
                 error_text = "Unknown error"
             return [TextContent(
                 type="text",
@@ -325,7 +325,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
                 )]
             try:
                 error_text = response.text[:200] if response.text else "No error message"
-            except:
+            except Exception:
                 error_text = "Unknown error"
             return [TextContent(
                 type="text",
@@ -370,7 +370,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
                     )]
             try:
                 error_text = response.text[:200] if response.text else "No error message"
-            except:
+            except Exception:
                 error_text = "Unknown error"
             return [TextContent(
                 type="text",

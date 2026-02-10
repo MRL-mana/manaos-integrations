@@ -47,7 +47,7 @@ def check_comfyui_running():
     try:
         response = requests.get(f"{COMFYUI_URL}/system_stats", timeout=5)
         return response.status_code == 200
-    except:
+    except Exception:
         return False
 
 
@@ -113,9 +113,9 @@ def install_via_comfyui_manager_api():
                     print(f"   [OK] {node['name']} をAPI経由でインストールしました")
                 else:
                     print(f"   [WARN] {node['name']} のAPIインストールに失敗（手動インストールが必要）")
-            except:
+            except Exception:
                 pass
-    except:
+    except Exception:
         pass
 
 

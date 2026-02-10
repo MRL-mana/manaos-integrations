@@ -725,7 +725,7 @@ class ComprehensiveSelfCapabilitiesSystem:
                         try:
                             self.auto_optimization._clear_cache()
                             actions_taken.append("キャッシュクリア")
-                        except:
+                        except Exception:
                             pass
                     
                     # メモリ使用率が高いプロセスを終了（オプション）
@@ -770,7 +770,7 @@ class ComprehensiveSelfCapabilitiesSystem:
                                 shutil.rmtree(temp_dir)
                                 temp_dir.mkdir(parents=True, exist_ok=True)
                                 actions_taken.append(f"一時ディレクトリクリア: {temp_dir}")
-                            except:
+                            except Exception:
                                 pass
                     
                     # 古いログファイルを削除
@@ -847,7 +847,7 @@ class ComprehensiveSelfCapabilitiesSystem:
                 response = requests.get(f"{primary_url}/health", timeout=5)
                 if response.status_code == 200:
                     return {"success": True, "message": f"プライマリURL接続OK: {primary_url}"}
-            except:
+            except Exception:
                 pass
             
             # フォールバックURLを試す
@@ -861,7 +861,7 @@ class ComprehensiveSelfCapabilitiesSystem:
                             "message": f"フォールバックURLに切り替え: {fallback_url}",
                             "new_url": fallback_url
                         }
-                except:
+                except Exception:
                     continue
             
             return {"error": "すべてのURL接続に失敗しました"}

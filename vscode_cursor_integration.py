@@ -141,7 +141,7 @@ class VSCodeManaOSIntegration:
             try:
                 with open(settings_path, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
-            except:
+            except Exception:
                 settings = {}
         
         # ManaOS設定をマージ

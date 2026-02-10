@@ -516,11 +516,11 @@ def get_intrinsic_score_history(days: int = 7) -> List[Dict[str, Any]]:
 
                         scores.append({"date": target_date.isoformat(), "score": score})
 
-                except:
+                except Exception:
 
                     pass
 
-    except:
+    except Exception:
 
         pass
 
@@ -601,7 +601,7 @@ def get_todo_metrics() -> Dict[str, Any]:
                 "week_expired": week_expired,
             }
 
-    except:
+    except Exception:
 
         pass
 

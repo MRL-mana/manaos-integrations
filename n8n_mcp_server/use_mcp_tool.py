@@ -37,7 +37,7 @@ async def import_workflow_via_mcp():
             if data.get("status") == "success":
                 print("\n[OK] ワークフローをインポートしました！")
                 return 0
-        except:
+        except Exception:
             pass
     
     return 1

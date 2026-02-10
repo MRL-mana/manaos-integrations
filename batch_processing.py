@@ -33,7 +33,7 @@ class BatchProcessor:
                 with open(self.storage_path, 'r', encoding='utf-8') as f:
                     state = json.load(f)
                     self.batch_history = state.get("history", [])[-100:]
-            except:
+            except Exception:
                 self.batch_history = []
         else:
             self.batch_history = []

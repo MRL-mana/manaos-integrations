@@ -53,7 +53,7 @@ def check_persona_system():
                 print("✅ IntentRouter: 人格設定あり")
             else:
                 print("⚠️ IntentRouter: 人格設定なし")
-        except:
+        except Exception:
             pass
         
         return True
@@ -82,7 +82,7 @@ def check_learning_system():
                     print(f"✅ {module_name}: 利用可能")
                 except ImportError:
                     pass
-        except:
+        except Exception:
             pass
         
         return True
@@ -106,7 +106,7 @@ def check_autonomous_system():
         try:
             from file_secretary_indexer import FileIndexer
             print("✅ FileIndexer: 自動監視機能あり")
-        except:
+        except Exception:
             pass
         
         return True
@@ -136,7 +136,7 @@ def check_secretary_system():
                 print("✅ File Secretary API: 実行中")
             else:
                 print("⚠️ File Secretary API: 停止中")
-        except:
+        except Exception:
             print("⚠️ File Secretary API: 接続不可")
         
         return True
@@ -207,7 +207,7 @@ def check_memory_sharing():
                 if 'memory' in content.lower() or 'Memory' in content:
                     memory_used = True
                     break
-            except:
+            except Exception:
                 pass
         
         if memory_used:

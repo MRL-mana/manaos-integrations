@@ -194,7 +194,7 @@ class DeviceOrchestrator:
                         try:
                             health_data = response.json()
                             device.current_load = health_data.get("cpu_percent", 0.0) / 100.0
-                        except:
+                        except Exception:
                             pass
                     else:
                         device.status = DeviceStatus.OFFLINE

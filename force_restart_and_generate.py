@@ -30,7 +30,7 @@ try:
         print("   [OK] ComfyUI起動中")
     else:
         print(f"   [WARN] ComfyUI応答異常: {response.status_code}")
-except:
+except Exception:
     print("   [ERROR] ComfyUIに接続できません")
     sys.exit(1)
 
@@ -44,7 +44,7 @@ try:
         print("   [OK] Gallery API起動中")
         print("   注意: モデル検索エラーが発生している可能性があります")
         print("   Gallery APIを再起動してください")
-except:
+except Exception:
     print("   [WARN] Gallery APIに接続できません")
 
 print()
@@ -164,7 +164,7 @@ if len(job_ids) > 0:
                     status_str = status.get("status_str", "unknown")
                     if status_str == "success":
                         success_count += 1
-        except:
+        except Exception:
             pass
     
     print(f"生成状況: 成功 {success_count}件 / {len(prompt_ids)}件")

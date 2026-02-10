@@ -522,13 +522,13 @@ Body: {{"approval_request_id": "{approval_request_id}"}}
                 # Slack通知を送信
                 try:
                     send_to_slack(approval_message, channel="#manaos-notifications")
-                except:
+                except Exception:
                     try:
                         notification_system.send_slack(approval_message)
-                    except:
+                    except Exception:
                         try:
                             notification_hub.notify(approval_message, priority="important")
-                        except:
+                        except Exception:
                             pass
                 
                 self.logger.info(f"Ultra Work承認リクエストを送信しました: {approval_request_id}")

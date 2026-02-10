@@ -28,7 +28,7 @@ try:
         print("   [OK] ComfyUIは起動しています")
     else:
         print(f"   [WARN] ComfyUI接続エラー: {response.status_code}")
-except:
+except Exception:
     print("   [WARN] ComfyUIに接続できません")
 
 print()
@@ -65,7 +65,7 @@ try:
                 print("     set PYTHONIOENCODING=utf-8")
                 print("     set PYTHONLEGACYWINDOWSSTDIO=1")
                 print("     python main.py")
-except:
+except Exception:
     pass
 
 print()

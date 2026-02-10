@@ -125,7 +125,7 @@ class FileOrganizer:
             try:
                 file_date = datetime.fromisoformat(file_record.file_created_at.replace("Z", "+00:00"))
                 date_str = file_date.strftime("%Y-%m-%d")
-            except:
+            except Exception:
                 pass
         
         # タグ部分
@@ -194,7 +194,7 @@ class FileOrganizer:
                         import httpx
                         check_response = httpx.get(f"{self.ollama_url}/api/tags", timeout=2.0)
                         use_llm = check_response.status_code == 200
-                    except:
+                    except Exception:
                         use_llm = False
                     
                     if use_llm:

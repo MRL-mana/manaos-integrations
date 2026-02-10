@@ -218,7 +218,7 @@ class IntrinsicTodoGenerator:
 
             playbook_files = list(playbooks_dir.glob("*.md"))
             return len(playbook_files)
-        except:
+        except Exception:
             return 0
 
     def generate_weekly_top3(self) -> List[IntrinsicTodo]:

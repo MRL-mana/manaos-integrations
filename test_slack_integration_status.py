@@ -29,7 +29,7 @@ def check_slack_integration_process():
         else:
             print("⚠️ Slack Integrationプロセスが見つかりません")
             return False
-    except:
+    except Exception:
         print("⚠️ プロセス確認失敗")
         return False
 

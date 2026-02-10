@@ -244,7 +244,7 @@ def get_log_stats() -> Dict[str, Any]:
                     "size": size,
                     "size_mb": size / (1024 * 1024)
                 })
-            except:
+            except Exception:
                 pass
         
         return {

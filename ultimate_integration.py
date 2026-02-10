@@ -79,7 +79,7 @@ class UltimateIntegration:
             try:
                 with open(self.storage_path, 'r', encoding='utf-8') as f:
                     state = json.load(f)
-            except:
+            except Exception:
                 pass
 
     def _save_state(self):

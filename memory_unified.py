@@ -316,7 +316,7 @@ class UnifiedMemory:
                         },
                         "important"
                     )
-                except:
+                except Exception:
                     pass
                 return cache_id
             except Exception as e:

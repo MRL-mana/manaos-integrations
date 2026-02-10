@@ -283,21 +283,21 @@ def get_status():
         try:
             response = httpx.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=2.0)
             services["ollama"] = response.status_code == 200
-        except:
+        except Exception:
             pass
         
         # AI Model Hub確認
         try:
             response = httpx.get("http://localhost:5080/api/health", timeout=2.0)
             services["ai_model_hub"] = response.status_code == 200
-        except:
+        except Exception:
             pass
         
         # RAG API確認
         try:
             response = httpx.get("http://localhost:5057/api/health", timeout=2.0)
             services["rag_api"] = response.status_code == 200
-        except:
+        except Exception:
             pass
         
         return jsonify({

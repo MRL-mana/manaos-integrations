@@ -301,7 +301,7 @@ class PDFToExcelConverter:
                     lang='jpn+eng',  # 日本語と英語
                     config='--psm 6'  # 均一なテキストブロックとして認識
                 )
-            except:
+            except Exception:
                 # 日本語が利用できない場合は英語のみ
                 logger.warning("日本語OCRが利用できません。英語のみで試行します...")
                 data = pytesseract.image_to_data(
@@ -718,7 +718,7 @@ class PDFToExcelConverter:
                         if torch.cuda.is_available():
                             max_workers = min(max_workers, 2)  # GPU使用時は最大2並列
                             logger.info(f"GPU検出: 並列数を{max_workers}に制限します")
-                    except:
+                    except Exception:
                         pass
                     
                     if use_parallel and total_target > 1:

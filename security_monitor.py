@@ -42,7 +42,7 @@ class SecurityMonitor:
                     self.suspicious_activities = state.get("suspicious_activities", [])[-100:]
                     self.blocked_ips = set(state.get("blocked_ips", []))
                     self.allowed_ips = set(state.get("allowed_ips", []))
-            except:
+            except Exception:
                 self.failed_attempts = deque(maxlen=100)
                 self.suspicious_activities = []
                 self.blocked_ips = set()
