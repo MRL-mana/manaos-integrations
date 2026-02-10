@@ -15,16 +15,28 @@ if (-not (Test-Path $logDir)) {
 # System 3に必要なサービス
 $services = @(
     @{
-        Name = "Intrinsic Score API"
-        Script = "intrinsic_motivation.py"
-        Port = 5130
+        Name      = "Intrinsic Score API"
+        Script    = "intrinsic_motivation.py"
+        Port      = 5130
         HealthUrl = "http://localhost:5130/api/score"
     },
     @{
-        Name = "Todo Queue API"
-        Script = "intrinsic_todo_queue.py"
-        Port = 5134
+        Name      = "Todo Queue API"
+        Script    = "intrinsic_todo_queue.py"
+        Port      = 5134
         HealthUrl = "http://localhost:5134/api/metrics"
+    },
+    @{
+        Name      = "Learning System API"
+        Script    = "learning_system_api.py"
+        Port      = 5126
+        HealthUrl = "http://localhost:5126/health"
+    },
+    @{
+        Name      = "RAG Memory API"
+        Script    = "rag_memory_enhanced.py"
+        Port      = 5103
+        HealthUrl = "http://localhost:5103/health"
     }
 )
 
@@ -51,10 +63,15 @@ foreach ($service in $services) {
     # バックグラウンドで起動
     Start-Process python -ArgumentList "`"$scriptPath`"" -WindowStyle Hidden -RedirectStandardOutput $logFile -RedirectStandardError $errorLogFile
 
-    Start-Sleep -Seconds 3
+    $waitSec = if ($service.Port -in 5126, 5103) { 8 } else { 3 }
+    Start-Sleep -Seconds $waitSec
 
-    # 起動確認
+    # 起動確認（Learning/RAG は追加リトライ）
     $portCheck = Get-NetTCPConnection -LocalPort $service.Port -ErrorAction SilentlyContinue
+    if (-not $portCheck -and $service.Port -in 5126, 5103) {
+        Start-Sleep -Seconds 4
+        $portCheck = Get-NetTCPConnection -LocalPort $service.Port -ErrorAction SilentlyContinue
+    }
     if ($portCheck) {
         Write-Host "  OK: $($service.Name) started (Port $($service.Port))" -ForegroundColor Green
 

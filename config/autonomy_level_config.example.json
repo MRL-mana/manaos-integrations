@@ -1,0 +1,29 @@
+{
+  "autonomy_level": 4,
+  "require_confirm_token_classes": ["C3", "C4"],
+  "confirm_tokens_allowlist": [],
+  "budget": {
+    "per_hour": {
+      "llm_calls": 50,
+      "image_jobs": 10,
+      "video_jobs": 2
+    },
+    "per_day": {
+      "llm_calls": 500,
+      "image_jobs": 80,
+      "video_jobs": 10
+    }
+  },
+  "quiet_hours": {
+    "start": "22:00",
+    "end": "07:00"
+  },
+  "degrade_policy": {
+    "on_budget_exceeded": 2,
+    "on_repeated_failures": 3,
+    "on_repeated_failures_threshold": 5
+  },
+  "runbooks_enabled": ["health_recover", "log_rotate", "inbox_scan"],
+  "runbook_flags": {"health_recover_allow_restart": false, "pixel7_bridge_allow_restart": false}, "audit_log_dir": ".",
+  "budget_usage_dir": "."
+}

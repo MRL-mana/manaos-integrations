@@ -8,8 +8,12 @@ import os
 import sys
 from pathlib import Path
 
-# APIキー
-API_KEY = "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"
+# APIキー（環境変数または引数から取得）
+API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+if not API_KEY:
+    print("[ERROR] OPENROUTER_API_KEY 環境変数を設定してください")
+    print("  例: $env:OPENROUTER_API_KEY='sk-or-v1-...' ; python set_openrouter_api_key.py")
+    sys.exit(1)
 
 def set_environment_variable():
     """環境変数を設定"""

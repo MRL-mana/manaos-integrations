@@ -7,21 +7,25 @@ System 3 Learning Nightly Batch
 
 import sys
 import io
+
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 import os
 from pathlib import Path
 from datetime import datetime, date, timedelta
 import json
-import urllib.request
-from typing import Dict, List, Any, Optional
-from collections import Counter, defaultdict
+from typing import Dict, List, Any
+from collections import Counter
+
+from system3_http_retry import http_get_json_retry
 
 # 設定（環境変数から取得、デフォルト値あり）
 VAULT_PATH = Path(os.getenv("OBSIDIAN_VAULT_PATH", r"C:\Users\mana4\Documents\Obsidian Vault"))
-INTEGRATIONS_DIR = Path(os.getenv("MANAOS_INTEGRATIONS_DIR", r"C:\Users\mana4\Desktop\manaos_integrations"))
+INTEGRATIONS_DIR = Path(
+    os.getenv("MANAOS_INTEGRATIONS_DIR", r"C:\Users\mana4\Desktop\manaos_integrations")
+)  # noqa: E501
 LOGS_DIR = INTEGRATIONS_DIR / "logs"
 OUT_DIR = VAULT_PATH / "ManaOS" / "System" / "Learning"
 
@@ -31,15 +35,9 @@ INTRINSIC_SCORE_URL = "http://localhost:5130/api/score"
 TODO_METRICS_URL = "http://localhost:5134/api/metrics"
 
 
-def http_get_json(url: str, timeout: int = 3) -> dict:
-    """Get JSON from API with error handling"""
-    try:
-        req = urllib.request.Request(url, headers={"Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            raw = resp.read()
-        return json.loads(raw.decode("utf-8"))
-    except Exception:
-        return {}
+def http_get_json(url: str, timeout: int = 5) -> dict:
+    """Get JSON from API (retry with backoff), empty dict on failure."""
+    return http_get_json_retry(url, timeout=timeout, retries=3, base_delay=1.0) or {}
 
 
 def read_jsonl_tail(path: Path, max_lines: int = 2000) -> List[Dict[str, Any]]:
@@ -49,7 +47,7 @@ def read_jsonl_tail(path: Path, max_lines: int = 2000) -> List[Dict[str, Any]]:
 
     lines = []
     try:
-        with open(path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
             all_lines = f.readlines()
             lines = all_lines[-max_lines:] if len(all_lines) > max_lines else all_lines
     except Exception:
@@ -79,7 +77,7 @@ def read_error_logs(log_dir: Path, hours: int = 24) -> List[Dict[str, Any]]:
             if mtime < cutoff_time:
                 continue
 
-            with open(error_log, 'r', encoding='utf-8', errors='replace') as f:
+            with open(error_log, "r", encoding="utf-8", errors="replace") as f:
                 lines = f.readlines()
                 for line in lines:
                     line = line.strip()
@@ -87,11 +85,9 @@ def read_error_logs(log_dir: Path, hours: int = 24) -> List[Dict[str, Any]]:
                         continue
 
                     # エラーログの簡易パース
-                    errors.append({
-                        "file": error_log.name,
-                        "line": line,
-                        "timestamp": mtime.isoformat()
-                    })
+                    errors.append(
+                        {"file": error_log.name, "line": line, "timestamp": mtime.isoformat()}
+                    )
         except Exception:
             continue
 
@@ -101,11 +97,7 @@ def read_error_logs(log_dir: Path, hours: int = 24) -> List[Dict[str, Any]]:
 def analyze_error_patterns(errors: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Analyze error patterns"""
     if not errors:
-        return {
-            "total": 0,
-            "by_file": {},
-            "common_patterns": []
-        }
+        return {"total": 0, "by_file": {}, "common_patterns": []}
 
     by_file = Counter()
     error_keywords = Counter()
@@ -123,7 +115,7 @@ def analyze_error_patterns(errors: List[Dict[str, Any]]) -> Dict[str, Any]:
     return {
         "total": len(errors),
         "by_file": dict(by_file.most_common(10)),
-        "common_patterns": [{"keyword": k, "count": v} for k, v in error_keywords.most_common(5)]
+        "common_patterns": [{"keyword": k, "count": v} for k, v in error_keywords.most_common(5)],
     }
 
 
@@ -167,9 +159,7 @@ def get_learning_system_data() -> Dict[str, Any]:
 
 
 def generate_proposals(
-    error_analysis: Dict[str, Any],
-    learning_data: Dict[str, Any],
-    todo_metrics: Dict[str, Any]
+    error_analysis: Dict[str, Any], learning_data: Dict[str, Any], todo_metrics: Dict[str, Any]
 ) -> List[Dict[str, Any]]:
     """Generate proposals based on analysis"""
     proposals = []
@@ -181,46 +171,54 @@ def generate_proposals(
         if by_file:
             top_error_file = max(by_file.items(), key=lambda x: x[1])
             if top_error_file[1] > 5:
-                proposals.append({
-                    "title": f"{top_error_file[0]}のエラーハンドリング改善",
-                    "reason": f"エラー数: {top_error_file[1]}件（24h）",
-                    "risk": "low",
-                    "autonomy_level_required": 2,
-                    "type": "error_handling"
-                })
+                proposals.append(
+                    {
+                        "title": f"{top_error_file[0]}のエラーハンドリング改善",
+                        "reason": f"エラー数: {top_error_file[1]}件（24h）",
+                        "risk": "low",
+                        "autonomy_level_required": 2,
+                        "type": "error_handling",
+                    }
+                )
 
     # 学習システムからの最適化提案
     optimizations = learning_data.get("optimizations", [])
     for opt in optimizations[:3]:  # 上位3件
-        proposals.append({
-            "title": opt.get("suggestion", "最適化提案"),
-            "reason": f"type: {opt.get('type', 'unknown')}",
-            "risk": "low",
-            "autonomy_level_required": 2,
-            "type": "optimization"
-        })
+        proposals.append(
+            {
+                "title": opt.get("suggestion", "最適化提案"),
+                "reason": f"type: {opt.get('type', 'unknown')}",
+                "risk": "low",
+                "autonomy_level_required": 2,
+                "type": "optimization",
+            }
+        )
 
     # ToDoメトリクスに基づく提案
     if todo_metrics:
         noise_index = todo_metrics.get("noise_index", 0)
         if noise_index > 0.3:
-            proposals.append({
-                "title": "ToDo提案品質の改善",
-                "reason": f"ノイズ指数が高い: {noise_index:.1%}",
-                "risk": "low",
-                "autonomy_level_required": 1,
-                "type": "todo_quality"
-            })
+            proposals.append(
+                {
+                    "title": "ToDo提案品質の改善",
+                    "reason": f"ノイズ指数が高い: {noise_index:.1%}",
+                    "risk": "low",
+                    "autonomy_level_required": 1,
+                    "type": "todo_quality",
+                }
+            )
 
         approval_rate = todo_metrics.get("approval_rate", 1.0)
         if approval_rate < 0.5:
-            proposals.append({
-                "title": "ToDo提案の粒度・優先順位の改善",
-                "reason": f"承認率が低い: {approval_rate:.1%}",
-                "risk": "low",
-                "autonomy_level_required": 1,
-                "type": "todo_granularity"
-            })
+            proposals.append(
+                {
+                    "title": "ToDo提案の粒度・優先順位の改善",
+                    "reason": f"承認率が低い: {approval_rate:.1%}",
+                    "risk": "low",
+                    "autonomy_level_required": 1,
+                    "type": "todo_granularity",
+                }
+            )
 
     return proposals
 
@@ -344,5 +342,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ エラー: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

@@ -42,11 +42,11 @@ class DeviceHealth:
 
 class DeviceHealthMonitor:
     """デバイス健康状態監視クラス"""
-    
+
     def __init__(self, config_path: str = "device_health_config.json"):
         """
         初期化
-        
+
         Args:
             config_path: 設定ファイルのパス
         """
@@ -63,7 +63,7 @@ class DeviceHealthMonitor:
             "disk_critical": 95.0
         })
         self.health_history: List[DeviceHealth] = []
-        
+
     def _load_config(self) -> Dict[str, Any]:
         """設定ファイルを読み込む"""
         if self.config_path.exists():
@@ -99,7 +99,7 @@ class DeviceHealthMonitor:
                     {
                         "name": "Pixel 7",
                         "type": "pixel7",
-                        "api_endpoint": "http://100.127.121.20:5122/health"
+                        "api_endpoint": "http://100.84.2.125:5122/health"
                     }
                 ],
                 "check_interval": 30,
@@ -115,46 +115,46 @@ class DeviceHealthMonitor:
             with open(self.config_path, 'w', encoding='utf-8') as f:
                 json.dump(default_config, f, indent=2, ensure_ascii=False)
             return default_config
-    
+
     def check_local_health(self) -> DeviceHealth:
         """ローカルデバイスの健康状態をチェック"""
         try:
             # CPU使用率
             cpu_percent = psutil.cpu_percent(interval=1)
-            
+
             # メモリ使用率
             memory = psutil.virtual_memory()
             memory_percent = memory.percent
-            
+
             # ディスク使用率
             disk = psutil.disk_usage('/')
             disk_percent = disk.percent
-            
+
             # ネットワーク統計
             net_io = psutil.net_io_counters()
             network_sent_mb = net_io.bytes_sent / (1024 * 1024)
             network_recv_mb = net_io.bytes_recv / (1024 * 1024)
-            
+
             # アップタイム
             uptime_seconds = time.time() - psutil.boot_time()
-            
+
             # アラート生成
             alerts = []
             if cpu_percent >= self.alert_thresholds["cpu_critical"]:
                 alerts.append(f"CPU使用率が危険レベル: {cpu_percent:.1f}%")
             elif cpu_percent >= self.alert_thresholds["cpu_warning"]:
                 alerts.append(f"CPU使用率が警告レベル: {cpu_percent:.1f}%")
-            
+
             if memory_percent >= self.alert_thresholds["memory_critical"]:
                 alerts.append(f"メモリ使用率が危険レベル: {memory_percent:.1f}%")
             elif memory_percent >= self.alert_thresholds["memory_warning"]:
                 alerts.append(f"メモリ使用率が警告レベル: {memory_percent:.1f}%")
-            
+
             if disk_percent >= self.alert_thresholds["disk_critical"]:
                 alerts.append(f"ディスク使用率が危険レベル: {disk_percent:.1f}%")
             elif disk_percent >= self.alert_thresholds["disk_warning"]:
                 alerts.append(f"ディスク使用率が警告レベル: {disk_percent:.1f}%")
-            
+
             # ステータス決定
             if any("危険レベル" in alert for alert in alerts):
                 status = "critical"
@@ -162,7 +162,7 @@ class DeviceHealthMonitor:
                 status = "warning"
             else:
                 status = "healthy"
-            
+
             return DeviceHealth(
                 device_name="Mothership",
                 device_type="mothership",
@@ -191,13 +191,13 @@ class DeviceHealthMonitor:
                 uptime_seconds=0.0,
                 alerts=[f"監視エラー: {str(e)}"]
             )
-    
+
     def check_remote_health(self, device_config: Dict[str, Any]) -> DeviceHealth:
         """リモートデバイスの健康状態をチェック"""
         api_endpoint = device_config.get("api_endpoint")
         device_name = device_config.get("name", "Unknown")
         device_type = device_config.get("type", "unknown")
-        
+
         if not api_endpoint:
             return DeviceHealth(
                 device_name=device_name,
@@ -213,13 +213,13 @@ class DeviceHealthMonitor:
                 alerts=["APIエンドポイントが設定されていません"],
                 api_endpoint=api_endpoint
             )
-        
+
         try:
             # ヘルスチェックAPIを呼び出し
             response = requests.get(api_endpoint, timeout=5)
             if response.status_code == 200:
                 health_data = response.json()
-                
+
                 # リモートデバイスの健康状態を取得
                 return DeviceHealth(
                     device_name=device_name,
@@ -266,34 +266,34 @@ class DeviceHealthMonitor:
                 alerts=[f"接続エラー: {str(e)}"],
                 api_endpoint=api_endpoint
             )
-    
+
     def check_all_devices(self) -> List[DeviceHealth]:
         """全デバイスの健康状態をチェック"""
         health_statuses = []
-        
+
         for device_config in self.devices:
             device_type = device_config.get("type", "unknown")
-            
+
             if device_type == "mothership":
                 # ローカルデバイス
                 health = self.check_local_health()
             else:
                 # リモートデバイス
                 health = self.check_remote_health(device_config)
-            
+
             health_statuses.append(health)
             self.health_history.append(health)
-            
+
             # 履歴を保持（最新100件）
             if len(self.health_history) > 100:
                 self.health_history = self.health_history[-100:]
-        
+
         return health_statuses
-    
+
     def get_health_summary(self) -> Dict[str, Any]:
         """健康状態のサマリーを取得"""
         health_statuses = self.check_all_devices()
-        
+
         summary = {
             "timestamp": datetime.now().isoformat(),
             "total_devices": len(health_statuses),
@@ -303,40 +303,40 @@ class DeviceHealthMonitor:
             "offline": sum(1 for h in health_statuses if h.status == "offline"),
             "devices": [asdict(h) for h in health_statuses]
         }
-        
+
         return summary
-    
+
     def get_all_devices_health(self) -> Dict[str, Any]:
         """全デバイスの健康状態を取得（統一インターフェース）"""
         return self.get_health_summary()
-    
+
     def get_status(self) -> Dict[str, Any]:
         """システム状態を取得（統一インターフェース）"""
         return self.get_health_summary()
-    
+
     def run_monitoring_loop(self, notification_hub=None):
         """監視ループを実行
-        
+
         Args:
             notification_hub: NotificationHubEnhancedインスタンス（オプション）
         """
         logger.info("Device Health Monitorを開始します...")
-        
+
         while True:
             try:
                 summary = self.get_health_summary()
-                
+
                 # ログ出力
                 logger.info(f"監視結果: 正常={summary['healthy']}, "
                           f"警告={summary['warning']}, "
                           f"危険={summary['critical']}, "
                           f"オフライン={summary['offline']}")
-                
+
                 # アラートがある場合は通知
                 for device in summary["devices"]:
                     if device["alerts"]:
                         logger.warning(f"{device['device_name']}: {device['alerts']}")
-                        
+
                         # 通知ハブが設定されている場合は通知を送信
                         if notification_hub:
                             priority = "critical" if device["status"] == "critical" else "important"
@@ -350,10 +350,10 @@ class DeviceHealthMonitor:
                                     "status": device["status"]
                                 }
                             )
-                
+
                 # 待機
                 time.sleep(self.check_interval)
-                
+
             except KeyboardInterrupt:
                 logger.info("監視を停止します...")
                 break
@@ -365,15 +365,14 @@ class DeviceHealthMonitor:
 def main():
     """メイン関数"""
     monitor = DeviceHealthMonitor()
-    
+
     # 一度だけチェック
     summary = monitor.get_health_summary()
     print(json.dumps(summary, indent=2, ensure_ascii=False))
-    
+
     # 監視ループを開始する場合は以下をコメントアウト
     # monitor.run_monitoring_loop()
 
 
 if __name__ == "__main__":
     main()
-

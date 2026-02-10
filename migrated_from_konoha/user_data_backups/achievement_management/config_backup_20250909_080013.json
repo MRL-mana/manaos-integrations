@@ -1,0 +1,21 @@
+{
+  "notion": {
+    "database_id": "261ba7ac0cd38003bf50db759f0a736b",
+    "task_database_id": "233ba7ac-0cd3-80a6-b6d0-db0324e80b56",
+    "api_token": "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"
+  },
+  "google": {
+    "drive_folder_id": "1bJlfAI0QeO4KxPrJ6i38dRI9oeyXPnj8",
+    "spreadsheet_id": "1Bq1nw2hgHu8eT5bLmoii8YusN8gKLGHI",
+    "calendar_id": "primary"
+  },
+  "slack": {
+    "channel_id": "general",
+    "bot_token": "xoxb-9116671142134-9133084897333-HAwdxsPyviilzR1bNsiDlKXi"
+  },
+  "system": {
+    "timezone": "Asia/Tokyo",
+    "sync_interval": 1,
+    "notification_hour": 8
+  }
+}

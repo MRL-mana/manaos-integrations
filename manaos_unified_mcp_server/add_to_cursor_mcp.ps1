@@ -35,16 +35,19 @@ try {
 Write-Host "   [OK] 設定ファイルを読み込みました" -ForegroundColor Green
 Write-Host ""
 
+# プロジェクトルート（このスクリプトの親ディレクトリ）
+$projectRoot = if ($PSScriptRoot) { (Resolve-Path (Join-Path $PSScriptRoot "..")).Path } else { (Get-Location).Path }
+
 # ManaOS統合MCPサーバーの設定
 $manaosConfig = @{
     command = "python"
-    args = @("-m", "manaos_unified_mcp_server.server")
-    env = @{
-        COMFYUI_URL = "http://localhost:8188"
+    args    = @("-m", "manaos_unified_mcp_server.server")
+    env     = @{
+        COMFYUI_URL                = "http://localhost:8188"
         MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
-        OBSIDIAN_VAULT_PATH = "C:\Users\mana4\Documents\Obsidian Vault"
+        OBSIDIAN_VAULT_PATH        = $(if ($env:OBSIDIAN_VAULT_PATH) { $env:OBSIDIAN_VAULT_PATH } else { "C:\Users\mana4\Documents\Obsidian Vault" })
     }
-    cwd = "C:\Users\mana4\Desktop\manaos_integrations"
+    cwd     = $projectRoot
 }
 
 # mcpServersプロパティが存在しない場合は作成
@@ -79,6 +82,7 @@ Write-Host "1. Cursorを再起動してください" -ForegroundColor Yellow
 Write-Host "2. Cursorから以下のように使用できます:" -ForegroundColor Yellow
 Write-Host "   - svi_generate_video: 動画生成" -ForegroundColor Gray
 Write-Host "   - comfyui_generate_image: 画像生成" -ForegroundColor Gray
+Write-Host "   - generate_sd_prompt: SD用プロンプト生成（日本語→英語）" -ForegroundColor Gray
 Write-Host "   - google_drive_upload: Google Driveアップロード" -ForegroundColor Gray
 Write-Host "   - rows_query: Rowsスプレッドシートクエリ" -ForegroundColor Gray
 Write-Host "   - obsidian_create_note: Obsidianノート作成" -ForegroundColor Gray
@@ -88,14 +92,3 @@ Write-Host "   - memory_store: 記憶に保存" -ForegroundColor Gray
 Write-Host "   - llm_chat: LLMチャット" -ForegroundColor Gray
 Write-Host "   - secretary_morning_routine: 朝のルーチン" -ForegroundColor Gray
 Write-Host ""
-
-
-
-
-
-
-
-
-
-
-

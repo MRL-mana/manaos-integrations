@@ -1,0 +1,163 @@
+{
+  "youtube_videos": [],
+  "social_trends": [
+    {
+      "platform": "Instagram",
+      "keyword": "#副業",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710467"
+    },
+    {
+      "platform": "Instagram",
+      "keyword": "#AI",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710483"
+    },
+    {
+      "platform": "Instagram",
+      "keyword": "#プログラミング",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710488"
+    },
+    {
+      "platform": "Instagram",
+      "keyword": "#ビジネス",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710491"
+    },
+    {
+      "platform": "Instagram",
+      "keyword": "#マネタイズ",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710494"
+    },
+    {
+      "platform": "Instagram",
+      "keyword": "#フリーランス",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710497"
+    },
+    {
+      "platform": "Instagram",
+      "keyword": "#起業",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710500"
+    },
+    {
+      "platform": "Instagram",
+      "keyword": "#投資",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710503"
+    },
+    {
+      "platform": "Instagram",
+      "keyword": "#ブログ",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710506"
+    },
+    {
+      "platform": "Instagram",
+      "keyword": "#YouTube",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710509"
+    },
+    {
+      "platform": "Instagram",
+      "keyword": "#インスタグラム",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710512"
+    },
+    {
+      "platform": "Instagram",
+      "keyword": "#マーケティング",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710515"
+    },
+    {
+      "platform": "Instagram",
+      "keyword": "#自動化",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710517"
+    },
+    {
+      "platform": "Instagram",
+      "keyword": "#効率化",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710520"
+    },
+    {
+      "platform": "Instagram",
+      "keyword": "#生産性",
+      "volume": 0,
+      "trend_type": "hashtag",
+      "related_keywords": [],
+      "sentiment": "neutral",
+      "category": "lifestyle",
+      "discovered_at": "2025-08-09T17:09:05.710524"
+    }
+  ],
+  "trending_keywords": [],
+  "ai_insights": "AI分析エラー: 404 models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+  "stats": {
+    "collection_time": 41.05561828613281,
+    "total_items": 15,
+    "success_rate": 100.0
+  },
+  "generated_at": "2025-08-09T17:09:43.271310"
+}

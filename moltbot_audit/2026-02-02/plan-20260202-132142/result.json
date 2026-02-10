@@ -1,0 +1,30 @@
+{
+  "plan_id": "plan-20260202-132142",
+  "success": true,
+  "status": "completed",
+  "summary": "openclaw tools/invoke",
+  "finished_at": "2026-02-02T04:21:42.000Z",
+  "steps_done": 1,
+  "steps_total": 1,
+  "duration_seconds": 0.04,
+  "execute_events": [
+    {
+      "ts": 1770006102.466704,
+      "step_id": "scan",
+      "event": "list_files",
+      "tool": "local_fallback",
+      "status": "ok",
+      "result": {
+        "path": "C:\\Users\\mana4\\Downloads",
+        "files": []
+      },
+      "note": "openclaw_tools_invoke_404"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "C:\\Users\\mana4\\Downloads",
+      "files": []
+    }
+  ]
+}

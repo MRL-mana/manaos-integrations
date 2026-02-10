@@ -1,0 +1,32 @@
+{
+  "ollama_url": "http://localhost:11434",
+  "models": {
+    "quality": "llama3-uncensored:latest",
+    "speed": "dolphin-mistral:7b",
+    "vision": "llava:latest"
+  },
+  "voicevox_url": "http://127.0.0.1:50021",
+  "voicevox_speaker_id": 3,
+  "voicevox_speed": 1.1,
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 24,
+    "duration_per_image": 5.0,
+    "max_duration": 60.0,
+    "transition_duration": 0.5,
+    "bg_color": [10, 10, 10]
+  },
+  "subtitle": {
+    "font_size": 36,
+    "font_color": "white",
+    "bg_opacity": 0.7,
+    "position": ["center", "bottom"],
+    "margin_bottom": 60
+  },
+  "output_dir": "output/videos",
+  "output_format": "mp4",
+  "codec": "libx264",
+  "audio_codec": "aac",
+  "bitrate": "5000k"
+}

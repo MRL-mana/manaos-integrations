@@ -1,0 +1,25 @@
+{
+  "id": "log_rotate",
+  "name": "ログ肥大時のローテーション提案",
+  "description": "ログサイズを確認し、閾値超過時はローテーション手順を提案する（実行は手動または別 Runbook）",
+  "action_class": "C0",
+  "steps": [
+    {
+      "order": 1,
+      "action": "orchestrator",
+      "text": "各サービスのログディレクトリのサイズを確認し、合計が 500MB を超えているかチェックしてください。超過している場合はローテーション手順を提案するだけにし、実行はしません。",
+      "mode": "auto",
+      "on_failure": "log_and_stop"
+    }
+  ],
+  "conditions": {
+    "schedule": "0 */6 * * *",
+    "max_daily_runs": 4,
+    "quiet_hours_skip": false
+  },
+  "safety": {
+    "no_destructive": true,
+    "read_only": true,
+    "description": "ログの削除・移動は行わず、提案のみ"
+  }
+}

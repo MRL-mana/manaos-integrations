@@ -153,7 +153,8 @@ def get_integration(name: str):
                 _integrations[name] = RowsIntegration()
             elif name == "obsidian":
                 vault_path = os.getenv(
-                    "OBSIDIAN_VAULT_PATH", "C:/Users/mana4/Documents/Obsidian Vault"
+                    "OBSIDIAN_VAULT_PATH",
+                    str(Path.home() / "Documents" / "Obsidian Vault"),
                 )
                 from obsidian_integration import ObsidianIntegration
 

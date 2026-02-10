@@ -23,7 +23,7 @@
     {
       "name": "Pixel 7",
       "type": "pixel7",
-      "api_endpoint": "http://100.127.121.20:5122/health"
+      "api_endpoint": "http://localhost:5122/health"
     }
   ],
   "check_interval": 30,

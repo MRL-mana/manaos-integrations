@@ -1,0 +1,45 @@
+{
+  "id": "pixel7_bridge_recover",
+  "name": "Pixel7 ブリッジ死活確認と復旧提案",
+  "description": "Pixel7 ブリッジの応答を確認し、死んでいる場合は再起動手順を提案。自動復旧は runbooks_enabled と別フラグで許可されている場合のみ",
+  "action_class": "C2",
+  "steps": [
+    {
+      "order": 1,
+      "action": "tool",
+      "tool_name": "device_get_health",
+      "params": { "device_name": "pixel7" },
+      "on_failure": "log_and_continue"
+    },
+    {
+      "order": 2,
+      "action": "tool",
+      "tool_name": "pixel7_get_resources",
+      "params": {},
+      "on_failure": "mark_bridge_down"
+    },
+    {
+      "order": 3,
+      "action": "condition",
+      "condition_type": "bridge_down",
+      "description": "上記でタイムアウトまたはエラーなら bridge_down"
+    },
+    {
+      "order": 4,
+      "action": "orchestrator",
+      "text": "Pixel7 ブリッジが応答しません。再起動手順を提案してください。自動復旧が許可されている環境の場合のみ、start_pixel7_bridge の実行を提案に含めてください。",
+      "mode": "auto",
+      "on_failure": "log_and_stop"
+    }
+  ],
+  "conditions": {
+    "schedule": "*/10 * * * *",
+    "max_daily_runs": 144,
+    "quiet_hours_skip": false
+  },
+  "safety": {
+    "no_destructive": true,
+    "recovery_requires_runbook_flag": "pixel7_bridge_allow_restart",
+    "description": "再起動は許可フラグが true のときのみ提案に含める。実際実行は L3 承認または手動"
+  }
+}

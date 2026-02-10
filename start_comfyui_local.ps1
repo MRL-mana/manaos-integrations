@@ -18,7 +18,7 @@ Write-Host ""
 # ComfyUIパスの検索
 if ([string]::IsNullOrEmpty($ComfyUIPath)) {
     Write-Host "[1] ComfyUIのインストール場所を検索中..." -ForegroundColor Yellow
-    
+
     $searchPaths = @(
         "C:\ComfyUI",
         "$env:USERPROFILE\ComfyUI",
@@ -27,7 +27,7 @@ if ([string]::IsNullOrEmpty($ComfyUIPath)) {
         "E:\ComfyUI",
         "$env:USERPROFILE\Documents\ComfyUI"
     )
-    
+
     $foundPath = $null
     foreach ($path in $searchPaths) {
         if (Test-Path $path) {
@@ -39,7 +39,7 @@ if ([string]::IsNullOrEmpty($ComfyUIPath)) {
             }
         }
     }
-    
+
     if ($null -eq $foundPath) {
         Write-Host "   ❌ ComfyUIが見つかりませんでした" -ForegroundColor Red
         Write-Host ""
@@ -53,14 +53,14 @@ if ([string]::IsNullOrEmpty($ComfyUIPath)) {
         Write-Host "  pip install -r requirements.txt" -ForegroundColor Cyan
         exit 1
     }
-    
+
     $ComfyUIPath = $foundPath
 } else {
     if (-not (Test-Path $ComfyUIPath)) {
         Write-Host "❌ 指定されたパスが存在しません: $ComfyUIPath" -ForegroundColor Red
         exit 1
     }
-    
+
     $mainPy = Join-Path $ComfyUIPath "main.py"
     if (-not (Test-Path $mainPy)) {
         Write-Host "❌ main.pyが見つかりません: $ComfyUIPath" -ForegroundColor Red
@@ -109,6 +109,9 @@ Write-Host ""
 Write-Host "停止する場合は Ctrl+C を押してください" -ForegroundColor Yellow
 Write-Host ""
 
+# tqdm の stderr flush で Windows が OSError [Errno 22] になるのを防ぐ（ComfyUI サンプリング中クラッシュ対策）
+$env:TQDM_DISABLE = "1"
+
 # ディレクトリを変更してから起動
 Push-Location $ComfyUIPath
 try {
@@ -116,21 +119,3 @@ try {
 } finally {
     Pop-Location
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

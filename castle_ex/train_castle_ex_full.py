@@ -15,12 +15,13 @@ from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 import argparse
 
-if sys.platform == 'win32':
+if sys.platform == "win32":
     try:
         import io
+
         if not isinstance(sys.stdout, io.TextIOWrapper):
-            if hasattr(sys.stdout, 'buffer') and not sys.stdout.buffer.closed:
-                sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+            if hasattr(sys.stdout, "buffer") and not sys.stdout.buffer.closed:
+                sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
     except (AttributeError, ValueError, TypeError):
         pass
 
@@ -52,9 +53,10 @@ try:
         TrainingArguments,
         Trainer,
         DataCollatorForLanguageModeling,
-        BitsAndBytesConfig
+        BitsAndBytesConfig,
     )
     from datasets import Dataset
+
     TRANSFORMERS_AVAILABLE = True
 except ImportError as e:
     TRANSFORMERS_AVAILABLE = False
@@ -63,20 +65,21 @@ except ImportError as e:
 # transformers 側の progress bar を可能なら無効化（バージョン差異に備えて try/except）
 try:
     from transformers.utils import logging as hf_logging
+
     hf_logging.disable_progress_bar()
 except Exception:
     pass
 
 # ログ設定
-log_file_path = Path('training.log')
+log_file_path = Path("training.log")
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(str(log_file_path), encoding='utf-8'),
-        logging.StreamHandler(sys.stdout)
+        logging.FileHandler(str(log_file_path), encoding="utf-8"),
+        logging.StreamHandler(sys.stdout),
     ],
-    force=True  # 既存のハンドラを上書き
+    force=True,  # 既存のハンドラを上書き
 )
 logger = logging.getLogger(__name__)
 
@@ -88,14 +91,14 @@ def load_schedule(schedule_file: str = "castle_ex_schedule_v1_0.json") -> Option
         print(f"[警告] 学習スケジュールファイルが見つかりません: {schedule_file}")
         return None
 
-    with open(schedule_path, 'r', encoding='utf-8') as f:
+    with open(schedule_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
 def load_dataset_jsonl(jsonl_file: str) -> List[Dict]:
     """JSONLファイルからデータセットを読み込む"""
     data = []
-    with open(jsonl_file, 'r', encoding='utf-8') as f:
+    with open(jsonl_file, "r", encoding="utf-8") as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
             if not line:
@@ -150,30 +153,28 @@ def preprocess_dataset(data: List[Dict], tokenizer, max_length: int = 2048):
 
     for idx, item in enumerate(data):
         if idx % 100 == 0:
-            print(f"  前処理中: {idx}/{len(data)}件", end='\r')
+            print(f"  前処理中: {idx}/{len(data)}件", end="\r")
 
         text = format_messages_for_training(item, tokenizer)
         if not text:
             continue
 
-        # トークン化（labelsも含める）
+        # トークン化（labels は DataCollator が input_ids から作るので渡さない）
         encoded = tokenizer(
             text,
             truncation=True,
             max_length=max_length,
             padding=False,
-            return_tensors=None
+            return_tensors=None,
         )
-
-        # labelsはinput_idsと同じ（言語モデリング用）
         input_ids = encoded["input_ids"]
-        labels = input_ids.copy()
-
-        processed.append({
-            "input_ids": input_ids,
-            "labels": labels,
-            "attention_mask": encoded.get("attention_mask", [1] * len(input_ids))
-        })
+        attention_mask = encoded.get("attention_mask", [1] * len(input_ids))
+        processed.append(
+            {
+                "input_ids": input_ids,
+                "attention_mask": attention_mask,
+            }
+        )
 
     print(f"  前処理完了: {len(processed)}/{len(data)}件")
     return processed
@@ -247,8 +248,8 @@ def check_disk_space(path: Path, required_gb: float = 5.0) -> Tuple[bool, float,
     """
     try:
         stat = shutil.disk_usage(path)
-        free_gb = stat.free / (1024 ** 3)
-        total_gb = stat.total / (1024 ** 3)
+        free_gb = stat.free / (1024**3)
+        total_gb = stat.total / (1024**3)
         is_sufficient = free_gb >= required_gb
         return is_sufficient, free_gb, total_gb
     except Exception as e:
@@ -268,7 +269,7 @@ def test_write_access(path: Path) -> bool:
     """
     try:
         test_file = path / ".write_test"
-        test_file.write_text("test", encoding='utf-8')
+        test_file.write_text("test", encoding="utf-8")
         test_file.unlink()
         return True
     except Exception as e:
@@ -278,46 +279,97 @@ def test_write_access(path: Path) -> bool:
 
 def main():
     """メイン処理"""
-    parser = argparse.ArgumentParser(description='CASTLE-EX 完全学習スクリプト')
-    parser.add_argument('--model', type=str, default='microsoft/Phi-3-mini-4k-instruct',
-                       help='ベースモデル（デフォルト: microsoft/Phi-3-mini-4k-instruct）')
-    parser.add_argument('--model-revision', type=str, default=None,
-                       help='HuggingFaceのmodel revision（commit hash / tag）。固定すると再現性が上がります。')
-    parser.add_argument('--train-data', type=str, default='castle_ex_dataset_v1_0_train.jsonl',
-                       help='訓練データファイル')
-    parser.add_argument('--eval-data', type=str, default='castle_ex_dataset_v1_0_eval.jsonl',
-                       help='評価データファイル')
-    parser.add_argument('--no-eval', action='store_true',
-                       help='評価を無効化（eval_datasetを作らず、eval_strategy=no）。DynamicCache系エラー回避用。')
-    parser.add_argument('--output-dir', type=str, default='./outputs/castle_ex_v1_0',
-                       help='出力ディレクトリ')
-    parser.add_argument('--epochs', type=int, default=25,
-                       help='エポック数（デフォルト: 25）')
-    parser.add_argument('--batch-size', type=int, default=2,
-                       help='バッチサイズ（デフォルト: 2）')
-    parser.add_argument('--learning-rate', type=float, default=2.0e-5,
-                       help='学習率（デフォルト: 2.0e-5）')
-    parser.add_argument('--max-length', type=int, default=2048,
-                       help='最大シーケンス長（デフォルト: 2048）')
-    parser.add_argument('--check-only', action='store_true',
-                       help='環境確認のみ実行（学習は実行しない）')
-    parser.add_argument('--resume-from-checkpoint', type=str, default=None,
-                       help='チェックポイントから再開（パスを指定、または"auto"で自動検出）')
-    parser.add_argument('--save-steps', type=int, default=100,
-                       help='チェックポイント保存間隔（steps、デフォルト: 100）')
-    parser.add_argument('--save-total-limit', type=int, default=3,
-                       help='保持するチェックポイント上限（古いものを自動削除、デフォルト: 3）')
-    parser.add_argument('--logging-steps', type=int, default=25,
-                       help='ログ出力間隔（steps、デフォルト: 25）')
-    parser.add_argument('--eval-steps', type=int, default=100,
-                       help='評価実行間隔（steps、デフォルト: 100）')
-    parser.add_argument('--load-best-model-at-end', action='store_true',
-                       help='eval loss最小のモデルを最後に読み込む（save_steps と eval_steps の整合が必要）')
-    parser.add_argument('--attn-implementation', type=str, default='eager',
-                       choices=['eager', 'sdpa', 'flash_attention_2'],
-                       help='Attention実装（illegal memory access回避のためeager推奨）')
-    parser.add_argument('--no-gradient-checkpointing', action='store_true',
-                       help='Gradient Checkpointingを無効化（illegal memory access切り分け用）')
+    parser = argparse.ArgumentParser(description="CASTLE-EX 完全学習スクリプト")
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="microsoft/Phi-3-mini-4k-instruct",
+        help="ベースモデル（デフォルト: microsoft/Phi-3-mini-4k-instruct）",
+    )
+    parser.add_argument(
+        "--model-revision",
+        type=str,
+        default=None,
+        help="HuggingFaceのmodel revision（commit hash / tag）。固定すると再現性が上がります。",
+    )
+    parser.add_argument(
+        "--train-data",
+        type=str,
+        default="castle_ex_dataset_v1_0_train.jsonl",
+        help="訓練データファイル",
+    )
+    parser.add_argument(
+        "--eval-data",
+        type=str,
+        default="castle_ex_dataset_v1_0_eval.jsonl",
+        help="評価データファイル",
+    )
+    parser.add_argument(
+        "--no-eval",
+        action="store_true",
+        help="評価を無効化（eval_datasetを作らず、eval_strategy=no）。DynamicCache系エラー回避用。",
+    )
+    parser.add_argument(
+        "--output-dir", type=str, default="./outputs/castle_ex_v1_0", help="出力ディレクトリ"
+    )
+    parser.add_argument("--epochs", type=int, default=25, help="エポック数（デフォルト: 25）")
+    parser.add_argument(
+        "--max-steps",
+        type=int,
+        default=-1,
+        help="最大ステップ数（指定時はepochsを無視、v1.1検証用に1000〜2000など）",
+    )
+    parser.add_argument("--batch-size", type=int, default=2, help="バッチサイズ（デフォルト: 2）")
+    parser.add_argument(
+        "--learning-rate", type=float, default=2.0e-5, help="学習率（デフォルト: 2.0e-5）"
+    )
+    parser.add_argument(
+        "--max-length", type=int, default=2048, help="最大シーケンス長（デフォルト: 2048）"
+    )
+    parser.add_argument(
+        "--check-only", action="store_true", help="環境確認のみ実行（学習は実行しない）"
+    )
+    parser.add_argument(
+        "--resume-from-checkpoint",
+        type=str,
+        default=None,
+        help='チェックポイントから再開（パスを指定、または"auto"で自動検出）',
+    )
+    parser.add_argument(
+        "--save-steps",
+        type=int,
+        default=100,
+        help="チェックポイント保存間隔（steps、デフォルト: 100）",
+    )
+    parser.add_argument(
+        "--save-total-limit",
+        type=int,
+        default=3,
+        help="保持するチェックポイント上限（古いものを自動削除、デフォルト: 3）",
+    )
+    parser.add_argument(
+        "--logging-steps", type=int, default=25, help="ログ出力間隔（steps、デフォルト: 25）"
+    )
+    parser.add_argument(
+        "--eval-steps", type=int, default=100, help="評価実行間隔（steps、デフォルト: 100）"
+    )
+    parser.add_argument(
+        "--load-best-model-at-end",
+        action="store_true",
+        help="eval loss最小のモデルを最後に読み込む（save_steps と eval_steps の整合が必要）",
+    )
+    parser.add_argument(
+        "--attn-implementation",
+        type=str,
+        default="eager",
+        choices=["eager", "sdpa", "flash_attention_2"],
+        help="Attention実装（illegal memory access回避のためeager推奨）",
+    )
+    parser.add_argument(
+        "--no-gradient-checkpointing",
+        action="store_true",
+        help="Gradient Checkpointingを無効化（illegal memory access切り分け用）",
+    )
 
     args = parser.parse_args()
 
@@ -434,7 +486,7 @@ def main():
         print("[OK] モデル読み込み完了")
 
         # Gradient Checkpointingを有効化（VRAM節約）
-        if not args.no_gradient_checkpointing and hasattr(model, 'gradient_checkpointing_enable'):
+        if not args.no_gradient_checkpointing and hasattr(model, "gradient_checkpointing_enable"):
             model.gradient_checkpointing_enable()
             print("[OK] Gradient Checkpointingを有効化しました（VRAM節約）")
         elif args.no_gradient_checkpointing:
@@ -450,6 +502,7 @@ def main():
         print(f"[エラー] {error_msg}")
         logger.exception(error_msg)
         import traceback
+
         traceback.print_exc()
         return 1
 
@@ -522,13 +575,19 @@ def main():
     eval_steps = args.eval_steps if eval_dataset else None
     if load_best_model_at_end and eval_steps:
         if args.save_steps % eval_steps != 0:
-            print("[警告] load_best_model_at_end=True のため、eval_steps を save_steps に合わせます")
-            print(f"       save_steps={args.save_steps}, eval_steps={eval_steps} -> eval_steps={args.save_steps}")
+            print(
+                "[警告] load_best_model_at_end=True のため、eval_steps を save_steps に合わせます"
+            )
+            print(
+                f"       save_steps={args.save_steps}, eval_steps={eval_steps} -> eval_steps={args.save_steps}"
+            )
             eval_steps = args.save_steps
 
+    _max_steps = args.max_steps if args.max_steps > 0 else -1
     training_args = TrainingArguments(
         output_dir=str(output_dir),
         num_train_epochs=args.epochs,
+        max_steps=_max_steps,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
         gradient_accumulation_steps=8,  # メモリ不足対策: 4→8に増加
@@ -555,6 +614,8 @@ def main():
 
     print(f"出力ディレクトリ: {output_dir}")
     print(f"エポック数: {args.epochs}")
+    if _max_steps > 0:
+        print(f"最大ステップ数: {_max_steps}（epochsは無視）")
     print(f"バッチサイズ: {args.batch_size}")
     print(f"学習率: {args.learning_rate}")
     print(f"最大シーケンス長: {args.max_length}")
@@ -595,9 +656,13 @@ def main():
                 print("       -> --resume-from-checkpoint auto を推奨します")
                 return 1
             if not _is_valid_trainer_checkpoint(requested):
-                print(f"[エラー] 指定されたチェックポイントが不完全です（trainer_state.jsonがありません）: {requested}")
+                print(
+                    f"[エラー] 指定されたチェックポイントが不完全です（trainer_state.jsonがありません）: {requested}"
+                )
                 print("       -> 不完全checkpointは再開できません")
-                print("       -> --resume-from-checkpoint auto または trainer_state.json のあるcheckpointを指定してください")
+                print(
+                    "       -> --resume-from-checkpoint auto または trainer_state.json のあるcheckpointを指定してください"
+                )
                 return 1
             resume_from_checkpoint = str(requested)
             print(f"[情報] 指定されたチェックポイントから再開: {resume_from_checkpoint}")
@@ -626,10 +691,13 @@ def main():
     )
 
     try:
-        logger.info(f"学習開始: output_dir={output_dir}, resume_from_checkpoint={resume_from_checkpoint}")
+        logger.info(
+            f"学習開始: output_dir={output_dir}, resume_from_checkpoint={resume_from_checkpoint}"
+        )
         # tqdmエラー対策: 環境変数でtqdmを無効化
         import os
-        os.environ['TQDM_DISABLE'] = '1'
+
+        os.environ["TQDM_DISABLE"] = "1"
 
         print(f"[INFO] 学習を開始します（checkpoint-800から再開）")
         logger.info("trainer.train()を呼び出します")
@@ -654,12 +722,13 @@ def main():
             print(f"\n[エラー] {error_msg}")
             logger.exception(error_msg)
             import traceback
+
             tb_str = traceback.format_exc()
             print(f"\n[トレースバック]\n{tb_str}")
             logger.error(f"トレースバック:\n{tb_str}")
             # エラー詳細をファイルに保存
             error_log_path = output_dir / "training_error.log"
-            with open(error_log_path, 'w', encoding='utf-8') as f:
+            with open(error_log_path, "w", encoding="utf-8") as f:
                 f.write(f"エラー発生時刻: {datetime.now()}\n")
                 f.write(f"エラータイプ: {type(train_error).__name__}\n")
                 f.write(f"エラーメッセージ: {train_error}\n")
@@ -687,6 +756,7 @@ def main():
         print(f"\n[エラー] {error_msg}")
         logger.exception(error_msg)
         import traceback
+
         traceback.print_exc()
         return 1
 
@@ -705,5 +775,5 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

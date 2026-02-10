@@ -1,0 +1,19 @@
+{
+    "baseline": {
+        "p95": 0.000263,
+        "writes_per_min": 0
+    },
+    "stop_thresholds": {
+        "writes_per_min_multiplier": 10.0,
+        "writes_per_min_absolute": 50,
+        "p95_multiplier": 4.0,
+        "p95_go_multiplier": 3.0,
+        "contradiction_rate_max": 0.10,
+        "contradiction_rate_go": 0.05,
+        "gate_block_rate_go": 0.95,
+        "http_5xx_max": 3,
+        "consecutive_violations": 3,
+        "max_missing_snapshots": 1,
+        "max_consecutive_missing": 2
+    }
+}

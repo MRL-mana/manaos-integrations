@@ -69,6 +69,13 @@ self.webrtc_vad = webrtcvad.Vad(2)  # 0=最も敏感、3=最も鈍感
 python voice_realtime_streaming.py
 ```
 
+**Pixel 7 ＋ 母艦（ブラウザクライアント）**:
+
+- Pixel 7 は単体ではなく**母艦とセット**で使う想定。母艦で WebSocket サーバー（8765）とクライアント配信（8766）を起動し、Pixel 7 のブラウザで接続する。
+- 母艦で: **`scripts\voice\start_pixel7_realtime_voice.bat`** で一括起動（推奨）、または `python voice_realtime_streaming.py` と `python scripts/voice/serve_voice_client.py`。
+- Pixel 7 で: ブラウザを開き `http://<母艦のIP>:8766` にアクセス。WebSocket URL に `ws://<母艦のIP>:8765` を入力して「開始」。マイク許可後「レミ」のあとで話しかける。
+- クライアントHTML: `scripts/voice/realtime_client.html`（16kHz PCM 送信・応答音声再生まで含む）。
+
 **クライアント例（JavaScript）**:
 
 ```javascript
@@ -102,12 +109,12 @@ async def send_audio():
         # 音声データを送信
         with open('audio.wav', 'rb') as f:
             audio_data = f.read()
-        
+
         await websocket.send(json.dumps({
             'type': 'audio',
             'data': audio_data.hex()
         }))
-        
+
         # 応答を受信
         response = await websocket.recv()
         print(f"応答受信: {response}")

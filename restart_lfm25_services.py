@@ -108,7 +108,7 @@ def main():
         ("Intent Router", 5100, "intent_router.py"),
         ("Task Planner", 5101, "task_planner.py"),
         ("Content Generation", 5109, "content_generation_loop.py"),
-        ("Unified API Server", 9500, "unified_api_server.py")
+        ("Unified API Server", 9502, "unified_api_server.py")
     ]
     
     print("[1] 既存プロセスを確認・停止中...")

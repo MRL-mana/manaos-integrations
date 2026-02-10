@@ -1,0 +1,18 @@
+{
+  "plan_id": "plan-20260202-103618",
+  "success": false,
+  "status": "openclaw_invoke_error",
+  "error": "'latin-1' codec can't encode characters in position 7-9: ordinal not in range(256)",
+  "steps_done": 0,
+  "steps_total": 1,
+  "execute_events": [
+    {
+      "ts": 1769996178.9445927,
+      "step_id": "scan",
+      "event": "list_files",
+      "skill": "skills.fs.list",
+      "status": "error",
+      "error": "'latin-1' codec can't encode characters in position 7-9: ordinal not in range(256)"
+    }
+  ]
+}

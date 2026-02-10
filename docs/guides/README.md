@@ -52,6 +52,8 @@ export MANAOS_DEBUG=false
 python unified_api_server.py
 ```
 
+**統合API ＋ MoltBot Gateway をまとめて起動**（MCP・秘書ファイル整理用）: リポジトリルートで **`start_unified_api_and_moltbot.bat`** を実行すると 9500 と 8088 が別窓で起動する。
+
 本番運用は Flask 開発サーバではなく Waitress を推奨します：
 
 ```bat
@@ -102,6 +104,7 @@ note_path = obsidian.create_note("タイトル", "内容", tags=["タグ1", "タ
 - `GET /health` - ヘルスチェック
 - `GET /api/integrations/status` - 統合システム状態
 - `POST /api/comfyui/generate` - ComfyUI画像生成
+- `POST /api/sd-prompt/generate` - SD用プロンプト生成（日本語→英語、Ollama）
 - `POST /api/google_drive/upload` - Google Driveアップロード
 - `GET /api/civitai/search` - CivitAIモデル検索
 - `POST /api/langchain/chat` - LangChainチャット
@@ -162,6 +165,27 @@ python test_all_integrations.py
 5. **Mem0** - メモリ管理システム
 6. **Obsidian** - ノート管理自動化
 
+## 📱 デバイス・オーケストレーター
+
+| デバイス | 役割 | オンラインにするには |
+|----------|------|----------------------|
+| 母艦 | 開発・ComfyUI・実行元 | 常時オンライン扱い |
+| ManaOS | 統合オーケストレーター (5106) | `start_orchestrator_5106.ps1` |
+| Pixel 7 | カメラ・ストレージ・ADB | `start_pixel7_bridge.ps1`（USB） / `start_pixel7_bridge_tailscale.ps1`（Tailscale） |
+| X280 | SSOT API (5120) | X280 PC で 5120 起動 |
+| Konoha | このはサーバー (5106) | このはで 5106 起動 |
+
+- **3/6 をワンクリック**: `quick_start_devices.bat` または `quick_start_devices.ps1`（Pixel 7 ブリッジ + 5106）
+- **接続確認**: `scripts\check_devices_online.ps1`
+- **詳細**: [PIXEL7_INTEGRATION_GUIDE.md](PIXEL7_INTEGRATION_GUIDE.md) / [DEVICES_ONLINE_SETUP.md](DEVICES_ONLINE_SETUP.md)
+
 ## 📚 詳細ドキュメント
 
-各統合モジュールの詳細は、各ファイルのdocstringを参照してください。
+- **起動依存関係**: [STARTUP_DEPENDENCY.md](STARTUP_DEPENDENCY.md)
+- **Skills と MCP の使い分け**: [SKILLS_AND_MCP_GUIDE.md](SKILLS_AND_MCP_GUIDE.md)
+- **Skills ドキュメント索引**: [SKILLS_INDEX.md](SKILLS_INDEX.md)
+- **MCP サーバー一覧**: [MCP_SERVERS_GUIDE.md](MCP_SERVERS_GUIDE.md)
+- **他にできること（一覧）**: [WHAT_ELSE_YOU_CAN_DO.md](WHAT_ELSE_YOU_CAN_DO.md)
+- **sd-prompt（CLI/MCP/API）**: [SD_PROMPT_USAGE.md](SD_PROMPT_USAGE.md)
+- **Pixel 7・デバイス統合**: [PIXEL7_INTEGRATION_GUIDE.md](PIXEL7_INTEGRATION_GUIDE.md) / [DEVICES_ONLINE_SETUP.md](DEVICES_ONLINE_SETUP.md)
+- 各統合モジュールの詳細は、各ファイルのdocstringを参照してください。

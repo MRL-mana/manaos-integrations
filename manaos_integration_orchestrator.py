@@ -330,7 +330,7 @@ MANAOS_SERVICES = {
 
 # 統合システム定義
 INTEGRATION_SERVICES = {
-    "unified_api": {"port": 9500, "name": "Unified API Server"},
+    "unified_api": {"port": 9502, "name": "Unified API Server"},
     "command_hub": {"port": 9404, "name": "Command Hub"},
     "enhanced_api": {"port": 9406, "name": "Enhanced API"},
     "monitoring": {"port": 9407, "name": "Monitoring"},

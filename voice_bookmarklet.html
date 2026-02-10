@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Integration Bookmarklet</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .bookmarklet {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+            cursor: move;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .bookmarklet:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        .instructions {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        h1 {
+            color: #667eea;
+        }
+        .step {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+        code {
+            background: #3a3a3a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #a8dadc;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎤 レミ Voice Integration</h1>
+    
+    <div class="instructions">
+        <h2>📖 使い方</h2>
+        <div class="step">
+            <strong>1.</strong> 下のボタンを<strong>ブックマークバーにドラッグ&ドロップ</strong>
+        </div>
+        <div class="step">
+            <strong>2.</strong> Open WebUI (<code>localhost:3001</code> または Tailscale IP) を開く
+        </div>
+        <div class="step">
+            <strong>3.</strong> ブックマークバーの「Voice ON」をクリック
+        </div>
+        <div class="step">
+            <strong>4.</strong> 画面右下に「Voice ON」ボタンが出現！
+        </div>
+    </div>
+
+    <div style="text-align: center; margin: 40px 0;">
+        <a href="javascript:(function(){const s=document.createElement('script');s.src='http://100.73.247.100:8888/openwebui_voice_script.js';document.head.appendChild(s);})();" class="bookmarklet">
+            🎤 Voice ON
+        </a>
+        <p style="color: #888; margin-top: 10px;">👆 このボタンをブックマークバーにドラッグ</p>
+    </div>
+
+    <div class="instructions">
+        <h2>💡 ブックマークバーが表示されていない場合</h2>
+        <div class="step">
+            <strong>Chrome/Edge:</strong> <code>Ctrl+Shift+B</code>
+        </div>
+        <div class="step">
+            <strong>Firefox:</strong> <code>Ctrl+Shift+B</code>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h2>📱 Pixel 7で使う場合</h2>
+        <div class="step">
+            <strong>1.</strong> このページ (<code>http://100.73.247.100:8888/voice_bookmarklet.html</code>) を開く
+        </div>
+        <div class="step">
+            <strong>2.</strong> 「Voice ON」ボタンを長押し → 「ブックマークに追加」
+        </div>
+        <div class="step">
+            <strong>3.</strong> Open WebUI アプリを開く
+        </div>
+        <div class="step">
+            <strong>4.</strong> アドレスバーのブックマークから「Voice ON」を選択
+        </div>
+    </div>
+</body>
+</html>

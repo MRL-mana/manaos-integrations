@@ -1,0 +1,48 @@
+{
+    "name": "Moltbot Plan 送信（サンプル）",
+    "nodes": [
+        {
+            "name": "POST /moltbot/plan",
+            "type": "n8n-nodes-base.httpRequest",
+            "parameters": {
+                "method": "POST",
+                "url": "={{ $env.MOLTBOT_GATEWAY_URL || 'http://127.0.0.1:8088' }}/moltbot/plan",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        },
+                        {
+                            "name": "X-Plan-Id",
+                            "value": "={{ $json.plan_id }}"
+                        },
+                        {
+                            "name": "X-Plan-Signature",
+                            "value": "={{ $json.signature }}"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": []
+                },
+                "specifyBody": "json",
+                "jsonBody": "={{ $json.plan }}"
+            }
+        },
+        {
+            "name": "GET result（ポーリング）",
+            "type": "n8n-nodes-base.httpRequest",
+            "parameters": {
+                "method": "GET",
+                "url": "={{ $env.MOLTBOT_GATEWAY_URL || 'http://127.0.0.1:8088' }}/moltbot/plan/{{ $('POST /moltbot/plan').item.json.plan_id }}/result"
+            }
+        }
+    ],
+    "connections": {},
+    "meta": {
+        "templateCredsSetupCompleted": true
+    }
+}

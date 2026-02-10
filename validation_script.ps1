@@ -37,16 +37,19 @@ Write-Host "`n[2] ドキュメントの確認" -ForegroundColor Yellow
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Gray
 
 $docs = @(
-    "manaos_integrations\README.md",
-    "manaos_integrations\QUICKREF.md",
-    "manaos_integrations\VSCODE_SETUP_GUIDE.md",
-    "manaos_integrations\VSCODE_VS_CURSOR.md",
-    "manaos_integrations\VSCODE_CHECKLIST.md",
-    "manaos_integrations\VSCODE_TEST_CHECKLIST.md",
-    "manaos_integrations\SNIPPETS_GUIDE.md",
-    "manaos_integrations\STARTUP_GUIDE.md",
-    "manaos_integrations\SYSTEM3_GUIDE.md",
-    "manaos_integrations\EMERGENCY_STOP_GUIDE.md"
+    "README.md",
+    "QUICKREF.md",
+    "VSCODE_SETUP_GUIDE.md",
+    "VSCODE_VS_CURSOR.md",
+    "VSCODE_CHECKLIST.md",
+    "VSCODE_TEST_CHECKLIST.md",
+    "SNIPPETS_GUIDE.md",
+    "STARTUP_GUIDE.md",
+    "SYSTEM3_GUIDE.md",
+    "EMERGENCY_STOP_GUIDE.md",
+    "FAQ.md",
+    "CONTRIBUTING.md",
+    "PERFORMANCE_MONITORING.md"
 )
 
 foreach ($doc in $docs) {
@@ -66,8 +69,8 @@ Write-Host "`n[3] Python環境の確認" -ForegroundColor Yellow
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Gray
 
 $totalChecks++
-if (Test-Path ".venv\Scripts\python.exe") {
-    $pythonVersion = & .venv\Scripts\python.exe --version 2>&1
+if (Test-Path "..\.venv\Scripts\python.exe") {
+    $pythonVersion = & ..\.venv\Scripts\python.exe --version 2>&1
     Write-Host "  ✅ Python venv存在: $pythonVersion" -ForegroundColor Green
     $passedChecks++
 } else {
@@ -76,6 +79,9 @@ if (Test-Path ".venv\Scripts\python.exe") {
 }
 
 # 3-1. 重要なPythonモジュールの確認
+$totalChecks++
+try {
+    & ..\ 重要なPythonモジュールの確認
 $totalChecks++
 try {
     & .venv\Scripts\python.exe -c "import fastapi; import uvicorn; import requests" 2>$null
@@ -88,10 +94,10 @@ try {
 
 # 4. ManaOSサービススクリプトの確認
 Write-Host "`n[4] ManaOSサービススクリプトの確認" -ForegroundColor Yellow
-Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Gray
-
-$serviceScripts = @(
-    "manaos_integrations\start_vscode_cursor_services.py",
+Writestart_vscode_cursor_services.py",
+    "check_services_health.py",
+    "autonomous_operations.py",
+    "start_vscode_cursor_services.py",
     "manaos_integrations\check_services_health.py",
     "manaos_integrations\autonomous_operations.py",
     "manaos_integrations\emergency_stop.py"
@@ -200,19 +206,24 @@ Write-Host "`n[9] コードスニペットの確認" -ForegroundColor Yellow
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Gray
 
 $totalChecks++
-try {
-    $snippetsJson = Get-Content ".vscode\python.code-snippets" -Raw | ConvertFrom-Json
-    $snippetCount = ($snippetsJson | Get-Member -MemberType NoteProperty).Count
-    Write-Host "  ✅ スニペット数: $snippetCount 個" -ForegroundColor Green
-    
-    foreach ($snippet in ($snippetsJson | Get-Member -MemberType NoteProperty)) {
-        $prefix = $snippetsJson.($snippet.Name).prefix
-        Write-Host "     - $($snippet.Name) ($prefix)" -ForegroundColor Gray
+if (Test-Path ".vscode\python.code-snippets") {
+    try {
+        $snippetsJson = Get-Content ".vscode\python.code-snippets" -Raw | ConvertFrom-Json
+        $snippetCount = ($snippetsJson | Get-Member -MemberType NoteProperty).Count
+        Write-Host "  ✅ スニペット数: $snippetCount 個" -ForegroundColor Green
+        
+        foreach ($snippet in ($snippetsJson | Get-Member -MemberType NoteProperty)) {
+            $prefix = $snippetsJson.($snippet.Name).prefix
+            Write-Host "     - $($snippet.Name) ($prefix)" -ForegroundColor Gray
+        }
+        $passedChecks++
+    } catch {
+        Write-Host "  ❌ スニペットの読み込みエラー" -ForegroundColor Red
+        $failedChecks++
     }
-    $passedChecks++
-} catch {
-    Write-Host "  ❌ スニペットの読み込みエラー" -ForegroundColor Red
-    $failedChecks++
+} else {
+    Write-Host "  ⚠️  python.code-snippets not found" -ForegroundColor Yellow
+    $warningChecks++
 }
 
 # 10. GitHubリポジトリの確認

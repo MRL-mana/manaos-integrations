@@ -1,0 +1,11 @@
+{
+  "voice": {
+    "VOICEVOX_URL": "http://127.0.0.1:50021",
+    "VOICE_TTS_ENGINE": "voicevox",
+    "VOICEVOX_SPEAKER_ID": "3",
+    "style_bert_vits2_url": "http://127.0.0.1:5000",
+    "voice_stt_model": "large-v3",
+    "voice_stt_device": "cuda",
+    "voice_stt_compute_type": "float16"
+  }
+}

@@ -69,8 +69,17 @@
       "詳しく調べて",
       "徹底的に調べて",
       "根拠付きで調べて"
+    ],
+    "device_status": [
+      "Pixel 7",
+      "ピクセル7",
+      "バッテリー",
+      "デバイス",
+      "オンライン",
+      "スマホ",
+      "端末",
+      "リソース"
     ]
   },
-  "intent_prompt_template": "あなたは意図分類システムです。ユーザーの入力から意図を分類してください。\n\n利用可能な意図タイプ:\n- conversation: 会話・雑談\n- task_execution: タスク実行（実行、作って、処理など）\n- information_search: 情報検索（検索、調べて、確認など）\n- image_generation: 画像生成（画像、生成、描いてなど）\n- code_generation: コード生成（コード、実装、プログラムなど）\n- system_control: システム制御（再起動、停止、設定など）\n- scheduling: スケジューリング（予定、カレンダー、予約など）\n- data_analysis: データ分析（分析、統計、レポートなど）\n- deep_research: 専門調査（調査、リサーチ、深く調べてなど）\n- unknown: 不明\n\nユーザー入力: {input}\n\n以下のJSON形式で回答してください:\n{\n    \"intent_type\": \"意図タイプ\",\n    \"confidence\": 0.0-1.0の信頼度,\n    \"entities\": {\"key\": \"value\"},\n    \"reasoning\": \"分類理由\",\n    \"suggested_actions\": [\"アクション1\", \"アクション2\"]\n}"
+  "intent_prompt_template": "あなたは意図分類システムです。ユーザーの入力から意図を分類してください。\n\n利用可能な意図タイプ:\n- conversation: 会話・雑談\n- task_execution: タスク実行（実行、作って、処理など）\n- information_search: 情報検索（検索、調べて、確認など）\n- image_generation: 画像生成（画像、生成、描いてなど）\n- code_generation: コード生成（コード、実装、プログラムなど）\n- system_control: システム制御（再起動、停止、設定など）\n- scheduling: スケジューリング（予定、カレンダー、予約など）\n- data_analysis: データ分析（分析、統計、レポートなど）\n- deep_research: 専門調査（調査、リサーチ、深く調べてなど）\n- device_status: デバイス状態（Pixel 7、バッテリー、デバイス、オンラインなど）\n- unknown: 不明\n\nユーザー入力: {input}\n\n以下のJSON形式で回答してください:\n{\n    \"intent_type\": \"意図タイプ\",\n    \"confidence\": 0.0-1.0の信頼度,\n    \"entities\": {\"key\": \"value\"},\n    \"reasoning\": \"分類理由\",\n    \"suggested_actions\": [\"アクション1\", \"アクション2\"]\n}"
 }
-

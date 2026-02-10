@@ -5,35 +5,83 @@ Phase 2 (Write 10%) 停止判定スクリプト
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 from datetime import datetime
 from typing import List, Tuple, Optional
 import re
+from urllib.request import Request, urlopen
 
-# スケジューラ運用向け: 判定不能/NO-GO を「失敗(exit 1)」にしないオプション
+# スケジューラ運用向け: 判定不能/NO-GO は exit 0、「本当のSTOP」だけ exit 1
 # 例: python phase2_stop_checker.py --go snapshots baseline.json 24 --scheduler
 SCHEDULER_FLAG = "--scheduler"
 
-# 実測値（Phase 1 baseline）
-BASELINE_P95 = 0.000263  # baseline p95
-BASELINE_WRITES_PER_MIN = 0  # baseline writes_per_min
-
-# 停止閾値（実測値ベース）
-STOP_THRESHOLDS = {
-    "writes_per_min_multiplier": 10.0,  # Phase1比で10倍以上
-    "writes_per_min_absolute": 50,  # Phase2での絶対値（sample_rate=0.1なら数十/min想定）
-    "p95_multiplier": 4.0,  # Phase1比で4倍以上（0.001052秒）
-    "p95_go_multiplier": 3.0,  # Phase1比で3倍以上（0.000789秒）が継続したらNG
-    "contradiction_rate_max": 0.10,  # 10%（停止ライン）
-    "contradiction_rate_go": 0.05,  # 5%（Go判定ライン）
-    "gate_block_rate_go": 0.95,  # 95%（Go判定ライン）
-    "http_5xx_max": 3,  # 3以上
-    "quarantine_dominance": True,  # quarantine > scratchpad
-    "consecutive_violations": 3,  # 3回連続（=3時間）で継続と判定
-    "max_missing_snapshots": 1,  # 24hのうち欠損が1回まで許容
-    "max_consecutive_missing": 2,  # 連続欠損が2回以上で判定不能
+# デフォルト: 実測値（Phase 1 baseline）と停止閾値（phase2_thresholds.json が無い場合に使用）
+_DEFAULT_BASELINE = {"p95": 0.000263, "writes_per_min": 0}
+_DEFAULT_STOP_THRESHOLDS = {
+    "writes_per_min_multiplier": 10.0,
+    "writes_per_min_absolute": 50,
+    "p95_multiplier": 4.0,
+    "p95_go_multiplier": 3.0,
+    "contradiction_rate_max": 0.10,
+    "contradiction_rate_go": 0.05,
+    "gate_block_rate_go": 0.95,
+    "http_5xx_max": 3,
+    "consecutive_violations": 3,
+    "max_missing_snapshots": 1,
+    "max_consecutive_missing": 2,
 }
+
+BASELINE_P95 = _DEFAULT_BASELINE["p95"]
+BASELINE_WRITES_PER_MIN = _DEFAULT_BASELINE["writes_per_min"]
+STOP_THRESHOLDS = dict(_DEFAULT_STOP_THRESHOLDS)
+
+
+def _load_thresholds() -> None:
+    """phase2_thresholds.json を読み込み、BASELINE_* と STOP_THRESHOLDS を更新する。"""
+    global BASELINE_P95, BASELINE_WRITES_PER_MIN, STOP_THRESHOLDS
+    cfg_path = Path(__file__).resolve().parent / "phase2_thresholds.json"
+    if not cfg_path.exists():
+        return
+    try:
+        with open(cfg_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        bl = data.get("baseline", {})
+        if bl:
+            BASELINE_P95 = float(bl.get("p95", BASELINE_P95))
+            BASELINE_WRITES_PER_MIN = int(bl.get("writes_per_min", BASELINE_WRITES_PER_MIN))
+        th = data.get("stop_thresholds", {})
+        if th:
+            for k, v in th.items():
+                if k in _DEFAULT_STOP_THRESHOLDS:
+                    STOP_THRESHOLDS[k] = v
+    except Exception:
+        pass
+
+
+_load_thresholds()
+
+
+def _send_alert(reasons: List[str]) -> None:
+    """PHASE2_ALERT_WEBHOOK_URL または SLACK_WEBHOOK_URL が設定されていれば POST する。"""
+    webhook_url = os.getenv("PHASE2_ALERT_WEBHOOK_URL") or os.getenv("SLACK_WEBHOOK_URL")
+    if not webhook_url or not webhook_url.strip():
+        return
+    try:
+        body = json.dumps(
+            {
+                "text": "[MRL Memory Phase 2] STOP: " + "; ".join(reasons[:5]),
+            }
+        ).encode("utf-8")
+        req = Request(
+            webhook_url, data=body, method="POST", headers={"Content-Type": "application/json"}
+        )
+        with urlopen(req, timeout=10) as _:
+            pass
+    except Exception:
+        pass
+
 
 _DATE_DIR_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _HOUR_JSON_RE = re.compile(r"^\d{2}\.json$")
@@ -58,7 +106,9 @@ def _list_snapshot_files(snapshot_dir: Path) -> List[Path]:
         return []
 
     # まずは推奨形式だけ拾う（誤検知を減らす）
-    candidates = [p for p in snapshot_dir.rglob("*.json") if p.is_file() and _looks_like_hourly_snapshot(p)]
+    candidates = [
+        p for p in snapshot_dir.rglob("*.json") if p.is_file() and _looks_like_hourly_snapshot(p)
+    ]
     if candidates:
         return candidates
 
@@ -68,13 +118,12 @@ def _list_snapshot_files(snapshot_dir: Path) -> List[Path]:
 
 def load_snapshot(json_path: Path) -> dict:
     """スナップショットを読み込む"""
-    with open(json_path, 'r', encoding='utf-8') as f:
+    with open(json_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
+
 def check_consecutive_violations(
-    snapshot_paths: List[Path],
-    check_func,
-    baseline: Optional[dict] = None
+    snapshot_paths: List[Path], check_func, baseline: Optional[dict] = None
 ) -> Tuple[bool, List[str], int]:
     """
     連続違反をチェック（欠損を考慮）
@@ -116,34 +165,55 @@ def check_consecutive_violations(
 
     return has_consecutive, all_reasons, max_consecutive
 
-def check_p95_go_violation(snapshot: dict, baseline: Optional[dict] = None) -> Tuple[bool, Optional[str]]:
+
+def check_p95_go_violation(
+    snapshot: dict, baseline: Optional[dict] = None
+) -> Tuple[bool, Optional[str]]:
     """p95 Go判定ライン違反をチェック"""
     metrics = snapshot.get("metrics", {})
     current_p95 = metrics.get("e2e_p95_sec", 0)
-    baseline_p95 = baseline.get("metrics", {}).get("e2e_p95_sec", BASELINE_P95) if baseline else BASELINE_P95
+    baseline_p95 = (
+        baseline.get("metrics", {}).get("e2e_p95_sec", BASELINE_P95) if baseline else BASELINE_P95
+    )
     p95_threshold = baseline_p95 * STOP_THRESHOLDS["p95_go_multiplier"]
 
     if current_p95 >= p95_threshold:
-        return True, f"e2e_p95_sec={current_p95:.6f}秒 >= {p95_threshold:.6f}秒（baseline×{STOP_THRESHOLDS['p95_go_multiplier']}）"
+        return (
+            True,
+            f"e2e_p95_sec={current_p95:.6f}秒 >= {p95_threshold:.6f}秒（baseline×{STOP_THRESHOLDS['p95_go_multiplier']}）",
+        )
     return False, None
 
-def check_contradiction_rate_go_violation(snapshot: dict, baseline: Optional[dict] = None) -> Tuple[bool, Optional[str]]:
+
+def check_contradiction_rate_go_violation(
+    snapshot: dict, baseline: Optional[dict] = None
+) -> Tuple[bool, Optional[str]]:
     """矛盾検出率 Go判定ライン違反をチェック"""
     metrics = snapshot.get("metrics", {})
     contradiction_rate = metrics.get("contradiction_rate", 0)
 
     if contradiction_rate >= STOP_THRESHOLDS["contradiction_rate_go"]:
-        return True, f"contradiction_rate={contradiction_rate:.1%} >= {STOP_THRESHOLDS['contradiction_rate_go']:.1%}"
+        return (
+            True,
+            f"contradiction_rate={contradiction_rate:.1%} >= {STOP_THRESHOLDS['contradiction_rate_go']:.1%}",
+        )
     return False, None
 
-def check_gate_block_rate_go_violation(snapshot: dict, baseline: Optional[dict] = None) -> Tuple[bool, Optional[str]]:
+
+def check_gate_block_rate_go_violation(
+    snapshot: dict, baseline: Optional[dict] = None
+) -> Tuple[bool, Optional[str]]:
     """ゲート遮断率 Go判定ライン違反をチェック"""
     metrics = snapshot.get("metrics", {})
     gate_block_rate = metrics.get("gate_block_rate", 0)
 
     if gate_block_rate >= STOP_THRESHOLDS["gate_block_rate_go"]:
-        return True, f"gate_block_rate={gate_block_rate:.1%} >= {STOP_THRESHOLDS['gate_block_rate_go']:.1%}"
+        return (
+            True,
+            f"gate_block_rate={gate_block_rate:.1%} >= {STOP_THRESHOLDS['gate_block_rate_go']:.1%}",
+        )
     return False, None
+
 
 def check_stop_conditions(current: dict, baseline: dict = None) -> tuple[bool, list[str]]:
     """
@@ -166,7 +236,11 @@ def check_stop_conditions(current: dict, baseline: dict = None) -> tuple[bool, l
 
     # 1. 書き込み暴走（絶対値と比率の両方でチェック）
     current_writes = metrics.get("writes_per_min", 0)
-    baseline_writes = baseline.get("metrics", {}).get("writes_per_min", BASELINE_WRITES_PER_MIN) if baseline else BASELINE_WRITES_PER_MIN
+    baseline_writes = (
+        baseline.get("metrics", {}).get("writes_per_min", BASELINE_WRITES_PER_MIN)
+        if baseline
+        else BASELINE_WRITES_PER_MIN
+    )
 
     # 絶対値チェック（Phase2での想定値を超えた場合）
     if current_writes >= STOP_THRESHOLDS["writes_per_min_absolute"]:
@@ -176,7 +250,10 @@ def check_stop_conditions(current: dict, baseline: dict = None) -> tuple[bool, l
         should_stop = True
 
     # 比率チェック（Phase1比で10倍以上、かつbaseline > 0の場合のみ有効）
-    if baseline_writes > 0 and current_writes > baseline_writes * STOP_THRESHOLDS["writes_per_min_multiplier"]:
+    if (
+        baseline_writes > 0
+        and current_writes > baseline_writes * STOP_THRESHOLDS["writes_per_min_multiplier"]
+    ):
         reasons.append(
             f"書き込み暴走（比率）: writes_per_min={current_writes} "
             f"（baseline={baseline_writes}の{current_writes/baseline_writes:.1f}倍）"
@@ -205,7 +282,9 @@ def check_stop_conditions(current: dict, baseline: dict = None) -> tuple[bool, l
 
     # 4. レイテンシの暴走
     current_p95 = metrics.get("e2e_p95_sec", 0)
-    baseline_p95 = baseline.get("metrics", {}).get("e2e_p95_sec", BASELINE_P95) if baseline else BASELINE_P95
+    baseline_p95 = (
+        baseline.get("metrics", {}).get("e2e_p95_sec", BASELINE_P95) if baseline else BASELINE_P95
+    )
     p95_threshold = baseline_p95 * STOP_THRESHOLDS["p95_multiplier"]
 
     if current_p95 >= p95_threshold:
@@ -227,10 +306,9 @@ def check_stop_conditions(current: dict, baseline: dict = None) -> tuple[bool, l
 
     return should_stop, reasons
 
+
 def check_go_conditions(
-    snapshot_dir: Path,
-    baseline: Optional[dict] = None,
-    hours: int = 24
+    snapshot_dir: Path, baseline: Optional[dict] = None, hours: int = 24
 ) -> Tuple[bool, List[str]]:
     """
     Phase 2 Go条件をチェック（継続判定）
@@ -248,9 +326,7 @@ def check_go_conditions(
 
     # スナップショットファイルを時系列順（新しい順）に取得
     snapshot_files = sorted(
-        _list_snapshot_files(snapshot_dir),
-        key=lambda p: p.stat().st_mtime,
-        reverse=True
+        _list_snapshot_files(snapshot_dir), key=lambda p: p.stat().st_mtime, reverse=True
     )
     if not snapshot_files:
         reasons.append(f"スナップショットが見つかりません: {snapshot_dir}")
@@ -258,10 +334,9 @@ def check_go_conditions(
 
     # 直近hours時間分のスナップショットを取得
     cutoff_time = datetime.now().timestamp() - (hours * 3600)
-    recent_snapshots = [
-        p for p in snapshot_files
-        if p.stat().st_mtime >= cutoff_time
-    ][:hours]  # 最大hours個まで
+    recent_snapshots = [p for p in snapshot_files if p.stat().st_mtime >= cutoff_time][
+        :hours
+    ]  # 最大hours個まで
 
     # 欠損チェック（保険①：メトリクス欠損の扱いルール）
     expected_count = hours
@@ -321,8 +396,10 @@ def check_go_conditions(
         can_go = False
 
     # 2. contradiction_rate Go判定ラインの継続違反チェック
-    has_contradiction_violations, contradiction_reasons, contradiction_count = check_consecutive_violations(
-        recent_snapshots, check_contradiction_rate_go_violation, baseline
+    has_contradiction_violations, contradiction_reasons, contradiction_count = (
+        check_consecutive_violations(
+            recent_snapshots, check_contradiction_rate_go_violation, baseline
+        )
     )
     if has_contradiction_violations:
         reasons.append(
@@ -346,6 +423,7 @@ def check_go_conditions(
 
     return can_go, reasons
 
+
 def main():
     """メイン処理"""
     scheduler_mode = SCHEDULER_FLAG in sys.argv
@@ -361,7 +439,9 @@ def main():
     if len(sys.argv) < 2:
         print("使用方法:")
         print("  python phase2_stop_checker.py <current_snapshot.json> [baseline_snapshot.json]")
-        print("  python phase2_stop_checker.py --go <snapshot_dir> [baseline_snapshot.json] [hours]")
+        print(
+            "  python phase2_stop_checker.py --go <snapshot_dir> [baseline_snapshot.json] [hours]"
+        )
         return False
 
     # Go条件チェックモード
@@ -378,7 +458,9 @@ def main():
             print(f"[ERROR] スナップショットディレクトリが見つかりません: {snapshot_dir}")
             return False
 
-        baseline = load_snapshot(baseline_path) if baseline_path and baseline_path.exists() else None
+        baseline = (
+            load_snapshot(baseline_path) if baseline_path and baseline_path.exists() else None
+        )
 
         can_go, reasons = check_go_conditions(snapshot_dir, baseline, hours)
 
@@ -389,12 +471,17 @@ def main():
             print()
             print("→ Phase 2へ進む前に、上記の問題を解決してください")
 
-            # スケジューラ運用では「判定不能/NO-GO」を “タスク失敗” にしない
-            # （Task Schedulerの履歴が真っ赤になるのを防ぐ）
+            # スケジューラ運用: 「判定不能」は exit 0、「本当のSTOP」は exit 1
             if scheduler_mode:
+                is_indeterminate = any("判定不能" in r or "観測復旧" in r for r in reasons)
+                if is_indeterminate:
+                    print()
+                    print("[WARN] scheduler: indeterminate -> exit 0")
+                    return True
+                _send_alert(reasons)
                 print()
-                print("[WARN] scheduler mode: returning success exit code (0)")
-                return True
+                print("[STOP] scheduler: real stop condition -> exit 1")
+                return False
 
             return False
         else:
@@ -442,6 +529,7 @@ def main():
         print()
         print("→ Phase 2を継続できます")
         return True
+
 
 if __name__ == "__main__":
     success = main()

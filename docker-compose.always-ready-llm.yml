@@ -111,6 +111,9 @@ services:
     - 0.0.0.0:3001:8080
     volumes:
     - openwebui_data:/app/backend/data
+    - ./openwebui_voice_script.js:/app/build/static/voice.js:ro
+    - ./inject_voice_script.sh:/inject_voice_script.sh:ro
+    entrypoint: ["bash", "/inject_voice_script.sh"]
     environment:
     - OLLAMA_BASE_URL=http://host.docker.internal:11434
     - OPENAI_API_BASE_URL=http://host.docker.internal:1234/v1
@@ -287,6 +290,40 @@ services:
     - llm_network
     profiles:
     - monitoring
+  # ============================================================
+  # VOICEVOX - High quality Japanese TTS
+  # ============================================================
+  voicevox:
+    image: voicevox/voicevox_engine:cpu-ubuntu20.04-latest
+    container_name: voicevox
+    restart: unless-stopped
+    ports:
+    - 0.0.0.0:50021:50021
+    environment:
+    - VV_CPU_NUM_THREADS=4
+    networks:
+    - llm_network
+
+  # ============================================================
+  # Local Remi API - Status & Voice API for Pixel 7
+  # ============================================================
+  local-remi-api:
+    image: python:3.11-slim
+    container_name: local-remi-api
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+    - 0.0.0.0:5050:5050
+    volumes:
+    - ./local_remi_api.py:/app/local_remi_api.py:ro
+    command: >
+      bash -c "pip install fastapi uvicorn psutil httpx --quiet &&
+               python local_remi_api.py"
+    extra_hosts:
+    - host.docker.internal:host-gateway
+    networks:
+    - llm_network
+
 volumes:
   ollama_data:
     driver: local

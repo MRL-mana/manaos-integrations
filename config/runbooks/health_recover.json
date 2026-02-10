@@ -1,0 +1,45 @@
+{
+  "id": "health_recover",
+  "name": "ヘルス監視と軽微な復旧",
+  "description": "デバイス・サービスの状態を取得し、定義された軽微な復旧（再起動手順の提案または許可時のみ自動復旧）を行う",
+  "action_class": "C2",
+  "steps": [
+    {
+      "order": 1,
+      "action": "tool",
+      "tool_name": "device_get_status",
+      "params": {},
+      "on_failure": "log_and_continue"
+    },
+    {
+      "order": 2,
+      "action": "tool",
+      "tool_name": "device_get_health",
+      "params": {},
+      "on_failure": "log_and_continue"
+    },
+    {
+      "order": 3,
+      "action": "condition",
+      "condition_type": "any_device_unhealthy",
+      "description": "いずれかデバイスが unhealthy の場合のみ次へ"
+    },
+    {
+      "order": 4,
+      "action": "orchestrator",
+      "text": "デバイス状態を確認した。不健全なデバイスがある場合は、復旧手順を提案し、runbook で許可されている場合のみ自動復旧を試みてください。",
+      "mode": "auto",
+      "on_failure": "log_and_stop"
+    }
+  ],
+  "conditions": {
+    "schedule": "*/15 * * * *",
+    "max_daily_runs": 96,
+    "quiet_hours_skip": true
+  },
+  "safety": {
+    "no_destructive": true,
+    "allowed_tools": ["device_get_status", "device_get_health", "device_get_alerts", "device_discover"],
+    "recovery_requires_runbook_flag": "health_recover_allow_restart"
+  }
+}

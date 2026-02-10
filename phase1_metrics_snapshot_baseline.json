@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-01-15T08:15:45.828775",
+  "timestamp": "2026-02-08T22:24:23.026683",
   "phase": "Phase 1: Read-only",
   "config": {
     "write_mode": "readonly",
@@ -14,11 +14,11 @@
     "pii_mask": "enabled"
   },
   "metrics": {
-    "e2e_p95_sec": 0.0002630000017234124,
-    "gate_block_rate": 0,
-    "contradiction_rate": 0,
-    "slot_usage_variance": 0,
-    "writes_per_min": 0
+    "e2e_p95_sec": 0.0,
+    "writes_per_min": 0,
+    "contradiction_rate": 0.0,
+    "gate_block_rate": 0.0,
+    "slot_usage_variance": 0
   },
   "storage": {
     "scratchpad_entries": 0,

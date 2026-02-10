@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>リアルタイム音声（Pixel 7 ＋ 母艦）</title>
+  <style>
+    :root { --bg: #0f0f12; --card: #1a1a20; --accent: #6c5ce7; --text: #e4e4e7; --muted: #71717a; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 16px; min-height: 100vh; }
+    h1 { font-size: 1.25rem; margin: 0 0 8px; }
+    p.sub { color: var(--muted); font-size: 0.875rem; margin: 0 0 20px; }
+    .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+    input[type="url"], input[type="text"] { width: 100%; padding: 10px 12px; border: 1px solid #2d2d35; border-radius: 8px; background: var(--bg); color: var(--text); font-size: 1rem; }
+    input:focus { outline: none; border-color: var(--accent); }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+    button { padding: 10px 20px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    button.primary { background: var(--accent); color: #fff; }
+    button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.secondary { background: #2d2d35; color: var(--text); }
+    .status { font-size: 0.875rem; margin-top: 12px; padding: 8px 12px; border-radius: 8px; background: #2d2d35; }
+    .status.ok { background: #14532d; color: #86efac; }
+    .status.err { background: #450a0a; color: #fca5a5; }
+    .hint { font-size: 0.75rem; color: var(--muted); margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <h1>🎤 リアルタイム音声（Pixel 7 ＋ 母艦）</h1>
+  <p class="sub">母艦で voice_realtime_streaming.py を起動し、このページで母艦の WebSocket に接続して使います。</p>
+
+  <div class="card">
+    <label for="wsUrl">母艦 WebSocket URL</label>
+    <input type="url" id="wsUrl" placeholder="ws://192.168.x.x:8765 または ws://100.x.x.x:8765（Tailscale）" value="">
+    <p class="hint">母艦の IP に合わせて変更してください。母艦側は VOICE_WEBSOCKET_HOST=0.0.0.0 で起動すること。</p>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <button class="primary" id="btnStart">開始</button>
+      <button class="secondary" id="btnStop" disabled>停止</button>
+    </div>
+    <div id="status" class="status">接続していません</div>
+  </div>
+
+  <script>
+(function () {
+  const wsUrlEl = document.getElementById('wsUrl');
+  const btnStart = document.getElementById('btnStart');
+  const btnStop = document.getElementById('btnStop');
+  const statusEl = document.getElementById('status');
+
+  // ローカルストレージに前回の URL を保存
+  const KEY = 'voice_realtime_ws_url';
+  try {
+    const saved = localStorage.getItem(KEY);
+    if (saved) wsUrlEl.value = saved;
+  } catch (_) {}
+
+  let ws = null;
+  let audioContext = null;
+  let sourceNode = null;
+  let processorNode = null;
+  let stream = null;
+  let sendBuffer = [];
+  const TARGET_SAMPLE_RATE = 16000;
+  const CHUNK_DURATION_MS = 500;
+  const CHUNK_SAMPLES = (TARGET_SAMPLE_RATE * CHUNK_DURATION_MS / 1000) | 0;
+
+  function setStatus(msg, ok) {
+    statusEl.textContent = msg;
+    statusEl.className = 'status' + (ok === true ? ' ok' : ok === false ? ' err' : '');
+  }
+
+  function floatTo16PCM(float32Array) {
+    const buffer = new ArrayBuffer(float32Array.length * 2);
+    const view = new DataView(buffer);
+    for (let i = 0; i < float32Array.length; i++) {
+      const s = Math.max(-1, Math.min(1, float32Array[i]));
+      view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    }
+    return buffer;
+  }
+
+  function resampleTo16k(inputRate, float32Array) {
+    if (inputRate === TARGET_SAMPLE_RATE) return float32Array;
+    const ratio = inputRate / TARGET_SAMPLE_RATE;
+    const outLength = Math.floor(float32Array.length / ratio);
+    const out = new Float32Array(outLength);
+    for (let i = 0; i < outLength; i++) {
+      const srcIndex = i * ratio;
+      const i0 = Math.floor(srcIndex);
+      const i1 = Math.min(i0 + 1, float32Array.length - 1);
+      const t = srcIndex - i0;
+      out[i] = float32Array[i0] * (1 - t) + float32Array[i1] * t;
+    }
+    return out;
+  }
+
+  function sendAudioChunk(pcm16Buffer) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const base64 = btoa(String.fromCharCode.apply(null, new Uint8Array(pcm16Buffer)));
+    ws.send(JSON.stringify({ type: 'audio', data: base64 }));
+  }
+
+  function startCapture() {
+    if (stream) return Promise.resolve();
+    return navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true } })
+      .then(function (s) {
+        stream = s;
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const inputRate = audioContext.sampleRate;
+
+        sourceNode = audioContext.createMediaStreamSource(stream);
+        const bufferSize = 4096;
+        processorNode = audioContext.createScriptProcessor(bufferSize, 1, 1);
+        sendBuffer = [];
+
+        processorNode.onaudioprocess = function (e) {
+          const input = e.inputBuffer.getChannelData(0);
+          const resampled = resampleTo16k(inputRate, input);
+          const pcm16 = floatTo16PCM(resampled);
+          for (let i = 0; i < pcm16.byteLength; i += 2)
+            sendBuffer.push(new DataView(pcm16).getInt16(i, true));
+        };
+
+        sourceNode.connect(processorNode);
+        var dummy = audioContext.createGain();
+        dummy.gain.value = 0;
+        processorNode.connect(dummy);
+        dummy.connect(audioContext.destination);
+
+        const interval = setInterval(function () {
+          if (sendBuffer.length >= CHUNK_SAMPLES) {
+            const chunk = sendBuffer.splice(0, CHUNK_SAMPLES);
+            const buf = new ArrayBuffer(chunk.length * 2);
+            const view = new DataView(buf);
+            chunk.forEach(function (v, i) { view.setInt16(i * 2, v, true); });
+            sendAudioChunk(buf);
+          }
+        }, CHUNK_DURATION_MS);
+
+        return new Promise(function (resolve) {
+          processorNode.onended = function () { clearInterval(interval); };
+          resolve();
+        });
+      });
+  }
+
+  function stopCapture() {
+    if (processorNode) try { processorNode.disconnect(); } catch (_) {}
+    if (sourceNode) try { sourceNode.disconnect(); } catch (_) {}
+    if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+    stream = null;
+    sourceNode = null;
+    processorNode = null;
+    audioContext = null;
+    sendBuffer = [];
+  }
+
+  function playResponseAudio(base64Data) {
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    ctx.decodeAudioData(bytes.buffer).then(function (buf) {
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start(0);
+    }).catch(function (e) { console.warn('Playback decode error', e); });
+  }
+
+  function connect() {
+    const url = (wsUrlEl.value || '').trim();
+    if (!url) {
+      setStatus('WebSocket URL を入力してください', false);
+      return;
+    }
+    try { localStorage.setItem(KEY, url); } catch (_) {}
+
+    setStatus('接続中...');
+    ws = new WebSocket(url);
+
+    ws.onopen = function () {
+      setStatus('接続しました。マイクをオンにしています…', true);
+      startCapture().then(function () { setStatus('接続済み・送受信中（「レミ」のあとに話しかけてください）', true); });
+    };
+
+    ws.onmessage = function (ev) {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === 'audio' && msg.data) playResponseAudio(msg.data);
+      } catch (e) { console.warn(e); }
+    };
+
+    ws.onclose = function () {
+      setStatus('接続が閉じました', false);
+      stopCapture();
+      btnStart.disabled = false;
+      btnStop.disabled = true;
+    };
+
+    ws.onerror = function () { setStatus('WebSocket エラー', false); };
+    btnStart.disabled = true;
+    btnStop.disabled = false;
+  }
+
+  function disconnect() {
+    if (ws) {
+      ws.close();
+      ws = null;
+    }
+    stopCapture();
+    btnStart.disabled = false;
+    btnStop.disabled = true;
+    setStatus('接続していません');
+  }
+
+  btnStart.addEventListener('click', connect);
+  btnStop.addEventListener('click', disconnect);
+})();
+  </script>
+</body>
+</html>
