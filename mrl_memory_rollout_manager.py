@@ -62,12 +62,9 @@ class RolloutManager:
             return False
         
         if self.write_mode == "sampled":
-            # サンプリング（簡易実装：ハッシュベース）
-            import hashlib
-            import time
-            seed = f"{time.time() // 60}"  # 1分ごとに変更
-            hash_val = int(hashlib.md5(seed.encode()).hexdigest(), 16)
-            return (hash_val % 100) < (self.write_sample_rate * 100)
+            # サンプリング（リクエストごとに独立判定）
+            import random
+            return random.random() < self.write_sample_rate
         
         # full
         return True
