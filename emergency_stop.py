@@ -28,6 +28,7 @@ class EmergencyStop:
         "learning_system",
         "llm_routing",
         "unified_api",
+        "video_pipeline",
         "autonomous_operations",
         "start_vscode_cursor_services"
     ]

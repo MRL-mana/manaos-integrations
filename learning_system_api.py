@@ -35,7 +35,7 @@ CORS(app)
 # グローバル学習システムインスタンス
 learning_system = None
 
-def init_learning_system():
+def init_learning_system() -> LearningSystem:
     """学習システムを初期化"""
     global learning_system
     if learning_system is None:
@@ -43,12 +43,12 @@ def init_learning_system():
     return learning_system
 
 @app.route('/health', methods=['GET'])
-def health():
+def health() -> tuple:
     """ヘルスチェック"""
     return jsonify({"status": "healthy", "service": "Learning System API"})
 
 @app.route('/api/record', methods=['POST'])
-def record_usage():
+def record_usage() -> tuple:
     """使用パターンを記録"""
     try:
         data = request.get_json() or {}
@@ -77,7 +77,7 @@ def record_usage():
         return jsonify(error.to_json_response()), 500
 
 @app.route('/api/analyze', methods=['GET'])
-def analyze_patterns():
+def analyze_patterns() -> tuple:
     """パターンを分析"""
     try:
         system = init_learning_system()
@@ -92,7 +92,7 @@ def analyze_patterns():
         return jsonify(error.to_json_response()), 500
 
 @app.route('/api/preferences', methods=['GET'])
-def get_preferences():
+def get_preferences() -> tuple:
     """学習された好みを取得"""
     try:
         system = init_learning_system()
@@ -107,7 +107,7 @@ def get_preferences():
         return jsonify(error.to_json_response()), 500
 
 @app.route('/api/optimizations', methods=['GET'])
-def get_optimizations():
+def get_optimizations() -> tuple:
     """最適化提案を取得"""
     try:
         system = init_learning_system()
@@ -122,7 +122,7 @@ def get_optimizations():
         return jsonify(error.to_json_response()), 500
 
 @app.route('/api/status', methods=['GET'])
-def get_status():
+def get_status() -> tuple:
     """状態を取得"""
     try:
         system = init_learning_system()
@@ -137,7 +137,7 @@ def get_status():
         return jsonify(error.to_json_response()), 500
 
 @app.route('/api/apply-preferences', methods=['POST'])
-def apply_preferences():
+def apply_preferences() -> tuple:
     """学習された好みを適用"""
     try:
         data = request.get_json() or {}

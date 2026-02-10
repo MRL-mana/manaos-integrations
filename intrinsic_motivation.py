@@ -150,7 +150,7 @@ class IntrinsicMotivation:
 
         return idle_minutes >= self.idle_threshold_minutes
 
-    def record_external_task(self):
+    def record_external_task(self) -> None:
         """外部タスクの実行を記録"""
         self.last_external_task_time = datetime.now()
 
@@ -650,7 +650,7 @@ CORS(app)
 intrinsic_motivation = None
 
 
-def init_intrinsic_motivation():
+def init_intrinsic_motivation() -> 'IntrinsicMotivation':
     """内発的動機づけシステムを初期化"""
     global intrinsic_motivation
     if intrinsic_motivation is None:

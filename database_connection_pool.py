@@ -82,7 +82,7 @@ class DatabaseConnectionPool:
         return conn
     
     @contextmanager
-    def get_connection(self):
+    def get_connection(self) -> Any:
         """
         接続を取得（コンテキストマネージャー）
         
@@ -201,7 +201,7 @@ class DatabaseConnectionPool:
             conn.commit()
             return cursor.rowcount
     
-    def close_all(self):
+    def close_all(self) -> None:
         """すべての接続を閉じる"""
         with self.lock:
             while not self.pool.empty():
@@ -258,7 +258,7 @@ def get_pool(db_path: str, max_connections: int = 10) -> DatabaseConnectionPool:
         return _pools[db_path_str]
 
 
-def main():
+def main() -> None:
     """テスト用メイン関数"""
     print("データベース接続プールテスト")
     print("=" * 60)

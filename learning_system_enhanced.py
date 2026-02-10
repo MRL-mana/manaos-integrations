@@ -162,7 +162,7 @@ class LearningSystemEnhanced:
                 try:
                     hour = datetime.fromisoformat(record["timestamp"]).hour
                     hour_patterns[hour][action] += 1
-                except:
+                except (ValueError, KeyError):
                     pass
         
         # 確率に変換
@@ -333,7 +333,7 @@ class LearningSystemEnhanced:
                 try:
                     hour = datetime.fromisoformat(record["timestamp"]).hour
                     hour_counts[hour] += 1
-                except:
+                except (ValueError, KeyError):
                     pass
         
         if hour_counts:

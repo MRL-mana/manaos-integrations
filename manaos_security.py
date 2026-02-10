@@ -252,7 +252,7 @@ def require_jwt(f: Callable) -> Callable:
     return decorated_function
 
 
-def rate_limit(limit_type: str = 'default'):
+def rate_limit(limit_type: str = 'default') -> Callable:
     """レート制限デコレータ"""
     def decorator(f: Callable) -> Callable:
         @wraps(f)
@@ -284,7 +284,7 @@ def rate_limit(limit_type: str = 'default'):
     return decorator
 
 
-def validate_input(schema: Dict[str, Any]):
+def validate_input(schema: Dict[str, Any]) -> Callable:
     """入力検証デコレータ"""
     def decorator(f: Callable) -> Callable:
         @wraps(f)
@@ -321,7 +321,7 @@ class SecurityConfig:
         self.enable_rate_limit = os.getenv('MANAOS_ENABLE_RATE_LIMIT', 'true').lower() == 'true'
         self.enable_input_validation = os.getenv('MANAOS_ENABLE_INPUT_VALIDATION', 'true').lower() == 'true'
     
-    def apply_security(self, app):
+    def apply_security(self, app) -> None:
         """Flaskアプリにセキュリティ設定を適用"""
         # HTTPSリダイレクト（本番環境）
         if os.getenv('FLASK_ENV') == 'production':

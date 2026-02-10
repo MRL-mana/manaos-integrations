@@ -150,14 +150,70 @@ body {
     font-size:11px; cursor:pointer; font-weight:600;
 }
 .sug-btn-go { background:#667eea; color:white; }
-.sug-btn-no { background:#2a2a3e; color:#666; }
+/* Mini character in header */
+.header-char{
+  display:inline-block;cursor:pointer;margin-bottom:4px;
+  animation:miniFloat 3s ease-in-out infinite;
+}
+@keyframes miniFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.mini-head{
+  width:36px;height:34px;
+  background:linear-gradient(135deg,#667eea,#764ba2);
+  border-radius:18px 18px 16px 16px;
+  position:relative;display:inline-block;
+  box-shadow:0 0 12px rgba(102,126,234,0.4);
+}
+.mini-eyes{
+  position:absolute;top:13px;left:50%;transform:translateX(-50%);
+  display:flex;gap:8px;
+}
+.mini-eye{
+  width:6px;height:7px;background:#fff;border-radius:50%;
+  position:relative;
+}
+.mini-eye::after{
+  content:'';position:absolute;top:2px;left:1px;
+  width:4px;height:4px;background:#2d1b69;border-radius:50%;
+}
+.mini-mouth{
+  position:absolute;bottom:7px;left:50%;transform:translateX(-50%);
+  width:6px;height:3px;border-bottom:2px solid #2d1b69;border-radius:0 0 4px 4px;
+}
+.mini-ahoge{
+  position:absolute;top:-7px;left:50%;
+  width:3px;height:10px;
+  background:linear-gradient(180deg,#9f7aea,#667eea);
+  border-radius:2px;
+  animation:ahogeWave 2s ease-in-out infinite;
+  transform-origin:bottom;
+}
+@keyframes ahogeWave{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+.mini-ahoge::after{
+  content:'';position:absolute;top:-3px;left:-2px;
+  width:7px;height:7px;
+  background:radial-gradient(circle,#b794f6,#667eea);
+  border-radius:50%;
+  box-shadow:0 0 6px rgba(183,148,246,0.6);
+}
+.header-live-link{
+  display:block;font-size:10px;color:#667eea;
+  text-decoration:none;margin-top:2px;
+}
 </style>
 </head>
 <body>
 
 <div class="header">
+    <a class="header-char" id="header-char" href="#" onclick="openLive();return false;" title="Open Remi Live">
+      <div class="mini-head">
+        <div class="mini-ahoge"></div>
+        <div class="mini-eyes"><div class="mini-eye"></div><div class="mini-eye"></div></div>
+        <div class="mini-mouth"></div>
+      </div>
+    </a>
     <h1>Remi Dashboard</h1>
     <span class="conn conn-ng" id="conn">connecting...</span>
+    <a class="header-live-link" href="#" onclick="openLive();return false;">Open Remi Live</a>
 </div>
 
 <!-- Tab Content: Status -->
@@ -752,6 +808,11 @@ async function loadChatHistory() {
             el.innerHTML = '<div style="color:#444;text-align:center;padding:8px">\u4F1A\u8A71\u5C65\u6B74\u304C\u3042\u308A\u307E\u305B\u3093</div>';
         }
     } catch(e) {}
+}
+
+function openLive() {
+    const url = API + '/remi-live?token=' + encodeURIComponent(new URLSearchParams(location.search).get('token') || '') + '&mode=standalone';
+    window.open(url, '_blank');
 }
 
 async function sendChat() {

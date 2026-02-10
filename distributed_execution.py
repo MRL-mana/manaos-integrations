@@ -10,6 +10,10 @@ from datetime import datetime
 from pathlib import Path
 from enum import Enum
 
+from manaos_logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class NodeStatus(Enum):
     """ノードステータス"""
@@ -37,7 +41,7 @@ class DistributedExecution:
                     state = json.load(f)
                     self.nodes = state.get("nodes", {})
                     self.tasks = state.get("tasks", [])
-            except:
+            except (json.JSONDecodeError, IOError):
                 self.nodes = {}
                 self.tasks = []
         else:
@@ -111,7 +115,7 @@ class DistributedExecution:
                 node["status"] = NodeStatus.OFFLINE.value
                 self._save_state()
                 return False
-        except:
+        except Exception:
             node["status"] = NodeStatus.OFFLINE.value
             self._save_state()
             return False
@@ -234,8 +238,8 @@ class DistributedExecution:
                     node_status = response.json()
                     task.update(node_status)
                     self._save_state()
-            except:
-                pass
+            except Exception:
+                logger.debug(f"タスク {task_id} の状態更新に失敗")
         
         return task
     

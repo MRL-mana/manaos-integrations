@@ -87,7 +87,7 @@ class IntegratedLLMClient:
         self.mem0 = None
         
         if auto_save_obsidian and OBSIDIAN_AVAILABLE:
-            vault_path = os.getenv("OBSIDIAN_VAULT_PATH", "C:/Users/mana4/Documents/Obsidian Vault")
+            vault_path = os.getenv("OBSIDIAN_VAULT_PATH", str(Path.home() / "Documents" / "Obsidian Vault"))
             self.obsidian = ObsidianIntegration(vault_path)
         
         if auto_notify_slack and SLACK_AVAILABLE:

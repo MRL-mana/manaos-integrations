@@ -42,6 +42,12 @@ class ManaOSServiceManager:
             "module": "unified_api_server",
             "port": 9502,
             "description": "統合API"
+        },
+        {
+            "name": "Video Pipeline",
+            "module": "video_pipeline_mcp_server.server",
+            "port": 5112,
+            "description": "動画生成パイプライン"
         }
     ]
     

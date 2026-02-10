@@ -112,7 +112,7 @@ class RewardLoop:
 
             playbook_files = list(playbooks_dir.glob("*.md"))
             return len(playbook_files)
-        except:
+        except Exception:
             return 0
 
     def check_achievements(
@@ -151,8 +151,8 @@ class RewardLoop:
                 patterns_learned = learning_stats.get("patterns_learned", 0)
                 if patterns_learned >= 3:
                     failure_patterns_learned = True
-        except:
-            pass
+        except Exception:
+            logger.debug("失敗パターンのAPI取得に失敗")
 
         try:
             # Metrics Collectorから統計を取得
@@ -160,8 +160,8 @@ class RewardLoop:
             if response.status_code == 200:
                 metrics_stats = response.json()
                 # TODO: 週次比較で成功率向上をチェック
-        except:
-            pass
+        except Exception:
+            logger.debug("メトリクスサマリーAPIの取得に失敗")
 
         # 今日のカウントを記録
         today_record = next(
