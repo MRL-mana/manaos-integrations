@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#080816">
+<title>Remi Wallpaper</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  width:100%;height:100%;overflow:hidden;
+  touch-action:none;
+}
+body{
+  background:linear-gradient(180deg,#080816 0%,#0d1030 30%,#141852 60%,#0d1030 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  padding-bottom:env(safe-area-inset-bottom,40px);
+  font-family:'Segoe UI',system-ui,sans-serif;
+  -webkit-user-select:none;user-select:none;
+  transition:background 3s ease;
+}
+
+/* === Time-based background === */
+body.morning{background:linear-gradient(180deg,#1a1a40 0%,#3a2a6e 20%,#e07040 50%,#ffc070 80%,#ffe0a0 100%)}
+body.day{background:linear-gradient(180deg,#1a3a6a 0%,#2a5a9a 30%,#4a8ad0 60%,#70b0e0 100%)}
+body.evening{background:linear-gradient(180deg,#0a0820 0%,#2a1040 20%,#6a2050 45%,#d06040 70%,#f0a050 100%)}
+body.night{background:linear-gradient(180deg,#050510 0%,#0a0a20 30%,#0d0d30 60%,#0a0a20 100%)}
+
+/* === Stars (night) === */
+.stars{position:fixed;top:0;left:0;width:100%;height:60%;pointer-events:none;z-index:0;opacity:0;transition:opacity 2s}
+body.night .stars,body:not(.morning):not(.day):not(.evening) .stars{opacity:1}
+body.evening .stars{opacity:0.4}
+.star{
+  position:absolute;border-radius:50%;background:#fff;
+  animation:twinkle var(--dur) var(--delay) infinite ease-in-out;
+}
+@keyframes twinkle{
+  0%,100%{opacity:0.2;transform:scale(0.8)}
+  50%{opacity:1;transform:scale(1.2)}
+}
+
+/* === Shooting star === */
+.shooting-star{
+  position:fixed;width:80px;height:1px;
+  background:linear-gradient(90deg,rgba(255,255,255,0.8),transparent);
+  opacity:0;z-index:1;pointer-events:none;
+  transform:rotate(-35deg);
+}
+@keyframes shoot{
+  0%{opacity:0;transform:rotate(-35deg) translateX(0)}
+  10%{opacity:1}
+  100%{opacity:0;transform:rotate(-35deg) translateX(300px)}
+}
+
+/* === Particles === */
+.particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.particle{
+  position:absolute;border-radius:50%;
+  animation:drift var(--dur) var(--delay) infinite ease-in-out;
+}
+@keyframes drift{
+  0%{opacity:0;transform:translateY(0) translateX(0) scale(0.5)}
+  25%{opacity:0.8}
+  50%{transform:translateY(-40px) translateX(15px) scale(1)}
+  75%{opacity:0.6}
+  100%{opacity:0;transform:translateY(-80px) translateX(-10px) scale(0.3)}
+}
+
+/* === Aurora (subtle) === */
+.aurora{
+  position:fixed;top:5%;left:-10%;width:120%;height:30%;
+  background:linear-gradient(90deg,
+    transparent 0%,rgba(102,126,234,0.06) 20%,
+    rgba(159,122,234,0.08) 40%,rgba(102,126,234,0.06) 60%,
+    rgba(76,175,80,0.04) 80%,transparent 100%);
+  filter:blur(40px);
+  animation:auroraShift 20s ease-in-out infinite;
+  pointer-events:none;z-index:0;
+}
+@keyframes auroraShift{
+  0%,100%{transform:translateX(-5%) scaleY(1)}
+  33%{transform:translateX(5%) scaleY(1.3)}
+  66%{transform:translateX(-3%) scaleY(0.8)}
+}
+
+/* === Ground glow === */
+.ground{
+  position:fixed;bottom:0;left:0;width:100%;height:120px;
+  background:radial-gradient(ellipse at 50% 100%,rgba(102,126,234,0.08) 0%,transparent 70%);
+  pointer-events:none;z-index:1;
+}
+
+/* === Character === */
+.char-container{
+  position:relative;z-index:10;
+  margin-bottom:30px;
+  animation:charFloat 5s ease-in-out infinite;
+}
+@keyframes charFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-18px)}
+}
+
+/* Shadow */
+.char-shadow{
+  width:100px;height:14px;margin:10px auto 0;
+  background:radial-gradient(ellipse,rgba(102,126,234,0.25),transparent);
+  border-radius:50%;
+  animation:shadowPulse 5s ease-in-out infinite;
+}
+@keyframes shadowPulse{
+  0%,100%{transform:scaleX(1);opacity:0.5}
+  50%{transform:scaleX(0.6);opacity:0.2}
+}
+
+/* Main body group */
+.char-body{
+  position:relative;width:140px;height:165px;
+  display:flex;flex-direction:column;align-items:center;
+}
+
+/* Head */
+.head{
+  position:relative;width:120px;height:112px;
+  background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  border-radius:60px 60px 52px 52px;
+  box-shadow:0 0 40px rgba(102,126,234,0.35),inset 0 -6px 20px rgba(0,0,0,0.12);
+  animation:breathe 3.5s ease-in-out infinite;
+  z-index:2;
+}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
+
+/* Cheeks */
+.head::before,.head::after{
+  content:'';position:absolute;bottom:26px;width:20px;height:12px;
+  border-radius:50%;opacity:0;transition:opacity 1s;
+}
+.head::before{left:12px;background:rgba(255,150,180,0.5)}
+.head::after{right:12px;background:rgba(255,150,180,0.5)}
+.happy .head::before,.happy .head::after{opacity:1}
+
+/* Hair */
+.hair{
+  position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  width:130px;height:52px;
+  background:linear-gradient(135deg,#5a67d8 0%,#6b46c1 60%,#553c9a 100%);
+  border-radius:65px 65px 35px 35px;
+  z-index:3;
+  box-shadow:0 -4px 20px rgba(90,103,216,0.25);
+}
+.hair-strand{
+  position:absolute;top:12px;width:9px;
+  background:linear-gradient(180deg,#6b46c1,#9f7aea);
+  border-radius:0 0 5px 5px;z-index:4;
+}
+.hair-strand:nth-child(1){left:18px;height:40px;transform:rotate(-12deg)}
+.hair-strand:nth-child(2){right:18px;height:40px;transform:rotate(12deg)}
+.hair-strand:nth-child(3){left:50%;transform:translateX(-50%) rotate(2deg);height:32px}
+
+/* Ahoge */
+.ahoge{
+  position:absolute;top:-24px;left:50%;
+  width:4px;height:28px;
+  background:linear-gradient(180deg,#b794f6,#667eea);
+  border-radius:2px;
+  transform-origin:bottom center;
+  animation:ahogeWave 2.5s ease-in-out infinite;
+  z-index:5;
+}
+.ahoge::after{
+  content:'';position:absolute;top:-8px;left:-5px;
+  width:14px;height:14px;
+  background:radial-gradient(circle,#c4b5fd,#818cf8);
+  border-radius:50%;
+  box-shadow:0 0 14px rgba(196,181,253,0.7);
+  animation:orbPulse 2.5s ease-in-out infinite;
+}
+@keyframes ahogeWave{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+@keyframes orbPulse{0%,100%{box-shadow:0 0 10px rgba(196,181,253,0.5);transform:scale(1)}50%{box-shadow:0 0 22px rgba(196,181,253,1);transform:scale(1.1)}}
+
+/* Eyes */
+.eyes{
+  position:absolute;top:40px;left:50%;transform:translateX(-50%);
+  display:flex;gap:26px;z-index:6;
+}
+.eye{
+  position:relative;width:22px;height:24px;
+  background:radial-gradient(circle at 40% 35%,#fff 0%,#eef 100%);
+  border-radius:50%;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,0.08);
+}
+.pupil{
+  position:absolute;top:6px;left:6px;width:12px;height:12px;
+  background:radial-gradient(circle at 35% 35%,#7c3aed 0%,#312e81 70%);
+  border-radius:50%;
+  animation:look 8s ease-in-out infinite;
+  transition:transform 0.3s;
+}
+.pupil::after{
+  content:'';position:absolute;top:1px;left:2px;
+  width:5px;height:5px;background:rgba(255,255,255,0.9);border-radius:50%;
+}
+.pupil::before{
+  content:'';position:absolute;bottom:2px;right:1px;
+  width:3px;height:3px;background:rgba(255,255,255,0.4);border-radius:50%;
+}
+@keyframes look{
+  0%,20%,100%{transform:translate(0,0)}
+  25%,35%{transform:translate(3px,-1px)}
+  40%,55%{transform:translate(-3px,1px)}
+  60%,80%{transform:translate(1px,0)}
+  85%,95%{transform:translate(-1px,-1px)}
+}
+
+/* Blink */
+.eye-lid{
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,#667eea,#764ba2);
+  border-radius:50%;
+  transform:scaleY(0);transform-origin:top;
+  animation:blink 5s ease-in-out infinite;
+  z-index:1;
+}
+@keyframes blink{0%,93%,100%{transform:scaleY(0)}95.5%,97.5%{transform:scaleY(1)}}
+
+/* Mouth */
+.mouth{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:6}
+.mouth-inner{
+  width:14px;height:7px;
+  border-bottom:3px solid rgba(45,27,105,0.8);
+  border-radius:0 0 10px 10px;
+  transition:all 0.8s ease;
+}
+.happy .mouth-inner{width:18px;height:10px;border-radius:0 0 12px 12px}
+.alert .mouth-inner{width:10px;height:10px;border:2px solid rgba(45,27,105,0.7);border-radius:50%}
+.sleep .mouth-inner{width:12px;height:2px;border:none;background:rgba(45,27,105,0.5);border-radius:2px}
+
+/* Sleep eyes */
+.sleep .eye-lid{animation:none;transform:scaleY(1)}
+
+/* Mini body */
+.torso{
+  width:70px;height:48px;margin-top:-6px;
+  background:linear-gradient(180deg,#7c3aed 0%,#667eea 100%);
+  border-radius:12px 12px 28px 28px;
+  box-shadow:0 6px 20px rgba(102,126,234,0.25);
+  position:relative;z-index:1;
+}
+
+/* Arms */
+.arm{
+  position:absolute;top:6px;width:18px;height:30px;
+  background:linear-gradient(180deg,#7c3aed,#667eea);
+  border-radius:9px;z-index:0;
+}
+.arm-l{left:-12px;animation:armL 4s ease-in-out infinite}
+.arm-r{right:-12px;animation:armR 4s ease-in-out infinite}
+@keyframes armL{0%,100%{transform:rotate(8deg)}50%{transform:rotate(-8deg)}}
+@keyframes armR{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+
+/* Wave animation for happy state */
+.happy .arm-r{animation:wave 1.5s ease-in-out 3}
+@keyframes wave{
+  0%,100%{transform:rotate(-8deg)}
+  25%{transform:rotate(-35deg)}
+  75%{transform:rotate(-20deg)}
+}
+
+/* Aura rings */
+.aura-ring{
+  position:absolute;top:50%;left:50%;
+  border:1.5px solid rgba(102,126,234,0.1);
+  border-radius:50%;pointer-events:none;
+  animation:auraRotate var(--speed) linear infinite;
+}
+.aura-ring:nth-child(1){width:180px;height:180px;transform:translate(-50%,-50%);--speed:10s}
+.aura-ring:nth-child(2){width:220px;height:220px;transform:translate(-50%,-50%);--speed:15s;animation-direction:reverse;border-color:rgba(159,122,234,0.08)}
+.aura-ring::before{
+  content:'';position:absolute;top:-4px;left:50%;
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(102,126,234,0.5);
+  box-shadow:0 0 8px rgba(102,126,234,0.5);
+}
+@keyframes auraRotate{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+/* Zzz */
+.zzz-wrap{display:none;position:absolute;top:-5px;right:-25px;z-index:10}
+.sleep .zzz-wrap{display:block}
+.zzz{
+  position:absolute;font-size:16px;color:#a78bfa;opacity:0;
+  animation:zFloat 3.5s ease-in-out infinite;
+}
+.zzz:nth-child(1){top:0;right:0;animation-delay:0s}
+.zzz:nth-child(2){top:-12px;right:8px;font-size:12px;animation-delay:1.2s}
+.zzz:nth-child(3){top:-22px;right:2px;font-size:9px;animation-delay:2.4s}
+@keyframes zFloat{0%{opacity:0;transform:translateY(0)}30%{opacity:0.8}100%{opacity:0;transform:translateY(-30px)}}
+
+/* === Status bar (top) === */
+.status-bar{
+  position:fixed;top:0;left:0;right:0;
+  padding:env(safe-area-inset-top,28px) 16px 8px;
+  display:flex;justify-content:space-between;align-items:center;
+  z-index:20;
+  background:linear-gradient(180deg,rgba(0,0,0,0.3),transparent);
+}
+.sb-item{
+  font-size:10px;color:rgba(255,255,255,0.5);
+  display:flex;align-items:center;gap:4px;
+}
+.sb-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.sb-online{background:#4caf50;box-shadow:0 0 4px #4caf50}
+.sb-offline{background:#f44336;box-shadow:0 0 4px #f44336}
+.sb-warn{background:#ff9800;box-shadow:0 0 4px #ff9800}
+
+/* === Speech bubble === */
+.speech{
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-80%);
+  max-width:220px;padding:10px 16px;
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:16px;
+  font-size:13px;color:rgba(255,255,255,0.8);
+  text-align:center;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  opacity:0;transform:translate(-50%,-80%) scale(0.9);
+  transition:opacity 0.6s,transform 0.6s;
+  z-index:15;pointer-events:none;
+}
+.speech.show{opacity:1;transform:translate(-50%,-80%) scale(1)}
+.speech::after{
+  content:'';position:absolute;bottom:-8px;left:50%;
+  transform:translateX(-50%) rotate(45deg);
+  width:14px;height:14px;
+  background:rgba(255,255,255,0.07);
+  border-right:1px solid rgba(255,255,255,0.1);
+  border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+/* === Tap ripple === */
+.ripple{
+  position:fixed;border-radius:50%;z-index:50;
+  background:radial-gradient(circle,rgba(183,148,246,0.4),transparent);
+  pointer-events:none;
+  animation:rippleGrow 0.8s ease-out forwards;
+}
+@keyframes rippleGrow{
+  0%{width:0;height:0;opacity:1}
+  100%{width:150px;height:150px;opacity:0;margin:-75px 0 0 -75px}
+}
+
+/* === Alert state colors === */
+.alert .head{box-shadow:0 0 40px rgba(255,152,0,0.35),inset 0 -6px 20px rgba(0,0,0,0.12)}
+.alert .ahoge::after{background:radial-gradient(circle,#ffb74d,#ff9800);box-shadow:0 0 14px rgba(255,152,0,0.7)}
+
+.sleep .head{box-shadow:0 0 25px rgba(102,126,234,0.15),inset 0 -6px 20px rgba(0,0,0,0.12)}
+.sleep .ahoge{animation:ahogeWave 4s ease-in-out infinite}
+
+/* === Clock === */
+.clock{
+  position:fixed;bottom:env(safe-area-inset-bottom,16px);left:50%;
+  transform:translateX(-50%);
+  font-size:48px;font-weight:200;color:rgba(255,255,255,0.7);
+  letter-spacing:4px;z-index:15;pointer-events:none;
+  text-shadow:0 0 20px rgba(102,126,234,0.3);
+}
+.clock-date{
+  text-align:center;font-size:12px;color:rgba(255,255,255,0.35);
+  letter-spacing:2px;margin-top:2px;
+}
+</style>
+</head>
+<body>
+
+<!-- Stars -->
+<div class="stars" id="stars"></div>
+
+<!-- Shooting star -->
+<div class="shooting-star" id="shootingStar"></div>
+
+<!-- Aurora -->
+<div class="aurora"></div>
+
+<!-- Particles -->
+<div class="particles" id="particles"></div>
+
+<!-- Ground glow -->
+<div class="ground"></div>
+
+<!-- Status bar -->
+<div class="status-bar">
+  <div class="sb-item" id="sb-pc"><span class="sb-dot sb-offline"></span> PC</div>
+  <div class="sb-item" id="sb-svc">-- services</div>
+  <div class="sb-item" id="sb-gpu">GPU --%</div>
+</div>
+
+<!-- Speech bubble -->
+<div class="speech" id="speech"></div>
+
+<!-- Character -->
+<div class="char-container" id="charContainer" ontouchstart="onTouch(event)" onclick="onTouch(event)">
+  <div class="aura-ring"></div>
+  <div class="aura-ring"></div>
+  <div class="char-body" id="charBody">
+    <div class="hair">
+      <div class="hair-strand"></div>
+      <div class="hair-strand"></div>
+      <div class="hair-strand"></div>
+    </div>
+    <div class="ahoge"></div>
+    <div class="zzz-wrap">
+      <div class="zzz">z</div><div class="zzz">z</div><div class="zzz">z</div>
+    </div>
+    <div class="head">
+      <div class="eyes">
+        <div class="eye"><div class="pupil"></div><div class="eye-lid"></div></div>
+        <div class="eye"><div class="pupil"></div><div class="eye-lid"></div></div>
+      </div>
+      <div class="mouth"><div class="mouth-inner"></div></div>
+    </div>
+    <div class="torso">
+      <div class="arm arm-l"></div>
+      <div class="arm arm-r"></div>
+    </div>
+  </div>
+  <div class="char-shadow"></div>
+</div>
+
+<!-- Clock -->
+<div class="clock" id="clock">
+  <div id="clockTime">00:00</div>
+  <div class="clock-date" id="clockDate"></div>
+</div>
+
+<script>
+const P = new URLSearchParams(location.search);
+const API = P.get('api') || `${location.protocol}//${location.hostname}:5050`;
+const TOKEN = P.get('token') || '';
+const body = document.body;
+const charBody = document.getElementById('charBody');
+const speech = document.getElementById('speech');
+
+// === Create stars ===
+const starsEl = document.getElementById('stars');
+for (let i = 0; i < 60; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  s.style.left = Math.random() * 100 + '%';
+  s.style.top = Math.random() * 100 + '%';
+  const size = 1 + Math.random() * 2;
+  s.style.width = size + 'px';
+  s.style.height = size + 'px';
+  s.style.setProperty('--dur', (2 + Math.random() * 5) + 's');
+  s.style.setProperty('--delay', (Math.random() * 5) + 's');
+  starsEl.appendChild(s);
+}
+
+// === Create particles ===
+const particlesEl = document.getElementById('particles');
+for (let i = 0; i < 20; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.left = Math.random() * 100 + '%';
+  p.style.top = 30 + Math.random() * 70 + '%';
+  const size = 2 + Math.random() * 3;
+  p.style.width = size + 'px';
+  p.style.height = size + 'px';
+  p.style.setProperty('--dur', (4 + Math.random() * 6) + 's');
+  p.style.setProperty('--delay', (Math.random() * 6) + 's');
+  const hue = 240 + Math.random() * 60;
+  p.style.background = `hsla(${hue},70%,70%,${0.2 + Math.random() * 0.3})`;
+  particlesEl.appendChild(p);
+}
+
+// === Shooting star ===
+const shootEl = document.getElementById('shootingStar');
+function triggerShootingStar() {
+  shootEl.style.top = (5 + Math.random() * 30) + '%';
+  shootEl.style.left = (Math.random() * 60) + '%';
+  shootEl.style.animation = 'none';
+  shootEl.offsetHeight;
+  shootEl.style.animation = 'shoot 1.2s ease-out forwards';
+}
+setInterval(() => { if (Math.random() < 0.3) triggerShootingStar(); }, 8000);
+setTimeout(triggerShootingStar, 3000);
+
+// === Clock ===
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('clockTime').textContent = h + ':' + m;
+  const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  document.getElementById('clockDate').textContent =
+    `${days[now.getDay()]} ${months[now.getMonth()]} ${now.getDate()}`;
+  return now.getHours();
+}
+
+// === Time-of-day theme ===
+function updateTheme(hour) {
+  body.classList.remove('morning','day','evening','night');
+  if (hour >= 5 && hour < 8) body.classList.add('morning');
+  else if (hour >= 8 && hour < 17) body.classList.add('day');
+  else if (hour >= 17 && hour < 20) body.classList.add('evening');
+  else body.classList.add('night');
+}
+
+// === Character state ===
+let currentState = 'happy';
+function setState(s) {
+  charBody.classList.remove('happy','alert','sleep');
+  charBody.classList.add(s);
+  currentState = s;
+}
+
+// === Speech ===
+let speechTimer = null;
+function say(text, dur = 4000) {
+  if (speechTimer) clearTimeout(speechTimer);
+  speech.textContent = text;
+  speech.classList.add('show');
+  speechTimer = setTimeout(() => speech.classList.remove('show'), dur);
+}
+
+const GREETINGS_JP = [
+  'おはようございます、指揮官！',
+  'システム監視中です！',
+  'ご用はありますか？',
+  'すべて順調です！',
+  'いつでもスタンバイ！',
+  'お疲れ様です！',
+  'PCを見守っています！',
+];
+const ALERT_JP = ['注意：問題が検出されました', 'サービスが一部停止中です', 'チェックが必要です'];
+const SLEEP_JP = ['zzz...', 'おやすみなさい...', 'スリープ中...'];
+const MORNING_JP = ['おはようございます！', '今日も頑張りましょう！', '朝のチェック完了！'];
+const EVENING_JP = ['お疲れ様です！', '今日もお疲れ様でした', 'ゆっくり休んでください'];
+
+function randomSpeech() {
+  if (speech.classList.contains('show')) return;
+  const hour = new Date().getHours();
+  let pool;
+  if (currentState === 'sleep') pool = SLEEP_JP;
+  else if (currentState === 'alert') pool = ALERT_JP;
+  else if (hour >= 5 && hour < 9) pool = MORNING_JP;
+  else if (hour >= 18 && hour < 23) pool = EVENING_JP;
+  else pool = GREETINGS_JP;
+  say(pool[Math.floor(Math.random() * pool.length)], 3500);
+}
+
+// === Touch interaction ===
+let lastTap = 0;
+function onTouch(e) {
+  e.preventDefault();
+  const x = e.touches ? e.touches[0].clientX : e.clientX;
+  const y = e.touches ? e.touches[0].clientY : e.clientY;
+
+  // Ripple
+  const r = document.createElement('div');
+  r.className = 'ripple';
+  r.style.left = x + 'px';
+  r.style.top = y + 'px';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 800);
+
+  // Bounce
+  const container = document.getElementById('charContainer');
+  container.style.animation = 'none';
+  container.offsetHeight;
+  container.style.animation = '';
+
+  // Speech
+  const now = Date.now();
+  const tapMsgs = ['はい！','なんですか？','指揮官！','ここにいます！','呼びましたか？','何かお手伝いしましょうか？'];
+  if (now - lastTap < 400) {
+    say('えへへ >///<', 2000);
+  } else {
+    say(tapMsgs[Math.floor(Math.random() * tapMsgs.length)], 2500);
+  }
+  lastTap = now;
+}
+
+// === Fetch API status ===
+async function fetchStatus() {
+  const sbPC = document.getElementById('sb-pc');
+  const sbSvc = document.getElementById('sb-svc');
+  const sbGPU = document.getElementById('sb-gpu');
+
+  try {
+    const headers = TOKEN ? {'Authorization': 'Bearer ' + TOKEN} : {};
+    const opts = {headers, signal: AbortSignal.timeout(5000)};
+
+    const [healthRes, statusRes] = await Promise.all([
+      fetch(API + '/health', opts).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(API + '/status', opts).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
+
+    if (!healthRes) throw new Error('offline');
+
+    sbPC.innerHTML = '<span class="sb-dot sb-online"></span> PC Online';
+
+    // GPU
+    if (statusRes) {
+      const gpu = statusRes.gpu_usage_percent ?? statusRes.gpu?.utilization ?? '--';
+      sbGPU.textContent = `GPU ${gpu}%`;
+    }
+
+    // Services
+    let svcOnline = 0, svcTotal = 0;
+    try {
+      const svcRes = await fetch(API + '/manaos/services', {headers, signal: AbortSignal.timeout(5000)});
+      if (svcRes.ok) {
+        const d = await svcRes.json();
+        svcOnline = d.online || 0;
+        svcTotal = d.total || 0;
+      }
+    } catch(e) {}
+
+    if (svcTotal > 0) {
+      const dot = svcOnline < svcTotal * 0.5 ? 'sb-warn' : 'sb-online';
+      sbSvc.innerHTML = `<span class="sb-dot ${dot}"></span> ${svcOnline}/${svcTotal}`;
+    }
+
+    // State
+    const hour = new Date().getHours();
+    if (hour >= 1 && hour < 5) setState('sleep');
+    else if (svcTotal > 0 && svcOnline < svcTotal * 0.5) setState('alert');
+    else setState('happy');
+
+  } catch(e) {
+    sbPC.innerHTML = '<span class="sb-dot sb-offline"></span> Offline';
+    sbSvc.textContent = '';
+    sbGPU.textContent = '';
+    setState('alert');
+  }
+}
+
+// === Init ===
+const hour = updateClock();
+updateTheme(hour);
+setInterval(() => { const h = updateClock(); updateTheme(h); }, 10000);
+
+fetchStatus();
+setInterval(fetchStatus, 30000);
+setInterval(randomSpeech, 20000);
+setTimeout(() => say('指揮官、レミはここにいます！', 3500), 2000);
+</script>
+</body>
+</html>

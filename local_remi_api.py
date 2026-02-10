@@ -382,6 +382,19 @@ async def remi_live(token: str = Query(""), mode: str = Query("standalone")):
         return HTMLResponse("<h1>Character file not found</h1>", status_code=404)
 
 
+@app.get("/remi-wallpaper", response_class=HTMLResponse)
+async def remi_wallpaper(token: str = Query("")):
+    """Full-screen live wallpaper with animated Remi + clock + sky"""
+    if token != API_TOKEN:
+        return HTMLResponse("<h3 style='color:red'>Auth Error</h3>", status_code=401)
+    wp_path = os.path.join(os.path.dirname(__file__), "remi_wallpaper.html")
+    try:
+        with open(wp_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return HTMLResponse("<h1>Wallpaper file not found</h1>", status_code=404)
+
+
 @app.get("/widget", response_class=HTMLResponse)
 async def widget(token: str = Query("")):
     """Compact widget view for Android home screen (token via query param)"""
