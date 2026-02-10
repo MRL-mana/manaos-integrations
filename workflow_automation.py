@@ -3,9 +3,8 @@ ManaOSワークフロー自動化モジュール
 複数の統合システムを組み合わせた自動化ワークフロー
 """
 
-import os
 import json
-from typing import Dict, List, Any, Optional, Callable
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 from pathlib import Path
 
@@ -23,7 +22,6 @@ except (ImportError, NameError):
     LangChainIntegration = None
 from mem0_integration import Mem0Integration
 from obsidian_integration import ObsidianIntegration
-from pathlib import Path
 
 
 class WorkflowAutomation:
@@ -43,7 +41,8 @@ class WorkflowAutomation:
                 self.obsidian = ObsidianIntegration(str(default_vault))
             else:
                 self.obsidian = ObsidianIntegration(str(Path.cwd()))
-        except Exception:
+        except Exception as e:
+            self.logger.debug("Obsidian統合初期化スキップ: %s", e)
             self.obsidian = None
         
         self.workflows = {}
@@ -56,7 +55,8 @@ class WorkflowAutomation:
             try:
                 with open(workflow_file, 'r', encoding='utf-8') as f:
                     self.workflows = json.load(f)
-            except:
+            except (json.JSONDecodeError, OSError) as e:
+                self.logger.warning("workflows.json 読み込み失敗: %s", e)
                 self.workflows = {}
     
     def _save_workflows(self):

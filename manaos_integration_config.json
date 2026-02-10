@@ -94,6 +94,11 @@
       "port": 5120,
       "name": "SSOT API",
       "description": "SSOT API"
+    },
+    "mem0": {
+      "port": 5121,
+      "name": "Mem0",
+      "description": "外部Mem0ストレージ連携サービス"
     }
   },
   "integration_services": {
@@ -147,4 +152,3 @@
   "retry_attempts": 3,
   "retry_delay": 1.0
 }
-
