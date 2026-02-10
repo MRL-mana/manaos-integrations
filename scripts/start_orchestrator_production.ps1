@@ -1,0 +1,25 @@
+# ask_orchestrator 本格運用スタート
+# 5106 と Portal の起動確認 → 問題なければ「本格運用の土台は起動しています」と表示
+# 使い方: .\scripts\start_orchestrator_production.ps1
+
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$rootDir = Split-Path -Parent $scriptDir
+Set-Location $rootDir
+
+$env:ORCHESTRATOR_URL = "http://localhost:5106"
+$env:PORTAL_URL = "http://localhost:5108"
+
+Write-Host "ask_orchestrator 本格運用 起動確認" -ForegroundColor Cyan
+Write-Host ""
+
+python scripts/check_orchestrator_production_ready.py
+$exitCode = $LASTEXITCODE
+
+if ($exitCode -eq 0) {
+    Write-Host ""
+    Write-Host "次のステップ:" -ForegroundColor Green
+    Write-Host "  - Slack 通知: .env に SLACK_WEBHOOK_URL または SLACK_BOT_TOKEN を設定"
+    Write-Host "  - 集計: GET http://localhost:5108/api/orchestrator/stats"
+    Write-Host "  - 事故防止テスト: python scripts/test_ask_orchestrator_safety.py"
+}
+exit $exitCode

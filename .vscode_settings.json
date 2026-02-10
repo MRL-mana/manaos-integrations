@@ -1,0 +1,46 @@
+{
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.python",
+    "editor.formatOnSave": true
+  },
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "manaos.enabled": true,
+  "manaos.integrationPath": "${workspaceFolder}",
+  "manaos.apiUrl": "http://localhost:9500",
+  "manaos.memory.enabled": true,
+  "manaos.memory.type": "mrl",
+  "manaos.memory.apiUrl": "http://localhost:5103",
+  "manaos.llmRouting.enabled": true,
+  "manaos.llmRouting.apiUrl": "http://localhost:5111",
+  "manaos.autoStart": true,
+  "manaos.services": {
+    "memory": {
+      "port": 5103,
+      "autoStart": true,
+      "module": "mrl_memory_system"
+    },
+    "learning": {
+      "port": 5104,
+      "autoStart": true,
+      "module": "learning_system"
+    },
+    "unifiedApi": {
+      "port": 9500,
+      "autoStart": true,
+      "module": "unified_api_mcp_server"
+    },
+    "llmRouting": {
+      "port": 5111,
+      "autoStart": true,
+      "module": "llm_routing_mcp_server"
+    }
+  },
+  "manaos.extensions": {
+    "codeCompletion": true,
+    "errorDiagnostics": true,
+    "memoryAwareSuggestions": true,
+    "learningBasedOptimization": true
+  }
+}

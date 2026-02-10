@@ -17,6 +17,19 @@ from datetime import datetime
 from pathlib import Path
 
 
+def _log(base_dir: Path, message: str, is_error: bool = False) -> None:
+    """監視ログを logs/phase2_auto_YYYYMMDD.log に追記する。"""
+    log_dir = base_dir / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = log_dir / f"phase2_auto_{datetime.now().strftime('%Y-%m-%d')}.log"
+    try:
+        with open(log_file, "a", encoding="utf-8", errors="replace") as f:
+            prefix = "ERROR" if is_error else "INFO"
+            f.write(f"{datetime.now().isoformat()} [{prefix}] {message}\n")
+    except Exception:
+        pass
+
+
 def _snapshot_path(base_dir: Path) -> Path:
     now = datetime.now()
     date_dir = base_dir / "snapshots" / now.strftime("%Y-%m-%d")
@@ -32,6 +45,7 @@ def main() -> int:
 
     if not snapshot_script.exists():
         print("[ERROR] Missing required file: phase1_metrics_snapshot.py")
+        _log(base_dir, "Missing phase1_metrics_snapshot.py", is_error=True)
         return 2
 
     # Generate snapshot
@@ -47,6 +61,7 @@ def main() -> int:
         )
     except Exception as e:
         print(f"[ERROR] Snapshot generation failed: {e}")
+        _log(base_dir, f"Snapshot generation failed: {e}", is_error=True)
         return 2
 
     if p.returncode != 0:
@@ -57,9 +72,11 @@ def main() -> int:
         if p.stderr.strip():
             print("--- stderr ---")
             print(p.stderr.strip()[:4000])
+        _log(base_dir, f"Snapshot generator exit code {p.returncode}", is_error=True)
         return int(p.returncode) if int(p.returncode) != 0 else 2
 
     print(f"[OK] Snapshot saved: {out_path}")
+    _log(base_dir, f"Snapshot saved: {out_path}")
     return 0
 
 

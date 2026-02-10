@@ -1,0 +1,35 @@
+{
+  "id": "inbox_scan",
+  "name": "Inbox スキャン（list_only / 候補出力）",
+  "description": "Drive やファイル秘書の Inbox をスキャンし、整理候補をリストアップする。実際の移動は MoltBot list_only または手動承認後に実行",
+  "action_class": "C2",
+  "steps": [
+    {
+      "order": 1,
+      "action": "tool",
+      "tool_name": "file_secretary_inbox_status",
+      "params": {},
+      "on_failure": "log_and_continue"
+    },
+    {
+      "order": 2,
+      "action": "tool",
+      "tool_name": "moltbot_submit_plan",
+      "params": {
+        "plan_type": "list_only",
+        "user_hint": "Inbox 一覧取得と整理候補の提案のみ。ファイル移動は実行しない。"
+      },
+      "on_failure": "log_and_stop"
+    }
+  ],
+  "conditions": {
+    "schedule": "0 8,12,18 * * *",
+    "max_daily_runs": 3,
+    "quiet_hours_skip": true
+  },
+  "safety": {
+    "no_destructive": true,
+    "list_only_or_append_only": true,
+    "description": "moltbot_submit_plan は list_only に限定。追記・移動は別承認"
+  }
+}

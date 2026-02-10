@@ -13,9 +13,17 @@ from pathlib import Path
 from flask import Flask, jsonify, render_template_string
 from flask_cors import CORS
 
+try:
+    import httpx
+
+    HTTPX_AVAILABLE = True
+except ImportError:
+    HTTPX_AVAILABLE = False
+
 # 統合オーケストレーターのインポート
 try:
     from manaos_integration_orchestrator import ManaOSIntegrationOrchestrator
+
     ORCHESTRATOR_AVAILABLE = True
 except ImportError:
     ORCHESTRATOR_AVAILABLE = False
@@ -26,12 +34,14 @@ CORS(app)
 
 orchestrator = None
 
+
 def init_orchestrator():
     """オーケストレーターを初期化"""
     global orchestrator
     if orchestrator is None and ORCHESTRATOR_AVAILABLE:
         orchestrator = ManaOSIntegrationOrchestrator()
     return orchestrator
+
 
 DASHBOARD_HTML = """
 <!DOCTYPE html>
@@ -159,57 +169,86 @@ DASHBOARD_HTML = """
 <body>
     <div class="container">
         <h1>🚀 ManaOS 統合状態ダッシュボード</h1>
-        
+
         <div class="dashboard-grid" id="dashboard">
             <!-- ダッシュボードコンテンツはJavaScriptで動的に生成 -->
         </div>
-        
+
         <button class="refresh-btn" onclick="refreshDashboard()">🔄 更新</button>
         <div class="timestamp" id="timestamp"></div>
     </div>
-    
+
     <script>
         function refreshDashboard() {
             fetch('/api/status')
                 .then(response => response.json())
                 .then(data => {
                     updateDashboard(data);
-                    document.getElementById('timestamp').textContent = 
+                    document.getElementById('timestamp').textContent =
                         '最終更新: ' + new Date(data.timestamp).toLocaleString('ja-JP');
                 })
                 .catch(error => {
                     console.error('エラー:', error);
-                    document.getElementById('dashboard').innerHTML = 
+                    document.getElementById('dashboard').innerHTML =
                         '<div class="card"><h2>エラー</h2><p>データの取得に失敗しました</p></div>';
                 });
         }
-        
+
         function updateDashboard(data) {
             const dashboard = document.getElementById('dashboard');
             dashboard.innerHTML = '';
-            
+
             // コアサービス
             const coreServices = createCard('コアサービス', data.services || {});
             dashboard.appendChild(coreServices);
-            
+
             // 自己能力システム
             const selfCapabilities = createSelfCapabilitiesCard(data);
             dashboard.appendChild(selfCapabilities);
-            
+
             // 統合システム
             const integrations = createIntegrationsCard(data);
             dashboard.appendChild(integrations);
-            
+
             // システム間連携
             const systemIntegration = createSystemIntegrationCard(data);
             dashboard.appendChild(systemIntegration);
+
+            // ask_orchestrator 集計（Portal から取得）
+            fetch('/api/orchestrator/stats')
+                .then(response => response.ok ? response.json() : null)
+                .then(stats => {
+                    if (stats && !stats.error) {
+                        const card = createOrchestratorStatsCard(stats);
+                        dashboard.appendChild(card);
+                    }
+                })
+                .catch(() => {});
         }
-        
+
+        function createOrchestratorStatsCard(stats) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = '<h2>ask_orchestrator 集計</h2>';
+            const s = stats.status || {};
+            const wrap = document.createElement('div');
+            wrap.innerHTML = `
+                <div class="status-item"><span>ok</span><span class="status-badge status-available">${s.ok || 0}</span></div>
+                <div class="status-item"><span>skill_not_found</span><span>${s.skill_not_found || 0}</span></div>
+                <div class="status-item"><span>tool_error</span><span>${s.tool_error || 0}</span></div>
+                <div class="status-item"><span>error</span><span class="status-badge status-unavailable">${s.error || 0}</span></div>
+                <div class="status-item"><span>Portal タイムアウト（直近5分）</span><span>${stats.portal_timeout_last_5min != null ? stats.portal_timeout_last_5min : '-'}</span></div>
+                <div class="status-item"><span>更新</span><span>${stats.updated_at || '-'}</span></div>
+            `;
+            card.appendChild(wrap);
+            return card;
+        }
+
         function createCard(title, data) {
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = `<h2>${title}</h2>`;
-            
+
             const summary = data.summary || {};
             const statusDiv = document.createElement('div');
             statusDiv.innerHTML = `
@@ -231,25 +270,25 @@ DASHBOARD_HTML = """
                 </div>
             `;
             card.appendChild(statusDiv);
-            
+
             return card;
         }
-        
+
         function createSelfCapabilitiesCard(data) {
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = '<h2>自己能力システム</h2>';
-            
+
             const orchestrator = data.orchestrator || {};
             const statusDiv = document.createElement('div');
-            
+
             const systems = [
                 { name: '包括的自己能力', key: 'comprehensive_self_capabilities_available' },
                 { name: '自己進化', key: 'self_evolution_available' },
                 { name: '自己保護', key: 'self_protection_available' },
                 { name: '自己管理', key: 'self_management_available' }
             ];
-            
+
             systems.forEach(system => {
                 const isAvailable = orchestrator[system.key] || false;
                 const statusItem = document.createElement('div');
@@ -262,19 +301,19 @@ DASHBOARD_HTML = """
                 `;
                 statusDiv.appendChild(statusItem);
             });
-            
+
             card.appendChild(statusDiv);
             return card;
         }
-        
+
         function createIntegrationsCard(data) {
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = '<h2>統合システム</h2>';
-            
+
             const orchestrator = data.orchestrator || {};
             const statusDiv = document.createElement('div');
-            
+
             const integrations = [
                 { name: 'Service Bridge', key: 'service_bridge_available' },
                 { name: 'Complete Integration', key: 'complete_integration_available' },
@@ -283,7 +322,7 @@ DASHBOARD_HTML = """
                 { name: '学習システム', key: 'learning_system_available' },
                 { name: '予測的メンテナンス', key: 'predictive_maintenance_available' }
             ];
-            
+
             integrations.forEach(integration => {
                 const isAvailable = orchestrator[integration.key] || false;
                 const statusItem = document.createElement('div');
@@ -296,26 +335,26 @@ DASHBOARD_HTML = """
                 `;
                 statusDiv.appendChild(statusItem);
             });
-            
+
             card.appendChild(statusDiv);
             return card;
         }
-        
+
         function createSystemIntegrationCard(data) {
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = '<h2>システム間連携</h2>';
-            
+
             const integration = data.system_integration || {};
             const integrationDiv = document.createElement('div');
             integrationDiv.className = 'integration-status';
-            
+
             const integrations = [
                 { name: '自己修復 ↔ 自己進化', key: 'self_healing_to_evolution' },
                 { name: '自己保護 ↔ 自己管理', key: 'self_protection_to_management' },
                 { name: '自己進化 ↔ 自己管理', key: 'self_evolution_to_management' }
             ];
-            
+
             integrations.forEach(item => {
                 const isActive = integration[item.key] || false;
                 const integrationItem = document.createElement('div');
@@ -326,11 +365,11 @@ DASHBOARD_HTML = """
                 `;
                 integrationDiv.appendChild(integrationItem);
             });
-            
+
             card.appendChild(integrationDiv);
             return card;
         }
-        
+
         // 初回読み込み
         refreshDashboard();
         // 30秒ごとに自動更新
@@ -340,41 +379,65 @@ DASHBOARD_HTML = """
 </html>
 """
 
-@app.route('/')
+
+@app.route("/")
 def dashboard():
     """ダッシュボードを表示"""
     return render_template_string(DASHBOARD_HTML)
 
-@app.route('/api/status', methods=['GET'])
+
+PORTAL_URL = os.getenv("PORTAL_URL", "http://localhost:5108")
+
+
+@app.route("/api/orchestrator/stats", methods=["GET"])
+def get_orchestrator_stats():
+    """ask_orchestrator 本格運用の集計を Portal から取得（プロキシ）。ダッシュボード用。"""
+    if not HTTPX_AVAILABLE:
+        return jsonify({"error": "httpx が利用できません"}), 503
+    try:
+        r = httpx.get(f"{PORTAL_URL.rstrip('/')}/api/orchestrator/stats", timeout=5)
+        if r.status_code == 200:
+            return jsonify(r.json())
+        return jsonify({"error": f"Portal returned {r.status_code}"}), r.status_code
+    except Exception as e:
+        return jsonify({"error": str(e), "hint": "Portal が起動しているか確認してください"}), 503
+
+
+@app.route("/api/status", methods=["GET"])
 def get_status():
     """統合状態を取得"""
     orchestrator = init_orchestrator()
     if not orchestrator:
-        return jsonify({
-            "error": "オーケストレーターが利用できません",
-            "timestamp": datetime.now().isoformat()
-        }), 503
-    
+        return (
+            jsonify(
+                {
+                    "error": "オーケストレーターが利用できません",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ),
+            503,
+        )
+
     try:
         status = orchestrator.get_comprehensive_status()
         return jsonify(status)
     except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }), 500
+        return jsonify({"error": str(e), "timestamp": datetime.now().isoformat()}), 500
 
-@app.route('/health', methods=['GET'])
+
+@app.route("/health", methods=["GET"])
 def health():
     """ヘルスチェック"""
-    return jsonify({
-        "status": "healthy",
-        "service": "System Integration Dashboard",
-        "timestamp": datetime.now().isoformat()
-    })
+    return jsonify(
+        {
+            "status": "healthy",
+            "service": "System Integration Dashboard",
+            "timestamp": datetime.now().isoformat(),
+        }
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     port = int(os.getenv("PORT", 9400))
     print(f"📊 ManaOS 統合状態ダッシュボード起動中... (ポート: {port})")
-    app.run(host='0.0.0.0', port=port, debug=False)
-
+    app.run(host="0.0.0.0", port=port, debug=False)

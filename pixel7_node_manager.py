@@ -36,7 +36,7 @@ timeout_config = get_timeout_config()
 app = FastAPI(title="Pixel7 Node Manager", version="1.0.0")
 
 # ピクセル7設定
-PIXEL7_HOST = os.getenv("PIXEL7_HOST", "100.127.121.20")  # Tailscale IP
+PIXEL7_HOST = os.getenv("PIXEL7_HOST", "100.84.2.125")  # Pixel 7a Tailscale IP
 PIXEL7_API_PORT = int(os.getenv("PIXEL7_API_PORT", "5122"))  # ピクセル7側のAPIポート
 PIXEL7_ADB_PORT = int(os.getenv("PIXEL7_ADB_PORT", "5555"))  # ADB接続ポート
 
@@ -58,7 +58,7 @@ class Pixel7NodeInfo:
     last_seen: Optional[datetime] = None
     resources: Dict[str, Any] = None
     capabilities: List[str] = None
-    
+
     def __post_init__(self):
         if self.resources is None:
             self.resources = {}
@@ -79,12 +79,12 @@ class CommandResult:
 
 class Pixel7NodeManager:
     """ピクセル7ノード管理クラス"""
-    
+
     def __init__(self):
         self.node_info = Pixel7NodeInfo()
         self.health_check_interval = 30  # 秒
         self.command_timeout = 60  # 秒
-        
+
     async def check_connection(self) -> bool:
         """ピクセル7への接続確認"""
         try:
@@ -95,17 +95,17 @@ class Pixel7NodeManager:
         except Exception as e:
             logger.error(f"ピクセル7接続確認失敗: {e}")
             return False
-    
+
     async def execute_command(
-        self, 
-        command: str, 
+        self,
+        command: str,
         timeout: Optional[int] = None,
         use_api: bool = True
     ) -> CommandResult:
         """ピクセル7でコマンドを実行（Android shellコマンド）"""
         start_time = datetime.now()
         timeout = timeout or self.command_timeout
-        
+
         try:
             if use_api:
                 # ピクセル7側のAPI経由で実行（推奨）
@@ -113,7 +113,7 @@ class Pixel7NodeManager:
             else:
                 # ADB経由で直接実行
                 result = await self._execute_via_adb(command, timeout)
-            
+
             execution_time = (datetime.now() - start_time).total_seconds()
             return CommandResult(
                 command=command,
@@ -140,7 +140,7 @@ class Pixel7NodeManager:
                 execution_time=execution_time,
                 timestamp=datetime.now()
             )
-    
+
     async def _execute_via_api(self, command: str, timeout: int) -> Dict[str, Any]:
         """ピクセル7側のAPI経由でコマンド実行"""
         try:
@@ -156,7 +156,7 @@ class Pixel7NodeManager:
         except httpx.RequestError as e:
             logger.warning(f"API経由実行失敗、ADB経由にフォールバック: {e}")
             return await self._execute_via_adb(command, timeout)
-    
+
     async def _execute_via_adb(self, command: str, timeout: int) -> Dict[str, Any]:
         """ADB経由でコマンド実行"""
         adb_command = [
@@ -165,7 +165,7 @@ class Pixel7NodeManager:
             "shell",
             command
         ]
-        
+
         try:
             process = await asyncio.create_subprocess_exec(
                 *adb_command,
@@ -176,7 +176,7 @@ class Pixel7NodeManager:
                 process.communicate(),
                 timeout=timeout
             )
-            
+
             return {
                 "exit_code": process.returncode,
                 "stdout": stdout.decode("utf-8", errors="ignore"),
@@ -188,7 +188,7 @@ class Pixel7NodeManager:
                 "stdout": "",
                 "stderr": f"Command timeout after {timeout} seconds"
             }
-    
+
     async def get_resources(self) -> Dict[str, Any]:
         """ピクセル7のリソース情報を取得"""
         try:
@@ -200,11 +200,11 @@ class Pixel7NodeManager:
         except Exception as e:
             logger.error(f"リソース情報取得失敗: {e}")
             return {}
-    
+
     async def health_check(self) -> Dict[str, Any]:
         """ピクセル7のヘルスチェック"""
         is_online = await self.check_connection()
-        
+
         if is_online:
             self.node_info.status = NodeStatus.ONLINE
             self.node_info.last_seen = datetime.now()
@@ -212,16 +212,16 @@ class Pixel7NodeManager:
             self.node_info.resources = resources
         else:
             self.node_info.status = NodeStatus.OFFLINE
-        
+
         return {
             "status": self.node_info.status.value,
             "last_seen": self.node_info.last_seen.isoformat() if self.node_info.last_seen else None,
             "resources": self.node_info.resources
         }
-    
+
     async def transfer_file(
-        self, 
-        local_path: str, 
+        self,
+        local_path: str,
         remote_path: str,
         direction: str = "upload"
     ) -> Dict[str, Any]:
@@ -245,14 +245,14 @@ class Pixel7NodeManager:
                     remote_path,
                     local_path
                 ]
-            
+
             process = await asyncio.create_subprocess_exec(
                 *adb_command,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
             stdout, stderr = await process.communicate()
-            
+
             return {
                 "success": process.returncode == 0,
                 "stdout": stdout.decode("utf-8", errors="ignore"),
@@ -332,4 +332,3 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PIXEL7_NODE_MANAGER_PORT", "5123"))
     uvicorn.run(app, host="0.0.0.0", port=port)
-

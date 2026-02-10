@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#0f0f12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="/companion/manifest.json">
+  <title>ManaOS コンパニオン（Pixel 7）</title>
+  <style>
+    :root {
+      --bg: #0f0f12;
+      --card: #1a1a20;
+      --accent: #6c5ce7;
+      --accent-dim: #5b4bc9;
+      --text: #e4e4e7;
+      --muted: #71717a;
+      --user-bubble: #2d2d35;
+      --assistant-bubble: #1e1e24;
+      --border: #2d2d35;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      padding: 12px 16px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 1.1rem; margin: 0; }
+    header p { font-size: 0.75rem; color: var(--muted); margin: 4px 0 0; }
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .msg {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #fff;
+    }
+    .msg.assistant {
+      align-self: flex-start;
+      background: var(--assistant-bubble);
+      border: 1px solid var(--border);
+    }
+    .msg.system {
+      align-self: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .msg .meta { font-size: 0.7rem; opacity: 0.8; margin-top: 4px; }
+    .input-area {
+      padding: 12px 16px;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .input-row textarea {
+      flex: 1;
+      min-height: 44px;
+      max-height: 120px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+      resize: none;
+    }
+    .input-row textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .btn.primary { background: var(--accent); color: #fff; }
+    .btn.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn.mic { width: 48px; height: 48px; padding: 0; border-radius: 50%; font-size: 1.25rem; }
+    .btn.mic.active { background: #dc2626; color: #fff; }
+    .btn.mic:not(.active) { background: var(--border); color: var(--text); }
+    .btn.small { padding: 6px 10px; font-size: 0.85rem; }
+    .status-bar {
+      font-size: 0.75rem;
+      color: var(--muted);
+      padding: 8px 16px;
+      background: var(--bg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .status-bar .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--muted);
+      display: inline-block;
+      margin-right: 4px;
+    }
+    .status-bar .dot.online { background: #22c55e; }
+    .status-bar .offline { color: #f87171; }
+    .config-collapse, .panel-collapse {
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .config-collapse summary, .panel-collapse summary { cursor: pointer; color: var(--muted); }
+    .config-collapse input, .config-collapse textarea, .panel-collapse input {
+      width: 100%;
+      padding: 6px;
+      margin-top: 4px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+    }
+    .config-collapse textarea { min-height: 60px; resize: vertical; }
+    .quick-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .device-panel { font-size: 0.85rem; max-height: 200px; overflow-y: auto; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🤖 ManaOS コンパニオン</h1>
+    <p>テキスト・音声・TTS・デバイス操作・Obsidian保存</p>
+  </header>
+
+  <div class="status-bar">
+    <span><span class="dot" id="wsDot"></span> 音声: <span id="wsStatus">未接続</span></span>
+    <span><span class="dot" id="apiDot"></span> API: <span id="apiStatus">—</span></span>
+    <span id="offlineBadge" class="offline" style="display:none;">📴 オフライン（送信はバッファへ）</span>
+  </div>
+
+  <details class="config-collapse">
+    <summary>接続設定</summary>
+    <label style="display:block; margin-top:8px;">WebSocket URL（音声）</label>
+    <input type="url" id="wsUrl" placeholder="ws://192.168.x.x:8765">
+    <label style="display:block; margin-top:8px;">API Base（空で同一ホスト）</label>
+    <input type="text" id="apiBase" placeholder="http://192.168.x.x:9500">
+    <label style="display:block; margin-top:8px;">人格・システムプロンプト（オプション）</label>
+    <textarea id="systemPrompt" placeholder="例: あなたは親しみやすいアシスタントです"></textarea>
+    <label style="display:block; margin-top:8px;">
+      <input type="checkbox" id="ttsOnDevice" checked> 応答を Pixel 7 で読み上げ
+    </label>
+  </details>
+
+  <details class="panel-collapse">
+    <summary>📊 デバイス状態</summary>
+    <div class="quick-actions">
+      <button class="btn small" id="btnDevices">デバイス一覧</button>
+      <button class="btn small" id="btnMothership">母艦リソース</button>
+      <button class="btn small" id="btnSleep">母艦スリープ</button>
+    </div>
+    <pre class="device-panel" id="devicePanel">—</pre>
+  </details>
+
+  <details class="panel-collapse">
+    <summary>⚡ クイックアクション</summary>
+    <div class="quick-actions">
+      <button class="btn small" id="btnObsidian">会話をObsidianに保存</button>
+      <span style="margin-top:4px;">
+        <label>n8n ワークフローID:</label>
+        <input type="text" id="n8nWorkflowId" placeholder="例: abc123" style="width:100px;display:inline-block;">
+        <button class="btn small" id="btnN8n">実行</button>
+      </span>
+    </div>
+  </details>
+
+  <div class="chat-area" id="chatArea"></div>
+
+  <div class="input-area">
+    <div class="input-row">
+      <textarea id="textInput" placeholder="メッセージを入力… (Enterで送信)" rows="1"></textarea>
+      <button class="btn mic" id="btnMic" title="音声入力">🎤</button>
+      <button class="btn primary" id="btnSend">送信</button>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  const chatArea = document.getElementById('chatArea');
+  const textInput = document.getElementById('textInput');
+  const btnSend = document.getElementById('btnSend');
+  const btnMic = document.getElementById('btnMic');
+  const wsUrlEl = document.getElementById('wsUrl');
+  const apiBaseEl = document.getElementById('apiBase');
+  const systemPromptEl = document.getElementById('systemPrompt');
+  const ttsOnDeviceEl = document.getElementById('ttsOnDevice');
+  const wsDot = document.getElementById('wsDot');
+  const wsStatusEl = document.getElementById('wsStatus');
+  const apiDot = document.getElementById('apiDot');
+  const apiStatusEl = document.getElementById('apiStatus');
+  const offlineBadge = document.getElementById('offlineBadge');
+  const devicePanel = document.getElementById('devicePanel');
+  const btnDevices = document.getElementById('btnDevices');
+  const btnMothership = document.getElementById('btnMothership');
+  const btnSleep = document.getElementById('btnSleep');
+  const btnObsidian = document.getElementById('btnObsidian');
+
+  const host = window.location.hostname;
+  const defaultWs = 'ws://' + host + ':8765';
+  const defaultApi = 'http://' + host + ':9500';
+  const STORAGE_KEYS = {
+    ws: 'companion_ws_url',
+    api: 'companion_api_base',
+    system: 'companion_system_prompt',
+    offlineQueue: 'companion_offline_queue'
+  };
+  try {
+    wsUrlEl.value = localStorage.getItem(STORAGE_KEYS.ws) || defaultWs;
+    apiBaseEl.value = localStorage.getItem(STORAGE_KEYS.api) || defaultApi;
+    const sp = localStorage.getItem(STORAGE_KEYS.system);
+    if (sp) systemPromptEl.value = sp;
+  } catch (_) {}
+
+  let ws = null;
+  let audioContext = null;
+  let sourceNode = null;
+  let processorNode = null;
+  let stream = null;
+  let sendBuffer = [];
+  const TARGET_SAMPLE_RATE = 16000;
+  const CHUNK_DURATION_MS = 500;
+  const CHUNK_SAMPLES = (TARGET_SAMPLE_RATE * CHUNK_DURATION_MS / 1000) | 0;
+  let messages = [];
+
+  function apiBase() {
+    const v = (apiBaseEl.value || '').trim();
+    return v || (window.location.protocol + '//' + window.location.host);
+  }
+  function isOnline() { return navigator.onLine; }
+
+  function addMsg(role, content, meta) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    let html = String(content).replace(/\n/g, '<br>');
+    if (meta) html += '<div class="meta">' + meta + '</div>';
+    div.innerHTML = html;
+    chatArea.appendChild(div);
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+
+  function floatTo16PCM(arr) {
+    const buf = new ArrayBuffer(arr.length * 2);
+    const v = new DataView(buf);
+    for (let i = 0; i < arr.length; i++) {
+      const s = Math.max(-1, Math.min(1, arr[i]));
+      v.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    }
+    return buf;
+  }
+  function resampleTo16k(inputRate, arr) {
+    if (inputRate === TARGET_SAMPLE_RATE) return arr;
+    const ratio = inputRate / TARGET_SAMPLE_RATE;
+    const outLen = Math.floor(arr.length / ratio);
+    const out = new Float32Array(outLen);
+    for (let i = 0; i < outLen; i++) {
+      const si = i * ratio;
+      const i0 = Math.floor(si);
+      const i1 = Math.min(i0 + 1, arr.length - 1);
+      const t = si - i0;
+      out[i] = arr[i0] * (1 - t) + arr[i1] * t;
+    }
+    return out;
+  }
+  function sendAudioChunk(pcm16) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const base64 = btoa(String.fromCharCode.apply(null, new Uint8Array(pcm16)));
+    ws.send(JSON.stringify({ type: 'audio', data: base64 }));
+  }
+
+  function startVoiceCapture() {
+    if (stream) return Promise.resolve();
+    return navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true } })
+      .then(function (s) {
+        stream = s;
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const inputRate = audioContext.sampleRate;
+        sourceNode = audioContext.createMediaStreamSource(stream);
+        const bufferSize = 4096;
+        processorNode = audioContext.createScriptProcessor(bufferSize, 1, 1);
+        sendBuffer = [];
+
+        processorNode.onaudioprocess = function (e) {
+          const input = e.inputBuffer.getChannelData(0);
+          const resampled = resampleTo16k(inputRate, input);
+          const pcm16 = floatTo16PCM(resampled);
+          for (let i = 0; i < pcm16.byteLength; i += 2)
+            sendBuffer.push(new DataView(pcm16).getInt16(i, true));
+        };
+
+        sourceNode.connect(processorNode);
+        var dummy = audioContext.createGain();
+        dummy.gain.value = 0;
+        processorNode.connect(dummy);
+        dummy.connect(audioContext.destination);
+
+        const iv = setInterval(function () {
+          if (sendBuffer.length >= CHUNK_SAMPLES) {
+            const chunk = sendBuffer.splice(0, CHUNK_SAMPLES);
+            const buf = new ArrayBuffer(chunk.length * 2);
+            const v = new DataView(buf);
+            chunk.forEach(function (val, i) { v.setInt16(i * 2, val, true); });
+            sendAudioChunk(buf);
+          }
+        }, CHUNK_DURATION_MS);
+        processorNode.onended = function () { clearInterval(iv); };
+        return Promise.resolve();
+      });
+  }
+
+  function stopVoiceCapture() {
+    if (processorNode) try { processorNode.disconnect(); } catch (_) {}
+    if (sourceNode) try { sourceNode.disconnect(); } catch (_) {}
+    if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+    stream = null;
+    sourceNode = null;
+    processorNode = null;
+    audioContext = null;
+    sendBuffer = [];
+  }
+
+  function playResponseAudio(base64Data) {
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    ctx.decodeAudioData(bytes.buffer).then(function (buf) {
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start(0);
+    }).catch(function (e) { console.warn('Playback decode error', e); });
+  }
+
+  function connectWs() {
+    const url = (wsUrlEl.value || '').trim();
+    if (!url) {
+      wsStatusEl.textContent = 'URL未設定';
+      return;
+    }
+    try { localStorage.setItem(STORAGE_KEYS.ws, url); } catch (_) {}
+    wsStatusEl.textContent = '接続中…';
+    ws = new WebSocket(url);
+
+    ws.onopen = function () {
+      wsDot.className = 'dot online';
+      wsStatusEl.textContent = '接続済み';
+      startVoiceCapture().then(function () {
+        addMsg('system', '🎤 音声入力OK。「レミ」のあとに話しかけてください。', null);
+      });
+    };
+    ws.onmessage = function (ev) {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === 'audio' && msg.data) {
+          playResponseAudio(msg.data);
+          addMsg('assistant', '🔊 音声で応答しました', null);
+        }
+      } catch (e) { console.warn(e); }
+    };
+    ws.onclose = function () {
+      wsDot.className = 'dot';
+      wsStatusEl.textContent = '未接続';
+      stopVoiceCapture();
+      btnMic.classList.remove('active');
+    };
+    ws.onerror = function () { wsStatusEl.textContent = 'エラー'; };
+  }
+
+  function disconnectWs() {
+    if (ws) { ws.close(); ws = null; }
+    stopVoiceCapture();
+    wsDot.className = 'dot';
+    wsStatusEl.textContent = '未接続';
+  }
+
+  btnMic.addEventListener('click', function () {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      disconnectWs();
+      btnMic.classList.remove('active');
+    } else {
+      connectWs();
+      btnMic.classList.add('active');
+    }
+  });
+
+  function getOfflineQueue() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.offlineQueue);
+      return raw ? JSON.parse(raw) : [];
+    } catch (_) { return []; }
+  }
+  function setOfflineQueue(q) {
+    try { localStorage.setItem(STORAGE_KEYS.offlineQueue, JSON.stringify(q)); } catch (_) {}
+  }
+  function pushOffline(text) {
+    const q = getOfflineQueue();
+    q.push({ text: text, ts: Date.now() });
+    setOfflineQueue(q);
+  }
+  function clearOfflineQueue() { setOfflineQueue([]); }
+
+  async function sendText() {
+    const text = (textInput.value || '').trim();
+    if (!text) return;
+
+    textInput.value = '';
+    addMsg('user', text, null);
+    messages.push({ role: 'user', content: text });
+
+    if (!isOnline()) {
+      pushOffline(text);
+      addMsg('system', '📴 オフラインのためバッファに保存しました。オンライン復帰後に送信できます。', null);
+      return;
+    }
+
+    btnSend.disabled = true;
+    apiStatusEl.textContent = '応答取得中…';
+
+    const payload = { messages: messages };
+    const sp = (systemPromptEl.value || '').trim();
+    if (sp) payload.system_prompt = sp;
+
+    try {
+      const base = apiBase();
+      const res = await fetch(base + '/api/llm/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      const reply = data.response || data.error || '応答がありません';
+      addMsg('assistant', reply, null);
+      messages.push({ role: 'assistant', content: reply });
+
+      if (ttsOnDeviceEl.checked) {
+        try {
+          await fetch(base + '/api/pixel7/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: reply })
+          });
+        } catch (e) { console.warn('TTS error', e); }
+      }
+      apiDot.className = 'dot online';
+      apiStatusEl.textContent = 'OK';
+    } catch (e) {
+      pushOffline(text);
+      addMsg('assistant', '❌ エラー: ' + e.message + ' （バッファに保存済み）', null);
+      apiStatusEl.textContent = 'エラー';
+    }
+    btnSend.disabled = false;
+  }
+
+  async function flushOfflineQueue() {
+    const q = getOfflineQueue();
+    if (q.length === 0) return;
+    addMsg('system', '📤 オフラインバッファ ' + q.length + ' 件を送信中…', null);
+    for (const item of q) {
+      messages.push({ role: 'user', content: item.text });
+      addMsg('user', item.text, null);
+      const payload = { messages: messages };
+      const sp = (systemPromptEl.value || '').trim();
+      if (sp) payload.system_prompt = sp;
+      try {
+        const base = apiBase();
+        const res = await fetch(base + '/api/llm/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        const reply = data.response || data.error || '応答がありません';
+        addMsg('assistant', reply, null);
+        messages.push({ role: 'assistant', content: reply });
+      } catch (e) {
+        addMsg('system', '送信失敗: ' + item.text, null);
+      }
+    }
+    clearOfflineQueue();
+    addMsg('system', 'バッファ送信完了', null);
+  }
+
+  window.addEventListener('online', function () {
+    offlineBadge.style.display = 'none';
+    const q = getOfflineQueue();
+    if (q.length > 0) flushOfflineQueue();
+  });
+  window.addEventListener('offline', function () {
+    offlineBadge.style.display = 'inline';
+  });
+  if (!isOnline()) offlineBadge.style.display = 'inline';
+
+  btnSend.addEventListener('click', sendText);
+  textInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendText();
+    }
+  });
+
+  apiBaseEl.addEventListener('change', function () {
+    try { localStorage.setItem(STORAGE_KEYS.api, apiBaseEl.value); } catch (_) {}
+  });
+  systemPromptEl.addEventListener('change', function () {
+    try { localStorage.setItem(STORAGE_KEYS.system, systemPromptEl.value); } catch (_) {}
+  });
+
+  btnDevices.addEventListener('click', async function () {
+    try {
+      const base = apiBase();
+      const res = await fetch(base + '/api/devices/status');
+      const data = await res.json();
+      devicePanel.textContent = JSON.stringify(data, null, 2);
+    } catch (e) {
+      devicePanel.textContent = 'エラー: ' + e.message;
+    }
+  });
+  btnMothership.addEventListener('click', async function () {
+    try {
+      const base = apiBase();
+      const res = await fetch(base + '/api/mothership/resources');
+      const data = await res.json();
+      devicePanel.textContent = JSON.stringify(data, null, 2);
+    } catch (e) {
+      devicePanel.textContent = 'エラー: ' + e.message;
+    }
+  });
+  btnSleep.addEventListener('click', async function () {
+    try {
+      const base = apiBase();
+      const cmd = 'rundll32.exe powercfg.dll,SetSuspendState 0,1,0';
+      await fetch(base + '/api/mothership/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: cmd })
+      });
+      addMsg('system', '母艦スリープを実行しました', null);
+    } catch (e) {
+      addMsg('system', 'エラー: ' + e.message, null);
+    }
+  });
+
+  const n8nWorkflowIdEl = document.getElementById('n8nWorkflowId');
+  const btnN8n = document.getElementById('btnN8n');
+  btnN8n.addEventListener('click', async function () {
+    const wid = (n8nWorkflowIdEl.value || '').trim();
+    if (!wid) {
+      addMsg('system', 'n8n ワークフローIDを入力してください', null);
+      return;
+    }
+    try {
+      const base = apiBase();
+      const res = await fetch(base + '/api/n8n/workflow/' + encodeURIComponent(wid) + '/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      const data = await res.json();
+      addMsg('system', data.status === 'success' ? 'n8n 実行完了' : 'エラー: ' + (data.error || '不明'), null);
+    } catch (e) {
+      addMsg('system', 'エラー: ' + e.message, null);
+    }
+  });
+
+  btnObsidian.addEventListener('click', async function () {
+    if (messages.length === 0) {
+      addMsg('system', '保存する会話がありません', null);
+      return;
+    }
+    const lines = messages.map(function (m) {
+      return (m.role === 'user' ? 'ユーザー' : 'アシスタント') + ': ' + (m.content || '');
+    });
+    const content = lines.join('\n\n');
+    const title = 'コンパニオン会話 ' + new Date().toISOString().slice(0, 19).replace(/T/g, ' ');
+    try {
+      const base = apiBase();
+      const res = await fetch(base + '/api/obsidian/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title, content: content, tags: ['companion', '会話'] })
+      });
+      const data = await res.json();
+      if (data.note_path) {
+        addMsg('system', 'Obsidianに保存しました: ' + data.note_path, null);
+      } else {
+        addMsg('system', '保存失敗: ' + (data.error || '不明'), null);
+      }
+    } catch (e) {
+      addMsg('system', 'エラー: ' + e.message, null);
+    }
+  });
+
+  (function checkApi() {
+    const base = apiBase();
+    fetch(base + '/health', { method: 'GET' }).then(function (r) {
+      if (r.ok) {
+        apiDot.className = 'dot online';
+        apiStatusEl.textContent = 'オンライン';
+      } else {
+        apiStatusEl.textContent = '応答異常';
+      }
+    }).catch(function () {
+      apiStatusEl.textContent = '未接続';
+    });
+  })();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/companion/sw.js').catch(function () {});
+  }
+
+  addMsg('system', 'ManaOS コンパニオンへようこそ。テキスト・音声・デバイス操作・Obsidian保存に対応。ホーム画面に追加で常設も可能。', null);
+})();
+  </script>
+</body>
+</html>

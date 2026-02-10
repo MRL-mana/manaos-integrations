@@ -13,6 +13,14 @@ from datetime import datetime, timedelta
 import sys
 from urllib.request import Request, urlopen
 
+# タスクスケジューラ等で cwd が異なる場合に備え、スクリプト基準で cwd と .env を設定
+_BASE_DIR = Path(__file__).resolve().parent
+if _BASE_DIR.exists():
+    try:
+        os.chdir(_BASE_DIR)
+    except Exception:
+        pass
+
 
 def _load_dotenv(env_path: str = ".env") -> None:
     """snapshot側でも必ず.envを読む（config/securityがunknown/1000000になるのを防ぐ）"""
@@ -30,10 +38,12 @@ def _load_dotenv(env_path: str = ".env") -> None:
         print(f"[WARN] .env読み込みに失敗: {e}")
 
 
-_load_dotenv()
+_load_dotenv(str(_BASE_DIR / ".env"))
+_load_dotenv(".env")  # 相対パスでも読む（cwd 変更済み）
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:5105")
 API_KEY = os.getenv("MRL_MEMORY_API_KEY") or os.getenv("API_KEY", "")
+
 
 def get_security_status() -> dict:
     """SECURITY設定の状態を取得（罠②対策：PIIマスキングの実際の状態を確認）"""
@@ -48,8 +58,9 @@ def get_security_status() -> dict:
         "auth": "enabled" if security.require_auth else "disabled",
         "rate_limit": "enabled" if security.rate_limit_per_minute > 0 else "disabled",
         "max_input": security.max_input_size,
-        "pii_mask": "enabled" if pii_mask_enabled else "disabled"
+        "pii_mask": "enabled" if pii_mask_enabled else "disabled",
     }
+
 
 def get_metrics_snapshot() -> dict:
     """
@@ -78,6 +89,7 @@ def get_metrics_snapshot() -> dict:
             if attempt < 5:
                 try:
                     import time
+
                     time.sleep(0.4 * attempt)
                 except Exception:
                     pass
@@ -92,7 +104,7 @@ def get_metrics_snapshot() -> dict:
             text=True,
             encoding="utf-8",
             errors="ignore",
-            timeout=10
+            timeout=10,
         )
         if result.returncode == 0:
             dashboard_data = json.loads(result.stdout)
@@ -102,7 +114,7 @@ def get_metrics_snapshot() -> dict:
                 "gate_block_rate": metrics_data.get("gate_block_rate", 0),
                 "contradiction_rate": metrics_data.get("contradiction_rate", 0),
                 "slot_usage_variance": metrics_data.get("slot_usage_variance", 0),
-                "writes_per_min": metrics_data.get("writes_per_min", 0)
+                "writes_per_min": metrics_data.get("writes_per_min", 0),
             }
     except Exception as e:
         print(f"[WARN] ダッシュボードJSONの読み込みに失敗: {e}")
@@ -110,11 +122,12 @@ def get_metrics_snapshot() -> dict:
     # 方法2: 永続化されたメトリクスを読む（フォールバック）
     try:
         from mrl_memory_metrics import MRLMemoryMetrics
+
         metrics = MRLMemoryMetrics()
 
         # 最新のメトリクスファイルを探す
         metrics_dir = metrics.metrics_dir
-        today = datetime.now().strftime('%Y%m%d')
+        today = datetime.now().strftime("%Y%m%d")
         metrics_file = metrics_dir / f"metrics_{today}.json"
 
         if metrics_file.exists():
@@ -141,14 +154,16 @@ def get_metrics_snapshot() -> dict:
 
         # 警告: メモリ内のみの場合、値が0になる可能性がある
         if p95 == 0 and gate_block_rate == 0 and conflict_rate == 0:
-            print("[WARN] メトリクスが0の可能性があります。APIサーバーのプロセスから直接取得するか、メトリクスを永続化してください。")
+            print(
+                "[WARN] メトリクスが0の可能性があります。APIサーバーのプロセスから直接取得するか、メトリクスを永続化してください。"
+            )
 
         return {
             "e2e_p95_sec": p95,
             "gate_block_rate": gate_block_rate,
             "contradiction_rate": conflict_rate,
             "slot_usage_variance": variance,
-            "writes_per_min": writes_per_min
+            "writes_per_min": writes_per_min,
         }
     except Exception as e:
         print(f"[ERROR] メトリクスの取得に失敗: {e}")
@@ -158,8 +173,9 @@ def get_metrics_snapshot() -> dict:
             "gate_block_rate": 0,
             "contradiction_rate": 0,
             "slot_usage_variance": 0,
-            "writes_per_min": 0
+            "writes_per_min": 0,
         }
+
 
 def get_storage_health() -> dict:
     """
@@ -173,7 +189,7 @@ def get_storage_health() -> dict:
     scratchpad_count = 0
     if scratchpad_path.exists():
         try:
-            with open(scratchpad_path, 'r', encoding='utf-8') as f:
+            with open(scratchpad_path, "r", encoding="utf-8") as f:
                 scratchpad_count = sum(1 for line in f if line.strip())
         except Exception as e:
             print(f"[WARN] Scratchpadの読み込みエラー: {e}")
@@ -183,7 +199,7 @@ def get_storage_health() -> dict:
     quarantine_count = 0
     if quarantine_path.exists():
         try:
-            with open(quarantine_path, 'r', encoding='utf-8') as f:
+            with open(quarantine_path, "r", encoding="utf-8") as f:
                 quarantine_count = sum(1 for line in f if line.strip())
         except Exception as e:
             print(f"[WARN] Quarantineの読み込みエラー: {e}")
@@ -193,7 +209,7 @@ def get_storage_health() -> dict:
     promoted_count = 0
     if promoted_path.exists():
         try:
-            with open(promoted_path, 'r', encoding='utf-8') as f:
+            with open(promoted_path, "r", encoding="utf-8") as f:
                 promoted_count = sum(1 for line in f if line.strip())
         except Exception as e:
             print(f"[WARN] Promotedの読み込みエラー: {e}")
@@ -201,8 +217,9 @@ def get_storage_health() -> dict:
     return {
         "scratchpad_entries": scratchpad_count,
         "quarantine_entries": quarantine_count,
-        "promoted_entries": promoted_count
+        "promoted_entries": promoted_count,
     }
+
 
 def get_error_count() -> dict:
     """
@@ -216,13 +233,13 @@ def get_error_count() -> dict:
             ["journalctl", "-u", "mrl-memory", "--since", "60 min ago", "--no-pager"],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=5,
         )
         if result.returncode == 0:
             # 5xxエラーをカウント（HTTP 500, 501, 502, 503, 504など）
-            lines = result.stdout.split('\n')
+            lines = result.stdout.split("\n")
             for line in lines:
-                if re.search(r'HTTP\s+(5\d{2})|status[:\s]+(5\d{2})', line, re.IGNORECASE):
+                if re.search(r"HTTP\s+(5\d{2})|status[:\s]+(5\d{2})", line, re.IGNORECASE):
                     error_count += 1
     except (FileNotFoundError, subprocess.TimeoutExpired):
         # journalctlが使えない場合、ログファイルを探す
@@ -233,24 +250,25 @@ def get_error_count() -> dict:
         log_paths = [
             Path("mrl_memory.log"),
             Path("logs/mrl_memory.log"),
-            Path(__file__).parent / "logs" / "mrl_memory.log"
+            Path(__file__).parent / "logs" / "mrl_memory.log",
         ]
 
         for log_path in log_paths:
             if log_path.exists():
                 try:
-                    with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
                         for line in f:
                             # タイムスタンプをチェック（簡易実装）
-                            if re.search(r'HTTP\s+(5\d{2})|status[:\s]+(5\d{2})', line, re.IGNORECASE):
+                            if re.search(
+                                r"HTTP\s+(5\d{2})|status[:\s]+(5\d{2})", line, re.IGNORECASE
+                            ):
                                 error_count += 1
                 except Exception as e:
                     print(f"[WARN] ログファイルの読み込みエラー: {e}")
                     break
 
-    return {
-        "http_5xx_last_60min": error_count
-    }
+    return {"http_5xx_last_60min": error_count}
+
 
 def create_snapshot(output_path: Path = None, baseline_path: Path = None) -> dict:
     """
@@ -289,13 +307,16 @@ def create_snapshot(output_path: Path = None, baseline_path: Path = None) -> dic
     storage_delta = None
     if baseline_path and baseline_path.exists():
         try:
-            with open(baseline_path, 'r', encoding='utf-8') as f:
+            with open(baseline_path, "r", encoding="utf-8") as f:
                 baseline = json.load(f)
                 baseline_storage = baseline.get("storage", {})
                 storage_delta = {
-                    "scratchpad_entries": storage["scratchpad_entries"] - baseline_storage.get("scratchpad_entries", 0),
-                    "quarantine_entries": storage["quarantine_entries"] - baseline_storage.get("quarantine_entries", 0),
-                    "promoted_entries": storage["promoted_entries"] - baseline_storage.get("promoted_entries", 0)
+                    "scratchpad_entries": storage["scratchpad_entries"]
+                    - baseline_storage.get("scratchpad_entries", 0),
+                    "quarantine_entries": storage["quarantine_entries"]
+                    - baseline_storage.get("quarantine_entries", 0),
+                    "promoted_entries": storage["promoted_entries"]
+                    - baseline_storage.get("promoted_entries", 0),
                 }
         except Exception as e:
             print(f"[WARN] ベースラインとの差分計算に失敗: {e}")
@@ -320,11 +341,12 @@ def create_snapshot(output_path: Path = None, baseline_path: Path = None) -> dic
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(snapshot, f, ensure_ascii=False, indent=2)
         print(f"スナップショットを保存: {output_path}")
 
     return snapshot
+
 
 def main():
     """メイン処理"""
@@ -352,6 +374,7 @@ def main():
     print(json.dumps(snapshot, ensure_ascii=False, indent=2))
 
     return snapshot
+
 
 if __name__ == "__main__":
     main()

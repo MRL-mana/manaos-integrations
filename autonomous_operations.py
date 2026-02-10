@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-🤖 ManaOS 自律運用システム（System3）
+[AUTO] ManaOS 自律運用システム（System3）
 サービスの自動監視・診断・復旧を統合管理
 """
 
@@ -49,12 +49,12 @@ class AutonomousOperations:
         self.running = False
         self.monitor_thread: Optional[threading.Thread] = None
         
-        # サービス定義
+        # サービス定義（Unified API は /ready で初期化完了を確認、タイムアウト長め）
         self.services = [
-            {"name": "MRL Memory", "port": 5103},
-            {"name": "Learning System", "port": 5104},
-            {"name": "LLM Routing", "port": 5111},
-            {"name": "Unified API", "port": 9500},
+            {"name": "MRL Memory", "port": 5103, "path": "/health", "timeout": 5},
+            {"name": "Learning System", "port": 5104, "path": "/health", "timeout": 5},
+            {"name": "LLM Routing", "port": 5111, "path": "/health", "timeout": 5},
+            {"name": "Unified API", "port": 9502, "path": "/ready", "timeout": 8},
         ]
         
         # 統計情報
@@ -66,27 +66,23 @@ class AutonomousOperations:
             "service_status": {}
         }
         
-        logger.info("🤖 自律運用システムを初期化しました")
+        logger.info("[AUTO] 自律運用システムを初期化しました")
         logger.info(f"   監視間隔: {check_interval}秒")
         logger.info(f"   自動復旧: {'有効' if enable_auto_recovery else '無効（計画のみ）'}")
     
     def check_service_health(self, service: Dict) -> bool:
         """
-        サービスのヘルスチェック
-        
-        Args:
-            service: サービス情報
-            
-        Returns:
-            健全ならTrue
+        サービスのヘルスチェック（Unified API は /ready で初期化完了を確認）
         """
         try:
             import requests
-            url = f"http://127.0.0.1:{service['port']}/health"
-            response = requests.get(url, timeout=5)
+            path = service.get("path", "/health")
+            timeout = service.get("timeout", 5)
+            url = f"http://127.0.0.1:{service['port']}{path}"
+            response = requests.get(url, timeout=timeout)
             return response.status_code == 200
         except Exception as e:
-            logger.warning(f"⚠️ {service['name']} (port {service['port']}): ヘルスチェック失敗 - {e}")
+            logger.warning(f"[WARN] {service['name']} (port {service['port']}): ヘルスチェック失敗 - {e}")
             return False
     
     def run_health_checks(self) -> Dict[str, bool]:
@@ -131,7 +127,7 @@ class AutonomousOperations:
         unhealthy_services = [name for name, is_healthy in health_results.items() if not is_healthy]
         
         if unhealthy_services:
-            logger.warning(f"⚠️ 異常検知: {len(unhealthy_services)}個のサービスが応答しません")
+            logger.warning(f"[WARN] 異常検知: {len(unhealthy_services)}個のサービスが応答しません")
             for service_name in unhealthy_services:
                 logger.warning(f"   - {service_name}")
             
@@ -144,11 +140,11 @@ class AutonomousOperations:
                 logger.info("   1. タスク \"ManaOS: サービスヘルスチェック\" を実行")
                 logger.info("   2. 問題のあるサービスを再起動")
         else:
-            logger.info("✅ すべてのサービスが正常稼働中")
+            logger.info("[OK] すべてのサービスが正常稼働中")
     
     def monitor_loop(self):
         """監視ループ"""
-        logger.info("🔍 自律監視を開始しました")
+        logger.info("[MONITOR] 自律監視を開始しました")
         
         while self.running:
             try:
@@ -174,7 +170,7 @@ class AutonomousOperations:
         self.running = True
         self.monitor_thread = threading.Thread(target=self.monitor_loop, daemon=True)
         self.monitor_thread.start()
-        logger.info("✅ 自律監視スレッドを起動しました")
+        logger.info("[OK] 自律監視スレッドを起動しました")
     
     def stop(self):
         """自律監視を停止"""
@@ -187,7 +183,7 @@ class AutonomousOperations:
         if self.monitor_thread:
             self.monitor_thread.join(timeout=5)
         
-        logger.info("✅ 自律監視を停止しました")
+        logger.info("[OK] 自律監視を停止しました")
     
     def get_stats(self) -> Dict:
         """統計情報を取得"""

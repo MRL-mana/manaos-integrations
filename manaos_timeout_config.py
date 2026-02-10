@@ -25,7 +25,11 @@ DEFAULT_TIMEOUTS = {
     "database_query": 10.0,
     "file_operation": 30.0,
     "network_request": 10.0,
-    "external_service": 30.0
+    "external_service": 30.0,
+    "voice_tts": 30.0,
+    "voice_stt": 60.0,
+    "voice_speakers": 10.0,
+    "voice_intent_router": 10.0,
 }
 
 # タイムアウト設定ファイルパス
@@ -34,27 +38,27 @@ TIMEOUT_CONFIG_FILE = Path(__file__).parent / "manaos_timeout_config.json"
 
 class TimeoutConfig:
     """タイムアウト設定管理クラス"""
-    
+
     def __init__(self, config_file: Optional[Path] = None):
         """
         初期化
-        
+
         Args:
             config_file: 設定ファイルパス（オプション）
         """
         self.config_file = config_file or TIMEOUT_CONFIG_FILE
         self.timeouts = self._load_config()
-    
+
     def _load_config(self) -> Dict[str, float]:
         """
         設定を読み込み
-        
+
         Returns:
             タイムアウト設定辞書
         """
         if self.config_file.exists():
             try:
-                with open(self.config_file, 'r', encoding='utf-8') as f:
+                with open(self.config_file, "r", encoding="utf-8") as f:
                     config = json.load(f)
                     # デフォルトとマージ
                     timeouts = DEFAULT_TIMEOUTS.copy()
@@ -67,29 +71,29 @@ class TimeoutConfig:
             # デフォルト設定を保存
             self._save_default_config()
             return DEFAULT_TIMEOUTS.copy()
-    
+
     def _save_default_config(self):
         """デフォルト設定を保存"""
         try:
             config = {
                 "version": "1.0",
                 "description": "ManaOS Timeout Configuration",
-                "timeouts": DEFAULT_TIMEOUTS
+                "timeouts": DEFAULT_TIMEOUTS,
             }
-            with open(self.config_file, 'w', encoding='utf-8') as f:
+            with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
             logger.info(f"デフォルトタイムアウト設定を保存: {self.config_file}")
         except Exception as e:
             logger.error(f"タイムアウト設定保存エラー: {e}")
-    
+
     def get(self, key: str, default: Optional[float] = None) -> float:
         """
         タイムアウト値を取得
-        
+
         Args:
             key: タイムアウトキー
             default: デフォルト値（設定ファイルにもデフォルトにもない場合）
-        
+
         Returns:
             タイムアウト値（秒）
         """
@@ -100,35 +104,35 @@ class TimeoutConfig:
             logger.warning(f"タイムアウト設定が見つかりません: {key}。デフォルト値を使用します。")
             return DEFAULT_TIMEOUTS.get(key, 10.0)
         return float(timeout)
-    
+
     def set(self, key: str, value: float):
         """
         タイムアウト値を設定
-        
+
         Args:
             key: タイムアウトキー
             value: タイムアウト値（秒）
         """
         self.timeouts[key] = float(value)
         self._save_config()
-    
+
     def _save_config(self):
         """設定を保存"""
         try:
             config = {
                 "version": "1.0",
                 "description": "ManaOS Timeout Configuration",
-                "timeouts": self.timeouts
+                "timeouts": self.timeouts,
             }
-            with open(self.config_file, 'w', encoding='utf-8') as f:
+            with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
         except Exception as e:
             logger.error(f"タイムアウト設定保存エラー: {e}")
-    
+
     def get_all(self) -> Dict[str, float]:
         """
         全タイムアウト設定を取得
-        
+
         Returns:
             タイムアウト設定辞書
         """
@@ -142,7 +146,7 @@ _timeout_config: Optional[TimeoutConfig] = None
 def get_timeout_config() -> TimeoutConfig:
     """
     タイムアウト設定インスタンスを取得
-    
+
     Returns:
         TimeoutConfigインスタンス
     """
@@ -155,11 +159,11 @@ def get_timeout_config() -> TimeoutConfig:
 def get_timeout(key: str, default: Optional[float] = None) -> float:
     """
     タイムアウト値を取得（簡易関数）
-    
+
     Args:
         key: タイムアウトキー
         default: デフォルト値
-    
+
     Returns:
         タイムアウト値（秒）
     """
@@ -183,4 +187,3 @@ def _apply_env_overrides():
 
 # 初期化時に環境変数を適用
 _apply_env_overrides()
-

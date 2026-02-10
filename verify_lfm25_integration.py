@@ -56,7 +56,7 @@ def test_unified_api():
     """Unified API Serverのテスト"""
     print("[2] Unified API Server動作確認...")
     try:
-        response = requests.get("http://localhost:9500/health", timeout=2)
+        response = requests.get("http://localhost:9502/ready", timeout=8)
         if response.status_code == 200:
             print("  [OK] 動作確認成功")
             return True
@@ -81,7 +81,7 @@ def main():
         ("Intent Router", 5100),
         ("Task Planner", 5101),
         ("Content Generation", 5109),
-        ("Unified API Server", 9500)
+        ("Unified API Server", 9502)
     ]
     
     all_running = True

@@ -45,6 +45,7 @@ class IntentType(str, Enum):
     FILE_MANAGEMENT = "file_management"  # ファイル整理
     FILE_SEARCH = "file_search"  # ファイル検索
     FILE_STATUS = "file_status"  # INBOX状況確認
+    DEVICE_STATUS = "device_status"  # デバイス・Pixel7 状態確認
     UNKNOWN = "unknown"  # 不明
 
 
@@ -61,7 +62,7 @@ class IntentResult:
 
 class IntentRouter:
     """意図分類ルーター"""
-    
+
     def __init__(
         self,
         ollama_url: str = "http://localhost:11434",
@@ -70,7 +71,7 @@ class IntentRouter:
     ):
         """
         初期化
-        
+
         Args:
             ollama_url: Ollama API URL
             model: 使用する軽量モデル
@@ -80,25 +81,25 @@ class IntentRouter:
         self.model = model
         self.config_path = config_path or Path(__file__).parent / "intent_router_config.json"
         self.config = self._load_config()
-        
+
         # 意図分類のプロンプトテンプレート
         self.intent_prompt_template = self.config.get(
             "intent_prompt_template",
             self._get_default_prompt_template()
         )
-        
+
         # 意図のキーワードマッピング（高速分類用）
         self.keyword_mapping = self.config.get("keyword_mapping", self._get_default_keyword_mapping())
-        
+
         logger.info(f"✅ Intent Router初期化完了 (モデル: {model})")
-    
+
     def _load_config(self) -> Dict[str, Any]:
         """設定を読み込む"""
         if self.config_path.exists():
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
                     config = json.load(f)
-                
+
                 # 設定ファイルの検証
                 schema = {
                     "required": ["model"],
@@ -109,7 +110,7 @@ class IntentRouter:
                         "use_keyword_fallback": {"type": bool, "default": True}
                     }
                 }
-                
+
                 is_valid, errors = config_validator.validate_config(config, schema, self.config_path)
                 if not is_valid:
                     logger.warning(f"設定ファイル検証エラー: {errors}")
@@ -117,7 +118,7 @@ class IntentRouter:
                     default_config = self._get_default_config()
                     default_config.update(config)
                     return default_config
-                
+
                 return config
             except Exception as e:
                 error = error_handler.handle_exception(
@@ -126,9 +127,9 @@ class IntentRouter:
                     user_message="設定ファイルの読み込みに失敗しました"
                 )
                 logger.warning(f"設定読み込みエラー: {error.message}")
-        
+
         return self._get_default_config()
-    
+
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
         return {
@@ -139,7 +140,7 @@ class IntentRouter:
             "confidence_threshold": 0.6,
             "use_keyword_fallback": True
         }
-    
+
     def _get_default_keyword_mapping(self) -> Dict[str, IntentType]:
         """デフォルトキーワードマッピング"""
         return {
@@ -150,7 +151,7 @@ class IntentRouter:
             "どうも": IntentType.CONVERSATION,
             "話": IntentType.CONVERSATION,
             "雑談": IntentType.CONVERSATION,
-            
+
             # タスク実行
             "実行": IntentType.TASK_EXECUTION,
             "やって": IntentType.TASK_EXECUTION,
@@ -159,7 +160,7 @@ class IntentRouter:
             "処理": IntentType.TASK_EXECUTION,
             "開始": IntentType.TASK_EXECUTION,
             "起動": IntentType.TASK_EXECUTION,
-            
+
             # 情報検索
             "検索": IntentType.INFORMATION_SEARCH,
             "調べて": IntentType.INFORMATION_SEARCH,
@@ -167,39 +168,39 @@ class IntentRouter:
             "確認": IntentType.INFORMATION_SEARCH,
             "見つけて": IntentType.INFORMATION_SEARCH,
             "教えて": IntentType.INFORMATION_SEARCH,
-            
+
             # 画像生成
             "画像": IntentType.IMAGE_GENERATION,
             "生成": IntentType.IMAGE_GENERATION,
             "描いて": IntentType.IMAGE_GENERATION,
             "絵": IntentType.IMAGE_GENERATION,
             "イラスト": IntentType.IMAGE_GENERATION,
-            
+
             # コード生成
             "コード": IntentType.CODE_GENERATION,
             "プログラム": IntentType.CODE_GENERATION,
             "実装": IntentType.CODE_GENERATION,
             "スクリプト": IntentType.CODE_GENERATION,
-            
+
             # システム制御
             "再起動": IntentType.SYSTEM_CONTROL,
             "停止": IntentType.SYSTEM_CONTROL,
             "開始": IntentType.SYSTEM_CONTROL,
             "状態": IntentType.SYSTEM_CONTROL,
             "設定": IntentType.SYSTEM_CONTROL,
-            
+
             # スケジューリング
             "予定": IntentType.SCHEDULING,
             "カレンダー": IntentType.SCHEDULING,
             "スケジュール": IntentType.SCHEDULING,
             "予約": IntentType.SCHEDULING,
-            
+
             # データ分析
             "分析": IntentType.DATA_ANALYSIS,
             "統計": IntentType.DATA_ANALYSIS,
             "レポート": IntentType.DATA_ANALYSIS,
             "集計": IntentType.DATA_ANALYSIS,
-            
+
             # ファイル整理
             "終わった": IntentType.FILE_MANAGEMENT,
             "完了": IntentType.FILE_MANAGEMENT,
@@ -207,18 +208,18 @@ class IntentRouter:
             "放置": IntentType.FILE_MANAGEMENT,
             "戻して": IntentType.FILE_MANAGEMENT,
             "復元": IntentType.FILE_MANAGEMENT,
-            
+
             # ファイル検索
             "探して": IntentType.FILE_SEARCH,
             "ファイル": IntentType.FILE_SEARCH,
             "見つけて": IntentType.FILE_SEARCH,
-            
+
             # INBOX状況確認
             "Inboxどう": IntentType.FILE_STATUS,
             "状況": IntentType.FILE_STATUS,
             "一覧": IntentType.FILE_STATUS,
         }
-    
+
     def _get_default_prompt_template(self) -> str:
         """デフォルトプロンプトテンプレート"""
         # 人格設定からプロンプトを取得
@@ -253,11 +254,11 @@ class IntentRouter:
     "reasoning": "分類理由",
     "suggested_actions": ["アクション1", "アクション2"]
 }}""".replace("{input}", "{input}")
-    
+
     def _classify_with_keywords(self, text: str) -> Optional[IntentResult]:
         """キーワードベースの高速分類"""
         text_lower = text.lower()
-        
+
         # キーワードマッチング
         matches = {}
         for keyword, intent_type in self.keyword_mapping.items():
@@ -265,25 +266,29 @@ class IntentRouter:
                 if intent_type not in matches:
                     matches[intent_type] = []
                 matches[intent_type].append(keyword)
-        
+
         if not matches:
             return None
-        
+
         # 最も多くマッチした意図を選択
         best_intent = max(matches.items(), key=lambda x: len(x[1]))
-        intent_type, matched_keywords = best_intent
-        
+        intent_type_str, matched_keywords = best_intent
+        try:
+            intent_type_enum = IntentType(intent_type_str)
+        except ValueError:
+            intent_type_enum = IntentType.UNKNOWN
+
         confidence = min(0.9, 0.5 + len(matched_keywords) * 0.1)
-        
+
         return IntentResult(
-            intent_type=intent_type,
+            intent_type=intent_type_enum,
             confidence=confidence,
             entities={"matched_keywords": matched_keywords},
             reasoning=f"キーワードマッチング: {', '.join(matched_keywords)}",
-            suggested_actions=self._get_suggested_actions(intent_type),
+            suggested_actions=self._get_suggested_actions(intent_type_enum),
             timestamp=datetime.now().isoformat()
         )
-    
+
     def _classify_with_llm(self, text: str) -> IntentResult:
         """LLMベースの分類"""
         # テンプレートの{input}を実際のテキストに置換（安全に）
@@ -291,7 +296,7 @@ class IntentRouter:
         import re
         prompt = re.sub(r'\{input\}', '__INPUT_PLACEHOLDER__', self.intent_prompt_template)
         prompt = prompt.replace('__INPUT_PLACEHOLDER__', text)
-        
+
         try:
             timeout = timeout_config.get("llm_call", 30.0)
             response = httpx.post(
@@ -307,7 +312,7 @@ class IntentRouter:
                 },
                 timeout=timeout
             )
-            
+
             if response.status_code != 200:
                 error = error_handler.handle_exception(
                     Exception(f"LLM分類失敗: HTTP {response.status_code}"),
@@ -316,9 +321,9 @@ class IntentRouter:
                 )
                 logger.warning(f"LLM分類失敗: {error.message}")
                 return self._fallback_classification(text)
-            
+
             result_text = response.json().get("response", "")
-            
+
             # JSONを抽出
             try:
                 # JSON部分を抽出
@@ -337,14 +342,14 @@ class IntentRouter:
                 )
                 logger.warning(f"JSON解析失敗、フォールバック分類を使用: {error.message}")
                 return self._fallback_classification(text)
-            
+
             # IntentResultに変換
             intent_type_str = result_data.get("intent_type", "unknown")
             try:
                 intent_type = IntentType(intent_type_str)
             except ValueError:
                 intent_type = IntentType.UNKNOWN
-            
+
             return IntentResult(
                 intent_type=intent_type,
                 confidence=float(result_data.get("confidence", 0.5)),
@@ -353,7 +358,7 @@ class IntentRouter:
                 suggested_actions=result_data.get("suggested_actions", []),
                 timestamp=datetime.now().isoformat()
             )
-            
+
         except Exception as e:
             error = error_handler.handle_exception(
                 e,
@@ -362,7 +367,7 @@ class IntentRouter:
             )
             logger.error(f"LLM分類エラー: {error.message}")
             return self._fallback_classification(text)
-    
+
     def _fallback_classification(self, text: str) -> IntentResult:
         """フォールバック分類"""
         return IntentResult(
@@ -373,7 +378,7 @@ class IntentRouter:
             suggested_actions=[],
             timestamp=datetime.now().isoformat()
         )
-    
+
     def _get_suggested_actions(self, intent_type: IntentType) -> List[str]:
         """意図タイプに基づく推奨アクション"""
         action_map = {
@@ -388,10 +393,11 @@ class IntentRouter:
             IntentType.FILE_MANAGEMENT: ["ファイル整理を実行", "File Secretary APIを呼び出し"],
             IntentType.FILE_SEARCH: ["ファイル検索を実行", "File Secretary APIを呼び出し"],
             IntentType.FILE_STATUS: ["INBOX状況を取得", "File Secretary APIを呼び出し"],
+            IntentType.DEVICE_STATUS: ["デバイス状態を取得", "Pixel 7 リソースを取得", "統合API /api/devices/status を呼び出し"],
             IntentType.UNKNOWN: ["詳細を確認", "ユーザーに質問"]
         }
         return action_map.get(intent_type, [])
-    
+
     def classify(
         self,
         input_text: str,
@@ -400,12 +406,12 @@ class IntentRouter:
     ) -> IntentResult:
         """
         入力テキストを分類
-        
+
         Args:
             input_text: 分類するテキスト
             use_keyword_fallback: キーワードフォールバックを使用するか（Noneの場合は設定から取得）
             use_llm: LLMを使用するか
-        
+
         Returns:
             IntentResult: 分類結果
         """
@@ -418,30 +424,30 @@ class IntentRouter:
                 suggested_actions=[],
                 timestamp=datetime.now().isoformat()
             )
-        
+
         # キーワードベースの高速分類を試行
         if use_keyword_fallback is None:
             use_keyword_fallback = self.config.get("use_keyword_fallback", True)
-        
+
         if use_keyword_fallback:
             keyword_result = self._classify_with_keywords(input_text)
             if keyword_result and keyword_result.confidence >= self.config.get("confidence_threshold", 0.6):
                 logger.info(f"✅ キーワード分類成功: {keyword_result.intent_type.value} (信頼度: {keyword_result.confidence:.2f})")
                 return keyword_result
-        
+
         # LLMベースの分類
         if use_llm:
             llm_result = self._classify_with_llm(input_text)
             logger.info(f"✅ LLM分類完了: {llm_result.intent_type.value} (信頼度: {llm_result.confidence:.2f})")
             return llm_result
-        
+
         # フォールバック
         return self._fallback_classification(input_text)
-    
+
     def classify_batch(self, inputs: List[str]) -> List[IntentResult]:
         """複数の入力を一括分類"""
         return [self.classify(text) for text in inputs]
-    
+
     def save_config(self):
         """設定を保存"""
         try:
@@ -485,7 +491,7 @@ def classify_endpoint():
     try:
         data = request.get_json() or {}
         input_text = data.get("text", "")
-        
+
         if not input_text:
             error = error_handler.handle_exception(
                 ValueError("text is required"),
@@ -493,10 +499,10 @@ def classify_endpoint():
                 user_message="入力テキストが必要です"
             )
             return jsonify(error.to_json_response()), 400
-        
+
         router = init_router()
         result = router.classify(input_text)
-        
+
         return jsonify(asdict(result))
     except Exception as e:
         error = error_handler.handle_exception(
@@ -512,7 +518,7 @@ def classify_batch_endpoint():
     try:
         data = request.get_json() or {}
         inputs = data.get("texts", [])
-        
+
         if not inputs:
             error = error_handler.handle_exception(
                 ValueError("texts is required"),
@@ -520,10 +526,10 @@ def classify_batch_endpoint():
                 user_message="入力テキストリストが必要です"
             )
             return jsonify(error.to_json_response()), 400
-        
+
         router = init_router()
         results = router.classify_batch(inputs)
-        
+
         return jsonify({
             "results": [asdict(r) for r in results]
         })
@@ -553,7 +559,7 @@ def update_config():
 
 if __name__ == '__main__':
     import sys
-    
+
     # コマンドライン引数で直接分類
     if len(sys.argv) > 1:
         router = IntentRouter()
@@ -570,4 +576,3 @@ if __name__ == '__main__':
         logger.info(f"🎯 Intent Router起動中... (ポート: {port})")
         init_router()
         app.run(host='0.0.0.0', port=port, debug=os.getenv("DEBUG", "False").lower() == "true")
-

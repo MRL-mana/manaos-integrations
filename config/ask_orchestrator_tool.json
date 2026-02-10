@@ -1,0 +1,22 @@
+{
+    "_comment": "AI向け汎用オーケストレーター（1ツール）— Gemini / Open WebUI / マスコット用。docs/guides/ORCHESTRATOR_AI_TOOL_DESIGN.md 参照",
+    "name": "ask_orchestrator",
+    "description": "室温・湿度・天気・照明操作など、ローカル環境に関する情報取得や操作を行う。一般的な知識や検索はこのツールを使わず、Grounding（Google検索）で対応する。",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "string",
+                "description": "自然文でのリクエスト内容"
+            }
+        },
+        "required": [
+            "query"
+        ]
+    },
+    "api": {
+        "url": "http://localhost:5106/api/execute",
+        "method": "POST",
+        "body_key": "query"
+    }
+}

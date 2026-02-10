@@ -1,4 +1,4 @@
-﻿# ManaOS統合MCPサーバーをすべてCursorのMCP設定に追加するスクリプト
+# ManaOS統合MCPサーバーをすべてCursorのMCP設定に追加するスクリプト
 
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "ManaOS統合MCPサーバー Cursor設定追加" -ForegroundColor Cyan
@@ -40,89 +40,151 @@ if (-not $config.mcpServers) {
     $config | Add-Member -MemberType NoteProperty -Name "mcpServers" -Value @{} -Force
 }
 
-$projectPath = "C:\Users\mana4\Desktop\manaos_integrations"
+# スクリプトの親ディレクトリ＝プロジェクトルート（ポータブル）
+$projectPath = if ($PSScriptRoot) { (Resolve-Path $PSScriptRoot).Path } else { (Get-Location).Path }
 
 # 追加するMCPサーバーの設定
 $mcpServers = @{
-    "unified-api" = @{
+    "unified-api"              = @{
         command = "python"
-        args = @("-m", "unified_api_mcp_server.server")
-        env = @{
+        args    = @("-m", "unified_api_mcp_server.server")
+        env     = @{
             MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
         }
-        cwd = $projectPath
+        cwd     = $projectPath
     }
-    "step-deep-research" = @{
+    "step-deep-research"       = @{
         command = "python"
-        args = @("-m", "step_deep_research_mcp_server.server")
-        env = @{
+        args    = @("-m", "step_deep_research_mcp_server.server")
+        env     = @{
             STEP_DEEP_RESEARCH_URL = "http://localhost:5121"
         }
-        cwd = $projectPath
+        cwd     = $projectPath
     }
-    "gallery-api" = @{
+    "gallery-api"              = @{
         command = "python"
-        args = @("-m", "gallery_api_mcp_server.server")
-        env = @{
+        args    = @("-m", "gallery_api_mcp_server.server")
+        env     = @{
             GALLERY_API_URL = "http://localhost:5559"
         }
-        cwd = $projectPath
+        cwd     = $projectPath
     }
-    "system-status" = @{
+    "system-status"            = @{
         command = "python"
-        args = @("-m", "system_status_mcp_server.server")
-        env = @{
+        args    = @("-m", "system_status_mcp_server.server")
+        env     = @{
             SYSTEM_STATUS_URL = "http://localhost:5112"
         }
-        cwd = $projectPath
+        cwd     = $projectPath
     }
-    "ssot-api" = @{
+    "ssot-api"                 = @{
         command = "python"
-        args = @("-m", "ssot_mcp_server.server")
-        env = @{
+        args    = @("-m", "ssot_mcp_server.server")
+        env     = @{
             SSOT_API_URL = "http://localhost:5120"
         }
-        cwd = $projectPath
+        cwd     = $projectPath
     }
-    "service-monitor" = @{
+    "service-monitor"          = @{
         command = "python"
-        args = @("-m", "service_monitor_mcp_server.server")
-        env = @{
+        args    = @("-m", "service_monitor_mcp_server.server")
+        env     = @{
             SERVICE_MONITOR_URL = "http://localhost:5111"
         }
-        cwd = $projectPath
+        cwd     = $projectPath
     }
-    "web-voice" = @{
+    "web-voice"                = @{
         command = "python"
-        args = @("-m", "web_voice_mcp_server.server")
-        env = @{
+        args    = @("-m", "web_voice_mcp_server.server")
+        env     = @{
             WEB_VOICE_API_URL = "http://localhost:5115"
         }
-        cwd = $projectPath
+        cwd     = $projectPath
     }
-    "portal-integration" = @{
+    "portal-integration"       = @{
         command = "python"
-        args = @("-m", "portal_integration_mcp_server.server")
-        env = @{
+        args    = @("-m", "portal_integration_mcp_server.server")
+        env     = @{
             PORTAL_API_URL = "http://localhost:5108"
         }
-        cwd = $projectPath
+        cwd     = $projectPath
     }
-    "slack-integration" = @{
+    "slack-integration"        = @{
         command = "python"
-        args = @("-m", "slack_integration_mcp_server.server")
-        env = @{
+        args    = @("-m", "slack_integration_mcp_server.server")
+        env     = @{
             SLACK_API_URL = "http://localhost:5114"
         }
-        cwd = $projectPath
+        cwd     = $projectPath
     }
     "portal-voice-integration" = @{
         command = "python"
-        args = @("-m", "portal_voice_integration_mcp_server.server")
-        env = @{
+        args    = @("-m", "portal_voice_integration_mcp_server.server")
+        env     = @{
             PORTAL_VOICE_API_URL = "http://localhost:5116"
         }
-        cwd = $projectPath
+        cwd     = $projectPath
+    }
+    "ltx2"                     = @{
+        command = "python"
+        args    = @("-m", "ltx2_mcp_server.server")
+        env     = @{
+            MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
+        }
+        cwd     = $projectPath
+    }
+    "phase1"                   = @{
+        command = "python"
+        args    = @("-m", "phase1_mcp_server.server")
+        env     = @{}
+        cwd     = $projectPath
+    }
+    "manaos-media"             = @{
+        command = "python"
+        args    = @("-m", "manaos_unified_mcp_server.server")
+        env     = @{
+            MCP_DOMAIN                 = "media"
+            MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
+            COMFYUI_URL                = "http://localhost:8188"
+        }
+        cwd     = $projectPath
+    }
+    "manaos-productivity"      = @{
+        command = "python"
+        args    = @("-m", "manaos_unified_mcp_server.server")
+        env     = @{
+            MCP_DOMAIN                 = "productivity"
+            MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
+        }
+        cwd     = $projectPath
+    }
+    "manaos-ai"                = @{
+        command = "python"
+        args    = @("-m", "manaos_unified_mcp_server.server")
+        env     = @{
+            MCP_DOMAIN                 = "ai"
+            MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
+        }
+        cwd     = $projectPath
+    }
+    "manaos-devices"           = @{
+        command = "python"
+        args    = @("-m", "manaos_unified_mcp_server.server")
+        env     = @{
+            MCP_DOMAIN                 = "devices"
+            MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
+            PORTAL_INTEGRATION_URL     = "http://localhost:5108"
+        }
+        cwd     = $projectPath
+    }
+    "manaos-moltbot"           = @{
+        command = "python"
+        args    = @("-m", "manaos_unified_mcp_server.server")
+        env     = @{
+            MCP_DOMAIN                 = "moltbot"
+            MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
+        }
+        cwd     = $projectPath
     }
 }
 
@@ -133,15 +195,15 @@ $updatedCount = 0
 
 foreach ($serverName in $mcpServers.Keys) {
     $serverConfig = $mcpServers[$serverName]
-    
+
     # PSCustomObjectに変換
     $serverObj = [PSCustomObject]@{
         command = $serverConfig.command
-        args = $serverConfig.args
-        env = [PSCustomObject]$serverConfig.env
-        cwd = $serverConfig.cwd
+        args    = $serverConfig.args
+        env     = [PSCustomObject]$serverConfig.env
+        cwd     = $serverConfig.cwd
     }
-    
+
     if ($config.mcpServers.PSObject.Properties.Name -contains $serverName) {
         $config.mcpServers.$serverName = $serverObj
         Write-Host "   [更新] $serverName" -ForegroundColor Cyan

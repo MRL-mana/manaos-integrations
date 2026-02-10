@@ -1,0 +1,103 @@
+{
+  "approval_request_id": null,
+  "constraints": {
+    "allowed_domains": [],
+    "artifacts": null,
+    "blocked_domains": [],
+    "idempotency_key": null,
+    "max_actions": 50,
+    "read_only_paths": [],
+    "timeouts": null,
+    "write_paths": [
+      "~/Downloads",
+      "~/Documents/PDF",
+      "~/Pictures/Inbox",
+      "~/Downloads/Archives"
+    ]
+  },
+  "created_at": "2026-02-02T09:10:30.094030",
+  "intent": "Downloadsの散らかりを整理して。PDFはDocumentsへ、画像はPicturesへ。",
+  "metadata": {
+    "phase": "1",
+    "user_hint": "Downloadsの散らかりを整理して。PDFはDocumentsへ、画像はPicturesへ。"
+  },
+  "plan_id": "plan-20260202-091030",
+  "requires_approval": false,
+  "risk_level": "low",
+  "scope": {
+    "allowed_actions": [
+      "list_files",
+      "classify_files",
+      "move_files",
+      "file_read",
+      "file_move",
+      "file_copy"
+    ],
+    "allowed_paths": [],
+    "forbidden_actions": [
+      "file_delete",
+      "os_command",
+      "email_send",
+      "slack_send",
+      "payment",
+      "browser_purchase",
+      "password_input",
+      "api_key_read"
+    ],
+    "max_steps": 5,
+    "timeout_seconds": 300
+  },
+  "source": "manaos",
+  "steps": [
+    {
+      "action": "list_files",
+      "condition": null,
+      "params": {
+        "path": "~/Downloads"
+      },
+      "rollback_hint": null,
+      "step_id": "scan_downloads"
+    },
+    {
+      "action": "classify_files",
+      "condition": null,
+      "params": {
+        "dry_run": true,
+        "rules": [
+          {
+            "if_ext": [
+              ".pdf"
+            ],
+            "move_to": "~/Documents/PDF"
+          },
+          {
+            "if_ext": [
+              ".png",
+              ".jpg",
+              ".webp"
+            ],
+            "move_to": "~/Pictures/Inbox"
+          },
+          {
+            "if_ext": [
+              ".zip"
+            ],
+            "move_to": "~/Downloads/Archives"
+          }
+        ]
+      },
+      "rollback_hint": null,
+      "step_id": "classify"
+    },
+    {
+      "action": "move_files",
+      "condition": null,
+      "params": {
+        "from_dry_run": true
+      },
+      "rollback_hint": null,
+      "step_id": "apply_moves"
+    }
+  ],
+  "version": "1.0"
+}

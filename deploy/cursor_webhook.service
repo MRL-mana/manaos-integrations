@@ -1,0 +1,14 @@
+[Unit]
+Description=ManaOS Cursor Webhook Service
+After=network.target
+
+[Service]
+Type=simple
+User=$(whoami)
+WorkingDirectory=/opt/manaos_integrations
+ExecStart=/usr/bin/env python3 /opt/manaos_integrations/cursor_webhook.py
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

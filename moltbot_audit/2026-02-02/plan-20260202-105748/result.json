@@ -1,0 +1,18 @@
+{
+  "plan_id": "plan-20260202-105748",
+  "success": false,
+  "status": "openclaw_invoke_error",
+  "error": "HTTPConnectionPool(host='127.0.0.1', port=18789): Max retries exceeded with url: /tools/invoke (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=18789): Failed to establish a new connection: [WinError 10061] 対象のコンピューターによって拒否されたため、接続できませんでした。\"))",
+  "steps_done": 0,
+  "steps_total": 1,
+  "execute_events": [
+    {
+      "ts": 1769997470.7207267,
+      "step_id": "scan",
+      "event": "list_files",
+      "skill": "skills.fs.list",
+      "status": "error",
+      "error": "HTTPConnectionPool(host='127.0.0.1', port=18789): Max retries exceeded with url: /tools/invoke (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=18789): Failed to establish a new connection: [WinError 10061] 対象のコンピューターによって拒否されたため、接続できませんでした。\"))"
+    }
+  ]
+}

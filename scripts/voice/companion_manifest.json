@@ -1,0 +1,10 @@
+{
+  "name": "ManaOS コンパニオン",
+  "short_name": "コンパニオン",
+  "description": "Pixel 7 で母艦と会話。テキスト・音声・TTS・デバイス操作",
+  "start_url": "/companion",
+  "display": "standalone",
+  "background_color": "#0f0f12",
+  "theme_color": "#6c5ce7",
+  "orientation": "portrait-primary"
+}

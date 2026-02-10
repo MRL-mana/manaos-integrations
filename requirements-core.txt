@@ -29,6 +29,7 @@ cachetools>=5.3.0
 
 # スケジューリング
 schedule>=1.2.0
+croniter>=2.0.0
 
 # システム監視
 psutil>=5.9.0

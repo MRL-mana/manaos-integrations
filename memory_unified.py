@@ -49,7 +49,7 @@ class UnifiedMemory:
         if vault_path is None:
             vault_path = os.getenv(
                 "OBSIDIAN_VAULT_PATH",
-                "C:/Users/mana4/Documents/Obsidian Vault"
+                str(Path.home() / "Documents" / "Obsidian Vault"),
             )
         
         self.vault_path = Path(vault_path)

@@ -1,0 +1,192 @@
+{
+  "5185": {
+    "class_type": "EmptyImage",
+    "inputs": {}
+  },
+  "5186": {
+    "class_type": "PrimitiveInt",
+    "inputs": {}
+  },
+  "5196": {
+    "class_type": "PrimitiveInt",
+    "inputs": {
+      "a": [
+        "5184",
+        0
+      ],
+      "value": 8
+    }
+  },
+  "5190": {
+    "class_type": "CreateVideo",
+    "inputs": {
+      "images": [
+        "5189",
+        0
+      ],
+      "audio": [
+        "5189",
+        1
+      ],
+      "fps": [
+        "5184",
+        0
+      ]
+    }
+  },
+  "4958": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "video": [
+        "5190",
+        0
+      ]
+    }
+  },
+  "5184": {
+    "class_type": "PrimitiveFloat",
+    "inputs": {}
+  },
+  "5176": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {}
+  },
+  "5188": {
+    "class_type": "LowVRAMAudioVAELoader",
+    "inputs": {
+      "ckpt_name": "ltx-2-19b-distilled.safetensors"
+    }
+  },
+  "5182": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "5176",
+        0
+      ]
+    }
+  },
+  "5183": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "5176",
+        0
+      ]
+    }
+  },
+  "5174": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "5178",
+        0
+      ],
+      "text": [
+        "5192",
+        0
+      ]
+    }
+  },
+  "5173": {
+    "class_type": "LTXVConditioning",
+    "inputs": {
+      "positive": [
+        "5174",
+        0
+      ],
+      "negative": [
+        "5174",
+        0
+      ],
+      "frame_rate": [
+        "5184",
+        0
+      ]
+    }
+  },
+  "5210": {
+    "class_type": "LatentUpscaleModelLoader",
+    "inputs": {}
+  },
+  "5192": {
+    "class_type": "LTXVGemmaEnhancePrompt",
+    "inputs": {
+      "clip": [
+        "5178",
+        0
+      ],
+      "image": [
+        "5180",
+        0
+      ],
+      "prompt": [
+        "5175",
+        0
+      ]
+    }
+  },
+  "5178": {
+    "class_type": "LTXVGemmaCLIPModelLoader",
+    "inputs": {}
+  },
+  "5175": {
+    "class_type": "PrimitiveStringMultiline",
+    "inputs": {}
+  },
+  "5180": {
+    "class_type": "LoadImage",
+    "inputs": {}
+  },
+  "5189": {
+    "class_type": "3eaa20c4-5842-4fe4-87df-c0a7e83a6a78",
+    "inputs": {
+      "model_1": [
+        "5182",
+        0
+      ],
+      "model": [
+        "5183",
+        0
+      ],
+      "upscale_model_1": [
+        "5210",
+        0
+      ],
+      "positive": [
+        "5173",
+        0
+      ],
+      "negative": [
+        "5173",
+        1
+      ],
+      "images": [
+        "5180",
+        0
+      ],
+      "vae": [
+        "5176",
+        2
+      ],
+      "audio_vae": [
+        "5188",
+        0
+      ],
+      "image_1": [
+        "5185",
+        0
+      ],
+      "length": [
+        "5186",
+        0
+      ],
+      "frame_rate": [
+        "5196",
+        0
+      ],
+      "strength": 121,
+      "noise_seed": 25
+    }
+  }
+}

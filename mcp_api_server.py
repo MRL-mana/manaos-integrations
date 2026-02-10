@@ -144,7 +144,7 @@ async def _call_mcp_tool_async(tool_name: str, arguments: dict):
                     from google_drive_integration import GoogleDriveIntegration
                     _integrations[name] = GoogleDriveIntegration()
                 elif name == "obsidian":
-                    vault_path = os.getenv("OBSIDIAN_VAULT_PATH", "C:/Users/mana4/Documents/Obsidian Vault")
+                    vault_path = os.getenv("OBSIDIAN_VAULT_PATH", str(Path.home() / "Documents" / "Obsidian Vault"))
                     from obsidian_integration import ObsidianIntegration
                     _integrations[name] = ObsidianIntegration(vault_path=vault_path)
                 # 他の統合も同様に追加可能

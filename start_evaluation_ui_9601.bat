@@ -1,7 +1,7 @@
 @echo off
-chcp 65001 >nul
 cd /d "%~dp0"
-echo 画像評価UI (ポート9601) を起動します...
+echo Starting Evaluation UI on http://localhost:9601
+echo Keep this window open. Close it to stop the server.
 echo.
-python start_evaluation_ui_port9601.py
+python -u start_evaluation_ui_port9601.py
 pause

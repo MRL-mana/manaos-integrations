@@ -4,17 +4,22 @@ System 3定義書をObsidianに作成
 修正版：Autonomy Level + System 3定義の明文化
 """
 
+import os
 from pathlib import Path
 from datetime import datetime
 from obsidian_integration import ObsidianIntegration
 
+
 def create_system3_definition():
     """System 3定義書を作成"""
 
-    # Obsidian統合を初期化（パスは環境に合わせて調整）
-    vault_path = Path.home() / "Documents" / "Obsidian"
-    if not vault_path.exists():
+    # Obsidian統合を初期化（OBSIDIAN_VAULT_PATH を優先）
+    env_path = os.getenv("OBSIDIAN_VAULT_PATH", "").strip()
+    vault_path = Path(env_path) if env_path else None
+    if not vault_path or not vault_path.exists():
         vault_path = Path.home() / "Documents" / "Obsidian Vault"
+    if not vault_path.exists():
+        vault_path = Path.home() / "Documents" / "Obsidian"
     if not vault_path.exists():
         vault_path = Path.cwd()
 
@@ -358,7 +363,7 @@ Playbook として昇格
         title="ManaOS_System3",
         content=content,
         tags=["ManaOS", "System3", "Supervisor", "Meta-Cognition"],
-        folder="ManaOS/System"
+        folder="ManaOS/System",
     )
 
     if note_path:
@@ -367,6 +372,7 @@ Playbook として昇格
     else:
         print("❌ System 3定義書の作成に失敗しました")
         return None
+
 
 if __name__ == "__main__":
     create_system3_definition()

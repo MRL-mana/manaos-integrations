@@ -1,0 +1,26 @@
+# Moltbot Gateway 常駐（このは側）
+# 配置: /etc/systemd/system/moltbot-gateway.service
+# REPLACE_ME: WorkingDirectory, User, ExecStart パスを環境に合わせる。
+#
+# SECRET は EnvironmentFile 推奨（直書きしない）:
+#   EnvironmentFile=/etc/moltbot-gateway.env  (chmod 600)
+# 直書きする場合は下の Environment 行を使う。
+
+[Unit]
+Description=Moltbot Gateway
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/moltbot_gateway
+# EnvironmentFile 版（推奨）: 上2行の代わりに以下1行。Environment 行は削除してよい。
+# EnvironmentFile=/etc/moltbot-gateway.env
+Environment="MOLTBOT_GATEWAY_SECRET=REPLACE_ME"
+Environment="MOLTBOT_GATEWAY_DATA_DIR=/var/lib/moltbot_gateway"
+Environment="EXECUTOR=mock"
+ExecStart=/home/ubuntu/moltbot_gateway/.venv/bin/uvicorn moltbot_gateway.gateway_app:app --host 127.0.0.1 --port 8088
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

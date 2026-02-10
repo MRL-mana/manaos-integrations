@@ -56,7 +56,7 @@ async def execute_android_command(command: str, timeout: int = 60) -> Dict[str, 
             stderr=asyncio.subprocess.PIPE,
             shell=True
         )
-        
+
         try:
             stdout, stderr = await asyncio.wait_for(
                 process.communicate(),
@@ -69,7 +69,7 @@ async def execute_android_command(command: str, timeout: int = 60) -> Dict[str, 
                 "stdout": "",
                 "stderr": f"Command timeout after {timeout} seconds"
             }
-        
+
         return {
             "exit_code": process.returncode,
             "stdout": stdout.decode("utf-8", errors="ignore"),
@@ -99,10 +99,10 @@ async def root():
 async def execute_command(request: CommandRequest):
     """Android shellコマンドを実行"""
     start_time = datetime.now()
-    
+
     result = await execute_android_command(request.command, request.timeout)
     execution_time = (datetime.now() - start_time).total_seconds()
-    
+
     return JSONResponse(content={
         "command": request.command,
         "exit_code": result["exit_code"],
@@ -120,15 +120,15 @@ async def get_system_info():
         # Androidバージョン
         version_result = await execute_android_command("getprop ro.build.version.release", timeout=5)
         android_version = version_result["stdout"].strip() if version_result["exit_code"] == 0 else "unknown"
-        
+
         # デバイスモデル
         model_result = await execute_android_command("getprop ro.product.model", timeout=5)
         device_model = model_result["stdout"].strip() if model_result["exit_code"] == 0 else "unknown"
-        
+
         # デバイス名
         device_result = await execute_android_command("getprop ro.product.device", timeout=5)
         device_name = device_result["stdout"].strip() if device_result["exit_code"] == 0 else "unknown"
-        
+
         return JSONResponse(content={
             "android_version": android_version,
             "device_model": device_model,
@@ -152,11 +152,11 @@ async def get_resources():
                     mem_info["total"] = int(line.split()[1]) * 1024  # KB to bytes
                 elif "MemAvailable" in line:
                     mem_info["available"] = int(line.split()[1]) * 1024
-        
+
         # CPU使用率（簡易版）
         cpu_result = await execute_android_command("top -n 1 -d 1", timeout=10)
         cpu_usage = 0  # パースが必要
-        
+
         # バッテリー情報
         battery_result = await execute_android_command("dumpsys battery", timeout=10)
         battery_level = 0
@@ -167,7 +167,7 @@ async def get_resources():
                     battery_level = int(line.split(":")[1].strip())
                 elif "status:" in line:
                     battery_status = line.split(":")[1].strip()
-        
+
         # ストレージ情報
         storage_result = await execute_android_command("df /data", timeout=10)
         storage_info = {}
@@ -179,17 +179,17 @@ async def get_resources():
                     storage_info["total"] = int(parts[1]) * 1024  # KB to bytes
                     storage_info["used"] = int(parts[2]) * 1024
                     storage_info["available"] = int(parts[3]) * 1024
-        
+
         # メモリ使用率を計算
         mem_usage_percent = 0
         if mem_info.get("total") and mem_info.get("available"):
             mem_usage_percent = round(((mem_info["total"] - mem_info["available"]) / mem_info["total"]) * 100, 2)
-        
+
         # ストレージ使用率を計算
         storage_usage_percent = 0
         if storage_info.get("total") and storage_info.get("used"):
             storage_usage_percent = round((storage_info["used"] / storage_info["total"]) * 100, 2)
-        
+
         return JSONResponse(content={
             "memory": {
                 "total_mb": round(mem_info.get("total", 0) / 1024 / 1024, 2) if mem_info.get("total") else 0,
@@ -223,7 +223,7 @@ async def get_apps():
     """インストール済みアプリ一覧を取得"""
     try:
         result = await execute_android_command("pm list packages", timeout=30)
-        
+
         if result["exit_code"] == 0:
             apps = [line.replace("package:", "") for line in result["stdout"].strip().split("\n") if line]
             return JSONResponse(content={
@@ -246,7 +246,15 @@ async def health_check():
     })
 
 
+@app.get("/health")
+async def health_compat():
+    """ヘルスチェック（オーケストレーター・監視用 /health 互換）"""
+    return JSONResponse(content={
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat()
+    })
+
+
 if __name__ == "__main__":
     port = int(os.getenv("PIXEL7_API_PORT", "5122"))
     uvicorn.run(app, host="0.0.0.0", port=port)
-

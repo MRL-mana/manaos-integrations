@@ -152,7 +152,8 @@ def create_comfyui_workflow(
     height: int = 1024,
     sampler: str = "euler",
     scheduler: str = "normal",
-    seed: Optional[int] = None
+    seed: Optional[int] = None,
+    output_subfolder: Optional[str] = None,
 ) -> Dict[str, Any]:
     """ComfyUIワークフローを作成"""
     # モデルパスを確認
@@ -235,7 +236,8 @@ def create_comfyui_workflow(
         "7": {
             "inputs": {
                 "filename_prefix": "ComfyUI",
-                "images": ["6", 0]
+                "images": ["6", 0],
+                **({"subfolder": output_subfolder} if output_subfolder else {})
             },
             "class_type": "SaveImage"
         }
@@ -334,7 +336,7 @@ def auto_regenerate(
 ):
     """
     自動再生成（改善提案に基づいて）
-    
+
     Args:
         job_id: 元のジョブID
         original_prompt: 元のプロンプト
@@ -350,12 +352,12 @@ def auto_regenerate(
             improved_prompt = improvement.get("improved_prompt", original_prompt)
             improved_negative_prompt = improvement.get("improved_negative_prompt", original_negative_prompt)
             improved_parameters = improvement.get("improved_parameters", original_parameters)
-            
+
             logger.info(f"[全自動再生成] 改善されたパラメータで再生成を開始...")
             logger.info(f"  改善理由: {improvement.get('reason', '')}")
             logger.info(f"  プロンプト改善: {len(improved_prompt)}文字")
             logger.info(f"  パラメータ改善: steps {original_parameters.get('steps')} -> {improved_parameters.get('steps')}")
-            
+
             # 再生成リクエスト
             regenerate_data = {
                 "prompt": improved_prompt,
@@ -371,7 +373,7 @@ def auto_regenerate(
                 "mufufu_mode": True,
                 "auto_reflection": True  # 再生成も自動評価
             }
-            
+
             # ワークフローを作成
             workflow = create_comfyui_workflow(
                 prompt=regenerate_data["prompt"],
@@ -385,13 +387,13 @@ def auto_regenerate(
                 scheduler=regenerate_data["scheduler"],
                 seed=regenerate_data.get("seed")
             )
-            
+
             # ComfyUIに送信
             new_prompt_id = submit_to_comfyui(workflow)
             if not new_prompt_id:
                 logger.error("[全自動再生成] ComfyUIへの送信に失敗しました")
                 return
-            
+
             # 新しいジョブを作成（改善版として）
             new_job_id = f"{job_id}_improved_{int(time.time())}"
             with jobs_lock:
@@ -407,9 +409,9 @@ def auto_regenerate(
                     "parent_job_id": job_id,
                     "regeneration_type": "auto_improvement"
                 }
-            
+
             logger.info(f"[全自動再生成] 新しいジョブ作成: {new_job_id}")
-            
+
             # 再生成完了を監視
             def monitor_regeneration():
                 filename = check_comfyui_history(new_prompt_id)
@@ -439,13 +441,13 @@ def auto_regenerate(
                         metadata_path = IMAGES_DIR / f"{gallery_filename}.json"
                         with open(metadata_path, 'w', encoding='utf-8') as f:
                             json.dump(metadata, f, ensure_ascii=False, indent=2)
-                        
+
                         # 改善版も自動評価
                         if AUTO_REFLECTION_AVAILABLE:
                             try:
                                 auto_system = get_auto_reflection_system()
                                 image_path = str(IMAGES_DIR / gallery_filename)
-                                
+
                                 new_reflection = auto_system.process_generated_image(
                                     image_path=image_path,
                                     prompt=improved_prompt,
@@ -455,24 +457,24 @@ def auto_regenerate(
                                     auto_improve=False,  # 再生成の評価では自動改善は無効（無限ループ防止）
                                     threshold=0.7
                                 )
-                                
+
                                 # 改善の確認
                                 original_score = original_reflection['evaluation']['overall_score']
                                 new_score = new_reflection['evaluation']['overall_score']
                                 score_improvement = new_score - original_score
-                                
+
                                 logger.info(f"[全自動再生成] 改善版評価完了")
                                 logger.info(f"  元のスコア: {original_score:.2f}")
                                 logger.info(f"  改善版スコア: {new_score:.2f}")
                                 logger.info(f"  スコア改善: {score_improvement:+.2f}")
-                                
+
                                 # 学習データに記録
                                 if score_improvement > 0:
                                     logger.info(f"[学習] 改善成功を記録: {score_improvement:.2f}向上")
                                     try:
                                         from auto_reflection_improvement import ImageEvaluation, ImprovementPlan
                                         from dataclasses import asdict
-                                        
+
                                         # 元の評価オブジェクトを再構築（学習用）
                                         orig_eval = original_reflection.get('evaluation', {})
                                         orig_evaluation = ImageEvaluation(
@@ -490,7 +492,7 @@ def auto_regenerate(
                                             prompt_mismatches=orig_eval.get('prompt_mismatches', []),
                                             improvements=orig_eval.get('improvements', [])
                                         )
-                                        
+
                                         # 改善計画オブジェクトを再構築
                                         improvement_plan = ImprovementPlan(
                                             original_prompt=improvement.get('original_prompt', ''),
@@ -502,7 +504,7 @@ def auto_regenerate(
                                             reason=improvement.get('reason', ''),
                                             expected_improvement=improvement.get('expected_improvement', 0)
                                         )
-                                        
+
                                         # 新しい評価オブジェクトを再構築
                                         new_eval = new_reflection.get('evaluation', {})
                                         new_evaluation = ImageEvaluation(
@@ -520,7 +522,7 @@ def auto_regenerate(
                                             prompt_mismatches=new_eval.get('prompt_mismatches', []),
                                             improvements=new_eval.get('improvements', [])
                                         )
-                                        
+
                                         auto_system.improver.learn_from_result(
                                             evaluation=orig_evaluation,
                                             improvement=improvement_plan,
@@ -532,7 +534,7 @@ def auto_regenerate(
                                     logger.warning(f"[学習] 改善失敗を記録: スコアが低下（{score_improvement:.2f}）")
                                 else:
                                     logger.warning(f"[学習] 改善失敗を記録: スコアが低下（{score_improvement:.2f}）")
-                                
+
                                 # ジョブステータスを更新
                                 with jobs_lock:
                                     if new_job_id in jobs:
@@ -546,7 +548,7 @@ def auto_regenerate(
                                             "score_improvement": score_improvement,
                                             "improvement_reason": improvement.get("reason")
                                         }
-                                        
+
                                         # 元のジョブに改善版ジョブIDを記録
                                         with jobs_lock:
                                             if job_id in jobs:
@@ -560,7 +562,7 @@ def auto_regenerate(
                                                 logger.info(f"[全自動再生成] 元のジョブ({job_id})に改善版ジョブ({new_job_id})を記録")
                             except Exception as e:
                                 logger.error(f"[全自動再生成評価エラー] {e}", exc_info=True)
-                        
+
                         # ジョブステータスを更新
                         with jobs_lock:
                             if new_job_id in jobs:
@@ -572,14 +574,14 @@ def auto_regenerate(
                         if new_job_id in jobs:
                             jobs[new_job_id]["status"] = "failed"
                             jobs[new_job_id]["error"] = "再生成がタイムアウトしました"
-            
+
             # 再生成を監視（バックグラウンド）
             regenerate_thread = threading.Thread(target=monitor_regeneration, daemon=True)
             regenerate_thread.start()
-            
+
         except Exception as e:
             logger.error(f"[全自動再生成エラー] {e}", exc_info=True)
-    
+
     # バックグラウンドで自動再生成を実行
     regenerate_thread = threading.Thread(target=perform_auto_regeneration, daemon=True)
     regenerate_thread.start()
@@ -650,7 +652,32 @@ def generate():
         sampler = data.get("sampler", "dpmpp_2m")
         scheduler = data.get("scheduler", "karras")
         mufufu_mode = data.get("mufufu_mode", False)
+        lab_mode = data.get("lab_mode", False)  # 闇の実験室: ネガ最小限・表現はモデルに委ねる
+        # 実験室ができる前の挙動をデフォルトにする: MANAOS_IMAGE_DEFAULT_PROFILE=lab
+        if not lab_mode and (os.getenv("MANAOS_IMAGE_DEFAULT_PROFILE") or "").strip().lower() == "lab":
+            lab_mode = True
+            logger.info("MANAOS_IMAGE_DEFAULT_PROFILE=lab: 闇の実験室をデフォルトにしました")
+        use_intent_routing = data.get("use_intent_routing", False)  # プロンプトからムフフ/実験室を推定
         negative_prompt = data.get("negative_prompt", "")
+
+        # LLMルーティング: プロンプトからムフフ/実験室モードを推定（明示指定がない場合のみ）
+        if use_intent_routing and not mufufu_mode and not lab_mode and prompt:
+            try:
+                from intent_router import IntentRouter, IntentType
+                router = IntentRouter()
+                result = router.route(prompt)
+                if result and result.intent_type == IntentType.IMAGE_GENERATION:
+                    prompt_lower = (prompt or "").lower()
+                    # 実験室キーワード: lab, 実験室, 闇
+                    if any(k in prompt_lower for k in ("lab", "実験室", "闇", "露骨")):
+                        lab_mode = True
+                        logger.info("Intent Router: lab_mode を推定しました")
+                    # ムフフキーワード: セクシー, ムフフ, sexy, lingerie, 下着
+                    elif any(k in prompt_lower for k in ("セクシー", "ムフフ", "sexy", "lingerie", "下着", "水着", "swimsuit")):
+                        mufufu_mode = True
+                        logger.info("Intent Router: mufufu_mode を推定しました")
+            except Exception as e:
+                logger.debug(f"Intent Router スキップ: {e}")
         seed = data.get("seed", None)  # seedが指定されていない場合はNone（ランダム）
 
         if not prompt:
@@ -680,36 +707,53 @@ def generate():
             prompt = f"{DEFAULT_JAPANESE_PROMPT}, {prompt}"
             logger.info(f"日本人タグを自動追加: {prompt}")
 
-        # ムフフモードの場合、ネガティブプロンプトとポジティブプロンプトを強化
-        if mufufu_mode:
+        # 闇の実験室（lab_mode）: ネガは崩壊防止のみ、安全タグは付けない
+        if lab_mode:
+            try:
+                from mufufu_config_lab import LAB_NEGATIVE_PROMPT
+                negative_prompt = f"{negative_prompt}, {LAB_NEGATIVE_PROMPT}".strip(", ") if negative_prompt else LAB_NEGATIVE_PROMPT
+                if ANATOMY_POSITIVE_TAGS:
+                    prompt = f"{ANATOMY_POSITIVE_TAGS}, {prompt}"
+                if OPTIMIZED_PARAMS:
+                    if not steps or steps < 30:
+                        steps = OPTIMIZED_PARAMS.get("steps", 50)
+                    if not guidance_scale:
+                        guidance_scale = OPTIMIZED_PARAMS.get("guidance_scale", 7.5)
+                logger.info("✅ 闇の実験室（lab_mode）: ネガ最小限・表現はモデルに委ねます")
+            except ImportError:
+                logger.warning("⚠️ mufufu_config_lab が見つかりません。mufufu_mode で続行します。")
+                lab_mode = False
+
+        # ムフフモードの場合、ネガティブプロンプトとポジティブプロンプトを強化（lab_mode でないとき）
+        if not lab_mode and mufufu_mode:
             # ネガティブプロンプトを追加（身体崩れ対策強化版）
             if negative_prompt:
                 negative_prompt = f"{negative_prompt}, {MUFUFU_NEGATIVE_PROMPT}"
             else:
                 negative_prompt = MUFUFU_NEGATIVE_PROMPT
-            
+
             # ポジティブプロンプトに身体崩れ対策タグを追加（重要）
             if ANATOMY_POSITIVE_TAGS:
                 prompt = f"{ANATOMY_POSITIVE_TAGS}, {prompt}"
                 logger.info("✅ ムフフモード: 身体崩れ対策タグをポジティブプロンプトに追加")
-            
+
             # パラメータの最適化（身体崩れを減らすため）
             if OPTIMIZED_PARAMS:
                 # stepsが指定されていない、または30未満の場合は最適化
                 if not steps or steps < 30:
                     steps = OPTIMIZED_PARAMS.get("steps", 50)
                     logger.info(f"✅ ムフフモード: stepsを最適化 ({steps})")
-                
+
                 # guidance_scaleが指定されていない場合は最適化
                 if not guidance_scale:
                     guidance_scale = OPTIMIZED_PARAMS.get("guidance_scale", 7.5)
                     logger.info(f"✅ ムフフモード: guidance_scaleを最適化 ({guidance_scale})")
-                
+
                 # 解像度が低い場合は警告
                 if width < OPTIMIZED_PARAMS.get("min_width", 1024) or height < OPTIMIZED_PARAMS.get("min_height", 1024):
                     logger.warning(f"⚠️ ムフフモード: 解像度が低いと身体崩れが増える可能性があります ({width}x{height})")
 
-        # ワークフローを作成
+        # ワークフローを作成（lab_mode 時は出力を output/lab に保存）
         workflow = create_comfyui_workflow(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -720,7 +764,8 @@ def generate():
             height=height,
             sampler=sampler,
             scheduler=scheduler,
-            seed=seed
+            seed=seed,
+            output_subfolder="lab" if lab_mode else None,
         )
 
         # ComfyUIに送信
@@ -779,7 +824,7 @@ def generate():
                         try:
                             auto_system = get_auto_reflection_system()
                             image_path = str(IMAGES_DIR / gallery_filename)
-                            
+
                             # 評価実行
                             reflection_result = auto_system.process_generated_image(
                                 image_path=image_path,
@@ -798,16 +843,16 @@ def generate():
                                 auto_improve=True,
                                 threshold=0.7
                             )
-                            
+
                             logger.info(f"[自動反省] 総合スコア: {reflection_result['evaluation']['overall_score']:.2f}")
-                            
+
                             # 全自動モード: 改善提案があれば自動的に再生成
                             if reflection_result.get("should_regenerate"):
                                 improvement = reflection_result.get("improvement")
                                 if improvement:
                                     logger.warning(f"[自動反省] 再生成推奨: {improvement.get('reason', '')}")
                                     logger.info(f"[全自動モード] 改善されたパラメータで自動再生成を開始...")
-                                    
+
                                     # 自動再生成を実行
                                     auto_regenerate(
                                         job_id=job_id,
@@ -829,7 +874,7 @@ def generate():
                                     )
                         except Exception as e:
                             logger.error(f"[自動反省エラー] {e}", exc_info=True)
-                    
+
                     with jobs_lock:
                         if job_id in jobs:
                             jobs[job_id]["status"] = "completed"
@@ -880,7 +925,7 @@ def get_job_status(job_id: str):
         return jsonify({
             "error": "ジョブが見つかりません"
         }), 404
-    
+
     # 改善版ジョブの情報も取得
     response_data = dict(job)
     if "improved_jobs" in job:
@@ -909,7 +954,7 @@ def get_reflection_statistics():
         return jsonify({
             "error": "自動反省・改善システムが利用できません"
         }), 503
-    
+
     try:
         auto_system = get_auto_reflection_system()
         stats = auto_system.get_statistics()
@@ -931,7 +976,7 @@ def evaluate_image():
         return jsonify({
             "error": "自動反省・改善システムが利用できません"
         }), 503
-    
+
     try:
         data = request.get_json()
         image_path = data.get("image_path")
@@ -939,12 +984,12 @@ def evaluate_image():
         negative_prompt = data.get("negative_prompt", "")
         model = data.get("model", "")
         parameters = data.get("parameters", {})
-        
+
         if not image_path:
             return jsonify({
                 "error": "image_pathが必要です"
             }), 400
-        
+
         auto_system = get_auto_reflection_system()
         result = auto_system.process_generated_image(
             image_path=image_path,
@@ -955,7 +1000,7 @@ def evaluate_image():
             auto_improve=data.get("auto_improve", True),
             threshold=data.get("threshold", 0.7)
         )
-        
+
         return jsonify({
             "success": True,
             "result": result

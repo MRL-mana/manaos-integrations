@@ -1,0 +1,12 @@
+{
+  "youtube_videos": [],
+  "social_trends": [],
+  "trending_keywords": [],
+  "ai_insights": "AI分析エラー: 404 models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+  "stats": {
+    "collection_time": 3.4676756858825684,
+    "total_items": 0,
+    "success_rate": 100.0
+  },
+  "generated_at": "2025-09-06T17:26:28.722864"
+}

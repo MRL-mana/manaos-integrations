@@ -21,7 +21,7 @@ except ImportError:
     import logging
     logger = logging.getLogger(__name__)
 
-_DEFAULT_INTEGRATIONS = r"C:\Users\mana4\Desktop\manaos_integrations"
+_DEFAULT_INTEGRATIONS = str(Path(__file__).resolve().parent)
 INTEGRATIONS_DIR = Path(os.getenv("MANAOS_INTEGRATIONS_DIR", _DEFAULT_INTEGRATIONS))
 LOG_DIR = INTEGRATIONS_DIR / "logs"
 LOG_FILE = LOG_DIR / "system3_health_check.log"

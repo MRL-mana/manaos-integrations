@@ -1,0 +1,46 @@
+# Konoha (このはサーバー) 向け docker-compose
+# VPS で n8n 等を動かす最小構成
+# 使い方: docker compose -f docker-compose.konoha.yml up -d
+#
+# 親 compose との併用（リソースオーバーライド）:
+#   docker compose -f docker-compose.manaos-services.yml -f docker-compose.konoha.yml up -d
+
+version: '3.8'
+
+services:
+  # n8n: Konoha で 5678 ポートで起動
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n-konoha
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE:-false}
+      - TZ=Asia/Tokyo
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - konoha-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # オーケストレーターは通常 Python で直接起動するため、
+  # ここでは n8n のみ。unified-api 等は manaos-services と併用するか、
+  # Konoha 上で systemd 等で個別起動。
+
+networks:
+  konoha-network:
+    driver: bridge
+
+volumes:
+  n8n_data:

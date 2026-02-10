@@ -21,19 +21,30 @@
 - **APIエンドポイント**: `null`（ローカル監視のみ）
 - **場所**: **母艦（メインのWindows PC）** ← このコードが実行されているPC
 
-### 3. X280
+### 3. NanoKVM
+- **デバイスID**: `nanokvm`
+- **タイプ**: `nanokvm`
+- **Web UI**: `https://100.105.25.84/#/auth/login`（Tailscale 等）
+- **APIエンドポイント**: `https://100.105.25.84`
+- **場所**: 母艦に接続（KVM / リモートコンソール）
+- **ログイン**: ユーザー `mana`。パスワードは `.env` の `NANOKVM_PASSWORD` に設定（`env.example` 参照）
+- **マナが画面を確認するには（ちょい上級）**: AI はプライベートIPに直接アクセスできないため、**Cursor の browser MCP（cursor-ide-browser）** を使う。あなたのPC上のブラウザを操作して NanoKVM の URL を開き、スナップショットを取得する。これは「あなたの環境から見る」扱いになるので利用可能。有効化は `.cursor/mcp.json` に `cursor-ide-browser` を追加済み。Cursor 再起動または 設定 → MCP でリロードすること。
+
+**ログイン後の流れ**: ログインすると KVM コンソール画面になる。接続先マシン（母艦に接続された対象）の画面操作・リモート管理が可能。URL は統合API `GET /api/nanokvm/console_url` または MCP `nanokvm_console_url` で取得できる（疎通確認は `GET /api/nanokvm` または `GET /api/nanokvm/health`）。
+
+### 4. X280
 - **デバイスID**: `x280`
 - **タイプ**: `x280`
 - **APIエンドポイント**: `http://100.127.121.20:5120`（Tailscale経由）
 - **場所**: **X280（別のThinkPad Windows PC）** ← 母艦とは別のPC
 
-### 4. Konoha Server（このはサーバー）
+### 5. Konoha Server（このはサーバー）
 - **デバイスID**: `konoha`
 - **タイプ**: `konoha`
 - **APIエンドポイント**: `http://100.93.120.33:5106`（Tailscale経由）
 - **場所**: このはサーバー（Linux）
 
-### 5. Pixel 7
+### 6. Pixel 7
 - **デバイスID**: `pixel7`
 - **タイプ**: `pixel7`
 - **APIエンドポイント**: `http://100.127.121.20:5122`（Tailscale経由）
@@ -45,6 +56,7 @@
 |---------|--------|------|
 | ManaOS | 5106 | このはサーバー上のManaOS API |
 | 母艦 | - | APIエンドポイントなし（ローカル監視のみ） |
+| NanoKVM | 443 (HTTPS) | https://100.105.25.84（ログイン: mana / .env でパスワード） |
 | X280 | 5120 | X280 API Gateway（X280側で実行） |
 | Konoha Server | 5106 | このはサーバー上のKonoha API |
 | Pixel 7 | 5122 | Pixel 7 API Gateway（Pixel 7側で実行） |
@@ -69,14 +81,3 @@
    - 母艦からX280への接続: `http://100.127.121.20:5120`
    - X280側でのローカル接続: `http://localhost:5120`
    - 母艦側でのローカル接続: `http://localhost:5120`（File Secretaryサービスが母艦で実行されている場合）
-
-
-
-
-
-
-
-
-
-
-

@@ -1,6 +1,6 @@
 {
-  "device_ip": "100.127.121.20",
-  "device_port": 5555,
+  "device_ip": "100.84.2.125",
+  "device_port": 34417,
   "screenshot_dir": "./screenshots",
   "battery_low_threshold": 20,
   "battery_critical_threshold": 10,

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>レミ - 音声拡張</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        
+        .control-panel {
+            background: #2a2a2a;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        .status-info {
+            background: #0d6efd;
+        }
+        
+        .status-success {
+            background: #198754;
+        }
+        
+        .status-warning {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .voice-settings {
+            margin-top: 20px;
+        }
+        
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+        }
+        
+        .range-value {
+            float: right;
+            color: #aaa;
+        }
+        
+        #test-text {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 14px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎤 レミ - 音声拡張</h1>
+    
+    <div class="control-panel">
+        <h2>コントロール</h2>
+        
+        <button class="btn btn-primary" onclick="toggleAutoSpeak()">
+            <span id="auto-speak-status">自動読み上げ: OFF</span>
+        </button>
+        
+        <button class="btn btn-success" onclick="startListening()">
+            🎙️ 音声入力開始
+        </button>
+        
+        <button class="btn btn-danger" onclick="stopSpeaking()">
+            🔇 読み上げ停止
+        </button>
+        
+        <div id="status" class="status status-info" style="display: none;">
+            待機中...
+        </div>
+    </div>
+    
+    <div class="control-panel voice-settings">
+        <h2>音声設定</h2>
+        
+        <label>
+            速度
+            <span class="range-value" id="rate-value">1.0</span>
+        </label>
+        <input type="range" id="rate" min="0.5" max="2.0" step="0.1" value="1.0" onchange="updateRateValue(this.value)">
+        
+        <label>
+            音程
+            <span class="range-value" id="pitch-value">1.0</span>
+        </label>
+        <input type="range" id="pitch" min="0.5" max="2.0" step="0.1" value="1.0" onchange="updatePitchValue(this.value)">
+        
+        <label>
+            音量
+            <span class="range-value" id="volume-value">1.0</span>
+        </label>
+        <input type="range" id="volume" min="0" max="1" step="0.1" value="1.0" onchange="updateVolumeValue(this.value)">
+    </div>
+    
+    <div class="control-panel">
+        <h2>テスト</h2>
+        <textarea id="test-text" rows="4" placeholder="テスト用のテキストを入力...">こんにちは、レミです。音声テストを実行しています。</textarea>
+        <button class="btn btn-primary" onclick="testSpeak()">
+            🔊 テスト再生
+        </button>
+    </div>
+    
+    <div class="control-panel">
+        <h2>使い方</h2>
+        <ol style="line-height: 1.8;">
+            <li>「自動読み上げ」をONにする</li>
+            <li>Open WebUIで会話</li>
+            <li>レミの返答が自動で音声になる</li>
+        </ol>
+        <p style="color: #aaa; font-size: 12px;">
+            ※ このページをホーム画面に追加すると、すぐにアクセスできます
+        </p>
+    </div>
+
+    <script>
+        let autoSpeak = false;
+        let recognition = null;
+        let synthesis = window.speechSynthesis;
+        
+        // 設定読み込み
+        function loadSettings() {
+            const saved = localStorage.getItem('remi-voice-settings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                document.getElementById('rate').value = settings.rate || 1.0;
+                document.getElementById('pitch').value = settings.pitch || 1.0;
+                document.getElementById('volume').value = settings.volume || 1.0;
+                updateRateValue(settings.rate || 1.0);
+                updatePitchValue(settings.pitch || 1.0);
+                updateVolumeValue(settings.volume || 1.0);
+            }
+        }
+        
+        // 設定保存
+        function saveSettings() {
+            const settings = {
+                rate: parseFloat(document.getElementById('rate').value),
+                pitch: parseFloat(document.getElementById('pitch').value),
+                volume: parseFloat(document.getElementById('volume').value)
+            };
+            localStorage.setItem('remi-voice-settings', JSON.stringify(settings));
+        }
+        
+        // 値更新
+        function updateRateValue(val) {
+            document.getElementById('rate-value').textContent = val;
+            saveSettings();
+        }
+        
+        function updatePitchValue(val) {
+            document.getElementById('pitch-value').textContent = val;
+            saveSettings();
+        }
+        
+        function updateVolumeValue(val) {
+            document.getElementById('volume-value').textContent = val;
+            saveSettings();
+        }
+        
+        // 自動読み上げトグル
+        function toggleAutoSpeak() {
+            autoSpeak = !autoSpeak;
+            const btn = document.getElementById('auto-speak-status');
+            btn.textContent = `自動読み上げ: ${autoSpeak ? 'ON' : 'OFF'}`;
+            
+            if (autoSpeak) {
+                showStatus('自動読み上げを開始しました', 'success');
+                startMonitoring();
+            } else {
+                showStatus('自動読み上げを停止しました', 'warning');
+            }
+        }
+        
+        // テキスト読み上げ
+        function speak(text) {
+            // 既存の読み上げを停止
+            synthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ja-JP';
+            utterance.rate = parseFloat(document.getElementById('rate').value);
+            utterance.pitch = parseFloat(document.getElementById('pitch').value);
+            utterance.volume = parseFloat(document.getElementById('volume').value);
+            
+            utterance.onstart = () => {
+                showStatus('🔊 読み上げ中...', 'info');
+            };
+            
+            utterance.onend = () => {
+                showStatus('✅ 読み上げ完了', 'success');
+                setTimeout(() => hideStatus(), 2000);
+            };
+            
+            utterance.onerror = (event) => {
+                showStatus(`❌ エラー: ${event.error}`, 'warning');
+            };
+            
+            synthesis.speak(utterance);
+        }
+        
+        // 読み上げ停止
+        function stopSpeaking() {
+            synthesis.cancel();
+            showStatus('読み上げを停止しました', 'warning');
+        }
+        
+        // テスト再生
+        function testSpeak() {
+            const text = document.getElementById('test-text').value;
+            if (text.trim()) {
+                speak(text);
+            } else {
+                showStatus('テキストを入力してください', 'warning');
+            }
+        }
+        
+        // 音声入力開始
+        function startListening() {
+            if (!('webkitSpeechRecognition' in window)) {
+                showStatus('❌ 音声認識非対応', 'warning');
+                return;
+            }
+            
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = 'ja-JP';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            recognition.onstart = () => {
+                showStatus('🎤 聞いています...', 'info');
+            };
+            
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                showStatus(`認識: ${transcript}`, 'success');
+                
+                // Open WebUIに送信（実装は環境に応じて調整）
+                sendToOpenWebUI(transcript);
+            };
+            
+            recognition.onerror = (event) => {
+                showStatus(`❌ エラー: ${event.error}`, 'warning');
+            };
+            
+            recognition.onend = () => {
+                setTimeout(() => hideStatus(), 2000);
+            };
+            
+            recognition.start();
+        }
+        
+        // Open WebUIへメッセージ送信（仮実装）
+        function sendToOpenWebUI(text) {
+            // Open WebUIのAPIエンドポイントに送信
+            // 実際の実装は環境に応じて調整
+            console.log('送信:', text);
+            
+            // TODO: 実際のAPI呼び出し
+            // fetch('http://localhost:3001/api/chat', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ message: text })
+            // });
+        }
+        
+        // Open WebUIからのレスポンス監視（仮実装）
+        function startMonitoring() {
+            if (!autoSpeak) return;
+            
+            // TODO: Open WebUIのレスポンスを監視
+            // 実際の実装は環境に応じて調整
+            
+            // 例: WebSocket接続
+            // const ws = new WebSocket('ws://localhost:3001/ws');
+            // ws.onmessage = (event) => {
+            //     const data = JSON.parse(event.data);
+            //     if (data.type === 'response') {
+            //         speak(data.text);
+            //     }
+            // };
+        }
+        
+        // ステータス表示
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status status-${type}`;
+            status.style.display = 'block';
+        }
+        
+        function hideStatus() {
+            document.getElementById('status').style.display = 'none';
+        }
+        
+        // 初期化
+        loadSettings();
+        
+        // PWAサポート
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
+    </script>
+</body>
+</html>
