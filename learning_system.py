@@ -240,8 +240,8 @@ class LearningSystem:
                 try:
                     hour = datetime.fromisoformat(record["timestamp"]).hour
                     hour_counts[hour] += 1
-                except:
-                    pass
+                except (ValueError, KeyError, TypeError):
+                    continue
         
         if hour_counts:
             peak_hour = max(hour_counts.items(), key=lambda x: x[1])

@@ -7,9 +7,16 @@ import requests
 import hashlib
 import json
 import time
+import logging
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 from enum import Enum
+
+try:
+    from manaos_logger import get_logger
+    _logger = get_logger(__name__)
+except ImportError:
+    _logger = logging.getLogger(__name__)
 
 
 class ModelType(Enum):
@@ -101,8 +108,8 @@ class AlwaysReadyLLMClient:
                 data = response.json()
                 if data.get("found"):
                     return data.get("data")
-        except Exception:
-            pass
+        except Exception as e:
+            _logger.debug("キャッシュ取得失敗: %s", e)
         
         return None
     
@@ -121,8 +128,8 @@ class AlwaysReadyLLMClient:
                 },
                 timeout=2
             )
-        except Exception:
-            pass
+        except Exception as e:
+            _logger.debug("キャッシュ保存失敗: %s", e)
     
     def chat(
         self,
@@ -233,7 +240,8 @@ class AlwaysReadyLLMClient:
             response = requests.get(f"{self.lm_studio_url}/models", timeout=2)
             self._lm_studio_available = response.status_code == 200
             return self._lm_studio_available
-        except:
+        except (requests.RequestException, OSError) as e:
+            _logger.debug("LM Studio不可: %s", e)
             self._lm_studio_available = False
             return False
     
