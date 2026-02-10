@@ -586,7 +586,12 @@ body.panel-open .swipe-hint{display:none}
 <script>
 const P = new URLSearchParams(location.search);
 const API = P.get('api') || `${location.protocol}//${location.hostname}:5050`;
-const TOKEN = P.get('token') || '';
+const tokenFromQuery = P.get('token') || '';
+const tokenFromPath = (() => {
+  const m = location.pathname.match(/\/remi-wallpaper\/([^\/?#]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+})();
+const TOKEN = tokenFromQuery || tokenFromPath || '';
 const body = document.body;
 const charBody = document.getElementById('charBody');
 const speech = document.getElementById('speech');
