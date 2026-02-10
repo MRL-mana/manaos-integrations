@@ -82,7 +82,7 @@ async def lifespan(app):
         _monitor_task.cancel()
     audit_logger.info("Remi API stopped")
 
-app = FastAPI(title="Local Remi API", version="4.1.0", lifespan=lifespan)
+app = FastAPI(title="Local Remi API", version="4.3.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -181,7 +181,7 @@ def check_ollama_models():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "local-remi-api", "version": "4.1.0",
+    return {"status": "ok", "service": "local-remi-api", "version": "4.3.0",
             "timestamp": datetime.now().isoformat()}
 
 
@@ -869,6 +869,131 @@ async def log_requests(request: Request, call_next):
         client = request.client.host if request.client else "unknown"
         audit_logger.info(f"{client} {request.method} {path} -> {response.status_code} ({duration}ms)")
     return response
+
+
+# ============================================================
+# Secretary & ManaOS Integration
+# ============================================================
+
+SECRETARY_API = "http://127.0.0.1:5003"
+SSOT_API = "http://127.0.0.1:5120"
+UNIFIED_API = "http://127.0.0.1:9500"
+
+
+async def _proxy_get(url: str, timeout: float = 10.0) -> dict:
+    """Proxy GET to internal service"""
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        resp = await client.get(url)
+        return resp.json()
+
+
+async def _proxy_post(url: str, data: dict = None, timeout: float = 15.0) -> dict:
+    """Proxy POST to internal service"""
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        resp = await client.post(url, json=data or {})
+        return resp.json()
+
+
+@app.get("/secretary/status", dependencies=[Depends(verify_token)])
+async def secretary_status():
+    """Check all secretary and ManaOS service health"""
+    services = {
+        "secretary_api": {"url": f"{SECRETARY_API}/health", "port": 5003},
+        "ssot_api": {"url": f"{SSOT_API}/health", "port": 5120},
+        "unified_api": {"url": f"{UNIFIED_API}/health", "port": 9500},
+        "secretary_system": {"url": "http://127.0.0.1:5125/health", "port": 5125},
+        "orchestrator": {"url": "http://127.0.0.1:5106/health", "port": 5106},
+    }
+    results = {}
+    for name, info in services.items():
+        try:
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                resp = await client.get(info["url"])
+                results[name] = {"status": "online", "port": info["port"], "data": resp.json()}
+        except Exception:
+            results[name] = {"status": "offline", "port": info["port"]}
+    return {"services": results, "online": sum(1 for v in results.values() if v["status"] == "online"), "total": len(results)}
+
+
+@app.get("/secretary/reminders", dependencies=[Depends(verify_token)])
+async def get_reminders():
+    """Get pending reminders from Secretary System"""
+    try:
+        data = await _proxy_get("http://127.0.0.1:5125/api/reminders")
+        return data
+    except httpx.ConnectError:
+        return {"error": "Secretary System offline (port 5125)", "hint": "Start secretary_system.py"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/secretary/reminders", dependencies=[Depends(verify_token)])
+async def add_reminder(
+    title: str = Query(..., description="Reminder title"),
+    due: str = Query(None, description="Due date (YYYY-MM-DD HH:MM)"),
+    repeat: str = Query("once", description="once/daily/weekly/monthly")
+):
+    """Add a reminder via Secretary System"""
+    try:
+        payload = {"title": title, "repeat_type": repeat}
+        if due:
+            payload["due_date"] = due
+        data = await _proxy_post("http://127.0.0.1:5125/api/reminders", payload)
+        return data
+    except httpx.ConnectError:
+        return {"error": "Secretary System offline (port 5125)"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/secretary/report", dependencies=[Depends(verify_token)])
+async def daily_report():
+    """Generate daily report via Secretary System"""
+    try:
+        data = await _proxy_post("http://127.0.0.1:5125/api/reports/daily")
+        return data
+    except httpx.ConnectError:
+        return {"error": "Secretary System offline (port 5125)"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/secretary/reports", dependencies=[Depends(verify_token)])
+async def get_reports(report_type: str = Query("daily"), limit: int = Query(5)):
+    """Get past reports from Secretary System"""
+    try:
+        data = await _proxy_get(f"http://127.0.0.1:5125/api/reports?type={report_type}&limit={limit}")
+        return data
+    except httpx.ConnectError:
+        return {"error": "Secretary System offline (port 5125)"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/manaos/services", dependencies=[Depends(verify_token)])
+async def manaos_services():
+    """List all ManaOS services and their status"""
+    service_map = {
+        "unified_api": 9500, "llm_routing": 9501, "mcp_api": 9502,
+        "intent_router": 5100, "rag_memory": 5103, "task_queue": 5104,
+        "orchestrator": 5106, "service_monitor": 5111,
+        "secretary_system": 5125, "file_secretary": 5120,
+        "mrl_memory": 5105, "learning_system": 5126,
+    }
+    async def _check(client, name, port):
+        try:
+            await client.get(f"http://127.0.0.1:{port}/health")
+            return name, {"status": "online", "port": port}
+        except Exception:
+            return name, {"status": "offline", "port": port}
+
+    async with httpx.AsyncClient(timeout=2.0) as client:
+        checks = await asyncio.gather(
+            *[_check(client, n, p) for n, p in service_map.items()]
+        )
+    results = dict(checks)
+    online = sum(1 for v in results.values() if v["status"] == "online")
+    return {"services": results, "online": online, "total": len(results)}
 
 
 # ============================================================
