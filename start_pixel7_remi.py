@@ -23,7 +23,13 @@ SERVICES = [
     {
         "name": "Local Remi API",
         "check_url": "http://localhost:5050/health",
-        "start_cmd": [sys.executable, os.path.join(os.path.dirname(__file__), "local_remi_api.py")],
+        "start_cmd": [
+            "powershell.exe",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            os.path.join(os.path.dirname(__file__), "start_remi_api.ps1"),
+        ],
     },
 ]
 
@@ -56,14 +62,19 @@ def start_docker_services():
 
 def start_remi_api():
     print("[*] Starting Local Remi API...")
-    env = os.environ.copy()
-    env["REMI_API_TOKEN"] = os.getenv("REMI_API_TOKEN", "remi-pixel7-2026")
+    cmd = [
+        "powershell.exe",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        os.path.join(os.path.dirname(__file__), "start_remi_api.ps1"),
+    ]
     subprocess.Popen(
-        [sys.executable, os.path.join(os.path.dirname(__file__), "local_remi_api.py")],
+        cmd,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
-        env=env,
-        creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+        env=os.environ.copy(),
+        creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
     )
     print("[+] Remi API started on port 5050")
 

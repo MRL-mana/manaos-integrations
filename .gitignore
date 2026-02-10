@@ -278,6 +278,11 @@ comfyui/custom_nodes/
 comfyui/models/
 comfyui/output/
 comfyui/input/
+# アーカイブ・バックアップ（歴史的資料、追跡不要）
+konoha_mcp_servers/archive_*/
+konoha_mcp_servers/duplicates_backup/
+migrated_from_konoha/user_data_backups/
+
 .clinerules/byterover-rules.md
 .kilocode/rules/byterover-rules.md
 .roo/rules/byterover-rules.md
