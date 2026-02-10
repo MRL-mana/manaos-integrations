@@ -23,7 +23,7 @@ def check_llava_installed():
         )
         if result.returncode == 0:
             return "llava" in result.stdout.lower()
-    except:
+    except Exception:
         pass
     return False
 
@@ -37,7 +37,7 @@ def check_download_progress():
             timeout=5
         )
         return result.returncode == 0 and result.stdout.strip() != ""
-    except:
+    except Exception:
         return False
 
 print("=" * 60)

@@ -139,7 +139,7 @@ class SecretaryRoutines:
                             "prompt": summary_prompt
                         })
                         log_diff["summary"] = summary_result.get("response", "")[:200]
-                    except:
+                    except Exception:
                         log_diff["summary"] = "要約生成に失敗しました"
                 
                 return log_diff
@@ -177,7 +177,7 @@ class SecretaryRoutines:
                         "search_lang": "jp",
                         "freshness": "pd"  # 過去1日
                     })
-                except:
+                except Exception:
                     # Brave Searchが利用できない場合はSearXNGを使用
                     search_result = manaos.act("web_search", {
                         "query": f"{topic} 最新情報",
@@ -582,7 +582,7 @@ class SecretaryRoutines:
                         "prompt": report_prompt
                     })
                     return report_result.get("response", "日報生成に失敗しました")
-                except:
+                except Exception:
                     return "日報生成に失敗しました（LLM呼び出しエラー）"
             
             except Exception as e:

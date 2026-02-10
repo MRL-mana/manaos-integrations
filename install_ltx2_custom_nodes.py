@@ -69,7 +69,7 @@ def check_comfyui_running():
     try:
         response = requests.get(f"{COMFYUI_URL}/system_stats", timeout=5)
         return response.status_code == 200
-    except:
+    except Exception:
         return False
 
 

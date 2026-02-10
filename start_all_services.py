@@ -123,7 +123,7 @@ def main():
                 process.terminate()
                 process.wait(timeout=5)
                 print(f"[停止] {SERVICES[name]['description']}")
-            except:
+            except Exception:
                 process.kill()
                 print(f"[強制停止] {SERVICES[name]['description']}")
         

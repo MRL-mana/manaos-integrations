@@ -30,7 +30,7 @@ try:
     else:
         print(f"   [WARN] ComfyUI接続エラー: {response.status_code}")
         comfyui_running = False
-except:
+except Exception:
     print("   [WARN] ComfyUIに接続できません")
     comfyui_running = False
 
@@ -51,7 +51,7 @@ try:
                 if status_str == "error":
                     error_count += 1
             print(f"   最新3件中、エラー: {error_count}件")
-except:
+except Exception:
     pass
 
 print()

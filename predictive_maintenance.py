@@ -67,7 +67,7 @@ class PredictiveMaintenance:
                     for key, values in state.get("metrics_history", {}).items():
                         self.metrics_history[key] = deque(values[-self.history_size:], maxlen=self.history_size)
                     self.alerts = state.get("alerts", [])[-50:]  # 最新50件のみ
-            except:
+            except Exception:
                 pass
     
     def _save_state(self, max_retries: int = 3):

@@ -62,7 +62,7 @@ def get_recent_images_from_filesystem(limit=200, random_sample=False):
                 try:
                     with open(metadata_file, 'r', encoding='utf-8') as f:
                         metadata = json.load(f)
-                except:
+                except Exception:
                     pass
             
             # ファイル情報を追加

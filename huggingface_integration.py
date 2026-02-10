@@ -465,7 +465,7 @@ class HuggingFaceManaOSIntegration:
         for generator in self.generators.values():
             try:
                 generator.cleanup()
-            except:
+            except Exception:
                 pass
         self.generators.clear()
         logger.info("リソースをクリーンアップしました")

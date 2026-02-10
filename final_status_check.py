@@ -92,7 +92,7 @@ try:
                     if diff_minutes < 60:  # 1時間以内
                         new_count += 1
                         print(f"   [NEW] {img.get('filename', 'N/A')} - {diff_minutes:.1f}分前")
-                except:
+                except Exception:
                     pass
         
         print(f"   総画像数: {total}枚")

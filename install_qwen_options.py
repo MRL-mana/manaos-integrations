@@ -41,7 +41,7 @@ def download_file_with_hf(model_name, file_path, target_path):
     try:
         subprocess.run(["hf", "--version"], capture_output=True, timeout=2, env=env)
         cmd_base = "hf"
-    except:
+    except Exception:
         cmd_base = "huggingface-cli"
     
     cmd = [
@@ -87,7 +87,7 @@ def download_model_files(model_name, target_path, file_patterns):
     try:
         subprocess.run(["hf", "--version"], capture_output=True, timeout=2, env=env)
         cmd_base = "hf"
-    except:
+    except Exception:
         cmd_base = "huggingface-cli"
     
     os.makedirs(target_path, exist_ok=True)

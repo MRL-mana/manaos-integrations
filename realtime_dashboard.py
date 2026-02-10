@@ -356,14 +356,14 @@ def background_task():
             if bridge:
                 try:
                     manaos_services = bridge.check_manaos_services()
-                except:
+                except Exception:
                     pass
 
             agent_status = {}
             if agent:
                 try:
                     agent_status = agent.get_status()
-                except:
+                except Exception:
                     pass
 
             status = {

@@ -32,7 +32,7 @@ class StatisticsGenerator:
                 for line in f:
                     try:
                         self.request_logs.append(json.loads(line.strip()))
-                    except:
+                    except Exception:
                         pass
         
         # エラーログ
@@ -41,7 +41,7 @@ class StatisticsGenerator:
                 for line in f:
                     try:
                         self.error_logs.append(json.loads(line.strip()))
-                    except:
+                    except Exception:
                         pass
         
         # パフォーマンスログ
@@ -50,7 +50,7 @@ class StatisticsGenerator:
                 for line in f:
                     try:
                         self.performance_logs.append(json.loads(line.strip()))
-                    except:
+                    except Exception:
                         pass
     
     def generate_statistics(self) -> Dict[str, Any]:

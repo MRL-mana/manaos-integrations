@@ -76,7 +76,7 @@ def test_task_planner(port: int) -> Dict[str, Any]:
             health_response = httpx.get(f"http://localhost:{port}/health", timeout=5)
             if health_response.status_code == 200:
                 return {"success": True, "note": "Service is running but LLM timeout (fallback may work)"}
-        except:
+        except Exception:
             pass
         return {"success": False, "error": "timed out"}
     except httpx.ConnectError:
@@ -115,7 +115,7 @@ def test_task_critic(port: int) -> Dict[str, Any]:
             health_response = httpx.get(f"http://localhost:{port}/health", timeout=5)
             if health_response.status_code == 200:
                 return {"success": True, "note": "Service is running but LLM timeout (fallback may work)"}
-        except:
+        except Exception:
             pass
         return {"success": False, "error": "timed out"}
     except httpx.ConnectError:

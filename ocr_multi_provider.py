@@ -62,7 +62,7 @@ class MultiProviderOCR:
                         pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
                         tesseract_found = True
                         logger.info(f"Tesseract OCRがPATHから見つかりました: {tesseract_cmd}")
-                except:
+                except Exception:
                     pass
             
             if tesseract_found:

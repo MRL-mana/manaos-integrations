@@ -21,7 +21,7 @@ Security: Bearer token via REMI_API_TOKEN env var
 
 from fastapi import FastAPI, Query, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, Response
+from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, Response, RedirectResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from contextlib import asynccontextmanager
 import psutil
@@ -383,14 +383,53 @@ async def remi_live(token: str = Query(""), mode: str = Query("standalone")):
 
 
 @app.get("/remi-wallpaper", response_class=HTMLResponse)
-async def remi_wallpaper(token: str = Query("")):
-    """Full-screen live wallpaper with animated Remi + clock + sky"""
-    if token != API_TOKEN:
+async def remi_wallpaper(request: Request, token: str = Query("")):
+    """Full-screen live wallpaper with animated Remi + clock + sky.
+
+    Supports a cookie-based token so the URL can stay clean after the first open.
+    """
+    cookie_token = request.cookies.get("remi_token", "")
+    presented = token or cookie_token
+    if presented != API_TOKEN:
         return HTMLResponse("<h3 style='color:red'>Auth Error</h3>", status_code=401)
+
+    # If a token was provided in the query, set cookie and redirect to tokenless URL.
+    if token and token == API_TOKEN:
+        resp = RedirectResponse(url="/remi-wallpaper", status_code=302)
+        resp.set_cookie(
+            key="remi_token",
+            value=API_TOKEN,
+            max_age=60 * 60 * 24 * 365,
+            path="/",
+            httponly=True,
+            samesite="lax",
+        )
+        return resp
+
     wp_path = os.path.join(os.path.dirname(__file__), "remi_wallpaper.html")
     try:
         with open(wp_path, "r", encoding="utf-8") as f:
-            return f.read()
+            html = f.read()
+
+        # Inject the token so the page can call APIs without relying on URL parameters.
+        bootstrap = f"<script>window.REMI_TOKEN={json.dumps(API_TOKEN)};</script>\n"
+        if "</head>" in html:
+            html = html.replace("</head>", bootstrap + "</head>", 1)
+        else:
+            html = bootstrap + html
+
+        resp = HTMLResponse(html)
+        # Ensure cookie is present for future clean reloads.
+        if cookie_token != API_TOKEN:
+            resp.set_cookie(
+                key="remi_token",
+                value=API_TOKEN,
+                max_age=60 * 60 * 24 * 365,
+                path="/",
+                httponly=True,
+                samesite="lax",
+            )
+        return resp
     except FileNotFoundError:
         return HTMLResponse("<h1>Wallpaper file not found</h1>", status_code=404)
 
@@ -400,12 +439,18 @@ async def remi_wallpaper_path_token(token: str):
     """Same as /remi-wallpaper but token is passed in the URL path (no query string)."""
     if token != API_TOKEN:
         return HTMLResponse("<h3 style='color:red'>Auth Error</h3>", status_code=401)
-    wp_path = os.path.join(os.path.dirname(__file__), "remi_wallpaper.html")
-    try:
-        with open(wp_path, "r", encoding="utf-8") as f:
-            return f.read()
-    except FileNotFoundError:
-        return HTMLResponse("<h1>Wallpaper file not found</h1>", status_code=404)
+
+    # Set cookie then redirect to the clean URL.
+    resp = RedirectResponse(url="/remi-wallpaper", status_code=302)
+    resp.set_cookie(
+        key="remi_token",
+        value=API_TOKEN,
+        max_age=60 * 60 * 24 * 365,
+        path="/",
+        httponly=True,
+        samesite="lax",
+    )
+    return resp
 
 
 @app.get("/widget", response_class=HTMLResponse)

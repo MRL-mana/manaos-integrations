@@ -114,7 +114,7 @@ class RAGMemoryEnhancedV2:
             # 埋め込みカラムが存在しない場合は追加
             try:
                 cursor.execute("ALTER TABLE memory_entries ADD COLUMN embedding TEXT")
-            except:
+            except Exception:
                 pass  # 既に存在する場合
             
             # インデックス作成
@@ -253,7 +253,7 @@ class RAGMemoryEnhancedV2:
                     similarity = self._cosine_similarity(entry.embedding, other_embedding)
                     if similarity > 0.7:  # 閾値
                         similarities.append((entry_id, similarity))
-                except:
+                except Exception:
                     pass
         
         # 類似度でソート

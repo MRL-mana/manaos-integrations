@@ -234,7 +234,7 @@ if len(prompt_ids) > 0:
                     
                     if status_str == "success" and has_images:
                         success_count += 1
-        except:
+        except Exception:
             pass
     
     print(f"生成状況: 成功 {success_count}件 / {len(prompt_ids)}件")

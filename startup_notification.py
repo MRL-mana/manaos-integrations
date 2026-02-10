@@ -42,7 +42,7 @@ def wait_for_ready(max_wait: int = 120, poll_interval: int = 5):
             response = requests.get(f"{base_url}/ready", timeout=5)
             if response.status_code == 200:
                 return response.json()
-        except:
+        except Exception:
             pass
         time.sleep(poll_interval)
     

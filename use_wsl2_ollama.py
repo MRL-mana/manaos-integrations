@@ -35,7 +35,7 @@ def call_wsl2_ollama_api(endpoint: str, method: str = "GET", json_data: dict = N
         try:
             import json
             return json.loads(result.stdout)
-        except:
+        except Exception:
             return result.stdout
     else:
         return None

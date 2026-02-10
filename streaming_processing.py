@@ -38,7 +38,7 @@ class StreamingProcessor:
                 with open(self.storage_path, 'r', encoding='utf-8') as f:
                     state = json.load(f)
                     self.processed_count = state.get("processed_count", 0)
-            except:
+            except Exception:
                 self.processed_count = 0
         else:
             self.processed_count = 0

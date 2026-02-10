@@ -86,7 +86,7 @@ for prompt_id in all_ids:
                     total_success += 1
                 elif status_str == "error":
                     total_error += 1
-    except:
+    except Exception:
         pass
 
 print(f"   最初の20件: 成功13件, エラー7件")

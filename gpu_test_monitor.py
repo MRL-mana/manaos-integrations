@@ -27,7 +27,7 @@ def monitor_gpu():
                 gpu_info = result.stdout.strip()
                 print(f"  GPU: {gpu_info}")
             time.sleep(2)
-        except:
+        except Exception:
             break
 
 def main():

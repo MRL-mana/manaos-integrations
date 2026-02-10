@@ -97,7 +97,7 @@ class UltimateIntegrationSystem:
                 with open(self.storage_path, 'r', encoding='utf-8') as f:
                     state = json.load(f)
                     # 必要に応じて状態を復元
-            except:
+            except Exception:
                 pass
     
     def _save_state(self, max_retries: int = 3):

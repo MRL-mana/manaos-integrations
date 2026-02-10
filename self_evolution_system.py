@@ -193,7 +193,7 @@ class SelfEvolutionSystem:
                     complexity += 1
             
             return complexity
-        except:
+        except Exception:
             return 0.0
     
     def _detect_performance_issues(self, code: str) -> List[str]:

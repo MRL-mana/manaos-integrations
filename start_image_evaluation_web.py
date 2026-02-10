@@ -29,7 +29,7 @@ if not evaluation_web_file.exists():
         try:
             with open(EVALUATION_DB, 'r', encoding='utf-8') as f:
                 evaluations = json.load(f)
-        except:
+        except Exception:
             pass
     
     @app.route('/')
@@ -228,7 +228,7 @@ if not evaluation_web_file.exists():
                 ip = s.getsockname()[0]
                 s.close()
                 return ip
-            except:
+            except Exception:
                 return "localhost"
         
         local_ip = get_local_ip()

@@ -35,7 +35,7 @@ def check_ollama():
             models = response.json().get("models", [])
             print(f"  [OK] Ollama起動中（モデル数: {len(models)}）")
             return True
-    except:
+    except Exception:
         print("  [WARN] Ollama未起動")
         return False
 

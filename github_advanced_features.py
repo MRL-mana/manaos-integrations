@@ -176,7 +176,7 @@ class GitHubAdvancedFeatures:
                             capture_output=True,
                             check=False
                         )
-                    except:
+                    except Exception:
                         pass
                 labeled_count += 1
         

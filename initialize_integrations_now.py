@@ -85,7 +85,7 @@ try:
             if hasattr(integration, 'is_available'):
                 try:
                     available = integration.is_available()
-                except:
+                except Exception:
                     pass
             status_icon = "[OK]" if available else "[NG]"
             print(f"    {status_icon} {name}")

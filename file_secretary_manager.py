@@ -88,7 +88,7 @@ def check_status():
             print("✅ APIサーバー: 正常応答")
         else:
             print(f"⚠️ APIサーバー: HTTP {response.status_code}")
-    except:
+    except Exception:
         print("⚠️ APIサーバー: 接続不可")
 
 def main():

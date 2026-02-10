@@ -32,7 +32,7 @@ def get_config_from_json():
                     'webhook_url': data.get('slack_webhook_url'),
                     'verification_token': data.get('slack_verification_token')
                 }
-        except:
+        except Exception:
             pass
     return {}
 

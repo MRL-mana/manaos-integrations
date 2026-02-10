@@ -67,7 +67,7 @@ class ExcelLLMOCRCorrector:
                         llm_model = model
                         print(f"大きなモデルを選択: {model}")
                         break
-            except:
+            except Exception:
                 # LM Studioのモデル名を直接試す
                 if os.getenv("USE_LM_STUDIO", "0").strip().lower() in ("1", "true", "yes", "y", "on"):
                     # LM Studio APIから直接モデル一覧を取得
@@ -89,7 +89,7 @@ class ExcelLLMOCRCorrector:
                         if picked:
                             llm_model = picked[0]
                             print(f"LM Studioモデルを選択（キャッシュ/テスト済み）: {llm_model}")
-                    except:
+                    except Exception:
                         # API取得に失敗した場合はデフォルトモデルを使用
                         pass
 

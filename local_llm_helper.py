@@ -26,7 +26,7 @@ def _check_lm_studio() -> bool:
     try:
         response = requests.get(f"{LM_STUDIO_URL}/models", timeout=2)
         return response.status_code == 200
-    except:
+    except Exception:
         return False
 
 
@@ -40,7 +40,7 @@ def _check_wsl2_ollama() -> bool:
             text=True
         )
         return result.returncode == 0 and "models" in result.stdout
-    except:
+    except Exception:
         return False
 
 
@@ -49,7 +49,7 @@ def _check_windows_ollama() -> bool:
     try:
         response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
         return response.status_code == 200
-    except:
+    except Exception:
         return False
 
 
@@ -204,7 +204,7 @@ def generate(model: str = "qwen3:4b", prompt: str = "", stream: bool = False,
                             error_msg = str(error_msg)
                     else:
                         error_msg = str(error_data)
-                except:
+                except Exception:
                     error_msg = response.text[:200] if response.text else f"HTTP {response.status_code}"
                 
                 if 'load' in error_msg.lower() or 'not found' in error_msg.lower():
@@ -235,7 +235,7 @@ def generate(model: str = "qwen3:4b", prompt: str = "", stream: bool = False,
                         error_msg = str(error_msg)
                 else:
                     error_msg = str(error_data)
-            except:
+            except Exception:
                 error_msg = str(e)
             
             if e.response and e.response.status_code == 400:
@@ -303,7 +303,7 @@ def check_status() -> Dict[str, Any]:
             if response.status_code == 200:
                 data = response.json()
                 running_models = [m["name"] for m in data.get("models", [])]
-        except:
+        except Exception:
             pass
 
         # GPU使用状況を確認（WSL2の場合）
@@ -318,7 +318,7 @@ def check_status() -> Dict[str, Any]:
                 )
                 if "GPU" in result.stdout:
                     gpu_mode = True
-            except:
+            except Exception:
                 pass
 
         return {

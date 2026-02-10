@@ -57,7 +57,7 @@ class AutonomousAgent:
                     state = json.load(f)
                     self.tasks = state.get("tasks", [])
                     self.goals = state.get("goals", [])
-            except:
+            except Exception:
                 self.tasks = []
                 self.goals = []
         else:

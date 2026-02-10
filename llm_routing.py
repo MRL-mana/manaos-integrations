@@ -450,7 +450,7 @@ class LLMRouter:
                     error_body = response.json()
                     if "error" in error_body:
                         error_detail += f": {error_body['error']}"
-                except:
+                except Exception:
                     error_detail += f": {response.text[:200]}"
                 raise ModelUnavailableError(f"APIエラー: {error_detail}")
 

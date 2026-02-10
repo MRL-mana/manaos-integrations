@@ -67,7 +67,7 @@ def get_local_llm_status():
                 "url": system_info["url"],
                 "features": system_info["features"]
             }
-        except:
+        except Exception:
             status[system_id] = {
                 "available": False,
                 "url": system_info["url"],

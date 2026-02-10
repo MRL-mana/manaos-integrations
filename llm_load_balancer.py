@@ -93,7 +93,7 @@ class LLMLoadBalancer:
             try:
                 response = requests.get(endpoint.health_check_url, timeout=2)
                 return response.status_code == 200
-            except:
+            except Exception:
                 return False
         
         # デフォルト: 成功率で判定

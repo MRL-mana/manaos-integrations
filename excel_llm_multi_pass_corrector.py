@@ -77,7 +77,7 @@ def multi_pass_correct(input_file: str, output_file: str, num_passes: int = 3, v
                 os.remove(temp_file)
                 if verbose:
                     print(f"  中間ファイル削除: {temp_file}")
-            except:
+            except Exception:
                 pass
     
     return True

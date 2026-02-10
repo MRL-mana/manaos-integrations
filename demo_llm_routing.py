@@ -212,7 +212,7 @@ def check_api_health():
             print("✅ 統合APIサーバー: 起動中")
         else:
             print(f"⚠️  統合APIサーバー: HTTP {response.status_code}")
-    except:
+    except Exception:
         print("❌ 統合APIサーバー: 接続不可")
         print(f"   URL: {UNIFIED_API_URL}")
     
@@ -223,7 +223,7 @@ def check_api_health():
             print("✅ 拡張LLMルーティングAPI: 起動中")
         else:
             print(f"⚠️  拡張LLMルーティングAPI: HTTP {response.status_code}")
-    except:
+    except Exception:
         print("❌ 拡張LLMルーティングAPI: 接続不可（オプション）")
         print(f"   URL: {ROUTING_API_URL}")
 

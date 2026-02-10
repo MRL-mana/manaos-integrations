@@ -37,6 +37,9 @@ env/
 # Pixel 7 スクリーンショット保存先
 pixel7_screenshots/
 
+# Windows スクリーンショット保存先
+screenshots/
+
 # IDE
 .vscode/
 .idea/

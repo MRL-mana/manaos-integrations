@@ -24,6 +24,11 @@ mcp>=0.9.0
 # 画像処理
 Pillow>=10.0.0
 
+# Windows自動化 & Pico HID
+pyserial>=3.5
+pynput>=1.7.0
+mss>=9.0.0
+
 # ドキュメント（オプション）
 sphinx>=7.1.0
 sphinx-rtd-theme>=1.3.0

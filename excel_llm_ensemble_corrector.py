@@ -78,7 +78,7 @@ class EnsembleOCRCorrector:
                     for m in models:
                         print(f"アンサンブル用モデル選択（キャッシュ/テスト済み）: {m}")
                     return models[:max_models]
-            except:
+            except Exception:
                 pass
         
         # デフォルトモデル

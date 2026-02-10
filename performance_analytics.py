@@ -32,7 +32,7 @@ class PerformanceAnalytics:
                     state = json.load(f)
                     self.metrics_data = defaultdict(list, state.get("metrics_data", {}))
                     self.performance_reports = state.get("reports", [])[-50:]
-            except:
+            except Exception:
                 self.metrics_data = defaultdict(list)
                 self.performance_reports = []
         else:

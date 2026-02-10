@@ -137,7 +137,7 @@ class OHMyOpenCodeKillSwitch:
             )
             if result.returncode == 0:
                 fingerprint_data["git_branch"] = result.stdout.strip()
-        except:
+        except Exception:
             pass
         
         # Hash生成

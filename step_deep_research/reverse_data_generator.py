@@ -324,14 +324,14 @@ class ReverseDataGenerator:
                                         # Planオブジェクトに変換（簡易版）
                                         try:
                                             plan = Plan(**plan_data)
-                                        except:
+                                        except Exception:
                                             # フォールバック: 基本的なPlanを作成
                                             from .schemas import TodoItem, TaskTool, TaskPriority
                                             todo_items = []
                                             for todo_data in plan_data.get("todo", []):
                                                 try:
                                                     todo_items.append(TodoItem(**todo_data))
-                                                except:
+                                                except Exception:
                                                     pass
                                             plan = Plan(
                                                 goal=plan_data.get("goal", ""),
@@ -346,7 +346,7 @@ class ReverseDataGenerator:
                                         # ResearchResultsオブジェクトに変換（簡易版）
                                         try:
                                             research_results = ResearchResults(**results_data)
-                                        except:
+                                        except Exception:
                                             # フォールバック: 基本的なResearchResultsを作成
                                             research_results = ResearchResults()
                                             if "citations" in results_data:
@@ -450,14 +450,14 @@ class ReverseDataGenerator:
                                     plan_data = log_entry.get("plan", {})
                                     try:
                                         plan = Plan(**plan_data)
-                                    except:
+                                    except Exception:
                                         # フォールバック: 基本的なPlanを作成
                                         from .schemas import TodoItem, TaskTool, TaskPriority
                                         todo_items = []
                                         for todo_data in plan_data.get("todo", []):
                                             try:
                                                 todo_items.append(TodoItem(**todo_data))
-                                            except:
+                                            except Exception:
                                                 pass
                                         plan = Plan(
                                             goal=plan_data.get("goal", ""),
@@ -471,7 +471,7 @@ class ReverseDataGenerator:
                                     results_data = log_entry.get("research_results") or log_entry.get("results", {})
                                     try:
                                         research_results = ResearchResults(**results_data)
-                                    except:
+                                    except Exception:
                                         # フォールバック: 基本的なResearchResultsを作成
                                         research_results = ResearchResults()
                                         if "citations" in results_data:
