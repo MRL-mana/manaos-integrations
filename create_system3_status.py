@@ -619,12 +619,8 @@ def get_todo_metrics() -> Dict[str, Any]:
 
 
 def count_recent_improvements(hours: int = 24) -> Dict[str, int]:
-
-    # Count recent improvements
-
-    # TODO: ﾃ･ﾂｮﾅｸﾃｩﾅ｡窶ｺﾃ｣・ｽﾂｮﾃ｣ﾆ停｡ﾃ｣ﾆ陳ｼﾃ｣窶堋ｿﾃ｣ﾆ停┐ﾃ｣ﾆ陳ｼﾃ｣窶堋ｹﾃ｣・ｽ窶ｹﾃ｣窶壺ｰﾃ･・ｽ窶禿･ﾂｾ窶・
-
-    # ﾃｧ・ｽﾂｾﾃｦ邃｢窶堙ｧ窶堋ｹﾃ｣・ｽﾂｧﾃ｣・ｽﾂｯﾃ｣ﾆ停氾｣ﾆ陳ｬﾃ｣ﾆ陳ｼﾃ｣窶堋ｹﾃ｣ﾆ停ｺﾃ｣ﾆ陳ｫﾃ｣ﾆ停ぎﾃ｣ﾆ陳ｼ
+    """直近の改善数をカウントする（未実装 — 現在はゼロ値を返す）"""
+    # TODO: 実際の改善データソースから集計する
 
     return {
         "playbooks_created": 0,

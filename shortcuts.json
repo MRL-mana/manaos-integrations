@@ -176,6 +176,16 @@
           },
           "headers": [],
           "parameters": []
+        },
+        {
+          "id": "b9999999-9999-9999-9999-999999999999",
+          "executionType": "browser",
+          "name": "\ud83d\udc7e Remi Live",
+          "description": "Animated Remi character",
+          "url": "http://100.73.247.100:5050/remi-live?token=remi-pixel7-2026&mode=standalone",
+          "authentication": "none",
+          "headers": [],
+          "parameters": []
         }
       ]
     }

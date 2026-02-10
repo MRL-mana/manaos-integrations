@@ -426,7 +426,7 @@ class UnifiedMemory:
                     results.remove(result)
                 elif scope == "month" and delta.days > 30:
                     results.remove(result)
-            except:
+            except (ValueError, KeyError):
                 continue
         
         return results
@@ -522,7 +522,7 @@ class UnifiedMemory:
                                         continue
                                     elif scope == "month" and delta.days > 30:
                                         continue
-                                except:
+                                except (ValueError, KeyError):
                                     pass
                         
                         results.append(content)

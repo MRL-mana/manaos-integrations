@@ -19,7 +19,7 @@ class VSCodeManaOSIntegration:
         self.home_dir = Path.home()
         self.vscode_dir = self.home_dir / ".vscode"
         self.cursor_dir = self.home_dir / ".cursor"
-        self.manaos_path = Path("c:\\Users\\mana4\\Desktop\\manaos_integrations")
+        self.manaos_path = Path(__file__).resolve().parent
         
     def get_vscode_settings_path(self) -> Path:
         """VSCode設定ファイルパスを取得"""
@@ -114,6 +114,15 @@ class VSCodeManaOSIntegration:
                     "LLM_ROUTING_PORT": "5111"
                 },
                 "cwd": str(self.manaos_path)
+            },
+            "manaos-video-pipeline": {
+                "command": "python",
+                "args": ["-m", "video_pipeline_mcp_server.server"],
+                "env": {
+                    "PYTHONPATH": str(self.manaos_path),
+                    "VIDEO_PIPELINE_HEALTH_PORT": "5112"
+                },
+                "cwd": str(self.manaos_path)
             }
         }
     
@@ -178,7 +187,7 @@ class VSCodeManaOSIntegration:
         print("  1. VSCodeを再起動")
         print("  2. Cursorを再起動")
         print("  3. 以下のコマンドでManaOSサービスを起動:")
-        print("     cd c:\\Users\\mana4\\Desktop\\manaos_integrations")
+        print("     cd", str(Path(__file__).resolve().parent))
         print("     python -m mrl_memory_system")
         print("     python -m learning_system_api")
         print("     python -m unified_api_mcp_server")

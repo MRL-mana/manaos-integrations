@@ -190,7 +190,7 @@ class MRLMemorySystem:
                 lines.append(f"- {d.get('value', '')[:100]}")
             lines.append("")
         
-        # TODO
+        # TODOエントリをリスト化
         todos = [e for e in entries if e.get('key') == 'todo']
         if todos:
             lines.append("### TODO")

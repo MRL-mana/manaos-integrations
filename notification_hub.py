@@ -269,8 +269,8 @@ class NotificationHub:
                     },
                     "critical"
                 )
-            except:
-                pass
+            except Exception:
+                logger.debug("MRL Memory APIへの通知記録に失敗")
         
         # 2. 優先度に応じて転送（Slack成功後）
         if slack_success:
@@ -344,7 +344,7 @@ class NotificationHub:
                         notification = json.loads(line.strip())
                         if notification.get("retry_count", 0) < self.max_retries:
                             failed_notifications.append(notification)
-                    except:
+                    except (json.JSONDecodeError, KeyError):
                         continue
             
             # 再送

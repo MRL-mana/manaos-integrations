@@ -118,7 +118,7 @@ class BaseAIIntegration:
             try:
                 error_data = e.response.json()
                 error_detail = f" - {error_data}"
-            except:
+            except Exception:
                 error_detail = f" - {e.response.text[:200]}"
             logger.error(f"Base AI API HTTPエラー ({e.response.status_code}): {e}{error_detail}")
             raise

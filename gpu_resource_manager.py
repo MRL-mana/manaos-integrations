@@ -84,7 +84,7 @@ class GPUResourceManager:
                 logger.info(f"⏳ GPUリソース待機中: {request.request_id} (優先度: {request.priority})")
                 return False
     
-    async def release_gpu(self, request_id: str):
+    async def release_gpu(self, request_id: str) -> None:
         """
         GPUリソースを解放
         
@@ -120,7 +120,7 @@ class GPUResourceManager:
                 "waiting_request_ids": [r.request_id for r in self.waiting_queue]
             }
     
-    async def cleanup_stale_requests(self):
+    async def cleanup_stale_requests(self) -> None:
         """古いリクエストをクリーンアップ"""
         async with self.lock:
             now = datetime.now()
@@ -135,7 +135,7 @@ class GPUResourceManager:
                 logger.warning(f"⚠️ タイムアウトしたリクエストをクリーンアップ: {request_id}")
                 await self.release_gpu(request_id)
     
-    async def start_monitoring(self, interval: int = 30):
+    async def start_monitoring(self, interval: int = 30) -> None:
         """GPU使用状況の監視を開始"""
         if self.monitoring:
             return
@@ -154,7 +154,7 @@ class GPUResourceManager:
         self.monitor_task = asyncio.create_task(monitor())
         logger.info("✅ GPU監視を開始しました")
     
-    async def stop_monitoring(self):
+    async def stop_monitoring(self) -> None:
         """GPU使用状況の監視を停止"""
         self.monitoring = False
         if self.monitor_task:

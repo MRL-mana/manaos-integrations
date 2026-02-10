@@ -988,7 +988,7 @@ class ManaOSIntegrationOrchestrator:
                         try:
                             health_data = response.json()
                             status.update(health_data)
-                        except:
+                        except (ValueError, KeyError):
                             pass
                     
                     return service_id, status
@@ -1405,8 +1405,8 @@ class ManaOSIntegrationOrchestrator:
                 if cache_stats.get("hits", 0) > 0:
                     hit_rate = cache_stats.get("hits", 0) / max(cache_stats.get("hits", 0) + cache_stats.get("misses", 0), 1)
                     score += hit_rate * 0.1
-            except:
-                pass
+            except Exception:
+                logger.debug("キャッシュ統計取得に失敗")
         factors += 0.1
         
         return min(score / max(factors, 1.0), 1.0)

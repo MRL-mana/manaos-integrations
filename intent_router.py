@@ -448,7 +448,7 @@ class IntentRouter:
         """複数の入力を一括分類"""
         return [self.classify(text) for text in inputs]
 
-    def save_config(self):
+    def save_config(self) -> None:
         """設定を保存"""
         try:
             with open(self.config_path, 'w', encoding='utf-8') as f:
@@ -473,7 +473,7 @@ CORS(app)
 # グローバルルーターインスタンス
 router = None
 
-def init_router():
+def init_router() -> 'IntentRouter':
     """ルーターを初期化"""
     global router
     if router is None:

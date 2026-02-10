@@ -202,7 +202,7 @@ class HTTPSessionPool:
             logger.error(f"HTTPリクエストエラー: {error.message}")
             raise
     
-    def close_all(self):
+    def close_all(self) -> None:
         """すべてのセッションを閉じる"""
         with self.lock:
             for session in self.sessions.values():
@@ -242,7 +242,7 @@ def get_http_session_pool() -> HTTPSessionPool:
     return _http_session_pool
 
 
-def main():
+def main() -> None:
     """テスト用メイン関数"""
     print("HTTPセッションプールテスト")
     print("=" * 60)

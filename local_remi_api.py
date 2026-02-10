@@ -36,6 +36,7 @@ import logging
 import secrets
 from datetime import datetime
 from typing import Optional, List
+from pathlib import Path
 
 # ============================================================
 # Security
@@ -368,6 +369,19 @@ async def service_worker():
         return Response(content="// SW not found", media_type="application/javascript")
 
 
+@app.get("/remi-live", response_class=HTMLResponse)
+async def remi_live(token: str = Query(""), mode: str = Query("standalone")):
+    """Animated Remi character page for home screen / live wallpaper"""
+    if token != API_TOKEN:
+        return HTMLResponse("<h3 style='color:red'>Auth Error</h3>", status_code=401)
+    char_path = os.path.join(os.path.dirname(__file__), "remi_character.html")
+    try:
+        with open(char_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return HTMLResponse("<h1>Character file not found</h1>", status_code=404)
+
+
 @app.get("/widget", response_class=HTMLResponse)
 async def widget(token: str = Query("")):
     """Compact widget view for Android home screen (token via query param)"""
@@ -448,7 +462,7 @@ async def emergency_stop():
 ACTIONS = {
     "comfyui_start": {
         "name": "Start ComfyUI",
-        "cmd": ["python", "C:\\Users\\mana4\\Desktop\\ComfyUI\\main.py", "--listen", "0.0.0.0"],
+        "cmd": ["python", str(Path.home() / "Desktop" / "ComfyUI" / "main.py"), "--listen", "0.0.0.0"],
         "background": True
     },
     "comfyui_stop": {

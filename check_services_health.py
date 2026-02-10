@@ -30,9 +30,11 @@ SERVICES = [
     # === インフラストラクチャ ===
     {"name": "Ollama", "port": 11434, "path": "/api/tags", "timeout": 5, "group": "infra"},
     {"name": "Gallery API", "port": 5559, "path": "/health", "timeout": 5, "group": "infra"},
+    # === コンテンツ生成 ===
+    {"name": "Video Pipeline", "port": 5112, "path": "/health", "timeout": 5, "group": "core"},
     # === 外部統合（オプショナル）===
     {"name": "ComfyUI", "port": 8188, "path": "/system_stats", "timeout": 5, "group": "optional"},
-    {"name": "Moltbot Gateway", "port": 8088, "path": "/health", "timeout": 5, "group": "optional"},
+    {"name": "Moltbot Gateway", "port": 8088, "path": "/moltbot/health", "timeout": 5, "group": "optional"},
 ]
 
 def check_service(service: Dict) -> Tuple[bool, str, Optional[float]]:
