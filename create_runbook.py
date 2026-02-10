@@ -5,11 +5,15 @@ System 3 Runbook生成スクリプト
 本番運用の取説を1枚にまとめる
 """
 
+import os
 from pathlib import Path
 from datetime import datetime
 
 def generate_runbook(
-    vault_path: str = r"C:\Users\mana4\Documents\Obsidian Vault",
+    vault_path: str = os.getenv(
+        "OBSIDIAN_VAULT_PATH",
+        str(Path.home() / "Documents" / "Obsidian Vault"),
+    ),
     runbook_relpath: str = r"ManaOS\System\Runbook_System3.md",
 ) -> str:
     """Generate System 3 Runbook"""

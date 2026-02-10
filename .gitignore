@@ -9,6 +9,11 @@ develop-eggs/
 dist/
 downloads/
 
+# Dead-code patterns (backups, broken, fixed copies)
+*_backup.py
+*_fixed.py
+*.broken_*
+
 # Archived docs (historical reports, not needed in repo)
 docs/archive/
 eggs/

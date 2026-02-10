@@ -27,7 +27,7 @@ except ImportError:
 # 設定
 OBSIDIAN_VAULT_PATH = os.getenv(
     "OBSIDIAN_VAULT_PATH",
-    "C:/Users/mana4/Documents/Obsidian Vault"
+    str(Path.home() / "Documents" / "Obsidian Vault")
 )
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 HISTORY_FILE = project_root / "data" / "skill_daily_ops_history.json"

@@ -103,7 +103,7 @@
   },
   "integration_services": {
     "unified_api": {
-      "port": 9500,
+      "port": 9502,
       "name": "Unified API Server",
       "description": "統合APIサーバー"
     },

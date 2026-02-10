@@ -473,40 +473,28 @@ class IntrinsicMotivation:
 
     def _execute_memory_organization(self, task: IntrinsicTask) -> Dict[str, Any]:
         """記憶の整理を実行"""
-        # TODO: 実際の実装
-        return {"status": "completed", "message": "記憶の整理が完了しました", "tasks_organized": 0}
+        logger.warning("_execute_memory_organization: 未実装 — スキップ")
+        return {"status": "not_implemented", "message": "記憶の整理は未実装です"}
 
     def _execute_knowledge_acquisition(self, task: IntrinsicTask) -> Dict[str, Any]:
         """知識の獲得を実行"""
-        # TODO: 実際の実装
-        return {"status": "completed", "message": "新しい知識を獲得しました", "patterns_learned": 0}
+        logger.warning("_execute_knowledge_acquisition: 未実装 — スキップ")
+        return {"status": "not_implemented", "message": "知識の獲得は未実装です"}
 
     def _execute_performance_improvement(self, task: IntrinsicTask) -> Dict[str, Any]:
         """パフォーマンス改善を実行"""
-        # TODO: 実際の実装
-        return {
-            "status": "completed",
-            "message": "パフォーマンス分析が完了しました",
-            "improvements_suggested": 0,
-        }
+        logger.warning("_execute_performance_improvement: 未実装 — スキップ")
+        return {"status": "not_implemented", "message": "パフォーマンス改善は未実装です"}
 
     def _execute_pattern_analysis(self, task: IntrinsicTask) -> Dict[str, Any]:
         """パターン分析を実行"""
-        # TODO: 実際の実装
-        return {
-            "status": "completed",
-            "message": "パターン分析が完了しました",
-            "patterns_identified": 0,
-        }
+        logger.warning("_execute_pattern_analysis: 未実装 — スキップ")
+        return {"status": "not_implemented", "message": "パターン分析は未実装です"}
 
     def _execute_documentation(self, task: IntrinsicTask) -> Dict[str, Any]:
         """ドキュメント整理を実行"""
-        # TODO: 実際の実装
-        return {
-            "status": "completed",
-            "message": "ドキュメント整理が完了しました",
-            "documents_organized": 0,
-        }
+        logger.warning("_execute_documentation: 未実装 — スキップ")
+        return {"status": "not_implemented", "message": "ドキュメント整理は未実装です"}
 
     def _load_metrics(self):
         """メトリクスを読み込み"""

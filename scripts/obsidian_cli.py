@@ -25,7 +25,7 @@ def create_note(args):
     """ノートを作成"""
     vault_path = args.vault_path or os.getenv(
         "OBSIDIAN_VAULT_PATH",
-        "C:/Users/mana4/Documents/Obsidian Vault"
+        str(Path.home() / "Documents" / "Obsidian Vault")
     )
     
     obsidian = ObsidianIntegration(vault_path)
@@ -62,7 +62,7 @@ def search_notes(args):
     """ノートを検索"""
     vault_path = args.vault_path or os.getenv(
         "OBSIDIAN_VAULT_PATH",
-        "C:/Users/mana4/Documents/Obsidian Vault"
+        str(Path.home() / "Documents" / "Obsidian Vault")
     )
     
     obsidian = ObsidianIntegration(vault_path)

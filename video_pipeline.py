@@ -95,7 +95,7 @@ DEFAULT_CONFIG = {
     # Ollama
     "ollama_url": "http://localhost:11434",
     "models": {
-        "quality": "llama3-uncensored:latest",  # 品質担当: ナレーション原稿
+        "quality": "dolphin-llama3:8b",  # 品質担当: ナレーション原稿
         "speed": "dolphin-mistral:7b",  # 速度担当: タイトル・テロップ
         "vision": "llava:latest",  # 視覚担当: 画像解析
     },

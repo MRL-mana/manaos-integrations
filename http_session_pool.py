@@ -89,8 +89,8 @@ class HTTPSessionPool:
                     # 期限切れのセッションを閉じる
                     try:
                         session.close()
-                    except:
-                        pass
+                    except Exception:
+                        logger.debug("期限切れセッションのクローズに失敗")
                     del self.sessions[session_key]
                     del self.session_metadata[session_key]
             
@@ -103,8 +103,8 @@ class HTTPSessionPool:
                 )
                 try:
                     self.sessions[oldest_key].close()
-                except:
-                    pass
+                except Exception:
+                    logger.debug("最古セッションのクローズに失敗")
                 del self.sessions[oldest_key]
                 del self.session_metadata[oldest_key]
             
@@ -208,8 +208,8 @@ class HTTPSessionPool:
             for session in self.sessions.values():
                 try:
                     session.close()
-                except:
-                    pass
+                except Exception:
+                    logger.debug("セッションのクローズに失敗")
             self.sessions.clear()
             self.session_metadata.clear()
         
