@@ -88,6 +88,7 @@ python_functions = ["test_*"]
 addopts = "-v --tb=short"
 filterwarnings = [
     "ignore::pytest.PytestUnknownMarkWarning",
+    "ignore:The NumPy module was reloaded.*:UserWarning:PIL\\._typing",
 ]
 
 [tool.mypy]
