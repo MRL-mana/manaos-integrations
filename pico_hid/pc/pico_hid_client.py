@@ -42,7 +42,7 @@ try:
 
     _screenshot_fn = _pyautogui_screenshot
     _has_screenshot = True
-except ImportError:
+except Exception:
     try:
         from PIL import ImageGrab
 
@@ -129,7 +129,7 @@ def screen_size():
         import pyautogui as _pyautogui
 
         return _pyautogui.size()
-    except ImportError:
+    except Exception:
         try:
             from PIL import ImageGrab as _ImageGrab
 
