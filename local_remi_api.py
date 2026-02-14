@@ -34,9 +34,94 @@ import io
 import os
 import logging
 import secrets
+import base64
+import binascii
+import tempfile
+import re
 from datetime import datetime
 from typing import Optional, List
 from pathlib import Path
+
+
+# ============================================================
+# Workspace helpers
+# ============================================================
+
+_WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
+_VENV_PYTHON = _WORKSPACE_ROOT / ".venv" / "Scripts" / "python.exe"
+
+
+def _workspace_python() -> str:
+    if _VENV_PYTHON.exists():
+        return str(_VENV_PYTHON)
+    return "python"
+
+
+def _powershell_exe() -> str:
+    return "powershell.exe" if os.name == "nt" else "powershell"
+
+
+def _safe_resolve_workspace_path(rel_path: str) -> Path:
+    """Resolve a user-supplied path safely under workspace root."""
+    raw = (rel_path or "").strip().lstrip("/\\")
+    if not raw:
+        raise ValueError("path is empty")
+    candidate = (_WORKSPACE_ROOT / raw).resolve()
+    workspace = _WORKSPACE_ROOT.resolve()
+    try:
+        candidate.relative_to(workspace)
+    except Exception as e:
+        raise ValueError("path escapes workspace") from e
+    return candidate
+
+
+def _run_cmd_capture(cmd: List[str], cwd: Optional[Path] = None, timeout: int = 60) -> dict:
+    """Run a command and capture limited output."""
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=str(cwd or _WORKSPACE_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        out = (result.stdout or "")
+        err = (result.stderr or "")
+        # keep response small
+        out_tail = out[-4000:] if out else ""
+        err_tail = err[-2000:] if err else ""
+        return {
+            "ok": result.returncode == 0,
+            "exit_code": result.returncode,
+            "stdout": out_tail,
+            "stderr": err_tail,
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def _extract_patch_paths(patch_text: str) -> List[str]:
+    """Extract file paths from unified diff headers."""
+    paths: List[str] = []
+    for line in (patch_text or "").splitlines():
+        if line.startswith("+++ ") or line.startswith("--- "):
+            # examples: '+++ b/manaos_integrations/foo.py' or '--- a/manaos_integrations/foo.py'
+            m = re.match(r"^[+\-]{3}\s+[ab]/(.+)$", line.strip())
+            if m:
+                p = m.group(1).strip()
+                if p and p not in paths:
+                    paths.append(p)
+    return paths
+
+
+def _is_patch_path_allowed(path: str) -> bool:
+    norm = (path or "").replace("\\", "/")
+    if not norm or norm.startswith("/"):
+        return False
+    if ".." in norm.split("/"):
+        return False
+    # Hard allowlist: only edit files inside manaos_integrations
+    return norm.startswith("manaos_integrations/")
 
 # ============================================================
 # Security
@@ -554,6 +639,35 @@ ACTIONS = {
         "cmd": ["docker", "system", "prune", "-f"],
         "background": False
     },
+
+    # --- ManaOS Ops (VS Code でやっている運用操作をチャット/壁紙から実行) ---
+    "manaos_start_services": {
+        "name": "Start ManaOS Services",
+        "cmd": [_workspace_python(), str(_WORKSPACE_ROOT / "manaos_integrations" / "start_vscode_cursor_services.py")],
+        "background": True,
+        "timeout": 10,
+    },
+    "manaos_health_check": {
+        "name": "ManaOS Health Check",
+        "cmd": [_workspace_python(), str(_WORKSPACE_ROOT / "manaos_integrations" / "check_services_health.py")],
+        "background": False,
+        "timeout": 90,
+    },
+    "manaos_release_9502": {
+        "name": "Release Unified API Port (9502)",
+        "cmd": [
+            _powershell_exe(),
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(_WORKSPACE_ROOT / "manaos_integrations" / "restart_unified_api_port9502.ps1"),
+            "-Port",
+            "9502",
+        ],
+        "background": False,
+        "timeout": 90,
+    },
 }
 
 
@@ -614,6 +728,8 @@ async def run_action(action_name: str, arg: Optional[str] = Query(None)):
             return JSONResponse(status_code=400, content={"error": "This action requires 'arg' parameter"})
         cmd.append(arg)
 
+    timeout_sec = int(action.get("timeout", 30))
+
     try:
         if action.get("background"):
             subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
@@ -621,7 +737,7 @@ async def run_action(action_name: str, arg: Optional[str] = Query(None)):
             add_notification("action", f"{action['name']} started")
             return {"action": action_name, "status": "started"}
         else:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_sec)
             add_notification("action", f"{action['name']} completed (exit={result.returncode})")
             return {
                 "action": action_name,
@@ -671,15 +787,901 @@ def _save_chat_history():
 
 chat_history: List[dict] = _load_chat_history()
 
+# Patch buffer for chunked uploads via chat
+_PATCH_B64_BUFFER: str = ""  # raw append mode
+_PATCH_CHUNKS: dict = {}  # indexed mode: {idx:int -> chunk:str}
+_PATCH_EXPECTED_TOTAL: Optional[int] = None
+_PATCH_B64_UPDATED_AT: Optional[datetime] = None
+_PATCH_MAX_AGE_SEC = 30 * 60
+
+
+def _patch_buffer_is_stale() -> bool:
+    if not _PATCH_B64_UPDATED_AT:
+        return False
+    return (datetime.now() - _PATCH_B64_UPDATED_AT).total_seconds() > _PATCH_MAX_AGE_SEC
+
+
+def _patch_buffer_clear():
+    global _PATCH_B64_BUFFER, _PATCH_CHUNKS, _PATCH_EXPECTED_TOTAL, _PATCH_B64_UPDATED_AT
+    _PATCH_B64_BUFFER = ""
+    _PATCH_CHUNKS = {}
+    _PATCH_EXPECTED_TOTAL = None
+    _PATCH_B64_UPDATED_AT = None
+
+
+def _patch_buffer_get_b64_or_raise() -> str:
+    if _patch_buffer_is_stale():
+        _patch_buffer_clear()
+        raise ValueError("buffer expired. please /patchbegin again")
+    if _PATCH_CHUNKS:
+        if not _PATCH_EXPECTED_TOTAL:
+            raise ValueError("buffer missing total. use /patchbegin <total> or /patchadd i/total ...")
+        missing = [i for i in range(1, _PATCH_EXPECTED_TOTAL + 1) if i not in _PATCH_CHUNKS]
+        if missing:
+            raise ValueError(f"missing chunks: {missing[:10]}" + (" ..." if len(missing) > 10 else ""))
+        return "".join(_PATCH_CHUNKS[i] for i in range(1, _PATCH_EXPECTED_TOTAL + 1))
+    if _PATCH_B64_BUFFER:
+        return _PATCH_B64_BUFFER
+    raise ValueError("buffer is empty. use /patchbegin then /patchadd")
+
 @app.post("/chat", dependencies=[Depends(verify_token)])
-async def send_chat(message: str = Query(...), model: str = Query("qwen2.5:7b"),
-                    system: str = Query("You are Remi, a cheerful AI companion for your commander. You MUST reply in Japanese only. Never mix Chinese or other languages. Be concise, friendly, and helpful. Use casual Japanese like a close friend.")):
-    """Send chat via Ollama direct (from Pixel 7)"""
+async def send_chat(
+    request: Request,
+    message: Optional[str] = Query(None),
+    model: str = Query("qwen2.5:7b"),
+    system: str = Query(
+        "You are Remi, a cheerful AI companion for your commander. You MUST reply in Japanese only. Never mix Chinese or other languages. Be concise, friendly, and helpful. Use casual Japanese like a close friend."
+    ),
+):
+    """Send chat via Ollama direct (from Pixel 7)
+
+    Compatibility:
+      - Existing clients: POST /chat?message=...
+      - New clients: POST /chat with JSON body {"message": "..."}
+    """
+    if message is None:
+        try:
+            data = await request.json()
+            if isinstance(data, dict):
+                message = str(data.get("message") or data.get("text") or "")
+        except Exception:
+            message = ""
+    message = (message or "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="message is required")
+
+    global _PATCH_B64_BUFFER, _PATCH_B64_UPDATED_AT
+    global _PATCH_CHUNKS, _PATCH_EXPECTED_TOTAL
+
     audit_logger.info(f"Chat: model={model} msg_len={len(message)}")
     chat_history.append({"role": "user", "content": message, "ts": datetime.now().isoformat()})
     if len(chat_history) > MAX_CHAT_HISTORY:
         chat_history.pop(0)
     _save_chat_history()
+
+    # ============================================================
+    # Chat Commands (安全な運用コマンド)
+    # ============================================================
+    cmd = (message or "").strip()
+    if cmd.startswith("/") or cmd.startswith("!"):
+        body = cmd.lstrip("/!")
+        body = body.lstrip()
+        m = re.match(r"^(\S+)(?:\s+([\s\S]*))?$", body)
+        key = (m.group(1).lower() if m else "")
+        rest = (m.group(2) if m and m.group(2) is not None else "")
+        args = rest.split() if rest else []
+
+        if key in ("help", "?"):
+            reply = (
+                "使えるコマンドだよ：\n"
+                "- /health : ManaOSのヘルスチェック\n"
+                "- /start  : ManaOSサービス起動（まとめて）\n"
+                "- /release9502 : 9502ポート解放（Unified API用）\n"
+                "- /read <path> [start] [end] : ファイル読む（1-based行番号）\n"
+                "- /grep <pattern> [glob] : ワークスペース検索\n"
+                "- /gitdiff : git diff（差分）\n"
+                "- /gitstatus : git status（変更一覧）\n"
+                "- /pycheck <path> : Python構文チェック\n"
+                "- /queue <text> : VS Code側でやる作業依頼を記録\n"
+                "- /applycheck <base64> : unified diffをgit apply --check（検査のみ）\n"
+                "- /applypatch <base64> : unified diffをgit apply（manaos_integrations配下のみ）\n"
+                "- /checktext <diff> : unified diffを直貼りしてチェック（適用しない）\n"
+                "- /applytext <diff> : unified diffを直貼りして適用（manaos_integrations配下のみ）\n"
+                "- /patchbegin : 分割パッチ入力開始（バッファ初期化）\n"
+                "- /patchbegin <total> : 分割パッチ入力開始（チャンク総数を指定・推奨）\n"
+                "- /patchadd <chunk> : 分割パッチ追記（単純追記モード）\n"
+                "- /patchadd i/total <chunk> : 分割パッチ追記（番号付き・推奨）\n"
+                "- /patchcheck : バッファのパッチをチェック（適用しない）\n"
+                "- /patchapply : バッファのパッチを適用\n"
+                "- /patchclear : バッファ破棄\n"
+                "- /help   : これ"
+            )
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key in ("health", "hc"):
+            try:
+                result = subprocess.run(
+                    [_workspace_python(), str(_WORKSPACE_ROOT / "manaos_integrations" / "check_services_health.py")],
+                    capture_output=True,
+                    text=True,
+                    timeout=90,
+                )
+                out = (result.stdout or "").strip()
+                err = (result.stderr or "").strip()
+
+                def _health_summarize(text: str) -> str:
+                    t = (text or "").strip()
+                    if not t:
+                        return ""
+                    lines = [ln.rstrip() for ln in t.splitlines() if ln.strip()]
+
+                    # Key lines
+                    ng_lines = [ln for ln in lines if ln.lstrip().startswith("[NG]")]
+                    warn_lines = [ln for ln in lines if "[!!]" in ln or "要検査" in ln]
+                    core_summary = next((ln for ln in reversed(lines) if ln.startswith("[コア]")), "")
+                    ok_line = next((ln for ln in reversed(lines) if ln.startswith("[OK]")), "")
+                    bad_line = next((ln for ln in reversed(lines) if ln.startswith("[!!]")), "")
+                    action_line = next((ln for ln in lines if "対処:" in ln), "")
+
+                    # Prefer a short, actionable reply
+                    parts = []
+                    if bad_line:
+                        parts.append(bad_line)
+                    if core_summary:
+                        parts.append(core_summary)
+                    if ng_lines:
+                        parts.append("\n".join(ng_lines[:12]))
+                        if len(ng_lines) > 12:
+                            parts.append(f"... (+{len(ng_lines) - 12} more NG)")
+                    if action_line:
+                        parts.append(action_line)
+                    if not bad_line and ok_line:
+                        parts.append(ok_line)
+
+                    # If still empty (format changed), fall back to tail
+                    reply0 = "\n".join([p for p in parts if p]).strip()
+                    if not reply0:
+                        return t[-1800:]
+
+                    # Keep response small
+                    return reply0[-2000:]
+
+                summarized = _health_summarize(out)
+                reply = summarized if summarized else (err[:1800] if err else "ヘルスチェックの出力が空だったよ")
+            except Exception as e:
+                reply = f"ヘルスチェック失敗: {e}"
+
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key in ("start", "up"):
+            try:
+                subprocess.Popen(
+                    [_workspace_python(), str(_WORKSPACE_ROOT / "manaos_integrations" / "start_vscode_cursor_services.py")],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                )
+                reply = "了解！ManaOSサービス起動を投げたよ。数秒後に /health してね。"
+            except Exception as e:
+                reply = f"起動失敗: {e}"
+
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key in ("release9502", "release"):
+            try:
+                result = subprocess.run(
+                    [
+                        _powershell_exe(),
+                        "-NoProfile",
+                        "-ExecutionPolicy",
+                        "Bypass",
+                        "-File",
+                        str(_WORKSPACE_ROOT / "manaos_integrations" / "restart_unified_api_port9502.ps1"),
+                        "-Port",
+                        "9502",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=90,
+                )
+                out = (result.stdout or "").strip()
+                err = (result.stderr or "").strip()
+                reply = (out[-1200:] if out else "") or (err[-1200:] if err else "ポート解放を実行したよ")
+            except Exception as e:
+                reply = f"9502解放失敗: {e}"
+
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key == "read":
+            try:
+                if not args:
+                    raise ValueError("usage: /read <path> [start] [end]")
+                path = _safe_resolve_workspace_path(args[0])
+                start = int(args[1]) if len(args) >= 2 else 1
+                end = int(args[2]) if len(args) >= 3 else start + 200
+                start = max(1, start)
+                end = max(start, end)
+
+                if not path.exists() or not path.is_file():
+                    raise ValueError(f"not found: {args[0]}")
+
+                def _compact(text: str, head: int = 1200, tail: int = 2200, max_total: int = 3800) -> str:
+                    t = (text or "").rstrip()
+                    if len(t) <= max_total:
+                        return t
+                    h = t[:head].rstrip()
+                    tt = t[-tail:].lstrip()
+                    omitted = max(0, len(t) - len(h) - len(tt))
+                    return h + f"\n\n... (truncated {omitted} chars) ...\n\n" + tt
+
+                lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+                total = len(lines)
+                slice_lines = lines[start - 1 : end]
+                preview = "\n".join(f"{i+start}: {line}" for i, line in enumerate(slice_lines))
+                header = f"FILE: {args[0]}\nRANGE: {start}-{min(end, total)} (total {total})\n\n"
+                reply = header + (preview if preview else "(empty)")
+                reply = _compact(reply)
+            except Exception as e:
+                reply = f"/read 失敗: {e}"
+
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key == "grep":
+            try:
+                if not args:
+                    raise ValueError("usage: /grep <pattern> [glob]")
+                pattern = args[0]
+                glob = args[1] if len(args) >= 2 else "**/*"
+                # Use PowerShell Select-String (fast on Windows) but restrict scope to workspace
+                ps = (
+                    "param($pattern,$glob,$root) "
+                    "$files=Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue | "
+                    "Where-Object { $_.FullName -like (Join-Path $root $glob) }; "
+                    "$hits=@(); "
+                    "foreach($f in $files){ try { $m=Select-String -Path $f.FullName -Pattern $pattern -SimpleMatch -ErrorAction SilentlyContinue; "
+                    "foreach($x in $m){ $hits += ($x.Path + ':' + $x.LineNumber + ':' + $x.Line.Trim()); if($hits.Count -ge 50){ break } } } catch {} "
+                    "if($hits.Count -ge 50){ break } } "
+                    "$hits | Out-String"
+                )
+                run = _run_cmd_capture(
+                    [_powershell_exe(), "-NoProfile", "-Command", ps, "-pattern", pattern, "-glob", glob, "-root", str(_WORKSPACE_ROOT)],
+                    cwd=_WORKSPACE_ROOT,
+                    timeout=60,
+                )
+                if run.get("ok"):
+                    def _compact(text: str, head: int = 1600, tail: int = 1800, max_total: int = 3800) -> str:
+                        t = (text or "").strip()
+                        if len(t) <= max_total:
+                            return t
+                        h = t[:head].rstrip()
+                        tt = t[-tail:].lstrip()
+                        omitted = max(0, len(t) - len(h) - len(tt))
+                        return h + f"\n\n... (truncated {omitted} chars) ...\n\n" + tt
+
+                    out = (run.get("stdout") or "").strip()
+                    lines = [ln for ln in out.splitlines() if ln.strip()]
+                    if not lines:
+                        reply = "(no matches)"
+                    else:
+                        header = f"Matches: {len(lines)} (showing up to 50)\n"
+                        reply = _compact(header + "\n".join(lines))
+                else:
+                    reply = f"/grep 失敗: {run}"
+            except Exception as e:
+                reply = f"/grep 失敗: {e}"
+
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key in ("gitdiff", "diff"):
+            def _compact(text: str, head: int = 1400, tail: int = 2200, max_total: int = 3800) -> str:
+                t = (text or "").strip()
+                if len(t) <= max_total:
+                    return t
+                h = t[:head].rstrip()
+                tt = t[-tail:].lstrip()
+                omitted = max(0, len(t) - len(h) - len(tt))
+                return h + f"\n\n... (truncated {omitted} chars) ...\n\n" + tt
+
+            # File list first (quick scan)
+            names = _run_cmd_capture(
+                ["git", "-C", str(_WORKSPACE_ROOT), "diff", "--name-only", "--ignore-submodules=all"],
+                cwd=_WORKSPACE_ROOT,
+                timeout=30,
+            )
+            name_out = (names.get("stdout") or "").strip() if names.get("ok") else ""
+            if name_out:
+                files = [x for x in name_out.splitlines() if x.strip()]
+                file_list = "\n".join(files[:30])
+                if len(files) > 30:
+                    file_list += f"\n... (+{len(files) - 30} more)"
+                prefix = "Changed files:\n" + file_list + "\n\n"
+            else:
+                prefix = ""
+
+            run = _run_cmd_capture(
+                [
+                    "git",
+                    "-C",
+                    str(_WORKSPACE_ROOT),
+                    "diff",
+                    "--no-color",
+                    "--ignore-submodules=all",
+                ],
+                cwd=_WORKSPACE_ROOT,
+                timeout=60,
+            )
+            out = (run.get("stdout") or "").strip()
+            err = (run.get("stderr") or "").strip()
+            if out:
+                reply = prefix + _compact(out)
+            else:
+                reply = prefix + (err[-1800:] if err else "(no diff / git not available)")
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key in ("gitstatus", "status"):
+            run = _run_cmd_capture(
+                [
+                    "git",
+                    "-C",
+                    str(_WORKSPACE_ROOT),
+                    "status",
+                    "--porcelain",
+                    "--ignore-submodules=all",
+                ],
+                cwd=_WORKSPACE_ROOT,
+                timeout=30,
+            )
+            out = (run.get("stdout") or "").strip()
+            err = (run.get("stderr") or "").strip()
+
+            def _format_status(porcelain: str) -> str:
+                lines = [ln for ln in (porcelain or "").splitlines() if ln.strip()]
+                if not lines:
+                    return "(clean)"
+
+                buckets = {
+                    "M": [],  # modified
+                    "A": [],  # added
+                    "D": [],  # deleted
+                    "R": [],  # renamed
+                    "C": [],  # copied
+                    "U": [],  # unmerged
+                    "?": [],  # untracked
+                    "!": [],  # ignored
+                    "O": [],  # other
+                }
+
+                for ln in lines:
+                    if len(ln) < 3:
+                        buckets["O"].append(ln)
+                        continue
+                    x = ln[0]
+                    y = ln[1]
+                    path = ln[3:].strip()
+                    code = "?" if (x == "?" and y == "?") else ("U" if (x == "U" or y == "U") else (x if x != " " else y))
+                    if code not in buckets:
+                        code = "O"
+                    buckets[code].append(path)
+
+                label = {
+                    "M": "Modified",
+                    "A": "Added",
+                    "D": "Deleted",
+                    "R": "Renamed",
+                    "C": "Copied",
+                    "U": "Unmerged",
+                    "?": "Untracked",
+                    "!": "Ignored",
+                    "O": "Other",
+                }
+
+                order = ["M", "A", "D", "R", "C", "U", "?", "!", "O"]
+                total = len(lines)
+                parts = [f"Changes: {total}"]
+                for k in order:
+                    if buckets[k]:
+                        parts.append(f"- {label[k]}: {len(buckets[k])}")
+
+                detail_lines = []
+                shown = 0
+                cap = 60
+                for k in order:
+                    if not buckets[k]:
+                        continue
+                    for p in buckets[k]:
+                        if shown >= cap:
+                            break
+                        detail_lines.append(f"{k} {p}")
+                        shown += 1
+                    if shown >= cap:
+                        break
+                if total > cap:
+                    detail_lines.append(f"... (+{total - cap} more)")
+
+                return "\n".join(parts) + "\n\n" + "\n".join(detail_lines)
+
+            if out:
+                reply = _format_status(out)
+                reply = reply[-3800:] if reply else "(clean)"
+            else:
+                reply = err if err else "(clean)"
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key == "applycheck":
+            try:
+                if not args:
+                    raise ValueError("usage: /applycheck <base64>")
+                b64 = "".join(args).strip().replace(" ", "+")
+                if len(b64) > 120000:
+                    raise ValueError("patch too large")
+
+                try:
+                    patch_bytes = base64.b64decode(b64.encode("utf-8"), validate=True)
+                except (binascii.Error, ValueError):
+                    padded = b64 + "=" * ((4 - (len(b64) % 4)) % 4)
+                    patch_bytes = base64.urlsafe_b64decode(padded.encode("utf-8"))
+                patch_text = patch_bytes.decode("utf-8", errors="replace")
+                if len(patch_text) > 80000:
+                    raise ValueError("patch too large")
+
+                paths = _extract_patch_paths(patch_text)
+                if not paths:
+                    raise ValueError("could not detect paths from diff")
+                bad = [p for p in paths if not _is_patch_path_allowed(p)]
+                if bad:
+                    raise ValueError(f"disallowed paths: {bad}")
+
+                patch_file = None
+                try:
+                    with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8", suffix=".patch") as tf:
+                        tf.write(patch_text)
+                        patch_file = tf.name
+
+                    check = _run_cmd_capture(
+                        [
+                            "git",
+                            "-C",
+                            str(_WORKSPACE_ROOT),
+                            "apply",
+                            "--check",
+                            "--whitespace=nowarn",
+                            patch_file,
+                        ],
+                        cwd=_WORKSPACE_ROOT,
+                        timeout=60,
+                    )
+                    if check.get("ok"):
+                        reply = "チェックOK（まだ適用してないよ）。適用するなら /applypatch <base64> だよ"
+                    else:
+                        reply = "チェック失敗: " + json.dumps(check, ensure_ascii=False)
+                finally:
+                    try:
+                        if patch_file and os.path.exists(patch_file):
+                            os.unlink(patch_file)
+                    except Exception:
+                        pass
+            except Exception as e:
+                reply = f"/applycheck 失敗: {e}"
+
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key in ("checktext", "applytext"):
+            try:
+                patch_text = (rest or "")
+                if not patch_text.strip():
+                    raise ValueError(f"usage: /{key} <unified diff text>")
+                if len(patch_text) > 80000:
+                    raise ValueError("patch too large")
+
+                paths = _extract_patch_paths(patch_text)
+                if not paths:
+                    raise ValueError("could not detect paths from diff")
+                bad = [p for p in paths if not _is_patch_path_allowed(p)]
+                if bad:
+                    raise ValueError(f"disallowed paths: {bad}")
+
+                patch_file = None
+                try:
+                    with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8", suffix=".patch") as tf:
+                        tf.write(patch_text)
+                        patch_file = tf.name
+
+                    check = _run_cmd_capture(
+                        [
+                            "git",
+                            "-C",
+                            str(_WORKSPACE_ROOT),
+                            "apply",
+                            "--check",
+                            "--whitespace=nowarn",
+                            patch_file,
+                        ],
+                        cwd=_WORKSPACE_ROOT,
+                        timeout=60,
+                    )
+                    if not check.get("ok"):
+                        reply = "チェック失敗: " + json.dumps(check, ensure_ascii=False)
+                    elif key == "checktext":
+                        reply = "チェックOK（まだ適用してないよ）。適用するなら /applytext <diff> だよ"
+                    else:
+                        run = _run_cmd_capture(
+                            ["git", "-C", str(_WORKSPACE_ROOT), "apply", "--whitespace=nowarn", patch_file],
+                            cwd=_WORKSPACE_ROOT,
+                            timeout=60,
+                        )
+                        if run.get("ok"):
+                            diff = _run_cmd_capture(
+                                [
+                                    "git",
+                                    "-C",
+                                    str(_WORKSPACE_ROOT),
+                                    "diff",
+                                    "--no-color",
+                                    "--ignore-submodules=all",
+                                ],
+                                cwd=_WORKSPACE_ROOT,
+                                timeout=30,
+                            )
+                            d = (diff.get("stdout") or "").strip()
+                            reply = "適用OK。\n" + (d[-2800:] if d else "(no diff)")
+                        else:
+                            reply = "適用失敗: " + json.dumps(run, ensure_ascii=False)
+                finally:
+                    try:
+                        if patch_file and os.path.exists(patch_file):
+                            os.unlink(patch_file)
+                    except Exception:
+                        pass
+            except Exception as e:
+                reply = f"/{key} 失敗: {e}"
+
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key == "patchbegin":
+            _patch_buffer_clear()
+            _PATCH_B64_UPDATED_AT = datetime.now()
+            if args:
+                try:
+                    _PATCH_EXPECTED_TOTAL = int(args[0])
+                    if _PATCH_EXPECTED_TOTAL <= 0 or _PATCH_EXPECTED_TOTAL > 200:
+                        raise ValueError("total out of range")
+                except Exception:
+                    _PATCH_EXPECTED_TOTAL = None
+            reply = (
+                "OK。分割パッチ入力を開始したよ。"
+                "おすすめは /patchadd i/total <chunk> を繰り返して、最後に /patchcheck か /patchapply だよ。"
+            )
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key == "patchadd":
+            try:
+                if not args:
+                    raise ValueError("usage: /patchadd <base64chunk>")
+                if _patch_buffer_is_stale():
+                    _patch_buffer_clear()
+                    raise ValueError("buffer expired. please /patchbegin again")
+
+                # tolerate spaces/newlines from chat clients
+                cleaned_args = [a.replace("\n", "").replace("\r", "") for a in args]
+
+                # Indexed mode: first token like 3/10
+                m = re.match(r"^(\d+)/(\d+)$", cleaned_args[0].strip())
+                if m and len(cleaned_args) >= 2:
+                    idx = int(m.group(1))
+                    total = int(m.group(2))
+                    if total <= 0 or total > 200:
+                        raise ValueError("total out of range")
+                    if idx <= 0 or idx > total:
+                        raise ValueError("index out of range")
+                    chunk = "".join(cleaned_args[1:]).strip().replace(" ", "+")
+                    if not chunk:
+                        raise ValueError("chunk is empty")
+                    if _PATCH_EXPECTED_TOTAL is None:
+                        _PATCH_EXPECTED_TOTAL = total
+                    if _PATCH_EXPECTED_TOTAL != total:
+                        raise ValueError(f"total mismatch (expected {_PATCH_EXPECTED_TOTAL}, got {total})")
+                    # switch to indexed mode
+                    if _PATCH_B64_BUFFER:
+                        raise ValueError("already in raw mode; /patchbegin to restart")
+                    _PATCH_CHUNKS[idx] = chunk
+                    _PATCH_B64_UPDATED_AT = datetime.now()
+                    got = len(_PATCH_CHUNKS)
+                    reply = f"追加OK（{idx}/{total}）。received={got}/{total}。次は /patchadd か /patchcheck だよ。"
+                else:
+                    # Raw append mode
+                    chunk = "".join(cleaned_args).strip().replace(" ", "+")
+                    if not chunk:
+                        raise ValueError("chunk is empty")
+                    if _PATCH_CHUNKS:
+                        raise ValueError("already in indexed mode; use /patchadd i/total ...")
+                    if len(_PATCH_B64_BUFFER) + len(chunk) > 200000:
+                        raise ValueError("buffer too large")
+                    _PATCH_B64_BUFFER += chunk
+                    _PATCH_B64_UPDATED_AT = datetime.now()
+                    reply = f"追加OK。buffer_len={len(_PATCH_B64_BUFFER)}。続けて /patchadd するか、/patchcheck してね。"
+            except Exception as e:
+                reply = f"/patchadd 失敗: {e}"
+
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key in ("patchclear", "patchreset"):
+            _patch_buffer_clear()
+            reply = "バッファを破棄したよ。"
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key in ("patchcheck", "patchapply"):
+            try:
+                b64 = _patch_buffer_get_b64_or_raise()
+                if key == "patchcheck":
+                    try:
+                        patch_bytes = base64.b64decode(b64.encode("utf-8"), validate=True)
+                    except (binascii.Error, ValueError):
+                        padded = b64 + "=" * ((4 - (len(b64) % 4)) % 4)
+                        patch_bytes = base64.urlsafe_b64decode(padded.encode("utf-8"))
+                    patch_text = patch_bytes.decode("utf-8", errors="replace")
+                    paths = _extract_patch_paths(patch_text)
+                    if not paths:
+                        raise ValueError("could not detect paths from diff")
+                    bad = [p for p in paths if not _is_patch_path_allowed(p)]
+                    if bad:
+                        raise ValueError(f"disallowed paths: {bad}")
+                    patch_file = None
+                    try:
+                        with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8", suffix=".patch") as tf:
+                            tf.write(patch_text)
+                            patch_file = tf.name
+                        check = _run_cmd_capture(
+                            [
+                                "git",
+                                "-C",
+                                str(_WORKSPACE_ROOT),
+                                "apply",
+                                "--check",
+                                "--whitespace=nowarn",
+                                patch_file,
+                            ],
+                            cwd=_WORKSPACE_ROOT,
+                            timeout=60,
+                        )
+                        if check.get("ok"):
+                            reply = "チェックOK（まだ適用してないよ）。このまま適用するなら /patchapply だよ"
+                        else:
+                            reply = "チェック失敗: " + json.dumps(check, ensure_ascii=False)
+                    finally:
+                        try:
+                            if patch_file and os.path.exists(patch_file):
+                                os.unlink(patch_file)
+                        except Exception:
+                            pass
+                else:
+                    # patchapply
+                    try:
+                        patch_bytes = base64.b64decode(b64.encode("utf-8"), validate=True)
+                    except (binascii.Error, ValueError):
+                        padded = b64 + "=" * ((4 - (len(b64) % 4)) % 4)
+                        patch_bytes = base64.urlsafe_b64decode(padded.encode("utf-8"))
+                    patch_text = patch_bytes.decode("utf-8", errors="replace")
+                    paths = _extract_patch_paths(patch_text)
+                    if not paths:
+                        raise ValueError("could not detect paths from diff")
+                    bad = [p for p in paths if not _is_patch_path_allowed(p)]
+                    if bad:
+                        raise ValueError(f"disallowed paths: {bad}")
+                    patch_file = None
+                    try:
+                        with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8", suffix=".patch") as tf:
+                            tf.write(patch_text)
+                            patch_file = tf.name
+                        check = _run_cmd_capture(
+                            [
+                                "git",
+                                "-C",
+                                str(_WORKSPACE_ROOT),
+                                "apply",
+                                "--check",
+                                "--whitespace=nowarn",
+                                patch_file,
+                            ],
+                            cwd=_WORKSPACE_ROOT,
+                            timeout=60,
+                        )
+                        if not check.get("ok"):
+                            reply = "適用前チェック失敗: " + json.dumps(check, ensure_ascii=False)
+                        else:
+                            run = _run_cmd_capture(
+                                ["git", "-C", str(_WORKSPACE_ROOT), "apply", "--whitespace=nowarn", patch_file],
+                                cwd=_WORKSPACE_ROOT,
+                                timeout=60,
+                            )
+                            if run.get("ok"):
+                                _patch_buffer_clear()
+                                diff = _run_cmd_capture(
+                                    [
+                                        "git",
+                                        "-C",
+                                        str(_WORKSPACE_ROOT),
+                                        "diff",
+                                        "--no-color",
+                                        "--ignore-submodules=all",
+                                    ],
+                                    cwd=_WORKSPACE_ROOT,
+                                    timeout=30,
+                                )
+                                d = (diff.get("stdout") or "").strip()
+                                reply = "適用OK。\n" + (d[-2800:] if d else "(no diff)")
+                            else:
+                                reply = "適用失敗: " + json.dumps(run, ensure_ascii=False)
+                    finally:
+                        try:
+                            if patch_file and os.path.exists(patch_file):
+                                os.unlink(patch_file)
+                        except Exception:
+                            pass
+            except Exception as e:
+                reply = f"/{key} 失敗: {e}"
+
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key == "applypatch":
+            try:
+                if not args:
+                    raise ValueError("usage: /applypatch <base64>")
+                b64 = "".join(args).strip().replace(" ", "+")
+                if len(b64) > 120000:
+                    raise ValueError("patch too large")
+
+                try:
+                    patch_bytes = base64.b64decode(b64.encode("utf-8"), validate=True)
+                except (binascii.Error, ValueError):
+                    # Accept URL-safe base64 too
+                    padded = b64 + "=" * ((4 - (len(b64) % 4)) % 4)
+                    patch_bytes = base64.urlsafe_b64decode(padded.encode("utf-8"))
+                patch_text = patch_bytes.decode("utf-8", errors="replace")
+                if len(patch_text) > 80000:
+                    raise ValueError("patch too large")
+
+                paths = _extract_patch_paths(patch_text)
+                if not paths:
+                    raise ValueError("could not detect paths from diff")
+                bad = [p for p in paths if not _is_patch_path_allowed(p)]
+                if bad:
+                    raise ValueError(f"disallowed paths: {bad}")
+
+                patch_file = None
+                try:
+                    with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8", suffix=".patch") as tf:
+                        tf.write(patch_text)
+                        patch_file = tf.name
+
+                    # Pre-check
+                    check = _run_cmd_capture(
+                        [
+                            "git",
+                            "-C",
+                            str(_WORKSPACE_ROOT),
+                            "apply",
+                            "--check",
+                            "--whitespace=nowarn",
+                            patch_file,
+                        ],
+                        cwd=_WORKSPACE_ROOT,
+                        timeout=60,
+                    )
+                    if not check.get("ok"):
+                        reply = "適用前チェック失敗: " + json.dumps(check, ensure_ascii=False)
+                        chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+                        _save_chat_history()
+                        return {"reply": reply, "mode": "command"}
+
+                    # Apply patch using git
+                    run = _run_cmd_capture(
+                        ["git", "-C", str(_WORKSPACE_ROOT), "apply", "--whitespace=nowarn", patch_file],
+                        cwd=_WORKSPACE_ROOT,
+                        timeout=60,
+                    )
+                    if run.get("ok"):
+                        # Return a short diff tail after apply
+                        diff = _run_cmd_capture(
+                            [
+                                "git",
+                                "-C",
+                                str(_WORKSPACE_ROOT),
+                                "diff",
+                                "--no-color",
+                                "--ignore-submodules=all",
+                            ],
+                            cwd=_WORKSPACE_ROOT,
+                            timeout=30,
+                        )
+                        d = (diff.get("stdout") or "").strip()
+                        reply = "適用OK。\n" + (d[-2800:] if d else "(no diff)")
+                    else:
+                        reply = "適用失敗: " + json.dumps(run, ensure_ascii=False)
+                finally:
+                    try:
+                        if patch_file and os.path.exists(patch_file):
+                            os.unlink(patch_file)
+                    except Exception:
+                        pass
+            except Exception as e:
+                reply = f"/applypatch 失敗: {e}"
+
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key in ("pycheck", "compile"):
+            try:
+                if not args:
+                    raise ValueError("usage: /pycheck <path>")
+                path = _safe_resolve_workspace_path(args[0])
+                run = _run_cmd_capture(
+                    [_workspace_python(), "-m", "py_compile", str(path)],
+                    cwd=_WORKSPACE_ROOT,
+                    timeout=60,
+                )
+                if run.get("ok"):
+                    reply = f"OK: {args[0]}"
+                else:
+                    reply = (run.get("stderr") or run.get("stdout") or str(run))[-3800:]
+            except Exception as e:
+                reply = f"/pycheck 失敗: {e}"
+
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        if key in ("queue", "todo"):
+            try:
+                text = (rest or "").strip()
+                if not text:
+                    raise ValueError("usage: /queue <text>")
+                queue_path = Path(LOG_DIR) / "remi_agent_queue.jsonl"
+                entry = {
+                    "ts": datetime.now().isoformat(),
+                    "text": text,
+                    "source": "remi_chat",
+                }
+                queue_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(queue_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                reply = f"キューに入れたよ: {text}"
+            except Exception as e:
+                reply = f"/queue 失敗: {e}"
+
+            chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
+            _save_chat_history()
+            return {"reply": reply, "mode": "command"}
+
+        # Unknown command: fall through to LLM
 
     # Inject real-time PC status into context so Remi can answer system questions
     gpu = get_gpu_info()
