@@ -418,11 +418,33 @@ def main():
         if hasattr(handler, 'flush'):
             handler.flush()
     
+    def _save_checkpoint_on_stop():
+        """Ctrl+C 時などに現在のステップをチェックポイントとして保存"""
+        step = trainer.state.global_step
+        if step <= 0:
+            logger.warning("保存可能なステップがありません")
+            return
+        ckpt_dir = os.path.join(args.output_dir, f"checkpoint-{step}")
+        os.makedirs(ckpt_dir, exist_ok=True)
+        logger.info(f"中断時のチェックポイントを保存中: {ckpt_dir}")
+        trainer.save_model(ckpt_dir)
+        tokenizer.save_pretrained(ckpt_dir)
+        trainer.state.save_to_json(os.path.join(ckpt_dir, "trainer_state.json"))
+        if trainer.optimizer is not None and hasattr(trainer.optimizer, "state_dict"):
+            torch.save(trainer.optimizer.state_dict(), os.path.join(ckpt_dir, "optimizer.pt"))
+        if hasattr(trainer, "lr_scheduler") and trainer.lr_scheduler is not None:
+            torch.save(trainer.lr_scheduler.state_dict(), os.path.join(ckpt_dir, "scheduler.pt"))
+        logger.info(f"保存完了: {ckpt_dir} (step {step})")
+
     try:
         trainer.train(resume_from_checkpoint=resume_from_checkpoint)
         logger.info("学習が正常に完了しました")
     except KeyboardInterrupt:
-        logger.warning("キーボード割り込みで中断されました")
+        logger.warning("キーボード割り込みで中断されました。現在の状態を保存します...")
+        try:
+            _save_checkpoint_on_stop()
+        except Exception as e:
+            logger.error(f"チェックポイント保存に失敗: {e}", exc_info=True)
         raise
     except Exception as e:
         logger.error(f"学習中にエラーが発生しました: {type(e).__name__}: {e}", exc_info=True)
