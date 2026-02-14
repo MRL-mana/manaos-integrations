@@ -532,8 +532,6 @@ def auto_regenerate(
                                         logger.warning(f"[学習エラー] {learn_error}")
                                 else:
                                     logger.warning(f"[学習] 改善失敗を記録: スコアが低下（{score_improvement:.2f}）")
-                                else:
-                                    logger.warning(f"[学習] 改善失敗を記録: スコアが低下（{score_improvement:.2f}）")
 
                                 # ジョブステータスを更新
                                 with jobs_lock:
