@@ -568,19 +568,29 @@ def _start_health_server(port: int):
 
 
 async def main():
-    if not MCP_AVAILABLE:
-        print("ERROR: mcp パッケージが必要です。pip install mcp", file=sys.stderr)
-        sys.exit(1)
-
-    # ヘルスチェックサーバーを起動
+    # ヘルスチェックサーバーを起動（MCPが無くても生存確認できるようにする）
     health_thread = threading.Thread(
         target=_start_health_server, args=(HEALTH_PORT,), daemon=True
     )
     health_thread.start()
     print(f"ヘルスチェック: http://127.0.0.1:{HEALTH_PORT}/health", file=sys.stderr)
 
+    if not MCP_AVAILABLE:
+        print(
+            "WARNING: mcp パッケージが見つかりません。MCP機能は無効ですが /health は稼働します。\n"
+            "         対処: pip install mcp",
+            file=sys.stderr,
+        )
+        # そのままプロセスを維持（ヘルスチェック用途）
+        while True:
+            await asyncio.sleep(3600)
+
     # MCPサーバーを起動（stdio通信）
     async with stdio_server() as (read_stream, write_stream):
         await server.run(
             read_stream, write_stream, server.create_initialization_options()
         )
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

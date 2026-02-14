@@ -1,0 +1,15 @@
+{
+  "include": ["manaos_integrations"],
+  "exclude": [
+    "**/.venv/**",
+    "**/venv/**",
+    "**/__pycache__/**",
+    "**/node_modules/**",
+    "**/data/**",
+    "**/outputs/**",
+    "**/out/**",
+    "**/snapshots/**"
+  ],
+  "reportMissingImports": "none",
+  "reportMissingTypeStubs": "none"
+}

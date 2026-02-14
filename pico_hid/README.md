@@ -89,6 +89,20 @@ Cursor やローカルLLM から「マウスを動かして」「この文字を
 - `w,delta` — ホイール
 - `k,KEY` — キー（KEY: A–Z, ENTER, TAB など）
 - `t,文字列` — 文字列入力（改行までがペイロード）
+- `combo,KEY1,KEY2,...` — キーコンボ（例: `combo,GUI,R` / `combo,CONTROL,SHIFT,S`）
+
+## 5. マクロ（起動/復旧の定型操作）
+
+`pico_hid/pc/pico_hid_macros.py` に、Win+R からコマンドを実行する **マクロ**を用意しています。
+
+```bash
+python -m pico_hid.pc.pico_hid_macros start_services
+python -m pico_hid.pc.pico_hid_macros restart_unified_api
+python -m pico_hid.pc.pico_hid_macros emergency_stop
+python -m pico_hid.pc.pico_hid_macros open_nanokvm --args "{\"nanokvm_url\":\"http://192.168.0.10\"}"
+```
+
+また、`manaos-pico-hid` MCP サーバー側には `hid_run_macro` ツールを追加しています（サーバーを再起動すると利用可能）。
 
 ## トラブルシュート
 

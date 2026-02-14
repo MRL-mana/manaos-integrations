@@ -11,7 +11,7 @@ Pico 2 W HID クライアント
 import os
 import sys
 import time
-from pathlib import Path
+from typing import Callable, Optional
 
 # pyserial は optional（Pico 接続時のみ必要）
 try:
@@ -33,14 +33,23 @@ except ImportError:
     _has_pynput = False
 
 # スクリーンショット用（pyautogui または PIL）
+_screenshot_fn: Optional[Callable[[str], None]] = None
 try:
     import pyautogui
-    _screenshot_fn = lambda path: pyautogui.screenshot().save(path)
+
+    def _pyautogui_screenshot(path: str) -> None:
+        pyautogui.screenshot().save(path)
+
+    _screenshot_fn = _pyautogui_screenshot
     _has_screenshot = True
 except ImportError:
     try:
         from PIL import ImageGrab
-        _screenshot_fn = lambda path: ImageGrab.grab().save(path)
+
+        def _pillow_screenshot(path: str) -> None:
+            ImageGrab.grab().save(path)
+
+        _screenshot_fn = _pillow_screenshot
         _has_screenshot = True
     except ImportError:
         _has_screenshot = False
@@ -117,18 +126,23 @@ def screen_size():
     if not _has_screenshot:
         return (0, 0)
     try:
-        import pyautogui
-        return pyautogui.size()
-    except (ImportError, Exception):
+        import pyautogui as _pyautogui
+
+        return _pyautogui.size()
+    except ImportError:
         try:
-            from PIL import ImageGrab
-            return ImageGrab.grab().size
+            from PIL import ImageGrab as _ImageGrab
+
+            return _ImageGrab.grab().size
         except Exception:
             return (0, 0)
 
 
 def use_pc_backend():
-    """PC 側（pynput）を使うか。デフォルトは PC（pynput があれば）。Pico を使うときは PICO_HID_USE_PICO=1。"""
+    """PC 側（pynput）を使うか。
+
+    デフォルトは PC（pynput があれば）。Pico を使うときは PICO_HID_USE_PICO=1。
+    """
     if os.environ.get("PICO_HID_USE_PICO", "").strip() in ("1", "true", "yes"):
         return False
     if os.environ.get("PICO_HID_USE_PC", "").strip() in ("1", "true", "yes"):
@@ -194,8 +208,11 @@ class PCHIDClient:
         """画面上の絶対座標 (x, y) をクリックする。"""
         try:
             self._mouse.position = (x, y)
-            btn = Button.right if (button or "").strip().lower() == "right" else Button.left
-            if (button or "").strip().lower() == "middle":
+            btn = Button.left
+            normalized = (button or "").strip().lower()
+            if normalized == "right":
+                btn = Button.right
+            elif normalized == "middle":
                 btn = Button.middle
             self._mouse.click(btn)
             return True
@@ -226,8 +243,11 @@ class PCHIDClient:
 
     def mouse_click(self, button: str = "left") -> bool:
         try:
-            btn = Button.right if (button or "").strip().lower() == "right" else Button.left
-            if (button or "").strip().lower() == "middle":
+            btn = Button.left
+            normalized = (button or "").strip().lower()
+            if normalized == "right":
+                btn = Button.right
+            elif normalized == "middle":
                 btn = Button.middle
             self._mouse.click(btn)
             return True
@@ -279,7 +299,8 @@ class PicoHIDClient:
     def __init__(self, port=None, baud=115200, timeout=0.5):
         if serial is None:
             raise RuntimeError("pyserial が必要です: pip install pyserial")
-        self.port = port or os.environ.get("PICO_HID_PORT", "").strip() or find_pico_port()
+        env_port = os.environ.get("PICO_HID_PORT", "").strip()
+        self.port = port or env_port or find_pico_port()
         self.baud = baud
         self.timeout = timeout
         self._ser = None
@@ -292,7 +313,11 @@ class PicoHIDClient:
         if not self.port:
             return False
         try:
-            self._ser = serial.Serial(self.port, self.baud, timeout=self.timeout)
+            self._ser = serial.Serial(
+                self.port,
+                self.baud,
+                timeout=self.timeout,
+            )
             time.sleep(0.05)  # 接続直後のゴミ対策
             return True
         except Exception:
@@ -321,18 +346,27 @@ class PicoHIDClient:
         return (0, 0)  # Pico 側では未対応
 
     def mouse_move_absolute(self, x: int, y: int) -> bool:
+        del x, y
         return False  # Pico 側では未対応（PC のみ）
 
     def mouse_click_at(self, x: int, y: int, button: str = "left") -> bool:
+        del x, y, button
         return False  # Pico 側では未対応（PC のみ）
 
     def key_combo(self, keys: list) -> bool:
         if not keys:
             return False
-        # 1キーなら key_press、複数は Pico プロトコル未対応
-        if len(keys) == 1:
-            return self.key_press(keys[0])
-        return False
+        # Pico 側の COMBO プロトコル対応（例: combo,CTRL,SHIFT,S）
+        cleaned = []
+        for k in keys:
+            k = (k or "").strip()
+            if not k or "," in k:
+                return False
+            cleaned.append(k)
+        if len(cleaned) == 1:
+            return self.key_press(cleaned[0])
+        payload = ",".join(["combo"] + cleaned)
+        return self.send_line(payload)
 
     def mouse_click(self, button: str = "left") -> bool:
         return self.send_line(f"c,{button.strip().lower()}")
@@ -440,7 +474,8 @@ def get_client(port=None):
         return PCHIDClient()
     if _has_serial:
         raise RuntimeError(
-            "Pico の COM ポートが見つかりません。pynput で PC 操作: pip install pynput のあと PICO_HID_USE_PC=1"
+            "Pico の COM ポートが見つかりません。"
+            "pynput で PC 操作: pip install pynput のあと PICO_HID_USE_PC=1"
         )
     raise RuntimeError(
         "pyserial か pynput が必要です: pip install pyserial または pip install pynput"
@@ -454,12 +489,20 @@ def main():
     except RuntimeError as e:
         print(e)
         sys.exit(1)
-    backend = "PC (pynput)" if isinstance(client, PCHIDClient) else f"Pico ({client.port})"
+    backend = (
+        "PC (pynput)"
+        if isinstance(client, PCHIDClient)
+        else f"Pico ({client.port})"
+    )
     print("使用:", backend)
     argv = sys.argv[1:]
     if not argv:
-        print("使い方: m dx dy | ma x y | c [left] | ca x y [left] | k KEY | combo ctrl c | t TEXT | w delta | pos | screen [path]")
-        print("例: m 10 0  ma 100 200  ca 50 50  combo ctrl c  t hello  pos  screen")
+        print(
+            "使い方: m dx dy | ma x y | c [left] | ca x y [left] | k KEY | "
+            "combo ctrl c | t TEXT | w delta | pos | screen [path]"
+        )
+        print("例: m 10 0  ma 100 200  ca 50 50  combo ctrl c")
+        print("     t hello  pos  screen")
         print("Pico で操作するとき: 環境変数 PICO_HID_USE_PICO=1")
         client.close()
         return
@@ -472,7 +515,11 @@ def main():
     elif cmd == "c":
         ok = client.mouse_click(argv[1] if len(argv) >= 2 else "left")
     elif cmd == "ca" and len(argv) >= 3:
-        ok = client.mouse_click_at(int(argv[1]), int(argv[2]), argv[3] if len(argv) >= 4 else "left")
+        ok = client.mouse_click_at(
+            int(argv[1]),
+            int(argv[2]),
+            argv[3] if len(argv) >= 4 else "left",
+        )
     elif cmd == "k" and len(argv) >= 2:
         ok = client.key_press(argv[1])
     elif cmd == "combo" and len(argv) >= 2:

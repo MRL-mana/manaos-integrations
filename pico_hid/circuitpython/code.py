@@ -133,6 +133,39 @@ def parse_and_run(line):
             keyboard.release_all()
         elif len(key) == 1:
             layout.write(key)
+    elif cmd == "COMBO":
+        # 例: combo,ctrl,shift,s
+        raw = line.split(",")
+        if len(raw) >= 3:
+            keycodes = []
+            for token in raw[1:]:
+                t = (token or "").strip().upper()
+                if not t:
+                    keycodes = []
+                    break
+                if t == "CTRL":
+                    t = "CONTROL"
+                if t == "WIN":
+                    t = "GUI"
+                if t == "WINDOWS":
+                    t = "GUI"
+                if t in KEY_MAP:
+                    keycodes.append(KEY_MAP[t])
+                elif len(t) == 1 and t.isalpha() and t in KEY_MAP:
+                    keycodes.append(KEY_MAP[t])
+                else:
+                    keycodes = []
+                    break
+            if keycodes:
+                try:
+                    for kc in keycodes:
+                        keyboard.press(kc)
+                    keyboard.release_all()
+                except Exception:
+                    try:
+                        keyboard.release_all()
+                    except Exception:
+                        pass
     elif cmd == "T" and len(parts) >= 2:
         layout.write(parts[1])
 

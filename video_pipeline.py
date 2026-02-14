@@ -19,15 +19,12 @@ Usage:
 """
 
 import os
-import io
 import json
 import time
 import wave
-import struct
 import tempfile
-import traceback
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 
 # 統一モジュール
@@ -41,12 +38,17 @@ except ImportError:
     logger = logging.getLogger(__name__)
     logging.basicConfig(level=logging.INFO)
 
+error_handler = None
 try:
-    from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
+    from manaos_error_handler import (
+        ManaOSErrorHandler,
+        ErrorCategory,
+        ErrorSeverity,
+    )
 
     error_handler = ManaOSErrorHandler("VideoPipeline")
 except ImportError:
-    error_handler = None
+    pass
 
 # MoviePy
 try:
@@ -65,7 +67,7 @@ except ImportError:
 
 # Pillow（画像処理）
 try:
-    from PIL import Image, ImageDraw, ImageFont
+    from PIL import Image
 
     PILLOW_AVAILABLE = True
 except ImportError:
@@ -79,13 +81,6 @@ try:
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
-
-# numpy
-try:
-    import numpy as np
-except ImportError:
-    np = None
-
 
 # ========================================
 # 設定
@@ -244,7 +239,7 @@ class VoicevoxTTS:
         # 1. 音声クエリ生成
         query_resp = requests.post(
             f"{self.url}/audio_query",
-            params={"text": text, "speaker": sid},
+            params={"text": str(text), "speaker": str(sid)},
             timeout=30,
         )
         query_resp.raise_for_status()
@@ -254,7 +249,7 @@ class VoicevoxTTS:
         # 2. 音声合成
         synth_resp = requests.post(
             f"{self.url}/synthesis",
-            params={"speaker": sid},
+            params={"speaker": str(sid)},
             json=audio_query,
             timeout=60,
         )
@@ -439,7 +434,12 @@ class VideoPipeline:
             new_h = height
             new_w = int(height * img_ratio)
 
-        img = img.resize((new_w, new_h), Image.LANCZOS)
+        resample = getattr(
+            getattr(Image, "Resampling", Image),
+            "LANCZOS",
+            getattr(Image, "BICUBIC", 3),
+        )
+        img = img.resize((new_w, new_h), resample)
 
         # キャンバスに配置
         canvas = Image.new("RGB", (width, height), bg_color)

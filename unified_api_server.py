@@ -1266,6 +1266,152 @@ def openapi_spec():
     return jsonify(build_openapi_spec())
 
 
+@app.route("/api/integrations/status", methods=["GET"])
+def api_integrations_status():
+    """統合モジュールの利用可否を返す（軽量）"""
+    # NOTE: 互換重視で `available` を最小キーとして返す
+    targets = {
+        "comfyui": "ComfyUI",
+        "svi_wan22": "SVI × Wan 2.2",
+        "ltx2": "LTX-2",
+        "ltx2_infinity": "LTX-2 Infinity",
+        "google_drive": "Google Drive",
+        "civitai": "CivitAI",
+        "obsidian": "Obsidian",
+        "local_llm": "Local LLM",
+        "llm_routing": "LLM Routing",
+        "memory_unified": "Memory",
+        "notification_hub": "Notification Hub",
+        "secretary": "Secretary",
+        "image_stock": "Image Stock",
+    }
+
+    out: Dict[str, Any] = {}
+    for key, display_name in targets.items():
+        inst = integrations.get(key)
+        available = False
+        reason = None
+        try:
+            if inst is None:
+                available = False
+                reason = "not_initialized"
+            elif hasattr(inst, "is_available"):
+                available = bool(inst.is_available())
+                if not available:
+                    reason = "unavailable"
+            else:
+                available = True
+        except Exception as e:
+            available = False
+            reason = f"error:{str(e)[:80]}"
+
+        out[key] = {
+            "name": display_name,
+            "available": available,
+            "reason": reason,
+        }
+
+    return jsonify(out), 200
+
+
+@app.route("/api/comfyui/generate", methods=["POST"])
+def api_comfyui_generate():
+    """ComfyUIで画像生成（prompt_id を返す）"""
+    data = request.get_json(silent=True) or {}
+    prompt = (data.get("prompt") or "").strip()
+    if not prompt:
+        return _json_error("prompt is required", 400, error="bad_request")
+
+    comfyui = integrations.get("comfyui")
+    if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
+        return jsonify({"error": "ComfyUIが利用できません"}), 503
+
+    negative_prompt = (data.get("negative_prompt") or "").strip()
+    width = int(data.get("width", 512) or 512)
+    height = int(data.get("height", 512) or 512)
+    steps = int(data.get("steps", 20) or 20)
+    cfg_scale = float(data.get("cfg_scale", data.get("cfg", 7.0)) or 7.0)
+    sampler = (data.get("sampler") or "euler_ancestral").strip() or "euler_ancestral"
+    scheduler = (data.get("scheduler") or "karras").strip() or "karras"
+    seed = int(data.get("seed", -1) if data.get("seed", -1) is not None else -1)
+    model = (data.get("model") or data.get("ckpt_name") or "").strip()
+    loras = data.get("loras")
+
+    try:
+        prompt_id = comfyui.generate_image(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            width=width,
+            height=height,
+            model=model,
+            loras=loras,
+            steps=steps,
+            guidance_scale=cfg_scale,
+            sampler=sampler,
+            scheduler=scheduler,
+            seed=seed,
+        )
+    except Exception as e:
+        logger.warning(f"ComfyUI generate error: {e}")
+        return _json_error("image_generation_failed", 500, error="internal_error")
+
+    if prompt_id:
+        # n8n Webhookに通知（オプション）
+        n8n_webhook_url = (os.getenv("N8N_WEBHOOK_URL") or "").strip()
+        if n8n_webhook_url and REQUESTS_AVAILABLE:
+            try:
+                requests.post(
+                    n8n_webhook_url,
+                    json={
+                        "prompt_id": prompt_id,
+                        "prompt": prompt,
+                        "negative_prompt": negative_prompt,
+                        "width": width,
+                        "height": height,
+                        "steps": steps,
+                        "cfg_scale": cfg_scale,
+                        "seed": seed,
+                        "status": "generated",
+                        "timestamp": datetime.now().isoformat(),
+                    },
+                    timeout=5,
+                )
+            except Exception as e:
+                logger.warning(f"n8n Webhook通知に失敗: {e}")
+
+        return jsonify({"prompt_id": prompt_id, "status": "success"}), 200
+
+    return jsonify({"error": "画像生成に失敗しました"}), 500
+
+
+@app.route("/api/comfyui/queue", methods=["GET"])
+def api_comfyui_queue():
+    """ComfyUIキュー状態"""
+    comfyui = integrations.get("comfyui")
+    if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
+        return jsonify({"error": "ComfyUIが利用できません"}), 503
+    try:
+        return jsonify(comfyui.get_queue_status()), 200
+    except Exception as e:
+        logger.warning(f"ComfyUI queue error: {e}")
+        return _json_error("queue_status_failed", 500, error="internal_error")
+
+
+@app.route("/api/comfyui/history", methods=["GET"])
+def api_comfyui_history():
+    """ComfyUI履歴"""
+    comfyui = integrations.get("comfyui")
+    if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
+        return jsonify({"error": "ComfyUIが利用できません"}), 503
+    try:
+        limit = int(request.args.get("limit", 10) or 10)
+        limit = max(1, min(limit, 50))
+        return jsonify({"items": comfyui.get_history(max_items=limit)}), 200
+    except Exception as e:
+        logger.warning(f"ComfyUI history error: {e}")
+        return _json_error("history_failed", 500, error="internal_error")
+
+
 # 統合システムのインスタンス
 integrations: Dict[str, Any] = {}
 
@@ -1902,7 +2048,12 @@ def _perform_readiness_checks(integrations: Dict[str, Any]) -> Dict[str, Dict[st
             # モデルリストを取得
             import requests
 
-            ollama_url = getattr(llm_routing, "ollama_url", "http://localhost:11434")
+            ollama_url = getattr(llm_routing, "ollama_url", "http://127.0.0.1:11434")
+            # Some environments route `localhost` via proxy/IPv6 unexpectedly.
+            # Normalize to 127.0.0.1 for a local readiness check.
+            ollama_url = ollama_url.replace("http://localhost", "http://127.0.0.1").replace(
+                "https://localhost", "https://127.0.0.1"
+            )
             response = requests.get(f"{ollama_url}/api/tags", timeout=2.0)
             if response.status_code == 200:
                 models = response.json().get("models", [])
@@ -2019,6 +2170,52 @@ def ready():
         completed = initialization_status["completed"].copy()
         failed = initialization_status["failed"].copy()
         checks = initialization_status.get("checks", {}).copy()
+
+    # NOTE: /ready は「依存関係まで含めたレディネス」のため、初回起動時に
+    # 依存（例: Ollama）が後から起動すると 503 のまま固定されがち。
+    # ここでは starting のときだけ軽量チェックを再計算し、条件を満たせば ready に遷移させる。
+    if status == "starting":
+        with initialization_lock:
+            try:
+                refreshed_checks = _perform_readiness_checks(integrations)
+                initialization_status["checks"] = refreshed_checks
+
+                required_checks = [
+                    "memory_db",
+                    "obsidian_path",
+                    "notification_hub",
+                    "llm_routing",
+                    "image_stock",
+                ]
+                available_checks = [
+                    check
+                    for check in required_checks
+                    if refreshed_checks.get(check, {}).get("status") != "not_available"
+                ]
+                all_required_ok = (
+                    all(
+                        refreshed_checks.get(check, {}).get("status") in ["ok", "warning"]
+                        for check in available_checks
+                    )
+                    if available_checks
+                    else True
+                )
+
+                if (
+                    not initialization_status["pending"]
+                    and all_required_ok
+                    and len(initialization_status["completed"]) > 0
+                ):
+                    initialization_status["status"] = "ready"
+
+            except Exception as e:
+                logger.warning(f"readiness refresh failed: {e}")
+
+            status = initialization_status["status"]
+            pending = initialization_status["pending"].copy()
+            completed = initialization_status["completed"].copy()
+            failed = initialization_status["failed"].copy()
+            checks = initialization_status.get("checks", {}).copy()
 
     if status == "ready":
         # 初期化完了：各統合の状態を確認（軽量化：タイムアウト対策）

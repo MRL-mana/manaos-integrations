@@ -129,6 +129,15 @@ class TestPicoHIDClient:
         client.mouse_move(5, -5)
         self.mock_serial.write.assert_called()
 
+    def test_key_combo_multi(self):
+        """複数キーの key_combo が combo,KEY... を送る"""
+        client = self.PicoHIDClient(port="COM3")
+        ok = client.key_combo(["ctrl", "shift", "s"])
+        assert ok is True
+        # combo,ctrl,shift,s\n を write していること
+        written = b"".join(call.args[0] for call in self.mock_serial.write.call_args_list)
+        assert b"combo,ctrl,shift,s" in written.lower()
+
 
 # ---------------------------------------------------------------------------
 # get_client / find_pico_port ヘルパー
