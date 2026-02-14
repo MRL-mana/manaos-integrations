@@ -436,6 +436,7 @@ body.panel-open .clock{opacity:0;transform:translateX(-50%) translateY(20px)}
   margin:0 4px;
 }
 .chat-reply.show{max-height:200px}
+.chat-reply.show.tall{max-height:70vh}
 .chat-reply-inner{
   padding:10px 14px;
   background:rgba(255,255,255,0.06);
@@ -445,6 +446,13 @@ body.panel-open .clock{opacity:0;transform:translateX(-50%) translateY(20px)}
   line-height:1.5;
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   max-height:180px;overflow-y:auto;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.chat-reply-inner.tall{max-height:calc(70vh - 20px)}
+.chat-reply-inner.mono{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  font-size:12px;
 }
 
 /* === Status detail panel === */
@@ -563,7 +571,7 @@ body.panel-open .swipe-hint{display:none}
 <div class="action-bar" id="actionBar">
   <div class="chat-reply" id="chatReply"><div class="chat-reply-inner" id="chatReplyInner"></div></div>
   <div class="chat-row">
-    <input class="chat-input" id="chatInput" type="text" placeholder="Talk to Remi..." enterkeyhint="send" autocomplete="off">
+    <input class="chat-input" id="chatInput" type="text" placeholder="Remiに話す（/help /patchsend でコマンド）" enterkeyhint="send" autocomplete="off">
     <button class="chat-send" id="chatSend" onclick="sendChat()">&#9654;</button>
   </div>
   <div class="quick-actions" id="qaRow">
@@ -754,9 +762,90 @@ const chatInput = document.getElementById('chatInput');
 const chatReply = document.getElementById('chatReply');
 const chatReplyInner = document.getElementById('chatReplyInner');
 
+function updateStateFromReply(text) {
+  const t = String(text ?? '');
+  const isBad =
+    t.includes('[NG]') ||
+    t.includes('[!!]') ||
+    t.includes('要検査') ||
+    t.includes('未起動') ||
+    t.includes('Timeout') ||
+    t.includes('Connection refused') ||
+    t.startsWith('Error:');
+  setState(isBad ? 'alert' : 'happy');
+}
+
+function setChatReplyText(text) {
+  const t = String(text ?? '');
+  chatReplyInner.textContent = t;
+
+  const lineCount = t ? (t.split('\n').length) : 0;
+  const isLong = (t.length > 900) || (lineCount > 18);
+  const isCodeLike = (
+    t.includes('diff --git') ||
+    (t.includes('--- ') && t.includes('+++ ')) ||
+    t.includes('Traceback (most recent call last)') ||
+    t.includes('File "')
+  );
+
+  chatReply.classList.toggle('tall', isLong);
+  chatReplyInner.classList.toggle('tall', isLong);
+  chatReplyInner.classList.toggle('mono', isCodeLike);
+
+  updateStateFromReply(t);
+}
+
 chatInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); sendChat(); }
 });
+
+async function apiChat(message, timeoutMs = 30000) {
+  const headers = {'Content-Type':'application/json'};
+  if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
+  const res = await fetch(API + '/chat', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({message}),
+    signal: AbortSignal.timeout(timeoutMs)
+  });
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.text()).slice(0, 300); } catch(e) {}
+    throw new Error('Error ' + res.status + (detail ? (': ' + detail) : ''));
+  }
+  return await res.json();
+}
+
+async function sendPatchFlow(base64, mode) {
+  // mode: 'check' | 'apply'
+  const b64 = String(base64 || '').trim().replace(/\s+/g, '').replace(/ /g, '+');
+  if (!b64) throw new Error('base64 empty');
+
+  const CHUNK_SIZE = 1800;
+  const total = Math.ceil(b64.length / CHUNK_SIZE);
+  if (total > 200) throw new Error('too many chunks: ' + total);
+
+  chatReplyInner.textContent = `patch: begin (${total} chunks)`;
+  await apiChat('/patchbegin ' + total, 30000);
+
+  for (let i = 1; i <= total; i++) {
+    const chunk = b64.slice((i - 1) * CHUNK_SIZE, i * CHUNK_SIZE);
+    chatReplyInner.textContent = `patch: sending ${i}/${total}`;
+    await apiChat(`/patchadd ${i}/${total} ${chunk}`, 30000);
+  }
+
+  chatReplyInner.textContent = `patch: ${mode}...`;
+  const finalCmd = mode === 'check' ? '/patchcheck' : '/patchapply';
+  let data;
+  try {
+    data = await apiChat(finalCmd, 60000);
+    return data;
+  } finally {
+    if (mode === 'apply') {
+      try { await apiChat('/patchclear', 15000); } catch(e) {}
+    }
+  }
+}
 
 async function sendChat() {
   const msg = chatInput.value.trim();
@@ -768,18 +857,40 @@ async function sendChat() {
   setState('happy');
 
   try {
-    const headers = {'Content-Type':'application/json'};
-    if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
-    const res = await fetch(API + '/chat?message=' + encodeURIComponent(msg), {
-      method: 'POST', headers, signal: AbortSignal.timeout(30000)
-    });
-    if (!res.ok) throw new Error('Error ' + res.status);
-    const data = await res.json();
+    // Client-side helper commands:
+    //   /patchsend <base64>
+    //   /patchsendcheck <base64>
+    if (msg.startsWith('/patchsendcheck ')) {
+      const b64 = msg.slice('/patchsendcheck '.length);
+      const data = await sendPatchFlow(b64, 'check');
+      const reply = data.reply || data.response || JSON.stringify(data);
+      setChatReplyText(reply);
+      say(reply.length > 30 ? reply.substring(0, 30) + '...' : reply, 5000);
+      // Guide next step without auto-sending
+      if (typeof reply === 'string' && reply.includes('チェックOK')) {
+        chatInput.value = '/patchapply';
+      }
+      return;
+    }
+    if (msg.startsWith('/patchsend ')) {
+      const b64 = msg.slice('/patchsend '.length);
+      const data = await sendPatchFlow(b64, 'apply');
+      const reply = data.reply || data.response || JSON.stringify(data);
+      setChatReplyText(reply);
+      say(reply.length > 30 ? reply.substring(0, 30) + '...' : reply, 5000);
+      // Guide next step without auto-sending
+      if (typeof reply === 'string' && reply.includes('適用OK')) {
+        chatInput.value = '/gitdiff';
+      }
+      return;
+    }
+
+    const data = await apiChat(msg, 30000);
     const reply = data.reply || data.response || JSON.stringify(data);
-    chatReplyInner.textContent = reply;
+    setChatReplyText(reply);
     say(reply.length > 30 ? reply.substring(0, 30) + '...' : reply, 5000);
   } catch(err) {
-    chatReplyInner.textContent = 'Error: ' + err.message;
+    setChatReplyText('Error: ' + err.message);
     say('通信エラーです...', 3000);
     setState('alert');
   }

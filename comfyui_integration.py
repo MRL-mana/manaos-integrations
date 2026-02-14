@@ -99,6 +99,32 @@ class ComfyUIIntegration(BaseIntegration):
                 user_message="キュー状態の取得に失敗しました"
             )
             return {"error": error.user_message or error.message}
+
+    def list_checkpoints(self) -> List[str]:
+        """利用可能なCheckpoint名一覧を取得"""
+        try:
+            timeout = self.get_timeout("api_call")
+            response = self.session.get(
+                f"{self.base_url}/object_info/CheckpointLoaderSimple",
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            data = response.json() or {}
+            ckpts = (
+                data.get("CheckpointLoaderSimple", {})
+                .get("input", {})
+                .get("required", {})
+                .get("ckpt_name", [[[]]])[0]
+            )
+            return list(ckpts) if ckpts else []
+        except Exception as e:
+            error = self.error_handler.handle_exception(
+                e,
+                context={"base_url": self.base_url, "action": "list_checkpoints"},
+                user_message="Checkpoint一覧の取得に失敗しました",
+            )
+            self.logger.warning(f"Checkpoint一覧取得エラー: {error.message}")
+            return []
     
     def submit_workflow(self, workflow: Dict[str, Any], prompt: str = "") -> Optional[str]:
         """
@@ -199,9 +225,21 @@ class ComfyUIIntegration(BaseIntegration):
             プロンプトID（成功時）、None（失敗時）
         """
         try:
+            # Checkpoint名が未指定/不正な場合は、ComfyUI側の利用可能一覧から自動選択
+            resolved_model = (model or "").strip()
+            ckpts = self.list_checkpoints()
+            if ckpts:
+                if not resolved_model:
+                    resolved_model = ckpts[0]
+                elif resolved_model not in ckpts:
+                    self.logger.warning(
+                        f"指定されたckpt_nameが見つかりません: {resolved_model} (fallback: {ckpts[0]})"
+                    )
+                    resolved_model = ckpts[0]
+
             workflow = {
                 "1": {
-                    "inputs": {"ckpt_name": model},
+                    "inputs": {"ckpt_name": resolved_model},
                     "class_type": "CheckpointLoaderSimple"
                 }
             }
