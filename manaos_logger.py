@@ -7,6 +7,7 @@
 
 import logging
 import logging.handlers
+import os
 import sys
 import io
 from pathlib import Path
@@ -62,7 +63,14 @@ def setup_logger(
     
     # コンソールハンドラー
     if console:
-        console_handler = logging.StreamHandler(sys.stdout)
+        use_stderr = os.getenv("MANAOS_LOG_TO_STDERR", "").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        stream = sys.stderr if use_stderr else sys.stdout
+        console_handler = logging.StreamHandler(stream)
         console_handler.setLevel(level)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)

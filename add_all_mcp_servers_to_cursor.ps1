@@ -49,7 +49,7 @@ $mcpServers = @{
         command = "python"
         args    = @("-m", "unified_api_mcp_server.server")
         env     = @{
-            MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
+            MANAOS_INTEGRATION_API_URL = "http://localhost:9502"
         }
         cwd     = $projectPath
     }
@@ -129,7 +129,7 @@ $mcpServers = @{
         command = "python"
         args    = @("-m", "ltx2_mcp_server.server")
         env     = @{
-            MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
+            MANAOS_INTEGRATION_API_URL = "http://localhost:9502"
         }
         cwd     = $projectPath
     }
@@ -144,7 +144,7 @@ $mcpServers = @{
         args    = @("-m", "manaos_unified_mcp_server.server")
         env     = @{
             MCP_DOMAIN                 = "media"
-            MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
+            MANAOS_INTEGRATION_API_URL = "http://localhost:9502"
             COMFYUI_URL                = "http://localhost:8188"
         }
         cwd     = $projectPath
@@ -154,7 +154,7 @@ $mcpServers = @{
         args    = @("-m", "manaos_unified_mcp_server.server")
         env     = @{
             MCP_DOMAIN                 = "productivity"
-            MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
+            MANAOS_INTEGRATION_API_URL = "http://localhost:9502"
         }
         cwd     = $projectPath
     }
@@ -163,7 +163,7 @@ $mcpServers = @{
         args    = @("-m", "manaos_unified_mcp_server.server")
         env     = @{
             MCP_DOMAIN                 = "ai"
-            MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
+            MANAOS_INTEGRATION_API_URL = "http://localhost:9502"
         }
         cwd     = $projectPath
     }
@@ -172,7 +172,7 @@ $mcpServers = @{
         args    = @("-m", "manaos_unified_mcp_server.server")
         env     = @{
             MCP_DOMAIN                 = "devices"
-            MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
+            MANAOS_INTEGRATION_API_URL = "http://localhost:9502"
             PORTAL_INTEGRATION_URL     = "http://localhost:5108"
         }
         cwd     = $projectPath
@@ -182,7 +182,17 @@ $mcpServers = @{
         args    = @("-m", "manaos_unified_mcp_server.server")
         env     = @{
             MCP_DOMAIN                 = "moltbot"
-            MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
+            MANAOS_INTEGRATION_API_URL = "http://localhost:9502"
+        }
+        cwd     = $projectPath
+    }
+
+    "manaos-pico-hid"          = @{
+        command = "python"
+        args    = @("-m", "pico_hid_mcp_server")
+        env     = @{
+            # 5116 は Portal Voice Integration と衝突するため避ける
+            PICO_HID_MCP_HEALTH_PORT = "5136"
         }
         cwd     = $projectPath
     }

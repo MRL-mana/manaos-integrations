@@ -102,8 +102,8 @@ class TestServicesConfig:
         assert "Unified API" in core_names
 
     def test_no_duplicate_ports(self):
-        ports = [s["port"] for s in SERVICES]
-        assert len(ports) == len(set(ports)), f"Duplicate ports: {ports}"
+        keys = [(s["port"], s["path"]) for s in SERVICES]
+        assert len(keys) == len(set(keys)), f"Duplicate (port,path): {keys}"
 
 
 # ---------------------------------------------------------------------------

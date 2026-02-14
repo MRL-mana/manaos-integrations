@@ -35,7 +35,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # APIエンドポイント
-UNIFIED_API_URL = os.getenv("MANAOS_INTEGRATION_API_URL", "http://localhost:9500")
+# NOTE:
+# - ManaOSの統合APIは通常 9502 を使用する
+# - 必要に応じて環境変数 `MANAOS_INTEGRATION_API_URL` で上書き可能
+UNIFIED_API_URL = (os.getenv("MANAOS_INTEGRATION_API_URL") or "http://localhost:9502").rstrip("/")
 ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://localhost:5106")
 
 # MCPサーバーの初期化

@@ -6,11 +6,29 @@ MRLメモリ、学習システム、記憶機能をVSCode/Cursorに接続
 """
 
 import json
+import io
 import os
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional
-import subprocess
+from typing import Any, Dict
+
+
+_ENCODINGS_TO_NORMALIZE = ("cp932", "cp936", "cp949")
+if (
+    sys.platform == "win32"
+    and getattr(sys.stdout, "encoding", "") in _ENCODINGS_TO_NORMALIZE
+):
+    sys.stdout = io.TextIOWrapper(
+        sys.stdout.buffer,
+        encoding="utf-8",
+        errors="replace",
+    )
+    sys.stderr = io.TextIOWrapper(
+        sys.stderr.buffer,
+        encoding="utf-8",
+        errors="replace",
+    )
+
 
 class VSCodeManaOSIntegration:
     """VSCode/Cursor ManaOS統合"""
@@ -20,6 +38,9 @@ class VSCodeManaOSIntegration:
         self.vscode_dir = self.home_dir / ".vscode"
         self.cursor_dir = self.home_dir / ".cursor"
         self.manaos_path = Path(__file__).resolve().parent
+        self._appdata_dir = (
+            Path(os.getenv("APPDATA", "")) if sys.platform == "win32" else None
+        )
         
     def get_vscode_settings_path(self) -> Path:
         """VSCode設定ファイルパスを取得"""
@@ -36,6 +57,36 @@ class VSCodeManaOSIntegration:
     def get_cursor_mcp_config_path(self) -> Path:
         """Cursor MCP設定ファイルパスを取得"""
         return self.cursor_dir / "mcp.json"
+
+    def get_cline_mcp_settings_path(self) -> Path | None:
+        """Cline MCP設定ファイルパスを取得（Windowsのみ）"""
+        if sys.platform != "win32" or not self._appdata_dir:
+            return None
+
+        # VS Code Stable / Insiders / VSCodium の候補を順に探索
+        product_dirs = ("Code", "Code - Insiders", "VSCodium")
+        candidates: list[Path] = []
+
+        for product in product_dirs:
+            candidates.append(
+                self._appdata_dir
+                / product
+                / "User"
+                / "globalStorage"
+                / "saoudrizwan.claude-dev"
+                / "settings"
+                / "cline_mcp_settings.json"
+            )
+
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+
+        for candidate in candidates:
+            if candidate.parent.exists():
+                return candidate
+
+        return candidates[0]
     
     def create_vscode_manaos_settings(self) -> Dict[str, Any]:
         """VSCode用ManaOS設定を作成"""
@@ -43,17 +94,17 @@ class VSCodeManaOSIntegration:
             "manaos": {
                 "enabled": True,
                 "integrationPath": str(self.manaos_path),
-                "apiUrl": "http://localhost:9500",
+                "apiUrl": "http://localhost:9502",
                 "memory": {
                     "enabled": True,
                     "type": "mrl",
-                    "apiUrl": "http://localhost:5103",
+                    "apiUrl": "http://localhost:5105",
                     "autoSync": True,
                     "syncInterval": 5000
                 },
                 "learning": {
                     "enabled": True,
-                    "apiUrl": "http://localhost:5104",
+                    "apiUrl": "http://localhost:5126",
                     "adaptiveOptimization": True
                 },
                 "llmRouting": {
@@ -76,55 +127,153 @@ class VSCodeManaOSIntegration:
             "python.linting.pylintEnabled": True
         }
     
-    def create_manaos_mcp_servers() -> Dict[str, Any]:
-        """ManaOS MCPサーバー設定"""
+    def create_vscode_mcp_servers(self) -> Dict[str, Any]:
+        """VSCode用に最低限のManaOS MCPサーバー設定を作成"""
         return {
-            "manaos-memory": {
-                "command": "python",
-                "args": ["-m", "mrl_memory_system.mcp_server"],
-                "env": {
-                    "PYTHONPATH": str(self.manaos_path),
-                    "MANAOS_MEMORY_PORT": "5103"
-                },
-                "cwd": str(self.manaos_path)
-            },
-            "manaos-learning": {
-                "command": "python",
-                "args": ["-m", "learning_system_api"],
-                "env": {
-                    "PYTHONPATH": str(self.manaos_path),
-                    "LEARNING_SYSTEM_PORT": "5104"
-                },
-                "cwd": str(self.manaos_path)
-            },
+            # VS Codeから ComfyUI生成などを呼ぶために必須
             "manaos-unified-api": {
                 "command": "python",
                 "args": ["-m", "unified_api_mcp_server.server"],
                 "env": {
                     "PYTHONPATH": str(self.manaos_path),
-                    "UNIFIED_API_PORT": "9500"
+                    "MANAOS_INTEGRATION_API_URL": "http://localhost:9502",
+                    "MANAOS_LOG_TO_STDERR": "1",
                 },
-                "cwd": str(self.manaos_path)
+                "cwd": str(self.manaos_path),
             },
-            "manaos-llm-routing": {
-                "command": "python",
-                "args": ["-m", "llm_routing_mcp_server.server"],
-                "env": {
-                    "PYTHONPATH": str(self.manaos_path),
-                    "LLM_ROUTING_PORT": "5111"
-                },
-                "cwd": str(self.manaos_path)
-            },
+            # /health を提供（MCP未導入でも生存確認できるようパッチ済み）
             "manaos-video-pipeline": {
                 "command": "python",
                 "args": ["-m", "video_pipeline_mcp_server.server"],
                 "env": {
                     "PYTHONPATH": str(self.manaos_path),
-                    "VIDEO_PIPELINE_HEALTH_PORT": "5112"
+                    "VIDEO_PIPELINE_HEALTH_PORT": "5112",
+                    "MANAOS_LOG_TO_STDERR": "1",
                 },
-                "cwd": str(self.manaos_path)
-            }
+                "cwd": str(self.manaos_path),
+            },
+            # Pico HID（MCP経由の入力注入）。healthポートは 5116 衝突回避で 5136。
+            "manaos-pico-hid": {
+                "command": "python",
+                "args": ["-m", "pico_hid_mcp_server"],
+                "env": {
+                    "PYTHONPATH": str(self.manaos_path),
+                    "PICO_HID_MCP_HEALTH_PORT": "5136",
+                    "MANAOS_LOG_TO_STDERR": "1",
+                },
+                "cwd": str(self.manaos_path),
+            },
         }
+
+    def create_cline_mcp_servers(self) -> Dict[str, Any]:
+        """Cline用の最低限のManaOS MCPサーバー設定を作成（Windows向け）"""
+        py_cmd = "py" if sys.platform == "win32" else "python"
+        py_args_prefix = ["-3.10"] if sys.platform == "win32" else []
+
+        return {
+            "manaos-unified-api": {
+                "command": py_cmd,
+                "args": [
+                    *py_args_prefix,
+                    "-m",
+                    "unified_api_mcp_server.server",
+                ],
+                "env": {
+                    "PYTHONPATH": str(self.manaos_path),
+                    "MANAOS_INTEGRATION_API_URL": "http://localhost:9502",
+                    "MANAOS_LOG_TO_STDERR": "1",
+                },
+                "cwd": str(self.manaos_path),
+            },
+            "manaos-video-pipeline": {
+                "command": py_cmd,
+                "args": [
+                    *py_args_prefix,
+                    "-m",
+                    "video_pipeline_mcp_server.server",
+                ],
+                "env": {
+                    "PYTHONPATH": str(self.manaos_path),
+                    "VIDEO_PIPELINE_HEALTH_PORT": "5112",
+                    "MANAOS_LOG_TO_STDERR": "1",
+                },
+                "cwd": str(self.manaos_path),
+            },
+            "manaos-pico-hid": {
+                "command": py_cmd,
+                "args": [*py_args_prefix, "-m", "pico_hid_mcp_server"],
+                "env": {
+                    "PYTHONPATH": str(self.manaos_path),
+                    "PICO_HID_MCP_HEALTH_PORT": "5136",
+                    "MANAOS_LOG_TO_STDERR": "1",
+                },
+                "cwd": str(self.manaos_path),
+            },
+        }
+
+    def setup_vscode_mcp(self) -> bool:
+        """VSCodeのMCP設定（~/.vscode/mcp.json）を作成/更新"""
+        print("📌 VSCode MCP設定を更新中...")
+
+        self.vscode_dir.mkdir(parents=True, exist_ok=True)
+
+        mcp_path = self.get_vscode_mcp_config_path()
+        config: Dict[str, Any] = {"mcpServers": {}}
+
+        if mcp_path.exists():
+            try:
+                with open(mcp_path, "r", encoding="utf-8") as f:
+                    loaded = json.load(f)
+                if isinstance(loaded, dict):
+                    config = loaded
+            except (OSError, json.JSONDecodeError, ValueError):
+                config = {"mcpServers": {}}
+
+        if not isinstance(config.get("mcpServers"), dict):
+            config["mcpServers"] = {}
+
+        servers = self.create_vscode_mcp_servers()
+        config["mcpServers"].update(servers)
+
+        with open(mcp_path, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+
+        print(f"✅ VSCode MCP設定を保存: {mcp_path}")
+        print(f"   追加/更新: {len(servers)} サーバー")
+        return True
+
+    def setup_cline_mcp(self) -> bool:
+        """ClineのMCP設定（cline_mcp_settings.json）を作成/更新（Windowsのみ）"""
+        cline_path = self.get_cline_mcp_settings_path()
+        if not cline_path:
+            print("ℹ️  Cline MCP設定はこの環境ではスキップします")
+            return False
+
+        print("📌 Cline MCP設定を更新中...")
+        cline_path.parent.mkdir(parents=True, exist_ok=True)
+
+        config: Dict[str, Any] = {"mcpServers": {}}
+        if cline_path.exists():
+            try:
+                with open(cline_path, "r", encoding="utf-8") as f:
+                    loaded = json.load(f)
+                if isinstance(loaded, dict):
+                    config = loaded
+            except (OSError, json.JSONDecodeError, ValueError):
+                config = {"mcpServers": {}}
+
+        if not isinstance(config.get("mcpServers"), dict):
+            config["mcpServers"] = {}
+
+        servers = self.create_cline_mcp_servers()
+        config["mcpServers"].update(servers)
+
+        with open(cline_path, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+
+        print(f"✅ Cline MCP設定を保存: {cline_path}")
+        print(f"   追加/更新: {len(servers)} サーバー")
+        return True
     
     def setup_vscode(self) -> bool:
         """VSCodeの統合設定"""
@@ -141,7 +290,7 @@ class VSCodeManaOSIntegration:
             try:
                 with open(settings_path, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
-            except Exception:
+            except (OSError, json.JSONDecodeError, ValueError):
                 settings = {}
         
         # ManaOS設定をマージ
@@ -186,6 +335,7 @@ class VSCodeManaOSIntegration:
         print("\n📌 次のステップ:")
         print("  1. VSCodeを再起動")
         print("  2. Cursorを再起動")
+        print("  2b. Clineを使う場合: VSCodeで Developer: Reload Window")
         print("  3. 以下のコマンドでManaOSサービスを起動:")
         print("     cd", str(Path(__file__).resolve().parent))
         print("     python -m mrl_memory_system")
@@ -202,9 +352,13 @@ class VSCodeManaOSIntegration:
         print("\n💾 設定ファイル:")
         print(f"  VSCode: {self.get_vscode_settings_path()}")
         print(f"  Cursor:  {self.get_cursor_mcp_config_path()}")
+        cline_path = self.get_cline_mcp_settings_path()
+        if cline_path:
+            print(f"  Cline:   {cline_path}")
         print(f"  ManaOS: {self.manaos_path}")
         
         print("\n" + "="*60)
+
 
 def main():
     """メイン処理"""
@@ -217,6 +371,14 @@ def main():
         # VSCode設定
         if integration.setup_vscode():
             print()
+
+        # VSCode MCP設定
+        if integration.setup_vscode_mcp():
+            print()
+
+        # Cline MCP設定
+        integration.setup_cline_mcp()
+        print()
         
         # Cursor設定確認
         if integration.setup_cursor():
@@ -225,9 +387,10 @@ def main():
         # 次のステップを表示
         integration.print_next_steps()
         
-    except Exception as e:
+    except (OSError, json.JSONDecodeError, ValueError) as e:
         print(f"❌ エラー: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

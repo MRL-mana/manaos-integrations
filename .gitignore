@@ -97,6 +97,15 @@ tmp/
 temp/
 *.tmp
 
+# UIAutomator / ad-hoc XML dumps (do not commit)
+/_tmp*.xml
+/_tmp*.png
+/_fail_*.png
+/_tmp_*.png
+/_tmp_*.txt
+/manaos_integrations/_tmp*.xml
+/manaos_integrations/_tmp*.png
+
 # Generated artifacts (local runs)
 artifacts/
 gallery_images/
