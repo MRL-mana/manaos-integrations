@@ -9,6 +9,8 @@ import os
 import httpx
 from typing import Dict, Any, Optional
 
+from _paths import INTENT_ROUTER_PORT, ORCHESTRATOR_PORT, UNIFIED_API_PORT
+
 try:
     from manaos_logger import get_logger
 except ImportError:
@@ -16,10 +18,14 @@ except ImportError:
     def get_logger(n): return logging.getLogger(n)
 logger = get_logger(__name__)
 
+DEFAULT_UNIFIED_API_URL = f"http://127.0.0.1:{UNIFIED_API_PORT}"
+DEFAULT_INTENT_ROUTER_URL = f"http://127.0.0.1:{INTENT_ROUTER_PORT}"
+DEFAULT_ORCHESTRATOR_URL = f"http://127.0.0.1:{ORCHESTRATOR_PORT}"
+
 # 統合API URL（自サーバー）
-UNIFIED_API_URL = os.getenv("UNIFIED_API_URL", "http://127.0.0.1:9510").rstrip("/")
+UNIFIED_API_URL = os.getenv("UNIFIED_API_URL", DEFAULT_UNIFIED_API_URL).rstrip("/")
 # Intent Router URL
-INTENT_ROUTER_URL = os.getenv("INTENT_ROUTER_URL", "http://127.0.0.1:5100").rstrip("/")
+INTENT_ROUTER_URL = os.getenv("INTENT_ROUTER_URL", DEFAULT_INTENT_ROUTER_URL).rstrip("/")
 
 
 def classify_intent(text: str) -> Dict[str, Any]:
@@ -85,7 +91,7 @@ def execute_by_intent(
 
     # 3. フォールバック: オーケストレーターに転送
     try:
-        orch_url = os.getenv("ORCHESTRATOR_URL", "http://127.0.0.1:5106").rstrip("/")
+        orch_url = os.getenv("ORCHESTRATOR_URL", DEFAULT_ORCHESTRATOR_URL).rstrip("/")
         r = httpx.post(
             f"{orch_url}/api/execute",
             json={"query": text, "auto_evaluate": True},
