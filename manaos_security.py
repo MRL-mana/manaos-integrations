@@ -18,6 +18,11 @@ from flask import request, jsonify, g
 from collections import defaultdict
 
 from manaos_logger import get_logger
+from manaos_jwt import (
+    accept_legacy_short_key,
+    derive_hs256_signing_key,
+    get_or_create_jwt_secret,
+)
 
 logger = get_logger(__name__)
 
@@ -59,24 +64,12 @@ class JWTManager:
     """JWT認証管理（PyJWTライブラリ使用）"""
 
     def __init__(self, secret_key: Optional[str] = None):
-        self.secret_key = secret_key or os.getenv('JWT_SECRET_KEY', '')
-        if not self.secret_key:
-            # auth_system.py の永続化鍵を参照
-            secret_file = Path(__file__).parent / '.jwt_secret'
-            if secret_file.exists():
-                self.secret_key = secret_file.read_text().strip()
-            else:
-                import secrets as _secrets
-                self.secret_key = _secrets.token_urlsafe(32)
-                secret_file.write_text(self.secret_key)
-                logger.warning('JWT_SECRET_KEY 未設定。.jwt_secret に自動生成しました')
+        self.secret_key = secret_key or get_or_create_jwt_secret()
         self._algorithm = 'HS256'
 
         self._raw_secret_bytes = self.secret_key.encode('utf-8')
-        self._accept_legacy_short_key = os.getenv('JWT_ACCEPT_LEGACY_SHORT_KEY', '').strip().lower() in {
-            '1', 'true', 'yes', 'y', 'on'
-        }
-        self._signing_key = self._derive_signing_key(self._raw_secret_bytes)
+        self._accept_legacy_short_key = accept_legacy_short_key()
+        self._signing_key = derive_hs256_signing_key(self.secret_key)
 
         if len(self._raw_secret_bytes) < 32:
             logger.warning(
@@ -84,17 +77,6 @@ class JWTManager:
                 ' 既存の「短鍵で署名されたトークン」を受け入れる必要がある場合は JWT_ACCEPT_LEGACY_SHORT_KEY=1 を設定してください。',
                 len(self._raw_secret_bytes),
             )
-
-    @staticmethod
-    def _derive_signing_key(raw_secret_bytes: bytes) -> bytes:
-        """HS256用の署名鍵を導出。
-
-        - 32 bytes以上ならそのまま利用（既存トークン互換）
-        - 32 bytes未満ならSHA-256で安定的に32 bytesへ派生（PyJWTの警告回避）
-        """
-        if len(raw_secret_bytes) >= 32:
-            return raw_secret_bytes
-        return hashlib.sha256(raw_secret_bytes).digest()
 
     def generate_token(self, user_id: str, expires_in: int = 3600) -> str:
         """トークンを生成"""

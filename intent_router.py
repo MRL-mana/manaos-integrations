@@ -18,6 +18,7 @@ from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from manaos_timeout_config import get_timeout_config
 from manaos_config_validator import ConfigValidator
+from _paths import OLLAMA_PORT
 
 # ロガーの初期化
 logger = get_logger(__name__)
@@ -30,6 +31,8 @@ timeout_config = get_timeout_config()
 
 # 設定ファイル検証の初期化
 config_validator = ConfigValidator("IntentRouter")
+
+DEFAULT_OLLAMA_URL = f"http://127.0.0.1:{OLLAMA_PORT}"
 
 
 class IntentType(str, Enum):
@@ -65,7 +68,7 @@ class IntentRouter:
 
     def __init__(
         self,
-        ollama_url: str = "http://127.0.0.1:11434",
+        ollama_url: Optional[str] = None,
         model: str = "lfm2.5:1.2b",  # LFM 2.5: 超軽量・超高速・日本語特化
         config_path: Optional[Path] = None
     ):
@@ -77,7 +80,7 @@ class IntentRouter:
             model: 使用する軽量モデル
             config_path: 設定ファイルのパス
         """
-        self.ollama_url = ollama_url
+        self.ollama_url = ollama_url or DEFAULT_OLLAMA_URL
         self.model = model
         self.config_path = config_path or Path(__file__).parent / "intent_router_config.json"
         self.config = self._load_config()
@@ -104,7 +107,7 @@ class IntentRouter:
                 schema = {
                     "required": ["model"],
                     "fields": {
-                        "ollama_url": {"type": str, "default": "http://127.0.0.1:11434"},
+                        "ollama_url": {"type": str, "default": DEFAULT_OLLAMA_URL},
                         "model": {"type": str},
                         "confidence_threshold": {"type": (int, float), "default": 0.6},
                         "use_keyword_fallback": {"type": bool, "default": True}
@@ -133,7 +136,7 @@ class IntentRouter:
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
         return {
-            "ollama_url": "http://127.0.0.1:11434",
+            "ollama_url": DEFAULT_OLLAMA_URL,
             "model": "lfm2.5:1.2b",
             "keyword_mapping": self._get_default_keyword_mapping(),
             "intent_prompt_template": self._get_default_prompt_template(),
