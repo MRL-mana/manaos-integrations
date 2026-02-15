@@ -12,12 +12,15 @@ from pathlib import Path
 
 # ベースクラスのインポート
 from base_integration import BaseIntegration
+from _paths import COMFYUI_PORT
+
+DEFAULT_COMFYUI_URL = f"http://127.0.0.1:{COMFYUI_PORT}"
 
 
 class ComfyUIIntegration(BaseIntegration):
     """ComfyUI統合クラス（改善版）"""
     
-    def __init__(self, base_url: str = "http://127.0.0.1:8188"):
+    def __init__(self, base_url: str = DEFAULT_COMFYUI_URL):
         """
         初期化
         

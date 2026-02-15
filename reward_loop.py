@@ -15,7 +15,12 @@ from dataclasses import dataclass, asdict
 from manaos_logger import get_logger
 from obsidian_integration import ObsidianIntegration
 
+from _paths import LEARNING_SYSTEM_PORT, METRICS_COLLECTOR_PORT
+
 logger = get_logger(__name__)
+
+DEFAULT_LEARNING_SYSTEM_URL = f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}"
+DEFAULT_METRICS_COLLECTOR_URL = f"http://127.0.0.1:{METRICS_COLLECTOR_PORT}"
 
 
 @dataclass
@@ -117,8 +122,8 @@ class RewardLoop:
 
     def check_achievements(
         self,
-        learning_system_url: str = "http://127.0.0.1:5126",
-        metrics_collector_url: str = "http://127.0.0.1:5127"
+        learning_system_url: Optional[str] = None,
+        metrics_collector_url: Optional[str] = None,
     ) -> Optional[RewardEvent]:
         """
         達成状況をチェックしてご褒美イベントを生成
@@ -130,6 +135,9 @@ class RewardLoop:
         Returns:
             ご褒美イベント（達成がない場合はNone）
         """
+        learning_system_url = learning_system_url or DEFAULT_LEARNING_SYSTEM_URL
+        metrics_collector_url = metrics_collector_url or DEFAULT_METRICS_COLLECTOR_URL
+
         current_count = self._count_playbooks()
         today = date.today().isoformat()
 
@@ -363,10 +371,7 @@ def health():
 def check_achievements():
     """達成状況をチェック"""
     loop = init_reward_loop()
-    event = loop.check_achievements(
-        learning_system_url="http://127.0.0.1:5126",
-        metrics_collector_url="http://127.0.0.1:5127"
-    )
+    event = loop.check_achievements()
 
     if event:
         return jsonify({

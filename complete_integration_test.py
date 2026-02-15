@@ -8,7 +8,9 @@ import json
 import time
 from typing import Dict, Any
 
-API_BASE = "http://127.0.0.1:9510"
+from _paths import UNIFIED_API_PORT
+
+API_BASE = f"http://127.0.0.1:{UNIFIED_API_PORT}"
 
 def test_all_integrations():
     """すべての統合システムをテスト"""

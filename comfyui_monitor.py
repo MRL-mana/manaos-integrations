@@ -11,6 +11,8 @@ import time
 import json
 import argparse
 
+from _paths import COMFYUI_PORT
+
 # Windows で UTF-8 出力
 if sys.platform == "win32":
     try:
@@ -21,7 +23,8 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-COMFYUI_URL = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
+DEFAULT_COMFYUI_URL = f"http://127.0.0.1:{COMFYUI_PORT}"
+COMFYUI_URL = os.getenv("COMFYUI_URL", DEFAULT_COMFYUI_URL)
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 CHECK_INTERVAL = int(os.getenv("COMFYUI_MONITOR_INTERVAL", "60"))
 QUEUE_WARN_THRESHOLD = int(os.getenv("COMFYUI_QUEUE_WARN", "5"))

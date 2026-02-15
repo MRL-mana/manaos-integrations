@@ -8,6 +8,8 @@ import os
 import httpx
 from typing import Dict, Any, List
 
+from _paths import PORTAL_INTEGRATION_PORT, UNIFIED_API_PORT
+
 try:
     from manaos_logger import get_logger
 except ImportError:
@@ -16,9 +18,13 @@ except ImportError:
 logger = get_logger(__name__)
 
 # Portal API URL（デバイスアラート取得）
-PORTAL_URL = os.getenv("PORTAL_INTEGRATION_URL", os.getenv("PORTAL_URL", "http://127.0.0.1:5108")).rstrip("/")
+DEFAULT_PORTAL_URL = f"http://127.0.0.1:{PORTAL_INTEGRATION_PORT}"
+PORTAL_URL = os.getenv(
+    "PORTAL_INTEGRATION_URL", os.getenv("PORTAL_URL", DEFAULT_PORTAL_URL)
+).rstrip("/")
 # 統合API URL（通知送信）
-UNIFIED_API_URL = os.getenv("UNIFIED_API_URL", "http://127.0.0.1:9510").rstrip("/")
+DEFAULT_UNIFIED_API_URL = f"http://127.0.0.1:{UNIFIED_API_PORT}"
+UNIFIED_API_URL = os.getenv("UNIFIED_API_URL", DEFAULT_UNIFIED_API_URL).rstrip("/")
 
 
 def fetch_alerts() -> Dict[str, Any]:
