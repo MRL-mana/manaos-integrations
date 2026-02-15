@@ -300,3 +300,6 @@ migrated_from_konoha/user_data_backups/
 .kiro/steering/byterover-rules.md
 .qoder/rules/byterover-rules.md
 .augment/rules/byterover-rules.md
+
+# JWT secret key (auto-generated)
+.jwt_secret

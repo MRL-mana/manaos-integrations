@@ -8,15 +8,25 @@
 import subprocess
 import sys
 import time
-import logging
 from typing import List, Dict
 from pathlib import Path
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)8s] %(message)s'
+from manaos_logger import get_logger
+from _paths import (
+    MRL_MEMORY_PORT,
+    LEARNING_SYSTEM_PORT,
+    LLM_ROUTING_PORT,
+    VIDEO_PIPELINE_PORT,
+    WINDOWS_AUTOMATION_PORT,
+    PICO_HID_PORT,
+    UNIFIED_API_PORT,
+    OLLAMA_PORT,
+    GALLERY_PORT,
+    COMFYUI_PORT,
+    MOLTBOT_GATEWAY_PORT,
 )
-logger = logging.getLogger(__name__)
+
+logger = get_logger(__name__)
 
 
 class EmergencyStop:
@@ -30,7 +40,27 @@ class EmergencyStop:
         "unified_api",
         "video_pipeline",
         "autonomous_operations",
-        "start_vscode_cursor_services"
+        "start_vscode_cursor_services",
+        "gallery_api_server",
+        "moltbot_gateway",
+        "windows_automation",
+        "pico_hid",
+        "service_monitor",
+        "secretary_system",
+        "manaos",
+    ]
+
+    # ポートベース停止対象（キーワード検索で漏れるサービス用）
+    SERVICE_PORTS: List[int] = [
+        MRL_MEMORY_PORT,
+        LEARNING_SYSTEM_PORT,
+        LLM_ROUTING_PORT,
+        VIDEO_PIPELINE_PORT,
+        WINDOWS_AUTOMATION_PORT,
+        PICO_HID_PORT,
+        UNIFIED_API_PORT,
+        GALLERY_PORT,
+        MOLTBOT_GATEWAY_PORT,
     ]
     
     def __init__(self):
@@ -40,38 +70,38 @@ class EmergencyStop:
     
     def find_manaos_processes(self) -> List[Dict]:
         """
-        ManaOS関連のPythonプロセスを検索
+        ManaOS関連のPythonプロセスを検索（キーワードベース）
         
         Returns:
             プロセス情報のリスト
         """
         try:
-            # PowerShellコマンドでプロセスを検索
+            import json as _json
+            # キーワードごとにOR条件で検索
+            or_clauses = " -or ".join(
+                [f"$_.CommandLine -like '*{kw}*'" for kw in self.MANAOS_PROCESS_KEYWORDS]
+            )
             cmd = [
                 "powershell",
                 "-NoProfile",
                 "-Command",
-                "Get-Process python | Where-Object { $_.CommandLine -like '*manaos*' } | Select-Object Id,ProcessName,CommandLine | ConvertTo-Json"
+                f"Get-Process python -ErrorAction SilentlyContinue | "
+                f"Where-Object {{ {or_clauses} }} | "
+                f"Select-Object Id,ProcessName,@{{N='CommandLine';E={{$_.CommandLine}}}} | "
+                f"ConvertTo-Json",
             ]
             
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
             
             if result.returncode != 0:
                 logger.warning(f"プロセス検索失敗: {result.stderr}")
                 return []
             
-            # JSONパース
-            import json
             output = result.stdout.strip()
             if not output or output == "null":
                 return []
             
-            processes = json.loads(output)
+            processes = _json.loads(output)
             if not isinstance(processes, list):
                 processes = [processes]
             
@@ -80,6 +110,32 @@ class EmergencyStop:
         except Exception as e:
             logger.error(f"プロセス検索エラー: {e}")
             return []
+
+    def find_processes_by_port(self) -> List[Dict]:
+        """
+        ポート番号からプロセスを検索（Ollama, ComfyUI 等のキーワード漏れ対策）
+        """
+        found: List[Dict] = []
+        try:
+            import json as _json
+            for port in self.SERVICE_PORTS:
+                cmd = [
+                    "powershell", "-NoProfile", "-Command",
+                    f"Get-NetTCPConnection -LocalPort {port} -State Listen -ErrorAction SilentlyContinue | "
+                    f"Select-Object OwningProcess | ConvertTo-Json",
+                ]
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+                if result.returncode == 0 and result.stdout.strip() and result.stdout.strip() != "null":
+                    data = _json.loads(result.stdout.strip())
+                    if not isinstance(data, list):
+                        data = [data]
+                    for entry in data:
+                        pid = entry.get("OwningProcess")
+                        if pid and not any(p.get("Id") == pid for p in found):
+                            found.append({"Id": pid, "ProcessName": f"port-{port}", "CommandLine": f"Listening on :{port}"})
+        except Exception as e:
+            logger.warning(f"ポートベース検索エラー: {e}")
+        return found
     
     def stop_process(self, pid: int, name: str = "unknown") -> bool:
         """
@@ -138,9 +194,17 @@ class EmergencyStop:
         logger.warning("🚨 緊急停止システムを起動します")
         logger.warning("="*60)
         
-        # プロセスを検索
+        # プロセスを検索（キーワード + ポートベース）
         logger.info("ManaOS関連プロセスを検索中...")
         processes = self.find_manaos_processes()
+        port_processes = self.find_processes_by_port()
+
+        # 重複排除してマージ
+        seen_pids = {p.get("Id") for p in processes}
+        for pp in port_processes:
+            if pp.get("Id") not in seen_pids:
+                processes.append(pp)
+                seen_pids.add(pp.get("Id"))
         
         if not processes:
             logger.info("✅ 停止対象のプロセスは見つかりませんでした")
