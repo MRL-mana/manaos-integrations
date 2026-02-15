@@ -1,0 +1,130 @@
+# Persistent Volume Claims for ManaOS Services
+
+# Unified API
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: unified-api-data-pvc
+  namespace: manaos
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: unified-api-logs-pvc
+  namespace: manaos
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 5Gi
+
+# MRL Memory
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mrl-memory-cache-pvc
+  namespace: manaos
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mrl-memory-logs-pvc
+  namespace: manaos
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 2Gi
+
+# Learning System
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: learning-system-data-pvc
+  namespace: manaos
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: learning-system-logs-pvc
+  namespace: manaos
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 2Gi
+
+# Gallery API
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gallery-images-pvc
+  namespace: manaos
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 20Gi
+
+# Prometheus
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-data-pvc
+  namespace: manaos
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 50Gi
+
+# Grafana
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-data-pvc
+  namespace: manaos
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 10Gi

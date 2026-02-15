@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: manaos-config
+  namespace: manaos
+data:
+  # Service Ports
+  UNIFIED_API_PORT: "9502"
+  MRL_MEMORY_PORT: "9507"
+  LEARNING_SYSTEM_PORT: "9508"
+  LLM_ROUTING_PORT: "9509"
+  GALLERY_PORT: "5559"
+  VIDEO_PIPELINE_PORT: "9511"
+  
+  # Performance Settings
+  WORKER_PROCESSES: "4"
+  REQUEST_TIMEOUT: "30"
+  MAX_CONCURRENT_REQUESTS: "100"
+  
+  # Logging
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  
+  # Cache Settings
+  MEMORY_CACHE_MAX_SIZE: "1000"
+  MEMORY_CACHE_TTL: "3600"

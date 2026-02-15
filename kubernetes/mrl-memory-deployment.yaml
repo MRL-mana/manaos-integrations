@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mrl-memory
+  namespace: manaos
+  labels:
+    app: mrl-memory
+    tier: core
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mrl-memory
+  template:
+    metadata:
+      labels:
+        app: mrl-memory
+        tier: core
+    spec:
+      containers:
+      - name: mrl-memory
+        image: manaos/mrl-memory:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9507
+          name: http
+          protocol: TCP
+        env:
+        - name: MRL_MEMORY_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: manaos-config
+              key: MRL_MEMORY_PORT
+        - name: MRL_MEMORY_HOST
+          value: "0.0.0.0"
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: manaos-config
+              key: LOG_LEVEL
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9507
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9507
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        volumeMounts:
+        - name: memory-cache
+          mountPath: /app/data/memory_cache
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: memory-cache
+        persistentVolumeClaim:
+          claimName: mrl-memory-cache-pvc
+      - name: logs
+        persistentVolumeClaim:
+          claimName: mrl-memory-logs-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mrl-memory
+  namespace: manaos
+  labels:
+    app: mrl-memory
+spec:
+  type: ClusterIP
+  selector:
+    app: mrl-memory
+  ports:
+  - port: 9507
+    targetPort: 9507
+    protocol: TCP
+    name: http

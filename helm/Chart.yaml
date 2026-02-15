@@ -1,0 +1,26 @@
+apiVersion: v2
+name: manaos
+description: ManaOS Integrations - VSCode/Cursor統合AIアシスタント
+type: application
+version: 2.6.0
+appVersion: "2.6.0"
+
+keywords:
+  - ai
+  - llm
+  - assistant
+  - vscode
+  - cursor
+
+home: https://github.com/MRL-mana/manaos-integrations
+sources:
+  - https://github.com/MRL-mana/manaos-integrations
+
+maintainers:
+  - name: MRL-mana
+    email: mana@example.com
+
+icon: https://raw.githubusercontent.com/MRL-mana/manaos-integrations/master/docs/images/logo.png
+
+annotations:
+  category: AI/ML

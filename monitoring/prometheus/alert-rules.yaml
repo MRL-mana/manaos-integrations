@@ -1,0 +1,297 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alert-rules
+  namespace: manaos
+data:
+  alert-rules.yml: |
+    groups:
+      # ===========================
+      # アプリケーションアラート
+      # ===========================
+      - name: manaos-application-alerts
+        interval: 30s
+        rules:
+          # 高エラーレート
+          - alert: HighErrorRate
+            expr: |
+              (
+                sum(rate(http_requests_total{namespace="manaos",status=~"5.."}[5m]))
+                /
+                sum(rate(http_requests_total{namespace="manaos"}[5m]))
+              ) * 100 > 5
+            for: 5m
+            labels:
+              severity: critical
+              team: backend
+            annotations:
+              summary: "高エラーレート検出: {{ $value | humanize }}%"
+              description: "サービス {{ $labels.service }} のエラーレートが5%を超えています"
+          
+          # レスポンス時間の増加
+          - alert: HighResponseTime
+            expr: |
+              histogram_quantile(0.95,
+                rate(http_request_duration_seconds_bucket{namespace="manaos"}[5m])
+              ) > 1
+            for: 10m
+            labels:
+              severity: warning
+              team: backend
+            annotations:
+              summary: "レスポンス時間が遅い: {{ $value | humanize }}s"
+              description: "サービス {{ $labels.service }} のP95レスポンス時間が1秒を超えています"
+          
+          # リクエストレートの急激な低下
+          - alert: RequestRateDropped
+            expr: |
+              (
+                rate(http_requests_total{namespace="manaos"}[5m])
+                /
+                rate(http_requests_total{namespace="manaos"}[1h] offset 1h)
+              ) < 0.5
+            for: 15m
+            labels:
+              severity: warning
+              team: backend
+            annotations:
+              summary: "リクエストレートが急激に低下"
+              description: "サービス {{ $labels.service }} のリクエストレートが通常の50%以下に低下しています"
+          
+          # サービス完全停止
+          - alert: ServiceDown
+            expr: up{namespace="manaos"} == 0
+            for: 2m
+            labels:
+              severity: critical
+              team: sre
+            annotations:
+              summary: "サービス停止: {{ $labels.service }}"
+              description: "サービス {{ $labels.service }} が応答していません"
+      
+      # ===========================
+      # インフラストラクチャアラート
+      # ===========================
+      - name: manaos-infrastructure-alerts
+        interval: 30s
+        rules:
+          # CPU使用率が高い
+          - alert: HighCPUUsage
+            expr: |
+              (
+                sum(rate(container_cpu_usage_seconds_total{namespace="manaos"}[5m]))
+                by (pod)
+                /
+                sum(container_spec_cpu_quota{namespace="manaos"} / container_spec_cpu_period{namespace="manaos"})
+                by (pod)
+              ) * 100 > 80
+            for: 10m
+            labels:
+              severity: warning
+              team: sre
+            annotations:
+              summary: "高CPU使用率: {{ $value | humanize }}%"
+              description: "Pod {{ $labels.pod }} のCPU使用率が80%を超えています"
+          
+          # メモリ使用率が高い
+          - alert: HighMemoryUsage
+            expr: |
+              (
+                sum(container_memory_working_set_bytes{namespace="manaos"})
+                by (pod)
+                /
+                sum(container_spec_memory_limit_bytes{namespace="manaos"})
+                by (pod)
+              ) * 100 > 80
+            for: 10m
+            labels:
+              severity: warning
+              team: sre
+            annotations:
+              summary: "高メモリ使用率: {{ $value | humanize }}%"
+              description: "Pod {{ $labels.pod }} のメモリ使用率が80%を超えています"
+          
+          # ディスク使用率が高い
+          - alert: HighDiskUsage
+            expr: |
+              (
+                sum(kubelet_volume_stats_used_bytes{namespace="manaos"})
+                by (persistentvolumeclaim)
+                /
+                sum(kubelet_volume_stats_capacity_bytes{namespace="manaos"})
+                by (persistentvolumeclaim)
+              ) * 100 > 85
+            for: 15m
+            labels:
+              severity: warning
+              team: sre
+            annotations:
+              summary: "ディスク使用率が高い: {{ $value | humanize }}%"
+              description: "PVC {{ $labels.persistentvolumeclaim }} のディスク使用率が85%を超えています"
+          
+          # Podの再起動が多い
+          - alert: PodCrashLooping
+            expr: |
+              rate(kube_pod_container_status_restarts_total{namespace="manaos"}[15m]) > 0.1
+            for: 5m
+            labels:
+              severity: critical
+              team: sre
+            annotations:
+              summary: "Podがクラッシュループ中"
+              description: "Pod {{ $labels.pod }} が頻繁に再起動しています"
+          
+          # Podが起動できない
+          - alert: PodNotReady
+            expr: |
+              sum by(pod) (
+                kube_pod_status_phase{namespace="manaos",phase!~"Running|Succeeded"}
+              ) > 0
+            for: 15m
+            labels:
+              severity: warning
+              team: sre
+            annotations:
+              summary: "Podが準備完了していません"
+              description: "Pod {{ $labels.pod }} が15分以上Running状態ではありません"
+      
+      # ===========================
+      # ネットワークアラート
+      # ===========================
+      - name: manaos-network-alerts
+        interval: 30s
+        rules:
+          # ネットワークエラーが多い
+          - alert: HighNetworkErrors
+            expr: |
+              rate(container_network_receive_errors_total{namespace="manaos"}[5m]) > 10
+              or
+              rate(container_network_transmit_errors_total{namespace="manaos"}[5m]) > 10
+            for: 5m
+            labels:
+              severity: warning
+              team: network
+            annotations:
+              summary: "ネットワークエラーが多い"
+              description: "Pod {{ $labels.pod }} でネットワークエラーが多発しています"
+          
+          # 高ネットワーク帯域使用
+          - alert: HighNetworkBandwidth
+            expr: |
+              rate(container_network_receive_bytes_total{namespace="manaos"}[5m]) > 100000000
+              or
+              rate(container_network_transmit_bytes_total{namespace="manaos"}[5m]) > 100000000
+            for: 10m
+            labels:
+              severity: info
+              team: network
+            annotations:
+              summary: "高ネットワーク帯域使用"
+              description: "Pod {{ $labels.pod }} のネットワーク使用量が多いです（> 100MB/s）"
+      
+      # ===========================
+      # データベース/キャッシュアラート
+      # ===========================
+      - name: manaos-data-alerts
+        interval: 30s
+        rules:
+          # キャッシュヒット率が低い
+          - alert: LowCacheHitRate
+            expr: |
+              (
+                sum(rate(cache_hits_total{namespace="manaos"}[5m]))
+                /
+                sum(rate(cache_requests_total{namespace="manaos"}[5m]))
+              ) * 100 < 80
+            for: 15m
+            labels:
+              severity: warning
+              team: backend
+            annotations:
+              summary: "キャッシュヒット率が低い: {{ $value | humanize }}%"
+              description: "キャッシュヒット率が80%を下回っています"
+          
+          # データベース接続プールが枯渇
+          - alert: DatabaseConnectionPoolExhausted
+            expr: |
+              (
+                sum(database_connections_active{namespace="manaos"})
+                /
+                sum(database_connections_max{namespace="manaos"})
+              ) * 100 > 90
+            for: 5m
+            labels:
+              severity: critical
+              team: backend
+            annotations:
+              summary: "データベース接続プールが枯渇"
+              description: "データベース接続プールの使用率が90%を超えています"
+      
+      # ===========================
+      # ビジネスメトリクスアラート
+      # ===========================
+      - name: manaos-business-alerts
+        interval: 1m
+        rules:
+          # API呼び出しの異常
+          - alert: AbnormalAPICallPattern
+            expr: |
+              abs(
+                rate(http_requests_total{namespace="manaos"}[5m])
+                -
+                avg_over_time(rate(http_requests_total{namespace="manaos"}[5m])[1h:])
+              ) > 
+              2 * stddev_over_time(rate(http_requests_total{namespace="manaos"}[5m])[1h:])
+            for: 10m
+            labels:
+              severity: info
+              team: product
+            annotations:
+              summary: "API呼び出しパターンの異常"
+              description: "通常と異なるAPI呼び出しパターンが検出されました"
+          
+          # ユーザーセッション数の急激な減少
+          - alert: UserSessionsDropped
+            expr: |
+              (
+                active_user_sessions{namespace="manaos"}
+                /
+                active_user_sessions{namespace="manaos"} offset 1h
+              ) < 0.7
+            for: 15m
+            labels:
+              severity: warning
+              team: product
+            annotations:
+              summary: "アクティブユーザーセッションが急激に減少"
+              description: "アクティブセッション数が通常の70%以下に減少しています"
+      
+      # ===========================
+      # セキュリティアラート
+      # ===========================
+      - name: manaos-security-alerts
+        interval: 30s
+        rules:
+          # 認証失敗が多い
+          - alert: HighAuthenticationFailures
+            expr: |
+              rate(authentication_failures_total{namespace="manaos"}[5m]) > 10
+            for: 5m
+            labels:
+              severity: warning
+              team: security
+            annotations:
+              summary: "認証失敗が多発"
+              description: "5分間で認証失敗が多発しています（> 10回/秒）"
+          
+          # 不正なアクセスパターン
+          - alert: SuspiciousAccessPattern
+            expr: |
+              rate(http_requests_total{namespace="manaos",status="403"}[5m]) > 5
+            for: 10m
+            labels:
+              severity: warning
+              team: security
+            annotations:
+              summary: "不正なアクセスパターン検出"
+              description: "403エラーが多発しています（> 5回/秒）"

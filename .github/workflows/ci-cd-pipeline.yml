@@ -1,0 +1,413 @@
+name: Complete CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.10'
+  NODE_VERSION: '18'
+
+jobs:
+  # ===========================
+  # 1. コード品質チェック
+  # ===========================
+  code-quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        check: [syntax, lint, type-check, security]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install flake8 pylint mypy bandit safety
+          pip install -r manaos_integrations/requirements-core.txt
+      
+      - name: Run syntax check
+        if: matrix.check == 'syntax'
+        run: |
+          python -m compileall manaos_integrations/ -q
+          flake8 manaos_integrations/ --count --select=E9,F63,F7,F82 --show-source --statistics
+      
+      - name: Run linting
+        if: matrix.check == 'lint'
+        run: |
+          flake8 manaos_integrations/ --count --max-complexity=10 --max-line-length=127 --statistics
+          pylint manaos_integrations/**/*.py --exit-zero --reports=y > pylint-report.txt
+      
+      - name: Run type checking
+        if: matrix.check == 'type-check'
+        continue-on-error: true
+        run: |
+          mypy manaos_integrations/ --ignore-missing-imports
+      
+      - name: Run security scan
+        if: matrix.check == 'security'
+        run: |
+          bandit -r manaos_integrations/ -f json -o bandit-report.json
+          safety check --json > safety-report.json
+      
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-reports-${{ matrix.check }}
+          path: |
+            *-report.*
+          retention-days: 30
+
+  # ===========================
+  # 2. ユニットテスト
+  # ===========================
+  unit-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.10', '3.11']
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install pytest pytest-cov pytest-asyncio pytest-timeout
+          pip install -r manaos_integrations/requirements-core.txt
+      
+      - name: Run tests with coverage
+        run: |
+          cd manaos_integrations
+          pytest tests/ -v --cov=. --cov-report=xml --cov-report=html --cov-report=term
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./manaos_integrations/coverage.xml
+          flags: unittests
+          name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            manaos_integrations/htmlcov/
+            manaos_integrations/coverage.xml
+          retention-days: 30
+
+  # ===========================
+  # 3. 統合テスト
+  # ===========================
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install pytest pytest-asyncio
+          pip install -r manaos_integrations/requirements-core.txt
+      
+      - name: Run integration tests
+        run: |
+          cd manaos_integrations
+          pytest tests/integration/ -v --tb=short
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+          REDIS_URL: redis://localhost:6379
+
+  # ===========================
+  # 4. Dockerイメージビルド
+  # ===========================
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    if: github.event_name != 'pull_request'
+    
+    strategy:
+      matrix:
+        service:
+          - unified-api
+          - mrl-memory
+          - learning-system
+          - llm-routing
+          - gallery-api
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_HUB_USERNAME }}/manaos-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./manaos_integrations
+          file: ./manaos_integrations/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            SERVICE_NAME=${{ matrix.service }}
+
+  # ===========================
+  # 5. セキュリティスキャン
+  # ===========================
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: github.event_name != 'pull_request'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ secrets.DOCKER_HUB_USERNAME }}/manaos-unified-api:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # ===========================
+  # 6. パフォーマンステスト
+  # ===========================
+  performance-test:
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Start services
+        run: |
+          docker-compose -f manaos_integrations/docker-compose.yml up -d unified-api
+          sleep 30
+      
+      - name: Install test dependencies
+        run: |
+          pip install aiohttp matplotlib
+      
+      - name: Run performance tests
+        run: |
+          cd manaos_integrations
+          python benchmark_performance.py
+      
+      - name: Run load tests
+        run: |
+          cd manaos_integrations
+          python load_test.py --service unified-api --test burst
+      
+      - name: Upload performance reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-reports
+          path: |
+            manaos_integrations/benchmark_report_*.json
+            manaos_integrations/load_test_report_*.json
+          retention-days: 90
+
+  # ===========================
+  # 7. Kubernetesデプロイ（ステージング）
+  # ===========================
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [security-scan, performance-test]
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://staging-api.manaos.example.com
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+      
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.13.0'
+      
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > kubeconfig.yaml
+          export KUBECONFIG=kubeconfig.yaml
+      
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install manaos ./manaos_integrations/helm \
+            -n manaos-staging \
+            --create-namespace \
+            --set unifiedApi.image.tag=${{ github.sha }} \
+            --set ingress.hosts[0].host=staging-api.manaos.example.com \
+            --wait --timeout 10m
+      
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/unified-api -n manaos-staging
+
+  # ===========================
+  # 8. Kubernetesデプロイ（本番）
+  # ===========================
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [security-scan, performance-test]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://api.manaos.example.com
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+      
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.13.0'
+      
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.KUBECONFIG_PRODUCTION }}" | base64 -d > kubeconfig.yaml
+          export KUBECONFIG=kubeconfig.yaml
+      
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install manaos ./manaos_integrations/helm \
+            -n manaos \
+            --create-namespace \
+            --set unifiedApi.image.tag=${{ github.sha }} \
+            --set unifiedApi.replicaCount=5 \
+            --wait --timeout 15m
+      
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/unified-api -n manaos
+      
+      - name: Smoke test
+        run: |
+          EXTERNAL_IP=$(kubectl get svc unified-api -n manaos -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          curl -f http://${EXTERNAL_IP}:9502/health || exit 1
+
+  # ===========================
+  # 9. 通知とレポート
+  # ===========================
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always()
+    
+    steps:
+      - name: Create deployment summary
+        run: |
+          echo "### 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ needs.deploy-production.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** Production" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** https://api.manaos.example.com" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Send Slack notification
+        if: always()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "ManaOS Deployment ${{ needs.deploy-production.result }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*ManaOS Deployment*\nStatus: ${{ needs.deploy-production.result }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
