@@ -30,7 +30,7 @@ try:
 except ImportError:
     try:
         from unified_logging import get_service_logger
-logger = get_service_logger("manaos-process-manager")
+        logger = get_service_logger("manaos-process-manager")
     except ImportError:
         import logging
         logger = logging.getLogger(__name__)

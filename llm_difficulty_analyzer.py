@@ -4,7 +4,7 @@ LLM難易度判定エンジン
 """
 
 import re
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from typing import Dict, Any, List, Optional
 
 logger = get_service_logger("llm-difficulty-analyzer")

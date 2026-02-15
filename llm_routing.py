@@ -8,7 +8,7 @@ import json
 import yaml
 import uuid
 import time
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import requests
 import subprocess
 import platform

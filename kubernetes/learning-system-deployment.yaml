@@ -17,10 +17,21 @@ spec:
         app: learning-system
         tier: core
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: learning-system
         image: manaos/learning-system:latest
         imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities:
+            drop: ["ALL"]
         ports:
         - containerPort: 9508
           name: http

@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from enum import Enum
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 
 from _paths import UNIFIED_API_PORT
 

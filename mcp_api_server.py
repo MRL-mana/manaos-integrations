@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 
 from _paths import COMFYUI_PORT, UNIFIED_API_PORT
 # Windows環境での文字エンコーディング設定

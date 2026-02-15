@@ -3,7 +3,7 @@ LLMバッチ処理システム
 複数クエリの並列処理
 """
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import asyncio
 from typing import List, Dict, Any, Callable, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed

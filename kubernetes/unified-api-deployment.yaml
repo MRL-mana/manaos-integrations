@@ -17,10 +17,21 @@ spec:
         app: unified-api
         tier: core
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: unified-api
         image: manaos/unified-api:latest
         imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities:
+            drop: ["ALL"]
         ports:
         - containerPort: 9502
           name: http

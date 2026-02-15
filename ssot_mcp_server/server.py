@@ -6,7 +6,7 @@ Single Source of Truth機能をMCPツールとして提供
 import os
 import sys
 import json
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import requests
 from typing import Any, Dict, List, Optional
 from pathlib import Path

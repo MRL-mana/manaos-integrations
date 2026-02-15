@@ -19,7 +19,7 @@ except Exception:  # pragma: no cover
     except Exception:  # pragma: no cover
         INTENT_ROUTER_PORT = int(os.getenv("INTENT_ROUTER_PORT", "5100"))
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from step_deep_research.orchestrator import StepDeepResearchOrchestrator
 
 logger = get_service_logger("step-deep-research-manaos-integration")

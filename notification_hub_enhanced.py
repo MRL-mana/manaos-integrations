@@ -7,7 +7,7 @@ Device Health Monitorと統合
 
 import os
 import json
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import time
 import requests
 from pathlib import Path

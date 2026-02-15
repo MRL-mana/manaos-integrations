@@ -17,7 +17,7 @@ except ImportError:
 # 統一モジュールのインポート
 try:
     from unified_logging import get_service_logger
-logger = get_service_logger("mrl-memory-priority-resolver")
+    logger = get_service_logger("mrl-memory-priority-resolver")
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)

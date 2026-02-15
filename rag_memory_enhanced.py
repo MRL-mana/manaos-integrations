@@ -24,7 +24,7 @@ DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 # 統一モジュールのインポート
 try:
     from unified_logging import get_service_logger
-logger = get_service_logger("rag-memory-enhanced")
+    logger = get_service_logger("rag-memory-enhanced")
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)

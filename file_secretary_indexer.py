@@ -13,7 +13,7 @@ from datetime import datetime
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from file_secretary_schemas import FileRecord, FileSource, FileStatus, FileType, AuditAction
 from file_secretary_db import FileSecretaryDB
 

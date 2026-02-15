@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from file_secretary_schemas import FileRecord, FileType, AuditAction
 from file_secretary_db import FileSecretaryDB
 

@@ -49,7 +49,7 @@ except Exception:  # pragma: no cover
         SECRETARY_SYSTEM_PORT = int(os.getenv("SECRETARY_SYSTEM_PORT", "5125"))
 
 # 統一モジュールのインポート
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 
 # 基本オーケストレーター

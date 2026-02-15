@@ -3,7 +3,7 @@
 朝・昼・夜のルーチンを自動実行
 """
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 from pathlib import Path

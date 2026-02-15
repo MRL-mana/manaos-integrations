@@ -3,7 +3,7 @@ Hugging Face統合サービス（ManaOS統合版）
 モデル検索・ダウンロード・画像生成をManaOSに統合
 """
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import os
 import sys
 from pathlib import Path

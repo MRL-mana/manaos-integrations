@@ -1,0 +1,619 @@
+# Network Policies for ManaOS Microservices
+# Implements Zero-Trust Network Security with Micro-Segmentation
+# Ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+
+---
+# Default Deny All Traffic (Foundation)
+# This should be applied first to establish zero-trust baseline
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: manaos-production
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+# Allow DNS Resolution (Essential)
+# All pods need to resolve DNS names
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: manaos-production
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
+---
+# Unified API Service Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: unified-api-netpol
+  namespace: manaos-production
+spec:
+  podSelector:
+    matchLabels:
+      app: unified-api
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow traffic from Ingress Controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 9510
+  
+  # Allow traffic from Prometheus for metrics scraping
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+      podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 9510
+  
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  
+  # Allow communication with MRL Memory service
+  - to:
+    - podSelector:
+        matchLabels:
+          app: mrl-memory
+    ports:
+    - protocol: TCP
+      port: 8001
+  
+  # Allow communication with Learning System service
+  - to:
+    - podSelector:
+        matchLabels:
+          app: learning-system
+    ports:
+    - protocol: TCP
+      port: 8002
+  
+  # Allow communication with LLM Routing service
+  - to:
+    - podSelector:
+        matchLabels:
+          app: llm-routing
+    ports:
+    - protocol: TCP
+      port: 8003
+  
+  # Allow HTTPS to external APIs (OpenAI, Anthropic, etc.)
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+  
+  # Allow Redis connection (if using external Redis)
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+
+---
+# MRL Memory Service Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mrl-memory-netpol
+  namespace: manaos-production
+spec:
+  podSelector:
+    matchLabels:
+      app: mrl-memory
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow traffic from Unified API
+  - from:
+    - podSelector:
+        matchLabels:
+          app: unified-api
+    ports:
+    - protocol: TCP
+      port: 8001
+  
+  # Allow traffic from Learning System (for memory-based learning)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: learning-system
+    ports:
+    - protocol: TCP
+      port: 8001
+  
+  # Allow Prometheus metrics scraping
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+      podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 8001
+  
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  
+  # Allow Redis connection for caching
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  # Allow PostgreSQL connection (if using database)
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+
+---
+# Learning System Service Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: learning-system-netpol
+  namespace: manaos-production
+spec:
+  podSelector:
+    matchLabels:
+      app: learning-system
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow traffic from Unified API
+  - from:
+    - podSelector:
+        matchLabels:
+          app: unified-api
+    ports:
+    - protocol: TCP
+      port: 8002
+  
+  # Allow Prometheus metrics scraping
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+      podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 8002
+  
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  
+  # Allow MRL Memory communication for learning data
+  - to:
+    - podSelector:
+        matchLabels:
+          app: mrl-memory
+    ports:
+    - protocol: TCP
+      port: 8001
+  
+  # Allow PostgreSQL for persistent learning data
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+
+---
+# LLM Routing Service Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: llm-routing-netpol
+  namespace: manaos-production
+spec:
+  podSelector:
+    matchLabels:
+      app: llm-routing
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow traffic from Unified API
+  - from:
+    - podSelector:
+        matchLabels:
+          app: unified-api
+    ports:
+    - protocol: TCP
+      port: 8003
+  
+  # Allow Prometheus metrics scraping
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+      podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 8003
+  
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  
+  # Allow HTTPS to external LLM APIs
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+  
+  # Allow Redis for routing cache
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+
+---
+# Redis Network Policy (Internal Cache)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-netpol
+  namespace: manaos-production
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow connections from all ManaOS services
+  - from:
+    - podSelector:
+        matchLabels:
+          app: unified-api
+    - podSelector:
+        matchLabels:
+          app: mrl-memory
+    - podSelector:
+        matchLabels:
+          app: llm-routing
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  # Allow Prometheus Redis exporter
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+      podSelector:
+        matchLabels:
+          app: redis-exporter
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  egress:
+  # Minimal egress - Redis should only respond to queries
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# PostgreSQL Network Policy (Persistent Storage)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-netpol
+  namespace: manaos-production
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow connections from services that need persistent storage
+  - from:
+    - podSelector:
+        matchLabels:
+          app: mrl-memory
+    - podSelector:
+        matchLabels:
+          app: learning-system
+    ports:
+    - protocol: TCP
+      port: 5432
+  
+  # Allow Prometheus Postgres exporter
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+      podSelector:
+        matchLabels:
+          app: postgres-exporter
+    ports:
+    - protocol: TCP
+      port: 5432
+  
+  egress:
+  # Minimal egress
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# Monitoring Namespace - Allow Prometheus scraping
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: prometheus-netpol
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow Grafana to query Prometheus
+  - from:
+    - podSelector:
+        matchLabels:
+          app: grafana
+    ports:
+    - protocol: TCP
+      port: 9090
+  
+  # Allow external access via Ingress
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 9090
+  
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  
+  # Allow scraping all application services
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: manaos-production
+    ports:
+    - protocol: TCP
+      port: 8001
+    - protocol: TCP
+      port: 8002
+    - protocol: TCP
+      port: 8003
+    - protocol: TCP
+      port: 9510
+  
+  # Allow Kubernetes API access for service discovery
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: default
+    ports:
+    - protocol: TCP
+      port: 443
+
+---
+# Grafana Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: grafana-netpol
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: grafana
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow external access via Ingress
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 3000
+  
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  
+  # Allow Prometheus queries
+  - to:
+    - podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 9090
+  
+  # Allow Loki queries (for logs)
+  - to:
+    - podSelector:
+        matchLabels:
+          app: loki
+    ports:
+    - protocol: TCP
+      port: 3100
+  
+  # Allow Jaeger queries (for traces)
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: tracing
+      podSelector:
+        matchLabels:
+          app: jaeger-query
+    ports:
+    - protocol: TCP
+      port: 16686
+
+---
+# Network Policy Testing Pod
+# Use this to verify network policies are working correctly
+apiVersion: v1
+kind: Pod
+metadata:
+  name: netpol-test
+  namespace: manaos-production
+  labels:
+    app: netpol-test
+spec:
+  containers:
+  - name: netshoot
+    image: nicolaka/netshoot:latest
+    command: ["sleep", "3600"]
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 10001
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+
+---
+# Emergency Access Network Policy (Break Glass)
+# Apply this ONLY during incidents when you need to bypass restrictions
+# Remove immediately after resolving the incident
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: emergency-allow-all
+  namespace: manaos-production
+  annotations:
+    emergency: "true"
+    created-by: "SRE Team"
+    incident-ticket: "INC-XXXXX"
+spec:
+  podSelector:
+    matchLabels:
+      emergency-access: "true"  # Only pods with this label get full access
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - {}
+  egress:
+  - {}

@@ -4,7 +4,7 @@
 """
 
 import os
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import requests
 from typing import Dict, Any, Optional, List
 from llm_difficulty_analyzer import DifficultyAnalyzer

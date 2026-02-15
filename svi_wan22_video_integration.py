@@ -9,7 +9,7 @@ import os
 import time
 from typing import Optional, Dict, List, Any, Union
 from pathlib import Path
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from datetime import datetime
 from _paths import COMFYUI_PORT
 

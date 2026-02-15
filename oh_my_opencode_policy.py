@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
 from enum import Enum
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler
 
 logger = get_service_logger("oh-my-opencode-policy")

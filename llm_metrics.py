@@ -5,7 +5,7 @@ LLMメトリクス収集システム
 
 import json
 import os
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 from datetime import datetime

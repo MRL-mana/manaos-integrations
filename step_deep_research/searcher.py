@@ -9,7 +9,7 @@ import httpx
 from typing import Dict, Any, List
 from datetime import datetime
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from .schemas import SearchResult, TaskTool
 from .source_quality_filter import SourceQualityFilter

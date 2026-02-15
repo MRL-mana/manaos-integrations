@@ -1,0 +1,630 @@
+# Jaeger Distributed Tracing Configuration
+# OpenTelemetry-compatible distributed tracing for microservices
+# Ref: https://www.jaegertracing.io/docs/
+
+---
+# Tracing Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tracing
+  labels:
+    name: tracing
+    pod-security.kubernetes.io/enforce: baseline
+
+---
+# Jaeger Operator (Alternative: Use Jaeger All-in-One or Jaeger Operator)
+# This is a production-ready configuration with Elasticsearch backend
+
+---
+# Jaeger All-in-One (Development/Staging)
+# Single pod with all Jaeger components for simplicity
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger-all-in-one
+  namespace: tracing
+  labels:
+    app: jaeger
+    component: all-in-one
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jaeger
+      component: all-in-one
+  template:
+    metadata:
+      labels:
+        app: jaeger
+        component: all-in-one
+    spec:
+      containers:
+      - name: jaeger
+        image: jaegertracing/all-in-one:1.52
+        env:
+        - name: COLLECTOR_ZIPKIN_HOST_PORT
+          value: ":9411"
+        - name: COLLECTOR_OTLP_ENABLED
+          value: "true"
+        ports:
+        - containerPort: 5775
+          protocol: UDP
+          name: zipkin-compact
+        - containerPort: 6831
+          protocol: UDP
+          name: jaeger-compact
+        - containerPort: 6832
+          protocol: UDP
+          name: jaeger-binary
+        - containerPort: 5778
+          protocol: TCP
+          name: configs
+        - containerPort: 16686
+          protocol: TCP
+          name: query
+        - containerPort: 14250
+          protocol: TCP
+          name: grpc
+        - containerPort: 14268
+          protocol: TCP
+          name: http
+        - containerPort: 14269
+          protocol: TCP
+          name: admin
+        - containerPort: 9411
+          protocol: TCP
+          name: zipkin
+        - containerPort: 4317
+          protocol: TCP
+          name: otlp-grpc
+        - containerPort: 4318
+          protocol: TCP
+          name: otlp-http
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 14269
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 14269
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# Jaeger Query Service (UI)
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger-query
+  namespace: tracing
+  labels:
+    app: jaeger
+    component: query
+spec:
+  type: ClusterIP
+  ports:
+  - name: query-http
+    port: 16686
+    targetPort: 16686
+    protocol: TCP
+  selector:
+    app: jaeger
+    component: all-in-one
+
+---
+# Jaeger Collector Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger-collector
+  namespace: tracing
+  labels:
+    app: jaeger
+    component: collector
+spec:
+  type: ClusterIP
+  ports:
+  - name: jaeger-collector-http
+    port: 14268
+    targetPort: 14268
+    protocol: TCP
+  - name: jaeger-collector-grpc
+    port: 14250
+    targetPort: 14250
+    protocol: TCP
+  - name: zipkin
+    port: 9411
+    targetPort: 9411
+    protocol: TCP
+  - name: otlp-grpc
+    port: 4317
+    targetPort: 4317
+    protocol: TCP
+  - name: otlp-http
+    port: 4318
+    targetPort: 4318
+    protocol: TCP
+  selector:
+    app: jaeger
+    component: all-in-one
+
+---
+# Jaeger Agent Service (UDP)
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger-agent
+  namespace: tracing
+  labels:
+    app: jaeger
+    component: agent
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: zipkin-compact
+    port: 5775
+    targetPort: 5775
+    protocol: UDP
+  - name: jaeger-compact
+    port: 6831
+    targetPort: 6831
+    protocol: UDP
+  - name: jaeger-binary
+    port: 6832
+    targetPort: 6832
+    protocol: UDP
+  selector:
+    app: jaeger
+    component: all-in-one
+
+---
+# Jaeger Ingress (UI Access)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jaeger-ui
+  namespace: tracing
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: jaeger-basic-auth
+    nginx.ingress.kubernetes.io/auth-realm: "Jaeger Tracing UI - Authentication Required"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - jaeger.manaos.local
+    secretName: jaeger-tls
+  rules:
+  - host: jaeger.manaos.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: jaeger-query
+            port:
+              number: 16686
+
+---
+# Basic Auth for Jaeger UI
+# Generate with: htpasswd -c auth admin
+# kubectl create secret generic jaeger-basic-auth --from-file=auth -n tracing
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jaeger-basic-auth
+  namespace: tracing
+type: Opaque
+data:
+  # admin:admin (change in production!)
+  auth: YWRtaW46JGFwcjEkSDY1dnVhRDYkRkFLNElRQlhwTUZqZUhRZmRiLllVLgo=
+
+---
+# OpenTelemetry Collector for Jaeger
+# Receives traces from applications and forwards to Jaeger
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: tracing
+  labels:
+    app: otel-collector
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+      - name: otel-collector
+        image: otel/opentelemetry-collector-contrib:0.91.0
+        args:
+        - --config=/conf/otel-collector-config.yaml
+        ports:
+        - containerPort: 4317  # OTLP gRPC
+          name: otlp-grpc
+        - containerPort: 4318  # OTLP HTTP
+          name: otlp-http
+        - containerPort: 8888  # Metrics
+          name: metrics
+        - containerPort: 13133  # Health check
+          name: health
+        volumeMounts:
+        - name: config
+          mountPath: /conf
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 13133
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 13133
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: otel-collector-config
+
+---
+# OpenTelemetry Collector Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: tracing
+  labels:
+    app: otel-collector
+spec:
+  type: ClusterIP
+  ports:
+  - name: otlp-grpc
+    port: 4317
+    targetPort: 4317
+    protocol: TCP
+  - name: otlp-http
+    port: 4318
+    targetPort: 4318
+    protocol: TCP
+  - name: metrics
+    port: 8888
+    targetPort: 8888
+    protocol: TCP
+  selector:
+    app: otel-collector
+
+---
+# OpenTelemetry Collector Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: tracing
+data:
+  otel-collector-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      
+      # Prometheus metrics receiver (for self-monitoring)
+      prometheus:
+        config:
+          scrape_configs:
+          - job_name: 'otel-collector'
+            scrape_interval: 10s
+            static_configs:
+            - targets: ['localhost:8888']
+    
+    processors:
+      # Batch processor for better performance
+      batch:
+        timeout: 10s
+        send_batch_size: 1024
+      
+      # Memory limiter to prevent OOM
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 400
+        spike_limit_mib: 100
+      
+      # Resource detection
+      resource:
+        attributes:
+        - key: service.namespace
+          value: manaos-production
+          action: insert
+        - key: deployment.environment
+          value: production
+          action: insert
+      
+      # Sampling (adjust for production load)
+      probabilistic_sampler:
+        sampling_percentage: 100  # 100% for now, reduce if needed
+    
+    exporters:
+      # Export to Jaeger
+      jaeger:
+        endpoint: jaeger-collector:14250
+        tls:
+          insecure: true
+      
+      # Export to logging (debug)
+      logging:
+        loglevel: info
+      
+      # Export metrics to Prometheus
+      prometheus:
+        endpoint: 0.0.0.0:8889
+    
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+      
+      pprof:
+        endpoint: 0.0.0.0:1777
+      
+      zpages:
+        endpoint: 0.0.0.0:55679
+    
+    service:
+      extensions: [health_check, pprof, zpages]
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, batch, resource, probabilistic_sampler]
+          exporters: [jaeger, logging]
+        
+        metrics:
+          receivers: [otlp, prometheus]
+          processors: [memory_limiter, batch, resource]
+          exporters: [prometheus, logging]
+
+---
+# Python Application Example with OpenTelemetry
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tracing-example-python
+  namespace: manaos-production
+data:
+  tracing_setup.py: |
+    """
+    OpenTelemetry Tracing Setup for Python Applications
+    Add this to your application to enable distributed tracing
+    """
+    from opentelemetry import trace
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from opentelemetry.sdk.resources import Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+    from opentelemetry.instrumentation.requests import RequestsInstrumentor
+    from opentelemetry.instrumentation.redis import RedisInstrumentor
+    from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
+    
+    def setup_tracing(service_name: str):
+        """Initialize OpenTelemetry tracing"""
+        
+        # Create resource with service information
+        resource = Resource.create({
+            "service.name": service_name,
+            "service.namespace": "manaos",
+            "deployment.environment": "production",
+        })
+        
+        # Create tracer provider
+        tracer_provider = TracerProvider(resource=resource)
+        
+        # Configure OTLP exporter to send to OpenTelemetry Collector
+        otlp_exporter = OTLPSpanExporter(
+            endpoint="http://otel-collector.tracing.svc.cluster.local:4317",
+            insecure=True,
+        )
+        
+        # Add batch span processor
+        span_processor = BatchSpanProcessor(otlp_exporter)
+        tracer_provider.add_span_processor(span_processor)
+        
+        # Set global tracer provider
+        trace.set_tracer_provider(tracer_provider)
+        
+        # Auto-instrument libraries
+        FastAPIInstrumentor.instrument()
+        RequestsInstrumentor.instrument()
+        RedisInstrumentor.instrument()
+        Psycopg2Instrumentor.instrument()
+        
+        print(f"✅ OpenTelemetry tracing initialized for {service_name}")
+        return trace.get_tracer(__name__)
+    
+    # Usage in your application:
+    # from tracing_setup import setup_tracing
+    # tracer = setup_tracing("unified-api")
+    
+    # Manual span creation:
+    # with tracer.start_as_current_span("operation-name") as span:
+    #     span.set_attribute("custom.attribute", "value")
+    #     # Your code here
+    #     pass
+
+---
+# ServiceMonitor for Prometheus metrics from OpenTelemetry Collector
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: otel-collector
+  namespace: tracing
+  labels:
+    app: otel-collector
+spec:
+  selector:
+    matchLabels:
+      app: otel-collector
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+
+---
+# Alert Rules for Jaeger/OpenTelemetry
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jaeger-alerts
+  namespace: monitoring
+data:
+  jaeger-alerts.yaml: |
+    groups:
+    - name: jaeger_tracing_alerts
+      interval: 30s
+      rules:
+      # Alert if Jaeger is down
+      - alert: JaegerDown
+        expr: up{job="jaeger"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: tracing
+        annotations:
+          summary: "Jaeger tracing service is down"
+          description: "Jaeger has been down for more than 5 minutes. Distributed tracing is not available."
+      
+      # Alert if OTel Collector is down
+      - alert: OtelCollectorDown
+        expr: up{job="otel-collector"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: tracing
+        annotations:
+          summary: "OpenTelemetry Collector is down"
+          description: "OTel Collector has been down for more than 5 minutes. Traces are not being collected."
+      
+      # Alert if span export failures
+      - alert: HighSpanExportFailures
+        expr: rate(otelcol_exporter_send_failed_spans[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: tracing
+        annotations:
+          summary: "High rate of span export failures"
+          description: "OTel Collector is failing to export spans at a high rate ({{ $value }} spans/sec). Check Jaeger backend."
+      
+      # Alert if high memory usage
+      - alert: OtelCollectorHighMemory
+        expr: container_memory_usage_bytes{pod=~"otel-collector.*"} / container_spec_memory_limit_bytes{pod=~"otel-collector.*"} > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          component: tracing
+        annotations:
+          summary: "OpenTelemetry Collector high memory usage"
+          description: "OTel Collector memory usage is above 80%. Consider increasing memory limits or reducing sampling rate."
+
+---
+# Documentation
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jaeger-documentation
+  namespace: tracing
+data:
+  README.md: |
+    # Jaeger Distributed Tracing Setup
+    
+    ## Access Jaeger UI
+    
+    https://jaeger.manaos.local
+    Username: admin
+    Password: admin (change in production!)
+    
+    ## Instrumenting Applications
+    
+    ### Python (FastAPI)
+    
+    1. Install dependencies:
+    ```bash
+    pip install opentelemetry-api opentelemetry-sdk opentelemetry-instrumentation-fastapi opentelemetry-exporter-otlp
+    ```
+    
+    2. Add to your application:
+    ```python
+    from tracing_setup import setup_tracing
+    
+    # Initialize tracing
+    tracer = setup_tracing("my-service")
+    
+    # Tracing is now automatic for FastAPI, requests, Redis, PostgreSQL
+    ```
+    
+    ### Manual Spans
+    
+    ```python
+    with tracer.start_as_current_span("custom-operation") as span:
+        span.set_attribute("user.id", user_id)
+        span.set_attribute("operation.type", "data-processing")
+        
+        # Your code here
+        result = process_data()
+        
+        span.set_attribute("result.count", len(result))
+    ```
+    
+    ## Querying Traces
+    
+    - **By Service**: Filter by service name (e.g., "unified-api")
+    - **By Operation**: Filter by operation name (e.g., "/api/v1/memory/store")
+    - **By Tags**: Search by custom tags (e.g., "user.id=12345")
+    - **By Duration**: Find slow requests (e.g., duration > 1s)
+    
+    ## Sampling Configuration
+    
+    Adjust sampling percentage in OpenTelemetry Collector config:
+    
+    ```yaml
+    processors:
+      probabilistic_sampler:
+        sampling_percentage: 10  # Sample 10% of traces
+    ```
+    
+    ## Best Practices
+    
+    1. **Add meaningful span names**: Use descriptive operation names
+    2. **Add custom attributes**: Include user_id, request_id, etc.
+    3. **Propagate context**: Ensure trace context is passed between services
+    4. **Monitor sampler**: Adjust sampling based on traffic volume
+    5. **Set up alerts**: Monitor for tracing infrastructure failures

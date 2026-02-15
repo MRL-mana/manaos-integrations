@@ -13,7 +13,7 @@ from collections import defaultdict
 from dataclasses import dataclass, asdict
 
 # 統一モジュールのインポート
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 
 from _paths import INTRINSIC_MOTIVATION_PORT, LEARNING_SYSTEM_PORT
 

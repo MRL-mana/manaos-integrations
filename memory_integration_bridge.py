@@ -9,7 +9,7 @@ from typing import Dict, Any, List, Optional
 
 # ロガー
 try:
-    from manaos_logger import get_logger
+    from manaos_logger import get_logger, get_service_logger
 except ImportError:
     import logging
     def get_logger(n): return logging.getLogger(n)

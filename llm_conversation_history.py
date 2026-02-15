@@ -4,7 +4,7 @@
 """
 
 import json
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path

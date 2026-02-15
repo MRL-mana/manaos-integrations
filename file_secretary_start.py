@@ -13,7 +13,7 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from file_secretary_db import FileSecretaryDB
 from file_secretary_indexer import FileIndexer
 from file_secretary_schemas import FileSource

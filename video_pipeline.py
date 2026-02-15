@@ -34,7 +34,7 @@ try:
 except ImportError:
     try:
         from unified_logging import get_service_logger
-logger = get_service_logger("video-pipeline")
+        logger = get_service_logger("video-pipeline")
     except ImportError:
         import logging
         logger = logging.getLogger(__name__)

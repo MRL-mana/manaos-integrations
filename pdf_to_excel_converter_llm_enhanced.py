@@ -10,7 +10,7 @@ PDF→Excel変換（LLM強化版）
 
 import os
 import sys
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import pandas as pd
 from pathlib import Path
 from typing import Optional, Dict, Any, List

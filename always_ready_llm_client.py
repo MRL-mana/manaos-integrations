@@ -21,7 +21,7 @@ except Exception:
     UNIFIED_API_PORT = int(os.getenv("PORT", os.getenv("UNIFIED_API_PORT", "9502")))
 
 try:
-    from manaos_logger import get_logger
+    from manaos_logger import get_service_logger
     _logger = get_service_logger("always-ready-llm-client")
 except ImportError:
     _logger = logging.getLogger(__name__)

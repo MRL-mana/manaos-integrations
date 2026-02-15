@@ -7,7 +7,7 @@
 from typing import Dict, Any, Optional
 from datetime import datetime
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from .schemas import Plan, ResearchResults, ResearchIteration, JobBudget
 from .searcher import Searcher

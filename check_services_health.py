@@ -48,7 +48,7 @@ if sys.platform == "win32" and getattr(sys.stdout, "encoding", "") in (
 
 try:
     from unified_logging import get_service_logger
-logger = get_service_logger("check-services-health")
+    logger = get_service_logger("check-services-health")
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)

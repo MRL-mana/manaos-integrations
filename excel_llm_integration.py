@@ -9,7 +9,7 @@ import pandas as pd
 import requests
 from pathlib import Path
 from typing import Dict, Any, Optional
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 
 from _paths import OLLAMA_PORT
 

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from file_secretary_schemas import FileRecord, FileSource, FileStatus, FileType, AuditLogEntry, AuditAction
 
 logger = get_service_logger("file-secretary-db")

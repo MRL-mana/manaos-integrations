@@ -4,7 +4,7 @@ RAGタスク向けにプロンプトを最適化
 """
 
 import os
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from typing import Dict, Optional, Any
 import re
 

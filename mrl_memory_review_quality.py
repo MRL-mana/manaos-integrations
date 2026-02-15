@@ -10,7 +10,7 @@ from datetime import datetime
 # 統一モジュールのインポート
 try:
     from unified_logging import get_service_logger
-logger = get_service_logger("mrl-memory-review-quality")
+    logger = get_service_logger("mrl-memory-review-quality")
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)

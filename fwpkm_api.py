@@ -16,7 +16,7 @@ from fwpkm_integration import UnifiedMemorySystem
 # 統一モジュールのインポート
 try:
     from unified_logging import get_service_logger
-logger = get_service_logger("fwpkm-api")
+    logger = get_service_logger("fwpkm-api")
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)

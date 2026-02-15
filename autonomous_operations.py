@@ -6,7 +6,7 @@
 """
 
 import time
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import threading
 import os
 from typing import Any, Dict, Optional

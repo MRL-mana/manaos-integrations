@@ -1,0 +1,565 @@
+# Velero Backup and Disaster Recovery Configuration
+# Automated Kubernetes backup to S3-compatible storage
+# Ref: https://velero.io/docs/
+
+---
+# Velero Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: velero
+  labels:
+    name: velero
+    pod-security.kubernetes.io/enforce: baseline
+
+---
+# Velero Service Account (Created by install, included for reference)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: velero
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+
+---
+# S3 Credentials Secret for Backup Storage
+# Replace with your actual AWS/MinIO/S3 credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloud-credentials
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+type: Opaque
+stringData:
+  cloud: |
+    [default]
+    aws_access_key_id = YOUR_ACCESS_KEY_ID
+    aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
+
+---
+# Velero BackupStorageLocation - Primary (AWS S3)
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: default
+  namespace: velero
+spec:
+  provider: aws
+  objectStorage:
+    bucket: manaos-velero-backups
+    prefix: production
+  config:
+    region: us-west-2
+    s3ForcePathStyle: "false"
+    s3Url: https://s3.us-west-2.amazonaws.com
+  credential:
+    name: cloud-credentials
+    key: cloud
+
+---
+# Velero BackupStorageLocation - Secondary (MinIO for On-Prem)
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: minio-backup
+  namespace: velero
+spec:
+  provider: aws
+  objectStorage:
+    bucket: manaos-backups
+    prefix: k8s-production
+  config:
+    region: minio
+    s3ForcePathStyle: "true"
+    s3Url: http://minio.storage.svc.cluster.local:9000
+    publicUrl: https://minio.manaos.local
+  credential:
+    name: cloud-credentials
+    key: cloud
+
+---
+# Velero VolumeSnapshotLocation (AWS EBS)
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: aws-ebs
+  namespace: velero
+spec:
+  provider: aws
+  config:
+    region: us-west-2
+  credential:
+    name: cloud-credentials
+    key: cloud
+
+---
+# Velero VolumeSnapshotLocation (Azure Disk)
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: azure-disk
+  namespace: velero
+spec:
+  provider: azure
+  config:
+    resourceGroup: manaos-backups-rg
+    subscriptionId: YOUR_SUBSCRIPTION_ID
+  credential:
+    name: azure-credentials
+    key: cloud
+
+---
+# Daily Full Backup Schedule - Production Namespace
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: daily-production-backup
+  namespace: velero
+  labels:
+    backup-type: full
+    environment: production
+spec:
+  # Runs at 2 AM UTC daily
+  schedule: "0 2 * * *"
+  template:
+    # Include only production namespace
+    includedNamespaces:
+    - manaos-production
+    
+    # Include cluster-scoped resources
+    includeClusterResources: true
+    
+    # Backup labels for filtering
+    labelSelector:
+      matchLabels:
+        backup: "true"
+    
+    # Snapshot volumes
+    snapshotVolumes: true
+    
+    # Backup TTL (30 days)
+    ttl: 720h
+    
+    # Hooks for application-consistent backups
+    hooks:
+      resources:
+      - name: postgres-backup-hook
+        includedNamespaces:
+        - manaos-production
+        labelSelector:
+          matchLabels:
+            app: postgres
+        pre:
+        - exec:
+            container: postgres
+            command:
+            - /bin/bash
+            - -c
+            - "PGPASSWORD=$POSTGRES_PASSWORD pg_dump -U postgres -d manaos > /tmp/backup.sql"
+            onError: Continue
+            timeout: 5m
+        post:
+        - exec:
+            container: postgres
+            command:
+            - /bin/bash
+            - -c
+            - "rm -f /tmp/backup.sql"
+
+---
+# Hourly Incremental Backup - Critical Services Only
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: hourly-critical-backup
+  namespace: velero
+  labels:
+    backup-type: incremental
+    environment: production
+spec:
+  # Runs every hour
+  schedule: "0 * * * *"
+  template:
+    includedNamespaces:
+    - manaos-production
+    
+    # Only backup resources with critical label
+    labelSelector:
+      matchLabels:
+        backup-tier: critical
+    
+    snapshotVolumes: true
+    
+    # TTL 7 days for hourly backups
+    ttl: 168h
+    
+    # Storage location
+    storageLocation: default
+
+---
+# Weekly Full Backup - All Namespaces
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: weekly-full-backup
+  namespace: velero
+  labels:
+    backup-type: full
+    scope: cluster-wide
+spec:
+  # Runs every Sunday at 3 AM UTC
+  schedule: "0 3 * * 0"
+  template:
+    # Backup all namespaces
+    includedNamespaces:
+    - "*"
+    
+    # Include all cluster resources
+    includeClusterResources: true
+    
+    snapshotVolumes: true
+    
+    # TTL 90 days for weekly backups
+    ttl: 2160h
+    
+    # Use secondary storage location for redundancy
+    storageLocation: minio-backup
+
+---
+# Monthly Archive Backup
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: monthly-archive-backup
+  namespace: velero
+  labels:
+    backup-type: archive
+    scope: cluster-wide
+spec:
+  # Runs on the 1st day of each month at 4 AM UTC
+  schedule: "0 4 1 * *"
+  template:
+    includedNamespaces:
+    - "*"
+    
+    includeClusterResources: true
+    
+    snapshotVolumes: true
+    
+    # TTL 1 year for monthly archives
+    ttl: 8760h
+    
+    storageLocation: default
+
+---
+# Pre-Upgrade Backup (Manual Trigger)
+apiVersion: velero.io/v1
+kind: Backup
+metadata:
+  name: pre-upgrade-backup
+  namespace: velero
+  labels:
+    backup-type: manual
+    purpose: upgrade
+spec:
+  includedNamespaces:
+  - manaos-production
+  - monitoring
+  
+  includeClusterResources: true
+  
+  snapshotVolumes: true
+  
+  # TTL 30 days
+  ttl: 720h
+  
+  storageLocation: default
+
+---
+# Disaster Recovery Restore (Template)
+# To restore: kubectl apply -f this-file
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: production-disaster-recovery
+  namespace: velero
+  labels:
+    restore-type: disaster-recovery
+spec:
+  # Backup name to restore from
+  backupName: daily-production-backup-20260215020000
+  
+  # Restore to original namespaces
+  includedNamespaces:
+  - manaos-production
+  
+  # Restore cluster resources
+  includeClusterResources: true
+  
+  # Restore volume data
+  restorePVs: true
+  
+  # Namespace mappings (if restoring to different namespace)
+  namespaceMapping: {}
+  
+  # Restore policy
+  existingResourcePolicy: update  # Options: none, update
+  
+  # Preserve NodePorts
+  preserveNodePorts: true
+
+---
+# Partial Restore - Single Application
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: restore-unified-api
+  namespace: velero
+spec:
+  backupName: daily-production-backup-latest
+  
+  includedNamespaces:
+  - manaos-production
+  
+  # Only restore specific resources
+  labelSelector:
+    matchLabels:
+      app: unified-api
+  
+  includeClusterResources: false
+  
+  restorePVs: true
+
+---
+# Backup Cleanup Policy
+# Automatically delete old backups
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-cleanup-policy
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+data:
+  # Keep last 30 daily backups
+  daily-retention: "30"
+  
+  # Keep last 168 hourly backups (7 days)
+  hourly-retention: "168"
+  
+  # Keep last 12 weekly backups (3 months)
+  weekly-retention: "12"
+  
+  # Keep last 12 monthly backups (1 year)
+  monthly-retention: "12"
+
+---
+# CronJob: Backup Verification
+# Automatically test restore from recent backups
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-verification
+  namespace: velero
+spec:
+  # Run daily at 6 AM UTC
+  schedule: "0 6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: velero
+          containers:
+          - name: verify-backup
+            image: velero/velero:v1.12.0
+            command:
+            - /bin/bash
+            - -c
+            - |
+              #!/bin/bash
+              set -e
+              
+              echo "Starting backup verification..."
+              
+              # Get latest backup
+              LATEST_BACKUP=$(velero backup get --output json | jq -r '.items | sort_by(.metadata.creationTimestamp) | .[-1].metadata.name')
+              
+              echo "Latest backup: $LATEST_BACKUP"
+              
+              # Check backup status
+              STATUS=$(velero backup describe $LATEST_BACKUP --output json | jq -r '.status.phase')
+              
+              if [ "$STATUS" == "Completed" ]; then
+                echo "✅ Backup verification successful: $LATEST_BACKUP"
+                exit 0
+              else
+                echo "❌ Backup verification failed: Status is $STATUS"
+                exit 1
+              fi
+            env:
+            - name: VELERO_NAMESPACE
+              value: velero
+            volumeMounts:
+            - name: velero-config
+              mountPath: /config
+          volumes:
+          - name: velero-config
+            configMap:
+              name: velero-config
+          restartPolicy: OnFailure
+
+---
+# Monitoring: Prometheus ServiceMonitor for Velero
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: velero
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: velero
+  endpoints:
+  - port: monitoring
+    interval: 30s
+    path: /metrics
+
+---
+# Alert Rules for Backup Failures
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: velero-alerts
+  namespace: monitoring
+data:
+  velero-alerts.yaml: |
+    groups:
+    - name: velero_backup_alerts
+      interval: 30s
+      rules:
+      # Alert if backup fails
+      - alert: VeleroBackupFailed
+        expr: velero_backup_failure_total > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: backup
+        annotations:
+          summary: "Velero backup has failed"
+          description: "Velero backup {{ $labels.schedule }} has failed in the last 5 minutes. Check backup logs immediately."
+      
+      # Alert if no backups in 24 hours
+      - alert: VeleroBackupNotRunning
+        expr: (time() - velero_backup_last_successful_timestamp) > 86400
+        for: 10m
+        labels:
+          severity: warning
+          component: backup
+        annotations:
+          summary: "No successful Velero backup in 24 hours"
+          description: "Last successful backup was more than 24 hours ago. Check Velero schedule and status."
+      
+      # Alert if backup duration is too long
+      - alert: VeleroBackupDurationHigh
+        expr: velero_backup_duration_seconds > 3600
+        for: 5m
+        labels:
+          severity: warning
+          component: backup
+        annotations:
+          summary: "Velero backup taking too long"
+          description: "Backup {{ $labels.schedule }} is taking more than 1 hour. Check cluster performance and backup configuration."
+      
+      # Alert if partial backup
+      - alert: VeleroBackupPartialFailure
+        expr: velero_backup_partial_failure_total > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: backup
+        annotations:
+          summary: "Velero backup partially failed"
+          description: "Backup {{ $labels.schedule }} completed with partial failures. Some resources may not be backed up."
+
+---
+# Documentation ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: velero-dr-procedures
+  namespace: velero
+data:
+  disaster-recovery.md: |
+    # Disaster Recovery Procedures
+    
+    ## Full Cluster Restore
+    
+    1. Install Velero on new cluster:
+    ```bash
+    velero install \
+      --provider aws \
+      --plugins velero/velero-plugin-for-aws:v1.8.0 \
+      --bucket manaos-velero-backups \
+      --backup-location-config region=us-west-2 \
+      --snapshot-location-config region=us-west-2 \
+      --secret-file ./credentials-velero
+    ```
+    
+    2. List available backups:
+    ```bash
+    velero backup get
+    ```
+    
+    3. Restore from backup:
+    ```bash
+    velero restore create --from-backup daily-production-backup-20260215020000
+    ```
+    
+    4. Monitor restore progress:
+    ```bash
+    velero restore describe production-disaster-recovery
+    velero restore logs production-disaster-recovery
+    ```
+    
+    ## Single Application Restore
+    
+    ```bash
+    velero restore create restore-unified-api \
+      --from-backup daily-production-backup-latest \
+      --include-namespaces manaos-production \
+      --selector app=unified-api
+    ```
+    
+    ## Backup Testing
+    
+    1. Create test namespace:
+    ```bash
+    kubectl create namespace dr-test
+    ```
+    
+    2. Restore to test namespace:
+    ```bash
+    velero restore create dr-test-restore \
+      --from-backup daily-production-backup-latest \
+      --namespace-mappings manaos-production:dr-test
+    ```
+    
+    3. Verify application:
+    ```bash
+    kubectl -n dr-test get pods
+    kubectl -n dr-test port-forward svc/unified-api 9510:9510
+    curl http://localhost:9510/health
+    ```
+    
+    4. Cleanup:
+    ```bash
+    kubectl delete namespace dr-test
+    ```

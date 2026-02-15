@@ -13,7 +13,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 # Google Drive統合をインポート
 try:
     from google_drive_integration import GoogleDriveIntegration

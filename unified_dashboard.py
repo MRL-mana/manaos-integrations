@@ -14,7 +14,7 @@ from flask import Flask, jsonify, render_template_string
 from flask_cors import CORS
 
 # 統一モジュールのインポート
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 
 # 最適化モジュールのインポート

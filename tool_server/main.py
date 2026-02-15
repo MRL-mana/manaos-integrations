@@ -10,7 +10,7 @@ import sys
 import io
 import subprocess
 import json
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime

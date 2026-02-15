@@ -11,7 +11,7 @@ from dataclasses import dataclass, asdict
 from collections import defaultdict
 import json
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler
 
 logger = get_service_logger("oh-my-opencode-cost-estimation")

@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional, List
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from manaos_timeout_config import get_timeout_config
 from file_secretary_error_handler import retry_on_error, safe_database_operation

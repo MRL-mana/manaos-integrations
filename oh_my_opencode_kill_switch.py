@@ -19,7 +19,7 @@ from enum import Enum
 from collections import deque
 from pathlib import Path
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler
 
 logger = get_service_logger("oh-my-opencode-kill-switch")

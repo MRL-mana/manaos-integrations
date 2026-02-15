@@ -5,7 +5,7 @@ Showcase‑level code quality and pythonic clarity.
 
 import os
 import asyncio
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import json  # For JSONDecodeError
 from typing import Optional, List, Dict, Any, Type, Callable
 

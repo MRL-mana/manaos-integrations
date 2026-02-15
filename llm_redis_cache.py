@@ -4,7 +4,7 @@ Redis統合キャッシュシステム
 """
 
 import json
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import hashlib
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta

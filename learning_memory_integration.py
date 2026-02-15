@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional, List
 from pathlib import Path
 
 # 統一モジュールのインポート
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 
 # 最適化モジュールのインポート
