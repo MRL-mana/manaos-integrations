@@ -10,6 +10,14 @@ import re
 import json
 from pathlib import Path
 
+
+def mask_secret(value: str, *, keep_start: int = 6, keep_end: int = 4) -> str:
+    if not value:
+        return ""
+    if len(value) <= keep_start + keep_end + 3:
+        return "***"
+    return f"{value[:keep_start]}...{value[-keep_end:]}"
+
 def get_webhook_from_md():
     """SLACK_WEBHOOK_URL.mdからWebhook URLを取得"""
     md_file = Path("SLACK_WEBHOOK_URL.md")
@@ -52,14 +60,18 @@ def main():
     # 設定を収集
     webhook_url = None
     verification_token = None
+    webhook_source = None
+    verification_token_source = None
     
     # 1. 環境変数から取得
     env_config = get_env_vars()
     if env_config['webhook_url']:
         webhook_url = env_config['webhook_url']
+        webhook_source = "env"
         print(f"✅ 環境変数からWebhook URL取得")
     if env_config['verification_token']:
         verification_token = env_config['verification_token']
+        verification_token_source = "env"
         print(f"✅ 環境変数からVerification Token取得")
     
     # 2. JSONファイルから取得
@@ -67,9 +79,11 @@ def main():
         json_config = get_config_from_json()
         if json_config.get('webhook_url') and not webhook_url:
             webhook_url = json_config['webhook_url']
+            webhook_source = "json"
             print(f"✅ JSONファイルからWebhook URL取得")
         if json_config.get('verification_token') and not verification_token:
             verification_token = json_config['verification_token']
+            verification_token_source = "json"
             print(f"✅ JSONファイルからVerification Token取得")
     
     # 3. MDファイルから取得
@@ -77,6 +91,7 @@ def main():
         webhook_from_md = get_webhook_from_md()
         if webhook_from_md:
             webhook_url = webhook_from_md
+            webhook_source = "md"
             print(f"✅ MDファイルからWebhook URL取得")
     
     # 結果表示
@@ -85,8 +100,10 @@ def main():
     print("=" * 60)
     print(f"Webhook URL: {'✅ 取得済み' if webhook_url else '❌ 未取得'}")
     if webhook_url:
-        print(f"  {webhook_url[:50]}...")
+        print(f"  {mask_secret(webhook_url)}")
     print(f"Verification Token: {'✅ 取得済み' if verification_token else '❌ 未取得'}")
+    if verification_token:
+        print(f"  {mask_secret(verification_token)}")
     
     # 環境変数設定スクリプト生成
     if webhook_url or verification_token:
@@ -96,26 +113,27 @@ def main():
         
         print("\n# PowerShellで実行:")
         print("cd C:\\Users\\mana4\\Desktop\\manaos_integrations")
-        if webhook_url:
-            print(f'$env:SLACK_WEBHOOK_URL = "{webhook_url}"')
-        if verification_token:
-            print(f'$env:SLACK_VERIFICATION_TOKEN = "{verification_token}"')
+        if webhook_url and webhook_source != "env":
+            print('$env:SLACK_WEBHOOK_URL = "<your_webhook_url>"  # 値は安全のため表示しません')
+        if verification_token and verification_token_source != "env":
+            print('$env:SLACK_VERIFICATION_TOKEN = "<your_verification_token>"  # 値は安全のため表示しません')
         print('$env:PORT = "5114"')
         print('$env:FILE_SECRETARY_URL = "http://127.0.0.1:5120"')
         print('python slack_integration.py')
         
-        # バッチファイル生成
+        # 起動スクリプト生成（秘密情報は保存しない）
         batch_file = Path("start_slack_integration_with_config.ps1")
         with open(batch_file, 'w', encoding='utf-8') as f:
             f.write("# Slack Integration起動スクリプト（設定統合版）\n")
             f.write("cd C:\\Users\\mana4\\Desktop\\manaos_integrations\n\n")
-            if webhook_url:
-                f.write(f'$env:SLACK_WEBHOOK_URL = "{webhook_url}"\n')
-            if verification_token:
-                f.write(f'$env:SLACK_VERIFICATION_TOKEN = "{verification_token}"\n')
             f.write('$env:PORT = "5114"\n')
             f.write('$env:FILE_SECRETARY_URL = "http://127.0.0.1:5120"\n')
             f.write('$env:ORCHESTRATOR_URL = "http://127.0.0.1:5106"\n')
+            f.write('\n')
+            f.write('if (-not $env:SLACK_WEBHOOK_URL -and -not $env:SLACK_VERIFICATION_TOKEN) {\n')
+            f.write('  Write-Error "SLACK_WEBHOOK_URL または SLACK_VERIFICATION_TOKEN を環境変数に設定してください（スクリプトは安全のため値を保存しません）"\n')
+            f.write('  exit 1\n')
+            f.write('}\n')
             f.write('\n')
             f.write('Write-Host "Slack Integration起動中..." -ForegroundColor Cyan\n')
             f.write('python slack_integration.py\n')

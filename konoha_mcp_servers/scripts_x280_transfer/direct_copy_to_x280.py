@@ -62,8 +62,16 @@ def main():
     print('\n🖥️ Windowsコマンドプロンプト経由でコピー試行...')
     try:
         # Windowsのコピーコマンドを実行
-        copy_cmd = f'cmd.exe /c copy "{source_file}" "%USERPROFILE%\\Desktop\\10月3日変換結果_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
-        result = subprocess.run(copy_cmd, shell=True, capture_output=True, text=True, timeout=15)
+        copy_cmd = (
+            f'copy "{source_file}" '
+            f'"%USERPROFILE%\\Desktop\\10月3日変換結果_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
+        )
+        result = subprocess.run(
+            ["cmd.exe", "/c", copy_cmd],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
         
         if result.returncode == 0:
             print('✅ Windowsコマンドプロンプト経由でコピー成功！')
