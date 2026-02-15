@@ -18,6 +18,7 @@ import json
 import asyncio
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from pathlib import Path
 
 try:
     from mcp.server import Server
@@ -33,8 +34,13 @@ try:
 except ImportError:
     requests = None
 
+# パスを追加（サブディレクトリ直叩き実行でも _paths を解決できるようにする）
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from _paths import LEARNING_SYSTEM_PORT
+
 # ── 設定 ─────────────────────────────────────────
-API_BASE = os.getenv("LEARNING_SYSTEM_API_URL", "http://127.0.0.1:5126")
+API_BASE = os.getenv("LEARNING_SYSTEM_API_URL", f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}")
 HEALTH_PORT = int(os.getenv("LEARNING_MCP_HEALTH_PORT", "5114"))
 TIMEOUT = 10
 

@@ -8,10 +8,14 @@ import requests
 from pathlib import Path
 from typing import Dict, Any, Optional
 
+from _paths import OLLAMA_PORT
+
+DEFAULT_OLLAMA_URL = f"http://127.0.0.1:{OLLAMA_PORT}"
+
 class ExcelLLMProcessor:
     """Excel/CSVファイルをLLMに渡して処理するクラス"""
     
-    def __init__(self, ollama_url: str = "http://127.0.0.1:11434", model: str = "llama3.2:3b"):
+    def __init__(self, ollama_url: str = DEFAULT_OLLAMA_URL, model: str = "llama3.2:3b"):
         self.ollama_url = ollama_url
         self.model = model
     

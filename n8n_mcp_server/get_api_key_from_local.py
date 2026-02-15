@@ -5,7 +5,8 @@
 import webbrowser
 import os
 
-N8N_BASE_URL = os.getenv("N8N_BASE_URL", "http://127.0.0.1:5679")
+DEFAULT_N8N_BASE_URL = f"http://127.0.0.1:{os.getenv('N8N_PORT', '5678')}"
+N8N_BASE_URL = os.getenv("N8N_BASE_URL", DEFAULT_N8N_BASE_URL).rstrip("/")
 
 print("=" * 60)
 print("n8n APIキー取得ガイド")

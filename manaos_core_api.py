@@ -11,6 +11,13 @@ from pathlib import Path
 from datetime import datetime
 import uuid
 
+from _paths import MRL_MEMORY_PORT, OLLAMA_PORT, SEARXNG_PORT, UNIFIED_API_PORT
+
+DEFAULT_MRL_MEMORY_API_URL = f"http://127.0.0.1:{MRL_MEMORY_PORT}"
+DEFAULT_SEARXNG_BASE_URL = f"http://127.0.0.1:{SEARXNG_PORT}"
+DEFAULT_UNIFIED_API_URL = f"http://127.0.0.1:{UNIFIED_API_PORT}"
+DEFAULT_OLLAMA_URL = f"http://127.0.0.1:{OLLAMA_PORT}"
+
 # .envファイルから環境変数を読み込む
 try:
     from dotenv import load_dotenv
@@ -120,7 +127,7 @@ class ManaOSCoreAPI:
                 import os
 
                 # MRL Memory APIのURL
-                api_url = os.getenv("MRL_MEMORY_API_URL", "http://127.0.0.1:5105")
+                api_url = os.getenv("MRL_MEMORY_API_URL", DEFAULT_MRL_MEMORY_API_URL)
                 # APIキーは環境変数から取得（MRL_MEMORY_API_KEY または API_KEY）
                 api_key = os.getenv("MRL_MEMORY_API_KEY") or os.getenv("API_KEY", "")
 
@@ -167,7 +174,7 @@ class ManaOSCoreAPI:
             try:
                 from searxng_integration import SearXNGIntegration
 
-                base_url = os.getenv("SEARXNG_BASE_URL", "http://127.0.0.1:8080")
+                base_url = os.getenv("SEARXNG_BASE_URL", DEFAULT_SEARXNG_BASE_URL)
                 self._searxng_integration = SearXNGIntegration(base_url=base_url)
             except ImportError as e:
                 logger.warning(f"SearXNG統合が利用できません: {e}")
@@ -584,7 +591,7 @@ class ManaOSCoreAPI:
             try:
                 import requests
 
-                api_url = os.getenv("MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510")
+                api_url = os.getenv("MANAOS_INTEGRATION_API_URL", DEFAULT_UNIFIED_API_URL)
 
                 response = requests.post(f"{api_url}/api/svi/generate", json=args, timeout=60)
                 response.raise_for_status()
@@ -606,7 +613,7 @@ class ManaOSCoreAPI:
             try:
                 import requests
 
-                api_url = os.getenv("MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510")
+                api_url = os.getenv("MANAOS_INTEGRATION_API_URL", DEFAULT_UNIFIED_API_URL)
 
                 response = requests.post(f"{api_url}/api/svi/extend", json=args, timeout=60)
                 response.raise_for_status()
@@ -628,7 +635,7 @@ class ManaOSCoreAPI:
             try:
                 import requests
 
-                api_url = os.getenv("MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510")
+                api_url = os.getenv("MANAOS_INTEGRATION_API_URL", DEFAULT_UNIFIED_API_URL)
 
                 response = requests.post(f"{api_url}/api/svi/story", json=args, timeout=60)
                 response.raise_for_status()
@@ -747,7 +754,7 @@ class ManaOSCoreAPI:
                 model_name = args.get("model", "llama3-uncensored")
                 temperature = args.get("temperature", 0.9)
                 with_negative = args.get("with_negative", False)
-                ollama_url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+                ollama_url = os.getenv("OLLAMA_URL", DEFAULT_OLLAMA_URL)
 
                 # システムプロンプト（sd-prompt.ps1と同様）
                 system_prompt = "You are an expert at creating detailed prompts for Stable Diffusion image generation. Convert the following Japanese description into a detailed, descriptive English prompt suitable for Stable Diffusion. Include style, composition, lighting, and other relevant details. Output only the prompt, no explanations."

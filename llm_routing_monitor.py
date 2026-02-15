@@ -11,12 +11,16 @@ from typing import Dict, Any, List
 from collections import deque
 import os
 
+from _paths import LM_STUDIO_PORT, UNIFIED_API_PORT
+
 # APIエンドポイント
 UNIFIED_API_URL = os.getenv(
-    "MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510"
+    "MANAOS_INTEGRATION_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}"
 ).rstrip("/")
 ROUTING_API_URL = UNIFIED_API_URL
-LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", "http://127.0.0.1:1234/v1").rstrip("/")
+LM_STUDIO_URL = os.getenv(
+    "LM_STUDIO_URL", f"http://127.0.0.1:{LM_STUDIO_PORT}/v1"
+).rstrip("/")
 
 # 監視履歴（最新100件）
 monitoring_history = deque(maxlen=100)

@@ -12,6 +12,8 @@ from enum import Enum
 
 from manaos_logger import get_logger
 
+from _paths import UNIFIED_API_PORT
+
 logger = get_logger(__name__)
 
 
@@ -274,7 +276,7 @@ def main():
     print("\nノードを登録中...")
     distributed.register_node(
         node_id="node1",
-        url="http://127.0.0.1:9510",
+        url=f"http://127.0.0.1:{UNIFIED_API_PORT}",
         capabilities=["image_generation", "model_search"],
         metadata={"max_concurrent_tasks": 3}
     )

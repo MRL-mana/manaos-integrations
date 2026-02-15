@@ -20,6 +20,23 @@ from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverit
 from manaos_timeout_config import get_timeout_config
 from intelligent_retry import IntelligentRetry
 
+from _paths import (
+    CONTENT_GENERATION_PORT,
+    EXECUTOR_ENHANCED_PORT,
+    FILE_SECRETARY_PORT,
+    INTENT_ROUTER_PORT,
+    LEARNING_SYSTEM_PORT,
+    LLM_ROUTING_PORT,
+    ORCHESTRATOR_PORT,
+    PORTAL_INTEGRATION_PORT,
+    RAG_MEMORY_PORT,
+    TASK_CRITIC_PORT,
+    TASK_PLANNER_PORT,
+    TASK_QUEUE_PORT,
+    MRL_MEMORY_PORT,
+    SLACK_INTEGRATION_PORT,
+)
+
 # ロガーの初期化
 logger = get_logger(__name__)
 
@@ -32,6 +49,21 @@ timeout_config = get_timeout_config()
 # リトライシステムの初期化
 retry_system = IntelligentRetry()
 
+DEFAULT_INTENT_ROUTER_URL = f"http://127.0.0.1:{INTENT_ROUTER_PORT}"
+DEFAULT_TASK_PLANNER_URL = f"http://127.0.0.1:{TASK_PLANNER_PORT}"
+DEFAULT_TASK_CRITIC_URL = f"http://127.0.0.1:{TASK_CRITIC_PORT}"
+DEFAULT_RAG_MEMORY_URL = f"http://127.0.0.1:{RAG_MEMORY_PORT}"
+DEFAULT_TASK_QUEUE_URL = f"http://127.0.0.1:{TASK_QUEUE_PORT}"
+DEFAULT_UI_OPERATIONS_URL = f"http://127.0.0.1:{MRL_MEMORY_PORT}"
+DEFAULT_ORCHESTRATOR_URL = f"http://127.0.0.1:{ORCHESTRATOR_PORT}"
+DEFAULT_EXECUTOR_ENHANCED_URL = f"http://127.0.0.1:{EXECUTOR_ENHANCED_PORT}"
+DEFAULT_PORTAL_INTEGRATION_URL = f"http://127.0.0.1:{PORTAL_INTEGRATION_PORT}"
+DEFAULT_CONTENT_GENERATION_URL = f"http://127.0.0.1:{CONTENT_GENERATION_PORT}"
+DEFAULT_LLM_ROUTING_URL = f"http://127.0.0.1:{LLM_ROUTING_PORT}"
+DEFAULT_SLACK_INTEGRATION_URL = f"http://127.0.0.1:{SLACK_INTEGRATION_PORT}"
+DEFAULT_FILE_SECRETARY_URL = f"http://127.0.0.1:{FILE_SECRETARY_PORT}"
+DEFAULT_LEARNING_SYSTEM_URL = f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}"
+
 
 class UnifiedAPIClient:
     """統合APIクライアント"""
@@ -40,21 +72,72 @@ class UnifiedAPIClient:
         """初期化"""
         # サービス定義
         self.services = {
-            "intent_router": {"url": "http://127.0.0.1:5100", "port": 5100},
-            "task_planner": {"url": "http://127.0.0.1:5101", "port": 5101},
-            "task_critic": {"url": "http://127.0.0.1:5102", "port": 5102},
-            "rag_memory": {"url": "http://127.0.0.1:5103", "port": 5103},
-            "task_queue": {"url": "http://127.0.0.1:5104", "port": 5104},
-            "ui_operations": {"url": "http://127.0.0.1:5105", "port": 5105},
-            "unified_orchestrator": {"url": "http://127.0.0.1:5106", "port": 5106},
-            "executor_enhanced": {"url": "http://127.0.0.1:5107", "port": 5107},
-            "portal_integration": {"url": "http://127.0.0.1:5108", "port": 5108},
-            "content_generation": {"url": "http://127.0.0.1:5109", "port": 5109},
-            "llm_routing": {"url": "http://127.0.0.1:5111", "port": 5111},
-            "service_monitor": {"url": "http://127.0.0.1:5111", "port": 5111},
-            "slack_integration": {"url": "http://127.0.0.1:5114", "port": 5114},
-            "file_secretary": {"url": "http://127.0.0.1:5120", "port": 5120},
-            "learning_system": {"url": "http://127.0.0.1:5126", "port": 5126},
+            "intent_router": {
+                "url": os.getenv("INTENT_ROUTER_URL", DEFAULT_INTENT_ROUTER_URL),
+                "port": INTENT_ROUTER_PORT,
+            },
+            "task_planner": {
+                "url": os.getenv("TASK_PLANNER_URL", DEFAULT_TASK_PLANNER_URL),
+                "port": TASK_PLANNER_PORT,
+            },
+            "task_critic": {
+                "url": os.getenv("TASK_CRITIC_URL", DEFAULT_TASK_CRITIC_URL),
+                "port": TASK_CRITIC_PORT,
+            },
+            "rag_memory": {
+                "url": os.getenv("RAG_MEMORY_URL", DEFAULT_RAG_MEMORY_URL),
+                "port": RAG_MEMORY_PORT,
+            },
+            "task_queue": {
+                "url": os.getenv("TASK_QUEUE_URL", DEFAULT_TASK_QUEUE_URL),
+                "port": TASK_QUEUE_PORT,
+            },
+            "ui_operations": {
+                "url": os.getenv(
+                    "UI_OPERATIONS_URL",
+                    os.getenv("MRL_MEMORY_API_URL", DEFAULT_UI_OPERATIONS_URL),
+                ),
+                "port": MRL_MEMORY_PORT,
+            },
+            "unified_orchestrator": {
+                "url": os.getenv("ORCHESTRATOR_URL", DEFAULT_ORCHESTRATOR_URL),
+                "port": ORCHESTRATOR_PORT,
+            },
+            "executor_enhanced": {
+                "url": os.getenv("EXECUTOR_ENHANCED_URL", DEFAULT_EXECUTOR_ENHANCED_URL),
+                "port": EXECUTOR_ENHANCED_PORT,
+            },
+            "portal_integration": {
+                "url": os.getenv(
+                    "PORTAL_INTEGRATION_URL",
+                    os.getenv("PORTAL_URL", DEFAULT_PORTAL_INTEGRATION_URL),
+                ),
+                "port": PORTAL_INTEGRATION_PORT,
+            },
+            "content_generation": {
+                "url": os.getenv("CONTENT_GENERATION_URL", DEFAULT_CONTENT_GENERATION_URL),
+                "port": CONTENT_GENERATION_PORT,
+            },
+            "llm_routing": {
+                "url": os.getenv("LLM_ROUTING_URL", DEFAULT_LLM_ROUTING_URL),
+                "port": LLM_ROUTING_PORT,
+            },
+            "service_monitor": {
+                "url": os.getenv("SERVICE_MONITOR_URL", DEFAULT_LLM_ROUTING_URL),
+                "port": LLM_ROUTING_PORT,
+            },
+            "slack_integration": {
+                "url": os.getenv("SLACK_INTEGRATION_URL", DEFAULT_SLACK_INTEGRATION_URL),
+                "port": SLACK_INTEGRATION_PORT,
+            },
+            "file_secretary": {
+                "url": os.getenv("FILE_SECRETARY_URL", DEFAULT_FILE_SECRETARY_URL),
+                "port": FILE_SECRETARY_PORT,
+            },
+            "learning_system": {
+                "url": os.getenv("LEARNING_SYSTEM_URL", DEFAULT_LEARNING_SYSTEM_URL),
+                "port": LEARNING_SYSTEM_PORT,
+            },
         }
         
         # HTTPクライアント（接続プール使用）

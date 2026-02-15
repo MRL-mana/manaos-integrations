@@ -13,6 +13,10 @@ from datetime import datetime
 # ベースクラスのインポート
 from base_integration import BaseIntegration
 
+from _paths import N8N_PORT
+
+DEFAULT_N8N_BASE_URL = f"http://127.0.0.1:{N8N_PORT}"
+
 try:
     REQUESTS_AVAILABLE = True
 except ImportError:
@@ -46,7 +50,7 @@ class N8NIntegration(BaseIntegration):
         except ImportError:
             pass
         
-        self.base_url = (base_url or os.getenv("N8N_BASE_URL", "http://127.0.0.1:5678")).rstrip("/")
+        self.base_url = (base_url or os.getenv("N8N_BASE_URL", DEFAULT_N8N_BASE_URL)).rstrip("/")
         self.api_key = api_key or os.getenv("N8N_API_KEY")
         self.session = None
         

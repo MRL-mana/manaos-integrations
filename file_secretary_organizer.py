@@ -14,6 +14,9 @@ from datetime import datetime
 from manaos_logger import get_logger
 from file_secretary_schemas import FileRecord, FileStatus, AuditAction
 from file_secretary_db import FileSecretaryDB
+from _paths import OLLAMA_PORT
+
+DEFAULT_OLLAMA_URL = f"http://127.0.0.1:{OLLAMA_PORT}"
 
 logger = get_logger(__name__)
 
@@ -29,7 +32,7 @@ except ImportError:
 class FileOrganizer:
     """ファイル整理ワーカー"""
     
-    def __init__(self, db: FileSecretaryDB, ollama_url: str = "http://127.0.0.1:11434", model: str = "qwen2.5:14b", use_memory: bool = True):
+    def __init__(self, db: FileSecretaryDB, ollama_url: str = DEFAULT_OLLAMA_URL, model: str = "qwen2.5:14b", use_memory: bool = True):
         """
         初期化
         

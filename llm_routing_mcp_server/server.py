@@ -13,7 +13,13 @@ from pathlib import Path
 # 親ディレクトリをパスに追加
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from mcp_common import check_mcp_available, start_health_thread, get_mcp_logger
+from mcp_common import (  # noqa: E402
+    check_mcp_available,
+    get_mcp_logger,
+    start_health_thread,
+)
+
+from _paths import UNIFIED_API_PORT  # noqa: E402
 
 MCP_AVAILABLE = check_mcp_available()
 if MCP_AVAILABLE:
@@ -26,7 +32,9 @@ if not MCP_AVAILABLE:
     logger.warning("MCP SDKがインストールされていません。pip install mcp を実行してください。")
 
 # APIエンドポイント
-UNIFIED_API_URL = os.getenv("MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510")
+UNIFIED_API_URL = os.getenv(
+    "MANAOS_INTEGRATION_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}"
+)
 
 # ヘルスチェック HTTP (mcp_common 使用)
 

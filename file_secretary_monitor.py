@@ -16,14 +16,17 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 from manaos_logger import get_logger
+from _paths import FILE_SECRETARY_PORT
 
 logger = get_logger(__name__)
+
+DEFAULT_FILE_SECRETARY_API_URL = f"http://127.0.0.1:{FILE_SECRETARY_PORT}"
 
 
 class FileSecretaryMonitor:
     """File Secretary監視システム"""
     
-    def __init__(self, api_url: str = "http://127.0.0.1:5120"):
+    def __init__(self, api_url: str = DEFAULT_FILE_SECRETARY_API_URL):
         """
         初期化
         
@@ -234,7 +237,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description='File Secretary 監視システム')
-    parser.add_argument('--api-url', default='http://127.0.0.1:5120',
+    parser.add_argument('--api-url', default=DEFAULT_FILE_SECRETARY_API_URL,
                        help='File Secretary API URL')
     parser.add_argument('--interval', type=int, default=60,
                        help='監視間隔（秒）')

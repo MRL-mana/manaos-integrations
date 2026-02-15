@@ -4,8 +4,10 @@ import json
 import os
 import sys
 
-base_url = os.getenv("N8N_BASE_URL", "http://127.0.0.1:5679")
 api_key = os.getenv("N8N_API_KEY")
+
+DEFAULT_N8N_BASE_URL = f"http://127.0.0.1:{os.getenv('N8N_PORT', '5678')}"
+base_url = os.getenv("N8N_BASE_URL", DEFAULT_N8N_BASE_URL).rstrip("/")
 
 if not api_key or not api_key.strip():
     print("[NG] N8N_API_KEY が未設定です（このスクリプトはキーの形式確認用です）")

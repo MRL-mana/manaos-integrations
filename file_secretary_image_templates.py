@@ -12,6 +12,10 @@ from datetime import datetime
 
 from manaos_logger import get_logger
 
+from _paths import COMFYUI_PORT
+
+DEFAULT_COMFYUI_URL = f"http://127.0.0.1:{COMFYUI_PORT}"
+
 logger = get_logger(__name__)
 
 # ComfyUI統合をインポート
@@ -48,7 +52,7 @@ class FileSecretaryImageTemplates:
         }
     }
     
-    def __init__(self, comfyui_url: str = "http://127.0.0.1:8188"):
+    def __init__(self, comfyui_url: str = DEFAULT_COMFYUI_URL):
         """
         初期化
         

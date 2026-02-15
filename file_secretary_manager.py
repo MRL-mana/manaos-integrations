@@ -83,7 +83,9 @@ def check_status():
     # API確認
     try:
         import httpx
-        response = httpx.get("http://127.0.0.1:5120/health", timeout=2.0)
+        from _paths import FILE_SECRETARY_PORT
+
+        response = httpx.get(f"http://127.0.0.1:{FILE_SECRETARY_PORT}/health", timeout=2.0)
         if response.status_code == 200:
             print("✅ APIサーバー: 正常応答")
         else:

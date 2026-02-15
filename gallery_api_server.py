@@ -18,6 +18,8 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import requests
 
+from _paths import COMFYUI_PORT, GALLERY_PORT as DEFAULT_GALLERY_PORT
+
 # 統一モジュールのインポート
 try:
     from manaos_logger import get_logger
@@ -46,8 +48,8 @@ app = Flask(__name__)
 CORS(app)
 
 # 設定
-COMFYUI_URL = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
-GALLERY_PORT = int(os.getenv("GALLERY_PORT", 5559))
+COMFYUI_URL = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
+GALLERY_PORT = int(os.getenv("GALLERY_PORT", str(DEFAULT_GALLERY_PORT)))
 IMAGES_DIR = Path(os.getenv("GALLERY_IMAGES_DIR", "gallery_images"))
 IMAGES_DIR.mkdir(exist_ok=True)
 

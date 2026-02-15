@@ -15,6 +15,8 @@ from typing import Dict, Any, Optional
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from manaos_logger import get_logger
+
+from _paths import COMFYUI_PORT, UNIFIED_API_PORT
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -131,11 +133,11 @@ async def _call_mcp_tool_async(tool_name: str, arguments: dict):
             try:
                 if name == "svi":
                     from svi_wan22_video_integration import SVIWan22VideoIntegration
-                    comfyui_url = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
+                    comfyui_url = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
                     _integrations[name] = SVIWan22VideoIntegration(base_url=comfyui_url)
                 elif name == "comfyui":
                     from comfyui_integration import ComfyUIIntegration
-                    comfyui_url = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
+                    comfyui_url = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
                     _integrations[name] = ComfyUIIntegration(base_url=comfyui_url)
                 elif name == "google_drive":
                     from google_drive_integration import GoogleDriveIntegration
@@ -204,7 +206,9 @@ async def _call_mcp_tool_async(tool_name: str, arguments: dict):
         else:
             # その他のツールは統合API経由で呼び出す
             import requests
-            manaos_api_url = os.getenv("MANAOS_API_URL", "http://127.0.0.1:9510")
+            manaos_api_url = os.getenv(
+                "MANAOS_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}"
+            )
 
             # ツール名をAPIエンドポイントにマッピング
             api_mapping = {

@@ -20,6 +20,8 @@ from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from manaos_timeout_config import get_timeout_config
 
+from _paths import TASK_QUEUE_PORT
+
 # ロガーの初期化
 logger = get_logger(__name__)
 
@@ -193,7 +195,7 @@ class CrashSnapshotManager:
         try:
             # Task Queueから実行中タスクを取得
             response = httpx.get(
-                f"http://127.0.0.1:5104/api/status",
+                f"http://127.0.0.1:{TASK_QUEUE_PORT}/api/status",
                 timeout=2
             )
             if response.status_code == 200:
