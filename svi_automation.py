@@ -12,10 +12,10 @@ from typing import Optional, Dict, List, Any, Callable
 from datetime import datetime, timedelta
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-import logging
+from manaos_logger import get_logger
 import requests
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 try:
     from svi_wan22_video_integration import SVIWan22VideoIntegration
@@ -376,14 +376,4 @@ class SVIAutomation:
         
         logger.info(f"バッチ処理完了: {len(execution_ids)}/{len(image_files)}件")
         return execution_ids
-
-
-
-
-
-
-
-
-
-
 

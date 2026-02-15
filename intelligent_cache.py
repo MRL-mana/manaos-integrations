@@ -12,12 +12,14 @@ from typing import Dict, Any, Optional, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from collections import OrderedDict
-import logging
+from manaos_logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass
+
+
 class CacheEntry:
     """キャッシュエントリ"""
     key: str
@@ -214,6 +216,8 @@ class IntelligentCache:
 
 
 # デコレータ
+
+
 def cached(ttl: int = 3600, key_func: Optional[Callable] = None):
     """キャッシュデコレータ"""
     cache = IntelligentCache()
@@ -254,11 +258,4 @@ def get_cache(max_size: int = 1000, default_ttl: int = 3600) -> IntelligentCache
     if _cache is None:
         _cache = IntelligentCache(max_size=max_size, default_ttl=default_ttl)
     return _cache
-
-
-
-
-
-
-
 

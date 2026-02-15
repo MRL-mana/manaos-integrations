@@ -5,11 +5,10 @@ MCPサーバーとTrinity Orchestratorの統合
 """
 
 import json
-import logging
+from manaos_logger import get_logger
 from typing import Dict, List, Any
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("mcp_bridge")
+logger = get_logger("mcp_bridge")
 
 
 class MCPBridge:
@@ -137,5 +136,4 @@ if __name__ == "__main__":
     })
     
     print(f"\n✅ Test result: {json.dumps(result, indent=2, ensure_ascii=False)}")
-
 

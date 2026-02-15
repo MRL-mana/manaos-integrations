@@ -6,13 +6,13 @@ LLMキャッシュシステム
 import hashlib
 import json
 import os
-import logging
+from manaos_logger import get_logger
 from typing import Dict, Any, Optional
 from pathlib import Path
 from datetime import datetime, timedelta
 import pickle
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class LLMCache:
@@ -196,6 +196,4 @@ def get_cache(enable: bool = True, **kwargs) -> Optional[LLMCache]:
         _global_cache = LLMCache(**kwargs)
     
     return _global_cache
-
-
 

@@ -6,7 +6,7 @@ Step Deep Research Service MCPサーバー
 import os
 import sys
 import json
-import logging
+from manaos_logger import get_logger
 import requests
 from typing import Any, Dict, List, Optional
 from pathlib import Path
@@ -30,8 +30,7 @@ except ImportError:
     MCP_AVAILABLE = False
     logging.warning("MCP SDKがインストールされていません。pip install mcp を実行してください。")
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # APIエンドポイント
 STEP_DEEP_RESEARCH_URL = os.getenv("STEP_DEEP_RESEARCH_URL", "http://127.0.0.1:5121")

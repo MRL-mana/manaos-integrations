@@ -4,13 +4,13 @@
 """
 
 import json
-import logging
+from manaos_logger import get_logger
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path
 import sqlite3
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ConversationHistory:
@@ -289,6 +289,4 @@ class ConversationHistory:
             "first_conversation": first_conversation,
             "last_conversation": last_conversation
         }
-
-
 

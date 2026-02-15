@@ -4,11 +4,11 @@ RAGタスク向けにプロンプトを最適化
 """
 
 import os
-import logging
+from manaos_logger import get_logger
 from typing import Dict, Optional, Any
 import re
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SimplePromptOptimizer:
@@ -173,6 +173,4 @@ def optimize_prompt(prompt: str, task_type: str = "rag", enable: bool = True) ->
     optimizer = SimplePromptOptimizer(enable_optimization=enable)
     result = optimizer.optimize(prompt, task_type=task_type)
     return result["optimized_prompt"]
-
-
 

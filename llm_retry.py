@@ -3,12 +3,12 @@ LLMリトライ機能
 エラー時の自動リトライとフォールバック
 """
 
-import logging
+from manaos_logger import get_logger
 import time
 from typing import Callable, Any, Optional, Dict, List
 from functools import wraps
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class RetryConfig:
@@ -143,6 +143,4 @@ class ModelFallback:
     def reset(self):
         """モデルインデックスをリセット"""
         self.current_model_index = 0
-
-
 

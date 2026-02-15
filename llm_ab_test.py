@@ -4,14 +4,14 @@ A/Bテスト機能
 """
 
 import json
-import logging
+from manaos_logger import get_logger
 import time
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from pathlib import Path
 import statistics
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ABTest:
@@ -277,6 +277,4 @@ class ABTest:
             report_lines.append("-" * 60)
         
         return "\n".join(report_lines)
-
-
 

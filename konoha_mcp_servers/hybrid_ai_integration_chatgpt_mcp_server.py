@@ -6,7 +6,7 @@ OpenAI Connector / MCP Protocol対応
 """
 
 import json
-import logging
+from manaos_logger import get_logger
 from datetime import datetime
 from typing import Dict, Optional
 
@@ -16,15 +16,7 @@ from pydantic import BaseModel
 import uvicorn
 
 # ログ設定を強化
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("/root/hybrid_ai_integration/chatgpt/logs/chatgpt_mcp.log"),
-    ],
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # MCP Protocol imports
 try:

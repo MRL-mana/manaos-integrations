@@ -8,7 +8,7 @@ PEFTを使用したLoRA学習による部分的パラメータ更新
 import sys
 import os
 import argparse
-import logging
+from manaos_logger import get_logger
 import datetime
 from pathlib import Path
 
@@ -47,16 +47,7 @@ except ImportError as e:
     sys.exit(1)
 
 # ログ設定
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("training_lora.log", encoding="utf-8"),
-        logging.StreamHandler(sys.stdout),
-    ],
-    force=True,  # 既存のハンドラを上書き
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def parse_args():

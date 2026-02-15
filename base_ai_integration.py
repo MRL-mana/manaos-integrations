@@ -6,18 +6,22 @@ Base AI API統合モジュール
 
 import os
 import requests
-import logging
+from manaos_logger import get_logger
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+
 
 @dataclass
+
+
 class BaseAIResponse:
     """Base AI APIレスポンス"""
     content: str
     model: Optional[str] = None
     usage: Optional[Dict[str, int]] = None
+
 
 class BaseAIIntegration:
     """Base AI API統合"""
@@ -149,5 +153,4 @@ class BaseAIIntegration:
         
         response = self.chat(messages=messages)
         return response.content
-
 

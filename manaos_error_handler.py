@@ -5,14 +5,14 @@
 全サービスで統一されたエラーハンドリングを提供
 """
 
-import logging
+from manaos_logger import get_logger
 import traceback
 from enum import Enum
 from typing import Dict, Any, Optional
 from datetime import datetime
 from dataclasses import dataclass, asdict
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ErrorSeverity(Enum):
@@ -36,6 +36,8 @@ class ErrorCategory(Enum):
 
 
 @dataclass
+
+
 class ManaOSError:
     """ManaOS統一エラー形式"""
     error_code: str
@@ -359,6 +361,8 @@ class ManaOSErrorHandler:
 
 
 # Flask用デコレータ
+
+
 def handle_errors(service_name: str):
     """
     エラーハンドリングデコレータ

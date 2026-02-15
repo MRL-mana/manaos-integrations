@@ -292,16 +292,15 @@ class GCPIntegration:
             # 環境変数でGCP認証情報が設定されているかチェック
             if not os.getenv("GOOGLE_APPLICATION_CREDENTIALS") and not os.getenv("GOOGLE_CLOUD_PROJECT"):
                 # ローカル環境では警告のみ（エラーにしない）
-                import logging
-                logger = logging.getLogger(__name__)
+                from manaos_logger import get_logger
+                logger = get_logger(__name__)
                 logger.debug("GCP認証情報が設定されていません。ローカル環境では問題ありません。")
                 return
             
             self.storage_client = storage.Client(project=self.project_id)
         except Exception as e:
             # ローカル環境では警告のみ
-            import logging
-            logger = logging.getLogger(__name__)
+            logger = get_logger(__name__)
             logger.debug(f"GCPクライアント初期化エラー（ローカル環境では問題ありません）: {e}")
     
     def is_available(self) -> bool:

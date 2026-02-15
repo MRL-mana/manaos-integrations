@@ -4,6 +4,7 @@ LLMルーティングシステム ログ記録
 """
 
 import json
+from manaos_logger import get_logger
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -36,7 +37,7 @@ class LLMRoutingLogger:
     
     def _setup_file_logger(self, name: str, log_file: Path) -> logging.Logger:
         """ファイルロガーを設定"""
-        logger = logging.getLogger(f"llm_routing_{name}")
+        logger = get_logger(f"llm_routing_{name}")
         logger.setLevel(logging.INFO)
         
         # 既存のハンドラーをクリア
@@ -139,22 +140,4 @@ class LLMRoutingLogger:
 
 # グローバルロガーインスタンス
 logger = LLMRoutingLogger()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

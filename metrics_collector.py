@@ -13,12 +13,14 @@ from datetime import datetime, timedelta
 from collections import defaultdict, deque
 import json
 from pathlib import Path
-import logging
+from manaos_logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass
+
+
 class Metric:
     """メトリクス"""
     name: str

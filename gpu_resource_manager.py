@@ -7,7 +7,7 @@ GPUリソースの競合を防ぎ、効率的に使用
 
 import asyncio
 import time
-import logging
+from manaos_logger import get_logger
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -16,7 +16,7 @@ import psutil
 import subprocess
 import platform
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class GPUStatus(Enum):
@@ -28,6 +28,8 @@ class GPUStatus(Enum):
 
 
 @dataclass
+
+
 class GPURequest:
     """GPUリクエスト"""
     request_id: str
@@ -209,6 +211,8 @@ class GPUResourceManager:
 
 
 # コンテキストマネージャー
+
+
 class GPUContext:
     """GPUリソースのコンテキストマネージャー"""
     
@@ -241,11 +245,4 @@ def get_gpu_manager(max_concurrent: int = 2) -> GPUResourceManager:
     if _gpu_manager is None:
         _gpu_manager = GPUResourceManager(max_concurrent=max_concurrent)
     return _gpu_manager
-
-
-
-
-
-
-
 

@@ -8,7 +8,7 @@ GPUを最大限活用して処理速度を向上
 import asyncio
 import os
 import time
-import logging
+from manaos_logger import get_logger
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -16,10 +16,12 @@ from collections import deque
 import subprocess
 import platform
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass
+
+
 class GPUOptimizationConfig:
     """GPU最適化設定"""
     max_concurrent_requests: int = 4  # 同時実行数を増やす（デフォルト2→4）

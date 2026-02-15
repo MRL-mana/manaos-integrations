@@ -6,7 +6,7 @@ Super OCR Pipeline MCP Server
 """
 
 import asyncio
-import logging
+from manaos_logger import get_logger
 from pathlib import Path
 
 from mcp.server import Server
@@ -30,11 +30,7 @@ from ocr_to_excel import ocr_to_excel
 from pdf_ocr import pdf_ocr
 
 # ログ設定
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - [%(levelname)s] %(message)s'
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SuperOCRPipelineMCPServer:
@@ -334,7 +330,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-
 

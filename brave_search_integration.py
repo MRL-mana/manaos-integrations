@@ -6,13 +6,16 @@ Brave Search API統合モジュール
 
 import os
 import requests
-import logging
+from manaos_logger import get_logger
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+
 
 @dataclass
+
+
 class BraveSearchResult:
     """Brave Search結果"""
     title: str
@@ -20,6 +23,7 @@ class BraveSearchResult:
     description: str
     age: Optional[str] = None
     meta_url: Optional[Dict[str, str]] = None
+
 
 class BraveSearchIntegration:
     """Brave Search API統合"""

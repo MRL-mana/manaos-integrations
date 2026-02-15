@@ -12,12 +12,14 @@ from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from collections import deque
-import logging
+from manaos_logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass
+
+
 class PerformanceMetric:
     """パフォーマンスメトリクス"""
     timestamp: datetime
@@ -303,11 +305,4 @@ def get_performance_monitor(history_size: int = 1000) -> PerformanceMonitor:
     if _performance_monitor is None:
         _performance_monitor = PerformanceMonitor(history_size=history_size)
     return _performance_monitor
-
-
-
-
-
-
-
 

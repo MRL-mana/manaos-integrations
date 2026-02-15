@@ -6,9 +6,9 @@
 """
 
 from pathlib import Path
-import logging
+from manaos_logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def integrate_security_to_flask_app(app):
@@ -153,11 +153,4 @@ def integrate_all_systems(app=None):
     
     logger.info("✅ すべての新システムを統合しました")
     return systems
-
-
-
-
-
-
-
 

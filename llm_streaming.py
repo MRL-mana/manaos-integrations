@@ -4,13 +4,13 @@ Server-Sent Events (SSE) によるリアルタイム回答
 """
 
 import json
-import logging
+from manaos_logger import get_logger
 import time
 from typing import Iterator, Dict, Any, Optional
 from flask import Response, stream_with_context
 import requests
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class StreamingLLM:
@@ -321,6 +321,4 @@ class StreamingRAG:
                 "type": "error",
                 "message": str(e)
             }
-
-
 

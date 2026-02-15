@@ -7,17 +7,19 @@
 
 import asyncio
 import time
-import logging
+from manaos_logger import get_logger
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass
 from datetime import datetime
 import os
 import requests
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass
+
+
 class ParallelRequest:
     """並列リクエスト"""
     request_id: str
@@ -219,11 +221,4 @@ def get_parallel_executor(max_parallel: int = 4) -> GPUParallelExecutor:
     if _parallel_executor is None:
         _parallel_executor = GPUParallelExecutor(max_parallel=max_parallel)
     return _parallel_executor
-
-
-
-
-
-
-
 
