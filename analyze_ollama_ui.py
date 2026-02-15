@@ -4,6 +4,20 @@ Ollama UIとManaOS統合APIサーバーの違いを分析
 
 import requests
 import subprocess
+import os
+
+try:
+    from manaos_integrations._paths import OLLAMA_PORT, UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import OLLAMA_PORT, UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9502"))
+
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
+DEFAULT_UNIFIED_API_URL = os.getenv("UNIFIED_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}")
 
 print("=" * 60)
 print("Ollama UI vs ManaOS統合APIサーバーの違い")
@@ -34,7 +48,7 @@ except Exception as e:
 print("\n[3] Ollama API直接呼び出し（Ollama UIと同じ方法）")
 try:
     response = requests.post(
-        "http://127.0.0.1:11434/api/chat",
+        f"{DEFAULT_OLLAMA_URL}/api/chat",
         json={
             "model": "gpt-oss:20b",
             "messages": [{"role": "user", "content": "こんにちは"}],
@@ -54,7 +68,7 @@ except Exception as e:
 print("\n[4] ManaOS統合APIサーバー経由")
 try:
     response = requests.post(
-        "http://127.0.0.1:9510/api/llm/chat",
+        f"{DEFAULT_UNIFIED_API_URL}/api/llm/chat",
         json={
             "messages": [{"role": "user", "content": "こんにちは"}],
             "task_type": "conversation"

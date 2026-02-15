@@ -11,6 +11,14 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, List, Any
 import httpx
 
+try:
+    from manaos_integrations._paths import ORCHESTRATOR_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import ORCHESTRATOR_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        ORCHESTRATOR_PORT = int(os.getenv("ORCHESTRATOR_PORT", "5106"))
+
 # 統一モジュールのインポート
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
@@ -43,7 +51,7 @@ except ImportError:
 
 # 設定
 OBSIDIAN_VAULT_PATH = os.getenv("OBSIDIAN_VAULT_PATH", str(Path.home() / "Documents" / "Obsidian Vault"))
-ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://127.0.0.1:5106")
+ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", f"http://127.0.0.1:{ORCHESTRATOR_PORT}")
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 
 

@@ -158,7 +158,7 @@ async def service_status(request: ServiceStatusRequest):
 
             except FileNotFoundError:
                 # 方法2: 統合APIサーバー経由で取得（コンテナ内から実行されている場合）
-                unified_api_url = os.getenv("MANAOS_API_URL", "http://host.docker.internal:9510")
+                unified_api_url = os.getenv("MANAOS_API_URL", "http://host.docker.internal:9502")
 
                 try:
                     response = requests.get(
@@ -407,7 +407,7 @@ async def check_errors(request: CheckErrorsRequest):
 
             except FileNotFoundError:
                 # 方法2: 統合APIサーバー経由で取得（コンテナ内から実行されている場合）
-                unified_api_url = os.getenv("MANAOS_API_URL", "http://host.docker.internal:9510")
+                unified_api_url = os.getenv("MANAOS_API_URL", "http://host.docker.internal:9502")
 
                 try:
                     response = requests.get(

@@ -2,6 +2,14 @@
 
 Write-Host "=== Slack Integration起動 ===" -ForegroundColor Cyan
 
+$slackPort = if ($env:SLACK_INTEGRATION_PORT) { $env:SLACK_INTEGRATION_PORT } else { "5114" }
+$fileSecretaryPort = if ($env:FILE_SECRETARY_PORT) { $env:FILE_SECRETARY_PORT } else { "5120" }
+$orchestratorPort = if ($env:ORCHESTRATOR_PORT) { $env:ORCHESTRATOR_PORT } else { "5106" }
+
+$slackBaseUrl = if ($env:SLACK_API_URL) { $env:SLACK_API_URL.TrimEnd('/') } else { "http://127.0.0.1:$slackPort" }
+$fileSecretaryBaseUrl = if ($env:FILE_SECRETARY_URL) { $env:FILE_SECRETARY_URL.TrimEnd('/') } else { "http://127.0.0.1:$fileSecretaryPort" }
+$orchestratorBaseUrl = if ($env:ORCHESTRATOR_URL) { $env:ORCHESTRATOR_URL.TrimEnd('/') } else { "http://127.0.0.1:$orchestratorPort" }
+
 # 設定ファイルからWebhook URLを読み込み
 $configPath = "notification_hub_enhanced_config.json"
 if (Test-Path $configPath) {
@@ -16,9 +24,9 @@ if (Test-Path $configPath) {
 
 # 環境変数を設定
 Write-Host "`n[2] 環境変数を設定中..." -ForegroundColor Yellow
-$env:PORT = "5114"
-$env:FILE_SECRETARY_URL = "http://127.0.0.1:5120"
-$env:ORCHESTRATOR_URL = "http://127.0.0.1:5106"
+$env:PORT = $slackPort
+$env:FILE_SECRETARY_URL = $fileSecretaryBaseUrl
+$env:ORCHESTRATOR_URL = $orchestratorBaseUrl
 
 if ($webhookUrl) {
     $env:SLACK_WEBHOOK_URL = $webhookUrl
@@ -55,14 +63,14 @@ if (Test-Path $scriptPath) {
     # 起動確認
     Write-Host "`n[5] 起動確認中..." -ForegroundColor Yellow
     try {
-        $response = Invoke-RestMethod -Uri "http://127.0.0.1:5114/health" -Method Get -TimeoutSec 5 -ErrorAction Stop
+        $response = Invoke-RestMethod -Uri "$slackBaseUrl/health" -Method Get -TimeoutSec 5 -ErrorAction Stop
         if ($response.status -eq "healthy") {
             Write-Host "  [OK] Slack Integrationが正常に起動しました" -ForegroundColor Green
-            Write-Host "  URL: http://127.0.0.1:5114" -ForegroundColor Cyan
+            Write-Host "  URL: $slackBaseUrl" -ForegroundColor Cyan
         }
     } catch {
         Write-Host "  [WARN] 起動確認に失敗しました（起動中かもしれません）" -ForegroundColor Yellow
-        Write-Host "  数秒後に再度確認してください: curl http://127.0.0.1:5114/health" -ForegroundColor Cyan
+        Write-Host "  数秒後に再度確認してください: curl $slackBaseUrl/health" -ForegroundColor Cyan
     }
 } else {
     Write-Host "  [ERROR] スクリプトが見つかりません: $scriptPath" -ForegroundColor Red
@@ -71,7 +79,7 @@ if (Test-Path $scriptPath) {
 
 Write-Host "`n=== 完了 ===" -ForegroundColor Cyan
 Write-Host "`n使用方法:" -ForegroundColor Yellow
-Write-Host "  Slack Events API: http://127.0.0.1:5114/api/slack/events" -ForegroundColor White
-Write-Host "  ヘルスチェック: http://127.0.0.1:5114/health" -ForegroundColor White
+Write-Host "  Slack Events API: $slackBaseUrl/api/slack/events" -ForegroundColor White
+Write-Host "  ヘルスチェック: $slackBaseUrl/health" -ForegroundColor White
 Write-Host "`n停止方法:" -ForegroundColor Yellow
 Write-Host "  Get-Process python | Where-Object {`$_.CommandLine -like '*slack_integration.py*' } | Stop-Process" -ForegroundColor White

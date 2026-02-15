@@ -41,7 +41,17 @@ except ImportError:
 
 # ログ設定
 logger = get_logger(__name__)
-OLLAMA_URL = "http://127.0.0.1:11434"
+
+try:
+    from manaos_integrations._paths import OLLAMA_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import OLLAMA_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
+
+OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 
 
 class PDFToExcelVisionLLM:

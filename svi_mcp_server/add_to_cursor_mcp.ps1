@@ -35,12 +35,15 @@ try {
 Write-Host "   [OK] 設定ファイルを読み込みました" -ForegroundColor Green
 Write-Host ""
 
+$comfyUiPort = if ($env:COMFYUI_PORT) { [int]$env:COMFYUI_PORT } else { 8188 }
+$comfyUiBaseUrl = if ($env:COMFYUI_URL) { $env:COMFYUI_URL.TrimEnd('/') } else { "http://127.0.0.1:$comfyUiPort" }
+
 # SVI MCPサーバーの設定
 $sviConfig = @{
     command = "python"
     args = @("-m", "svi_mcp_server.server")
     env = @{
-        COMFYUI_URL = "http://127.0.0.1:8188"
+        COMFYUI_URL = $comfyUiBaseUrl
     }
     cwd = "C:\Users\mana4\Desktop\manaos_integrations"
 }

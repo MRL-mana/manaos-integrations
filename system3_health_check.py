@@ -15,6 +15,27 @@ from urllib.request import Request, urlopen
 from system3_http_retry import http_get_json_retry
 
 try:
+    from manaos_integrations._paths import (
+        INTRINSIC_MOTIVATION_PORT,
+        LEARNING_SYSTEM_PORT,
+        RAG_MEMORY_PORT,
+        TODO_QUEUE_PORT,
+    )
+except Exception:  # pragma: no cover
+    try:
+        from _paths import (  # type: ignore
+            INTRINSIC_MOTIVATION_PORT,
+            LEARNING_SYSTEM_PORT,
+            RAG_MEMORY_PORT,
+            TODO_QUEUE_PORT,
+        )
+    except Exception:  # pragma: no cover
+        INTRINSIC_MOTIVATION_PORT = int(os.getenv("INTRINSIC_MOTIVATION_PORT", "5130"))
+        TODO_QUEUE_PORT = int(os.getenv("TODO_QUEUE_PORT", "5134"))
+        LEARNING_SYSTEM_PORT = int(os.getenv("LEARNING_SYSTEM_PORT", "5126"))
+        RAG_MEMORY_PORT = int(os.getenv("RAG_MEMORY_PORT", "5103"))
+
+try:
     from manaos_logger import get_logger
     logger = get_logger(__name__)
 except ImportError:
@@ -31,10 +52,34 @@ CONSECUTIVE_FAIL_THRESHOLD = int(
 )  # この回数連続失敗したら通知（ノイズ削減）
 
 SERVICES = [
-    ("Intrinsic Score API", "http://127.0.0.1:5130/api/score"),
-    ("Todo Queue API", "http://127.0.0.1:5134/api/metrics"),
-    ("Learning System API", "http://127.0.0.1:5126/health"),
-    ("RAG Memory API", "http://127.0.0.1:5103/health"),
+    (
+        "Intrinsic Score API",
+        os.getenv(
+            "INTRINSIC_SCORE_URL",
+            f"http://127.0.0.1:{INTRINSIC_MOTIVATION_PORT}/api/score",
+        ),
+    ),
+    (
+        "Todo Queue API",
+        os.getenv(
+            "TODO_METRICS_URL",
+            f"http://127.0.0.1:{TODO_QUEUE_PORT}/api/metrics",
+        ),
+    ),
+    (
+        "Learning System API",
+        os.getenv(
+            "LEARNING_SYSTEM_URL",
+            f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}/health",
+        ),
+    ),
+    (
+        "RAG Memory API",
+        os.getenv(
+            "RAG_MEMORY_URL",
+            f"http://127.0.0.1:{RAG_MEMORY_PORT}/health",
+        ),
+    ),
 ]
 
 

@@ -3,7 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 import aiohttp
 import os
 
-OPEN_WEBUI_BASE_URL = os.getenv("OPEN_WEBUI_BASE_URL", "http://127.0.0.1:8080")
+try:
+    from manaos_integrations._paths import OPEN_WEBUI_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import OPEN_WEBUI_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        OPEN_WEBUI_PORT = int(os.getenv("OPEN_WEBUI_PORT", "8080"))
+
+OPEN_WEBUI_BASE_URL = os.getenv(
+    "OPEN_WEBUI_BASE_URL",
+    f"http://127.0.0.1:{OPEN_WEBUI_PORT}",
+)
 
 app = FastAPI(
     title="User Info Proxy API",

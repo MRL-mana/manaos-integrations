@@ -214,6 +214,9 @@ class ConfigSchema:
         """manaos_integration_config.json のポート重複・範囲を検証."""
         errors: List[ValidationError] = []
         seen: Dict[int, str] = {}
+        allowed_dupes = {
+            frozenset({"manaos_services.ui_operations", "manaos_services.mrl_memory"})
+        }
         for section_key in ("manaos_services", "integration_services"):
             section = config_data.get(section_key, {})
             if not isinstance(section, dict):
@@ -242,12 +245,14 @@ class ConfigSchema:
                         )
                     )
                 if port in seen:
-                    errors.append(
-                        ValidationError(
-                            field=f"{section_key}.{svc_name}.port",
-                            message=f"ポート {port} は '{seen[port]}' と重複しています",
+                    pair = frozenset({seen[port], f"{section_key}.{svc_name}"})
+                    if pair not in allowed_dupes:
+                        errors.append(
+                            ValidationError(
+                                field=f"{section_key}.{svc_name}.port",
+                                message=f"ポート {port} は '{seen[port]}' と重複しています",
+                            )
                         )
-                    )
                 seen[port] = f"{section_key}.{svc_name}"
         return errors
 

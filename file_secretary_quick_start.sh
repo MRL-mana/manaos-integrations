@@ -10,7 +10,7 @@ echo "=== File Secretary クイック起動 ==="
 echo ""
 
 # 環境変数設定
-export PORT=5120
+export PORT="${FILE_SECRETARY_PORT:-5120}"
 export FILE_SECRETARY_DB_PATH=file_secretary.db
 export INBOX_PATH="${SCRIPT_DIR}/00_INBOX"
 
@@ -38,7 +38,7 @@ echo "✅ APIサーバー起動完了 (PID: $API_PID)"
 sleep 3
 echo ""
 echo "📊 状態確認中..."
-if curl -s http://localhost:5120/health > /dev/null; then
+if curl -s "http://localhost:${PORT}/health" > /dev/null; then
     echo "✅ APIサーバー: 正常応答"
 else
     echo "⚠️ APIサーバー: 応答なし"

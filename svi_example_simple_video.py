@@ -4,10 +4,19 @@ SVI × Wan 2.2統合の実用例: シンプルな動画生成
 
 import requests
 import json
+import os
 from pathlib import Path
 from typing import Optional
 
-API_BASE = "http://127.0.0.1:9510"
+try:
+    from manaos_integrations._paths import UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9510"))
+
+API_BASE = os.getenv("MANAOS_INTEGRATION_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}")
 
 
 def generate_simple_video(

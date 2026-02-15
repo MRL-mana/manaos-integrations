@@ -1,0 +1,21 @@
+{
+  "retention_days": 30,
+  "archive_days": 7,
+  "max_log_size_mb": 100,
+  "compress_archives": true,
+  "exclude_patterns": [
+    "archive/",
+    "audit/",
+    "*.json",
+    "step_deep_research/"
+  ],
+  "critical_logs": [
+    "manaos_core_api.log",
+    "unified_api_server.log",
+    "mrl_memory_integration.log",
+    "learning_system.log",
+    "llm_routing.log",
+    "Learning_System_API.log",
+    "check_services_health.log"
+  ]
+}

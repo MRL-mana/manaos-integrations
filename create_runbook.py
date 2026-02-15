@@ -9,6 +9,36 @@ import os
 from pathlib import Path
 from datetime import datetime
 
+try:
+    from manaos_integrations._paths import (
+        INTRINSIC_MOTIVATION_PORT,
+        ORCHESTRATOR_PORT,
+        PORTAL_INTEGRATION_PORT,
+        SLACK_INTEGRATION_PORT,
+        SYSTEM_STATUS_PORT,
+        TASK_QUEUE_PORT,
+        UNIFIED_API_PORT,
+    )
+except Exception:  # pragma: no cover
+    try:
+        from _paths import (  # type: ignore
+            INTRINSIC_MOTIVATION_PORT,
+            ORCHESTRATOR_PORT,
+            PORTAL_INTEGRATION_PORT,
+            SLACK_INTEGRATION_PORT,
+            SYSTEM_STATUS_PORT,
+            TASK_QUEUE_PORT,
+            UNIFIED_API_PORT,
+        )
+    except Exception:  # pragma: no cover
+        INTRINSIC_MOTIVATION_PORT = int(os.getenv("INTRINSIC_MOTIVATION_PORT", "5130"))
+        TASK_QUEUE_PORT = int(os.getenv("TASK_QUEUE_PORT", "5104"))
+        ORCHESTRATOR_PORT = int(os.getenv("ORCHESTRATOR_PORT", "5106"))
+        SYSTEM_STATUS_PORT = int(os.getenv("SYSTEM_STATUS_PORT", "5112"))
+        SLACK_INTEGRATION_PORT = int(os.getenv("SLACK_INTEGRATION_PORT", "5114"))
+        PORTAL_INTEGRATION_PORT = int(os.getenv("PORTAL_INTEGRATION_PORT", "5108"))
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9502"))
+
 def generate_runbook(
     vault_path: str = os.getenv(
         "OBSIDIAN_VAULT_PATH",
@@ -22,6 +52,12 @@ def generate_runbook(
     RUNBOOK_MD = VAULT / runbook_relpath
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    intrinsic_score_port = INTRINSIC_MOTIVATION_PORT
+    task_queue_port = TASK_QUEUE_PORT
+    orchestrator_port = ORCHESTRATOR_PORT
+    system_status_port = SYSTEM_STATUS_PORT
+    slack_port = SLACK_INTEGRATION_PORT
+    portal_port = PORTAL_INTEGRATION_PORT
 
     content = f"""# System 3 Runbook - 本番運用手順書
 
@@ -36,24 +72,24 @@ def generate_runbook(
 
 | サービス名 | ポート | 起動スクリプト | Health URL |
 |-----------|--------|---------------|------------|
-| Intrinsic Score API | 5130 | `intrinsic_score_api.py` | `http://127.0.0.1:5130/api/score` |
-| Task Queue | 5104 | `task_queue_system.py` | `http://127.0.0.1:5104/health` |
-| Unified Orchestrator | 5106 | `unified_orchestrator.py` | `http://127.0.0.1:5106/health` |
-| Unified API Server | 9510 | `unified_api_server.py` | `http://127.0.0.1:9510/health` |
+| Intrinsic Score API | {intrinsic_score_port} | `intrinsic_score_api.py` | `http://127.0.0.1:{intrinsic_score_port}/api/score` |
+| Task Queue | {task_queue_port} | `task_queue_system.py` | `http://127.0.0.1:{task_queue_port}/health` |
+| Unified Orchestrator | {orchestrator_port} | `unified_orchestrator.py` | `http://127.0.0.1:{orchestrator_port}/health` |
+| Unified API Server | {UNIFIED_API_PORT} | `unified_api_server.py` | `http://127.0.0.1:{UNIFIED_API_PORT}/health` |
 
 ### Status & Monitoring
 
 | サービス名 | ポート | 起動スクリプト | Health URL |
 |-----------|--------|---------------|------------|
-| System Status API | 5112 | `system_status_api.py` | `http://127.0.0.1:5112/api/health` |
+| System Status API | {system_status_port} | `system_status_api.py` | `http://127.0.0.1:{system_status_port}/api/health` |
 | SSOT Generator | - | `ssot_generator.py` | - |
 
 ### Integration Services
 
 | サービス名 | ポート | 起動スクリプト | Health URL |
 |-----------|--------|---------------|------------|
-| Slack Integration | 5114 | `slack_integration.py` | `http://127.0.0.1:5114/api/health` |
-| Portal Integration | 5108 | `portal_integration_api.py` | `http://127.0.0.1:5108/api/health` |
+| Slack Integration | {slack_port} | `slack_integration.py` | `http://127.0.0.1:{slack_port}/api/health` |
+| Portal Integration | {portal_port} | `portal_integration_api.py` | `http://127.0.0.1:{portal_port}/api/health` |
 
 ---
 
@@ -66,7 +102,7 @@ def generate_runbook(
 1. **状態確認**
    ```powershell
    # 全ポート確認
-    netstat -ano | findstr "5130 5104 5106 9510 5112"
+    netstat -ano | findstr "{intrinsic_score_port} {task_queue_port} {orchestrator_port} {UNIFIED_API_PORT} {system_status_port}"
 
    # プロセス確認
    Get-Process python | Where-Object {{$_.Path -like "*manaos*"}}
@@ -81,10 +117,10 @@ def generate_runbook(
 3. **動作確認**
    ```powershell
    # Health check
-   Invoke-RestMethod http://127.0.0.1:5130/api/score
-   Invoke-RestMethod http://127.0.0.1:5104/health
-   Invoke-RestMethod http://127.0.0.1:5106/health
-    Invoke-RestMethod http://127.0.0.1:9510/health
+    Invoke-RestMethod http://127.0.0.1:{intrinsic_score_port}/api/score
+    Invoke-RestMethod http://127.0.0.1:{task_queue_port}/health
+    Invoke-RestMethod http://127.0.0.1:{orchestrator_port}/health
+    Invoke-RestMethod http://127.0.0.1:{UNIFIED_API_PORT}/health
    ```
 
 **所要時間**: 約5分
@@ -109,7 +145,7 @@ cd C:\\Users\\mana4\\Desktop\\manaos_integrations
 python intrinsic_score_api.py
 
 # 4. 確認
-Invoke-RestMethod http://127.0.0.1:5130/api/health
+Invoke-RestMethod http://127.0.0.1:{intrinsic_score_port}/api/health
 ```
 
 #### Task Queue (5104) が死んだ
@@ -123,7 +159,7 @@ cd C:\\Users\\mana4\\Desktop\\manaos_integrations
 python task_queue_system.py
 
 # 3. 確認
-Invoke-RestMethod http://127.0.0.1:5104/health
+Invoke-RestMethod http://127.0.0.1:{task_queue_port}/health
 ```
 
 #### Unified Orchestrator (5106) が死んだ
@@ -137,21 +173,21 @@ cd C:\\Users\\mana4\\Desktop\\manaos_integrations
 python unified_orchestrator.py
 
 # 3. 確認
-Invoke-RestMethod http://127.0.0.1:5106/api/health
+Invoke-RestMethod http://127.0.0.1:{orchestrator_port}/api/health
 ```
 
-#### Unified API Server (9510) が死んだ
+#### Unified API Server (9502) が死んだ
 
 ```powershell
 # 1. ポート確認
-netstat -ano | findstr "9510"
+netstat -ano | findstr "9502"
 
 # 2. 再起動
 cd C:\\Users\\mana4\\Desktop\\manaos_integrations
 python unified_api_server.py
 
 # 3. 確認
-Invoke-RestMethod http://127.0.0.1:9510/health
+Invoke-RestMethod http://127.0.0.1:{UNIFIED_API_PORT}/health
 ```
 
 ---
@@ -292,8 +328,8 @@ Get-ScheduledTaskInfo -TaskName "System3_Status_Update"
 **対処法**:
 ```powershell
 # 1. サービス状態確認
-   Invoke-RestMethod http://127.0.0.1:5130/api/score -ErrorAction SilentlyContinue
-   Invoke-RestMethod http://127.0.0.1:5104/health -ErrorAction SilentlyContinue
+    Invoke-RestMethod http://127.0.0.1:{intrinsic_score_port}/api/score -ErrorAction SilentlyContinue
+    Invoke-RestMethod http://127.0.0.1:{task_queue_port}/health -ErrorAction SilentlyContinue
 
 # 2. サービス起動
 cd C:\\Users\\mana4\\Desktop\\manaos_integrations

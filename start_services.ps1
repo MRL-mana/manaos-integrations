@@ -13,7 +13,7 @@ $services = @(
     @{
         Name = "統合APIサーバー"
         Script = "unified_api_server.py"
-        Port = 9510
+        Port = 9502
     }
 )
 
@@ -51,6 +51,6 @@ foreach ($service in $services) {
 }
 Write-Host ""
 Write-Host "ブラウザで以下のURLにアクセスしてください:" -ForegroundColor Yellow
-Write-Host "  http://127.0.0.1:9510/health" -ForegroundColor Cyan
+Write-Host "  http://127.0.0.1:9502/health" -ForegroundColor Cyan
 Write-Host ""
 

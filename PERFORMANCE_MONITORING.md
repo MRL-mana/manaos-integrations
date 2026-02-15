@@ -52,7 +52,7 @@ python performance_monitor.py
 # ManaOS Performance Summary
 # ==========================================================
 #
-# Service: Unified API (Port 9510)
+# Service: Unified API (Port 9502)
 #   Status: 🟢 HEALTHY
 #   CPU: 2.5%
 #   Memory: 145.3 MB (1.8%)
@@ -165,7 +165,7 @@ manaos_integrations/metrics/
     {
       "timestamp": "2026-02-07T12:00:00.123456",
       "service_name": "Unified API",
-      "port": 9510,
+      "port": 9502,
       "cpu_percent": 2.5,
       "memory_mb": 145.3,
       "memory_percent": 1.8,
@@ -325,7 +325,7 @@ Ctrl+Shift+P → "Tasks: Run Task" → "ManaOS: サービスヘルスチェッ�
 
 **A:** サービスのヘルスチェックエンドポイントを確認:
 ```powershell
-curl http://127.0.0.1:9510/health
+curl http://127.0.0.1:9502/health
 curl http://127.0.0.1:5103/health
 ```
 

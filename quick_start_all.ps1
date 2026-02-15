@@ -55,7 +55,7 @@ if ($apiServerProcess) {
     Write-Host "   [OK] 統合APIサーバーは起動中です" -ForegroundColor Green
 } else {
     Write-Host "   [INFO] 統合APIサーバーを起動します" -ForegroundColor Yellow
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir'; `$env:PORT='9510'; py -3.10 unified_api_server.py" -WindowStyle Normal
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir'; `$env:PORT='9502'; py -3.10 unified_api_server.py" -WindowStyle Normal
     Write-Host "   統合APIサーバーを起動しました（別ウィンドウ）" -ForegroundColor Green
     Write-Host "   数秒待ってからテストを実行してください" -ForegroundColor Gray
     Start-Sleep -Seconds 5
@@ -98,9 +98,9 @@ Write-Host "=" -NoNewline
 Write-Host ("=" * 59) -ForegroundColor Cyan
 Write-Host ""
 Write-Host "利用可能なエンドポイント:" -ForegroundColor Yellow
-Write-Host "  POST http://127.0.0.1:9510/api/comfyui/generate - 画像生成" -ForegroundColor Gray
-Write-Host "  GET  http://127.0.0.1:9510/api/civitai/search - モデル検索" -ForegroundColor Gray
-Write-Host "  POST http://127.0.0.1:9510/api/google_drive/upload - ファイルアップロード" -ForegroundColor Gray
+Write-Host "  POST http://127.0.0.1:9502/api/comfyui/generate - 画像生成" -ForegroundColor Gray
+Write-Host "  GET  http://127.0.0.1:9502/api/civitai/search - モデル検索" -ForegroundColor Gray
+Write-Host "  POST http://127.0.0.1:9502/api/google_drive/upload - ファイルアップロード" -ForegroundColor Gray
 Write-Host ""
 Write-Host "詳細:" -ForegroundColor Yellow
 Write-Host "  FINAL_SETUP_GUIDE.md を参照" -ForegroundColor Gray

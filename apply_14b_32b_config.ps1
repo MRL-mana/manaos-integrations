@@ -5,10 +5,14 @@ Write-Host "14B/32Bモデル用設定の適用"
 Write-Host "=" * 60
 Write-Host ""
 
+# LM Studio API base URL（env優先、/v1吸収）
+$lmStudioRawUrl = if ($env:LM_STUDIO_URL) { $env:LM_STUDIO_URL.TrimEnd('/') } else { "http://127.0.0.1:1234" }
+$lmStudioApiBaseUrl = if ($lmStudioRawUrl -match "/v1$") { $lmStudioRawUrl } else { "$lmStudioRawUrl/v1" }
+
 # 現在のモデルを確認
 Write-Host "[1] 現在のモデルを確認中..." -ForegroundColor Yellow
 try {
-    $response = Invoke-WebRequest -Uri "http://127.0.0.1:1234/v1/models" -Method GET -TimeoutSec 3 -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "$lmStudioApiBaseUrl/models" -Method GET -TimeoutSec 3 -ErrorAction Stop
     $models = ($response.Content | ConvertFrom-Json).data
     $availableModels = $models | ForEach-Object { $_.id }
     

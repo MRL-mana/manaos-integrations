@@ -11,6 +11,14 @@ from typing import Dict, Any, Optional
 import httpx
 import asyncio
 
+try:
+    from manaos_integrations._paths import N8N_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import N8N_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        N8N_PORT = int(os.getenv("N8N_PORT", "5678"))
+
 logger = get_logger(__name__)
 # 既存の統合APIサーバーを拡張（オプション）
 try:
@@ -25,9 +33,9 @@ app = Flask(__name__)
 CORS(app)
 
 # ローカルLLMシステムURL
-FREE_ASSISTANT_URL = "http://127.0.0.1:8501"
-SARA_API_URL = "http://127.0.0.1:8000"
-N8N_URL = "http://127.0.0.1:5678"
+FREE_ASSISTANT_URL = os.getenv("FREE_ASSISTANT_URL", "http://127.0.0.1:8501")
+SARA_API_URL = os.getenv("SARA_API_URL", "http://127.0.0.1:8000")
+N8N_URL = os.getenv("N8N_BASE_URL", f"http://127.0.0.1:{N8N_PORT}")
 
 # 統合システム管理
 local_llm_systems = {

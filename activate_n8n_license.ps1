@@ -1,7 +1,9 @@
 # n8nライセンスキーをアクティベートするスクリプト
 
 $licenseKey = "b01a8246-6a35-4221-917e-b5b25028a21b"
-$n8nUrl = "http://127.0.0.1:5679"
+
+# URL（環境変数で上書き可能）
+$n8nBaseUrl = if ($env:N8N_URL) { $env:N8N_URL.TrimEnd('/') } else { "http://127.0.0.1:5679" }
 
 Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
 Write-Host "║                                                                    ║" -ForegroundColor Cyan
@@ -12,7 +14,7 @@ Write-Host ""
 
 Write-Host "[1] n8nサーバーの確認..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "$n8nUrl/healthz" -Method GET -TimeoutSec 3 -ErrorAction Stop
+    $response = Invoke-RestMethod -Uri "$n8nBaseUrl/healthz" -Method GET -TimeoutSec 3 -ErrorAction Stop
     Write-Host "   ✅ n8nサーバーは起動しています" -ForegroundColor Green
 } catch {
     Write-Host "   ❌ n8nサーバーに接続できません" -ForegroundColor Red
@@ -22,7 +24,7 @@ try {
 
 Write-Host ""
 Write-Host "[2] ブラウザでn8nのWeb UIを開きます..." -ForegroundColor Yellow
-Start-Process "http://127.0.0.1:5679/settings/license"
+Start-Process "$n8nBaseUrl/settings/license"
 
 Write-Host ""
 Write-Host "   ✅ ブラウザを開きました" -ForegroundColor Green

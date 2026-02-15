@@ -8,7 +8,9 @@
 import sys
 import requests
 
-COMFYUI_URL = "http://127.0.0.1:8188"
+from _paths import COMFYUI_PORT
+
+COMFYUI_URL = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
 
 # I2Vワークフローでよく使うノード（すべて必須ではないが、ltx2_i2v_from_ui 系で参照される）
 REQUIRED_FOR_I2V = [

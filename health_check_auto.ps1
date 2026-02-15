@@ -7,20 +7,25 @@ Write-Host "=" * 60
 Write-Host ""
 
 $checkInterval = 60  # 60秒ごとにチェック
+
+# URL（環境変数で上書き可能）
+$lmStudioBaseUrl = if ($env:LM_STUDIO_URL) { $env:LM_STUDIO_URL.TrimEnd('/') } else { "http://127.0.0.1:1234" }
+$unifiedApiBaseUrl = if ($env:MANAOS_INTEGRATION_API_URL) { $env:MANAOS_INTEGRATION_API_URL.TrimEnd('/') } else { "http://127.0.0.1:9502" }
+
 $services = @(
     @{
         Name = "LM Studioサーバー"
-        Url = "http://127.0.0.1:1234/v1/models"
+        Url = "$lmStudioBaseUrl/v1/models"
         Critical = $false
     },
     @{
         Name = "LLMルーティングAPI（Unified API）"
-        Url = "http://127.0.0.1:9510/api/llm/health"
+        Url = "$unifiedApiBaseUrl/api/llm/health"
         Critical = $true
     },
     @{
         Name = "Unified APIサーバー"
-        Url = "http://127.0.0.1:9510/health"
+        Url = "$unifiedApiBaseUrl/health"
         Critical = $true
     }
 )

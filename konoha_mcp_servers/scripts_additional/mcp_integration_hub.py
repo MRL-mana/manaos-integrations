@@ -6,6 +6,7 @@ MCP Integration Hub
 
 import asyncio
 import json
+import os
 import subprocess
 import httpx
 from datetime import datetime
@@ -19,10 +20,10 @@ class MCPIntegrationHub:
         self.ai_learning_data_dir = Path("/root/ai_learning_system/data")
         self.trinity_workspace = Path("/root/trinity_workspace")
         self.manaos_services = {
-            "api_bridge": "http://127.0.0.1:7000",
-            "unified_api_gateway": "http://127.0.0.1:8009",
-            "slack_bot": "http://127.0.0.1:5555",
-            "screen_sharing": "http://127.0.0.1:5008"
+            "api_bridge": os.getenv("API_BRIDGE_URL", "http://127.0.0.1:7000"),
+            "unified_api_gateway": os.getenv("UNIFIED_API_GATEWAY_URL", "http://127.0.0.1:8009"),
+            "slack_bot": os.getenv("SLACK_BOT_URL", "http://127.0.0.1:5555"),
+            "screen_sharing": os.getenv("SCREEN_SHARING_URL", "http://127.0.0.1:5008")
         }
         self.integration_log = Path("/root/logs/mcp_integration_hub.log")
         self.integration_log.parent.mkdir(exist_ok=True)

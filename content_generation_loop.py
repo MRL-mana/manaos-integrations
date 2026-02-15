@@ -72,9 +72,9 @@ class ContentGenerationLoop:
             db_path: データベースパス
             config_path: 設定ファイルのパス
         """
-        self.ollama_url = ollama_url or DEFAULT_OLLAMA_URL
+        self.ollama_url = os.getenv("OLLAMA_URL", ollama_url or DEFAULT_OLLAMA_URL)
         self.model = model
-        self.rag_memory_url = rag_memory_url or DEFAULT_RAG_MEMORY_URL
+        self.rag_memory_url = os.getenv("RAG_MEMORY_URL", rag_memory_url or DEFAULT_RAG_MEMORY_URL)
         self.config_path = config_path or Path(__file__).parent / "content_generation_config.json"
         self.config = self._load_config()
         

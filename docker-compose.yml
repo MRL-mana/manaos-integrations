@@ -1,0 +1,219 @@
+version: '3.8'
+
+services:
+  # ==================== コアサービス ====================
+  
+  # Unified API Server
+  unified-api:
+    build: .
+    container_name: manaos-unified-api
+    ports:
+      - "${UNIFIED_API_PORT:-9502}:9502"
+    environment:
+      - PORT=9502
+      - BRAVE_API_KEY=${BRAVE_API_KEY:-}
+      - CIVITAI_API_KEY=${CIVITAI_API_KEY:-}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+    restart: unless-stopped
+    networks:
+      - manaos-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:9502/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # MRL Memory Integration
+  mrl-memory:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: manaos-mrl-memory
+    command: python -m mrl_memory_integration
+    ports:
+      - "${MRL_MEMORY_PORT:-9507}:9507"
+    environment:
+      - MRL_MEMORY_PORT=9507
+      - MRL_MEMORY_HOST=0.0.0.0
+    volumes:
+      - ./data/memory_cache:/app/data/memory_cache
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - manaos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9507/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Learning System API
+  learning-system:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: manaos-learning-system
+    command: python -m learning_system_api
+    ports:
+      - "${LEARNING_SYSTEM_PORT:-9508}:9508"
+    environment:
+      - LEARNING_SYSTEM_PORT=9508
+      - LEARNING_SYSTEM_HOST=0.0.0.0
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - manaos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9508/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # LLM Routing MCP Server
+  llm-routing:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: manaos-llm-routing
+    command: python -m llm_routing_mcp_server
+    ports:
+      - "${LLM_ROUTING_PORT:-9509}:9509"
+    environment:
+      - LLM_ROUTING_PORT=9509
+      - LLM_ROUTING_HOST=0.0.0.0
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - manaos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9509/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ==================== オプショナルサービス ====================
+
+  # Gallery API
+  gallery-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: manaos-gallery-api
+    command: python gallery_api.py
+    ports:
+      - "${GALLERY_PORT:-5559}:5559"
+    environment:
+      - GALLERY_PORT=5559
+      - GALLERY_HOST=0.0.0.0
+    volumes:
+      - ./gallery_images:/app/gallery_images
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - manaos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5559/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Video Pipeline MCP Server
+  video-pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: manaos-video-pipeline
+    command: python -m video_pipeline_mcp_server
+    ports:
+      - "${VIDEO_PIPELINE_PORT:-9511}:9511"
+    environment:
+      - VIDEO_PIPELINE_PORT=9511
+      - VIDEO_PIPELINE_HOST=0.0.0.0
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - manaos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9511/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ==================== モニタリング ====================
+
+  # Prometheus（メトリクス収集）
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: manaos-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    restart: unless-stopped
+    networks:
+      - manaos-network
+
+  # Grafana（可視化ダッシュボード）
+  grafana:
+    image: grafana/grafana:latest
+    container_name: manaos-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    restart: unless-stopped
+    networks:
+      - manaos-network
+    depends_on:
+      - prometheus
+
+  # cAdvisor（コンテナメトリクス）
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: manaos-cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    restart: unless-stopped
+    networks:
+      - manaos-network
+
+# ==================== ネットワーク ====================
+networks:
+  manaos-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# ==================== ボリューム ====================
+volumes:
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local

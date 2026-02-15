@@ -39,7 +39,7 @@ SERVICES = [
     {"name": "Task Critic", "port": 5102, "script": "task_critic.py"},
     {"name": "RAG Memory", "port": 5103, "script": "rag_memory_enhanced.py"},
     {"name": "Task Queue", "port": 5104, "script": "task_queue_system.py"},
-    {"name": "UI Operations", "port": 5105, "script": "ui_operations_api.py"},
+    {"name": "UI Operations", "port": 5110, "script": "ui_operations_api.py"},
     {"name": "Unified Orchestrator", "port": 5106, "script": "unified_orchestrator.py"},
     {"name": "Executor Enhanced", "port": 5107, "script": "task_executor_enhanced.py"},
     {"name": "Portal Integration", "port": 5108, "script": "portal_integration_api.py"},

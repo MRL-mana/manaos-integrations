@@ -181,12 +181,12 @@ python autonomous_operations.py
 
 2. **ポート確認**:
    ```powershell
-   netstat -ano | findstr ":9510 :5103 :5104 :5111"
+   netstat -ano | findstr ":9502 :5103 :5104 :5111"
    ```
 
 3. **手動ヘルスチェック**:
    ```powershell
-   Invoke-RestMethod http://127.0.0.1:9510/health
+   Invoke-RestMethod http://127.0.0.1:9502/health
    ```
 
 ## 📁 関連ファイル

@@ -6,6 +6,17 @@ import subprocess
 import os
 import requests
 
+try:
+    from manaos_integrations._paths import OLLAMA_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import OLLAMA_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
+
 print("=" * 60)
 print("Ollama GPU設定確認")
 print("=" * 60)
@@ -53,7 +64,7 @@ except Exception as e:
 print("\n[4] Ollama APIテスト（GPU指定）")
 try:
     response = requests.post(
-        "http://127.0.0.1:11434/api/generate",
+        f"{DEFAULT_OLLAMA_URL}/api/generate",
         json={
             "model": "qwen2.5:7b",
             "prompt": "こんにちは",

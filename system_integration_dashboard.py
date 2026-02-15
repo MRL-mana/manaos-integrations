@@ -385,8 +385,15 @@ def dashboard():
     """ダッシュボードを表示"""
     return render_template_string(DASHBOARD_HTML)
 
+try:
+    from manaos_integrations._paths import PORTAL_INTEGRATION_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import PORTAL_INTEGRATION_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        PORTAL_INTEGRATION_PORT = int(os.getenv("PORTAL_INTEGRATION_PORT", "5108"))
 
-PORTAL_URL = os.getenv("PORTAL_URL", "http://127.0.0.1:5108")
+PORTAL_URL = os.getenv("PORTAL_URL", f"http://127.0.0.1:{PORTAL_INTEGRATION_PORT}")
 
 
 @app.route("/api/orchestrator/stats", methods=["GET"])

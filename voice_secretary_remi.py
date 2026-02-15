@@ -13,6 +13,16 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
 
+try:
+    from manaos_integrations._paths import INTENT_ROUTER_PORT, LLM_ROUTING_PORT, UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import INTENT_ROUTER_PORT, LLM_ROUTING_PORT, UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9510"))
+        INTENT_ROUTER_PORT = int(os.getenv("INTENT_ROUTER_PORT", "5100"))
+        LLM_ROUTING_PORT = int(os.getenv("LLM_ROUTING_PORT", "5111"))
+
 # プロジェクトルートをパスに追加
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -26,9 +36,9 @@ from manaos_logger import get_logger
 logger = get_logger(__name__)
 
 # 設定
-INTENT_ROUTER_URL = os.getenv("INTENT_ROUTER_URL", "http://127.0.0.1:5100")
-UNIFIED_API_URL = os.getenv("UNIFIED_API_URL", "http://127.0.0.1:9510")
-LLM_ROUTING_URL = os.getenv("LLM_ROUTING_URL", "http://127.0.0.1:5111")
+INTENT_ROUTER_URL = os.getenv("INTENT_ROUTER_URL", f"http://127.0.0.1:{INTENT_ROUTER_PORT}")
+UNIFIED_API_URL = os.getenv("UNIFIED_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}")
+LLM_ROUTING_URL = os.getenv("LLM_ROUTING_URL", f"http://127.0.0.1:{LLM_ROUTING_PORT}")
 NOTION_AVAILABLE = os.getenv("NOTION_API_KEY") is not None
 SLACK_AVAILABLE = os.getenv("SLACK_WEBHOOK_URL") is not None
 

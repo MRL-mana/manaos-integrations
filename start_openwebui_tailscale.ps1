@@ -14,6 +14,8 @@ if (-not $isAdmin) {
 Write-Host "=== Open WebUI Tailscale 完全セットアップ ===" -ForegroundColor Cyan
 Write-Host ""
 
+$openWebUiBaseUrl = if ($env:OPENWEBUI_URL) { $env:OPENWEBUI_URL.TrimEnd('/') } else { "http://127.0.0.1:3001" }
+
 # 1. Docker Desktopの確認と起動
 Write-Host "[1/6] Checking Docker Desktop..." -ForegroundColor Yellow
 try {
@@ -131,7 +133,7 @@ if ($portCheck) {
 # HTTP接続テスト
 Write-Host "  Testing HTTP connection..." -ForegroundColor Gray
 try {
-    $response = Invoke-WebRequest -Uri "http://127.0.0.1:3001" -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri $openWebUiBaseUrl -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
     Write-Host "[OK] HTTP connection works (Status: $($response.StatusCode))" -ForegroundColor Green
 } catch {
     Write-Host "[WARN] HTTP connection failed: $_" -ForegroundColor Yellow

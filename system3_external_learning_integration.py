@@ -21,11 +21,20 @@ import re
 
 from system3_http_retry import http_post_json_retry
 
+try:
+    from manaos_integrations._paths import LEARNING_SYSTEM_PORT, RAG_MEMORY_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import LEARNING_SYSTEM_PORT, RAG_MEMORY_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        LEARNING_SYSTEM_PORT = int(os.getenv("LEARNING_SYSTEM_PORT", "5126"))
+        RAG_MEMORY_PORT = int(os.getenv("RAG_MEMORY_PORT", "5103"))
+
 # 設定（環境変数から取得、デフォルト値あり）
 VAULT_PATH = Path(os.getenv("OBSIDIAN_VAULT_PATH", r"C:\Users\mana4\Documents\Obsidian Vault"))
 EXTERNAL_LEARNING_DIR = VAULT_PATH / "ManaOS" / "System" / "ExternalLearning"
-LEARNING_SYSTEM_URL = "http://127.0.0.1:5126"
-RAG_MEMORY_URL = "http://127.0.0.1:5103"  # RAG Memory API
+LEARNING_SYSTEM_URL = os.getenv("LEARNING_SYSTEM_URL", f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}")
+RAG_MEMORY_URL = os.getenv("RAG_MEMORY_URL", f"http://127.0.0.1:{RAG_MEMORY_PORT}")  # RAG Memory API
 
 
 def parse_external_learning_report(md_file: Path) -> List[Dict[str, Any]]:

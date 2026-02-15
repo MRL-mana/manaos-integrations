@@ -33,9 +33,9 @@ manaOS秘書機能の3本のルーチンワークフロー
 各ワークフローには、manaOS APIへのWebhookが含まれています。
 Webhook URLを設定してください：
 
-- `http://127.0.0.1:9510/api/secretary/morning`
-- `http://127.0.0.1:9510/api/secretary/noon`
-- `http://127.0.0.1:9510/api/secretary/evening`
+- `http://127.0.0.1:9502/api/secretary/morning`
+- `http://127.0.0.1:9502/api/secretary/noon`
+- `http://127.0.0.1:9502/api/secretary/evening`
 
 ### 3. スケジュールを設定
 

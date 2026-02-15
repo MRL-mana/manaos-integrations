@@ -24,7 +24,7 @@ $allServices = @(
     @{Name="Task Critic"; Port=5102; Script="task_critic.py"},
     @{Name="RAG Memory"; Port=5103; Script="rag_memory_enhanced.py"},
     @{Name="Task Queue"; Port=5104; Script="task_queue_system.py"},
-    @{Name="UI Operations"; Port=5105; Script="ui_operations_api.py"},
+    @{Name="UI Operations"; Port=5110; Script="ui_operations_api.py"},
     @{Name="Unified Orchestrator"; Port=5106; Script="unified_orchestrator.py"},
     @{Name="Executor Enhanced"; Port=5107; Script="task_executor_enhanced.py"},
     @{Name="Portal Integration"; Port=5108; Script="portal_integration_api.py"},

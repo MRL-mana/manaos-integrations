@@ -137,7 +137,7 @@ Ctrl+Shift+P → "Tasks: Run Task" → "🚨 ManaOS: 緊急停止"
       "command": "python",
       "args": ["-m", "manaos_unified_mcp_server.server"],
       "env": {
-      "MANAOS_INTEGRATION_API_URL": "http://127.0.0.1:9510",
+      "MANAOS_INTEGRATION_API_URL": "http://127.0.0.1:9502",
         "PYTHONPATH": "C:\\Users\\mana4\\Desktop\\manaos_integrations"
       },
       "cwd": "C:\\Users\\mana4\\Desktop\\manaos_integrations"
@@ -151,14 +151,14 @@ Ctrl+Shift+P → "Tasks: Run Task" → "🚨 ManaOS: 緊急停止"
 **方法:** REST API経由
 
 **特徴:**
-- REST APIで統合（`http://127.0.0.1:9510`）
+- REST APIで統合（`http://127.0.0.1:9502`）
 - 独自の拡張機能開発が必要
 - Task Providerとして統合可能
 
 **使用例:**
 ```powershell
 # PowerShellから直接API呼び出し
-$response = Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/integrations/status"
+$response = Invoke-RestMethod -Uri "http://127.0.0.1:9502/api/integrations/status"
 $response | ConvertTo-Json
 ```
 
@@ -227,7 +227,7 @@ Copy-Item ~/.vscode/settings.json ~/.cursor/
 
 3. **MCP設定を確認**
    - Cursorの `mcp.json` は使えない
-   - REST API（ポート9510）経由でアクセス
+   - REST API（ポート9502）経由でアクセス
 
 4. **個人設定を移行（オプション）**
    ```powershell

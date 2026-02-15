@@ -3,10 +3,26 @@
 
 Write-Host "Ollama常時起動確認中..." -ForegroundColor Cyan
 
+# URL（環境変数で上書き可能）
+$ollamaBaseUrl = if ($env:OLLAMA_URL) { $env:OLLAMA_URL.TrimEnd('/') } else { "http://127.0.0.1:11434" }
+
+function Get-UriSafe {
+    param([string]$Url)
+    try {
+        return [uri]$Url
+    } catch {
+        return $null
+    }
+}
+
+$ollamaUri = Get-UriSafe -Url $ollamaBaseUrl
+$ollamaHost = if ($ollamaUri) { $ollamaUri.Host } else { "127.0.0.1" }
+$ollamaPort = if ($ollamaUri) { $ollamaUri.Port } else { 11434 }
+
 # Ollamaの起動確認
 $ollamaRunning = $false
 try {
-    $response = Invoke-WebRequest -Uri "http://127.0.0.1:11434/api/tags" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "$ollamaBaseUrl/api/tags" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
     $ollamaRunning = $true
     Write-Host "[OK] Ollama is running" -ForegroundColor Green
 } catch {
@@ -14,7 +30,7 @@ try {
 }
 
 # ポート確認
-$portCheck = Test-NetConnection -ComputerName 127.0.0.1 -Port 11434 -WarningAction SilentlyContinue -InformationLevel Quiet -ErrorAction SilentlyContinue
+$portCheck = Test-NetConnection -ComputerName $ollamaHost -Port $ollamaPort -WarningAction SilentlyContinue -InformationLevel Quiet -ErrorAction SilentlyContinue
 
 if (-not $portCheck -and -not $ollamaRunning) {
     Write-Host "`nOllamaを起動します..." -ForegroundColor Yellow
@@ -52,7 +68,7 @@ if (-not $portCheck -and -not $ollamaRunning) {
             $maxRetries = 6
             while ($retryCount -lt $maxRetries) {
                 try {
-                    $response = Invoke-WebRequest -Uri "http://127.0.0.1:11434/api/tags" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+                    $response = Invoke-WebRequest -Uri "$ollamaBaseUrl/api/tags" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
                     Write-Host "[OK] Ollama is now running" -ForegroundColor Green
                     break
                 } catch {

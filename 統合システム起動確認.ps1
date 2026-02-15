@@ -10,10 +10,15 @@ Write-Host ""
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptDir
 
+$comfyUiPort = if ($env:COMFYUI_PORT) { [int]$env:COMFYUI_PORT } else { 8188 }
+$unifiedApiPort = if ($env:MANAOS_INTEGRATION_PORT) { [int]$env:MANAOS_INTEGRATION_PORT } else { 9510 }
+$comfyUiBaseUrl = if ($env:COMFYUI_URL) { $env:COMFYUI_URL.TrimEnd('/') } else { "http://127.0.0.1:$comfyUiPort" }
+$unifiedApiBaseUrl = if ($env:MANAOS_INTEGRATION_API_URL) { $env:MANAOS_INTEGRATION_API_URL.TrimEnd('/') } else { "http://127.0.0.1:$unifiedApiPort" }
+
 # 1. ComfyUI確認
 Write-Host "[1] ComfyUI起動確認..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "http://127.0.0.1:8188/system_stats" -Method GET -TimeoutSec 3 -ErrorAction SilentlyContinue
+    $response = Invoke-RestMethod -Uri "$comfyUiBaseUrl/system_stats" -Method GET -TimeoutSec 3 -ErrorAction SilentlyContinue
     if ($response) {
         Write-Host "   [OK] ComfyUIは起動中です" -ForegroundColor Green
     } else {
@@ -28,7 +33,7 @@ Write-Host ""
 # 2. 統合APIサーバー確認
 Write-Host "[2] 統合APIサーバー起動確認..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "http://127.0.0.1:9510/health" -Method GET -TimeoutSec 3 -ErrorAction SilentlyContinue
+    $response = Invoke-RestMethod -Uri "$unifiedApiBaseUrl/health" -Method GET -TimeoutSec 3 -ErrorAction SilentlyContinue
     if ($response) {
         Write-Host "   [OK] 統合APIサーバーは起動中です" -ForegroundColor Green
         $integrations = $response.integrations

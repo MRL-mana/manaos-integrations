@@ -12,6 +12,14 @@ from typing import Any, Dict, List, Optional
 from pathlib import Path
 import io
 
+try:
+    from manaos_integrations._paths import STEP_DEEP_RESEARCH_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import STEP_DEEP_RESEARCH_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        STEP_DEEP_RESEARCH_PORT = int(os.getenv("STEP_DEEP_RESEARCH_PORT", "5121"))
+
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -33,7 +41,10 @@ except ImportError:
 logger = get_logger(__name__)
 
 # APIエンドポイント
-STEP_DEEP_RESEARCH_URL = os.getenv("STEP_DEEP_RESEARCH_URL", "http://127.0.0.1:5121")
+STEP_DEEP_RESEARCH_URL = os.getenv(
+    "STEP_DEEP_RESEARCH_URL",
+    f"http://127.0.0.1:{STEP_DEEP_RESEARCH_PORT}",
+)
 
 # MCPサーバーの初期化
 if MCP_AVAILABLE:

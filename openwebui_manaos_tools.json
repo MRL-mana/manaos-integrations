@@ -20,7 +20,7 @@
         {
             "name": "memory_store",
             "description": "記憶に情報を保存します",
-            "url": "http://127.0.0.1:9510/api/memory/store",
+            "url": "http://127.0.0.1:9502/api/memory/store",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
@@ -41,7 +41,7 @@
         {
             "name": "memory_recall",
             "description": "記憶から情報を検索します",
-            "url": "http://127.0.0.1:9510/api/memory/recall",
+            "url": "http://127.0.0.1:9502/api/memory/recall",
             "method": "GET",
             "parameters": {
                 "query": {
@@ -225,7 +225,7 @@
         {
             "name": "obsidian_create_note",
             "description": "Obsidianにノートを作成します",
-            "url": "http://127.0.0.1:9510/api/obsidian/create",
+            "url": "http://127.0.0.1:9502/api/obsidian/create",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
@@ -250,7 +250,7 @@
         {
             "name": "obsidian_search_notes",
             "description": "Obsidianでノートを検索します",
-            "url": "http://127.0.0.1:9510/api/obsidian/search",
+            "url": "http://127.0.0.1:9502/api/obsidian/search",
             "method": "GET",
             "parameters": {
                 "query": {
@@ -263,7 +263,7 @@
         {
             "name": "vscode_open_file",
             "description": "VS Codeでファイルを開きます",
-            "url": "http://127.0.0.1:9510/api/vscode/open",
+            "url": "http://127.0.0.1:9502/api/vscode/open",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
@@ -283,7 +283,7 @@
         {
             "name": "vscode_open_folder",
             "description": "VS Codeでフォルダを開きます",
-            "url": "http://127.0.0.1:9510/api/vscode/open-folder",
+            "url": "http://127.0.0.1:9502/api/vscode/open-folder",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"

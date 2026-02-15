@@ -10,8 +10,27 @@ Write-Host ""
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptDir
 
+# URL（環境変数で上書き可能）
+$unifiedApiPort = if ($env:MANAOS_INTEGRATION_PORT) { [int]$env:MANAOS_INTEGRATION_PORT } else { 9502 }
+$comfyUiPort = if ($env:COMFYUI_PORT) { [int]$env:COMFYUI_PORT } else { 8188 }
+$unifiedApiBaseUrl = if ($env:MANAOS_INTEGRATION_API_URL) { $env:MANAOS_INTEGRATION_API_URL.TrimEnd('/') } else { "http://127.0.0.1:$unifiedApiPort" }
+$comfyUiBaseUrl = if ($env:COMFYUI_URL) { $env:COMFYUI_URL.TrimEnd('/') } else { "http://127.0.0.1:$comfyUiPort" }
+
+function Get-UriSafe {
+    param([string]$Url)
+    try {
+        return [uri]$Url
+    } catch {
+        return $null
+    }
+}
+
+$unifiedApiUri = Get-UriSafe -Url $unifiedApiBaseUrl
+$unifiedApiPort = if ($unifiedApiUri) { $unifiedApiUri.Port } else { $unifiedApiPort }
+
 # n8n Webhook URLを設定
-$env:N8N_WEBHOOK_URL = "http://100.93.120.33:5678/webhook/comfyui-generated"
+$n8nWebhookUrl = if ($env:N8N_WEBHOOK_URL) { $env:N8N_WEBHOOK_URL.TrimEnd('/') } else { "http://100.93.120.33:5678/webhook/comfyui-generated" }
+$env:N8N_WEBHOOK_URL = $n8nWebhookUrl
 Write-Host "[INFO] n8n Webhook URLを設定しました" -ForegroundColor Gray
 Write-Host "  URL: $env:N8N_WEBHOOK_URL" -ForegroundColor Gray
 Write-Host ""
@@ -19,7 +38,7 @@ Write-Host ""
 # 1. ComfyUI起動確認
 Write-Host "[1] ComfyUI起動確認..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "http://127.0.0.1:8188/system_stats" -Method GET -TimeoutSec 3 -ErrorAction SilentlyContinue
+    $response = Invoke-RestMethod -Uri "$comfyUiBaseUrl/system_stats" -Method GET -TimeoutSec 3 -ErrorAction SilentlyContinue
     if ($response) {
         Write-Host "   [OK] ComfyUIは起動中です" -ForegroundColor Green
     } else {
@@ -36,14 +55,14 @@ Write-Host ""
 Write-Host "[2] 統合APIサーバーを起動します..." -ForegroundColor Yellow
 $apiServerProcess = Get-Process python -ErrorAction SilentlyContinue | Where-Object {
     $_.CommandLine -like "*unified_api_server.py*" -or 
-    (Get-NetTCPConnection -LocalPort 9510 -ErrorAction SilentlyContinue)
+    (Get-NetTCPConnection -LocalPort $unifiedApiPort -ErrorAction SilentlyContinue)
 }
 
-if ($apiServerProcess -or (Get-NetTCPConnection -LocalPort 9510 -ErrorAction SilentlyContinue)) {
+if ($apiServerProcess -or (Get-NetTCPConnection -LocalPort $unifiedApiPort -ErrorAction SilentlyContinue)) {
     Write-Host "   [OK] 統合APIサーバーは既に起動中です" -ForegroundColor Green
 } else {
     Write-Host "   統合APIサーバーを起動中..." -ForegroundColor Gray
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir'; `$env:N8N_WEBHOOK_URL='http://100.93.120.33:5678/webhook/comfyui-generated'; python unified_api_server.py" -WindowStyle Normal
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir'; `$env:N8N_WEBHOOK_URL='$n8nWebhookUrl'; python unified_api_server.py" -WindowStyle Normal
     Write-Host "   [OK] 統合APIサーバーを起動しました（別ウィンドウ）" -ForegroundColor Green
     Write-Host "   数秒待ってからテストを実行してください" -ForegroundColor Gray
     Start-Sleep -Seconds 8
@@ -53,12 +72,12 @@ Write-Host ""
 # 3. 動作確認
 Write-Host "[3] 動作確認..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "http://127.0.0.1:9510/health" -Method GET -TimeoutSec 5 -ErrorAction SilentlyContinue
+    $response = Invoke-RestMethod -Uri "$unifiedApiBaseUrl/health" -Method GET -TimeoutSec 5 -ErrorAction SilentlyContinue
     if ($response) {
         Write-Host "   [OK] 統合APIサーバーは正常に動作しています" -ForegroundColor Green
         
         # 統合システム状態を表示
-        $statusResponse = Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/integrations/status" -Method GET -TimeoutSec 5 -ErrorAction SilentlyContinue
+        $statusResponse = Invoke-RestMethod -Uri "$unifiedApiBaseUrl/api/integrations/status" -Method GET -TimeoutSec 5 -ErrorAction SilentlyContinue
         if ($statusResponse) {
             Write-Host ""
             Write-Host "   統合システム状態:" -ForegroundColor Gray

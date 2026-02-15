@@ -5,6 +5,15 @@ ManaOS統合システム - クイックスタートスクリプト
 
 import sys
 from pathlib import Path
+import os
+
+try:
+    from manaos_integrations._paths import UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9502"))
 
 # モジュールパスを追加
 sys.path.insert(0, str(Path(__file__).parent))
@@ -39,12 +48,13 @@ def print_menu():
 def start_api_server():
     """統合APIサーバーを起動"""
     print("\n統合APIサーバーを起動中...")
-    print("ブラウザで http://127.0.0.1:9510/health にアクセスしてください")
+    port = int(os.getenv("PORT", str(UNIFIED_API_PORT)))
+    print(f"ブラウザで http://127.0.0.1:{port}/health にアクセスしてください")
     print("Ctrl+Cで停止")
     print()
     
     initialize_integrations()
-    app.run(host="0.0.0.0", port=9510, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=True)
 
 
 def test_workflow_automation():

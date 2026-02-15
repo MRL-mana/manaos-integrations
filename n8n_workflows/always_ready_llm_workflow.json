@@ -57,7 +57,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "=http://127.0.0.1:9510/api/cache/get",
+        "url": "=http://127.0.0.1:9502/api/cache/get",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -174,7 +174,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=http://127.0.0.1:9510/api/cache/set",
+        "url": "=http://127.0.0.1:9502/api/cache/set",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [

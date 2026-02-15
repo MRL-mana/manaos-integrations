@@ -3,10 +3,14 @@ param(
   [string]$Py = "py -3.10",
   [int]$VideoHealthPort = 5112,
   [int]$PicoHealthPort = 5136,
-  [string]$UnifiedApiUrl = "http://127.0.0.1:9510"
+  [string]$UnifiedApiUrl = ""
 )
 
 $ErrorActionPreference = "Stop"
+
+if (-not $UnifiedApiUrl) {
+  $UnifiedApiUrl = if ($env:MANAOS_INTEGRATION_API_URL) { $env:MANAOS_INTEGRATION_API_URL.TrimEnd('/') } else { "http://127.0.0.1:9502" }
+}
 
 function Step([string]$msg) {
   Write-Host $msg -ForegroundColor Cyan

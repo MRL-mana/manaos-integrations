@@ -2,8 +2,11 @@
 # 使い方: .\run_ltx2_diagnose.ps1
 #        .\run_ltx2_diagnose.ps1 -ComfyUrl "http://192.168.1.10:8188"
 param(
-    [string]$ComfyUrl = "http://127.0.0.1:8188"
+    [string]$ComfyUrl = $env:COMFYUI_URL
 )
+$comfyUiPort = if ($env:COMFYUI_PORT) { [int]$env:COMFYUI_PORT } else { 8188 }
+$defaultComfyUrl = if ($env:COMFYUI_URL) { $env:COMFYUI_URL.TrimEnd('/') } else { "http://127.0.0.1:$comfyUiPort" }
+$ComfyUrl = if ($ComfyUrl) { $ComfyUrl.TrimEnd('/') } else { $defaultComfyUrl }
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptDir
 $env:COMFYUI_URL = $ComfyUrl

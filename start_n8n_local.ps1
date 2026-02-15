@@ -5,10 +5,13 @@ Write-Host "n8n ローカル起動" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# ポート5679の確認
-$portInUse = Get-NetTCPConnection -LocalPort 5679 -ErrorAction SilentlyContinue
+$n8nPort = if ($env:N8N_PORT) { $env:N8N_PORT } else { "5679" }
+$n8nBaseUrl = if ($env:N8N_URL) { $env:N8N_URL.TrimEnd('/') } else { "http://127.0.0.1:$n8nPort" }
+
+# ポート確認
+$portInUse = Get-NetTCPConnection -LocalPort ([int]$n8nPort) -ErrorAction SilentlyContinue
 if ($portInUse) {
-    Write-Host "[警告] ポート5679は既に使用されています" -ForegroundColor Yellow
+    Write-Host "[警告] ポート$n8nPort は既に使用されています" -ForegroundColor Yellow
     Write-Host "既存のn8nプロセスを終了します..." -ForegroundColor Yellow
     
     # 既存のn8nプロセスを終了
@@ -27,7 +30,7 @@ if ($portInUse) {
         Start-Sleep -Seconds 2
     } else {
         Write-Host "[警告] n8nプロセスが見つかりませんでした" -ForegroundColor Yellow
-        Write-Host "[NG] ポート5679が使用中のため、n8nを起動できません" -ForegroundColor Red
+        Write-Host "[NG] ポート$n8nPort が使用中のため、n8nを起動できません" -ForegroundColor Red
         exit 1
     }
 }
@@ -41,7 +44,7 @@ if (-not (Test-Path $n8nDataDir)) {
 
 # 環境変数を設定
 $env:N8N_USER_FOLDER = $n8nDataDir
-$env:N8N_PORT = "5679"
+$env:N8N_PORT = $n8nPort
 $env:N8N_LICENSE_KEY = "b01a8246-6a35-4221-917e-b5b25028a21b"
 
 Write-Host ""
@@ -50,13 +53,13 @@ Write-Host "n8n起動中..." -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "ブラウザで以下のURLを開いてください:" -ForegroundColor Yellow
-Write-Host "  http://127.0.0.1:5679" -ForegroundColor Cyan
+Write-Host "  $n8nBaseUrl" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "停止するには Ctrl+C を押してください" -ForegroundColor Gray
 Write-Host ""
 
 # n8nを起動
-n8n start --port 5679
+n8n start --port $n8nPort
 
 
 

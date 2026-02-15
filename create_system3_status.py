@@ -389,26 +389,83 @@ from typing import Dict, Any, Optional, List
 
 from obsidian_integration import ObsidianIntegration
 
+try:
+    from manaos_integrations._paths import (
+        AUTONOMY_SYSTEM_PORT,
+        INTRINSIC_MOTIVATION_PORT,
+        LEARNING_SYSTEM_PORT,
+        METRICS_COLLECTOR_PORT,
+        TASK_CRITIC_PORT,
+        TODO_QUEUE_PORT,
+    )
+except Exception:  # pragma: no cover
+    try:
+        from _paths import (  # type: ignore
+            AUTONOMY_SYSTEM_PORT,
+            INTRINSIC_MOTIVATION_PORT,
+            LEARNING_SYSTEM_PORT,
+            METRICS_COLLECTOR_PORT,
+            TASK_CRITIC_PORT,
+            TODO_QUEUE_PORT,
+        )
+    except Exception:  # pragma: no cover
+        LEARNING_SYSTEM_PORT = int(os.getenv("LEARNING_SYSTEM_PORT", "5126"))
+        METRICS_COLLECTOR_PORT = int(os.getenv("METRICS_COLLECTOR_PORT", "5127"))
+        TASK_CRITIC_PORT = int(os.getenv("TASK_CRITIC_PORT", "5102"))
+        AUTONOMY_SYSTEM_PORT = int(os.getenv("AUTONOMY_SYSTEM_PORT", "5124"))
+        INTRINSIC_MOTIVATION_PORT = int(os.getenv("INTRINSIC_MOTIVATION_PORT", "5130"))
+        TODO_QUEUE_PORT = int(os.getenv("TODO_QUEUE_PORT", "5134"))
+
 
 # System 3ﾃｩ窶督｢ﾃｩ竄ｬﾂ｣ﾃ｣窶堋ｵﾃ｣ﾆ陳ｼﾃ｣ﾆ停愿｣窶堋ｹﾃ｣・ｽﾂｮURL
 
 
-LEARNING_SYSTEM_URL = "http://127.0.0.1:5126"
+LEARNING_SYSTEM_URL = os.getenv(
+    "LEARNING_SYSTEM_URL",
+    f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}",
+)
 
 
-METRICS_COLLECTOR_URL = "http://127.0.0.1:5127"
+METRICS_COLLECTOR_URL = os.getenv(
+    "METRICS_COLLECTOR_URL",
+    f"http://127.0.0.1:{METRICS_COLLECTOR_PORT}",
+)
 
 
-TASK_CRITIC_URL = "http://127.0.0.1:5102"
+TASK_CRITIC_URL = os.getenv(
+    "TASK_CRITIC_URL",
+    f"http://127.0.0.1:{TASK_CRITIC_PORT}",
+)
 
 
-AUTONOMY_SYSTEM_URL = "http://127.0.0.1:5124"
+AUTONOMY_SYSTEM_URL = os.getenv(
+    "AUTONOMY_SYSTEM_URL",
+    f"http://127.0.0.1:{AUTONOMY_SYSTEM_PORT}",
+)
 
 
-INTRINSIC_MOTIVATION_URL = "http://127.0.0.1:5130"
+INTRINSIC_MOTIVATION_URL = os.getenv(
+    "INTRINSIC_MOTIVATION_URL",
+    f"http://127.0.0.1:{INTRINSIC_MOTIVATION_PORT}",
+)
 
 
-TODO_QUEUE_URL = "http://127.0.0.1:5134"
+TODO_QUEUE_URL = os.getenv(
+    "TODO_QUEUE_URL",
+    f"http://127.0.0.1:{TODO_QUEUE_PORT}",
+)
+
+
+INTRINSIC_SCORE_URL = os.getenv(
+    "INTRINSIC_SCORE_URL",
+    f"http://127.0.0.1:{INTRINSIC_MOTIVATION_PORT}/api/score",
+)
+
+
+TODO_METRICS_URL = os.getenv(
+    "TODO_METRICS_URL",
+    f"http://127.0.0.1:{TODO_QUEUE_PORT}/api/metrics",
+)
 
 
 def get_learning_stats() -> Dict[str, Any]:
@@ -634,8 +691,8 @@ def generate_system3_status(
     vault_path: Optional[str] = None,
     status_relpath: str = r"ManaOS\System\System3_Status.md",
     daily_relpath: str = r"ManaOS\System\Daily",
-    intrinsic_score_url: str = "http://127.0.0.1:5130/api/score",
-    todo_metrics_url: str = "http://127.0.0.1:5134/api/metrics",
+    intrinsic_score_url: str = INTRINSIC_SCORE_URL,
+    todo_metrics_url: str = TODO_METRICS_URL,
 ) -> str:
     # Generate/update System3_Status.md and return path (UTF-8 fixed)
     # - 7-day score trend
@@ -856,8 +913,8 @@ def update_weekly_review(
     vault_path: Optional[str] = None,
     review_relpath: str = r"ManaOS\System\Playbook_Review",
     daily_relpath: str = r"ManaOS\System\Daily",
-    intrinsic_score_url: str = "http://127.0.0.1:5130/api/score",
-    todo_metrics_url: str = "http://127.0.0.1:5134/api/metrics",
+    intrinsic_score_url: str = INTRINSIC_SCORE_URL,
+    todo_metrics_url: str = TODO_METRICS_URL,
 ) -> str:
     """
     Update weekly review with score changes and insights

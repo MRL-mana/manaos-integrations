@@ -9,8 +9,19 @@ import json
 import time
 from typing import Dict, Any, Optional
 
+try:
+    from manaos_integrations._paths import UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9502"))
+
 # APIエンドポイント
-UNIFIED_API_URL = os.getenv("MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510").rstrip("/")
+UNIFIED_API_URL = os.getenv(
+    "MANAOS_INTEGRATION_API_URL",
+    f"http://127.0.0.1:{UNIFIED_API_PORT}",
+).rstrip("/")
 
 
 def print_section(title: str):

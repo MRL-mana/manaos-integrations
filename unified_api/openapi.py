@@ -10,7 +10,7 @@ def build_openapi_spec() -> Dict[str, Any]:
 
     NOTE: 互換のため、URLは従来どおり host.docker.internal をデフォルトにする。
     """
-    base_url = os.getenv("MANAOS_OPENAPI_SERVER_URL", "http://host.docker.internal:9510").rstrip(
+    base_url = os.getenv("MANAOS_OPENAPI_SERVER_URL", "http://host.docker.internal:9502").rstrip(
         "/"
     )
 

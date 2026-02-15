@@ -8,6 +8,7 @@ File Secretary 統合テスト
 import sys
 import time
 import httpx
+import os
 from pathlib import Path
 
 project_root = Path(__file__).parent
@@ -17,6 +18,14 @@ from file_secretary_db import FileSecretaryDB
 from file_secretary_indexer import FileIndexer
 from file_secretary_organizer import FileOrganizer
 from file_secretary_schemas import FileSource, FileStatus
+
+try:
+    from manaos_integrations._paths import FILE_SECRETARY_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import FILE_SECRETARY_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        FILE_SECRETARY_PORT = int(os.getenv("FILE_SECRETARY_PORT", "5120"))
 
 def test_database():
     """データベーステスト"""
@@ -101,7 +110,10 @@ def test_restore():
 def test_api():
     """APIテスト"""
     print("\n=== APIテスト ===")
-    api_url = "http://127.0.0.1:5120"
+    api_url = os.getenv(
+        "FILE_SECRETARY_URL",
+        f"http://127.0.0.1:{FILE_SECRETARY_PORT}",
+    )
     
     try:
         # ヘルスチェック

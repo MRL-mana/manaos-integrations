@@ -12,6 +12,14 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 from dataclasses import dataclass
 
+try:
+    from manaos_integrations._paths import X280_NODE_MANAGER_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import X280_NODE_MANAGER_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        X280_NODE_MANAGER_PORT = int(os.getenv("X280_NODE_MANAGER_PORT", "5121"))
+
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 
@@ -19,7 +27,13 @@ logger = get_logger(__name__)
 error_handler = ManaOSErrorHandler("Pixel7Executor")
 
 # ピクセル7 Node ManagerのURL
-PIXEL7_NODE_MANAGER_URL = os.getenv("PIXEL7_NODE_MANAGER_URL", os.getenv("X280_NODE_MANAGER_URL", "http://127.0.0.1:5121"))
+PIXEL7_NODE_MANAGER_URL = os.getenv(
+    "PIXEL7_NODE_MANAGER_URL",
+    os.getenv(
+        "X280_NODE_MANAGER_URL",
+        f"http://127.0.0.1:{X280_NODE_MANAGER_PORT}",
+    ),
+)
 
 
 @dataclass

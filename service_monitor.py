@@ -88,7 +88,7 @@ class ServiceMonitor:
                 {"name": "LLM Routing MCP", "port": 5111, "script": "llm_routing_mcp_server"},
                 {"name": "Video Pipeline", "port": 5112, "script": "video_pipeline_mcp_server"},
                 {"name": "Learning System", "port": 5126, "script": "learning_system_api"},
-                {"name": "Unified API", "port": 9510, "script": "unified_api_server.py"}
+                {"name": "Unified API", "port": 9502, "script": "unified_api_server.py"}
             ],
             "check_interval": 30,
             "max_restarts": 5,

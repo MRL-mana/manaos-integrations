@@ -1,6 +1,6 @@
 """
 LTX-2 専用 MCP サーバー
-統合API (9510) の /api/ltx2/* を MCP ツールとして提供
+統合API (9502) の /api/ltx2/* を MCP ツールとして提供
 """
 
 import asyncio

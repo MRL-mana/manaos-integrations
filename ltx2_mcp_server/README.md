@@ -16,7 +16,7 @@
   "ltx2": {
     "command": "python",
     "args": ["-m", "ltx2_mcp_server.server"],
-    "env": { "MANAOS_INTEGRATION_API_URL": "http://127.0.0.1:9510" },
+    "env": { "MANAOS_INTEGRATION_API_URL": "http://127.0.0.1:9502" },
     "cwd": "C:\\Users\\mana4\\Desktop\\manaos_integrations"
   }
 }

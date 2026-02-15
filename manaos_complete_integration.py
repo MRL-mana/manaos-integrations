@@ -12,6 +12,14 @@ from datetime import datetime
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 
+try:
+    from manaos_integrations._paths import N8N_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import N8N_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        N8N_PORT = int(os.getenv("N8N_PORT", "5678"))
+
 # 統一モジュールのインポート
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
@@ -232,8 +240,15 @@ class ManaOSCompleteIntegration:
         try:
             if N8N_AVAILABLE:
                 import os
+                try:
+                    from manaos_integrations._paths import N8N_PORT
+                except Exception:  # pragma: no cover
+                    try:
+                        from _paths import N8N_PORT  # type: ignore
+                    except Exception:  # pragma: no cover
+                        N8N_PORT = int(os.getenv("N8N_PORT", "5678"))
                 self.n8n = N8NIntegration(
-                    base_url=os.getenv("N8N_BASE_URL", "http://127.0.0.1:5678"),
+                    base_url=os.getenv("N8N_BASE_URL", f"http://127.0.0.1:{N8N_PORT}"),
                     api_key=os.getenv("N8N_API_KEY")
                 )
                 if self.n8n.is_available():
@@ -498,7 +513,10 @@ class ManaOSCompleteIntegration:
             status["n8n"]["n8n_integration"] = {
                 "available": False,
                 "api_key_set": bool(os.getenv("N8N_API_KEY")),
-                "base_url": os.getenv("N8N_BASE_URL", "http://127.0.0.1:5678")
+                "base_url": os.getenv(
+                    "N8N_BASE_URL",
+                    f"http://127.0.0.1:{N8N_PORT}",
+                )
             }
         
         return status

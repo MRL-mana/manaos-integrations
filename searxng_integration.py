@@ -19,6 +19,14 @@ import httpx
 from base_integration import BaseIntegration
 
 try:
+    from manaos_integrations._paths import SEARXNG_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import SEARXNG_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        SEARXNG_PORT = int(os.getenv("SEARXNG_PORT", "8080"))
+
+try:
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
@@ -55,7 +63,10 @@ class SearXNGIntegration(BaseIntegration):
         except ImportError:
             pass
         
-        self.base_url = (base_url or os.getenv("SEARXNG_BASE_URL", "http://127.0.0.1:8080")).rstrip("/")
+        self.base_url = (
+            base_url
+            or os.getenv("SEARXNG_BASE_URL", f"http://127.0.0.1:{SEARXNG_PORT}")
+        ).rstrip("/")
         self.enable_cache = enable_cache
         self.cache_ttl = cache_ttl
         

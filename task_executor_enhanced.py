@@ -14,6 +14,15 @@ from pathlib import Path
 from dataclasses import dataclass, asdict
 from enum import Enum
 
+try:
+    from manaos_integrations._paths import N8N_PORT, TASK_CRITIC_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import N8N_PORT, TASK_CRITIC_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        N8N_PORT = int(os.getenv("N8N_PORT", "5678"))
+        TASK_CRITIC_PORT = int(os.getenv("TASK_CRITIC_PORT", "5102"))
+
 # 統一モジュールのインポート
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
@@ -74,8 +83,8 @@ class TaskExecutorEnhanced:
     
     def __init__(
         self,
-        n8n_url: str = "http://127.0.0.1:5678",
-        task_critic_url: str = "http://127.0.0.1:5102",
+        n8n_url: str = f"http://127.0.0.1:{N8N_PORT}",
+        task_critic_url: str = f"http://127.0.0.1:{TASK_CRITIC_PORT}",
         config_path: Optional[Path] = None
     ):
         """
@@ -104,8 +113,8 @@ class TaskExecutorEnhanced:
                 schema = {
                     "required": [],
                     "fields": {
-                        "n8n_url": {"type": str, "default": "http://127.0.0.1:5678"},
-                        "task_critic_url": {"type": str, "default": "http://127.0.0.1:5102"},
+                        "n8n_url": {"type": str, "default": f"http://127.0.0.1:{N8N_PORT}"},
+                        "task_critic_url": {"type": str, "default": f"http://127.0.0.1:{TASK_CRITIC_PORT}"},
                         "timeout_seconds": {"type": int, "default": 300},
                         "retry_on_failure": {"type": bool, "default": True},
                         "max_retries": {"type": int, "default": 3}
@@ -134,8 +143,8 @@ class TaskExecutorEnhanced:
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
         return {
-            "n8n_url": "http://127.0.0.1:5678",
-            "task_critic_url": "http://127.0.0.1:5102",
+            "n8n_url": f"http://127.0.0.1:{N8N_PORT}",
+            "task_critic_url": f"http://127.0.0.1:{TASK_CRITIC_PORT}",
             "timeout_seconds": 300,
             "retry_on_failure": True,
             "max_retries": 3

@@ -6,6 +6,11 @@ Write-Host "LLMルーティングシステム 自動再起動"
 Write-Host "=" * 60
 Write-Host ""
 
+$unifiedApiPort = if ($env:MANAOS_INTEGRATION_PORT) { [int]$env:MANAOS_INTEGRATION_PORT } else { 9502 }
+$llmRoutingPort = if ($env:LLM_ROUTING_PORT) { [int]$env:LLM_ROUTING_PORT } else { 5111 }
+$unifiedApiBaseUrl = if ($env:MANAOS_INTEGRATION_API_URL) { $env:MANAOS_INTEGRATION_API_URL.TrimEnd('/') } else { "http://127.0.0.1:$unifiedApiPort" }
+$llmRoutingBaseUrl = if ($env:LLM_ROUTING_URL) { $env:LLM_ROUTING_URL.TrimEnd('/') } else { "http://127.0.0.1:$llmRoutingPort" }
+
 $workDir = Get-Location
 $checkInterval = 30  # 30秒ごとにチェック
 
@@ -62,15 +67,15 @@ try {
         $unifiedApiOk = Check-AndRestart-Service `
             -ServiceName "Unified API" `
             -ProcessMatch "unified_api_server.py" `
-            -StartCommand "`$env:PYTHONIOENCODING='utf-8'; `$env:PORT='9510'; py -3.10 unified_api_server.py" `
-            -HealthCheckUrl "http://127.0.0.1:9510/health"
+            -StartCommand "`$env:PYTHONIOENCODING='utf-8'; `$env:PORT='$unifiedApiPort'; py -3.10 unified_api_server.py" `
+            -HealthCheckUrl "$unifiedApiBaseUrl/health"
 
         # LLM routing MCP (health only)
         $llmRoutingOk = Check-AndRestart-Service `
             -ServiceName "LLM Routing MCP" `
             -ProcessMatch "llm_routing_mcp_server" `
             -StartCommand "`$env:PYTHONIOENCODING='utf-8'; `$env:MANAOS_LOG_TO_STDERR='1'; python -m llm_routing_mcp_server" `
-            -HealthCheckUrl "http://127.0.0.1:5111/health"
+            -HealthCheckUrl "$llmRoutingBaseUrl/health"
         
         if ($llmRoutingOk -and $unifiedApiOk) {
             Write-Host "   [OK] すべてのサービスが正常です" -ForegroundColor Green

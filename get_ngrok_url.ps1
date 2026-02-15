@@ -2,8 +2,14 @@
 
 Write-Host "=== ngrok URL取得 ===" -ForegroundColor Cyan
 
+$ngrokBaseUrl = if ($env:NGROK_URL) {
+    $env:NGROK_URL.TrimEnd('/')
+} else {
+    "http://127.0.0.1:4040"
+}
+
 try {
-    $response = Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels" -Method Get -TimeoutSec 10
+    $response = Invoke-RestMethod -Uri "$ngrokBaseUrl/api/tunnels" -Method Get -TimeoutSec 10
 
     if ($response.tunnels -and $response.tunnels.Count -gt 0) {
         $publicUrl = $response.tunnels[0].public_url
@@ -26,5 +32,5 @@ try {
     Write-Host "`n確認方法:" -ForegroundColor Yellow
     Write-Host "1. ngrokが起動しているか確認" -ForegroundColor White
     Write-Host "2. ngrokのターミナルウィンドウでURLを確認" -ForegroundColor White
-    Write-Host "3. http://127.0.0.1:4040 にブラウザでアクセス" -ForegroundColor White
+    Write-Host "3. $ngrokBaseUrl にブラウザでアクセス" -ForegroundColor White
 }

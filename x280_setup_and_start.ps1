@@ -46,20 +46,22 @@ if (-not (Test-Path $apiScript)) {
 }
 Write-Host "[OK] API Gateway script found" -ForegroundColor Green
 
-# 4. Stop existing process on port 5120
-Write-Host "[4/4] Checking port 5120..." -ForegroundColor Yellow
-$existingProcess = Get-NetTCPConnection -LocalPort 5120 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique
+$x280Port = if ($env:X280_API_PORT) { [int]$env:X280_API_PORT } else { 5120 }
+
+# 4. Stop existing process on port
+Write-Host "[4/4] Checking port $x280Port..." -ForegroundColor Yellow
+$existingProcess = Get-NetTCPConnection -LocalPort $x280Port -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique
 if ($existingProcess) {
     Write-Host "  Stopping existing process (PID: $existingProcess)..." -ForegroundColor Yellow
     Stop-Process -Id $existingProcess -Force -ErrorAction SilentlyContinue
     Start-Sleep -Seconds 2
 }
-Write-Host "[OK] Port 5120 is available" -ForegroundColor Green
+Write-Host "[OK] Port $x280Port is available" -ForegroundColor Green
 
 # 5. Set environment variables and start API Gateway
 Write-Host ""
 Write-Host "Starting X280 API Gateway..." -ForegroundColor Cyan
-$env:X280_API_PORT = "5120"
+$env:X280_API_PORT = "$x280Port"
 $env:X280_API_HOST = "0.0.0.0"
 
 # Start API Gateway in background
@@ -72,12 +74,17 @@ Start-Sleep -Seconds 5
 # Check if it's running
 Write-Host ""
 Write-Host "Checking API Gateway status..." -ForegroundColor Yellow
+$x280ApiBaseUrl = if ($env:X280_API_URL) {
+    $env:X280_API_URL.TrimEnd('/')
+} else {
+    "http://127.0.0.1:$x280Port"
+}
 try {
-    $response = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/health" -TimeoutSec 5
+    $response = Invoke-RestMethod -Uri "$x280ApiBaseUrl/api/health" -TimeoutSec 5
     Write-Host "[SUCCESS] API Gateway is running!" -ForegroundColor Green
     Write-Host "  Status: $($response.status)" -ForegroundColor Cyan
-    Write-Host "  Port: 5120" -ForegroundColor Cyan
-    Write-Host "  Documentation: http://127.0.0.1:5120/docs" -ForegroundColor Cyan
+    Write-Host "  Port: $x280Port" -ForegroundColor Cyan
+    Write-Host "  Documentation: $x280ApiBaseUrl/docs" -ForegroundColor Cyan
 } catch {
     Write-Host "[WARNING] API Gateway may not be running yet" -ForegroundColor Yellow
     Write-Host "  Error: $_" -ForegroundColor Yellow

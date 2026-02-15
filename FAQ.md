@@ -91,7 +91,7 @@ python -m mrl_memory_integration
 # → エラーメッセージを確認
 
 # 4. ポート競合確認
-netstat -ano | findstr "9510 5105 5126 5111"
+netstat -ano | findstr "9502 5105 5126 5111"
 # → すでに使用されている場合は停止
 ```
 
@@ -140,7 +140,7 @@ Ctrl+Shift+P → "Tasks: Run Task" →
 python -m mrl_memory_integration     # ポート5105
 python -m learning_system_api        # ポート5126
 python -m llm_routing_mcp_server     # ポート5111
-python -m unified_api_server         # ポート9510
+python -m unified_api_server         # ポート9502
 ```
 
 ---
@@ -372,7 +372,7 @@ response = requests.get("http://127.0.0.1:9502/api/mcp/tools")
 # 起動ログに表示される
 
 # 2. 個別サービスの応答時間を測定
-Measure-Command { Invoke-RestMethod http://127.0.0.1:9510/health }
+Measure-Command { Invoke-RestMethod http://127.0.0.1:9502/health }
 Measure-Command { Invoke-RestMethod http://127.0.0.1:5105/health }
 
 # 3. メモリ使用量を確認
@@ -458,20 +458,20 @@ cat .gitignore | findstr ".env"
 
 ---
 
-### Q22: ポート9510が外部に公開されますか？
+### Q22: ポート9502が外部に公開されますか？
 
 **A:** いいえ。デフォルトでローカルのみ（`127.0.0.1`）：
 
 ```python
 # unified_api_server.py
-uvicorn.run(app, host="127.0.0.1", port=9510)
+uvicorn.run(app, host="127.0.0.1", port=9502)
 #                      ^^^^^^^^^^^
 #                      ローカルのみ
 ```
 
 外部公開したい場合（VPNなど）:
 ```python
-uvicorn.run(app, host="0.0.0.0", port=9510)  # すべてのNICで待ち受け
+uvicorn.run(app, host="0.0.0.0", port=9502)  # すべてのNICで待ち受け
 ```
 
 ただし、認証なしなので**推奨しません**。

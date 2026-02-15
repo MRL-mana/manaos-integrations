@@ -7,6 +7,18 @@ WSL2内のOllamaを使用するためのヘルパー
 import subprocess
 import requests
 import sys
+import os
+
+try:
+    from manaos_integrations._paths import OLLAMA_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import OLLAMA_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 
 if sys.platform == 'win32':
     import io
@@ -14,7 +26,7 @@ if sys.platform == 'win32':
 
 def call_wsl2_ollama_api(endpoint: str, method: str = "GET", json_data: dict = None):
     """WSL2内のOllama APIを呼び出す"""
-    url = f"http://127.0.0.1:11434{endpoint}"
+    url = f"{DEFAULT_OLLAMA_URL}{endpoint}"
     
     # WSL2内からAPIを呼び出す
     if method == "GET":

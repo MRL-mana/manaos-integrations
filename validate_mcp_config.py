@@ -10,6 +10,15 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+try:
+    from manaos_integrations._paths import N8N_PORT, UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import N8N_PORT, UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        N8N_PORT = int(os.getenv("N8N_PORT", "5678"))
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9510"))
+
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -18,11 +27,11 @@ REQUIRED_ENV_VARS = {
     "manaos_unified_mcp_server": [
         # 必須ではないが推奨
         ("COMFYUI_URL", False, "http://127.0.0.1:8188"),
-        ("MANAOS_INTEGRATION_API_URL", False, "http://127.0.0.1:9510"),
+        ("MANAOS_INTEGRATION_API_URL", False, f"http://127.0.0.1:{UNIFIED_API_PORT}"),
         ("OBSIDIAN_VAULT_PATH", False, "/app/obsidian_vault"),
     ],
     "n8n_mcp_server": [
-        ("N8N_BASE_URL", False, "http://127.0.0.1:5678"),
+        ("N8N_BASE_URL", False, f"http://127.0.0.1:{N8N_PORT}"),
         ("N8N_API_KEY", True, None),  # APIキーは必須
     ],
     "svi_mcp_server": [

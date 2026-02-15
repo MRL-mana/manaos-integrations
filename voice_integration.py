@@ -265,7 +265,7 @@ class TTSEngine:
     def __init__(
         self,
         engine: str = "voicevox",
-        voicevox_url: str = "http://127.0.0.1:50021",
+        voicevox_url: Optional[str] = None,
         style_bert_vits2_url: Optional[str] = None,
         speaker_id: int = 3,  # VOICEVOXのデフォルトスピーカーID
     ):
@@ -278,9 +278,11 @@ class TTSEngine:
             style_bert_vits2_url: Style-Bert-VITS2 API URL
             speaker_id: スピーカーID（VOICEVOX用）
         """
+        from _paths import VOICEVOX_PORT
+        
         self.engine = engine
-        self.voicevox_url = voicevox_url
-        self.style_bert_vits2_url = style_bert_vits2_url or "http://127.0.0.1:5000"
+        self.voicevox_url = voicevox_url or os.getenv("VOICEVOX_URL", f"http://127.0.0.1:{VOICEVOX_PORT}")
+        self.style_bert_vits2_url = style_bert_vits2_url or os.getenv("STYLE_BERT_VITS2_URL", "http://127.0.0.1:5000")
         self.speaker_id = speaker_id
 
         # エンジン選択
@@ -763,7 +765,7 @@ def create_stt_engine(
 
 
 def create_tts_engine(
-    engine: str = "voicevox", voicevox_url: str = "http://127.0.0.1:50021", speaker_id: int = 3
+    engine: str = "voicevox", voicevox_url: Optional[str] = None, speaker_id: int = 3
 ) -> TTSEngine:
     """TTSエンジンを作成（簡易ファクトリー）"""
     return TTSEngine(engine=engine, voicevox_url=voicevox_url, speaker_id=speaker_id)

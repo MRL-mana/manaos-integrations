@@ -12,6 +12,20 @@ from pathlib import Path
 
 from manaos_process_manager import get_process_manager
 
+try:
+    from manaos_integrations._paths import (
+        FILE_SECRETARY_PORT,
+        ORCHESTRATOR_PORT,
+        SLACK_INTEGRATION_PORT,
+    )
+except Exception:  # pragma: no cover
+    try:
+        from _paths import FILE_SECRETARY_PORT, ORCHESTRATOR_PORT, SLACK_INTEGRATION_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        FILE_SECRETARY_PORT = int(os.getenv("FILE_SECRETARY_PORT", "5120"))
+        ORCHESTRATOR_PORT = int(os.getenv("ORCHESTRATOR_PORT", "5106"))
+        SLACK_INTEGRATION_PORT = int(os.getenv("SLACK_INTEGRATION_PORT", "5114"))
+
 def load_slack_config():
     """Slack設定を読み込む"""
     # Secretsは環境変数/.env（ローカル）から供給する（ファイル走査・直書きは禁止）
@@ -26,7 +40,7 @@ def stop_slack_integration():
     print("既存のSlack統合サーバーを停止中...")
     pm = get_process_manager()
     try:
-        killed = pm.kill_processes_by_port(5114)
+        killed = pm.kill_processes_by_port(SLACK_INTEGRATION_PORT)
         if killed:
             time.sleep(2)
             print(f"  [OK] {killed} プロセスを停止しました")
@@ -49,8 +63,8 @@ def start_slack_integration(config):
         env['SLACK_VERIFICATION_TOKEN'] = config['verification_token']
     
     env['PORT'] = '5114'
-    env['FILE_SECRETARY_URL'] = 'http://127.0.0.1:5120'
-    env['ORCHESTRATOR_URL'] = 'http://127.0.0.1:5106'
+    env['FILE_SECRETARY_URL'] = f'http://127.0.0.1:{FILE_SECRETARY_PORT}'
+    env['ORCHESTRATOR_URL'] = f'http://127.0.0.1:{ORCHESTRATOR_PORT}'
     
     # サーバーを起動
     script_path = Path("slack_integration.py")
@@ -67,14 +81,15 @@ def start_slack_integration(config):
         
         # 起動確認
         try:
-            response = httpx.get("http://127.0.0.1:5114/health", timeout=5)
+            base_url = f"http://127.0.0.1:{SLACK_INTEGRATION_PORT}"
+            response = httpx.get(f"{base_url}/health", timeout=5)
             if response.status_code == 200:
                 data = response.json()
                 if data.get("status") == "healthy":
                     print("  [OK] サーバーが正常に起動しました")
                     
                     # 設定確認
-                    test_response = httpx.get("http://127.0.0.1:5114/api/slack/test", timeout=5)
+                    test_response = httpx.get(f"{base_url}/api/slack/test", timeout=5)
                     if test_response.status_code == 200:
                         test_data = test_response.json()
                         print(f"  Webhook URL: {'設定済み' if test_data.get('slack_webhook_configured') else '未設定'}")

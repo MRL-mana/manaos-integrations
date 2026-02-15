@@ -33,9 +33,11 @@ if (-not (Test-Path $apiScript)) {
 }
 Write-Host "[OK] API Gateway script found" -ForegroundColor Green
 
-# Stop existing process on port 5120
-Write-Host "[3/4] Checking port 5120..." -ForegroundColor Yellow
-$existingConnections = Get-NetTCPConnection -LocalPort 5120 -ErrorAction SilentlyContinue
+$x280Port = if ($env:X280_API_PORT) { [int]$env:X280_API_PORT } else { 5120 }
+
+# Stop existing process on port
+Write-Host "[3/4] Checking port $x280Port..." -ForegroundColor Yellow
+$existingConnections = Get-NetTCPConnection -LocalPort $x280Port -ErrorAction SilentlyContinue
 if ($existingConnections) {
     $processes = $existingConnections | Select-Object -ExpandProperty OwningProcess -Unique
     foreach ($procId in $processes) {
@@ -44,28 +46,33 @@ if ($existingConnections) {
     }
     Start-Sleep -Seconds 2
 }
-Write-Host "[OK] Port 5120 is available" -ForegroundColor Green
+Write-Host "[OK] Port $x280Port is available" -ForegroundColor Green
 
 # Set environment variables
 Write-Host "[4/4] Starting API Gateway..." -ForegroundColor Yellow
-$env:X280_API_PORT = "5120"
+$env:X280_API_PORT = "$x280Port"
 $env:X280_API_HOST = "0.0.0.0"
 
 # Start API Gateway in a new window (so we can see it)
 Write-Host "Starting API Gateway..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir'; `$env:X280_API_PORT='5120'; `$env:X280_API_HOST='0.0.0.0'; python x280_api_gateway.py"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir'; `$env:X280_API_PORT='$x280Port'; `$env:X280_API_HOST='0.0.0.0'; python x280_api_gateway.py"
 
 Start-Sleep -Seconds 5
 
 # Check if it's running
 Write-Host ""
 Write-Host "Checking API Gateway status..." -ForegroundColor Yellow
+$x280ApiBaseUrl = if ($env:X280_API_URL) {
+    $env:X280_API_URL.TrimEnd('/')
+} else {
+    "http://127.0.0.1:$x280Port"
+}
 try {
-    $response = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/health" -TimeoutSec 5
+    $response = Invoke-RestMethod -Uri "$x280ApiBaseUrl/api/health" -TimeoutSec 5
     Write-Host "[SUCCESS] API Gateway is running!" -ForegroundColor Green
     Write-Host "  Status: $($response.status)" -ForegroundColor Cyan
-    Write-Host "  Port: 5120" -ForegroundColor Cyan
-    Write-Host "  Documentation: http://127.0.0.1:5120/docs" -ForegroundColor Cyan
+    Write-Host "  Port: $x280Port" -ForegroundColor Cyan
+    Write-Host "  Documentation: $x280ApiBaseUrl/docs" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "The API Gateway window is open. Keep it running." -ForegroundColor Yellow
 } catch {

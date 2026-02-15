@@ -77,6 +77,14 @@ logger = get_logger(__name__)
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("ServiceBridge")
 
+try:
+    from manaos_integrations._paths import MRL_MEMORY_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import MRL_MEMORY_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        MRL_MEMORY_PORT = int(os.getenv("MRL_MEMORY_PORT", "5105"))
+
 
 class ManaOSServiceBridge:
     """ManaOSサービスブリッジ（最適化版）"""
@@ -92,7 +100,7 @@ class ManaOSServiceBridge:
         self.monitoring_url = os.getenv("MONITORING_URL", "http://127.0.0.1:9407")
         self.ocr_api_url = os.getenv("OCR_API_URL", "http://127.0.0.1:9409")
         self.gallery_api_url = os.getenv("GALLERY_API_URL", "http://127.0.0.1:5559")
-        self.mrl_memory_url = os.getenv("MRL_MEMORY_API_URL", "http://127.0.0.1:5105")
+        self.mrl_memory_url = os.getenv("MRL_MEMORY_API_URL", f"http://127.0.0.1:{MRL_MEMORY_PORT}")
         
         # 統一キャッシュシステム（オプション）
         self.cache = None

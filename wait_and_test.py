@@ -8,7 +8,18 @@ import time
 import requests
 import sys
 
-BASE_URL = "http://127.0.0.1:9510"
+import os
+from datetime import datetime
+
+try:
+    from manaos_integrations._paths import UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9510"))
+
+BASE_URL = os.getenv("MANAOS_INTEGRATION_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}")
 MAX_WAIT = 60  # 最大60秒待機
 CHECK_INTERVAL = 2  # 2秒ごとにチェック
 
@@ -134,7 +145,7 @@ def main():
         print()
         print("次のステップ:")
         print("  - 実際のタスクを実行してみてください")
-        print("  - ブラウザで http://127.0.0.1:9510/health にアクセス")
+        print(f"  - ブラウザで {BASE_URL}/health にアクセス")
     else:
         print("[WARN] 一部のテストが失敗しました")
         print("=" * 60)

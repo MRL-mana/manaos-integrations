@@ -18,7 +18,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://127.0.0.1:9510/api/excel/process",
+        "url": "http://127.0.0.1:9502/api/excel/process",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ {\n  \"file_path\": $json.file_path,\n  \"task\": $json.task || \"異常値検出\"\n} }}",

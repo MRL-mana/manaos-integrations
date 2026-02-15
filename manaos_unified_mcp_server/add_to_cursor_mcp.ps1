@@ -38,13 +38,18 @@ Write-Host ""
 # プロジェクトルート（このスクリプトの親ディレクトリ）
 $projectRoot = if ($PSScriptRoot) { (Resolve-Path (Join-Path $PSScriptRoot "..")).Path } else { (Get-Location).Path }
 
+$comfyUiPort = if ($env:COMFYUI_PORT) { [int]$env:COMFYUI_PORT } else { 8188 }
+$unifiedApiPort = if ($env:MANAOS_INTEGRATION_PORT) { [int]$env:MANAOS_INTEGRATION_PORT } else { 9502 }
+$comfyUiBaseUrl = if ($env:COMFYUI_URL) { $env:COMFYUI_URL.TrimEnd('/') } else { "http://127.0.0.1:$comfyUiPort" }
+$unifiedApiBaseUrl = if ($env:MANAOS_INTEGRATION_API_URL) { $env:MANAOS_INTEGRATION_API_URL.TrimEnd('/') } else { "http://127.0.0.1:$unifiedApiPort" }
+
 # ManaOS統合MCPサーバーの設定
 $manaosConfig = @{
     command = "python"
     args    = @("-m", "manaos_unified_mcp_server.server")
     env     = @{
-        COMFYUI_URL                = "http://127.0.0.1:8188"
-        MANAOS_INTEGRATION_API_URL = "http://127.0.0.1:9510"
+        COMFYUI_URL                = $comfyUiBaseUrl
+        MANAOS_INTEGRATION_API_URL = $unifiedApiBaseUrl
         OBSIDIAN_VAULT_PATH        = $(if ($env:OBSIDIAN_VAULT_PATH) { $env:OBSIDIAN_VAULT_PATH } else { "C:\Users\mana4\Documents\Obsidian Vault" })
     }
     cwd     = $projectRoot

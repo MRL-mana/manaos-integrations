@@ -13,6 +13,14 @@ from typing import Dict, Any, Optional
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
+try:
+    from manaos_integrations._paths import ORCHESTRATOR_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import ORCHESTRATOR_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        ORCHESTRATOR_PORT = int(os.getenv("ORCHESTRATOR_PORT", "5106"))
+
 # 統一モジュールのインポート
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
@@ -31,7 +39,7 @@ app = Flask(__name__)
 CORS(app)
 
 # 設定
-ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://127.0.0.1:5106")
+ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", f"http://127.0.0.1:{ORCHESTRATOR_PORT}")
 
 # 音声認識API（Web Speech APIを使用するため、フロントエンドで処理）
 # バックエンドはテキストを受け取って実行するだけ

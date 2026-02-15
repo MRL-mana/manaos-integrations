@@ -19,7 +19,26 @@ from typing import List, Optional
 
 import requests
 
-LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", "http://127.0.0.1:1234/v1").rstrip("/")
+def _env_int(name: str, default: int) -> int:
+    try:
+        return int(os.getenv(name, str(default)))
+    except Exception:
+        return default
+
+
+try:
+    from manaos_integrations._paths import LM_STUDIO_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import LM_STUDIO_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        LM_STUDIO_PORT = _env_int("LM_STUDIO_PORT", 1234)
+
+
+DEFAULT_LM_STUDIO_URL = os.getenv(
+    "LM_STUDIO_URL", f"http://127.0.0.1:{LM_STUDIO_PORT}/v1"
+)
+LM_STUDIO_URL = DEFAULT_LM_STUDIO_URL.rstrip("/")
 
 
 @dataclass(frozen=True)

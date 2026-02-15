@@ -5,7 +5,16 @@ ManaOS環境でのLFM 2.5の実用的な使用例
 
 from always_ready_llm_client import AlwaysReadyLLMClient, ModelType, TaskType
 from llm_routing import LLMRouter
+import os
 import time
+
+try:
+    from manaos_integrations._paths import UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9502"))
 
 
 def example_1_basic_chat():
@@ -219,7 +228,7 @@ def example_10_api_usage():
     
     import requests
     
-    api_url = "http://127.0.0.1:9510"
+    api_url = os.getenv("MANAOS_INTEGRATION_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}")
     
     # LFM 2.5チャット
     response = requests.post(

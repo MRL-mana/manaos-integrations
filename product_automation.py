@@ -13,6 +13,15 @@ from typing import Dict, Any, Optional, List
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+try:
+    from manaos_integrations._paths import CONTENT_GENERATION_PORT, REVENUE_TRACKER_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import CONTENT_GENERATION_PORT, REVENUE_TRACKER_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        CONTENT_GENERATION_PORT = int(os.getenv("CONTENT_GENERATION_PORT", "5109"))
+        REVENUE_TRACKER_PORT = int(os.getenv("REVENUE_TRACKER_PORT", "5117"))
+
 # 統一モジュールのインポート
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
@@ -31,8 +40,8 @@ app = Flask(__name__)
 CORS(app)
 
 # 設定
-CONTENT_GENERATION_URL = os.getenv("CONTENT_GENERATION_URL", "http://127.0.0.1:5109")
-REVENUE_TRACKER_URL = os.getenv("REVENUE_TRACKER_URL", "http://127.0.0.1:5117")
+CONTENT_GENERATION_URL = os.getenv("CONTENT_GENERATION_URL", f"http://127.0.0.1:{CONTENT_GENERATION_PORT}")
+REVENUE_TRACKER_URL = os.getenv("REVENUE_TRACKER_URL", f"http://127.0.0.1:{REVENUE_TRACKER_PORT}")
 
 def get_generated_contents(content_type: Optional[str] = None, status: str = "draft", limit: int = 10) -> List[Dict[str, Any]]:
     """生成コンテンツを取得"""

@@ -46,10 +46,23 @@ class APISecurity:
             require_auth: 認証必須かどうか（環境変数から読み込み可能）
         """
         import os
-        
-        # 環境変数から読み込み（本番設定）
-        self.require_auth = os.getenv("REQUIRE_AUTH", "1" if require_auth else "0").lower() in ["1", "true", "yes"]
+
+        # APIキー（MRL専用 -> 共通キーの順で採用）
         self.api_key = api_key or os.getenv("MRL_MEMORY_API_KEY") or os.getenv("API_KEY")
+
+        # 認証必須フラグ（優先順）
+        # 1) MRL_MEMORY_REQUIRE_AUTH
+        # 2) REQUIRE_AUTH
+        # 3) どちらも未設定なら「APIキーがある時のみ認証ON」
+        raw_require_auth = os.getenv("MRL_MEMORY_REQUIRE_AUTH")
+        if raw_require_auth is None:
+            raw_require_auth = os.getenv("REQUIRE_AUTH")
+
+        if raw_require_auth is None:
+            self.require_auth = bool(self.api_key) if require_auth else False
+        else:
+            self.require_auth = raw_require_auth.lower() in ["1", "true", "yes"]
+
         self.rate_limit_per_minute = int(os.getenv("RATE_LIMIT_PER_MIN", str(rate_limit_per_minute)))
         self.max_input_size = int(os.getenv("MAX_INPUT_CHARS", str(max_input_size)))
         

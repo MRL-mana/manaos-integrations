@@ -10,6 +10,20 @@ import os
 from pathlib import Path
 from datetime import datetime
 
+try:
+    from manaos_integrations._paths import UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9502"))
+
+
+DEFAULT_UNIFIED_API_URL = os.getenv(
+    "MANAOS_INTEGRATION_API_URL",
+    f"http://127.0.0.1:{UNIFIED_API_PORT}",
+).rstrip("/")
+
 # 環境変数の読み込み
 try:
     from dotenv import load_dotenv
@@ -34,7 +48,7 @@ except ImportError:
 
 def wait_for_ready(max_wait: int = 120, poll_interval: int = 5):
     """サーバーがreadyになるまで待つ"""
-    base_url = "http://127.0.0.1:9510"
+    base_url = DEFAULT_UNIFIED_API_URL
     start_time = time.time()
     
     while time.time() - start_time < max_wait:

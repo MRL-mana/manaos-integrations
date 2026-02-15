@@ -7,8 +7,17 @@ Intent Routerへの登録と統合処理
 
 import json
 import httpx
+import os
 from pathlib import Path
 from typing import Dict, Any
+
+try:
+    from manaos_integrations._paths import INTENT_ROUTER_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import INTENT_ROUTER_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        INTENT_ROUTER_PORT = int(os.getenv("INTENT_ROUTER_PORT", "5100"))
 
 from manaos_logger import get_logger
 from step_deep_research.orchestrator import StepDeepResearchOrchestrator
@@ -34,7 +43,7 @@ class StepDeepResearchManaOSIntegration:
         self.orchestrator = StepDeepResearchOrchestrator(self.config)
         
         # Intent Router URL
-        self.intent_router_url = "http://127.0.0.1:5100"
+        self.intent_router_url = os.getenv("INTENT_ROUTER_URL", f"http://127.0.0.1:{INTENT_ROUTER_PORT}")
     
     def register_with_intent_router(self) -> bool:
         """

@@ -18,7 +18,7 @@ try:
 except Exception:
     OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
     LM_STUDIO_PORT = int(os.getenv("LM_STUDIO_PORT", "1234"))
-    UNIFIED_API_PORT = int(os.getenv("PORT", os.getenv("UNIFIED_API_PORT", "9510")))
+    UNIFIED_API_PORT = int(os.getenv("PORT", os.getenv("UNIFIED_API_PORT", "9502")))
 
 try:
     from manaos_logger import get_logger

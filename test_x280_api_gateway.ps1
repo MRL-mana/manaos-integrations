@@ -3,14 +3,21 @@
 
 Write-Host "=== X280 API Gateway テスト ===" -ForegroundColor Cyan
 
+$x280Port = if ($env:X280_API_PORT) { [int]$env:X280_API_PORT } else { 5120 }
+$x280ApiBaseUrl = if ($env:X280_API_URL) {
+    $env:X280_API_URL.TrimEnd('/')
+} else {
+    "http://127.0.0.1:$x280Port"
+}
+
 # 1. API Gatewayをバックグラウンドで起動
 Write-Host "`n[1] API Gatewayを起動中..." -ForegroundColor Yellow
-$env:X280_API_PORT = "5120"
+$env:X280_API_PORT = "$x280Port"
 $env:X280_API_HOST = "0.0.0.0"
 
 $job = Start-Job -ScriptBlock {
     Set-Location $using:PWD
-    $env:X280_API_PORT = "5120"
+    $env:X280_API_PORT = "$using:x280Port"
     $env:X280_API_HOST = "0.0.0.0"
     python x280_api_gateway.py
 }
@@ -21,7 +28,7 @@ Write-Host "  [OK] API Gatewayを起動しました（ジョブID: $($job.Id)）
 # 2. ヘルスチェック
 Write-Host "`n[2] ヘルスチェック中..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/health" -Method Get -TimeoutSec 5
+    $response = Invoke-RestMethod -Uri "$x280ApiBaseUrl/api/health" -Method Get -TimeoutSec 5
     Write-Host "  [OK] API Gatewayは正常に動作しています" -ForegroundColor Green
     Write-Host "  ステータス: $($response.status)" -ForegroundColor Cyan
 } catch {
@@ -34,7 +41,7 @@ try {
 # 3. システム情報取得テスト
 Write-Host "`n[3] システム情報取得テスト..." -ForegroundColor Yellow
 try {
-    $sysInfo = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/system/info" -Method Get -TimeoutSec 10
+    $sysInfo = Invoke-RestMethod -Uri "$x280ApiBaseUrl/api/system/info" -Method Get -TimeoutSec 10
     Write-Host "  [OK] システム情報を取得しました" -ForegroundColor Green
     Write-Host "  ホスト名: $($sysInfo.hostname)" -ForegroundColor Cyan
 } catch {
@@ -44,7 +51,7 @@ try {
 # 4. リソース情報取得テスト
 Write-Host "`n[4] リソース情報取得テスト..." -ForegroundColor Yellow
 try {
-    $resources = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/system/resources" -Method Get -TimeoutSec 10
+    $resources = Invoke-RestMethod -Uri "$x280ApiBaseUrl/api/system/resources" -Method Get -TimeoutSec 10
     Write-Host "  [OK] リソース情報を取得しました" -ForegroundColor Green
     Write-Host "  CPU使用率: $($resources.cpu.usage_percent)%" -ForegroundColor Cyan
     Write-Host "  メモリ使用率: $($resources.memory.usage_percent)%" -ForegroundColor Cyan
@@ -61,7 +68,7 @@ try {
         timeout = 10
     } | ConvertTo-Json
     
-    $cmdResult = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/execute" -Method Post -Body $body -ContentType "application/json" -TimeoutSec 15
+    $cmdResult = Invoke-RestMethod -Uri "$x280ApiBaseUrl/api/execute" -Method Post -Body $body -ContentType "application/json" -TimeoutSec 15
     Write-Host "  [OK] コマンドを実行しました" -ForegroundColor Green
     Write-Host "  コマンド: $($cmdResult.command)" -ForegroundColor Cyan
     Write-Host "  終了コード: $($cmdResult.exit_code)" -ForegroundColor Cyan

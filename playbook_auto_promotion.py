@@ -13,12 +13,27 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 import json
 
+try:
+    from manaos_integrations._paths import INTRINSIC_MOTIVATION_PORT, TODO_QUEUE_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import INTRINSIC_MOTIVATION_PORT, TODO_QUEUE_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        INTRINSIC_MOTIVATION_PORT = int(os.getenv("INTRINSIC_MOTIVATION_PORT", "5130"))
+        TODO_QUEUE_PORT = int(os.getenv("TODO_QUEUE_PORT", "5134"))
+
 # 設定（環境変数から取得、デフォルト値あり）
 VAULT_PATH = Path(os.getenv("OBSIDIAN_VAULT_PATH", r"C:\Users\mana4\Documents\Obsidian Vault"))
 PLAYBOOK_DIR = VAULT_PATH / "ManaOS" / "System" / "Playbook_Review"
 DAILY_DIR = VAULT_PATH / "ManaOS" / "System" / "Daily"
-TODO_METRICS_URL = "http://127.0.0.1:5134/api/metrics"
-SCORE_URL = "http://127.0.0.1:5130/api/score"
+TODO_METRICS_URL = os.getenv(
+    "TODO_METRICS_URL",
+    f"http://127.0.0.1:{TODO_QUEUE_PORT}/api/metrics",
+)
+SCORE_URL = os.getenv(
+    "INTRINSIC_SCORE_URL",
+    f"http://127.0.0.1:{INTRINSIC_MOTIVATION_PORT}/api/score",
+)
 
 # Tier定義
 TIER_CRITERIA = {

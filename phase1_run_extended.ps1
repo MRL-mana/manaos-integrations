@@ -17,7 +17,8 @@ try {
     $OutputEncoding = [System.Text.UTF8Encoding]::new()
 } catch {}
 Set-Location $PSScriptRoot
-$api = "http://127.0.0.1:9510/api/llm/chat"
+$unifiedApiBaseUrl = if ($env:MANAOS_INTEGRATION_API_URL) { $env:MANAOS_INTEGRATION_API_URL.TrimEnd('/') } else { "http://127.0.0.1:9502" }
+$api = "$unifiedApiBaseUrl/api/llm/chat"
 $timeout = 300
 
 Write-Host "=== Phase1 $Condition $Rounds-round extended test ===" -ForegroundColor Cyan

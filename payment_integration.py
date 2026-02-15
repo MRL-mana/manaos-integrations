@@ -13,9 +13,30 @@ from typing import Dict, Any, Optional
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+try:
+    from manaos_integrations._paths import (
+        PAYMENT_INTEGRATION_PORT,
+        REVENUE_TRACKER_PORT,
+    )
+except Exception:  # pragma: no cover
+    try:
+        from _paths import (  # type: ignore
+            PAYMENT_INTEGRATION_PORT,
+            REVENUE_TRACKER_PORT,
+        )
+    except Exception:  # pragma: no cover
+        REVENUE_TRACKER_PORT = int(os.getenv("REVENUE_TRACKER_PORT", "5117"))
+        PAYMENT_INTEGRATION_PORT = int(
+            os.getenv("PAYMENT_INTEGRATION_PORT", "5119")
+        )
+
 # 統一モジュールのインポート
 from manaos_logger import get_logger
-from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
+from manaos_error_handler import (
+    ManaOSErrorHandler,
+    ErrorCategory,
+    ErrorSeverity,
+)
 from manaos_timeout_config import get_timeout_config
 
 # ロガーの初期化
@@ -31,7 +52,10 @@ app = Flask(__name__)
 CORS(app)
 
 # 設定
-REVENUE_TRACKER_URL = os.getenv("REVENUE_TRACKER_URL", "http://127.0.0.1:5117")
+REVENUE_TRACKER_URL = os.getenv(
+    "REVENUE_TRACKER_URL",
+    f"http://127.0.0.1:{REVENUE_TRACKER_PORT}",
+)
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
 PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
@@ -181,8 +205,14 @@ def process_paypal_payment(amount: float, currency: str = "JPY", product_id: Opt
                     "custom": json.dumps(metadata) if metadata else None
                 }],
                 "redirect_urls": {
-                    "return_url": os.getenv("PAYPAL_RETURN_URL", "http://127.0.0.1:5119/api/payment/paypal/return"),
-                    "cancel_url": os.getenv("PAYPAL_CANCEL_URL", "http://127.0.0.1:5119/api/payment/paypal/cancel")
+                    "return_url": os.getenv(
+                        "PAYPAL_RETURN_URL",
+                        f"http://127.0.0.1:{PAYMENT_INTEGRATION_PORT}/api/payment/paypal/return",
+                    ),
+                    "cancel_url": os.getenv(
+                        "PAYPAL_CANCEL_URL",
+                        f"http://127.0.0.1:{PAYMENT_INTEGRATION_PORT}/api/payment/paypal/cancel",
+                    )
                 }
             })
             

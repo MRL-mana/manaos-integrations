@@ -9,7 +9,7 @@ $services = @(
     @{Name="Task Critic"; Port=5102; Script="task_critic.py"},
     @{Name="RAG Memory"; Port=5103; Script="rag_memory_enhanced.py"},
     @{Name="Task Queue"; Port=5104; Script="task_queue_system.py"},
-    @{Name="UI Operations"; Port=5105; Script="ui_operations_api.py"},
+    @{Name="UI Operations"; Port=5110; Script="ui_operations_api.py"},
     @{Name="Unified Orchestrator"; Port=5106; Script="unified_orchestrator.py"},
     @{Name="Executor Enhanced"; Port=5107; Script="task_executor_enhanced.py"},
     @{Name="Portal Integration"; Port=5108; Script="portal_integration_api.py"},
@@ -25,7 +25,7 @@ $services = @(
     @{Name="Payment Integration"; Port=5119; Script="payment_integration.py"},
     @{Name="SSOT API"; Port=5120; Script="ssot_api.py"},
     @{Name="LLM Routing MCP"; Port=5111; Script="llm_routing_mcp_server"},
-    @{Name="Unified API Server"; Port=9510; Script="unified_api_server.py"}
+    @{Name="Unified API Server"; Port=9502; Script="unified_api_server.py"}
 )
 
 $totalKilled = 0

@@ -7,6 +7,24 @@ Write-Host ""
 
 $workDir = Get-Location
 
+# URL（環境変数で上書き可能）
+$defaultUnifiedPort = if ($env:UNIFIED_API_PORT) { $env:UNIFIED_API_PORT } elseif ($env:PORT) { $env:PORT } else { "9502" }
+$llmRoutingPort = if ($env:LLM_ROUTING_PORT) { $env:LLM_ROUTING_PORT } else { "5111" }
+$unifiedApiBaseUrl = if ($env:MANAOS_INTEGRATION_API_URL) { $env:MANAOS_INTEGRATION_API_URL.TrimEnd('/') } else { "http://127.0.0.1:$defaultUnifiedPort" }
+$llmRoutingBaseUrl = if ($env:LLM_ROUTING_URL) { $env:LLM_ROUTING_URL.TrimEnd('/') } else { "http://127.0.0.1:$llmRoutingPort" }
+
+function Get-UriSafe {
+    param([string]$Url)
+    try {
+        return [uri]$Url
+    } catch {
+        return $null
+    }
+}
+
+$unifiedApiUri = Get-UriSafe -Url $unifiedApiBaseUrl
+$unifiedApiPort = if ($unifiedApiUri) { $unifiedApiUri.Port } else { $defaultUnifiedPort }
+
 # 1. LLM Routing MCP を起動（ヘルス: 5111）
 Write-Host "[1] LLM Routing MCP を起動中..." -ForegroundColor Yellow
 
@@ -57,7 +75,7 @@ if ($existingUnified) {
 }
 
 if (-not $existingUnified -or $restartUnified -eq "y") {
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$workDir'; `$env:PYTHONIOENCODING='utf-8'; `$env:PORT='9510'; py -3.10 unified_api_server.py" -WindowStyle Minimized
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$workDir'; `$env:PYTHONIOENCODING='utf-8'; `$env:PORT='$unifiedApiPort'; py -3.10 unified_api_server.py" -WindowStyle Minimized
     Write-Host "   [OK] 統合APIサーバーを起動しました" -ForegroundColor Green
     Start-Sleep -Seconds 3
 }
@@ -71,7 +89,7 @@ $allOk = $true
 
 # LLM Routing MCP health
 try {
-    $status = Invoke-RestMethod -Uri "http://127.0.0.1:5111/health" -Method GET -TimeoutSec 2 -ErrorAction Stop
+    $status = Invoke-RestMethod -Uri "$llmRoutingBaseUrl/health" -Method GET -TimeoutSec 2 -ErrorAction Stop
     Write-Host "   [OK] LLM Routing MCP: 起動中" -ForegroundColor Green
 } catch {
     Write-Host "   [NG] LLM Routing MCP: 起動失敗" -ForegroundColor Red
@@ -80,7 +98,7 @@ try {
 
 # 統合APIサーバー
 try {
-    $status = Invoke-RestMethod -Uri "http://127.0.0.1:9510/health" -Method GET -TimeoutSec 2 -ErrorAction Stop
+    $status = Invoke-RestMethod -Uri "$unifiedApiBaseUrl/health" -Method GET -TimeoutSec 2 -ErrorAction Stop
     Write-Host "   [OK] 統合APIサーバー: 起動中" -ForegroundColor Green
     Write-Host "      ステータス: $($status.status)" -ForegroundColor Gray
 } catch {

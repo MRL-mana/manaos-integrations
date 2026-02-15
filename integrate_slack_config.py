@@ -10,6 +10,15 @@ import re
 import json
 from pathlib import Path
 
+try:
+    from manaos_integrations._paths import FILE_SECRETARY_PORT, ORCHESTRATOR_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import FILE_SECRETARY_PORT, ORCHESTRATOR_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        FILE_SECRETARY_PORT = int(os.getenv("FILE_SECRETARY_PORT", "5120"))
+        ORCHESTRATOR_PORT = int(os.getenv("ORCHESTRATOR_PORT", "5106"))
+
 
 def mask_secret(value: str, *, keep_start: int = 6, keep_end: int = 4) -> str:
     if not value:
@@ -118,7 +127,7 @@ def main():
         if verification_token and verification_token_source != "env":
             print('$env:SLACK_VERIFICATION_TOKEN = "<your_verification_token>"  # 値は安全のため表示しません')
         print('$env:PORT = "5114"')
-        print('$env:FILE_SECRETARY_URL = "http://127.0.0.1:5120"')
+        print(f'$env:FILE_SECRETARY_URL = "http://127.0.0.1:{FILE_SECRETARY_PORT}"')
         print('python slack_integration.py')
         
         # 起動スクリプト生成（秘密情報は保存しない）
@@ -127,8 +136,8 @@ def main():
             f.write("# Slack Integration起動スクリプト（設定統合版）\n")
             f.write("cd C:\\Users\\mana4\\Desktop\\manaos_integrations\n\n")
             f.write('$env:PORT = "5114"\n')
-            f.write('$env:FILE_SECRETARY_URL = "http://127.0.0.1:5120"\n')
-            f.write('$env:ORCHESTRATOR_URL = "http://127.0.0.1:5106"\n')
+            f.write(f'$env:FILE_SECRETARY_URL = "http://127.0.0.1:{FILE_SECRETARY_PORT}"\n')
+            f.write(f'$env:ORCHESTRATOR_URL = "http://127.0.0.1:{ORCHESTRATOR_PORT}"\n')
             f.write('\n')
             f.write('if (-not $env:SLACK_WEBHOOK_URL -and -not $env:SLACK_VERIFICATION_TOKEN) {\n')
             f.write('  Write-Error "SLACK_WEBHOOK_URL または SLACK_VERIFICATION_TOKEN を環境変数に設定してください（スクリプトは安全のため値を保存しません）"\n')

@@ -11,10 +11,13 @@ Write-Host ""
 $mcpConfigPath1 = "$env:APPDATA\Cursor\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json"
 $mcpConfigPath2 = "$env:USERPROFILE\.cursor\mcp.json"
 
+$n8nPort = if ($env:N8N_PORT) { $env:N8N_PORT } else { "5679" }
+$n8nBaseUrl = if ($env:N8N_URL) { $env:N8N_URL.TrimEnd('/') } else { "http://127.0.0.1:$n8nPort" }
+
 Write-Host "[手順]" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "1. ブラウザでn8nのWeb UIを開いてください:" -ForegroundColor White
-Write-Host "   http://127.0.0.1:5679" -ForegroundColor Cyan
+Write-Host "   $n8nBaseUrl" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "2. ログイン後、APIキーを作成してください:" -ForegroundColor White
 Write-Host "   Settings → API → Create API Key" -ForegroundColor Gray

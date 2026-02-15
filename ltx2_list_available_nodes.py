@@ -16,7 +16,9 @@ import sys
 
 import requests
 
-COMFYUI_URL_DEFAULT = "http://127.0.0.1:8188"
+from _paths import COMFYUI_PORT
+
+COMFYUI_URL_DEFAULT = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
 
 # LTX / 動画で使うノードのプレフィックス・キーワード
 RELEVANT_KEYWORDS = (

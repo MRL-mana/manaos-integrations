@@ -13,7 +13,8 @@ Set-Location $scriptDir
 # Stop existing processes
 Write-Host "[1/4] Stopping existing processes..." -ForegroundColor Yellow
 try {
-    $existingConnections = netstat -ano | Select-String ":5120" | Select-String "LISTENING"
+    $x280Port = if ($env:X280_API_PORT) { [int]$env:X280_API_PORT } else { 5120 }
+    $existingConnections = netstat -ano | Select-String ":$x280Port" | Select-String "LISTENING"
     if ($existingConnections) {
         $pids = $existingConnections | ForEach-Object {
             ($_ -split '\s+')[-1]
@@ -37,7 +38,7 @@ if ($LASTEXITCODE -ne 0 -or $firewallRule -match "指定された規則が見つ
     Write-Host "  [INFO] Attempting to create firewall rule..." -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Please run as Administrator:" -ForegroundColor Yellow
-    Write-Host "  netsh advfirewall firewall add rule name=`"ManaOS X280 API Gateway`" dir=in action=allow protocol=TCP localport=5120" -ForegroundColor Cyan
+    Write-Host "  netsh advfirewall firewall add rule name=`"ManaOS X280 API Gateway`" dir=in action=allow protocol=TCP localport=$x280Port" -ForegroundColor Cyan
     Write-Host ""
 } else {
     Write-Host "[OK] Firewall rule exists" -ForegroundColor Green
@@ -45,7 +46,7 @@ if ($LASTEXITCODE -ne 0 -or $firewallRule -match "指定された規則が見つ
 
 # Set environment variables
 Write-Host "[3/4] Setting environment variables..." -ForegroundColor Yellow
-$env:X280_API_PORT = "5120"
+$env:X280_API_PORT = "$x280Port"
 $env:X280_API_HOST = "0.0.0.0"
 Write-Host "[OK] Environment variables set" -ForegroundColor Green
 Write-Host "  X280_API_PORT = $env:X280_API_PORT" -ForegroundColor Gray
@@ -53,7 +54,7 @@ Write-Host "  X280_API_HOST = $env:X280_API_HOST" -ForegroundColor Gray
 
 # Start API Gateway
 Write-Host "[4/4] Starting API Gateway..." -ForegroundColor Yellow
-$env:X280_API_PORT = "5120"
+$env:X280_API_PORT = "$x280Port"
 $env:X280_API_HOST = "0.0.0.0"
 $process = Start-Process python -ArgumentList "x280_api_gateway.py" -PassThru -WindowStyle Hidden -WorkingDirectory $scriptDir
 
@@ -65,19 +66,24 @@ Start-Sleep -Seconds 8
 # Check if it's running
 Write-Host ""
 Write-Host "Checking API Gateway status..." -ForegroundColor Yellow
+$x280ApiBaseUrl = if ($env:X280_API_URL) {
+    $env:X280_API_URL.TrimEnd('/')
+} else {
+    "http://127.0.0.1:$x280Port"
+}
 try {
-    $response = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/health" -TimeoutSec 5
+    $response = Invoke-RestMethod -Uri "$x280ApiBaseUrl/api/health" -TimeoutSec 5
     Write-Host "[SUCCESS] API Gateway is running!" -ForegroundColor Green
     Write-Host "  Status: $($response.status)" -ForegroundColor Cyan
     Write-Host "  Process ID: $($process.Id)" -ForegroundColor Cyan
-    Write-Host "  Listening on: 0.0.0.0:5120" -ForegroundColor Cyan
+    Write-Host "  Listening on: 0.0.0.0:$x280Port" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "Local access: http://127.0.0.1:5120/api/health" -ForegroundColor Cyan
-    Write-Host "Remote access: http://100.127.121.20:5120/api/health" -ForegroundColor Cyan
+    Write-Host "Local access: $x280ApiBaseUrl/api/health" -ForegroundColor Cyan
+    Write-Host "Remote access: http://100.127.121.20:$x280Port/api/health" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Note: If remote access fails, configure firewall:" -ForegroundColor Yellow
     Write-Host "  Run as Administrator:" -ForegroundColor Yellow
-    Write-Host "  netsh advfirewall firewall add rule name=`"ManaOS X280 API Gateway`" dir=in action=allow protocol=TCP localport=5120" -ForegroundColor Cyan
+    Write-Host "  netsh advfirewall firewall add rule name=`"ManaOS X280 API Gateway`" dir=in action=allow protocol=TCP localport=$x280Port" -ForegroundColor Cyan
 } catch {
     Write-Host "[WARNING] Could not verify API Gateway status" -ForegroundColor Yellow
     Write-Host "  Error: $_" -ForegroundColor Yellow

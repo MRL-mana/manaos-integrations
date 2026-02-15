@@ -4,9 +4,21 @@
 計画作成エージェント（Planner）
 """
 
+import os
 import httpx
 from typing import Dict, Any
 from pathlib import Path
+
+try:
+    from manaos_integrations._paths import OLLAMA_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import OLLAMA_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
@@ -28,7 +40,7 @@ class PlannerAgent:
             config: Planner設定
         """
         self.config = config
-        self.ollama_url = config.get("ollama_url", "http://127.0.0.1:11434")
+        self.ollama_url = config.get("ollama_url", DEFAULT_OLLAMA_URL)
         self.model = config.get("model", "llama3.2:3b")
         self.max_todo_items = config.get("max_todo_items", 15)
         

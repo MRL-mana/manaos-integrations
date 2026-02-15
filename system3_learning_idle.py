@@ -24,6 +24,14 @@ from datetime import datetime, date, timedelta
 from typing import Dict, Any, List, Optional
 import signal
 
+try:
+    from manaos_integrations._paths import TODO_QUEUE_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import TODO_QUEUE_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        TODO_QUEUE_PORT = int(os.getenv("TODO_QUEUE_PORT", "5134"))
+
 # 設定（環境変数から取得、デフォルト値あり）
 VAULT_PATH = Path(os.getenv("OBSIDIAN_VAULT_PATH", r"C:\Users\mana4\Documents\Obsidian Vault"))
 SYSTEM_DIR = VAULT_PATH / "ManaOS" / "System"
@@ -160,7 +168,10 @@ def execute_idle_learning_job() -> Dict[str, Any]:
         try:
             import urllib.request
             import json as jjson
-            todo_metrics_url = "http://127.0.0.1:5134/api/metrics"
+            todo_metrics_url = os.getenv(
+                "TODO_METRICS_URL",
+                f"http://127.0.0.1:{TODO_QUEUE_PORT}/api/metrics",
+            )
             req = urllib.request.Request(todo_metrics_url, headers={"Accept": "application/json"})
             with urllib.request.urlopen(req, timeout=3) as resp:
                 todo_data = jjson.loads(resp.read().decode("utf-8"))
