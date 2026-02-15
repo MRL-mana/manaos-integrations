@@ -31,7 +31,7 @@ except ImportError:
     PerformanceOptimizer = None
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("unified-optimizer")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("UnifiedAPIServerOptimizer")

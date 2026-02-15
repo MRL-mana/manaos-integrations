@@ -21,7 +21,7 @@ from manaos_timeout_config import get_timeout_config
 from manaos_config_validator import ConfigValidator
 
 # 統一ロガーの使用
-logger = get_logger(__name__)
+logger = get_service_logger("manaos-integration-orchestrator")
 
 # 統一エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("ManaOSIntegrationOrchestrator")
@@ -297,7 +297,7 @@ except ImportError:
     PerformanceOptimizer = None
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("manaos-integration-orchestrator")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("ManaOSIntegrationOrchestrator")

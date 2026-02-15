@@ -37,12 +37,23 @@ except ImportError:
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from manaos_timeout_config import get_timeout_config
+try:
+    from api_auth import get_auth_manager
+except ImportError:
+    class DummyAuthManager:
+        def require_api_key(self, func):
+            return func
+    get_auth_manager = lambda: DummyAuthManager()
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("unified")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("UnifiedAPIServer")
+
+# 認証マネージャーの初期化
+auth_manager = get_auth_manager()
+logger.info("✅ API認証システムを初期化しました")
 
 # タイムアウト設定の取得
 timeout_config = get_timeout_config()
@@ -1296,8 +1307,9 @@ def openapi_spec():
 
 
 @app.route("/api/integrations/status", methods=["GET"])
+@auth_manager.require_api_key
 def api_integrations_status():
-    """統合モジュールの利用可否を返す（軽量）"""
+    """統合モジュールの利用可否を返す（軽量）（要認証）"""
     # NOTE: 互換重視で `available` を最小キーとして返す
     targets = {
         "comfyui": "ComfyUI",
@@ -1344,8 +1356,9 @@ def api_integrations_status():
 
 
 @app.route("/api/comfyui/generate", methods=["POST"])
+@auth_manager.require_api_key
 def api_comfyui_generate():
-    """ComfyUIで画像生成（prompt_id を返す）"""
+    """ComfyUIで画像生成（prompt_id を返す）（要認証）"""
     data = request.get_json(silent=True) or {}
     prompt = (data.get("prompt") or "").strip()
     if not prompt:
@@ -1414,8 +1427,9 @@ def api_comfyui_generate():
 
 
 @app.route("/api/comfyui/queue", methods=["GET"])
+@auth_manager.require_api_key
 def api_comfyui_queue():
-    """ComfyUIキュー状態"""
+    """ComfyUIキュー状態（要認証）"""
     comfyui = integrations.get("comfyui")
     if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
         return jsonify({"error": "ComfyUIが利用できません"}), 503
@@ -1427,6 +1441,7 @@ def api_comfyui_queue():
 
 
 @app.route("/api/comfyui/history", methods=["GET"])
+@auth_manager.require_api_key
 def api_comfyui_history():
     """ComfyUI履歴"""
     comfyui = integrations.get("comfyui")

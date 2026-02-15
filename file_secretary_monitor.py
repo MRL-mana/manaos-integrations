@@ -18,7 +18,7 @@ sys.path.insert(0, str(project_root))
 from manaos_logger import get_logger
 from _paths import FILE_SECRETARY_PORT
 
-logger = get_logger(__name__)
+logger = get_service_logger("file-secretary-monitor")
 
 DEFAULT_FILE_SECRETARY_API_URL = f"http://127.0.0.1:{FILE_SECRETARY_PORT}"
 

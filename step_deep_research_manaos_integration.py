@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover
 from manaos_logger import get_logger
 from step_deep_research.orchestrator import StepDeepResearchOrchestrator
 
-logger = get_logger(__name__)
+logger = get_service_logger("step-deep-research-manaos-integration")
 
 
 class StepDeepResearchManaOSIntegration:

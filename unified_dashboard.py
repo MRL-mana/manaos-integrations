@@ -25,7 +25,7 @@ from learning_memory_integration import LearningMemoryIntegration
 from manaos_performance_optimizer import PerformanceOptimizer
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("unified-dashboard")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("UnifiedDashboard")

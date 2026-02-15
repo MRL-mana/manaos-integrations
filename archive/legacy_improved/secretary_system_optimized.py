@@ -28,7 +28,7 @@ from unified_cache_system import get_unified_cache
 from config_cache import get_config_cache
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("secretary-system-optimized")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("SecretarySystem")

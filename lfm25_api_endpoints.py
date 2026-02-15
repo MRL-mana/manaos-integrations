@@ -7,7 +7,7 @@ from flask import request, jsonify
 from manaos_logger import get_logger
 from typing import Dict, Any
 
-logger = get_logger(__name__)
+logger = get_service_logger("lfm25-api-endpoints")
 
 # LFM 2.5クライアントのインポート
 LFM25_AVAILABLE = False

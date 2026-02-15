@@ -45,7 +45,7 @@ except ImportError:
     print("警告: PyMuPDFが見つかりません")
 
 # ログ設定
-logger = get_logger(__name__)
+logger = get_service_logger("pdf-to-excel-converter-llm-enhanced")
 
 
 class PDFToExcelConverterLLMEnhanced:

@@ -26,7 +26,7 @@ DEFAULT_MANAOS_API_URL = os.getenv(
     f"http://127.0.0.1:{UNIFIED_API_PORT}",
 ).rstrip("/")
 
-logger = get_logger(__name__)
+logger = get_service_logger("rows-integration")
 
 try:
     REQUESTS_AVAILABLE = True

@@ -29,7 +29,7 @@ from manaos_config_validator import ConfigValidator
 from _paths import INTRINSIC_MOTIVATION_PORT, ORCHESTRATOR_PORT
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("autonomy-system")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("AutonomySystem")

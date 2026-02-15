@@ -21,7 +21,7 @@ from manaos_unified_client import get_unified_client
 from manaos_service_bridge import ManaOSServiceBridge
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("manaos-integration-monitor")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("IntegrationMonitor")

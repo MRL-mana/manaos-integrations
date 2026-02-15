@@ -72,7 +72,7 @@ except ImportError:
     ObsidianIntegration = None
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("manaos-service-bridge")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("ServiceBridge")

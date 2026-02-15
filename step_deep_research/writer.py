@@ -28,7 +28,7 @@ from .utils import load_prompt_template, format_prompt
 from .citation_formatter import CitationFormatter
 from .template_router import TemplateRouter
 
-logger = get_logger(__name__)
+logger = get_service_logger("writer")
 error_handler = ManaOSErrorHandler("StepDeepResearchWriter")
 
 

@@ -15,8 +15,8 @@ from pathlib import Path
 
 # 統一モジュールのインポート
 try:
-    from manaos_logger import get_logger
-    logger = get_logger(__name__)
+    from unified_logging import get_service_logger
+logger = get_service_logger("rag-memory-optimized")
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)

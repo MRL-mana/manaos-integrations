@@ -11,7 +11,7 @@ from mcp.types import Tool, TextContent, ImageContent
 from manaos_logger import get_logger
 
 # ロギング設定
-logger = get_logger(__name__)
+logger = get_service_logger("server")
 
 # n8nの設定
 DEFAULT_N8N_BASE_URL = f"http://127.0.0.1:{os.getenv('N8N_PORT', '5678')}"

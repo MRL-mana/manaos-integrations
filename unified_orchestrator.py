@@ -30,7 +30,7 @@ from _paths import (
 )
 
 # ロガーの初期化（インポート前に必要）
-logger = get_logger(__name__)
+logger = get_service_logger("unified-orchestrator")
 
 # 強化モジュールのインポート
 try:

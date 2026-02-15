@@ -13,7 +13,7 @@ from typing import Dict, Any, Optional, List
 
 from _paths import OLLAMA_PORT
 
-logger = get_logger(__name__)
+logger = get_service_logger("ai-assistant-chatbot")
 app = Flask(__name__)
 CORS(app)
 

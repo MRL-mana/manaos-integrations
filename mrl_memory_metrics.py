@@ -13,8 +13,8 @@ import json
 
 # 統一モジュールのインポート
 try:
-    from manaos_logger import get_logger
-    logger = get_logger(__name__)
+    from unified_logging import get_service_logger
+logger = get_service_logger("mrl-memory-metrics")
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)

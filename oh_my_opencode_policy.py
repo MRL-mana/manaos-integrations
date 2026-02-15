@@ -13,7 +13,7 @@ from enum import Enum
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler
 
-logger = get_logger(__name__)
+logger = get_service_logger("oh-my-opencode-policy")
 error_handler = ManaOSErrorHandler("OHMyOpenCodePolicy")
 
 

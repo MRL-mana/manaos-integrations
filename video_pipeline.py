@@ -29,14 +29,16 @@ from datetime import datetime
 
 # 統一モジュール
 try:
-    from manaos_logger import get_logger
-
-    logger = get_logger(__name__)
+    from unified_logging import get_service_logger
+    logger = get_service_logger("video-pipeline")
 except ImportError:
-    import logging
-
-    logger = logging.getLogger(__name__)
-    logging.basicConfig(level=logging.INFO)
+    try:
+        from unified_logging import get_service_logger
+logger = get_service_logger("video-pipeline")
+    except ImportError:
+        import logging
+        logger = logging.getLogger(__name__)
+        logging.basicConfig(level=logging.INFO)
 
 error_handler = None
 try:

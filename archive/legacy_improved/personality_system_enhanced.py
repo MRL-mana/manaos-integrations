@@ -21,7 +21,7 @@ from config_cache import get_config_cache
 from learning_system_enhanced import LearningSystemEnhanced
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("personality-system-enhanced")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("PersonalitySystemEnhanced")

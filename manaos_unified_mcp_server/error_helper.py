@@ -8,7 +8,7 @@ import requests
 from typing import Any, Callable, Optional, Sequence, Dict
 from mcp.types import TextContent
 
-logger = get_logger(__name__)
+logger = get_service_logger("error-helper")
 
 # タイムアウト設定のインポート
 try:

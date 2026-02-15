@@ -34,7 +34,7 @@ except Exception:  # pragma: no cover
         ORCHESTRATOR_PORT = int(os.getenv("ORCHESTRATOR_PORT", "5106"))
         CRASH_SNAPSHOT_PORT = int(os.getenv("CRASH_SNAPSHOT_PORT", "5113"))
 
-logger = get_logger(__name__)
+logger = get_service_logger("ssot-generator")
 # SSOTファイルパス
 SSOT_FILE = Path(__file__).parent / "manaos_status.json"
 SSOT_LOCK = Lock()

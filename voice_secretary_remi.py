@@ -31,9 +31,8 @@ from voice_integration import (
     create_tts_engine,
     VoiceConversationLoop
 )
-from manaos_logger import get_logger
-
-logger = get_logger(__name__)
+from unified_logging import get_service_logger
+logger = get_service_logger("voice-secretary-remi")
 
 # 設定
 INTENT_ROUTER_URL = os.getenv("INTENT_ROUTER_URL", f"http://127.0.0.1:{INTENT_ROUTER_PORT}")

@@ -10,7 +10,7 @@ from datetime import datetime
 import torch
 from PIL import Image
 
-logger = get_logger(__name__)
+logger = get_service_logger("stable-diffusion-generator")
 try:
     from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
     from diffusers.utils import export_to_gif

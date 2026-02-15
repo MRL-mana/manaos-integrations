@@ -9,9 +9,8 @@ import sys
 from pathlib import Path
 
 from step_deep_research.orchestrator import StepDeepResearchOrchestrator
-from manaos_logger import get_logger
-
-logger = get_logger(__name__)
+from unified_logging import get_service_logger
+logger = get_service_logger("integration-test")
 
 
 def test_manaos_integration():

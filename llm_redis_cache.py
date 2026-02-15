@@ -9,7 +9,7 @@ import hashlib
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 
-logger = get_logger(__name__)
+logger = get_service_logger("llm-redis-cache")
 
 try:
     import redis

@@ -25,7 +25,7 @@ from learning_system_enhanced import LearningSystemEnhanced
 from manaos_async_client import AsyncUnifiedAPIClient
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("autonomy-system-enhanced")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("AutonomySystemEnhanced")

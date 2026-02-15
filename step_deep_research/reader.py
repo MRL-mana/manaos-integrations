@@ -26,7 +26,7 @@ from .schemas import Citation, Summary, CitationTag, SearchResult
 from .utils import load_prompt_template, format_prompt, parse_json_response
 from .source_quality_filter import SourceQualityFilter, SourceQuality
 
-logger = get_logger(__name__)
+logger = get_service_logger("reader")
 error_handler = ManaOSErrorHandler("StepDeepResearchReader")
 
 

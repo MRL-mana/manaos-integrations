@@ -38,7 +38,7 @@ except ImportError:
     MCP_AVAILABLE = False
     logging.warning("MCP SDKがインストールされていません。pip install mcp を実行してください。")
 
-logger = get_logger(__name__)
+logger = get_service_logger("server")
 
 # APIエンドポイント
 STEP_DEEP_RESEARCH_URL = os.getenv(

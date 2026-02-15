@@ -19,7 +19,7 @@ from manaos_timeout_config import get_timeout_config
 from manaos_config_validator import ConfigValidator
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("self-management-system")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("SelfManagementSystem")

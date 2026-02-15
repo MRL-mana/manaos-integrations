@@ -22,7 +22,7 @@ except Exception:
 
 try:
     from manaos_logger import get_logger
-    _logger = get_logger(__name__)
+    _logger = get_service_logger("always-ready-llm-client")
 except ImportError:
     _logger = logging.getLogger(__name__)
 

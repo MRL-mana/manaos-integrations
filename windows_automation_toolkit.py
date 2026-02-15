@@ -28,7 +28,7 @@ try:
 except ImportError:
     mss = None
 
-logger = get_logger(__name__)
+logger = get_service_logger("windows-automation-toolkit")
 # ─── データクラス ───────────────────────────────────────
 
 @dataclass

@@ -32,7 +32,7 @@ except ImportError:
     MCP_AVAILABLE = False
     logging.warning("MCP SDKがインストールされていません。pip install mcp を実行してください。")
 
-logger = get_logger(__name__)
+logger = get_service_logger("server")
 
 # APIエンドポイント
 GALLERY_API_URL = os.getenv("GALLERY_API_URL", f"http://127.0.0.1:{GALLERY_PORT}")

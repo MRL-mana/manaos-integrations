@@ -24,7 +24,7 @@ from _paths import (
     TASK_PLANNER_PORT,
 )
 
-logger = get_logger(__name__)
+logger = get_service_logger("oh-my-opencode-trinity-bridge")
 error_handler = ManaOSErrorHandler("OHMyOpenCodeTrinityBridge")
 timeout_config = get_timeout_config()
 

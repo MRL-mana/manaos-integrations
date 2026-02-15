@@ -9,7 +9,7 @@ from typing import List, Dict, Any, Callable, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
-logger = get_logger(__name__)
+logger = get_service_logger("llm-batch")
 
 
 class BatchProcessor:

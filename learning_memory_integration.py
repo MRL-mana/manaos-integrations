@@ -20,7 +20,7 @@ from learning_system import LearningSystem
 from unified_cache_system import get_unified_cache
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("learning-memory-integration")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("LearningMemoryIntegration")

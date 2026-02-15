@@ -35,7 +35,7 @@ from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 from autonomy_gates import get_action_class_for_tool, ActionClass, get_usage_key_for_tool
 
-logger = get_logger(__name__)
+logger = get_service_logger("server")
 
 # 環境変数の読み込み（python-dotenvを使用）
 try:

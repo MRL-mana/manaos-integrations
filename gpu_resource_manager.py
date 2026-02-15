@@ -16,7 +16,7 @@ import psutil
 import subprocess
 import platform
 
-logger = get_logger(__name__)
+logger = get_service_logger("gpu-resource-manager")
 
 
 class GPUStatus(Enum):

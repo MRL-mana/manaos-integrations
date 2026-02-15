@@ -11,7 +11,7 @@ from manaos_logger import get_logger
 from pathlib import Path
 from typing import Dict, Any, Optional
 
-logger = get_logger(__name__)
+logger = get_service_logger("manaos-timeout-config")
 
 # デフォルトタイムアウト設定
 DEFAULT_TIMEOUTS = {

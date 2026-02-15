@@ -23,7 +23,7 @@ try:
 except ImportError:
     import logging
     def get_logger(n): return logging.getLogger(n)
-logger = get_logger(__name__)
+logger = get_service_logger("system3-learning-personality-autonomy-bridge")
 
 # System3 各コンポーネントの URL
 LEARNING_URL = os.getenv("LEARNING_SYSTEM_URL", f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}").rstrip("/")

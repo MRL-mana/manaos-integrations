@@ -19,7 +19,7 @@ from manaos_timeout_config import get_timeout_config
 from _paths import LEARNING_SYSTEM_PORT, METRICS_COLLECTOR_PORT, ORCHESTRATOR_PORT
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("intrinsic-motivation")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("IntrinsicMotivation")

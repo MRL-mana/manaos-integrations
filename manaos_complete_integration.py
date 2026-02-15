@@ -82,7 +82,7 @@ except ImportError:
     N8N_AVAILABLE = False
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("manaos-complete-integration")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("ManaOSCompleteIntegration")

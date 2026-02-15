@@ -27,7 +27,7 @@ from .schemas import (
 )
 from .utils import load_prompt_template, format_prompt, parse_json_response
 
-logger = get_logger(__name__)
+logger = get_service_logger("verifier")
 error_handler = ManaOSErrorHandler("StepDeepResearchVerifier")
 
 

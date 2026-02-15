@@ -12,7 +12,7 @@ from datetime import datetime
 from manaos_logger import get_logger
 from .schemas import JobBudget
 
-logger = get_logger(__name__)
+logger = get_service_logger("budget-guard")
 
 
 class StopReason(str, Enum):

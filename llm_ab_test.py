@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 import statistics
 
-logger = get_logger(__name__)
+logger = get_service_logger("llm-ab-test")
 
 
 class ABTest:

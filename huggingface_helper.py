@@ -7,7 +7,7 @@ from manaos_logger import get_logger
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 
-logger = get_logger(__name__)
+logger = get_service_logger("huggingface-helper")
 try:
     from huggingface_hub import HfApi, snapshot_download
     from huggingface_hub.utils import HfHubHTTPError

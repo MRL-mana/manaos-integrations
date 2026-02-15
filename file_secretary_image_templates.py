@@ -16,7 +16,7 @@ from _paths import COMFYUI_PORT
 
 DEFAULT_COMFYUI_URL = f"http://127.0.0.1:{COMFYUI_PORT}"
 
-logger = get_logger(__name__)
+logger = get_service_logger("file-secretary-image-templates")
 
 # ComfyUI統合をインポート
 try:

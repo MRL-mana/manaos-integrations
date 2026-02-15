@@ -17,7 +17,7 @@ from manaos_logger import get_logger
 from file_secretary_schemas import FileRecord, FileSource, FileStatus, FileType, AuditAction
 from file_secretary_db import FileSecretaryDB
 
-logger = get_logger(__name__)
+logger = get_service_logger("file-secretary-indexer")
 
 
 class FileIndexerHandler(FileSystemEventHandler):

@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 import json
 
-logger = get_logger(__name__)
+logger = get_service_logger("huggingface-integration")
 # Hugging Face統合
 
 # 親ディレクトリをパスに追加

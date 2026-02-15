@@ -6,9 +6,8 @@
 """
 
 from pathlib import Path
-from manaos_logger import get_logger
-
-logger = get_logger(__name__)
+from unified_logging import get_service_logger
+logger = get_service_logger("integration-guide")
 
 
 def integrate_security_to_flask_app(app):

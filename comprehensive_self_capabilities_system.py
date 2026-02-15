@@ -26,7 +26,7 @@ from manaos_config_validator import ConfigValidator
 from _paths import N8N_PORT
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("comprehensive-self-capabilities-system")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("ComprehensiveSelfCapabilities")

@@ -18,7 +18,7 @@ from file_secretary_db import FileSecretaryDB
 from file_secretary_indexer import FileIndexer
 from file_secretary_schemas import FileSource
 
-logger = get_logger(__name__)
+logger = get_service_logger("file-secretary-start")
 
 
 def main():

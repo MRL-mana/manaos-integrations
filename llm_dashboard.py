@@ -10,7 +10,7 @@ from flask import Flask, render_template_string, jsonify
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
-logger = get_logger(__name__)
+logger = get_service_logger("llm-dashboard")
 
 # ダッシュボードHTMLテンプレート
 DASHBOARD_HTML = """

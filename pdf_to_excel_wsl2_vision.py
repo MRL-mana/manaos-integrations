@@ -34,7 +34,7 @@ if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8')
     sys.stderr.reconfigure(encoding='utf-8')
 
-logger = get_logger(__name__)
+logger = get_service_logger("pdf-to-excel-wsl2-vision")
 
 
 class WSL2VisionLLM:

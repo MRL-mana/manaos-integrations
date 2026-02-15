@@ -25,7 +25,7 @@ from manaos_config_validator import ConfigValidator
 from _paths import ORCHESTRATOR_PORT
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("secretary-system")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("SecretarySystem")

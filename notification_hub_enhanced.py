@@ -24,7 +24,7 @@ try:
     NOTIFICATION_HUB_AVAILABLE = True
 except ImportError:
     NOTIFICATION_HUB_AVAILABLE = False
-logger = get_logger(__name__)
+logger = get_service_logger("notification-hub-enhanced")
 
 if not NOTIFICATION_HUB_AVAILABLE:
     logger.warning("既存のNotification Hubが利用できません")

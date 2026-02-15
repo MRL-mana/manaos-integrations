@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 # ログ設定
-logger = get_logger(__name__)
+logger = get_service_logger("device-monitor-with-notifications")
 # モジュールをインポート
 try:
     from device_health_monitor import DeviceHealthMonitor

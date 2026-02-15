@@ -22,7 +22,7 @@ except ImportError:
     GoogleDriveIntegration = None
 
 # ログ設定
-logger = get_logger(__name__)
+logger = get_service_logger("google-drive-sync-agent")
 
 
 class FileChangeHandler(FileSystemEventHandler):

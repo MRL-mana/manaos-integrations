@@ -17,7 +17,7 @@ from pathlib import Path
 from dataclasses import dataclass, asdict
 import threading
 
-logger = get_logger(__name__)
+logger = get_service_logger("service-monitor")
 
 
 @dataclass

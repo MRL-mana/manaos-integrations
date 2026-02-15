@@ -24,7 +24,7 @@ from manaos_config_validator import ConfigValidator
 from _paths import AUTONOMY_SYSTEM_PORT, MRL_MEMORY_PORT, ORCHESTRATOR_PORT, TASK_QUEUE_PORT
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("portal-integration-api")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("PortalIntegration")

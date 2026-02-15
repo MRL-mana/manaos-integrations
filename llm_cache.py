@@ -12,7 +12,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import pickle
 
-logger = get_logger(__name__)
+logger = get_service_logger("llm-cache")
 
 
 class LLMCache:

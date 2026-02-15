@@ -28,7 +28,7 @@ from file_secretary_templates import (
     template_search, template_error, template_new_files
 )
 
-logger = get_logger(__name__)
+logger = get_service_logger("file-secretary-api")
 error_handler = ManaOSErrorHandler("FileSecretaryAPI")
 timeout_config = get_timeout_config()
 

@@ -12,7 +12,7 @@ import re
 import numpy as np
 from bisect import bisect_right
 
-logger = get_logger(__name__)
+logger = get_service_logger("ocr-multi-provider")
 
 
 class MultiProviderOCR:

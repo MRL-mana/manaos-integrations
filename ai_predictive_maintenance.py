@@ -31,7 +31,7 @@ try:
 except ImportError:
     LLM_AVAILABLE = False
 
-logger = get_logger(__name__)
+logger = get_service_logger("ai-predictive-maintenance")
 
 DEFAULT_OLLAMA_GENERATE_URL = f"http://127.0.0.1:{OLLAMA_PORT}/api/generate"
 DEFAULT_DEVICE_HEALTH_MONITOR_URL = f"http://127.0.0.1:{LLM_ROUTING_PORT}"

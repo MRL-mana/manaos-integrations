@@ -16,9 +16,8 @@ import os
 import secrets
 from pathlib import Path
 
-from manaos_logger import get_logger
-
-logger = get_logger(__name__)
+from unified_logging import get_service_logger
+logger = get_service_logger("manaos-jwt")
 
 JWT_ALGORITHM = "HS256"
 

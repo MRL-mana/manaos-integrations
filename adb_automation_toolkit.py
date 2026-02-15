@@ -14,7 +14,7 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 from dataclasses import dataclass, asdict
 
-logger = get_logger(__name__)
+logger = get_service_logger("adb-automation-toolkit")
 
 
 @dataclass

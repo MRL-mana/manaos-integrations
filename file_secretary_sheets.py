@@ -13,7 +13,7 @@ from manaos_logger import get_logger
 from file_secretary_db import FileSecretaryDB
 from file_secretary_schemas import FileStatus, FileType
 
-logger = get_logger(__name__)
+logger = get_service_logger("file-secretary-sheets")
 
 # Rows統合をインポート
 try:

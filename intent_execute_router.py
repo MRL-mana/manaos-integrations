@@ -16,7 +16,7 @@ try:
 except ImportError:
     import logging
     def get_logger(n): return logging.getLogger(n)
-logger = get_logger(__name__)
+logger = get_service_logger("intent-execute-router")
 
 DEFAULT_UNIFIED_API_URL = f"http://127.0.0.1:{UNIFIED_API_PORT}"
 DEFAULT_INTENT_ROUTER_URL = f"http://127.0.0.1:{INTENT_ROUTER_PORT}"

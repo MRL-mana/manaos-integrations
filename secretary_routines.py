@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 
-logger = get_logger(__name__)
+logger = get_service_logger("secretary-routines")
 # 標準APIをインポート
 try:
     import manaos_core_api as manaos

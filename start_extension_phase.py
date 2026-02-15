@@ -27,7 +27,7 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
-logger = get_logger(__name__)
+logger = get_service_logger("start-extension-phase")
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent))
 
