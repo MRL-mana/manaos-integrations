@@ -4,10 +4,10 @@ unified_api_server.pyに追加するエンドポイント
 """
 
 from flask import request, jsonify
-import logging
+from manaos_logger import get_logger
 from typing import Dict, Any
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # LFM 2.5クライアントのインポート
 LFM25_AVAILABLE = False

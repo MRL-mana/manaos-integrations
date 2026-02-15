@@ -8,11 +8,10 @@ import requests
 from typing import Any, Sequence
 from mcp.server import Server
 from mcp.types import Tool, TextContent, ImageContent
-import logging
+from manaos_logger import get_logger
 
 # ロギング設定
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # n8nの設定
 N8N_BASE_URL = os.getenv("N8N_BASE_URL", "http://127.0.0.1:5679")
@@ -21,12 +20,14 @@ N8N_API_KEY = os.getenv("N8N_API_KEY", "")
 # MCPサーバーの初期化
 server = Server("n8n-mcp")
 
+
 def get_headers():
     """n8n APIリクエスト用のヘッダーを取得"""
     headers = {"Content-Type": "application/json"}
     if N8N_API_KEY:
         headers["X-N8N-API-KEY"] = N8N_API_KEY
     return headers
+
 
 @server.list_tools()
 async def list_tools() -> list[Tool]:
@@ -155,6 +156,7 @@ async def list_tools() -> list[Tool]:
             }
         )
     ]
+
 
 @server.call_tool()
 async def call_tool(name: str, arguments: dict) -> Sequence[TextContent | ImageContent]:

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-import logging
+from manaos_logger import get_logger
 from pathlib import Path
 from typing import List, Optional
 from enum import Enum
@@ -135,6 +135,8 @@ def get_repo(repo_path: str) -> git.Repo:
     response_model=TextResponse,
     description="Get the current status of the Git repository.",
 )
+
+
 def get_status(request: GitStatusRequest):
     repo = get_repo(request.repo_path)
     status = repo.git.status()
@@ -146,6 +148,8 @@ def get_status(request: GitStatusRequest):
     response_model=TextResponse,
     description="Get differences of unstaged changes.",
 )
+
+
 def diff_unstaged(request: GitDiffUnstagedRequest):
     repo = get_repo(request.repo_path)
     diff = repo.git.diff()
@@ -157,6 +161,8 @@ def diff_unstaged(request: GitDiffUnstagedRequest):
     response_model=TextResponse,
     description="Get differences of staged changes.",
 )
+
+
 def diff_staged(request: GitDiffStagedRequest):
     repo = get_repo(request.repo_path)
     diff = repo.git.diff("--cached")
@@ -168,6 +174,8 @@ def diff_staged(request: GitDiffStagedRequest):
     response_model=TextResponse,
     description="Get comparison between two branches or commits.",
 )
+
+
 def diff_target(request: GitDiffRequest):
     repo = get_repo(request.repo_path)
     diff = repo.git.diff(request.target)
@@ -179,6 +187,8 @@ def diff_target(request: GitDiffRequest):
     response_model=TextResponse,
     description="Commit staged changes to the repository.",
 )
+
+
 def commit_changes(request: GitCommitRequest):
     repo = get_repo(request.repo_path)
     commit = repo.index.commit(request.message)
@@ -186,6 +196,8 @@ def commit_changes(request: GitCommitRequest):
 
 
 @app.post("/add", response_model=TextResponse, description="Stage files for commit.")
+
+
 def add_files(request: GitAddRequest):
     repo = get_repo(request.repo_path)
     repo.index.add(request.files)
@@ -195,6 +207,8 @@ def add_files(request: GitAddRequest):
 @app.post(
     "/reset", response_model=TextResponse, description="Unstage all staged changes."
 )
+
+
 def reset_changes(request: GitResetRequest):
     repo = get_repo(request.repo_path)
     repo.index.reset()
@@ -206,6 +220,8 @@ def reset_changes(request: GitResetRequest):
     response_model=LogResponse,
     description="Get recent commit history of the repository.",
 )
+
+
 def get_log(request: GitLogRequest):
     repo = get_repo(request.repo_path)
     commits = [
@@ -221,6 +237,8 @@ def get_log(request: GitLogRequest):
 @app.post(
     "/create_branch", response_model=TextResponse, description="Create a new branch."
 )
+
+
 def create_branch(request: GitCreateBranchRequest):
     repo = get_repo(request.repo_path)
     if request.base_branch is None:
@@ -236,6 +254,8 @@ def create_branch(request: GitCreateBranchRequest):
 @app.post(
     "/checkout", response_model=TextResponse, description="Checkout an existing branch."
 )
+
+
 def checkout_branch(request: GitCheckoutRequest):
     repo = get_repo(request.repo_path)
     repo.git.checkout(request.branch_name)
@@ -247,6 +267,8 @@ def checkout_branch(request: GitCheckoutRequest):
     response_model=TextResponse,
     description="Show details and diff of a specific commit.",
 )
+
+
 def show_revision(request: GitShowRequest):
     repo = get_repo(request.repo_path)
     commit = repo.commit(request.revision)
@@ -266,6 +288,8 @@ def show_revision(request: GitShowRequest):
 @app.post(
     "/init", response_model=TextResponse, description="Initialize a new Git repository."
 )
+
+
 def init_repo(request: GitInitRequest):
     try:
         repo = git.Repo.init(path=request.repo_path, mkdir=True)

@@ -7,11 +7,11 @@
 
 import os
 import json
-import logging
+from manaos_logger import get_logger
 from pathlib import Path
 from typing import Dict, Any, Optional
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # デフォルトタイムアウト設定
 DEFAULT_TIMEOUTS = {
@@ -171,6 +171,8 @@ def get_timeout(key: str, default: Optional[float] = None) -> float:
 
 
 # 環境変数による上書きサポート
+
+
 def _apply_env_overrides():
     """環境変数からタイムアウト設定を読み込み"""
     config = get_timeout_config()

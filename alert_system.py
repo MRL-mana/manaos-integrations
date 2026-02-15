@@ -6,7 +6,7 @@
 """
 
 import os
-import logging
+from manaos_logger import get_logger
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -14,7 +14,7 @@ from enum import Enum
 import json
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class AlertSeverity(Enum):
@@ -26,6 +26,8 @@ class AlertSeverity(Enum):
 
 
 @dataclass
+
+
 class AlertRule:
     """アラートルール"""
     rule_id: str
@@ -40,6 +42,8 @@ class AlertRule:
 
 
 @dataclass
+
+
 class Alert:
     """アラート"""
     alert_id: str
@@ -265,6 +269,8 @@ class AlertSystem:
 
 
 # 通知ハンドラー例
+
+
 def email_notification_handler(alert: Alert):
     """メール通知ハンドラー（例）"""
     # 実装は環境に応じて
@@ -287,11 +293,4 @@ def get_alert_system() -> AlertSystem:
     if _alert_system is None:
         _alert_system = AlertSystem()
     return _alert_system
-
-
-
-
-
-
-
 

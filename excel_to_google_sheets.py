@@ -8,10 +8,10 @@ Microsoft ExcelがなくてもGoogle Sheetsで確認可能
 import pandas as pd
 from pathlib import Path
 import sys
-import logging
+from manaos_logger import get_logger
 import time
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Windowsでのエンコーディング修正（cp932で落ちるのを防ぐ）
 if sys.platform == "win32":

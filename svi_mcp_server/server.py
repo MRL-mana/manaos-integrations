@@ -8,7 +8,7 @@ import json
 import os
 from pathlib import Path
 from typing import Any, Optional
-import logging
+from manaos_logger import get_logger
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
@@ -22,14 +22,14 @@ sys.path.insert(0, str(sys_path))
 
 from svi_wan22_video_integration import SVIWan22VideoIntegration
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # 環境変数から設定を読み込み
 COMFYUI_URL = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
 
 # SVI統合インスタンス
 svi_integration = None
+
 
 def get_svi_integration():
     """SVI統合インスタンスを取得"""
@@ -40,6 +40,7 @@ def get_svi_integration():
 
 # MCPサーバーの作成
 server = Server("svi-video-generation")
+
 
 @server.list_tools()
 async def list_tools() -> list[Tool]:
@@ -194,6 +195,7 @@ async def list_tools() -> list[Tool]:
             }
         )
     ]
+
 
 @server.call_tool()
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:

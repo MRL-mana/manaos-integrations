@@ -10,7 +10,7 @@ import re
 import sys
 from pathlib import Path
 from typing import Any, Optional, Sequence
-import logging
+from manaos_logger import get_logger
 import io
 import httpx
 
@@ -27,8 +27,7 @@ from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 from autonomy_gates import get_action_class_for_tool, ActionClass, get_usage_key_for_tool
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # 環境変数の読み込み（python-dotenvを使用）
 try:
@@ -77,6 +76,8 @@ SECRETARY_SYSTEM_URL = os.getenv("SECRETARY_SYSTEM_URL", "http://127.0.0.1:5125"
 
 
 # 危険度の高いツール（VS Code操作など）の有効/無効
+
+
 def _vscode_tools_enabled() -> bool:
     return os.getenv("MANAOS_ENABLE_VSCODE_TOOLS", "false").strip().lower() in (
         "1",
@@ -88,6 +89,8 @@ def _vscode_tools_enabled() -> bool:
 
 
 # Autonomy System 連携ユーティリティ
+
+
 def _autonomy_check_tool(tool_name: str) -> tuple[bool, str]:
     """
     自律ゲートにツール実行可否を問い合わせる。

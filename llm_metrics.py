@@ -5,13 +5,13 @@ LLMメトリクス収集システム
 
 import json
 import os
-import logging
+from manaos_logger import get_logger
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class LLMMetrics:
@@ -183,6 +183,4 @@ def get_metrics(enable: bool = True, **kwargs) -> Optional[LLMMetrics]:
         _global_metrics = LLMMetrics(**kwargs)
     
     return _global_metrics
-
-
 

@@ -3,6 +3,7 @@
 詳細なエラー情報とリカバリー
 """
 
+from manaos_logger import get_logger
 import logging
 import traceback
 from typing import Dict, Any, Optional, List
@@ -11,7 +12,7 @@ from enum import Enum
 from pathlib import Path
 import json
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ErrorType(Enum):
@@ -272,6 +273,4 @@ def safe_execute(
                 pass
         
         return default_return
-
-
 

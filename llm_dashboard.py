@@ -4,13 +4,13 @@ LLMメトリクスダッシュボード
 """
 
 import json
-import logging
+from manaos_logger import get_logger
 from pathlib import Path
 from flask import Flask, render_template_string, jsonify
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # ダッシュボードHTMLテンプレート
 DASHBOARD_HTML = """
@@ -310,6 +310,4 @@ if __name__ == '__main__':
     metrics = get_metrics(enable=True)
     dashboard = LLMDashboard(metrics_instance=metrics)
     dashboard.run()
-
-
 

@@ -3,12 +3,12 @@
 複数のモデルを同時に使用・比較
 """
 
-import logging
+from manaos_logger import get_logger
 from typing import Dict, Any, List, Optional, Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class MultiModelManager:
@@ -290,6 +290,4 @@ class ModelSelector:
         # 履歴を100件に制限
         if len(self.usage_history) > 100:
             self.usage_history = self.usage_history[-100:]
-
-
 

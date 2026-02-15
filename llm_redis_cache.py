@@ -4,12 +4,12 @@ Redis統合キャッシュシステム
 """
 
 import json
-import logging
+from manaos_logger import get_logger
 import hashlib
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 try:
     import redis
@@ -224,6 +224,4 @@ def get_redis_cache(
         RedisCacheインスタンス
     """
     return RedisCache(enable=enable, host=host, port=port, **kwargs)
-
-
 

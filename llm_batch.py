@@ -3,13 +3,13 @@ LLMバッチ処理システム
 複数クエリの並列処理
 """
 
-import logging
+from manaos_logger import get_logger
 import asyncio
 from typing import List, Dict, Any, Callable, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class BatchProcessor:
@@ -125,6 +125,4 @@ class BatchProcessor:
     def shutdown(self):
         """エグゼキューターをシャットダウン"""
         self.executor.shutdown(wait=True)
-
-
 

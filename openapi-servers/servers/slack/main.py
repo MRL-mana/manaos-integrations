@@ -5,7 +5,7 @@ Showcase‑level code quality and pythonic clarity.
 
 import os
 import asyncio
-import logging
+from manaos_logger import get_logger
 import json  # For JSONDecodeError
 from typing import Optional, List, Dict, Any, Type, Callable
 
@@ -19,8 +19,7 @@ from pydantic import BaseModel, Field
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Environment variables
@@ -90,6 +89,7 @@ if not SERVER_API_KEY:
 # Pydantic models (arguments & responses)
 # ---------------------------------------------------------------------------
 
+
 class ListChannelsArgs(BaseModel):
     limit: Optional[int] = Field(100, description="Maximum number of channels to return (default 100, max 200)")
     cursor: Optional[str] = Field(None, description="Pagination cursor for next page of results")
@@ -138,6 +138,7 @@ class ToolResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Slack client (high‑performance)
 # ---------------------------------------------------------------------------
+
 
 class SlackClient:
     """Thin async wrapper over Slack Web API with connection‑pool reuse."""
@@ -338,6 +339,7 @@ TOOL_MAPPING = {
 
 # ---------------- endpoint factory ---------------- #
 
+
 def create_endpoint_handler(tool_name: str, method: Callable, args_model: Type[BaseModel]):
     async def handler(args: args_model = Body(...), api_key: str = Depends(get_api_key)) -> ToolResponse:  # noqa: ANN001
         try:
@@ -366,6 +368,8 @@ for name, cfg in TOOL_MAPPING.items():
 # ---------------------------------------------------------------------------
 # Lifecycle events
 # ---------------------------------------------------------------------------
+
+
 @app.on_event("shutdown")
 async def _close_slack_client():
     await slack_client.aclose()
@@ -374,6 +378,8 @@ async def _close_slack_client():
 # ---------------------------------------------------------------------------
 # Root endpoint
 # ---------------------------------------------------------------------------
+
+
 @app.get("/", summary="Root endpoint", include_in_schema=False)
 async def read_root():
     return {"message": "Slack API Server is running. See /docs for available tool endpoints."}

@@ -10,7 +10,7 @@ import sys
 import io
 import subprocess
 import json
-import logging
+from manaos_logger import get_logger
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
@@ -26,8 +26,7 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 app = FastAPI(
     title="manaOS Tool Server",
@@ -45,19 +44,24 @@ app.add_middleware(
 )
 
 # リクエスト/レスポンスモデル
+
+
 class ServiceStatusRequest(BaseModel):
     service_type: str = Field(description="サービスタイプ: 'docker' or 'systemd'")
     service_name: Optional[str] = Field(None, description="特定のサービス名（オプション）")
+
 
 class ServiceStatusResponse(BaseModel):
     status: str
     services: List[Dict[str, Any]]
     message: str
 
+
 class CheckErrorsRequest(BaseModel):
     log_type: str = Field(description="ログタイプ: 'docker' or 'journalctl'")
     service_name: Optional[str] = Field(None, description="サービス名（オプション）")
     lines: int = Field(100, description="取得する行数")
+
 
 class CheckErrorsResponse(BaseModel):
     status: str
@@ -65,12 +69,14 @@ class CheckErrorsResponse(BaseModel):
     summary: str
     message: str
 
+
 class GenerateImageRequest(BaseModel):
     prompt: str = Field(description="画像生成のプロンプト")
     width: int = Field(512, description="画像の幅")
     height: int = Field(512, description="画像の高さ")
     steps: int = Field(20, description="生成ステップ数")
     negative_prompt: Optional[str] = Field(None, description="ネガティブプロンプト")
+
 
 class GenerateImageResponse(BaseModel):
     status: str
@@ -81,6 +87,8 @@ class GenerateImageResponse(BaseModel):
 # ========================================
 # Tool 1: docker/systemdの死活確認ツール
 # ========================================
+
+
 @app.post("/service_status", response_model=ServiceStatusResponse)
 async def service_status(request: ServiceStatusRequest):
     """
@@ -265,6 +273,8 @@ async def service_status(request: ServiceStatusRequest):
 # ========================================
 # Tool 2: journalctl/docker logsを要約してエラー検知するツール
 # ========================================
+
+
 @app.post("/check_errors", response_model=CheckErrorsResponse)
 async def check_errors(request: CheckErrorsRequest):
     """
@@ -516,6 +526,8 @@ async def check_errors(request: CheckErrorsRequest):
 # ========================================
 # Tool 3: ComfyUI APIを叩いて画像生成してファイルパスを返すツール
 # ========================================
+
+
 @app.post("/generate_image", response_model=GenerateImageResponse)
 async def generate_image(request: GenerateImageRequest):
     """
@@ -588,6 +600,8 @@ async def generate_image(request: GenerateImageRequest):
 # ========================================
 # ヘルスチェック
 # ========================================
+
+
 @app.get("/health")
 async def health():
     """ヘルスチェック"""
@@ -600,6 +614,8 @@ async def health():
 # ========================================
 # OpenAPI仕様のカスタマイズ（OpenWebUI用）
 # ========================================
+
+
 @app.get("/openapi.json")
 async def openapi_spec():
     """OpenAPI仕様を返す（OpenWebUI External Tools対応）"""

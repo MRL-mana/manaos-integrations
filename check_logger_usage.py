@@ -31,6 +31,7 @@ SERVICES = [
     "unified_api_server.py"
 ]
 
+
 def check_logger_usage():
     """ログ管理モジュールの使用状況を確認"""
     script_dir = Path(__file__).parent

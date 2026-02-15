@@ -8,11 +8,11 @@ import os
 import re
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Tuple
-import logging
+from manaos_logger import get_logger
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import multiprocessing
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # 必要なライブラリのインポートチェック
 try:
@@ -732,185 +732,185 @@ class PDFToExcelConverter:
                     else:
                         # 順次処理（従来通り）
                         for idx, page_num in enumerate(range(start, end), start=1):
-                        page = doc[page_num]
-                        actual_page_num = page_num + 1
-                        logger.info(f"ページ {actual_page_num}（範囲 {idx}/{total_target}）をOCR処理中...")
+                            page = doc[page_num]
+                            actual_page_num = page_num + 1
+                            logger.info(f"ページ {actual_page_num}（範囲 {idx}/{total_target}）をOCR処理中...")
                         
-                        # ページを画像に変換（超高解像度・精度向上）
-                        # zoom 6.0 = 600 DPI相当（数字・文字の読み取り精度を最大化）
-                        # 4.0 → 6.0 に向上（処理時間は増えるが精度が大幅向上）
-                        zoom = 6.0
-                        mat = fitz.Matrix(zoom, zoom)
-                        pix = page.get_pixmap(matrix=mat, alpha=False)
-                        temp_image_path = f"temp_page_{actual_page_num}.png"
-                        pix.save(temp_image_path, output="png")
+                            # ページを画像に変換（超高解像度・精度向上）
+                            # zoom 6.0 = 600 DPI相当（数字・文字の読み取り精度を最大化）
+                            # 4.0 → 6.0 に向上（処理時間は増えるが精度が大幅向上）
+                            zoom = 6.0
+                            mat = fitz.Matrix(zoom, zoom)
+                            pix = page.get_pixmap(matrix=mat, alpha=False)
+                            temp_image_path = f"temp_page_{actual_page_num}.png"
+                            pix.save(temp_image_path, output="png")
                         
-                        # OCRで認識（複数エンジンで試行して最良の結果を選ぶ、またはマージ）
-                        ocr_results = []
-                        providers_to_try = [selected_provider]
+                            # OCRで認識（複数エンジンで試行して最良の結果を選ぶ、またはマージ）
+                            ocr_results = []
+                            providers_to_try = [selected_provider]
                         
-                        # 日本語に強いOCRエンジンも追加で試行（アンサンブル方式）
-                        if selected_provider != "paddleocr" and "paddleocr" in available_providers:
-                            providers_to_try.append("paddleocr")
-                        if selected_provider != "easyocr" and "easyocr" in available_providers:
-                            providers_to_try.append("easyocr")
-                        if selected_provider != "tesseract" and "tesseract" in available_providers:
-                            providers_to_try.append("tesseract")
+                            # 日本語に強いOCRエンジンも追加で試行（アンサンブル方式）
+                            if selected_provider != "paddleocr" and "paddleocr" in available_providers:
+                                providers_to_try.append("paddleocr")
+                            if selected_provider != "easyocr" and "easyocr" in available_providers:
+                                providers_to_try.append("easyocr")
+                            if selected_provider != "tesseract" and "tesseract" in available_providers:
+                                providers_to_try.append("tesseract")
                         
-                        best_result = None
-                        best_score = -1e9
+                            best_result = None
+                            best_score = -1e9
                         
-                        for provider in providers_to_try:
-                            try:
-                                # Tesseractの場合は MultiProviderOCR 側のレイアウト付き実装を使用
-                                if provider == "tesseract":
-                                    result = self.ocr.recognize(
-                                        temp_image_path,
-                                        provider="tesseract",
-                                        layout=True,
-                                        auto=True,  # 複数前処理×PSM探索を有効化
-                                        lang="jpn+eng",
-                                        max_cols=80,
-                                        psm_list=[6, 4, 11, 1, 3, 12, 13],  # 表に適したPSMを追加
-                                        use_gridlines=True,  # 罫線（枠線）からセル境界を推定
-                                    )
-                                elif provider in ["easyocr", "paddleocr"]:
-                                    # EasyOCR/PaddleOCRは日本語に強い（GPU使用を試行、失敗時はCPU）
-                                    # TesseractはGPU非対応なので、GPU化できるのはここだけ。
-                                    #
-                                    # 既定:
-                                    # - PaddleOCR: GPU利用を試行（速い/安定しやすい）
-                                    # - EasyOCR: 以前クラッシュ実績があるため「明示ON」時のみGPU利用
-                                    #
-                                    # 環境変数で切り替え:
-                                    # - MANA_OCR_USE_GPU=1/0 (全体のON/OFF)
-                                    # - MANA_EASYOCR_USE_GPU=1/0
-                                    # - MANA_PADDLEOCR_USE_GPU=1/0
-                                    def _env_true(name: str, default: str = "0") -> bool:
-                                        v = (os.getenv(name, default) or "").strip().lower()
-                                        return v in ("1", "true", "yes", "y", "on")
-
-                                    global_gpu = _env_true("MANA_OCR_USE_GPU", "1")
-                                    engine_gpu = (
-                                        _env_true("MANA_PADDLEOCR_USE_GPU", "1") if provider == "paddleocr"
-                                        else _env_true("MANA_EASYOCR_USE_GPU", "0")
-                                    )
-
-                                    use_gpu = False
-                                    if global_gpu and engine_gpu:
-                                        try:
-                                            import torch
-                                            use_gpu = bool(torch.cuda.is_available())
-                                        except Exception:
-                                            use_gpu = False
-
-                                    if use_gpu:
-                                        logger.info(f"  GPU有効: {provider} をGPUで実行します")
-                                    else:
-                                        logger.info(f"  GPU無効: {provider} はCPUで実行します")
-
-                                    try:
+                            for provider in providers_to_try:
+                                try:
+                                    # Tesseractの場合は MultiProviderOCR 側のレイアウト付き実装を使用
+                                    if provider == "tesseract":
                                         result = self.ocr.recognize(
                                             temp_image_path,
-                                            provider=provider,
+                                            provider="tesseract",
                                             layout=True,
-                                            lang="ja" if provider == "easyocr" else "japan",
-                                            gpu=use_gpu,
+                                            auto=True,  # 複数前処理×PSM探索を有効化
+                                            lang="jpn+eng",
+                                            max_cols=80,
+                                            psm_list=[6, 4, 11, 1, 3, 12, 13],  # 表に適したPSMを追加
+                                            use_gridlines=True,  # 罫線（枠線）からセル境界を推定
                                         )
-                                        # EasyOCRがNoneを返した場合（初期化失敗）はスキップ
-                                        if result is None:
-                                            logger.warning(f"  {provider}: 初期化失敗、スキップ")
+                                    elif provider in ["easyocr", "paddleocr"]:
+                                        # EasyOCR/PaddleOCRは日本語に強い（GPU使用を試行、失敗時はCPU）
+                                        # TesseractはGPU非対応なので、GPU化できるのはここだけ。
+                                        #
+                                        # 既定:
+                                        # - PaddleOCR: GPU利用を試行（速い/安定しやすい）
+                                        # - EasyOCR: 以前クラッシュ実績があるため「明示ON」時のみGPU利用
+                                        #
+                                        # 環境変数で切り替え:
+                                        # - MANA_OCR_USE_GPU=1/0 (全体のON/OFF)
+                                        # - MANA_EASYOCR_USE_GPU=1/0
+                                        # - MANA_PADDLEOCR_USE_GPU=1/0
+                                        def _env_true(name: str, default: str = "0") -> bool:
+                                            v = (os.getenv(name, default) or "").strip().lower()
+                                            return v in ("1", "true", "yes", "y", "on")
+
+                                        global_gpu = _env_true("MANA_OCR_USE_GPU", "1")
+                                        engine_gpu = (
+                                            _env_true("MANA_PADDLEOCR_USE_GPU", "1") if provider == "paddleocr"
+                                            else _env_true("MANA_EASYOCR_USE_GPU", "0")
+                                        )
+
+                                        use_gpu = False
+                                        if global_gpu and engine_gpu:
+                                            try:
+                                                import torch
+                                                use_gpu = bool(torch.cuda.is_available())
+                                            except Exception:
+                                                use_gpu = False
+
+                                        if use_gpu:
+                                            logger.info(f"  GPU有効: {provider} をGPUで実行します")
+                                        else:
+                                            logger.info(f"  GPU無効: {provider} はCPUで実行します")
+
+                                        try:
+                                            result = self.ocr.recognize(
+                                                temp_image_path,
+                                                provider=provider,
+                                                layout=True,
+                                                lang="ja" if provider == "easyocr" else "japan",
+                                                gpu=use_gpu,
+                                            )
+                                            # EasyOCRがNoneを返した場合（初期化失敗）はスキップ
+                                            if result is None:
+                                                logger.warning(f"  {provider}: 初期化失敗、スキップ")
+                                                continue
+                                        except (MemoryError, OSError, RuntimeError) as critical_err:
+                                            logger.error(f"  {provider}: 致命的エラー ({type(critical_err).__name__})、スキップ: {critical_err}")
                                             continue
-                                    except (MemoryError, OSError, RuntimeError) as critical_err:
-                                        logger.error(f"  {provider}: 致命的エラー ({type(critical_err).__name__})、スキップ: {critical_err}")
-                                        continue
-                                else:
-                                    result = self.ocr.recognize(temp_image_path, provider=provider)
+                                    else:
+                                        result = self.ocr.recognize(temp_image_path, provider=provider)
                                 
-                                if result and result.get('text') and result.get('text').strip():
-                                    ocr_results.append(result)
-                                    # スコアリング（文字数、信頼度、日本語文字の割合）
-                                    conf = result.get('confidence', 0.0)
-                                    text_len = len(result.get('text', ''))
-                                    jp_chars = len(re.findall(r"[\u3040-\u30ff\u4e00-\u9fff]", result.get('text', '')))
-                                    score = conf * 0.5 + min(text_len / 1000.0, 1.0) * 0.3 + min(jp_chars / max(text_len, 1), 1.0) * 0.2
+                                    if result and result.get('text') and result.get('text').strip():
+                                        ocr_results.append(result)
+                                        # スコアリング（文字数、信頼度、日本語文字の割合）
+                                        conf = result.get('confidence', 0.0)
+                                        text_len = len(result.get('text', ''))
+                                        jp_chars = len(re.findall(r"[\u3040-\u30ff\u4e00-\u9fff]", result.get('text', '')))
+                                        score = conf * 0.5 + min(text_len / 1000.0, 1.0) * 0.3 + min(jp_chars / max(text_len, 1), 1.0) * 0.2
                                     
+                                        if score > best_score:
+                                            best_score = score
+                                            best_result = result
+                                    
+                                        logger.info(f"  ✓ {provider}: {len(result.get('text', ''))}文字, 信頼度: {conf:.1f}%")
+                                except Exception as e:
+                                    error_msg = str(e)
+                                    logger.warning(f"プロバイダー '{provider}' でエラー: {error_msg[:100]}")
+                                    # 致命的エラーの場合は次のプロバイダーに進む
+                                    continue
+                        
+                            # 複数の結果をマージして文字化けを減らす
+                            ocr_result = best_result
+                            if ocr_result and len(ocr_results) > 1:
+                                # 複数の結果がある場合、文字化けの少ない結果を優先（ただし文字数も考慮）
+                                best_score = -1e9
+                                best_result_merged = ocr_result
+                            
+                                for result in ocr_results:
+                                    if not result:
+                                        continue
+                                
+                                    grid = result.get('grid_data')
+                                    if not grid:
+                                        continue
+                                
+                                    # 文字化けの数をカウント
+                                    mojibake_count = 0
+                                    total_chars = 0
+                                    filled_cells = 0
+                                
+                                    for row in grid:
+                                        for cell in row:
+                                            if cell:
+                                                cell_str = str(cell).strip()
+                                                if cell_str:
+                                                    filled_cells += 1
+                                                    total_chars += len(cell_str)
+                                                    mojibake_count += cell_str.count('')
+                                                    mojibake_count += len([c for c in cell_str if ord(c) > 0xFFFF])
+                                
+                                    # スコアリング: 文字数が多い + 文字化けが少ない = 高スコア
+                                    # ただし、文字数が極端に少ない場合は除外
+                                    if total_chars < 100:  # 100文字未満は除外
+                                        continue
+                                
+                                    mojibake_ratio = mojibake_count / max(total_chars, 1)
+                                    score = total_chars * 0.6 - mojibake_count * 10 - mojibake_ratio * 1000
+                                
                                     if score > best_score:
                                         best_score = score
-                                        best_result = result
-                                    
-                                    logger.info(f"  ✓ {provider}: {len(result.get('text', ''))}文字, 信頼度: {conf:.1f}%")
-                            except Exception as e:
-                                error_msg = str(e)
-                                logger.warning(f"プロバイダー '{provider}' でエラー: {error_msg[:100]}")
-                                # 致命的エラーの場合は次のプロバイダーに進む
-                                continue
-                        
-                        # 複数の結果をマージして文字化けを減らす
-                        ocr_result = best_result
-                        if ocr_result and len(ocr_results) > 1:
-                            # 複数の結果がある場合、文字化けの少ない結果を優先（ただし文字数も考慮）
-                            best_score = -1e9
-                            best_result_merged = ocr_result
+                                        best_result_merged = result
                             
-                            for result in ocr_results:
-                                if not result:
-                                    continue
-                                
-                                grid = result.get('grid_data')
-                                if not grid:
-                                    continue
-                                
-                                # 文字化けの数をカウント
-                                mojibake_count = 0
-                                total_chars = 0
-                                filled_cells = 0
-                                
-                                for row in grid:
-                                    for cell in row:
-                                        if cell:
-                                            cell_str = str(cell).strip()
-                                            if cell_str:
-                                                filled_cells += 1
-                                                total_chars += len(cell_str)
-                                                mojibake_count += cell_str.count('')
-                                                mojibake_count += len([c for c in cell_str if ord(c) > 0xFFFF])
-                                
-                                # スコアリング: 文字数が多い + 文字化けが少ない = 高スコア
-                                # ただし、文字数が極端に少ない場合は除外
-                                if total_chars < 100:  # 100文字未満は除外
-                                    continue
-                                
-                                mojibake_ratio = mojibake_count / max(total_chars, 1)
-                                score = total_chars * 0.6 - mojibake_count * 10 - mojibake_ratio * 1000
-                                
-                                if score > best_score:
-                                    best_score = score
-                                    best_result_merged = result
-                            
-                            ocr_result = best_result_merged
-                            if ocr_result != best_result:
-                                logger.info(f"  最良の結果を選択: {ocr_result.get('provider')} (文字数: {len(ocr_result.get('text', ''))}, スコア: {best_score:.1f})")
+                                ocr_result = best_result_merged
+                                if ocr_result != best_result:
+                                    logger.info(f"  最良の結果を選択: {ocr_result.get('provider')} (文字数: {len(ocr_result.get('text', ''))}, スコア: {best_score:.1f})")
                         
-                        if ocr_result:
-                            # ページごとのデータを保存（後でシート分けに使用）
-                            self.page_data.append({
-                                'page_num': actual_page_num,
-                                'text': ocr_result.get('text', ''),
-                                'grid_data': ocr_result.get('grid_data'),
-                                'provider': ocr_result.get('provider', selected_provider)
-                            })
+                            if ocr_result:
+                                # ページごとのデータを保存（後でシート分けに使用）
+                                self.page_data.append({
+                                    'page_num': actual_page_num,
+                                    'text': ocr_result.get('text', ''),
+                                    'grid_data': ocr_result.get('grid_data'),
+                                    'provider': ocr_result.get('provider', selected_provider)
+                                })
                             
-                            page_text = ocr_result['text']
-                            text += f"=== ページ {actual_page_num} ===\n{page_text}\n\n"
-                            logger.info(f"✅ ページ {actual_page_num} からテキストを抽出しました ({len(page_text)}文字, {ocr_result.get('provider', selected_provider)})")
-                        else:
-                            logger.warning(f"⚠️ ページ {actual_page_num} からテキストを抽出できませんでした")
+                                page_text = ocr_result['text']
+                                text += f"=== ページ {actual_page_num} ===\n{page_text}\n\n"
+                                logger.info(f"✅ ページ {actual_page_num} からテキストを抽出しました ({len(page_text)}文字, {ocr_result.get('provider', selected_provider)})")
+                            else:
+                                logger.warning(f"⚠️ ページ {actual_page_num} からテキストを抽出できませんでした")
                         
-                        # 一時ファイルを削除
-                        import os
-                        if os.path.exists(temp_image_path):
-                            os.remove(temp_image_path)
+                            # 一時ファイルを削除
+                            import os
+                            if os.path.exists(temp_image_path):
+                                os.remove(temp_image_path)
                     doc.close()
                 elif PDF2IMAGE_AVAILABLE:
                     images = convert_from_path(pdf_path, dpi=300)

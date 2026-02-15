@@ -7,9 +7,9 @@ Prometheus形式のメトリクスをエクスポート
 
 from typing import Dict, Any, List
 from datetime import datetime
-import logging
+from manaos_logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 try:
     from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
@@ -123,6 +123,8 @@ class PrometheusMetrics:
 
 
 # Flask統合
+
+
 def setup_prometheus_endpoint(app, prometheus_metrics: PrometheusMetrics):
     """Prometheusエンドポイントを設定"""
     from flask import Response
@@ -149,11 +151,4 @@ def get_prometheus_metrics() -> PrometheusMetrics:
             return None
         _prometheus_metrics = PrometheusMetrics()
     return _prometheus_metrics
-
-
-
-
-
-
-
 

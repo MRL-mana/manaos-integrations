@@ -58,8 +58,8 @@ class StreamingProcessor:
                 return
             except Exception as e:
                 if attempt == max_retries - 1:
-                    import logging
-                    logger = logging.getLogger(__name__)
+                    from manaos_logger import get_logger
+                    logger = get_logger(__name__)
                     logger.warning(f"状態保存エラー（{max_retries}回リトライ後）: {e}")
                 else:
                     import time
@@ -263,22 +263,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

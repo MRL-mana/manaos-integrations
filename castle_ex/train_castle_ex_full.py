@@ -9,6 +9,7 @@ import sys
 import json
 import os
 import shutil
+from manaos_logger import get_logger
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -68,16 +69,7 @@ except Exception:
 
 # ログ設定
 log_file_path = Path("training.log")
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler(str(log_file_path), encoding="utf-8"),
-        logging.StreamHandler(sys.stdout),
-    ],
-    force=True,  # 既存のハンドラを上書き
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def load_schedule(schedule_file: str = "castle_ex_schedule_v1_0.json") -> Optional[Dict]:

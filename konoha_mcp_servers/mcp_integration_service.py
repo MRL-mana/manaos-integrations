@@ -6,7 +6,7 @@ PostgreSQL to AI Learning統合サービス
 
 import os
 import sys
-import logging
+from manaos_logger import get_logger
 import asyncio
 from pathlib import Path
 from datetime import datetime
@@ -15,11 +15,7 @@ from typing import Dict, List, Optional
 # パス設定
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - MCP_INTEGRATION - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # 設定
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")

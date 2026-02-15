@@ -10,7 +10,7 @@ MCP-Proxy: 安全で高性能なMCPサーバープロキシ
 """
 import asyncio
 import json
-import logging
+from manaos_logger import get_logger
 import os
 import time
 from collections import defaultdict
@@ -29,15 +29,7 @@ import uvicorn
 log_dir = Path("/root/logs/mcp_proxy")
 log_dir.mkdir(parents=True, exist_ok=True)
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(log_dir / "mcp_proxy.log"),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # FastAPI app
 app = FastAPI(
@@ -56,6 +48,8 @@ app.add_middleware(
 )
 
 # ===== 設定 =====
+
+
 class Config:
     """MCP-Proxy設定"""
     # ポート
@@ -78,6 +72,8 @@ class Config:
 
 
 # ===== データモデル =====
+
+
 class MCPRequest(BaseModel):
     """MCPリクエスト"""
     mcp_server: str = Field(..., description="MCPサーバー名")
@@ -153,6 +149,8 @@ MCP_SERVERS = {
 
 
 # ===== レート制限 =====
+
+
 class RateLimiter:
     """レート制限管理"""
 
@@ -218,6 +216,8 @@ async def verify_token(authorization: Optional[str] = Header(None)):
 
 
 # ===== メトリクス =====
+
+
 class Metrics:
     """メトリクス収集"""
 
@@ -268,6 +268,8 @@ metrics = Metrics()
 
 
 # ===== MCPプロキシ =====
+
+
 class MCPProxy:
     """MCPプロキシコア"""
 
@@ -407,6 +409,8 @@ proxy = MCPProxy()
 
 
 # ===== APIエンドポイント =====
+
+
 @app.get("/")
 async def root():
     """ルートエンドポイント"""

@@ -4,7 +4,7 @@ MCP Gateway for WAN2.2
 Model Context Protocol Gateway implementation
 """
 
-import logging
+from manaos_logger import get_logger
 import os
 import sys
 from datetime import datetime
@@ -20,13 +20,12 @@ try:
     from github_bridge import GitHubBridge
     GITHUB_BRIDGE_AVAILABLE = True
 except ImportError as e:
-    logger = logging.getLogger(__name__)
+    logger = get_logger(__name__)
     logger.warning(f"GitHub Bridge not available: {e}")
     GITHUB_BRIDGE_AVAILABLE = False
 
 # ログ設定
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 app = FastAPI(title="WAN2.2 MCP Gateway", version="2.2.0")
 
@@ -39,10 +38,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class MCPRequest(BaseModel):
     method: str
     params: Optional[Dict] = None
     id: Optional[str] = None
+
 
 class MCPResponse(BaseModel):
     result: Optional[Dict] = None
@@ -81,6 +82,7 @@ if GITHUB_BRIDGE_AVAILABLE:
         "methods": ["push_file", "get_file", "delete_file", "list_files", "test_connection"]
     }
 
+
 @app.get("/")
 async def root():
     """MCP Gateway情報"""
@@ -97,6 +99,7 @@ async def root():
             "GitHub操作サポート" if GITHUB_BRIDGE_AVAILABLE else ""
         ]
     }
+
 
 @app.post("/mcp", response_model=MCPResponse)
 async def mcp_request(request: MCPRequest):
@@ -237,6 +240,7 @@ async def execute_tool(tool_name: str, params: Dict) -> Dict:
 
     return {"error": "Unknown tool method", "success": False}
 
+
 @app.get("/health")
 async def health_check():
     """ヘルスチェック"""
@@ -247,6 +251,7 @@ async def health_check():
         "version": "2.2.0"
     }
 
+
 @app.get("/tools")
 async def list_tools():
     """利用可能なツール一覧"""
@@ -256,6 +261,8 @@ async def list_tools():
     }
 
 # ===== GitHub操作用REST APIエンドポイント（n8n連携用） =====
+
+
 class GitHubPushRequest(BaseModel):
     """GitHubファイルプッシュリクエスト"""
     path: str
@@ -263,10 +270,12 @@ class GitHubPushRequest(BaseModel):
     message: Optional[str] = "Update via ManaOS API"
     branch: Optional[str] = "main"
 
+
 class GitHubGetRequest(BaseModel):
     """GitHubファイル取得リクエスト"""
     path: str
     branch: Optional[str] = "main"
+
 
 @app.post("/api/github/push")
 async def github_push_api(request: GitHubPushRequest):
@@ -287,6 +296,7 @@ async def github_push_api(request: GitHubPushRequest):
         logger.error(f"GitHub push API error: {e}")
         return {"success": False, "error": str(e)}
 
+
 @app.post("/api/github/get")
 async def github_get_api(request: GitHubGetRequest):
     """GitHubファイル取得API（n8n連携用）"""
@@ -304,6 +314,7 @@ async def github_get_api(request: GitHubGetRequest):
         logger.error(f"GitHub get API error: {e}")
         return {"success": False, "error": str(e)}
 
+
 @app.get("/api/github/list")
 async def github_list_api(path: str = "", branch: str = "main"):
     """GitHubファイル一覧取得API（n8n連携用）"""
@@ -317,6 +328,7 @@ async def github_list_api(path: str = "", branch: str = "main"):
     except Exception as e:
         logger.error(f"GitHub list API error: {e}")
         return {"success": False, "error": str(e)}
+
 
 @app.get("/api/github/test")
 async def github_test_api():

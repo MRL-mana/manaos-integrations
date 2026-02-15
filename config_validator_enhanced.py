@@ -11,12 +11,14 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass
 from datetime import datetime
-import logging
+from manaos_logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass
+
+
 class ValidationError:
     """検証エラー"""
     field: str

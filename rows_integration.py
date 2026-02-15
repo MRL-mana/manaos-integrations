@@ -10,9 +10,9 @@ import requests
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
-import logging
+from manaos_logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 try:
     REQUESTS_AVAILABLE = True
@@ -899,16 +899,4 @@ class RowsIntegration:
         except Exception as e:
             logger.error(f"ダッシュボード作成エラー: {e}")
             return None
-
-
-
-
-
-
-
-
-
-
-
-
 

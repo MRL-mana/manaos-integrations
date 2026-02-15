@@ -3,12 +3,12 @@ MCPサーバー用エラーハンドリングヘルパー
 統一エラーハンドリングとリトライメカニズムを提供
 """
 
-import logging
+from manaos_logger import get_logger
 import requests
 from typing import Any, Callable, Optional, Sequence, Dict
 from mcp.types import TextContent
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # タイムアウト設定のインポート
 try:
