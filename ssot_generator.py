@@ -58,7 +58,7 @@ class SSOTGenerator:
         """サービスヘルスチェック"""
         try:
             response = httpx.get(
-                f"http://localhost:{port}/health",
+                f"http://127.0.0.1:{port}/health",
                 timeout=timeout
             )
             if response.status_code == 200:
@@ -164,7 +164,7 @@ class SSOTGenerator:
         try:
             # Task Queueから取得
             response = httpx.get(
-                "http://localhost:5104/api/status",
+                "http://127.0.0.1:5104/api/status",
                 timeout=2
             )
             if response.status_code == 200:
@@ -188,7 +188,7 @@ class SSOTGenerator:
         # Unified Orchestratorから実行履歴を取得
         try:
             response = httpx.get(
-                "http://localhost:5106/api/history?limit=5",
+                "http://127.0.0.1:5106/api/history?limit=5",
                 timeout=2
             )
             if response.status_code == 200:
@@ -212,7 +212,7 @@ class SSOTGenerator:
         # Crash Snapshotから最新エラーを取得
         try:
             response = httpx.get(
-                "http://localhost:5113/api/snapshots?limit=1",
+                "http://127.0.0.1:5113/api/snapshots?limit=1",
                 timeout=2
             )
             if response.status_code == 200:

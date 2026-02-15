@@ -21,7 +21,7 @@ Write-Host "  [OK] API Gatewayを起動しました（ジョブID: $($job.Id)）
 # 2. ヘルスチェック
 Write-Host "`n[2] ヘルスチェック中..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "http://localhost:5120/api/health" -Method Get -TimeoutSec 5
+    $response = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/health" -Method Get -TimeoutSec 5
     Write-Host "  [OK] API Gatewayは正常に動作しています" -ForegroundColor Green
     Write-Host "  ステータス: $($response.status)" -ForegroundColor Cyan
 } catch {
@@ -34,7 +34,7 @@ try {
 # 3. システム情報取得テスト
 Write-Host "`n[3] システム情報取得テスト..." -ForegroundColor Yellow
 try {
-    $sysInfo = Invoke-RestMethod -Uri "http://localhost:5120/api/system/info" -Method Get -TimeoutSec 10
+    $sysInfo = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/system/info" -Method Get -TimeoutSec 10
     Write-Host "  [OK] システム情報を取得しました" -ForegroundColor Green
     Write-Host "  ホスト名: $($sysInfo.hostname)" -ForegroundColor Cyan
 } catch {
@@ -44,7 +44,7 @@ try {
 # 4. リソース情報取得テスト
 Write-Host "`n[4] リソース情報取得テスト..." -ForegroundColor Yellow
 try {
-    $resources = Invoke-RestMethod -Uri "http://localhost:5120/api/system/resources" -Method Get -TimeoutSec 10
+    $resources = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/system/resources" -Method Get -TimeoutSec 10
     Write-Host "  [OK] リソース情報を取得しました" -ForegroundColor Green
     Write-Host "  CPU使用率: $($resources.cpu.usage_percent)%" -ForegroundColor Cyan
     Write-Host "  メモリ使用率: $($resources.memory.usage_percent)%" -ForegroundColor Cyan
@@ -61,7 +61,7 @@ try {
         timeout = 10
     } | ConvertTo-Json
     
-    $cmdResult = Invoke-RestMethod -Uri "http://localhost:5120/api/execute" -Method Post -Body $body -ContentType "application/json" -TimeoutSec 15
+    $cmdResult = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/execute" -Method Post -Body $body -ContentType "application/json" -TimeoutSec 15
     Write-Host "  [OK] コマンドを実行しました" -ForegroundColor Green
     Write-Host "  コマンド: $($cmdResult.command)" -ForegroundColor Cyan
     Write-Host "  終了コード: $($cmdResult.exit_code)" -ForegroundColor Cyan

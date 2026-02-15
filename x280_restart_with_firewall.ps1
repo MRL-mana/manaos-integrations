@@ -66,13 +66,13 @@ Start-Sleep -Seconds 8
 Write-Host ""
 Write-Host "Checking API Gateway status..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "http://localhost:5120/api/health" -TimeoutSec 5
+    $response = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/health" -TimeoutSec 5
     Write-Host "[SUCCESS] API Gateway is running!" -ForegroundColor Green
     Write-Host "  Status: $($response.status)" -ForegroundColor Cyan
     Write-Host "  Process ID: $($process.Id)" -ForegroundColor Cyan
     Write-Host "  Listening on: 0.0.0.0:5120" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "Local access: http://localhost:5120/api/health" -ForegroundColor Cyan
+    Write-Host "Local access: http://127.0.0.1:5120/api/health" -ForegroundColor Cyan
     Write-Host "Remote access: http://100.127.121.20:5120/api/health" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Note: If remote access fails, configure firewall:" -ForegroundColor Yellow

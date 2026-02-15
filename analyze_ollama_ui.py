@@ -34,7 +34,7 @@ except Exception as e:
 print("\n[3] Ollama API直接呼び出し（Ollama UIと同じ方法）")
 try:
     response = requests.post(
-        "http://localhost:11434/api/chat",
+        "http://127.0.0.1:11434/api/chat",
         json={
             "model": "gpt-oss:20b",
             "messages": [{"role": "user", "content": "こんにちは"}],
@@ -54,7 +54,7 @@ except Exception as e:
 print("\n[4] ManaOS統合APIサーバー経由")
 try:
     response = requests.post(
-        "http://localhost:9500/api/llm/chat",
+        "http://127.0.0.1:9510/api/llm/chat",
         json={
             "messages": [{"role": "user", "content": "こんにちは"}],
             "task_type": "conversation"

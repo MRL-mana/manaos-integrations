@@ -9,10 +9,10 @@ import time
 import requests
 
 if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
-COMFYUI_URL = "http://localhost:8188"
+COMFYUI_URL = "http://127.0.0.1:8188"
 COMFYUI_PORT = 8188
 
 def check_comfyui_running():

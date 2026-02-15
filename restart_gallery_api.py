@@ -11,9 +11,9 @@ import io
 from pathlib import Path
 
 if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-GALLERY_API = "http://localhost:5559"
+GALLERY_API = "http://127.0.0.1:5559"
 
 print("=" * 60)
 print("Gallery APIサーバー再起動")

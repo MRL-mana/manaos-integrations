@@ -49,7 +49,7 @@ $mcpServers = @{
         command = "python"
         args    = @("-m", "unified_api_mcp_server.server")
         env     = @{
-            MANAOS_INTEGRATION_API_URL = "http://localhost:9502"
+            MANAOS_INTEGRATION_API_URL = "http://127.0.0.1:9510"
         }
         cwd     = $projectPath
     }
@@ -57,7 +57,7 @@ $mcpServers = @{
         command = "python"
         args    = @("-m", "step_deep_research_mcp_server.server")
         env     = @{
-            STEP_DEEP_RESEARCH_URL = "http://localhost:5121"
+            STEP_DEEP_RESEARCH_URL = "http://127.0.0.1:5121"
         }
         cwd     = $projectPath
     }
@@ -65,7 +65,7 @@ $mcpServers = @{
         command = "python"
         args    = @("-m", "gallery_api_mcp_server.server")
         env     = @{
-            GALLERY_API_URL = "http://localhost:5559"
+            GALLERY_API_URL = "http://127.0.0.1:5559"
         }
         cwd     = $projectPath
     }
@@ -73,7 +73,7 @@ $mcpServers = @{
         command = "python"
         args    = @("-m", "system_status_mcp_server.server")
         env     = @{
-            SYSTEM_STATUS_URL = "http://localhost:5112"
+            SYSTEM_STATUS_URL = "http://127.0.0.1:5112"
         }
         cwd     = $projectPath
     }
@@ -81,7 +81,7 @@ $mcpServers = @{
         command = "python"
         args    = @("-m", "ssot_mcp_server.server")
         env     = @{
-            SSOT_API_URL = "http://localhost:5120"
+            SSOT_API_URL = "http://127.0.0.1:5120"
         }
         cwd     = $projectPath
     }
@@ -89,7 +89,7 @@ $mcpServers = @{
         command = "python"
         args    = @("-m", "service_monitor_mcp_server.server")
         env     = @{
-            SERVICE_MONITOR_URL = "http://localhost:5111"
+            SERVICE_MONITOR_URL = "http://127.0.0.1:5111"
         }
         cwd     = $projectPath
     }
@@ -97,7 +97,7 @@ $mcpServers = @{
         command = "python"
         args    = @("-m", "web_voice_mcp_server.server")
         env     = @{
-            WEB_VOICE_API_URL = "http://localhost:5115"
+            WEB_VOICE_API_URL = "http://127.0.0.1:5115"
         }
         cwd     = $projectPath
     }
@@ -105,7 +105,7 @@ $mcpServers = @{
         command = "python"
         args    = @("-m", "portal_integration_mcp_server.server")
         env     = @{
-            PORTAL_API_URL = "http://localhost:5108"
+            PORTAL_API_URL = "http://127.0.0.1:5108"
         }
         cwd     = $projectPath
     }
@@ -113,7 +113,7 @@ $mcpServers = @{
         command = "python"
         args    = @("-m", "slack_integration_mcp_server.server")
         env     = @{
-            SLACK_API_URL = "http://localhost:5114"
+            SLACK_API_URL = "http://127.0.0.1:5114"
         }
         cwd     = $projectPath
     }
@@ -121,7 +121,7 @@ $mcpServers = @{
         command = "python"
         args    = @("-m", "portal_voice_integration_mcp_server.server")
         env     = @{
-            PORTAL_VOICE_API_URL = "http://localhost:5116"
+            PORTAL_VOICE_API_URL = "http://127.0.0.1:5116"
         }
         cwd     = $projectPath
     }
@@ -129,7 +129,7 @@ $mcpServers = @{
         command = "python"
         args    = @("-m", "ltx2_mcp_server.server")
         env     = @{
-            MANAOS_INTEGRATION_API_URL = "http://localhost:9502"
+            MANAOS_INTEGRATION_API_URL = "http://127.0.0.1:9510"
         }
         cwd     = $projectPath
     }
@@ -144,8 +144,8 @@ $mcpServers = @{
         args    = @("-m", "manaos_unified_mcp_server.server")
         env     = @{
             MCP_DOMAIN                 = "media"
-            MANAOS_INTEGRATION_API_URL = "http://localhost:9502"
-            COMFYUI_URL                = "http://localhost:8188"
+            MANAOS_INTEGRATION_API_URL = "http://127.0.0.1:9510"
+            COMFYUI_URL                = "http://127.0.0.1:8188"
         }
         cwd     = $projectPath
     }
@@ -154,7 +154,7 @@ $mcpServers = @{
         args    = @("-m", "manaos_unified_mcp_server.server")
         env     = @{
             MCP_DOMAIN                 = "productivity"
-            MANAOS_INTEGRATION_API_URL = "http://localhost:9502"
+            MANAOS_INTEGRATION_API_URL = "http://127.0.0.1:9510"
         }
         cwd     = $projectPath
     }
@@ -163,7 +163,7 @@ $mcpServers = @{
         args    = @("-m", "manaos_unified_mcp_server.server")
         env     = @{
             MCP_DOMAIN                 = "ai"
-            MANAOS_INTEGRATION_API_URL = "http://localhost:9502"
+            MANAOS_INTEGRATION_API_URL = "http://127.0.0.1:9510"
         }
         cwd     = $projectPath
     }
@@ -172,8 +172,8 @@ $mcpServers = @{
         args    = @("-m", "manaos_unified_mcp_server.server")
         env     = @{
             MCP_DOMAIN                 = "devices"
-            MANAOS_INTEGRATION_API_URL = "http://localhost:9502"
-            PORTAL_INTEGRATION_URL     = "http://localhost:5108"
+            MANAOS_INTEGRATION_API_URL = "http://127.0.0.1:9510"
+            PORTAL_INTEGRATION_URL     = "http://127.0.0.1:5108"
         }
         cwd     = $projectPath
     }
@@ -182,7 +182,7 @@ $mcpServers = @{
         args    = @("-m", "manaos_unified_mcp_server.server")
         env     = @{
             MCP_DOMAIN                 = "moltbot"
-            MANAOS_INTEGRATION_API_URL = "http://localhost:9502"
+            MANAOS_INTEGRATION_API_URL = "http://127.0.0.1:9510"
         }
         cwd     = $projectPath
     }

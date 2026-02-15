@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # 設定
-N8N_BASE_URL = os.getenv("N8N_BASE_URL", "http://localhost:5678")
+N8N_BASE_URL = os.getenv("N8N_BASE_URL", "http://127.0.0.1:5678")
 N8N_API_KEY = os.getenv("N8N_API_KEY", "")
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 

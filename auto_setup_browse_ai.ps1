@@ -6,8 +6,8 @@ Write-Host ""
 
 # Step 1: n8n確認
 Write-Host "📋 Step 1: n8n確認中..." -ForegroundColor Yellow
-$n8nPort = Test-NetConnection -ComputerName localhost -Port 5678 -InformationLevel Quiet
-$portalPort = Test-NetConnection -ComputerName localhost -Port 5000 -InformationLevel Quiet
+$n8nPort = Test-NetConnection -ComputerName 127.0.0.1 -Port 5678 -InformationLevel Quiet
+$portalPort = Test-NetConnection -ComputerName 127.0.0.1 -Port 5000 -InformationLevel Quiet
 
 if ($n8nPort) {
     Write-Host "✅ n8nは起動しています (ポート5678)" -ForegroundColor Green
@@ -51,13 +51,13 @@ Write-Host ""
 Write-Host "✅ 準備完了！次の手順でインポートしてください:" -ForegroundColor Green
 Write-Host ""
 Write-Host "【方法A: Portal UI経由（推奨・簡単）】" -ForegroundColor Cyan
-Write-Host "1. ブラウザで開く: http://localhost:5000" -ForegroundColor White
+Write-Host "1. ブラウザで開く: http://127.0.0.1:5000" -ForegroundColor White
 Write-Host "2. 「⚙️ 自動化ワークフロー（n8n）」セクションを開く" -ForegroundColor White
 Write-Host "3. 「ワークフローをインポート」をクリック" -ForegroundColor White
 Write-Host "4. ファイルを選択: $workflowPath" -ForegroundColor White
 Write-Host ""
 Write-Host "【方法B: n8n直接アクセス】" -ForegroundColor Cyan
-Write-Host "1. ブラウザで開く: http://localhost:5678" -ForegroundColor White
+Write-Host "1. ブラウザで開く: http://127.0.0.1:5678" -ForegroundColor White
 Write-Host "2. ログイン（必要に応じて）" -ForegroundColor White
 Write-Host "3. 「Workflows」→「Import from File」" -ForegroundColor White
 Write-Host "4. ファイルを選択: $workflowPath" -ForegroundColor White
@@ -69,7 +69,7 @@ Write-Host ""
 Write-Host "✅ ワークフローインポート後:" -ForegroundColor Green
 Write-Host ""
 Write-Host "1. Webhook URL確認:" -ForegroundColor Cyan
-Write-Host "   http://localhost:5678/webhook/browse-ai-webhook" -ForegroundColor White
+Write-Host "   http://127.0.0.1:5678/webhook/browse-ai-webhook" -ForegroundColor White
 Write-Host ""
 Write-Host "2. Browse AIアカウント作成（手動）:" -ForegroundColor Cyan
 Write-Host "   https://www.browse.ai/" -ForegroundColor White

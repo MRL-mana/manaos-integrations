@@ -60,7 +60,7 @@ Docker Desktopが起動したら：
 
 3. **ブラウザでアクセス**
    ```
-   http://localhost:3001
+   http://127.0.0.1:3001
    ```
 
 ---
@@ -126,8 +126,8 @@ Docker Desktopが正常に起動している場合：
 - ✅ タスクバーにDockerアイコンが表示される
 - ✅ `docker ps` コマンドが実行できる
 - ✅ Open WebUIコンテナが起動している
-- ✅ `http://localhost:3001` にアクセスできる
+- ✅ `http://127.0.0.1:3001` にアクセスできる
 
 ---
 
-**Docker Desktopを起動してから、再度 `http://localhost:3001` にアクセスしてください！**
+**Docker Desktopを起動してから、再度 `http://127.0.0.1:3001` にアクセスしてください！**

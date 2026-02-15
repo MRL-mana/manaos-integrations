@@ -10,8 +10,8 @@ import logging
 
 # Windows環境でのエンコーディング問題を回避
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

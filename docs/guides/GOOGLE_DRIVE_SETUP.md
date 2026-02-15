@@ -147,7 +147,7 @@ $body = @{
     folder_id = ""  # オプション: フォルダID
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://localhost:9500/api/google_drive/upload" `
+Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/google_drive/upload" `
     -Method POST `
     -Body $body `
     -ContentType "application/json"
@@ -192,6 +192,7 @@ Google Drive認証が完了したら:
 - [Google Drive API ドキュメント](https://developers.google.com/drive/api)
 - [OAuth 2.0 設定ガイド](https://developers.google.com/identity/protocols/oauth2)
 - [Google Cloud Console](https://console.cloud.google.com/)
+
 
 
 

@@ -16,8 +16,8 @@ import httpx
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -66,14 +66,14 @@ except ImportError:
     timeout_config = None
 
 # 環境変数から設定を読み込み
-COMFYUI_URL = os.getenv("COMFYUI_URL", "http://localhost:8188")
-MANAOS_API_URL = os.getenv("MANAOS_INTEGRATION_API_URL", "http://localhost:9500")
-PORTAL_INTEGRATION_URL = os.getenv("PORTAL_INTEGRATION_URL", "http://localhost:5108")
+COMFYUI_URL = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
+MANAOS_API_URL = os.getenv("MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510")
+PORTAL_INTEGRATION_URL = os.getenv("PORTAL_INTEGRATION_URL", "http://127.0.0.1:5108")
 ROOT = Path(__file__).resolve().parent.parent
-LEARNING_SYSTEM_URL = os.getenv("LEARNING_SYSTEM_URL", "http://localhost:5126")
-PERSONALITY_SYSTEM_URL = os.getenv("PERSONALITY_SYSTEM_URL", "http://localhost:5123")
-AUTONOMY_SYSTEM_URL = os.getenv("AUTONOMY_SYSTEM_URL", "http://localhost:5124")
-SECRETARY_SYSTEM_URL = os.getenv("SECRETARY_SYSTEM_URL", "http://localhost:5125")
+LEARNING_SYSTEM_URL = os.getenv("LEARNING_SYSTEM_URL", "http://127.0.0.1:5126")
+PERSONALITY_SYSTEM_URL = os.getenv("PERSONALITY_SYSTEM_URL", "http://127.0.0.1:5123")
+AUTONOMY_SYSTEM_URL = os.getenv("AUTONOMY_SYSTEM_URL", "http://127.0.0.1:5124")
+SECRETARY_SYSTEM_URL = os.getenv("SECRETARY_SYSTEM_URL", "http://127.0.0.1:5125")
 
 
 # 危険度の高いツール（VS Code操作など）の有効/無効
@@ -182,7 +182,7 @@ def get_integration(name: str):
             elif name == "searxng":
                 from searxng_integration import SearXNGIntegration
 
-                searxng_url = os.getenv("SEARXNG_BASE_URL", "http://localhost:8080")
+                searxng_url = os.getenv("SEARXNG_BASE_URL", "http://127.0.0.1:8080")
                 _integrations[name] = SearXNGIntegration(base_url=searxng_url)
             elif name == "brave_search":
                 from brave_search_integration import BraveSearchIntegration
@@ -925,7 +925,7 @@ async def list_tools() -> list[Tool]:
         [
             Tool(
                 name="phase1_run_off_3rounds",
-                description="Phase1 OFF 3往復テストを実行。unified_api_server が PHASE1_REFLECTION=off で起動している必要あり。API (localhost:9500) に接続してログを採取し、集計結果を返す。",
+                description="Phase1 OFF 3往復テストを実行。unified_api_server が PHASE1_REFLECTION=off で起動している必要あり。API (127.0.0.1:9510) に接続してログを採取し、集計結果を返す。",
                 inputSchema={"type": "object", "properties": {}},
             ),
             Tool(

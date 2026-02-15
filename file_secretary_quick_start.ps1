@@ -48,7 +48,7 @@ Start-Sleep -Seconds 3
 Write-Host ""
 Write-Host "📊 状態確認中..." -ForegroundColor Yellow
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:5120/health" -TimeoutSec 2 -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "http://127.0.0.1:5120/health" -TimeoutSec 2 -ErrorAction Stop
     Write-Host "✅ APIサーバー: 正常応答" -ForegroundColor Green
 } catch {
     Write-Host "⚠️ APIサーバー: 応答なし" -ForegroundColor Yellow

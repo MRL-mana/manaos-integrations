@@ -44,7 +44,7 @@ python test_slack_webhook_direct.py
 ### 方法2: APIエンドポイント直接テスト
 
 ```powershell
-curl -X POST http://localhost:5114/api/slack/webhook `
+curl -X POST http://127.0.0.1:5114/api/slack/webhook `
   -H "Content-Type: application/json" `
   -d '{\"text\": \"こんにちは\", \"user\": \"test_user\", \"channel\": \"test\"}'
 ```
@@ -52,7 +52,7 @@ curl -X POST http://localhost:5114/api/slack/webhook `
 ### 方法3: Slack Events APIテスト
 
 Slack Appの設定で、Event SubscriptionsのRequest URLに以下を設定：
-- ローカル: `http://localhost:5114/api/slack/events`（ngrok経由が必要）
+- ローカル: `http://127.0.0.1:5114/api/slack/events`（ngrok経由が必要）
 - または: ngrok URL + `/api/slack/events`
 
 ## 💡 解決方法

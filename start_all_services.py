@@ -32,7 +32,7 @@ def check_port(port: int) -> bool:
     """ポートが使用中かチェック"""
     import socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = sock.connect_ex(('localhost', port))
+    result = sock.connect_ex(('127.0.0.1', port))
     sock.close()
     return result == 0
 
@@ -59,7 +59,7 @@ def start_service(name: str, config: dict) -> subprocess.Popen:
         
         if check_port(config["port"]):
             print(f"[成功] {config['description']} が起動しました (ポート {config['port']})")
-            print(f"        URL: http://localhost:{config['port']}")
+            print(f"        URL: http://127.0.0.1:{config['port']}")
         else:
             print(f"[警告] {config['description']} の起動を確認できませんでした")
         
@@ -97,7 +97,7 @@ def main():
     print("起動中のサービス:")
     for name, config in SERVICES.items():
         if check_port(config["port"]):
-            print(f"  ✓ {config['description']}: http://localhost:{config['port']}")
+            print(f"  ✓ {config['description']}: http://127.0.0.1:{config['port']}")
     
     print()
     print("停止するには Ctrl+C を押してください")

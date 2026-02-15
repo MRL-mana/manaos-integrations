@@ -31,9 +31,9 @@ app = Flask(__name__)
 CORS(app)
 
 # 設定
-ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://localhost:5106")
-SLACK_INTEGRATION_URL = os.getenv("SLACK_INTEGRATION_URL", "http://localhost:5114")
-WEB_VOICE_URL = os.getenv("WEB_VOICE_URL", "http://localhost:5115")
+ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://127.0.0.1:5106")
+SLACK_INTEGRATION_URL = os.getenv("SLACK_INTEGRATION_URL", "http://127.0.0.1:5114")
+WEB_VOICE_URL = os.getenv("WEB_VOICE_URL", "http://127.0.0.1:5115")
 
 def execute_via_orchestrator(text: str, source: str = "portal", user: str = "portal_user") -> Dict[str, Any]:
     """Unified Orchestrator経由で実行"""

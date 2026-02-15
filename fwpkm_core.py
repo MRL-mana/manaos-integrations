@@ -503,7 +503,7 @@ class InferenceMemoryUpdater:
     def __init__(
         self,
         chunk_processor: ChunkMemoryProcessor,
-        ollama_url: str = "http://localhost:11434"
+        ollama_url: str = "http://127.0.0.1:11434"
     ):
         self.chunk_processor = chunk_processor
         self.ollama_url = ollama_url

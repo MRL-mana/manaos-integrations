@@ -31,7 +31,7 @@ Cursorから直接SVI × Wan 2.2の動画生成を実行できるMCPサーバー
        "command": "python",
        "args": ["-m", "svi_mcp_server.server"],
        "env": {
-         "COMFYUI_URL": "http://localhost:8188"
+         "COMFYUI_URL": "http://127.0.0.1:8188"
        },
        "cwd": "C:\\Users\\mana4\\OneDrive\\Desktop\\manaos_integrations"
      }
@@ -90,7 +90,7 @@ ComfyUIのキュー状態を取得します。
 
 ### 環境変数
 
-- `COMFYUI_URL`: ComfyUIのベースURL（デフォルト: http://localhost:8188）
+- `COMFYUI_URL`: ComfyUIのベースURL（デフォルト: http://127.0.0.1:8188）
 
 ---
 

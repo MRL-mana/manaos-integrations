@@ -274,7 +274,7 @@ def main():
     print("\nノードを登録中...")
     distributed.register_node(
         node_id="node1",
-        url="http://localhost:9500",
+        url="http://127.0.0.1:9510",
         capabilities=["image_generation", "model_search"],
         metadata={"max_concurrent_tasks": 3}
     )

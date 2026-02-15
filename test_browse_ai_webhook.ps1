@@ -1,7 +1,7 @@
 # Browse AI Webhook Test Script
 
 param(
-    [string]$WebhookUrl = "http://localhost:5678/webhook-test/browse-ai-webhook"
+    [string]$WebhookUrl = "http://127.0.0.1:5678/webhook-test/browse-ai-webhook"
 )
 
 Write-Host "Browse AI Webhook Test Start" -ForegroundColor Green

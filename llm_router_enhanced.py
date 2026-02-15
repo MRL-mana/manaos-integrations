@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class EnhancedLLMRouter:
     """難易度ルーティング対応のLLMルーター"""
     
-    def __init__(self, lm_studio_url: str = "http://localhost:1234/v1", ollama_url: str = "http://localhost:11434"):
+    def __init__(self, lm_studio_url: str = "http://127.0.0.1:1234/v1", ollama_url: str = "http://127.0.0.1:11434"):
         """
         初期化
         

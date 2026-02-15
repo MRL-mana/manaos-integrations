@@ -31,7 +31,7 @@ if (-not $lmStudioProcess) {
 Write-Host ""
 Write-Host "[確認中] サーバーの状態を確認中..." -ForegroundColor Yellow
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:1234/v1/models" -Method GET -TimeoutSec 2 -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "http://127.0.0.1:1234/v1/models" -Method GET -TimeoutSec 2 -ErrorAction Stop
     Write-Host "[✅] LM Studioサーバーは既に起動しています！" -ForegroundColor Green
     $models = ($response.Content | ConvertFrom-Json).data
     Write-Host "利用可能なモデル数: $($models.Count)" -ForegroundColor Cyan

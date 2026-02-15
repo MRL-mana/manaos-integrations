@@ -116,12 +116,12 @@
 
 ### インストール済みモデル確認
 ```powershell
-curl http://localhost:11434/api/tags
+curl http://127.0.0.1:11434/api/tags
 ```
 
 ### 実行中モデル確認（メモリにロード済み）
 ```powershell
-curl http://localhost:11434/api/ps
+curl http://127.0.0.1:11434/api/ps
 ```
 
 ### モデル使用状況確認スクリプト

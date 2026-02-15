@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any
 import random
 
-API_BASE = "http://localhost:9500"
+API_BASE = "http://127.0.0.1:9510"
 
 
 def create_log_spreadsheet():

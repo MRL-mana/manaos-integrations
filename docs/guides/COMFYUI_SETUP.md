@@ -47,10 +47,10 @@ python main.py --port 8188
 
 ```bash
 # このはサーバー側
-curl http://localhost:8188/system_stats
+curl http://127.0.0.1:8188/system_stats
 
 # またはブラウザで
-http://localhost:8188
+http://127.0.0.1:8188
 # または外部から
 http://163.44.120.49:8188
 ```
@@ -77,7 +77,7 @@ $body = @{
     steps = 20
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://localhost:9500/api/comfyui/generate" `
+Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/comfyui/generate" `
     -Method POST `
     -Body $body `
     -ContentType "application/json"
@@ -140,6 +140,7 @@ ComfyUIが起動したら：
 - `comfyui_integration.py` - ComfyUI統合モジュール
 - `unified_api_server.py` - 統合APIサーバー
 - `test_comfyui_civitai.py` - テストスクリプト
+
 
 
 

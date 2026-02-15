@@ -16,7 +16,7 @@ if ($port) {
 
 # n8nを再起動
 Write-Host "n8nを起動しています..." -ForegroundColor Cyan
-Write-Host "ブラウザで http://localhost:5679 を開いてください" -ForegroundColor Yellow
+Write-Host "ブラウザで http://127.0.0.1:5679 を開いてください" -ForegroundColor Yellow
 Write-Host "停止するには Ctrl+C を押してください" -ForegroundColor Gray
 Write-Host ""
 

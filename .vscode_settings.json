@@ -8,12 +8,12 @@
   "python.analysis.typeCheckingMode": "basic",
   "manaos.enabled": true,
   "manaos.integrationPath": "${workspaceFolder}",
-  "manaos.apiUrl": "http://localhost:9500",
+  "manaos.apiUrl": "http://127.0.0.1:9510",
   "manaos.memory.enabled": true,
   "manaos.memory.type": "mrl",
-  "manaos.memory.apiUrl": "http://localhost:5103",
+  "manaos.memory.apiUrl": "http://127.0.0.1:5103",
   "manaos.llmRouting.enabled": true,
-  "manaos.llmRouting.apiUrl": "http://localhost:5111",
+  "manaos.llmRouting.apiUrl": "http://127.0.0.1:5111",
   "manaos.autoStart": true,
   "manaos.services": {
     "memory": {
@@ -27,7 +27,7 @@
       "module": "learning_system"
     },
     "unifiedApi": {
-      "port": 9500,
+      "port": 9510,
       "autoStart": true,
       "module": "unified_api_mcp_server"
     },

@@ -30,8 +30,8 @@ class Searcher:
         self.config = config
         self.sources = config.get("sources", ["web", "rag"])
         self.max_results_per_query = config.get("max_results_per_query", 10)
-        self.searxng_url = config.get("searxng_url", "http://localhost:8080")
-        self.rag_api_url = config.get("rag_api_url", "http://localhost:5103")
+        self.searxng_url = config.get("searxng_url", "http://127.0.0.1:8080")
+        self.rag_api_url = config.get("rag_api_url", "http://127.0.0.1:5103")
         
         # ソース品質フィルタ初期化
         self.quality_filter = SourceQualityFilter()

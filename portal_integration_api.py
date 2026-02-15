@@ -35,11 +35,11 @@ CORS(app)
 
 # サービスURL
 SERVICES = {
-    "unified_orchestrator": "http://localhost:5106",
-    "ui_operations": "http://localhost:5105",
-    "task_queue": "http://localhost:5104",
+    "unified_orchestrator": "http://127.0.0.1:5106",
+    "ui_operations": "http://127.0.0.1:5105",
+    "task_queue": "http://127.0.0.1:5104",
 }
-AUTONOMY_SYSTEM_URL = os.getenv("AUTONOMY_SYSTEM_URL", "http://localhost:5124").rstrip("/")
+AUTONOMY_SYSTEM_URL = os.getenv("AUTONOMY_SYSTEM_URL", "http://127.0.0.1:5124").rstrip("/")
 
 # 外部クライアント用: Portal → 5106 のタイムアウト（短めで切る。LLM待ちでUX死ぬの防止）
 ORCHESTRATOR_CLIENT_TIMEOUT = float(os.getenv("PORTAL_ORCHESTRATOR_TIMEOUT", "12"))

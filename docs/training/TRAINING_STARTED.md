@@ -39,7 +39,7 @@ dir outputs\castle_ex_v1_0\checkpoint-*
 tensorboard --logdir ./outputs/castle_ex_v1_0/logs
 ```
 
-ブラウザで `http://localhost:6006` を開く
+ブラウザで `http://127.0.0.1:6006` を開く
 
 ### 4. 学習状態ファイルの確認
 

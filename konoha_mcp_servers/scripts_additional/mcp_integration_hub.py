@@ -19,10 +19,10 @@ class MCPIntegrationHub:
         self.ai_learning_data_dir = Path("/root/ai_learning_system/data")
         self.trinity_workspace = Path("/root/trinity_workspace")
         self.manaos_services = {
-            "api_bridge": "http://localhost:7000",
-            "unified_api_gateway": "http://localhost:8009",
-            "slack_bot": "http://localhost:5555",
-            "screen_sharing": "http://localhost:5008"
+            "api_bridge": "http://127.0.0.1:7000",
+            "unified_api_gateway": "http://127.0.0.1:8009",
+            "slack_bot": "http://127.0.0.1:5555",
+            "screen_sharing": "http://127.0.0.1:5008"
         }
         self.integration_log = Path("/root/logs/mcp_integration_hub.log")
         self.integration_log.parent.mkdir(exist_ok=True)

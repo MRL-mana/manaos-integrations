@@ -25,7 +25,7 @@
 ### 4. パス・URLの固定
 - **問題**: ComfyUI のパス・URLが `C:/ComfyUI` 固定
 - **対応**: 環境変数で上書き可能に
-  - `COMFYUI_URL` … API URL（既定: http://localhost:8188）
+  - `COMFYUI_URL` … API URL（既定: http://127.0.0.1:8188）
   - `COMFYUI_BASE` … ベースパス（既定: C:/ComfyUI）
   - `COMFYUI_MODELS` … checkpoints フォルダ
   - `COMFYUI_LORAS` … loras フォルダ

@@ -23,8 +23,8 @@ $manaosUnifiedConfig = @{
     )
     env = @{
         PYTHONPATH = "C:\Users\mana4\Desktop\manaos_integrations"
-        MANAOS_INTEGRATION_API_URL = "http://localhost:9500"
-        COMFYUI_URL = "http://localhost:8188"
+        MANAOS_INTEGRATION_API_URL = "http://127.0.0.1:9510"
+        COMFYUI_URL = "http://127.0.0.1:8188"
         OBSIDIAN_VAULT_PATH = "C:\Users\mana4\Documents\Obsidian Vault"
     }
     cwd = "C:\Users\mana4\Desktop\manaos_integrations"

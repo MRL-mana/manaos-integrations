@@ -126,7 +126,7 @@ Get-NetTCPConnection -LocalPort 5679
 Get-Process | Where-Object { $_.ProcessName -eq "node" } | Where-Object { $_.CommandLine -like "*n8n*" }
 
 # Web UI確認
-Start-Process "http://localhost:5679"
+Start-Process "http://127.0.0.1:5679"
 ```
 
 

@@ -12,11 +12,7 @@ from pathlib import Path
 # モジュール読み込み前にエンコーディング設定（一度だけ）
 if sys.platform == 'win32':
     try:
-        import io
-        # 既にTextIOWrapperでラップされている場合はスキップ
-        if not isinstance(sys.stdout, io.TextIOWrapper):
-            if hasattr(sys.stdout, 'buffer') and not sys.stdout.buffer.closed:
-                sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        sys.stdout.reconfigure(encoding='utf-8')
     except (AttributeError, ValueError, TypeError):
         pass
 

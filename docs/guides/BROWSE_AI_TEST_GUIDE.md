@@ -19,7 +19,7 @@
 ### Step 1: n8nのワークフローを確認
 
 **n8nにアクセス**:
-- **URL**: http://localhost:5678
+- **URL**: http://127.0.0.1:5678
 - **ワークフロー**: `browse_ai_manaos_integration`
 
 **確認項目**:
@@ -45,7 +45,7 @@
 ### Step 3: ngrokのWeb UIで確認
 
 **ngrokのWeb UIにアクセス**:
-- **URL**: http://localhost:4040
+- **URL**: http://127.0.0.1:4040
 
 **確認項目**:
 1. **リクエスト履歴を確認**

@@ -88,7 +88,7 @@ elif args.model_type == 'ollama':
     import requests
     def ollama_predict(prompt: str) -> str:
         response = requests.post(
-            "http://localhost:11434/api/generate",
+            "http://127.0.0.1:11434/api/generate",
             json={"model": args.model, "prompt": prompt}
         )
         return response.json().get("response", "")

@@ -254,7 +254,7 @@ final_result = manaos.act("llm_call", {
 # intent_router.py
 def __init__(
     self,
-    ollama_url: str = "http://localhost:11434",
+    ollama_url: str = "http://127.0.0.1:11434",
     model: str = "lfm2.5:1.2b",  # ← LFM 2.5に変更
     config_path: Optional[Path] = None
 ):

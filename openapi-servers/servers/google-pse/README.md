@@ -115,8 +115,8 @@ Extend the search functionality, add custom filters, or integrate with other API
 
 Once running, explore auto-generated interactive docs:
 
-🖥️ Swagger UI: http://localhost:8000/docs  
-📄 OpenAPI JSON: http://localhost:8000/openapi.json
+🖥️ Swagger UI: http://127.0.0.1:8000/docs  
+📄 OpenAPI JSON: http://127.0.0.1:8000/openapi.json
 
 ---
 
@@ -139,13 +139,13 @@ docker-compose up --build
 
 ```bash
 # Basic search
-curl "http://localhost:8000/search?q=OpenAI+GPT"
+curl "http://127.0.0.1:8000/search?q=OpenAI+GPT"
 
 # Advanced search with filters
-curl "http://localhost:8000/search?q=machine+learning&num=5&lr=lang_en&dateRestrict=m1"
+curl "http://127.0.0.1:8000/search?q=machine+learning&num=5&lr=lang_en&dateRestrict=m1"
 
 # Site-specific search
-curl "http://localhost:8000/search?q=python+tutorial&siteSearch=github.com&siteSearchFilter=i"
+curl "http://127.0.0.1:8000/search?q=python+tutorial&siteSearch=github.com&siteSearchFilter=i"
 ```
 
 ---

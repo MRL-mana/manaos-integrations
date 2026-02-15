@@ -26,7 +26,7 @@ if ($portInUse) {
     Write-Host "[INFO] ポート $Port は既に使用中です" -ForegroundColor Yellow
     Write-Host "ComfyUIは既に起動している可能性があります" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "ブラウザで http://localhost:$Port にアクセスしてください" -ForegroundColor Cyan
+    Write-Host "ブラウザで http://127.0.0.1:$Port にアクセスしてください" -ForegroundColor Cyan
     exit 0
 }
 
@@ -40,10 +40,10 @@ if ($Background) {
     Start-Process python -ArgumentList "main.py", "--port", $Port.ToString() -WorkingDirectory $ComfyUIPath -WindowStyle Hidden
     Write-Host "[OK] ComfyUIをバックグラウンドで起動しました" -ForegroundColor Green
     Write-Host ""
-    Write-Host "ブラウザで http://localhost:$Port にアクセスしてください" -ForegroundColor Cyan
+    Write-Host "ブラウザで http://127.0.0.1:$Port にアクセスしてください" -ForegroundColor Cyan
 } else {
     Write-Host "ComfyUIサーバーを起動中..." -ForegroundColor Green
-    Write-Host "ブラウザで http://localhost:$Port にアクセスしてください" -ForegroundColor Cyan
+    Write-Host "ブラウザで http://127.0.0.1:$Port にアクセスしてください" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "停止する場合は Ctrl+C を押してください" -ForegroundColor Yellow
     Write-Host ""

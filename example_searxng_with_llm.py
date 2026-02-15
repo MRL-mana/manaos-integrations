@@ -18,8 +18,8 @@ def example_1_simple_search_with_llm():
     print("=" * 60)
     
     integration = SearXNGLLMIntegration(
-        searxng_url="http://localhost:8080",
-        ollama_url="http://localhost:11434",
+        searxng_url="http://127.0.0.1:8080",
+        ollama_url="http://127.0.0.1:11434",
         model_name="qwen2.5:7b"
     )
     
@@ -103,7 +103,7 @@ def example_4_ollama_function_calling():
     import requests
     
     response = requests.post(
-        "http://localhost:11434/api/chat",
+        "http://127.0.0.1:11434/api/chat",
         json={
             "model": "qwen2.5:7b",
             "messages": [

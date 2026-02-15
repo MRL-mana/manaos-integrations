@@ -13,7 +13,7 @@ Set-Location $scriptDir
 # 1. ComfyUI確認
 Write-Host "[1] ComfyUI起動確認..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "http://localhost:8188/system_stats" -Method GET -TimeoutSec 3 -ErrorAction SilentlyContinue
+    $response = Invoke-RestMethod -Uri "http://127.0.0.1:8188/system_stats" -Method GET -TimeoutSec 3 -ErrorAction SilentlyContinue
     if ($response) {
         Write-Host "   [OK] ComfyUIは起動中です" -ForegroundColor Green
     } else {
@@ -28,7 +28,7 @@ Write-Host ""
 # 2. 統合APIサーバー確認
 Write-Host "[2] 統合APIサーバー起動確認..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "http://localhost:9500/health" -Method GET -TimeoutSec 3 -ErrorAction SilentlyContinue
+    $response = Invoke-RestMethod -Uri "http://127.0.0.1:9510/health" -Method GET -TimeoutSec 3 -ErrorAction SilentlyContinue
     if ($response) {
         Write-Host "   [OK] 統合APIサーバーは起動中です" -ForegroundColor Green
         $integrations = $response.integrations

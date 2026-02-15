@@ -93,8 +93,8 @@ Each tool is available as a dedicated endpoint with full OpenAPI documentation.
 
 Once running, explore the interactive API documentation:
 
-🖥️ Swagger UI: http://localhost:8000/docs
-📄 OpenAPI JSON: http://localhost:8000/openapi.json
+🖥️ Swagger UI: http://127.0.0.1:8000/docs
+📄 OpenAPI JSON: http://127.0.0.1:8000/openapi.json
 
 The documentation includes detailed schemas, example requests, and response formats for all available tools.
 

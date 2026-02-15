@@ -12,7 +12,7 @@ def check_available_models():
     """利用可能なモデルを確認"""
     print("=== 利用可能なモデル確認 ===")
     try:
-        response = httpx.get("http://localhost:11434/api/tags", timeout=5.0)
+        response = httpx.get("http://127.0.0.1:11434/api/tags", timeout=5.0)
         if response.status_code == 200:
             data = response.json()
             models = data.get("models", [])

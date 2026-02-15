@@ -7,7 +7,7 @@ if not exist "%COMFYUI_BASE%\main.py" (
     exit /b 1
 )
 cd /d "%COMFYUI_BASE%"
-echo ComfyUI starting - http://localhost:8188
+echo ComfyUI starting - http://127.0.0.1:8188
 echo Press Ctrl+C to stop.
 python main.py --port 8188
 pause

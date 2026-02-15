@@ -11,8 +11,8 @@ import io
 
 # Windows環境でのエンコーディング問題を回避
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -60,8 +60,8 @@ def check_services():
     print("=" * 60)
     
     services = {
-        "Ollama": "http://localhost:11434",
-        "n8n": "http://localhost:5678"
+        "Ollama": "http://127.0.0.1:11434",
+        "n8n": "http://127.0.0.1:5678"
     }
     
     import requests
@@ -122,8 +122,8 @@ def start_server():
         initialize_integrations()
         
         # ポートとホストを取得
-        port = int(os.getenv("MANAOS_INTEGRATION_PORT", 9500))
-        host = os.getenv("MANAOS_INTEGRATION_HOST", "0.0.0.0")
+        port = int(os.getenv("MANAOS_INTEGRATION_PORT", 9510))
+        host = os.getenv("MANAOS_INTEGRATION_HOST", "127.0.0.1")
         
         print(f"\nサーバー起動: http://{host}:{port}")
         print("\n利用可能なエンドポイント:")

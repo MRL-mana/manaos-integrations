@@ -50,7 +50,7 @@ Write-Host "n8n起動中..." -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "ブラウザで以下のURLを開いてください:" -ForegroundColor Yellow
-Write-Host "  http://localhost:5679" -ForegroundColor Cyan
+Write-Host "  http://127.0.0.1:5679" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "停止するには Ctrl+C を押してください" -ForegroundColor Gray
 Write-Host ""

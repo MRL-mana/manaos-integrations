@@ -31,7 +31,7 @@ app = Flask(__name__)
 CORS(app)
 
 # 設定
-ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://localhost:5106")
+ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://127.0.0.1:5106")
 
 # 音声認識API（Web Speech APIを使用するため、フロントエンドで処理）
 # バックエンドはテキストを受け取って実行するだけ

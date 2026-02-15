@@ -10,7 +10,7 @@ try {
     $OutputEncoding = [System.Text.UTF8Encoding]::new()
 } catch {}
 Set-Location $PSScriptRoot
-$api = "http://127.0.0.1:9500/api/llm/chat"
+$api = "http://127.0.0.1:9510/api/llm/chat"
 $timeout = 120
 
 # 同一テーマ再訪: 1と4が天気、2と5がプログラミング、3が料理 → 2テーマ再訪

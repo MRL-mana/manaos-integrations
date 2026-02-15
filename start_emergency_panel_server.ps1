@@ -21,11 +21,11 @@ if (-not (Test-Path $serverScript)) {
     exit 1
 }
 
-# ポート9500が使用中か確認
-Write-Host "[1/3] ポート9500の確認..." -ForegroundColor Green
-$portInUse = Get-NetTCPConnection -LocalPort 9500 -ErrorAction SilentlyContinue
+# ポート9510が使用中か確認
+Write-Host "[1/3] ポート9510の確認..." -ForegroundColor Green
+$portInUse = Get-NetTCPConnection -LocalPort 9510 -ErrorAction SilentlyContinue
 if ($portInUse) {
-    Write-Host "  ⚠️  ポート9500は既に使用中です" -ForegroundColor Yellow
+    Write-Host "  ⚠️  ポート9510は既に使用中です" -ForegroundColor Yellow
     Write-Host "     プロセス: $($portInUse.OwningProcess)" -ForegroundColor Gray
     
     $killProcess = Read-Host "既存のプロセスを終了しますか？ (Y/N)"
@@ -41,7 +41,7 @@ if ($portInUse) {
         Write-Host "  ⚠️  既存のプロセスを終了しませんでした。別のターミナルでサーバーが起動している可能性があります。" -ForegroundColor Yellow
     }
 } else {
-    Write-Host "  ✅ ポート9500は使用可能です" -ForegroundColor Green
+    Write-Host "  ✅ ポート9510は使用可能です" -ForegroundColor Green
 }
 
 Write-Host ""
@@ -61,8 +61,8 @@ Write-Host ""
 
 # サーバー起動
 Write-Host "[3/3] サーバー起動..." -ForegroundColor Green
-Write-Host "  緊急パネルURL: http://localhost:9500/emergency" -ForegroundColor Cyan
-Write-Host "  緊急パネルURL（Tailscale）: http://100.73.247.100:9500/emergency" -ForegroundColor Cyan
+Write-Host "  緊急パネルURL: http://127.0.0.1:9510/emergency" -ForegroundColor Cyan
+Write-Host "  緊急パネルURL（Tailscale）: http://100.73.247.100:9510/emergency" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  サーバーを停止するには Ctrl+C を押してください" -ForegroundColor Yellow
 Write-Host ""

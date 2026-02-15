@@ -43,12 +43,12 @@ def start_n8n():
     try:
         import socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = sock.connect_ex(('localhost', port))
+        result = sock.connect_ex(('127.0.0.1', port))
         sock.close()
         if result == 0:
             print(f"[情報] ポート {port} は既に使用中です")
             print(f"n8nは既に起動している可能性があります")
-            print(f"ブラウザで http://localhost:{port} にアクセスしてください")
+            print(f"ブラウザで http://127.0.0.1:{port} にアクセスしてください")
             return True
     except Exception as e:
         print(f"[警告] ポート確認中にエラー: {e}")
@@ -57,7 +57,7 @@ def start_n8n():
     print(f"  コマンド: {' '.join(args)}")
     print(f"  ポート: {port}")
     print(f"")
-    print(f"ブラウザで http://localhost:{port} にアクセスしてください")
+    print(f"ブラウザで http://127.0.0.1:{port} にアクセスしてください")
     print(f"")
     
     try:

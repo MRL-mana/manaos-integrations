@@ -17,7 +17,7 @@ tool_def = create_searxng_tool_for_ollama()
 
 # Ollamaにツールを登録して使用
 response = requests.post(
-    "http://localhost:11434/api/chat",
+    "http://127.0.0.1:11434/api/chat",
     json={
         "model": "qwen2.5:7b",
         "messages": [
@@ -43,8 +43,8 @@ from langchain.prompts import PromptTemplate
 
 # 統合クラスを初期化
 integration = SearXNGLLMIntegration(
-    searxng_url="http://localhost:8080",
-    ollama_url="http://localhost:11434",
+    searxng_url="http://127.0.0.1:8080",
+    ollama_url="http://127.0.0.1:11434",
     model_name="qwen2.5:7b"
 )
 

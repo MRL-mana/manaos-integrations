@@ -13,7 +13,7 @@ ManaOSに統合された「SVI × Wan 2.2」動画生成機能の使用方法を
 ### 必要な環境
 
 1. **ComfyUI**: ローカルまたはクラウド環境で起動していること
-   - デフォルトURL: `http://localhost:8188`
+   - デフォルトURL: `http://127.0.0.1:8188`
    - 環境変数 `COMFYUI_URL` で変更可能
 
 2. **SVI × Wan 2.2ワークフロー**: ComfyUIにインストールされていること
@@ -21,7 +21,7 @@ ManaOSに統合された「SVI × Wan 2.2」動画生成機能の使用方法を
    - モデルファイル（wan2.2.safetensors）が準備されていること
 
 3. **ManaOS統合APIサーバー**: 起動していること
-   - デフォルトURL: `http://localhost:9500`
+   - デフォルトURL: `http://127.0.0.1:9510`
    - 環境変数 `MANAOS_INTEGRATION_PORT` で変更可能
 
 ---
@@ -34,7 +34,7 @@ ManaOSに統合された「SVI × Wan 2.2」動画生成機能の使用方法を
 from svi_wan22_video_integration import SVIWan22VideoIntegration
 
 # 初期化
-svi = SVIWan22VideoIntegration(base_url="http://localhost:8188")
+svi = SVIWan22VideoIntegration(base_url="http://127.0.0.1:8188")
 
 # 利用可能か確認
 if not svi.is_available():
@@ -62,7 +62,7 @@ else:
 #### 動画生成
 
 ```bash
-curl -X POST http://localhost:9500/api/svi/generate \
+curl -X POST http://127.0.0.1:9510/api/svi/generate \
   -H "Content-Type: application/json" \
   -d '{
     "start_image_path": "path/to/start_image.png",
@@ -77,7 +77,7 @@ curl -X POST http://localhost:9500/api/svi/generate \
 #### 動画延長
 
 ```bash
-curl -X POST http://localhost:9500/api/svi/extend \
+curl -X POST http://127.0.0.1:9510/api/svi/extend \
   -H "Content-Type: application/json" \
   -d '{
     "previous_video_path": "path/to/previous_video.mp4",
@@ -91,7 +91,7 @@ curl -X POST http://localhost:9500/api/svi/extend \
 #### ストーリー動画生成
 
 ```bash
-curl -X POST http://localhost:9500/api/svi/story \
+curl -X POST http://127.0.0.1:9510/api/svi/story \
   -H "Content-Type: application/json" \
   -d '{
     "start_image_path": "path/to/start_image.png",
@@ -336,7 +336,7 @@ if not svi.is_available():
     print("ComfyUIが利用できません")
     print("確認事項:")
     print("1. ComfyUIサーバーが起動しているか")
-    print("2. URLが正しいか（デフォルト: http://localhost:8188）")
+    print("2. URLが正しいか（デフォルト: http://127.0.0.1:8188）")
     print("3. ネットワーク接続が正常か")
 ```
 
@@ -423,6 +423,7 @@ print(f"{len(execution_ids)}個の動画を生成中...")
 ---
 
 *最終更新: 2025-01-28*
+
 
 
 

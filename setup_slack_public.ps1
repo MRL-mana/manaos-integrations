@@ -27,7 +27,7 @@ if (-not $verificationToken) {
 
 # 2. Slack Integration起動確認
 Write-Host "`n[2/4] Slack Integration起動確認中..." -ForegroundColor Yellow
-$slackRunning = Test-NetConnection -ComputerName localhost -Port 5114 -WarningAction SilentlyContinue -InformationLevel Quiet -ErrorAction SilentlyContinue
+$slackRunning = Test-NetConnection -ComputerName 127.0.0.1 -Port 5114 -WarningAction SilentlyContinue -InformationLevel Quiet -ErrorAction SilentlyContinue
 
 if (-not $slackRunning) {
     Write-Host "  [WARN] Slack Integrationが起動していません" -ForegroundColor Yellow
@@ -38,8 +38,8 @@ if (-not $slackRunning) {
         $config = Get-Content "notification_hub_enhanced_config.json" | ConvertFrom-Json
         $env:SLACK_WEBHOOK_URL = $config.slack_webhook_url
         $env:PORT = "5114"
-        $env:FILE_SECRETARY_URL = "http://localhost:5120"
-        $env:ORCHESTRATOR_URL = "http://localhost:5106"
+        $env:FILE_SECRETARY_URL = "http://127.0.0.1:5120"
+        $env:ORCHESTRATOR_URL = "http://127.0.0.1:5106"
         Start-Process python -ArgumentList "slack_integration.py" -WindowStyle Normal
         Start-Sleep -Seconds 3
         Write-Host "  [OK] Slack Integrationを起動しました" -ForegroundColor Green
@@ -65,18 +65,18 @@ if (-not $ngrokProcess) {
         Start-Process ngrok -ArgumentList "http", "5114" -WindowStyle Normal
         Start-Sleep -Seconds 3
         Write-Host "  [OK] ngrokを起動しました" -ForegroundColor Green
-        Write-Host "  ngrokのWeb UI: http://localhost:4040" -ForegroundColor Cyan
+        Write-Host "  ngrokのWeb UI: http://127.0.0.1:4040" -ForegroundColor Cyan
     }
 } else {
     Write-Host "  [OK] ngrokが起動しています" -ForegroundColor Green
-    Write-Host "  ngrokのWeb UI: http://localhost:4040" -ForegroundColor Cyan
+    Write-Host "  ngrokのWeb UI: http://127.0.0.1:4040" -ForegroundColor Cyan
 }
 
 # 4. Slack App設定手順
 Write-Host "`n[4/4] Slack App設定手順" -ForegroundColor Yellow
 Write-Host "`n次の手順でSlack Appを設定してください:" -ForegroundColor Cyan
 Write-Host "`n1. ngrokのURLを確認" -ForegroundColor White
-Write-Host "   - ngrokのWeb UI: http://localhost:4040" -ForegroundColor Gray
+Write-Host "   - ngrokのWeb UI: http://127.0.0.1:4040" -ForegroundColor Gray
 Write-Host "   - または: ngrokのターミナルに表示されたURL" -ForegroundColor Gray
 Write-Host "`n2. Slack Appの設定" -ForegroundColor White
 Write-Host "   - https://api.slack.com/apps にアクセス" -ForegroundColor Gray

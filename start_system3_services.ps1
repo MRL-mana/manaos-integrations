@@ -18,25 +18,25 @@ $services = @(
         Name      = "Intrinsic Score API"
         Script    = "intrinsic_motivation.py"
         Port      = 5130
-        HealthUrl = "http://localhost:5130/api/score"
+        HealthUrl = "http://127.0.0.1:5130/api/score"
     },
     @{
         Name      = "Todo Queue API"
         Script    = "intrinsic_todo_queue.py"
         Port      = 5134
-        HealthUrl = "http://localhost:5134/api/metrics"
+        HealthUrl = "http://127.0.0.1:5134/api/metrics"
     },
     @{
         Name      = "Learning System API"
         Script    = "learning_system_api.py"
         Port      = 5126
-        HealthUrl = "http://localhost:5126/health"
+        HealthUrl = "http://127.0.0.1:5126/health"
     },
     @{
         Name      = "RAG Memory API"
         Script    = "rag_memory_enhanced.py"
         Port      = 5103
-        HealthUrl = "http://localhost:5103/health"
+        HealthUrl = "http://127.0.0.1:5103/health"
     }
 )
 

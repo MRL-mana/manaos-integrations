@@ -52,7 +52,7 @@ Write-Host "  [OK] Ollama started" -ForegroundColor Green
 # 6. Verify startup and check GPU usage
 Write-Host "`n[6/6] Verifying startup and checking GPU usage..." -ForegroundColor Yellow
 try {
-    $apiCheck = wsl -d Ubuntu-22.04 -- bash -c "curl -s http://localhost:11434/api/tags" 2>&1
+    $apiCheck = wsl -d Ubuntu-22.04 -- bash -c "curl -s http://127.0.0.1:11434/api/tags" 2>&1
     if ($LASTEXITCODE -eq 0 -and $apiCheck -match "models") {
         Write-Host "  [OK] Ollama is running normally" -ForegroundColor Green
     } else {

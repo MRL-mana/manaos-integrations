@@ -9,8 +9,8 @@ import sys
 import io
 
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 import os
 from pathlib import Path
@@ -30,9 +30,9 @@ LOGS_DIR = INTEGRATIONS_DIR / "logs"
 OUT_DIR = VAULT_PATH / "ManaOS" / "System" / "Learning"
 
 # API URLs
-LEARNING_SYSTEM_URL = "http://localhost:5126"
-INTRINSIC_SCORE_URL = "http://localhost:5130/api/score"
-TODO_METRICS_URL = "http://localhost:5134/api/metrics"
+LEARNING_SYSTEM_URL = "http://127.0.0.1:5126"
+INTRINSIC_SCORE_URL = "http://127.0.0.1:5130/api/score"
+TODO_METRICS_URL = "http://127.0.0.1:5134/api/metrics"
 
 
 def http_get_json(url: str, timeout: int = 5) -> dict:

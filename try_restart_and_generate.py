@@ -10,10 +10,10 @@ import subprocess
 import os
 
 if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-COMFYUI_URL = "http://localhost:8188"
-GALLERY_API = "http://localhost:5559/api/generate"
+COMFYUI_URL = "http://127.0.0.1:8188"
+GALLERY_API = "http://127.0.0.1:5559/api/generate"
 
 print("=" * 60)
 print("ComfyUI再起動試行と画像生成")
@@ -169,7 +169,7 @@ if len(job_ids) > 0:
     print("  powershell -ExecutionPolicy Bypass -File start_comfyui_fixed.ps1")
     print()
     print("画像生成の進行状況は以下で確認できます:")
-    print("  http://localhost:5559/api/images")
+    print("  http://127.0.0.1:5559/api/images")
 else:
     print("[警告] ジョブの送信に失敗しました。")
     print("ComfyUIの状態を確認してください。")

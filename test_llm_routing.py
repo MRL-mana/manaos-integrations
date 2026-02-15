@@ -8,7 +8,7 @@ import time
 from typing import Dict, Any
 
 # APIエンドポイント
-BASE_URL = "http://localhost:9501/api/llm"
+BASE_URL = "http://127.0.0.1:9510/api/llm"
 
 
 def test_health_check():
@@ -101,7 +101,7 @@ def main():
     # ヘルスチェック
     if not test_health_check():
         print("❌ ヘルスチェック失敗。APIサーバーが起動していない可能性があります。")
-        print("   manaos_llm_routing_api.py を起動してください。")
+        print("   Unified API（PORT=9510）を起動してください。")
         return
     
     # モデル一覧取得

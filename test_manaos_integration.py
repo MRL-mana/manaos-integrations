@@ -88,7 +88,7 @@ def test_api_connection():
     try:
         import httpx
         
-        api_url = os.getenv("FILE_SECRETARY_URL", "http://localhost:5120")
+        api_url = os.getenv("FILE_SECRETARY_URL", "http://127.0.0.1:5120")
         
         # ヘルスチェック
         response = httpx.get(f"{api_url}/health", timeout=5.0)

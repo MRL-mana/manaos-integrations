@@ -20,8 +20,8 @@ Write-Host ""
 Write-Host "統合APIサーバーを起動します..." -ForegroundColor Yellow
 Write-Host ""
 
-# 統合APIサーバーをバックグラウンドで起動
-$serverProcess = Start-Process python -ArgumentList "unified_api_server.py" -PassThru -NoNewWindow
+# 統合APIサーバーをバックグラウンドで起動（PORT=9510）
+$serverProcess = Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot'; `$env:PYTHONIOENCODING='utf-8'; `$env:PORT='9510'; py -3.10 unified_api_server.py" -PassThru -WindowStyle Minimized
 
 Write-Host "[OK] 統合APIサーバーを起動しました (PID: $($serverProcess.Id))" -ForegroundColor Green
 Write-Host ""
@@ -34,8 +34,8 @@ Start-Sleep -Seconds 5
 Write-Host ""
 Write-Host "ヘルスチェックを実行中..." -ForegroundColor Yellow
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:9500/health" -TimeoutSec 5 -UseBasicParsing
-    if ($response.StatusCode -eq 200) {
+    Invoke-RestMethod -Uri "http://127.0.0.1:9510/health" -TimeoutSec 5 | Out-Null
+    if ($true) {
         Write-Host "[OK] サーバーが正常に起動しました" -ForegroundColor Green
     }
 } catch {
@@ -50,7 +50,7 @@ Write-Host "1. 別のPowerShellウィンドウで以下を実行:" -ForegroundCo
 Write-Host "   python test_oh_my_opencode_integration.py" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "2. または、ブラウザで以下にアクセス:" -ForegroundColor White
-Write-Host "   http://localhost:9500/health" -ForegroundColor Cyan
+Write-Host "   http://127.0.0.1:9510/health" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "3. サーバーを停止する場合:" -ForegroundColor White
 Write-Host "   Stop-Process -Id $($serverProcess.Id)" -ForegroundColor Cyan

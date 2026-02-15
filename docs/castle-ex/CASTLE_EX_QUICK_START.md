@@ -86,7 +86,7 @@ python castle_ex/castle_ex_evaluator_fixed.py \
   --output evaluation_v1_0.json \
   --model-type ollama \
   --model qwen2.5:14b \
-  --ollama-url http://localhost:11434/api/generate
+  --ollama-url http://127.0.0.1:11434/api/generate
 ```
 
 #### Transformersを使用

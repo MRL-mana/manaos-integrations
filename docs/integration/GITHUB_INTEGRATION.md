@@ -61,25 +61,25 @@ GitHubトークンの取得方法:
 #### リポジトリ情報を取得
 
 ```bash
-curl "http://localhost:9500/api/github/repository?owner=comfyanonymous&repo=ComfyUI"
+curl "http://127.0.0.1:9510/api/github/repository?owner=comfyanonymous&repo=ComfyUI"
 ```
 
 #### 最近のコミットを取得
 
 ```bash
-curl "http://localhost:9500/api/github/commits?owner=comfyanonymous&repo=ComfyUI&branch=main&limit=5"
+curl "http://127.0.0.1:9510/api/github/commits?owner=comfyanonymous&repo=ComfyUI&branch=main&limit=5"
 ```
 
 #### プルリクエストを取得
 
 ```bash
-curl "http://localhost:9500/api/github/pull_requests?owner=comfyanonymous&repo=ComfyUI&state=open&limit=10"
+curl "http://127.0.0.1:9510/api/github/pull_requests?owner=comfyanonymous&repo=ComfyUI&state=open&limit=10"
 ```
 
 #### リポジトリを検索
 
 ```bash
-curl "http://localhost:9500/api/github/search?query=stable+diffusion&limit=10"
+curl "http://127.0.0.1:9510/api/github/search?query=stable+diffusion&limit=10"
 ```
 
 ### Pythonコードから直接使用

@@ -21,7 +21,7 @@ def test_ollama_connection():
     print("=== Ollama接続テスト ===")
     try:
         import httpx
-        response = httpx.get("http://localhost:11434/api/tags", timeout=5.0)
+        response = httpx.get("http://127.0.0.1:11434/api/tags", timeout=5.0)
         if response.status_code == 200:
             models = response.json().get("models", [])
             print(f"✅ Ollama接続成功")

@@ -137,7 +137,7 @@
 [Environment]::SetEnvironmentVariable('OBSIDIAN_VAULT_PATH', 'C:\Users\mana4\Documents\Obsidian Vault', 'User')
 
 # ManaOS Orchestrator URL
-[Environment]::SetEnvironmentVariable('ORCHESTRATOR_URL', 'http://localhost:5106', 'User')
+[Environment]::SetEnvironmentVariable('ORCHESTRATOR_URL', 'http://127.0.0.1:5106', 'User')
 
 # Slack Webhook URL（オプション）
 [Environment]::SetEnvironmentVariable('SLACK_WEBHOOK_URL', 'https://hooks.slack.com/services/...', 'User')
@@ -145,7 +145,7 @@
 
 ### n8nワークフロー設定
 
-1. **n8nを開く**: `http://localhost:5678`
+1. **n8nを開く**: `http://127.0.0.1:5678`
 2. **ワークフローをインポート**: `n8n_workflows/obsidian_notebooklm_weekly_simple.json`
 3. **認証情報を設定**: Slack Webhook URL
 4. **ワークフローを有効化**
@@ -192,7 +192,7 @@ python setup_obsidian_templates.py
 
 ### n8nワークフローが動かない
 
-1. n8nが起動しているか確認: `http://localhost:5678`
+1. n8nが起動しているか確認: `http://127.0.0.1:5678`
 2. ワークフローが有効化されているか確認
 3. 簡易版ワークフローを使用: `obsidian_notebooklm_weekly_simple.json`
 

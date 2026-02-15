@@ -39,17 +39,17 @@ Function Callingが有効になっていない可能性が高いです。
 
 1. **Tool Serverの状態を確認**
    ```powershell
-   Invoke-RestMethod -Uri "http://localhost:9503/health"
+   Invoke-RestMethod -Uri "http://127.0.0.1:9503/health"
    ```
 
 2. **OpenAPI仕様が正しく取得できるか確認**
    ```powershell
-   Invoke-RestMethod -Uri "http://localhost:9503/openapi.json"
+   Invoke-RestMethod -Uri "http://127.0.0.1:9503/openapi.json"
    ```
 
 3. **OpenWebUIの設定画面でTool Serverが正しく登録されているか確認**
    - 設定画面 → 「External Tools」または「Tool Servers」
-   - `http://localhost:9503` が登録されているか確認
+   - `http://127.0.0.1:9503` が登録されているか確認
    - ステータスが「Connected」になっているか確認
 
 ### Step 4: モデルを確認
@@ -103,7 +103,7 @@ OpenWebUIのシステムプロンプトでTool Serverの使用を促す：
 
 - [ ] OpenWebUIの設定でFunction Callingが有効になっている
 - [ ] チャット画面でFunction Callingが有効になっている
-- [ ] Tool Serverが起動中（http://localhost:9503）
+- [ ] Tool Serverが起動中（http://127.0.0.1:9503）
 - [ ] OpenAPI仕様が正しく取得できる
 - [ ] Tool ServerがOpenWebUIに正しく登録されている
 - [ ] 使用しているモデルがFunction Callingに対応している

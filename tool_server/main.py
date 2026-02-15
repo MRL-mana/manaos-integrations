@@ -23,8 +23,8 @@ from pydantic import BaseModel, Field
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -145,7 +145,7 @@ async def service_status(request: ServiceStatusRequest):
 
             except FileNotFoundError:
                 # 方法2: 統合APIサーバー経由で取得（コンテナ内から実行されている場合）
-                unified_api_url = os.getenv("MANAOS_API_URL", "http://host.docker.internal:9500")
+                unified_api_url = os.getenv("MANAOS_API_URL", "http://host.docker.internal:9510")
 
                 try:
                     response = requests.get(
@@ -392,7 +392,7 @@ async def check_errors(request: CheckErrorsRequest):
 
             except FileNotFoundError:
                 # 方法2: 統合APIサーバー経由で取得（コンテナ内から実行されている場合）
-                unified_api_url = os.getenv("MANAOS_API_URL", "http://host.docker.internal:9500")
+                unified_api_url = os.getenv("MANAOS_API_URL", "http://host.docker.internal:9510")
 
                 try:
                     response = requests.get(
@@ -526,7 +526,7 @@ async def generate_image(request: GenerateImageRequest):
     logger.info(f"generate_image called: prompt='{request.prompt[:50]}...'")
 
     try:
-        comfyui_url = os.getenv("COMFYUI_URL", "http://localhost:8188")
+        comfyui_url = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
 
         # ComfyUIが利用可能かチェック
         try:
@@ -543,7 +543,7 @@ async def generate_image(request: GenerateImageRequest):
             )
 
         # 統合APIサーバー経由で画像生成（既存の実装を利用）
-        unified_api_url = os.getenv("MANAOS_API_URL", "http://localhost:9500")
+        unified_api_url = os.getenv("MANAOS_API_URL", "http://127.0.0.1:9510")
 
         payload = {
             "prompt": request.prompt,

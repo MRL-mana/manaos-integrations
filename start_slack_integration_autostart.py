@@ -9,8 +9,8 @@ import os
 import sys
 
 os.environ['PORT'] = '5114'
-os.environ['FILE_SECRETARY_URL'] = 'http://localhost:5120'
-os.environ['ORCHESTRATOR_URL'] = 'http://localhost:5106'
+os.environ['FILE_SECRETARY_URL'] = 'http://127.0.0.1:5120'
+os.environ['ORCHESTRATOR_URL'] = 'http://127.0.0.1:5106'
 
 # Slack統合サーバーを起動
 script_dir = Path(__file__).parent

@@ -10,7 +10,7 @@ import requests
 
 if sys.platform == 'win32':
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
 
 print("=" * 60)
 print("GPU使用状況テスト")

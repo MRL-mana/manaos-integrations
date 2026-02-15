@@ -123,7 +123,7 @@ class DeviceOrchestrator:
                         "device_id": "manaos",
                         "device_name": "ManaOS",
                         "device_type": "manaos",
-                        "api_endpoint": "http://localhost:5106",
+                        "api_endpoint": "http://127.0.0.1:5106",
                         "capabilities": ["compute", "storage"],
                     },
                     {
@@ -154,7 +154,7 @@ class DeviceOrchestrator:
                         "device_id": "pixel7",
                         "device_name": "Pixel 7",
                         "device_type": "pixel7",
-                        "api_endpoint": "http://localhost:5122",
+                        "api_endpoint": "http://127.0.0.1:5122",
                         "capabilities": ["camera", "storage"],
                     },
                 ]

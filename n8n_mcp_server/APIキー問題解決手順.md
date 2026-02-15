@@ -37,7 +37,7 @@ Get-Process -Name node -ErrorAction SilentlyContinue | Where-Object {
 Test-NetConnection -ComputerName localhost -Port 5679
 
 # ヘルスチェック
-curl.exe http://localhost:5679/healthz
+curl.exe http://127.0.0.1:5679/healthz
 ```
 
 **期待される結果:**
@@ -59,7 +59,7 @@ cd C:\Users\mana4\Desktop\manaos_integrations
 
 ```powershell
 # ローカルN8N（ポート5679）を開く
-Start-Process "http://localhost:5679"
+Start-Process "http://127.0.0.1:5679"
 ```
 
 #### 2-2. ログイン
@@ -85,7 +85,7 @@ Start-Process "http://localhost:5679"
 
 ```powershell
 cd C:\Users\mana4\Desktop\manaos_integrations
-.\n8n_mcp_server\set_api_key_manual.ps1 -ApiKey "ここにコピーしたAPIキーを貼り付け" -BaseUrl "http://localhost:5679"
+.\n8n_mcp_server\set_api_key_manual.ps1 -ApiKey "ここにコピーしたAPIキーを貼り付け" -BaseUrl "http://127.0.0.1:5679"
 ```
 
 #### 方法B: 手動で設定ファイルを編集
@@ -106,7 +106,7 @@ notepad $mcpConfigPath
       "cwd": "C:\\Users\\mana4\\Desktop\\manaos_integrations",
       "env": {
         "N8N_API_KEY": "ここに新しいAPIキーを貼り付け",
-        "N8N_BASE_URL": "http://localhost:5679",
+        "N8N_BASE_URL": "http://127.0.0.1:5679",
         "PYTHONPATH": "C:\\Users\\mana4\\Desktop\\manaos_integrations"
       }
     }
@@ -121,7 +121,7 @@ notepad $mcpConfigPath
 ```powershell
 # 環境変数を設定してテスト
 $env:N8N_API_KEY = "ここに新しいAPIキー"
-$env:N8N_BASE_URL = "http://localhost:5679"
+$env:N8N_BASE_URL = "http://127.0.0.1:5679"
 
 # テスト実行
 python n8n_mcp_server\test_mcp_connection.py
@@ -211,17 +211,17 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Users\mana
    ```powershell
    $config.mcpServers.n8n.env.N8N_BASE_URL
    ```
-   期待値: `http://localhost:5679`
+   期待値: `http://127.0.0.1:5679`
 
 3. **N8Nが実際に起動しているか確認**
    ```powershell
-   curl.exe http://localhost:5679/healthz
+   curl.exe http://127.0.0.1:5679/healthz
    ```
 
 4. **APIキーが有効か直接テスト**
    ```powershell
    $env:N8N_API_KEY = "your-api-key"
-   $env:N8N_BASE_URL = "http://localhost:5679"
+   $env:N8N_BASE_URL = "http://127.0.0.1:5679"
    python -c "import requests; import os; r = requests.get(f'{os.getenv(\"N8N_BASE_URL\")}/api/v1/workflows', headers={'X-N8N-API-KEY': os.getenv('N8N_API_KEY')}); print(f'Status: {r.status_code}'); print(r.text[:200])"
    ```
 

@@ -17,7 +17,7 @@ def check_slack_integration_api():
     """Slack Integration API確認"""
     print("=== Slack Integration API確認 ===")
     try:
-        response = httpx.get("http://localhost:5114/health", timeout=5.0)
+        response = httpx.get("http://127.0.0.1:5114/health", timeout=5.0)
         if response.status_code == 200:
             data = response.json()
             print(f"✅ Slack Integration API: 正常応答")
@@ -51,7 +51,7 @@ def check_file_secretary_api():
     """File Secretary API確認"""
     print("\n=== File Secretary API確認 ===")
     try:
-        response = httpx.get("http://localhost:5120/health", timeout=5.0)
+        response = httpx.get("http://127.0.0.1:5120/health", timeout=5.0)
         if response.status_code == 200:
             data = response.json()
             print(f"✅ File Secretary API: 正常応答")
@@ -114,9 +114,9 @@ def check_slack_endpoints():
     for endpoint, method in endpoints:
         try:
             if method == "GET":
-                response = httpx.get(f"http://localhost:5114{endpoint}", timeout=2.0)
+                response = httpx.get(f"http://127.0.0.1:5114{endpoint}", timeout=2.0)
             else:
-                response = httpx.post(f"http://localhost:5114{endpoint}", json={}, timeout=2.0)
+                response = httpx.post(f"http://127.0.0.1:5114{endpoint}", json={}, timeout=2.0)
             
             if response.status_code in [200, 400, 401]:  # 400/401は設定の問題、エンドポイントは存在
                 print(f"✅ {method} {endpoint}: 利用可能")

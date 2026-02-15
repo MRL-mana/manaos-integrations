@@ -54,7 +54,7 @@ $body = @{
     steps = 20
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://localhost:9500/api/comfyui/generate" `
+Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/comfyui/generate" `
     -Method POST `
     -Body $body `
     -ContentType "application/json"
@@ -63,7 +63,7 @@ Invoke-RestMethod -Uri "http://localhost:9500/api/comfyui/generate" `
 ### モデル検索
 
 ```powershell
-Invoke-RestMethod -Uri "http://localhost:9500/api/civitai/search?query=realistic&limit=5" -Method GET
+Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/civitai/search?query=realistic&limit=5" -Method GET
 ```
 
 ### ファイルアップロード
@@ -73,7 +73,7 @@ $body = @{
     file_path = "C:\path\to\file.png"
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://localhost:9500/api/google_drive/upload" `
+Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/google_drive/upload" `
     -Method POST `
     -Body $body `
     -ContentType "application/json"
@@ -111,6 +111,7 @@ Invoke-RestMethod -Uri "http://localhost:9500/api/google_drive/upload" `
 ---
 
 **進捗:** 97%完了
+
 
 
 

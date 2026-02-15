@@ -55,7 +55,7 @@ class SearXNGIntegration(BaseIntegration):
         except ImportError:
             pass
         
-        self.base_url = (base_url or os.getenv("SEARXNG_BASE_URL", "http://localhost:8080")).rstrip("/")
+        self.base_url = (base_url or os.getenv("SEARXNG_BASE_URL", "http://127.0.0.1:8080")).rstrip("/")
         self.enable_cache = enable_cache
         self.cache_ttl = cache_ttl
         

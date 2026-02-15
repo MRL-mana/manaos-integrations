@@ -83,7 +83,7 @@ def check_status():
     # API確認
     try:
         import httpx
-        response = httpx.get("http://localhost:5120/health", timeout=2.0)
+        response = httpx.get("http://127.0.0.1:5120/health", timeout=2.0)
         if response.status_code == 200:
             print("✅ APIサーバー: 正常応答")
         else:

@@ -129,9 +129,9 @@
       }
     },
     {
-      "label": "Python: LLMルーティングAPI起動",
+      "label": "Python: LLMルーティングMCP起動",
       "type": "shell",
-      "command": "python manaos_llm_routing_api.py",
+      "command": "python -m llm_routing_mcp_server",
       "group": "build",
       "presentation": {
         "reveal": "always",

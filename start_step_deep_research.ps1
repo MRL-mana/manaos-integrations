@@ -59,7 +59,7 @@ try {
     Write-Host "`nサービス情報:" -ForegroundColor Cyan
     Write-Host "  - 名前: $($service.Name)" -ForegroundColor White
     Write-Host "  - ポート: $($service.Port)" -ForegroundColor White
-    Write-Host "  - URL: http://localhost:$($service.Port)" -ForegroundColor White
+    Write-Host "  - URL: http://127.0.0.1:$($service.Port)" -ForegroundColor White
     Write-Host "  - PID: $($process.Id)" -ForegroundColor White
     Write-Host "  - ログ: $logFile" -ForegroundColor White
     

@@ -95,7 +95,7 @@ python svi_example_story_video.py
 import requests
 
 # 動画生成
-response = requests.post("http://localhost:9500/api/svi/generate", json={
+response = requests.post("http://127.0.0.1:9510/api/svi/generate", json={
     "start_image_path": "/path/to/image.png",
     "prompt": "beautiful landscape",
     "video_length_seconds": 5
@@ -154,7 +154,7 @@ python test_svi_integration.py
 
 ```bash
 # ComfyUIサーバーが起動しているか確認
-curl http://localhost:8188/system_stats
+curl http://127.0.0.1:8188/system_stats
 
 # ComfyUIを起動
 cd C:\ComfyUI
@@ -192,6 +192,7 @@ manaos_integrations/
 ├── SVI_WAN22_SETUP_COMPLETE.md       # セットアップ完了ガイド
 └── SVI_INTEGRATION_GUIDE.md          # このガイド
 ```
+
 
 
 

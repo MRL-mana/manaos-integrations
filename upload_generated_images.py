@@ -19,7 +19,7 @@ if sys.platform == "win32":
         import io
 
         if hasattr(sys.stdout, "buffer"):
-            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     except Exception:
         pass
 

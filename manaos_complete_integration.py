@@ -79,12 +79,12 @@ class ManaOSCompleteIntegration:
     
     def __init__(
         self,
-        orchestrator_url: str = "http://localhost:5106",
-        rag_memory_url: str = "http://localhost:5103",
-        learning_system_url: str = "http://localhost:5126",
-        personality_url: str = "http://localhost:5123",
-        autonomy_url: str = "http://localhost:5124",
-        secretary_url: str = "http://localhost:5125"
+        orchestrator_url: str = "http://127.0.0.1:5106",
+        rag_memory_url: str = "http://127.0.0.1:5103",
+        learning_system_url: str = "http://127.0.0.1:5126",
+        personality_url: str = "http://127.0.0.1:5123",
+        autonomy_url: str = "http://127.0.0.1:5124",
+        secretary_url: str = "http://127.0.0.1:5125"
     ):
         """
         初期化
@@ -210,7 +210,7 @@ class ManaOSCompleteIntegration:
             if N8N_AVAILABLE:
                 import os
                 self.n8n = N8NIntegration(
-                    base_url=os.getenv("N8N_BASE_URL", "http://localhost:5678"),
+                    base_url=os.getenv("N8N_BASE_URL", "http://127.0.0.1:5678"),
                     api_key=os.getenv("N8N_API_KEY")
                 )
                 if self.n8n.is_available():
@@ -475,7 +475,7 @@ class ManaOSCompleteIntegration:
             status["n8n"]["n8n_integration"] = {
                 "available": False,
                 "api_key_set": bool(os.getenv("N8N_API_KEY")),
-                "base_url": os.getenv("N8N_BASE_URL", "http://localhost:5678")
+                "base_url": os.getenv("N8N_BASE_URL", "http://127.0.0.1:5678")
             }
         
         return status

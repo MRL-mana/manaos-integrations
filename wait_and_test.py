@@ -8,7 +8,7 @@ import time
 import requests
 import sys
 
-BASE_URL = "http://localhost:9500"
+BASE_URL = "http://127.0.0.1:9510"
 MAX_WAIT = 60  # 最大60秒待機
 CHECK_INTERVAL = 2  # 2秒ごとにチェック
 
@@ -134,7 +134,7 @@ def main():
         print()
         print("次のステップ:")
         print("  - 実際のタスクを実行してみてください")
-        print("  - ブラウザで http://localhost:9500/health にアクセス")
+        print("  - ブラウザで http://127.0.0.1:9510/health にアクセス")
     else:
         print("[WARN] 一部のテストが失敗しました")
         print("=" * 60)

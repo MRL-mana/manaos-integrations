@@ -25,7 +25,7 @@
 
 ブラウザで以下を開いてください:
 ```
-http://localhost:5678
+http://127.0.0.1:5678
 ```
 
 ---
@@ -46,7 +46,7 @@ http://localhost:5678
 
 - **名前**: "Browse AI → ManaOS統合"
 - **ノード数**: 6個
-- **Webhook URL**: `http://localhost:5678/webhook/browse-ai-webhook`
+- **Webhook URL**: `http://127.0.0.1:5678/webhook/browse-ai-webhook`
 
 ---
 

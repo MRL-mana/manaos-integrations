@@ -73,8 +73,8 @@ def start_slack_integration(config):
         env['SLACK_VERIFICATION_TOKEN'] = config['verification_token']
     
     env['PORT'] = '5114'
-    env['FILE_SECRETARY_URL'] = 'http://localhost:5120'
-    env['ORCHESTRATOR_URL'] = 'http://localhost:5106'
+    env['FILE_SECRETARY_URL'] = 'http://127.0.0.1:5120'
+    env['ORCHESTRATOR_URL'] = 'http://127.0.0.1:5106'
     
     # サーバーを起動
     script_path = Path("slack_integration.py")
@@ -91,14 +91,14 @@ def start_slack_integration(config):
         
         # 起動確認
         try:
-            response = httpx.get("http://localhost:5114/health", timeout=5)
+            response = httpx.get("http://127.0.0.1:5114/health", timeout=5)
             if response.status_code == 200:
                 data = response.json()
                 if data.get("status") == "healthy":
                     print("  [OK] サーバーが正常に起動しました")
                     
                     # 設定確認
-                    test_response = httpx.get("http://localhost:5114/api/slack/test", timeout=5)
+                    test_response = httpx.get("http://127.0.0.1:5114/api/slack/test", timeout=5)
                     if test_response.status_code == 200:
                         test_data = test_response.json()
                         print(f"  Webhook URL: {'設定済み' if test_data.get('slack_webhook_configured') else '未設定'}")

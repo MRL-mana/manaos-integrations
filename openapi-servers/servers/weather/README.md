@@ -46,8 +46,8 @@ Plug in your favorite weather provider API, tailor endpoints, or extend the Open
 
 Once running, explore auto-generated interactive docs:
 
-🖥️ Swagger UI: http://localhost:8000/docs  
-📄 OpenAPI JSON: http://localhost:8000/openapi.json
+🖥️ Swagger UI: http://127.0.0.1:8000/docs  
+📄 OpenAPI JSON: http://127.0.0.1:8000/openapi.json
 
 ---
 

@@ -22,8 +22,8 @@ Test-NetConnection -ComputerName localhost -Port 5114
 $config = Get-Content "notification_hub_enhanced_config.json" | ConvertFrom-Json
 $env:SLACK_WEBHOOK_URL = $config.slack_webhook_url
 $env:PORT = "5114"
-$env:FILE_SECRETARY_URL = "http://localhost:5120"
-$env:ORCHESTRATOR_URL = "http://localhost:5106"
+$env:FILE_SECRETARY_URL = "http://127.0.0.1:5120"
+$env:ORCHESTRATOR_URL = "http://127.0.0.1:5106"
 Start-Process python -ArgumentList "slack_integration.py" -WindowStyle Normal
 ```
 
@@ -82,7 +82,7 @@ Start-Process python -ArgumentList "slack_integration.py" -WindowStyle Normal
 
 2. **ngrokが起動しているか**
    - ngrokのターミナルウィンドウを確認
-   - http://localhost:4040 にアクセス
+   - http://127.0.0.1:4040 にアクセス
 
 3. **URLが正しいか**
    - `/api/slack/events`が含まれているか

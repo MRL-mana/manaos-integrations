@@ -1,6 +1,6 @@
 """
 LTX-2 専用 MCP サーバー
-統合API (9500) の /api/ltx2/* を MCP ツールとして提供
+統合API (9510) の /api/ltx2/* を MCP ツールとして提供
 """
 
 import asyncio
@@ -17,12 +17,12 @@ from mcp.types import TextContent, Tool
 if sys.platform == "win32":
     import io
 
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-API_URL = os.getenv("MANAOS_INTEGRATION_API_URL", "http://localhost:9500").rstrip("/")
+API_URL = os.getenv("MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510").rstrip("/")
 server = Server("ltx2")
 
 

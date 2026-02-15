@@ -19,7 +19,7 @@ app = Flask(__name__)
 CORS(app)
 
 # 設定
-OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
 DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "qwen2.5:3b")
 
 # 会話履歴管理
@@ -288,14 +288,14 @@ def get_status():
         
         # AI Model Hub確認
         try:
-            response = httpx.get("http://localhost:5080/api/health", timeout=2.0)
+            response = httpx.get("http://127.0.0.1:5080/api/health", timeout=2.0)
             services["ai_model_hub"] = response.status_code == 200
         except Exception:
             pass
         
         # RAG API確認
         try:
-            response = httpx.get("http://localhost:5057/api/health", timeout=2.0)
+            response = httpx.get("http://127.0.0.1:5057/api/health", timeout=2.0)
             services["rag_api"] = response.status_code == 200
         except Exception:
             pass
@@ -586,16 +586,16 @@ PORTAL_HTML = """<!DOCTYPE html>
             <div class="section">
                 <h2>🔗 利用可能なサービス</h2>
                 <div style="padding: 20px;">
-                    <a href="http://localhost:5080" target="_blank" class="service-link">
+                    <a href="http://127.0.0.1:5080" target="_blank" class="service-link">
                         🧠 AI Model Hub (ポート5080)
                     </a>
-                    <a href="http://localhost:5074" target="_blank" class="service-link">
+                    <a href="http://127.0.0.1:5074" target="_blank" class="service-link">
                         💬 AI Assistant Chatbot (ポート5074)
                     </a>
-                    <a href="http://localhost:5057" target="_blank" class="service-link">
+                    <a href="http://127.0.0.1:5057" target="_blank" class="service-link">
                         🔍 RAG API Server (ポート5057)
                     </a>
-                    <a href="http://localhost:11434" target="_blank" class="service-link">
+                    <a href="http://127.0.0.1:11434" target="_blank" class="service-link">
                         🦙 Ollama (ポート11434)
                     </a>
                 </div>
@@ -783,7 +783,7 @@ PORTAL_HTML = """<!DOCTYPE html>
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
     logger.info(f"🌐 Unified Portal起動中...")
-    logger.info(f"   URL: http://localhost:{port}")
+    logger.info(f"   URL: http://127.0.0.1:{port}")
     logger.info(f"   Ollama URL: {OLLAMA_BASE_URL}")
     
     app.run(host="0.0.0.0", port=port, debug=os.getenv("DEBUG", "False").lower() == "true")

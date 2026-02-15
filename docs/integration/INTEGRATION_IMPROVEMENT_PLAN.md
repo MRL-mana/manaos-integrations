@@ -85,7 +85,7 @@
 from base_integration import BaseIntegration
 
 class ComfyUIIntegration(BaseIntegration):
-    def __init__(self, base_url: str = "http://localhost:8188"):
+    def __init__(self, base_url: str = "http://127.0.0.1:8188"):
         super().__init__("ComfyUI")
         self.base_url = base_url.rstrip('/')
         self.session = requests.Session()

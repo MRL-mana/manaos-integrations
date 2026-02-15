@@ -63,7 +63,7 @@ class IntrinsicTodoQueue:
     def __init__(
         self,
         storage_path: Optional[Path] = None,
-        intrinsic_motivation_url: str = "http://localhost:5130",
+        intrinsic_motivation_url: str = "http://127.0.0.1:5130",
     ):
         """
         初期化
@@ -691,7 +691,7 @@ def init_todo_queue():
 
 
 # グローバル変数（healthcheck用）
-intrinsic_motivation_url = "http://localhost:5130"
+intrinsic_motivation_url = "http://127.0.0.1:5130"
 
 
 @app.route("/health", methods=["GET"])

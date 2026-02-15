@@ -12,26 +12,36 @@ $checkInterval = 30  # 30秒ごとにチェック
 function Check-AndRestart-Service {
     param(
         [string]$ServiceName,
-        [string]$ScriptPath,
+        [string]$ProcessMatch,
+        [string]$StartCommand,
         [string]$HealthCheckUrl
     )
     
     try {
-        $response = Invoke-WebRequest -Uri $HealthCheckUrl -Method GET -TimeoutSec 2 -ErrorAction Stop
+        Invoke-RestMethod -Uri $HealthCheckUrl -Method GET -TimeoutSec 2 -ErrorAction Stop | Out-Null
         return $true
     } catch {
         Write-Host "   [警告] $ServiceName が応答しません。再起動します..." -ForegroundColor Yellow
         
         # 既存のプロセスを停止
-        Get-Process -Name python -ErrorAction SilentlyContinue | Where-Object {
-            $cmdLine = (Get-WmiObject Win32_Process -Filter "ProcessId = $($_.Id)").CommandLine
-            $cmdLine -like "*$ScriptPath*"
-        } | Stop-Process -Force -ErrorAction SilentlyContinue
+        try {
+            Get-CimInstance Win32_Process | Where-Object {
+                ($_.CommandLine -like "*$ProcessMatch*") -and ($_.Name -match "^(python|py)(\\.exe)?$")
+            } | ForEach-Object {
+                try {
+                    Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+                } catch {
+                }
+            }
+        } catch {
+            # 取得できない環境向けのフォールバック
+            Get-Process -Name python -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        }
         
         Start-Sleep -Seconds 2
         
         # 再起動
-        Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$workDir'; `$env:PYTHONIOENCODING='utf-8'; python $ScriptPath" -WindowStyle Minimized
+        Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$workDir'; $StartCommand" -WindowStyle Minimized
         
         Write-Host "   [OK] $ServiceName を再起動しました" -ForegroundColor Green
         return $false
@@ -48,19 +58,21 @@ try {
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         Write-Host "[$timestamp] サービス状態をチェック中..." -ForegroundColor Yellow
         
-        # LLMルーティングAPI
-        $llmApiOk = Check-AndRestart-Service `
-            -ServiceName "LLMルーティングAPI" `
-            -ScriptPath "manaos_llm_routing_api.py" `
-            -HealthCheckUrl "http://localhost:9501/api/llm/health"
-        
-        # 統合APIサーバー
+        # Unified API
         $unifiedApiOk = Check-AndRestart-Service `
-            -ServiceName "統合APIサーバー" `
-            -ScriptPath "unified_api_server.py" `
-            -HealthCheckUrl "http://localhost:9500/health"
+            -ServiceName "Unified API" `
+            -ProcessMatch "unified_api_server.py" `
+            -StartCommand "`$env:PYTHONIOENCODING='utf-8'; `$env:PORT='9510'; py -3.10 unified_api_server.py" `
+            -HealthCheckUrl "http://127.0.0.1:9510/health"
+
+        # LLM routing MCP (health only)
+        $llmRoutingOk = Check-AndRestart-Service `
+            -ServiceName "LLM Routing MCP" `
+            -ProcessMatch "llm_routing_mcp_server" `
+            -StartCommand "`$env:PYTHONIOENCODING='utf-8'; `$env:MANAOS_LOG_TO_STDERR='1'; python -m llm_routing_mcp_server" `
+            -HealthCheckUrl "http://127.0.0.1:5111/health"
         
-        if ($llmApiOk -and $unifiedApiOk) {
+        if ($llmRoutingOk -and $unifiedApiOk) {
             Write-Host "   [OK] すべてのサービスが正常です" -ForegroundColor Green
         }
         

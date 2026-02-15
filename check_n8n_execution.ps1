@@ -4,7 +4,7 @@ Write-Host "🔍 n8nの実行履歴を確認中..." -ForegroundColor Yellow
 Write-Host ""
 
 # n8nのAPIエンドポイント（ローカル）
-$n8nUrl = "http://localhost:5678"
+$n8nUrl = "http://127.0.0.1:5678"
 
 try {
     Write-Host "n8nに接続中..." -ForegroundColor Cyan
@@ -15,7 +15,7 @@ try {
     Write-Host ""
     
     Write-Host "📋 確認手順:" -ForegroundColor Yellow
-    Write-Host "1. ブラウザで http://localhost:5678 を開く" -ForegroundColor White
+    Write-Host "1. ブラウザで http://127.0.0.1:5678 を開く" -ForegroundColor White
     Write-Host "2. 左メニューから「Executions」をクリック" -ForegroundColor White
     Write-Host "3. 最新の実行を確認:" -ForegroundColor White
     Write-Host "   - Browse AI Webhookノードでデータを受信しているか" -ForegroundColor White
@@ -35,7 +35,7 @@ try {
     Write-Host "エラー: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host ""
     Write-Host "n8nが起動しているか確認してください:" -ForegroundColor Yellow
-    Write-Host "  http://localhost:5678" -ForegroundColor White
+    Write-Host "  http://127.0.0.1:5678" -ForegroundColor White
     Write-Host ""
 }
 

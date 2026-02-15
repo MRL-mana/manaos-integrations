@@ -50,20 +50,20 @@
       "name": "Content Generation",
       "description": "コンテンツ生成サービス"
     },
-    "llm_optimization": {
-      "port": 5110,
-      "name": "LLM Optimization",
-      "description": "LLM最適化サービス"
-    },
-    "service_monitor": {
+    "llm_routing": {
       "port": 5111,
-      "name": "Service Monitor",
-      "description": "サービス監視サービス"
+      "name": "LLM Routing MCP",
+      "description": "LLMルーティングMCPサービス"
     },
-    "system_status": {
+    "mrl_memory": {
+      "port": 5105,
+      "name": "MRL Memory",
+      "description": "MRLメモリサービス"
+    },
+    "video_pipeline": {
       "port": 5112,
-      "name": "System Status API",
-      "description": "システムステータスAPI"
+      "name": "Video Pipeline",
+      "description": "動画パイプラインサービス"
     },
     "web_voice": {
       "port": 5115,
@@ -103,7 +103,7 @@
   },
   "integration_services": {
     "unified_api": {
-      "port": 9502,
+      "port": 9510,
       "name": "Unified API Server",
       "description": "統合APIサーバー"
     },

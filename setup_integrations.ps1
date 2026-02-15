@@ -63,7 +63,7 @@ if (Test-Path $envFile) {
 OBSIDIAN_VAULT_PATH=C:\Users\mana4\Documents\Obsidian Vault
 
 # Ollama設定（LLMルーティング用）
-OLLAMA_URL=http://localhost:11434
+OLLAMA_URL=http://127.0.0.1:11434
 OLLAMA_MODEL=qwen2.5:7b
 
 # GitHub統合（オプション）
@@ -87,7 +87,7 @@ Write-Host "統合システムのセットアップが完了しました！" -Fo
 Write-Host ""
 Write-Host "次のステップ:" -ForegroundColor Cyan
 Write-Host "  1. 統合APIサーバーを再起動してください" -ForegroundColor White
-Write-Host "  2. http://localhost:9500/api/integrations/status で状態を確認" -ForegroundColor White
+Write-Host "  2. http://127.0.0.1:9510/api/integrations/status で状態を確認" -ForegroundColor White
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 

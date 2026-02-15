@@ -17,7 +17,7 @@ from base_integration import BaseIntegration
 class ComfyUIIntegration(BaseIntegration):
     """ComfyUI統合クラス（改善版）"""
     
-    def __init__(self, base_url: str = "http://localhost:8188"):
+    def __init__(self, base_url: str = "http://127.0.0.1:8188"):
         """
         初期化
         

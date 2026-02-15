@@ -10,18 +10,9 @@ from pathlib import Path
 # 注意: sys.stdout/stderrのラッピングは他のモジュールのインポート前に実行する必要がある
 if sys.platform == "win32":
     try:
-        import io
-        # 既にラッピングされている場合はスキップ
-        if not hasattr(sys.stdout, 'buffer') or isinstance(sys.stdout, io.TextIOWrapper):
-            pass  # 既に適切に設定されている
-        else:
-            # バッファが存在する場合のみラッピング
-            if hasattr(sys.stdout, 'buffer'):
-                sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-            if hasattr(sys.stderr, 'buffer'):
-                sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
     except Exception:
-        # エンコーディング設定に失敗した場合はスキップ
         pass
 
 # パスを追加
@@ -40,7 +31,7 @@ if __name__ == "__main__":
         init_thread = start_initialization_background()
         
         # ポートとホストを取得
-        port = int(os.getenv("MANAOS_INTEGRATION_PORT", 9500))
+        port = int(os.getenv("MANAOS_INTEGRATION_PORT", 9510))
         host = os.getenv("MANAOS_INTEGRATION_HOST", "127.0.0.1")  # ローカルホストに変更
         
         print(f"\nサーバー起動: http://{host}:{port}")

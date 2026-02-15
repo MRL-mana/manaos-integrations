@@ -58,4 +58,4 @@ pip install "transformers>=4.50.3,<4.52" "tokenizers>=0.21,<0.22"
 - **ComfyUI-LTXVideo** の `No module named 'comfy.ldm.lightricks.vae.audio_vae'` などは、そのノード側の非対応です。本体の起動には影響しません。
 - **ComfyUI-KJNodes** の LTXV ノードの AttributeError も、ノードの互換性の問題です。画像生成（generate_50）は通常のノードだけで動作します。
 
-起動ログに **「To see the GUI go to: http://127.0.0.1:8188」** が出ていれば、ComfyUI は起動しています。ブラウザで http://localhost:8188 を開いてください。
+起動ログに **「To see the GUI go to: http://127.0.0.1:8188」** が出ていれば、ComfyUI は起動しています。ブラウザで http://127.0.0.1:8188 を開いてください。

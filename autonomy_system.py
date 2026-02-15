@@ -85,7 +85,7 @@ class AutonomySystem:
 
     def __init__(
         self,
-        orchestrator_url: str = "http://localhost:5106",
+        orchestrator_url: str = "http://127.0.0.1:5106",
         learning_system_url: Optional[str] = None,
         intrinsic_motivation_url: Optional[str] = None,
         config_path: Optional[Path] = None
@@ -100,7 +100,7 @@ class AutonomySystem:
         """
         self.orchestrator_url = orchestrator_url
         self.learning_system_url = learning_system_url
-        self.intrinsic_motivation_url = intrinsic_motivation_url or "http://localhost:5130"
+        self.intrinsic_motivation_url = intrinsic_motivation_url or "http://127.0.0.1:5130"
 
         self.config_path = config_path or Path(__file__).parent / "autonomy_config.json"
         self.config = self._load_config()

@@ -72,7 +72,7 @@ def check_service(port: int) -> Dict[str, Any]:
     """サービス状態をチェック"""
     try:
         response = requests.get(
-            f"http://localhost:{port}/health",
+            f"http://127.0.0.1:{port}/health",
             timeout=5
         )
         if response.status_code == 200:

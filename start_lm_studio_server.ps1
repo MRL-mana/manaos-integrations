@@ -57,7 +57,7 @@ $serverStarted = $false
 
 while ($retryCount -lt $maxRetries -and -not $serverStarted) {
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:1234/v1/models" -Method GET -TimeoutSec 2 -ErrorAction Stop
+        $response = Invoke-WebRequest -Uri "http://127.0.0.1:1234/v1/models" -Method GET -TimeoutSec 2 -ErrorAction Stop
         $serverStarted = $true
         Write-Host "   [OK] LM Studioサーバーが起動しています！" -ForegroundColor Green
         

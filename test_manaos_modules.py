@@ -81,7 +81,7 @@ def test_config_validator():
     
     # 正常な設定のテスト
     valid_config = {
-        "ollama_url": "http://localhost:11434",
+        "ollama_url": "http://127.0.0.1:11434",
         "model": "llama3.2:3b"
     }
     is_valid, errors = validator.validate_config(valid_config, COMMON_SCHEMAS["ollama_config"])

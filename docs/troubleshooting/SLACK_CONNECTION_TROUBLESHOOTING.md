@@ -95,7 +95,7 @@ Invoke-RestMethod -Uri $webhookUrl -Method Post -Body $body -ContentType "applic
 
 ### 方法C: n8nのログ確認
 
-1. **n8n UI: http://localhost:5678**
+1. **n8n UI: http://127.0.0.1:5678**
 2. **「Executions」タブを開く**
 3. **最新の実行を確認**
 4. **エラーメッセージを確認**

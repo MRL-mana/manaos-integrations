@@ -37,7 +37,7 @@ def check_slack_api():
     """Slack Integration API確認"""
     print("\n=== Slack Integration API確認 ===")
     port = os.getenv("PORT", "5114")
-    api_url = f"http://localhost:{port}"
+    api_url = f"http://127.0.0.1:{port}"
     
     try:
         response = httpx.get(f"{api_url}/health", timeout=5.0)
@@ -91,7 +91,7 @@ def check_environment_variables():
     print("\n=== 環境変数確認 ===")
     port = os.getenv("PORT", "未設定（デフォルト: 5114）")
     webhook_url = os.getenv("SLACK_WEBHOOK_URL", "未設定")
-    file_secretary_url = os.getenv("FILE_SECRETARY_URL", "未設定（デフォルト: http://localhost:5120）")
+    file_secretary_url = os.getenv("FILE_SECRETARY_URL", "未設定（デフォルト: http://127.0.0.1:5120）")
     
     print(f"PORT: {port}")
     print(f"SLACK_WEBHOOK_URL: {'設定済み' if webhook_url != '未設定' else '未設定'}")

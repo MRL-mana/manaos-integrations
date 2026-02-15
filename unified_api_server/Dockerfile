@@ -43,11 +43,11 @@ ENV FLASK_APP=unified_api_server.py
 ENV FLASK_ENV=production
 
 # ポート公開
-EXPOSE 9500
+EXPOSE 9510
 
 # ヘルスチェック
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-    CMD curl -f http://localhost:9500/health || exit 1
+    CMD curl -f http://localhost:9510/health || exit 1
 
 # アプリケーション起動
 CMD ["python", "-u", "unified_api_server.py"]

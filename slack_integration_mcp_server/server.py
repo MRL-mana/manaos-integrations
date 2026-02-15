@@ -13,8 +13,8 @@ from pathlib import Path
 import io
 
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -30,7 +30,7 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-SLACK_API_URL = os.getenv("SLACK_API_URL", "http://localhost:5114")
+SLACK_API_URL = os.getenv("SLACK_API_URL", "http://127.0.0.1:5114")
 
 if MCP_AVAILABLE:
     app = Server("slack-integration")

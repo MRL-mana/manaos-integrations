@@ -4,7 +4,7 @@
 
 n8nのWebhookノードがテストモードでリッスン中
 
-**テストURL**: `http://localhost:5678/webhook-test/browse-ai-webhook`
+**テストURL**: `http://127.0.0.1:5678/webhook-test/browse-ai-webhook`
 
 ---
 
@@ -18,7 +18,7 @@ n8nのWebhookノードがテストモードでリッスン中
 
 **プロダクションURLの形式**:
 ```
-http://localhost:5678/webhook/browse-ai-webhook
+http://127.0.0.1:5678/webhook/browse-ai-webhook
 ```
 
 **注意**: これはローカルURLです。Browse AIからアクセスするには、**パブリックURL**が必要です。
@@ -47,7 +47,7 @@ ngrok http 5678
 
 **出力例**:
 ```
-Forwarding  https://xxxx-xxxx-xxxx.ngrok-free.app -> http://localhost:5678
+Forwarding  https://xxxx-xxxx-xxxx.ngrok-free.app -> http://127.0.0.1:5678
 ```
 
 **このURLをコピー**:
@@ -84,7 +84,7 @@ https://xxxx-xxxx-xxxx.ngrok-free.app/webhook/browse-ai-webhook
 ### 方法B: PowerShellでテスト
 
 ```powershell
-$webhookUrl = "http://localhost:5678/webhook-test/browse-ai-webhook"
+$webhookUrl = "http://127.0.0.1:5678/webhook-test/browse-ai-webhook"
 $body = @{
     robot = @{
         name = "Sale Monitor"
@@ -116,7 +116,7 @@ Invoke-RestMethod -Uri $webhookUrl -Method Post -Body $body -ContentType "applic
 ## 💡 ローカル開発の場合
 
 **ローカル開発中は**:
-- テストURLを使用: `http://localhost:5678/webhook-test/browse-ai-webhook`
+- テストURLを使用: `http://127.0.0.1:5678/webhook-test/browse-ai-webhook`
 - Browse AIの代わりに、PowerShellやPostmanでテスト
 
 **本番環境では**:

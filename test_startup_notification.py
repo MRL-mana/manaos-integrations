@@ -10,7 +10,7 @@ from pathlib import Path
 # UTF-8エンコーディング設定
 sys.stdout.reconfigure(encoding='utf-8')
 
-BASE_URL = "http://localhost:9500"
+BASE_URL = "http://127.0.0.1:9510"
 
 
 def test_startup_notification():

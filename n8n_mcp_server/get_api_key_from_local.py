@@ -5,7 +5,7 @@
 import webbrowser
 import os
 
-N8N_BASE_URL = os.getenv("N8N_BASE_URL", "http://localhost:5679")
+N8N_BASE_URL = os.getenv("N8N_BASE_URL", "http://127.0.0.1:5679")
 
 print("=" * 60)
 print("n8n APIキー取得ガイド")

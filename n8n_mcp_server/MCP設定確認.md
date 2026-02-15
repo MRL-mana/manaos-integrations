@@ -17,7 +17,7 @@ Get-Content "$env:USERPROFILE\.cursor\mcp.json" | ConvertFrom-Json | Select-Obje
   "command": "python",
   "args": ["-m", "n8n_mcp_server.server"],
   "env": {
-    "N8N_BASE_URL": "http://localhost:5679",
+    "N8N_BASE_URL": "http://127.0.0.1:5679",
     "N8N_API_KEY": "your_n8n_api_key_here"
   },
   "cwd": "C:\\Users\\mana4\\OneDrive\\Desktop\\manaos_integrations"
@@ -68,7 +68,7 @@ $config.mcpServers.n8n.env
 
 期待される出力：
 ```
-N8N_BASE_URL : http://localhost:5679
+N8N_BASE_URL : http://127.0.0.1:5679
 N8N_API_KEY  : your_n8n_api_key_here
 ```
 
@@ -122,7 +122,7 @@ n8nのワークフロー一覧を取得してください
 ```powershell
 # Base URLを更新
 cd C:\Users\mana4\OneDrive\Desktop\manaos_integrations
-.\n8n_mcp_server\set_api_key_manual.ps1 -ApiKey "既存のAPIキー" -BaseUrl "http://localhost:5679"
+.\n8n_mcp_server\set_api_key_manual.ps1 -ApiKey "既存のAPIキー" -BaseUrl "http://127.0.0.1:5679"
 ```
 
 ## 完了チェックリスト
@@ -130,7 +130,7 @@ cd C:\Users\mana4\OneDrive\Desktop\manaos_integrations
 - ✅ n8n MCPサーバーの実装（`n8n_mcp_server/server.py`）
 - ✅ MCP設定ファイルへの追加（`add_to_cursor_mcp.ps1`）
 - ✅ APIキーの設定
-- ✅ Base URLの設定（`http://localhost:5679`）
+- ✅ Base URLの設定（`http://127.0.0.1:5679`）
 - ⏳ Cursorの再起動
 - ⏳ MCPツールの動作確認
 

@@ -96,7 +96,7 @@
 4. **「Add Webhook」をクリック**
 5. **Webhook URLを入力**:
    ```
-   http://localhost:5678/webhook/browse-ai-webhook
+   http://127.0.0.1:5678/webhook/browse-ai-webhook
    ```
    **注意**: 外部公開する場合はngrokを使用
 6. **「Save」をクリック**
@@ -113,7 +113,7 @@
 
 #### 4.2 n8nワークフロー確認
 
-1. **n8n UI: http://localhost:5678**
+1. **n8n UI: http://127.0.0.1:5678**
 2. **ワークフローを開く**
 3. **「Executions」タブを確認**
 4. **実行履歴を確認**

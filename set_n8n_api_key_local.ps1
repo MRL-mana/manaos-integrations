@@ -14,7 +14,7 @@ $mcpConfigPath2 = "$env:USERPROFILE\.cursor\mcp.json"
 Write-Host "[手順]" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "1. ブラウザでn8nのWeb UIを開いてください:" -ForegroundColor White
-Write-Host "   http://localhost:5679" -ForegroundColor Cyan
+Write-Host "   http://127.0.0.1:5679" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "2. ログイン後、APIキーを作成してください:" -ForegroundColor White
 Write-Host "   Settings → API → Create API Key" -ForegroundColor Gray

@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional
 class ExcelLLMProcessor:
     """Excel/CSVファイルをLLMに渡して処理するクラス"""
     
-    def __init__(self, ollama_url: str = "http://localhost:11434", model: str = "llama3.2:3b"):
+    def __init__(self, ollama_url: str = "http://127.0.0.1:11434", model: str = "llama3.2:3b"):
         self.ollama_url = ollama_url
         self.model = model
     

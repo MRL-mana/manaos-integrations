@@ -12,12 +12,12 @@ ngrokを起動しました。以下の手順で設定してください。
 
 **ngrokのターミナルウィンドウで、以下のような行を探してください：**
 ```
-Forwarding  https://xxxx-xxxx-xxxx.ngrok.io -> http://localhost:5114
+Forwarding  https://xxxx-xxxx-xxxx.ngrok.io -> http://127.0.0.1:5114
 ```
 
 **このURL（`https://xxxx-xxxx-xxxx.ngrok.io`）をコピーしてください。**
 
-または、ブラウザで http://localhost:4040 にアクセスして確認できます。
+または、ブラウザで http://127.0.0.1:4040 にアクセスして確認できます。
 
 ---
 

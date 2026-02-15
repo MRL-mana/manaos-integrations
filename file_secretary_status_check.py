@@ -34,7 +34,7 @@ def check_api():
     """API確認"""
     print("\n=== API確認 ===")
     try:
-        response = httpx.get("http://localhost:5120/health", timeout=5.0)
+        response = httpx.get("http://127.0.0.1:5120/health", timeout=5.0)
         if response.status_code == 200:
             data = response.json()
             print(f"✅ APIサーバー: 正常 ({data.get('version')})")

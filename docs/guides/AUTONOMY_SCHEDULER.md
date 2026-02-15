@@ -4,7 +4,7 @@ Runbook と自律タスクを定期的に走らせるには、**Autonomy System*
 
 ## 前提
 
-- **Autonomy System** が起動していること（既定: `http://localhost:5124`）
+- **Autonomy System** が起動していること（既定: `http://127.0.0.1:5124`）
 - レベル L4 以上で Runbook が due になると実行される
 
 ## 1. 1回だけ実行（手動・テスト）
@@ -17,7 +17,7 @@ cd manaos_integrations
 環境変数で先を変える場合:
 
 ```powershell
-$env:AUTONOMY_URL = "http://localhost:5124"
+$env:AUTONOMY_URL = "http://127.0.0.1:5124"
 .\scripts\autonomy_execute_once.ps1
 ```
 
@@ -47,11 +47,11 @@ $env:AUTONOMY_URL = "http://localhost:5124"
 1. **Schedule Trigger** ノード: Cron で `*/10 * * * *`（10分ごと）などに設定。
 2. **HTTP Request** ノード:
    - Method: POST
-   - URL: `http://localhost:5124/api/execute`
+   - URL: `http://127.0.0.1:5124/api/execute`
    - Body: 空でよい（JSON なしで OK な実装とする）
 3. 必要なら **IF** で status や `runbook_count` を見て通知ノードへ分岐。
 
 ## 5. 確認
 
-- レベル・予算・Runbook 最終実行: `GET http://localhost:5124/api/dashboard`
+- レベル・予算・Runbook 最終実行: `GET http://127.0.0.1:5124/api/dashboard`
 - 実行結果の詳細: `POST /api/execute` のレスポンスの `runbook_results` / `results`

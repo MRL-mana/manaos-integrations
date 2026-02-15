@@ -49,9 +49,9 @@ class IntrinsicTodoGenerator:
 
     def __init__(
         self,
-        learning_system_url: str = "http://localhost:5126",
-        metrics_collector_url: str = "http://localhost:5127",
-        task_critic_url: str = "http://localhost:5102",
+        learning_system_url: str = "http://127.0.0.1:5126",
+        metrics_collector_url: str = "http://127.0.0.1:5127",
+        task_critic_url: str = "http://127.0.0.1:5102",
         storage_path: Optional[Path] = None
     ):
         """

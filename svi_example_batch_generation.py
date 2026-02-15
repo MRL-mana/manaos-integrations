@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import List, Dict, Any
 
-API_BASE = "http://localhost:9500"
+API_BASE = "http://127.0.0.1:9510"
 
 
 def batch_generate_videos(batch_items: List[Dict[str, Any]]) -> List[str]:

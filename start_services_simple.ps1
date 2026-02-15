@@ -37,7 +37,7 @@ foreach ($service in $services) {
     $portInUse = Get-NetTCPConnection -LocalPort $service.Port -ErrorAction SilentlyContinue
     if ($portInUse) {
         Write-Host "[スキップ] $($service.Name) は既に起動しています (ポート $($service.Port))" -ForegroundColor Yellow
-        Write-Host "         URL: http://localhost:$($service.Port)" -ForegroundColor Gray
+        Write-Host "         URL: http://127.0.0.1:$($service.Port)" -ForegroundColor Gray
         continue
     }
     
@@ -57,7 +57,7 @@ foreach ($service in $services) {
         $portCheck = Get-NetTCPConnection -LocalPort $service.Port -ErrorAction SilentlyContinue
         if ($portCheck) {
             Write-Host "[成功] $($service.Name) が起動しました (ポート $($service.Port))" -ForegroundColor Green
-            Write-Host "        URL: http://localhost:$($service.Port)" -ForegroundColor Cyan
+            Write-Host "        URL: http://127.0.0.1:$($service.Port)" -ForegroundColor Cyan
         } else {
             Write-Host "[警告] $($service.Name) の起動を確認できませんでした" -ForegroundColor Yellow
         }
@@ -75,7 +75,7 @@ Write-Host ""
 
 Write-Host "起動中のサービス:" -ForegroundColor Cyan
 foreach ($proc in $processes) {
-    Write-Host "  ✓ $($proc.Name): http://localhost:$($proc.Port)" -ForegroundColor Green
+    Write-Host "  ✓ $($proc.Name): http://127.0.0.1:$($proc.Port)" -ForegroundColor Green
 }
 
 Write-Host ""

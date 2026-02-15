@@ -77,14 +77,14 @@ Start-ScheduledTask -TaskName "ComfyUI Auto Start"
 
 # 数秒待ってから確認
 Start-Sleep -Seconds 10
-Invoke-WebRequest -Uri "http://localhost:8188"
+Invoke-WebRequest -Uri "http://127.0.0.1:8188"
 ```
 
 ### システム再起動後
 
 1. システムを再起動
 2. 数秒〜数十秒待つ
-3. http://localhost:8188 にアクセスして確認
+3. http://127.0.0.1:8188 にアクセスして確認
 
 ---
 

@@ -9,6 +9,7 @@ NOTE:
 - 本スクリプトの目的は「サービスが起動して応答するか」の確認なので、Unified API は軽量な /health を検査する。
 """
 import io
+import os
 import sys
 import time
 from typing import Dict, List, Optional, Tuple
@@ -16,20 +17,34 @@ from typing import Dict, List, Optional, Tuple
 import requests  # pyright: ignore[reportMissingTypeStubs]
 
 _ENCODINGS_TO_NORMALIZE = ("cp932", "cp936", "cp949")
-if (
-    sys.platform == "win32"
-    and getattr(sys.stdout, "encoding", "") in _ENCODINGS_TO_NORMALIZE
+if sys.platform == "win32" and getattr(sys.stdout, "encoding", "") in (
+    _ENCODINGS_TO_NORMALIZE
 ):
-    sys.stdout = io.TextIOWrapper(
-        sys.stdout.buffer,
-        encoding="utf-8",
-        errors="replace",
-    )
-    sys.stderr = io.TextIOWrapper(
-        sys.stderr.buffer,
-        encoding="utf-8",
-        errors="replace",
-    )
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(  # type: ignore[attr-defined]
+                    encoding="utf-8",
+                    errors="replace",
+                )
+                continue
+            except (TypeError, ValueError):
+                pass
+
+        # フォールバック（可能ならバッファを保持したまま差し替え）
+        if hasattr(stream, "buffer"):
+            try:
+                wrapped = io.TextIOWrapper(
+                    stream.buffer,  # type: ignore[attr-defined]
+                    encoding="utf-8",
+                    errors="replace",
+                )
+                if stream is sys.stdout:
+                    sys.stdout = wrapped
+                else:
+                    sys.stderr = wrapped
+            except (AttributeError, TypeError, ValueError):
+                pass
 
 try:
     from manaos_logger import get_logger
@@ -39,18 +54,24 @@ except ImportError:
     logger = logging.getLogger(__name__)
 
 # チェック対象のサービス
+_DEFAULT_UNIFIED_API_PORT = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9510"))
+_DEFAULT_MRL_MEMORY_PORT = int(os.getenv("MANAOS_MRL_MEMORY_PORT", "5105"))
+_DEFAULT_LEARNING_SYSTEM_PORT = int(
+    os.getenv("MANAOS_LEARNING_SYSTEM_PORT", "5126")
+)
+
 SERVICES: List[Dict[str, object]] = [
     # === コアサービス ===
     {
         "name": "MRL Memory",
-        "port": 5105,
+        "port": _DEFAULT_MRL_MEMORY_PORT,
         "path": "/health",
         "timeout": 5,
         "group": "core",
     },
     {
         "name": "Learning System",
-        "port": 5126,
+        "port": _DEFAULT_LEARNING_SYSTEM_PORT,
         "path": "/health",
         "timeout": 5,
         "group": "core",
@@ -64,7 +85,7 @@ SERVICES: List[Dict[str, object]] = [
     },
     {
         "name": "Unified API",
-        "port": 9502,
+        "port": _DEFAULT_UNIFIED_API_PORT,
         "path": "/health",
         "timeout": 5,
         "group": "core",
@@ -95,7 +116,7 @@ SERVICES: List[Dict[str, object]] = [
     # === 外部統合（オプショナル）===
     {
         "name": "Unified API (/ready)",
-        "port": 9502,
+        "port": _DEFAULT_UNIFIED_API_PORT,
         "path": "/ready",
         "timeout": 5,
         "group": "optional",

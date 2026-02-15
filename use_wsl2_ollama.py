@@ -10,11 +10,11 @@ import sys
 
 if sys.platform == 'win32':
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
 
 def call_wsl2_ollama_api(endpoint: str, method: str = "GET", json_data: dict = None):
     """WSL2内のOllama APIを呼び出す"""
-    url = f"http://localhost:11434{endpoint}"
+    url = f"http://127.0.0.1:11434{endpoint}"
     
     # WSL2内からAPIを呼び出す
     if method == "GET":

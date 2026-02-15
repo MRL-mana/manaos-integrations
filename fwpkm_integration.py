@@ -87,7 +87,7 @@ class UnifiedMemorySystem:
         # 推論時メモリ更新器
         self.memory_updater = InferenceMemoryUpdater(
             chunk_processor=self.chunk_processor,
-            ollama_url=self.config.get("ollama_url", "http://localhost:11434")
+            ollama_url=self.config.get("ollama_url", "http://127.0.0.1:11434")
         )
         
         # 統合設定
@@ -111,7 +111,7 @@ class UnifiedMemorySystem:
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
         return {
-            "ollama_url": "http://localhost:11434",
+            "ollama_url": "http://127.0.0.1:11434",
             "chunk_processing": {
                 "enabled": True,
                 "chunk_size": 2048,

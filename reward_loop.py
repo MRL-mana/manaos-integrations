@@ -117,8 +117,8 @@ class RewardLoop:
 
     def check_achievements(
         self,
-        learning_system_url: str = "http://localhost:5126",
-        metrics_collector_url: str = "http://localhost:5127"
+        learning_system_url: str = "http://127.0.0.1:5126",
+        metrics_collector_url: str = "http://127.0.0.1:5127"
     ) -> Optional[RewardEvent]:
         """
         達成状況をチェックしてご褒美イベントを生成
@@ -364,8 +364,8 @@ def check_achievements():
     """達成状況をチェック"""
     loop = init_reward_loop()
     event = loop.check_achievements(
-        learning_system_url="http://localhost:5126",
-        metrics_collector_url="http://localhost:5127"
+        learning_system_url="http://127.0.0.1:5126",
+        metrics_collector_url="http://127.0.0.1:5127"
     )
 
     if event:

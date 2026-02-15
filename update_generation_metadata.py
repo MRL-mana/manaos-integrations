@@ -6,7 +6,7 @@ import sys
 import io
 
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 import os
 import json

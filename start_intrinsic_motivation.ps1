@@ -37,7 +37,7 @@ Start-Sleep -Seconds 3
 $portCheck = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
 if ($portCheck) {
     Write-Host "✅ Intrinsic Motivation System: 起動成功" -ForegroundColor Green
-    Write-Host "   URL: http://localhost:$port" -ForegroundColor Gray
+    Write-Host "   URL: http://127.0.0.1:$port" -ForegroundColor Gray
     Write-Host "   ログ: $logFile" -ForegroundColor Gray
 } else {
     Write-Host "⚠️  Intrinsic Motivation System: 起動確認できませんでした" -ForegroundColor Yellow

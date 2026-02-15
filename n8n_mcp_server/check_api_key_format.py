@@ -4,7 +4,7 @@ import json
 import os
 import sys
 
-base_url = os.getenv("N8N_BASE_URL", "http://localhost:5679")
+base_url = os.getenv("N8N_BASE_URL", "http://127.0.0.1:5679")
 api_key = os.getenv("N8N_API_KEY")
 
 if not api_key or not api_key.strip():

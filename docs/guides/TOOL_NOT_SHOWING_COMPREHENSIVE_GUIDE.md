@@ -8,9 +8,9 @@ OpenWebUIで「ツールの選択」ドロップダウンにTool Serverのツー
 
 ### ✅ 正常に動作している項目
 
-1. **Tool Server**: 正常に動作中（http://localhost:9503）
-2. **OpenAPI仕様**: 正常に取得可能（http://localhost:9503/openapi.json）
-3. **Tool Serverの登録**: OpenWebUIに登録済み（http://localhost:9503）
+1. **Tool Server**: 正常に動作中（http://127.0.0.1:9503）
+2. **OpenAPI仕様**: 正常に取得可能（http://127.0.0.1:9503/openapi.json）
+3. **Tool Serverの登録**: OpenWebUIに登録済み（http://127.0.0.1:9503）
 4. **Function Calling**: 「ネイティブ」モードに設定済み
 5. **OpenWebUI**: 起動中（v0.6.43）
 
@@ -29,13 +29,13 @@ OpenWebUIで「ツールの選択」ドロップダウンにTool Serverのツー
    - 左メニューから「External Tools」または「Tool Servers」タブを選択
 
 2. **Tool Serverの接続状態を確認**
-   - `http://localhost:9503` が登録されているか確認
+   - `http://127.0.0.1:9503` が登録されているか確認
    - **接続状態が「Connected」になっているか確認**（重要）
    - 「Connected」になっていない場合、接続ボタンをクリック
 
 3. **接続できない場合**
-   - Tool Serverが起動中か確認（http://localhost:9503/health）
-   - OpenAPI仕様が取得できるか確認（http://localhost:9503/openapi.json）
+   - Tool Serverが起動中か確認（http://127.0.0.1:9503/health）
+   - OpenAPI仕様が取得できるか確認（http://127.0.0.1:9503/openapi.json）
    - エラーメッセージがないか確認
 
 ### Step 2: ブラウザのキャッシュを完全にクリアして再起動
@@ -50,7 +50,7 @@ OpenWebUIで「ツールの選択」ドロップダウンにTool Serverのツー
    - ブラウザを再起動
 
 3. **OpenWebUIにアクセス**
-   - `http://localhost:3001` にアクセス
+   - `http://127.0.0.1:3001` にアクセス
    - 「ツールの選択」ドロップダウンを確認
 
 ### Step 3: OpenWebUIのバージョンを確認
@@ -70,19 +70,19 @@ docker-compose -f docker-compose.always-ready-llm.yml up -d openwebui
 3. **「ツールの選択」ドロップダウンを開く**
 4. **以下のリクエストを確認**:
    - `/api/v1/tools/` へのリクエスト
-   - `http://localhost:9503/openapi.json` へのリクエスト
+   - `http://127.0.0.1:9503/openapi.json` へのリクエスト
 5. **Consoleタブでエラーメッセージを確認**
 
 ### Step 5: Tool Serverを再登録
 
 1. **OpenWebUIの設定画面を開く**（⚙️ → External Tools）
 2. **既存のTool Serverを削除**
-   - `http://localhost:9503` を削除
+   - `http://127.0.0.1:9503` を削除
 3. **Tool Serverを再登録**
    - 「Add Tool」または「ツールを追加」をクリック
-   - URL: `http://localhost:9503`
+   - URL: `http://127.0.0.1:9503`
    - OpenAPI Spec: ON（チェックを入れる）
-   - OpenAPI Spec URL: `http://localhost:9503/openapi.json`
+   - OpenAPI Spec URL: `http://127.0.0.1:9503/openapi.json`
    - 保存
 
 ## 🔥 レミ先輩の推奨順序

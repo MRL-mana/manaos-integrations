@@ -7,13 +7,13 @@ Write-Host ""
 
 $workDir = Get-Location
 
-# 1. LLMルーティングAPIを起動
-Write-Host "[1] LLMルーティングAPIを起動中..." -ForegroundColor Yellow
+# 1. LLM Routing MCP を起動（ヘルス: 5111）
+Write-Host "[1] LLM Routing MCP を起動中..." -ForegroundColor Yellow
 
 # 既存のプロセスを確認
 $existingProcesses = Get-Process -Name python -ErrorAction SilentlyContinue | Where-Object {
     $cmdLine = (Get-WmiObject Win32_Process -Filter "ProcessId = $($_.Id)").CommandLine
-    $cmdLine -like "*manaos_llm_routing_api*"
+    $cmdLine -like "*llm_routing_mcp_server*"
 }
 
 if ($existingProcesses) {
@@ -29,8 +29,8 @@ if ($existingProcesses) {
 }
 
 if (-not $existingProcesses -or $restart -eq "y") {
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$workDir'; python manaos_llm_routing_api.py" -WindowStyle Minimized
-    Write-Host "   [OK] LLMルーティングAPIを起動しました" -ForegroundColor Green
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$workDir'; `$env:PYTHONIOENCODING='utf-8'; `$env:MANAOS_LOG_TO_STDERR='1'; python -m llm_routing_mcp_server" -WindowStyle Minimized
+    Write-Host "   [OK] LLM Routing MCP を起動しました" -ForegroundColor Green
     Start-Sleep -Seconds 3
 }
 
@@ -57,7 +57,7 @@ if ($existingUnified) {
 }
 
 if (-not $existingUnified -or $restartUnified -eq "y") {
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$workDir'; python unified_api_server.py" -WindowStyle Minimized
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$workDir'; `$env:PYTHONIOENCODING='utf-8'; `$env:PORT='9510'; py -3.10 unified_api_server.py" -WindowStyle Minimized
     Write-Host "   [OK] 統合APIサーバーを起動しました" -ForegroundColor Green
     Start-Sleep -Seconds 3
 }
@@ -69,22 +69,19 @@ Start-Sleep -Seconds 5
 
 $allOk = $true
 
-# LLMルーティングAPI
+# LLM Routing MCP health
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:9501/api/llm/health" -Method GET -TimeoutSec 2 -ErrorAction Stop
-    Write-Host "   [OK] LLMルーティングAPI: 起動中" -ForegroundColor Green
-    $status = $response.Content | ConvertFrom-Json
-    Write-Host "      ステータス: $($status.status)" -ForegroundColor Gray
+    $status = Invoke-RestMethod -Uri "http://127.0.0.1:5111/health" -Method GET -TimeoutSec 2 -ErrorAction Stop
+    Write-Host "   [OK] LLM Routing MCP: 起動中" -ForegroundColor Green
 } catch {
-    Write-Host "   [NG] LLMルーティングAPI: 起動失敗" -ForegroundColor Red
+    Write-Host "   [NG] LLM Routing MCP: 起動失敗" -ForegroundColor Red
     $allOk = $false
 }
 
 # 統合APIサーバー
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:9500/health" -Method GET -TimeoutSec 2 -ErrorAction Stop
+    $status = Invoke-RestMethod -Uri "http://127.0.0.1:9510/health" -Method GET -TimeoutSec 2 -ErrorAction Stop
     Write-Host "   [OK] 統合APIサーバー: 起動中" -ForegroundColor Green
-    $status = $response.Content | ConvertFrom-Json
     Write-Host "      ステータス: $($status.status)" -ForegroundColor Gray
 } catch {
     Write-Host "   [NG] 統合APIサーバー: 起動失敗" -ForegroundColor Red

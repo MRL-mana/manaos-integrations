@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # 環境変数から設定を読み込み
-COMFYUI_URL = os.getenv("COMFYUI_URL", "http://localhost:8188")
+COMFYUI_URL = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
 
 # SVI統合インスタンス
 svi_integration = None
@@ -240,7 +240,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             if prompt_id:
                 return [TextContent(
                     type="text",
-                    text=f"✅ 動画生成が開始されました\n\n実行ID: {prompt_id}\n開始画像: {start_image_path}\nプロンプト: {prompt}\n動画の長さ: {video_length_seconds}秒\nステップ数: {steps}\nモーション強度: {motion_strength}\n\n生成状況を確認:\n- ComfyUIのUI: http://localhost:8188\n- キュー状態: svi_get_queue_status を使用"
+                    text=f"✅ 動画生成が開始されました\n\n実行ID: {prompt_id}\n開始画像: {start_image_path}\nプロンプト: {prompt}\n動画の長さ: {video_length_seconds}秒\nステップ数: {steps}\nモーション強度: {motion_strength}\n\n生成状況を確認:\n- ComfyUIのUI: http://127.0.0.1:8188\n- キュー状態: svi_get_queue_status を使用"
                 )]
             else:
                 return [TextContent(

@@ -85,7 +85,7 @@ python google_drive_sync_agent.py
     {
       "name": "ManaOS",
       "type": "manaos",
-      "api_endpoint": "http://localhost:5106/health"
+      "api_endpoint": "http://127.0.0.1:5106/health"
     },
     {
       "name": "Mothership",

@@ -8,13 +8,13 @@ Write-Host ""
 Write-Host "📋 Step 1: Checking n8n..." -ForegroundColor Yellow
 try {
     # Try to check if n8n is running (without auth for now)
-    $response = Invoke-WebRequest -Uri "http://localhost:5678" -Method Get -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "http://127.0.0.1:5678" -Method Get -ErrorAction Stop
     Write-Host "✅ n8n is running normally" -ForegroundColor Green
-    Write-Host "   Access: http://localhost:5678" -ForegroundColor Cyan
+    Write-Host "   Access: http://127.0.0.1:5678" -ForegroundColor Cyan
     Write-Host "   Note: API may require authentication" -ForegroundColor Yellow
 } catch {
     Write-Host "⚠️  Cannot connect to n8n" -ForegroundColor Yellow
-    Write-Host "   Check: http://localhost:5678" -ForegroundColor Cyan
+    Write-Host "   Check: http://127.0.0.1:5678" -ForegroundColor Cyan
     Write-Host "   If n8n is not running, start it first" -ForegroundColor Yellow
     Write-Host "   Error: $_" -ForegroundColor Gray
 }
@@ -64,13 +64,13 @@ Write-Host "📋 Step 4: Workflow import preparation..." -ForegroundColor Yellow
 Write-Host "   Follow these steps to import:" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "   Method A: Via Portal UI (Recommended)" -ForegroundColor White
-Write-Host "   1. Access Portal UI: http://localhost:5000" -ForegroundColor Gray
+Write-Host "   1. Access Portal UI: http://127.0.0.1:5000" -ForegroundColor Gray
 Write-Host "   2. Open n8n section" -ForegroundColor Gray
 Write-Host "   3. Click 'Import Workflow'" -ForegroundColor Gray
 Write-Host "   4. Select file: $workflowPath" -ForegroundColor Gray
 Write-Host ""
 Write-Host "   Method B: Via API" -ForegroundColor White
-Write-Host "   curl -X POST http://localhost:5678/rest/workflows \" -ForegroundColor Gray
+Write-Host "   curl -X POST http://127.0.0.1:5678/rest/workflows \" -ForegroundColor Gray
 Write-Host "     -H 'Content-Type: application/json' \" -ForegroundColor Gray
 Write-Host "     -d @$workflowPath" -ForegroundColor Gray
 Write-Host ""
@@ -86,7 +86,7 @@ Write-Host "      - Name: 'CivitAI Sale Monitor'" -ForegroundColor Gray
 Write-Host "      - URL: https://civitai.com/models?onSale=true" -ForegroundColor Gray
 Write-Host "      - Monitor type: Change detection" -ForegroundColor Gray
 Write-Host "   4. Webhook setup:" -ForegroundColor White
-Write-Host "      - URL: http://localhost:5678/webhook/browse-ai-webhook" -ForegroundColor Gray
+Write-Host "      - URL: http://127.0.0.1:5678/webhook/browse-ai-webhook" -ForegroundColor Gray
 Write-Host "      - Or: Use ngrok for external access" -ForegroundColor Gray
 Write-Host ""
 
@@ -94,7 +94,7 @@ Write-Host ""
 Write-Host "📋 Step 6: Webhook URL acquisition..." -ForegroundColor Yellow
 Write-Host "   After importing the workflow, the following URL will be the webhook endpoint:" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "   Local: http://localhost:5678/webhook/browse-ai-webhook" -ForegroundColor White
+Write-Host "   Local: http://127.0.0.1:5678/webhook/browse-ai-webhook" -ForegroundColor White
 Write-Host ""
 Write-Host "   For external access (Recommended):" -ForegroundColor Yellow
 Write-Host "   ngrok http 5678" -ForegroundColor White

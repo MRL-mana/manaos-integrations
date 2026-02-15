@@ -13,7 +13,7 @@ from pathlib import Path
 #     import io
 #     if hasattr(sys.stdout, 'buffer'):
 #         try:
-#             sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+#             sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 #         except (AttributeError, ValueError, OSError):
 #             pass
 

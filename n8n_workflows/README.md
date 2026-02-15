@@ -24,7 +24,7 @@ manaOS秘書機能の3本のルーチンワークフロー
 
 ### 1. n8nにワークフローをインポート
 
-1. n8nを開く（http://localhost:5678）
+1. n8nを開く（http://127.0.0.1:5678）
 2. ワークフロー → インポート
 3. 各JSONファイルをインポート
 
@@ -33,9 +33,9 @@ manaOS秘書機能の3本のルーチンワークフロー
 各ワークフローには、manaOS APIへのWebhookが含まれています。
 Webhook URLを設定してください：
 
-- `http://localhost:9500/api/secretary/morning`
-- `http://localhost:9500/api/secretary/noon`
-- `http://localhost:9500/api/secretary/evening`
+- `http://127.0.0.1:9510/api/secretary/morning`
+- `http://127.0.0.1:9510/api/secretary/noon`
+- `http://127.0.0.1:9510/api/secretary/evening`
 
 ### 3. スケジュールを設定
 
@@ -92,6 +92,7 @@ Slack通知
 ---
 
 **最終更新**: 2025-12-28
+
 
 
 

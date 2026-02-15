@@ -119,7 +119,7 @@ Write-Host "`n[5] サービス起動状態の確認" -ForegroundColor Yellow
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Gray
 
 $services = @(
-    @{Port=9500; Name="Unified API"},
+    @{Port=9510; Name="Unified API"},
     @{Port=5111; Name="LLM Routing"},
     @{Port=5104; Name="Learning System"},
     @{Port=5103; Name="MRL Memory"}
@@ -128,7 +128,7 @@ $services = @(
 foreach ($service in $services) {
     $totalChecks++
     try {
-        $response = Invoke-RestMethod -Uri "http://localhost:$($service.Port)/health" -TimeoutSec 2 -ErrorAction Stop
+        $response = Invoke-RestMethod -Uri "http://127.0.0.1:$($service.Port)/health" -TimeoutSec 2 -ErrorAction Stop
         Write-Host "  ✅ Port $($service.Port) ($($service.Name)): $($response.status)" -ForegroundColor Green
         $passedChecks++
     } catch {

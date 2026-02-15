@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 
 # n8nの設定
-N8N_BASE_URL = os.getenv("N8N_BASE_URL", "http://localhost:5679")
+N8N_BASE_URL = os.getenv("N8N_BASE_URL", "http://127.0.0.1:5679")
 N8N_API_KEY = os.getenv("N8N_API_KEY")
 
 

@@ -8,7 +8,7 @@
 
 ### Open WebUI
 
-- ✅ **ローカル環境**: `http://localhost:3001` で動作中
+- ✅ **ローカル環境**: `http://127.0.0.1:3001` で動作中
 - ✅ **コンテナ化**: Dockerコンテナ（`open-webui`）として実行中
 - ✅ **ネットワーク**: `llm_network` に接続
 - ✅ **設定**: 環境変数で設定可能
@@ -111,7 +111,7 @@ def call_mcp_tool(tool_name):
 4. 以下の情報を入力：
 
    - **Name**: `comfyui_generate_image_mcp`
-   - **URL**: `http://host.docker.internal:9500/api/mcp/tool/comfyui_generate_image`
+    - **URL**: `http://host.docker.internal:9502/api/mcp/tool/comfyui_generate_image`
    - **Method**: `POST`
 
 ### ステップ3: チャットで使用
@@ -148,7 +148,7 @@ async def openwebui_create_chat(arguments: dict):
     """Open WebUIでチャットを作成"""
     import requests
 
-    url = "http://localhost:3001/api/v1/chats/new"
+    url = "http://127.0.0.1:3001/api/v1/chats/new"
     headers = {"Authorization": "Bearer YOUR_API_KEY"}
     data = {
         "message": arguments.get("message"),

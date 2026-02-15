@@ -14,13 +14,13 @@
 母艦の統合APIサーバーが起動している状態で：
 
 ```
-http://localhost:9500/emergency
+http://127.0.0.1:9510/emergency
 ```
 
 または、Tailscale経由：
 
 ```
-http://100.73.247.100:9500/emergency
+http://100.73.247.100:9510/emergency
 ```
 
 ### 機能
@@ -80,7 +80,7 @@ Google Play Storeで「Tasker」を検索してインストール
 ##### アクション2: 緊急パネルを開く
 
 1. **アクション**: 「Webページを開く」を選択
-2. URL: `http://100.73.247.100:9500/emergency`
+2. URL: `http://100.73.247.100:9510/emergency`
 3. ブラウザ: 「Chrome」を選択
 
 ##### アクション3（オプション）: 画面ロック解除・通知抑制
@@ -113,7 +113,7 @@ Google Play Storeで「Tasker」を検索してインストール
 3. **アクション2**: 「待機」
    - 時間: 3秒
 4. **アクション3**: 「URLを開く」
-   - URL: `http://100.73.247.100:9500/emergency`
+   - URL: `http://100.73.247.100:9510/emergency`
    - ブラウザ: Chrome
 
 ##### 終了タスク（USB切断時）
@@ -160,7 +160,7 @@ Google Play Storeで「Tasker」を検索してインストール
    - 母艦（100.93.120.33）が「接続済み」になっているか確認
 
 2. **URL確認**
-   - 手動でChromeで `http://100.73.247.100:9500/emergency` を開いてみる
+   - 手動でChromeで `http://100.73.247.100:9510/emergency` を開いてみる
    - 母艦の統合APIサーバーが起動しているか確認
 
 3. **マクロ/プロファイル確認**
@@ -203,7 +203,7 @@ Google Play Storeで「Tasker」を検索してインストール
 
 - 母艦（新PC）Tailscale IP: `100.73.247.100`
 - 統合APIポート: `9500`
-- 緊急パネルURL: `http://100.73.247.100:9500/emergency`
+- 緊急パネルURL: `http://100.73.247.100:9510/emergency`
 - 許可サービス: n8n, mana-ocr-api, mana-intent, manaos-command-hub, sd-webui, manaos-api
 - 許可ワークフロー: daily_report, pdf_to_excel, image_generation, remi_command
 
@@ -215,4 +215,5 @@ Google Play Storeで「Tasker」を検索してインストール
 - 外部画面/USB接続の検知精度向上
 - 緊急時の自動通知機能
 - ログの自動アップロード機能
+
 

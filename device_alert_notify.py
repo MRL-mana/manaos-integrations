@@ -16,9 +16,9 @@ except ImportError:
 logger = get_logger(__name__)
 
 # Portal API URL（デバイスアラート取得）
-PORTAL_URL = os.getenv("PORTAL_INTEGRATION_URL", os.getenv("PORTAL_URL", "http://localhost:5108")).rstrip("/")
+PORTAL_URL = os.getenv("PORTAL_INTEGRATION_URL", os.getenv("PORTAL_URL", "http://127.0.0.1:5108")).rstrip("/")
 # 統合API URL（通知送信）
-UNIFIED_API_URL = os.getenv("UNIFIED_API_URL", "http://localhost:9500").rstrip("/")
+UNIFIED_API_URL = os.getenv("UNIFIED_API_URL", "http://127.0.0.1:9510").rstrip("/")
 
 
 def fetch_alerts() -> Dict[str, Any]:

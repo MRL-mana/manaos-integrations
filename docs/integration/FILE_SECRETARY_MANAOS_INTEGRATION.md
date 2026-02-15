@@ -39,7 +39,7 @@ Slack IntegrationがFile Secretary APIを呼び出せます：
 
 **環境変数**:
 ```bash
-FILE_SECRETARY_URL=http://localhost:5120  # デフォルト値
+FILE_SECRETARY_URL=http://127.0.0.1:5120  # デフォルト値
 ```
 
 ### 3. API接続 ✅
@@ -135,8 +135,8 @@ FILE_SECRETARY_URL=http://localhost:5120  # デフォルト値
 ```bash
 # 環境変数設定
 export PORT=5114
-export FILE_SECRETARY_URL=http://localhost:5120
-export ORCHESTRATOR_URL=http://localhost:5106
+export FILE_SECRETARY_URL=http://127.0.0.1:5120
+export ORCHESTRATOR_URL=http://127.0.0.1:5106
 
 # 起動
 python slack_integration.py

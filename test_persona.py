@@ -5,7 +5,7 @@
 import requests
 import json
 
-API_BASE = "http://localhost:9500"
+API_BASE = "http://127.0.0.1:9510"
 
 def test_persona_chat():
     """人格設定が適用されたチャットをテスト"""

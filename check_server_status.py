@@ -7,7 +7,7 @@ print("初期化の進行を確認中...")
 time.sleep(5)
 
 try:
-    r = requests.get('http://127.0.0.1:9500/status', timeout=5)
+    r = requests.get('http://127.0.0.1:9510/status', timeout=5)
     data = r.json()
     
     print(f"Status: {data.get('status')}")

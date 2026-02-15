@@ -88,7 +88,7 @@ except ImportError:
 
 DEFAULT_CONFIG = {
     # Ollama
-    "ollama_url": "http://localhost:11434",
+    "ollama_url": "http://127.0.0.1:11434",
     "models": {
         "quality": "dolphin-llama3:8b",  # 品質担当: ナレーション原稿
         "speed": "dolphin-mistral:7b",  # 速度担当: タイトル・テロップ
@@ -133,7 +133,7 @@ DEFAULT_CONFIG = {
 class LocalLLMClient:
     """Ollama API経由でローカルLLMにリクエスト"""
 
-    def __init__(self, ollama_url: str = "http://localhost:11434"):
+    def __init__(self, ollama_url: str = "http://127.0.0.1:11434"):
         self.ollama_url = ollama_url
 
     def generate(
@@ -774,7 +774,7 @@ def demo():
 
     # Ollamaチェック
     try:
-        resp = requests.get("http://localhost:11434/api/tags", timeout=5)
+        resp = requests.get("http://127.0.0.1:11434/api/tags", timeout=5)
         models = [m["name"] for m in resp.json().get("models", [])]
         print(f"  ✅ Ollama ({len(models)}モデル)")
         for m in models:

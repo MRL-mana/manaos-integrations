@@ -393,22 +393,22 @@ from obsidian_integration import ObsidianIntegration
 # System 3ﾃｩ窶督｢ﾃｩ竄ｬﾂ｣ﾃ｣窶堋ｵﾃ｣ﾆ陳ｼﾃ｣ﾆ停愿｣窶堋ｹﾃ｣・ｽﾂｮURL
 
 
-LEARNING_SYSTEM_URL = "http://localhost:5126"
+LEARNING_SYSTEM_URL = "http://127.0.0.1:5126"
 
 
-METRICS_COLLECTOR_URL = "http://localhost:5127"
+METRICS_COLLECTOR_URL = "http://127.0.0.1:5127"
 
 
-TASK_CRITIC_URL = "http://localhost:5102"
+TASK_CRITIC_URL = "http://127.0.0.1:5102"
 
 
-AUTONOMY_SYSTEM_URL = "http://localhost:5124"
+AUTONOMY_SYSTEM_URL = "http://127.0.0.1:5124"
 
 
-INTRINSIC_MOTIVATION_URL = "http://localhost:5130"
+INTRINSIC_MOTIVATION_URL = "http://127.0.0.1:5130"
 
 
-TODO_QUEUE_URL = "http://localhost:5134"
+TODO_QUEUE_URL = "http://127.0.0.1:5134"
 
 
 def get_learning_stats() -> Dict[str, Any]:
@@ -634,8 +634,8 @@ def generate_system3_status(
     vault_path: Optional[str] = None,
     status_relpath: str = r"ManaOS\System\System3_Status.md",
     daily_relpath: str = r"ManaOS\System\Daily",
-    intrinsic_score_url: str = "http://localhost:5130/api/score",
-    todo_metrics_url: str = "http://localhost:5134/api/metrics",
+    intrinsic_score_url: str = "http://127.0.0.1:5130/api/score",
+    todo_metrics_url: str = "http://127.0.0.1:5134/api/metrics",
 ) -> str:
     # Generate/update System3_Status.md and return path (UTF-8 fixed)
     # - 7-day score trend
@@ -856,8 +856,8 @@ def update_weekly_review(
     vault_path: Optional[str] = None,
     review_relpath: str = r"ManaOS\System\Playbook_Review",
     daily_relpath: str = r"ManaOS\System\Daily",
-    intrinsic_score_url: str = "http://localhost:5130/api/score",
-    todo_metrics_url: str = "http://localhost:5134/api/metrics",
+    intrinsic_score_url: str = "http://127.0.0.1:5130/api/score",
+    todo_metrics_url: str = "http://127.0.0.1:5134/api/metrics",
 ) -> str:
     """
     Update weekly review with score changes and insights

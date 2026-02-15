@@ -1,5 +1,5 @@
 {
-  "ollama_url": "http://localhost:11434",
+  "ollama_url": "http://127.0.0.1:11434",
   "model": "qwen2.5:14b",
   "auto_generate": true,
   "generation_rules": {

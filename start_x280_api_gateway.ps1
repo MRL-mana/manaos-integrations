@@ -82,8 +82,8 @@ Write-Host "  X280_HOST = $env:X280_HOST" -ForegroundColor Green
 # 6. API Gatewayを起動
 Write-Host "`n[6] X280 API Gatewayを起動中..." -ForegroundColor Yellow
 Write-Host "  ポート: 5120" -ForegroundColor Cyan
-Write-Host "  アクセスURL: http://localhost:5120" -ForegroundColor Cyan
-Write-Host "  ドキュメント: http://localhost:5120/docs" -ForegroundColor Cyan
+Write-Host "  アクセスURL: http://127.0.0.1:5120" -ForegroundColor Cyan
+Write-Host "  ドキュメント: http://127.0.0.1:5120/docs" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  停止するには Ctrl+C を押してください" -ForegroundColor Yellow
 Write-Host ""

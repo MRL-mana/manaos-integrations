@@ -89,7 +89,7 @@ server {
   auth_basic_user_file /etc/nginx/.htpasswd;
 
   location / {
-    proxy_pass http://127.0.0.1:9500;
+    proxy_pass http://127.0.0.1:9510;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -187,4 +187,5 @@ MANAOS_TRUST_X_FORWARDED_FOR=true
 ## CIのシークレットスキャン（参考）
 
 GitHub ActionsのCIでは gitleaks が動く前提です。設定は `.gitleaks.toml` を参照します。
+
 

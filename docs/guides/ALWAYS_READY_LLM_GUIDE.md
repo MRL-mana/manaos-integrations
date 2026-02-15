@@ -62,7 +62,7 @@ docker exec ollama-always-ready ollama pull qwen2.5:32b
 
 ### 3. n8nワークフローインポート
 
-1. n8nにアクセス: `http://localhost:5678`
+1. n8nにアクセス: `http://127.0.0.1:5678`
 2. ワークフロー → インポート
 3. `n8n_workflows/always_ready_llm_workflow.json` をインポート
 4. Webhook URLをコピー
@@ -228,7 +228,7 @@ import requests
 
 def call_llm(message: str, model: str = "llama3.2:3b", use_cache: bool = True):
     """n8n Webhook経由でLLM呼び出し（キャッシュ自動対応）"""
-    webhook_url = "http://localhost:5678/webhook/llm-chat"
+    webhook_url = "http://127.0.0.1:5678/webhook/llm-chat"
     
     response = requests.post(webhook_url, json={
         "message": message,
@@ -259,7 +259,7 @@ def call_llm_with_cache(message: str, model: str = "llama3.2:3b"):
     
     # キャッシュチェック
     cache_response = requests.get(
-        "http://localhost:9500/api/cache/get",
+        "http://127.0.0.1:9510/api/cache/get",
         params={"key": cache_key}
     )
     
@@ -269,7 +269,7 @@ def call_llm_with_cache(message: str, model: str = "llama3.2:3b"):
     
     # Ollamaで生成
     ollama_response = requests.post(
-        "http://localhost:11434/api/generate",
+        "http://127.0.0.1:11434/api/generate",
         json={
             "model": model,
             "prompt": message,
@@ -285,7 +285,7 @@ def call_llm_with_cache(message: str, model: str = "llama3.2:3b"):
     
     # キャッシュに保存
     requests.post(
-        "http://localhost:9500/api/cache/set",
+        "http://127.0.0.1:9510/api/cache/set",
         json={
             "key": cache_key,
             "value": result,
@@ -307,7 +307,7 @@ import requests
 
 def call_ollama_direct(message: str, model: str = "llama3.2:3b"):
     """Ollama直接呼び出し"""
-    response = requests.post("http://localhost:11434/api/generate", json={
+    response = requests.post("http://127.0.0.1:11434/api/generate", json={
         "model": model,
         "prompt": message,
         "stream": False
@@ -371,4 +371,5 @@ print(result)
 ---
 
 **質問あったら気軽に聞いて👍🔥**
+
 

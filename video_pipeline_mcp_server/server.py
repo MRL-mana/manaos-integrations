@@ -463,7 +463,7 @@ async def _list_models() -> str:
         loop = asyncio.get_event_loop()
 
         def _fetch():
-            r = requests.get("http://localhost:11434/api/tags", timeout=5)
+            r = requests.get("http://127.0.0.1:11434/api/tags", timeout=5)
             return r.json().get("models", [])
 
         models = await loop.run_in_executor(None, _fetch)
@@ -505,7 +505,7 @@ async def _system_check() -> str:
 
     # Ollama
     try:
-        r = requests.get("http://localhost:11434/api/tags", timeout=3)
+        r = requests.get("http://127.0.0.1:11434/api/tags", timeout=3)
         models = [m["name"] for m in r.json().get("models", [])]
         checks["ollama"] = {"connected": True, "models": models}
     except Exception:

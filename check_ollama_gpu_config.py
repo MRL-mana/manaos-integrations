@@ -53,7 +53,7 @@ except Exception as e:
 print("\n[4] Ollama APIテスト（GPU指定）")
 try:
     response = requests.post(
-        "http://localhost:11434/api/generate",
+        "http://127.0.0.1:11434/api/generate",
         json={
             "model": "qwen2.5:7b",
             "prompt": "こんにちは",

@@ -81,12 +81,15 @@ class ServiceMonitor:
                 {"name": "Task Critic", "port": 5102, "script": "task_critic.py"},
                 {"name": "RAG記憶進化", "port": 5103, "script": "rag_memory_enhanced.py"},
                 {"name": "汎用タスクキュー", "port": 5104, "script": "task_queue_system.py"},
-                {"name": "UI操作機能", "port": 5105, "script": "ui_operations_api.py"},
+                {"name": "MRL Memory", "port": 5105, "script": "mrl_memory_integration"},
                 {"name": "統合オーケストレーター", "port": 5106, "script": "unified_orchestrator.py"},
                 {"name": "Executor拡張", "port": 5107, "script": "task_executor_enhanced.py"},
                 {"name": "Portal統合", "port": 5108, "script": "portal_integration_api.py"},
                 {"name": "成果物自動生成", "port": 5109, "script": "content_generation_loop.py"},
-                {"name": "LLM最適化", "port": 5110, "script": "llm_optimization.py"}
+                {"name": "LLM Routing MCP", "port": 5111, "script": "llm_routing_mcp_server"},
+                {"name": "Video Pipeline", "port": 5112, "script": "video_pipeline_mcp_server"},
+                {"name": "Learning System", "port": 5126, "script": "learning_system_api"},
+                {"name": "Unified API", "port": 9510, "script": "unified_api_server.py"}
             ],
             "check_interval": 30,
             "max_restarts": 5,
@@ -170,7 +173,7 @@ class ServiceMonitor:
         """サービスをチェック"""
         try:
             response = httpx.get(
-                f"http://localhost:{port}/health",
+                f"http://127.0.0.1:{port}/health",
                 timeout=5
             )
             if response.status_code == 200:

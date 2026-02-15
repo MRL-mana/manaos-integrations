@@ -4,7 +4,7 @@
 
 ### ComfyUIの起動確認
 
-- **URL**: http://localhost:8188
+- **URL**: http://127.0.0.1:8188
 - **ポート**: 8188
 - **ステータス**: 起動中または起動していない可能性
 
@@ -110,7 +110,7 @@ Register-ScheduledTask -TaskName "ComfyUI Auto Start" -Action $action -Trigger $
 ### 優先度2: 動作確認
 
 1. **ComfyUIが正常に動作することを確認**
-   - http://localhost:8188 にアクセス
+   - http://127.0.0.1:8188 にアクセス
    - 画像生成をテスト
 
 2. **リソース使用量を監視**

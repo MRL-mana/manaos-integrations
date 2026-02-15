@@ -160,7 +160,7 @@ def main():
     print("   result = manaos.act('base_ai_chat', {'prompt': 'こんにちは'})")
     print()
     print("2. Unified API Server経由:")
-    print("   curl 'http://localhost:9500/api/brave/search?query=Python'")
+    print("   curl 'http://127.0.0.1:9510/api/brave/search?query=Python'")
     print()
     print("3. MCP Server経由（Cursorから）:")
     print("   brave_search(query='Python')")

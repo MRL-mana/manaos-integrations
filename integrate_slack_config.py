@@ -101,7 +101,7 @@ def main():
         if verification_token:
             print(f'$env:SLACK_VERIFICATION_TOKEN = "{verification_token}"')
         print('$env:PORT = "5114"')
-        print('$env:FILE_SECRETARY_URL = "http://localhost:5120"')
+        print('$env:FILE_SECRETARY_URL = "http://127.0.0.1:5120"')
         print('python slack_integration.py')
         
         # バッチファイル生成
@@ -114,8 +114,8 @@ def main():
             if verification_token:
                 f.write(f'$env:SLACK_VERIFICATION_TOKEN = "{verification_token}"\n')
             f.write('$env:PORT = "5114"\n')
-            f.write('$env:FILE_SECRETARY_URL = "http://localhost:5120"\n')
-            f.write('$env:ORCHESTRATOR_URL = "http://localhost:5106"\n')
+            f.write('$env:FILE_SECRETARY_URL = "http://127.0.0.1:5120"\n')
+            f.write('$env:ORCHESTRATOR_URL = "http://127.0.0.1:5106"\n')
             f.write('\n')
             f.write('Write-Host "Slack Integration起動中..." -ForegroundColor Cyan\n')
             f.write('python slack_integration.py\n')

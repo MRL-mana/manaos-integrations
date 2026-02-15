@@ -8,9 +8,9 @@
 import time
 import logging
 import threading
-from typing import Dict, List, Optional
+import os
+from typing import Any, Dict, Optional
 from datetime import datetime
-from pathlib import Path
 
 # 標準ライブラリのみ使用（依存関係を最小化）
 logging.basicConfig(
@@ -50,15 +50,36 @@ class AutonomousOperations:
         self.monitor_thread: Optional[threading.Thread] = None
         
         # サービス定義（Unified API は /ready で初期化完了を確認、タイムアウト長め）
+        unified_api_port = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9510"))
         self.services = [
-            {"name": "MRL Memory", "port": 5103, "path": "/health", "timeout": 5},
-            {"name": "Learning System", "port": 5104, "path": "/health", "timeout": 5},
-            {"name": "LLM Routing", "port": 5111, "path": "/health", "timeout": 5},
-            {"name": "Unified API", "port": 9502, "path": "/ready", "timeout": 8},
+            {
+                "name": "MRL Memory",
+                "port": 5105,
+                "path": "/health",
+                "timeout": 5,
+            },
+            {
+                "name": "Learning System",
+                "port": 5126,
+                "path": "/health",
+                "timeout": 5,
+            },
+            {
+                "name": "LLM Routing",
+                "port": 5111,
+                "path": "/health",
+                "timeout": 5,
+            },
+            {
+                "name": "Unified API",
+                "port": unified_api_port,
+                "path": "/ready",
+                "timeout": 8,
+            },
         ]
         
         # 統計情報
-        self.stats = {
+        self.stats: Dict[str, Any] = {
             "start_time": datetime.now().isoformat(),
             "total_checks": 0,
             "health_failures": 0,
@@ -82,7 +103,10 @@ class AutonomousOperations:
             response = requests.get(url, timeout=timeout)
             return response.status_code == 200
         except Exception as e:
-            logger.warning(f"[WARN] {service['name']} (port {service['port']}): ヘルスチェック失敗 - {e}")
+            logger.warning(
+                f"[WARN] {service['name']} (port {service['port']}): "
+                f"ヘルスチェック失敗 - {e}"
+            )
             return False
     
     def run_health_checks(self) -> Dict[str, bool]:
@@ -109,7 +133,9 @@ class AutonomousOperations:
                 }
             
             self.stats["service_status"][service["name"]]["total_checks"] += 1
-            self.stats["service_status"][service["name"]]["last_status"] = "healthy" if is_healthy else "unhealthy"
+            self.stats["service_status"][service["name"]]["last_status"] = (
+                "healthy" if is_healthy else "unhealthy"
+            )
             
             if not is_healthy:
                 self.stats["service_status"][service["name"]]["failures"] += 1
@@ -124,10 +150,16 @@ class AutonomousOperations:
         Args:
             health_results: サービス名 -> 健全性のマップ
         """
-        unhealthy_services = [name for name, is_healthy in health_results.items() if not is_healthy]
+        unhealthy_services = [
+            name
+            for name, is_healthy in health_results.items()
+            if not is_healthy
+        ]
         
         if unhealthy_services:
-            logger.warning(f"[WARN] 異常検知: {len(unhealthy_services)}個のサービスが応答しません")
+            logger.warning(
+                f"[WARN] 異常検知: {len(unhealthy_services)}個のサービスが応答しません"
+            )
             for service_name in unhealthy_services:
                 logger.warning(f"   - {service_name}")
             
@@ -168,7 +200,10 @@ class AutonomousOperations:
             return
         
         self.running = True
-        self.monitor_thread = threading.Thread(target=self.monitor_loop, daemon=True)
+        self.monitor_thread = threading.Thread(
+            target=self.monitor_loop,
+            daemon=True,
+        )
         self.monitor_thread.start()
         logger.info("[OK] 自律監視スレッドを起動しました")
     
@@ -190,7 +225,8 @@ class AutonomousOperations:
         return {
             **self.stats,
             "uptime_seconds": (
-                datetime.now() - datetime.fromisoformat(self.stats["start_time"])
+                datetime.now()
+                - datetime.fromisoformat(self.stats["start_time"])
             ).total_seconds()
         }
     
@@ -210,8 +246,11 @@ class AutonomousOperations:
             print("\n--- サービス別統計 ---")
             for service_name, service_stats in stats['service_status'].items():
                 failure_rate = (
-                    service_stats['failures'] / service_stats['total_checks'] * 100
-                    if service_stats['total_checks'] > 0 else 0
+                    service_stats['failures']
+                    / service_stats['total_checks']
+                    * 100
+                    if service_stats['total_checks'] > 0
+                    else 0
                 )
                 print(f"{service_name}:")
                 print(f"  チェック回数: {service_stats['total_checks']}")
@@ -225,7 +264,10 @@ class AutonomousOperations:
 def main():
     """テスト実行"""
     # 自律運用システムを初期化（チェック間隔30秒）
-    autonomous = AutonomousOperations(check_interval=30, enable_auto_recovery=False)
+    autonomous = AutonomousOperations(
+        check_interval=30,
+        enable_auto_recovery=False,
+    )
     
     # 監視開始
     autonomous.start()

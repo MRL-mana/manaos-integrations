@@ -31,10 +31,10 @@ CONSECUTIVE_FAIL_THRESHOLD = int(
 )  # この回数連続失敗したら通知（ノイズ削減）
 
 SERVICES = [
-    ("Intrinsic Score API", "http://localhost:5130/api/score"),
-    ("Todo Queue API", "http://localhost:5134/api/metrics"),
-    ("Learning System API", "http://localhost:5126/health"),
-    ("RAG Memory API", "http://localhost:5103/health"),
+    ("Intrinsic Score API", "http://127.0.0.1:5130/api/score"),
+    ("Todo Queue API", "http://127.0.0.1:5134/api/metrics"),
+    ("Learning System API", "http://127.0.0.1:5126/health"),
+    ("RAG Memory API", "http://127.0.0.1:5103/health"),
 ]
 
 

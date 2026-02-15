@@ -2,13 +2,13 @@
 Cursor × ローカルLLM統合 使用例
 """
 
+import os
 import requests
 import json
 from typing import Dict, Any, Optional
 
 # APIエンドポイント
-UNIFIED_API_URL = "http://localhost:9500"
-ROUTING_API_URL = "http://localhost:9501"
+UNIFIED_API_URL = os.getenv("MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510").rstrip("/")
 
 
 def analyze_difficulty(prompt: str, code_context: Optional[str] = None) -> Dict[str, Any]:

@@ -5,7 +5,7 @@ import requests
 import json
 
 # テスト用のWebhookエンドポイント
-url = "http://localhost:5114/api/slack/webhook"
+url = "http://127.0.0.1:5114/api/slack/webhook"
 
 # テストデータ
 test_cases = [

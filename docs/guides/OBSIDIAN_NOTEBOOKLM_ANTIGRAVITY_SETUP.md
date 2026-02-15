@@ -45,7 +45,7 @@
 
 1. **n8nを開く**
    ```
-   http://localhost:5678
+   http://127.0.0.1:5678
    ```
 
 2. **ワークフローをインポート**
@@ -69,7 +69,7 @@
 [Environment]::SetEnvironmentVariable('OBSIDIAN_VAULT_PATH', 'C:\Users\mana4\Documents\Obsidian Vault', 'User')
 
 # ManaOS Orchestrator URL
-[Environment]::SetEnvironmentVariable('ORCHESTRATOR_URL', 'http://localhost:5106', 'User')
+[Environment]::SetEnvironmentVariable('ORCHESTRATOR_URL', 'http://127.0.0.1:5106', 'User')
 
 # Slack Webhook URL（オプション）
 [Environment]::SetEnvironmentVariable('SLACK_WEBHOOK_URL', 'https://hooks.slack.com/services/...', 'User')
@@ -233,7 +233,7 @@ ManaOSの記憶システムに登録
 
 1. **n8nが起動しているか確認**
    ```
-   http://localhost:5678
+   http://127.0.0.1:5678
    ```
 
 2. **ワークフローが有効化されているか確認**

@@ -19,7 +19,7 @@ from typing import List, Optional
 
 import requests
 
-LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", "http://localhost:1234/v1").rstrip("/")
+LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", "http://127.0.0.1:1234/v1").rstrip("/")
 
 
 @dataclass(frozen=True)

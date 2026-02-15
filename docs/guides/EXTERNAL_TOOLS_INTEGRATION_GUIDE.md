@@ -109,7 +109,7 @@
     },
     {
       "parameters": {
-        "url": "http://localhost:5000/api/manaos/judge",
+        "url": "http://127.0.0.1:5000/api/manaos/judge",
         "method": "POST",
         "body": {
           "data": "={{ $json }}",
@@ -171,7 +171,7 @@
    - 競合サイト
 
 2. **Webhook設定**:
-   - URL: `http://localhost:5678/webhook/browse-ai-webhook`
+   - URL: `http://127.0.0.1:5678/webhook/browse-ai-webhook`
    - または: `https://your-domain.com/webhook/browse-ai-webhook`
 
 ### 💡 使いどころ
@@ -257,7 +257,7 @@ Level 1: ManaOS Core
     },
     {
       "parameters": {
-        "url": "http://localhost:5000/api/manaos/structure",
+        "url": "http://127.0.0.1:5000/api/manaos/structure",
         "method": "GET"
       },
       "name": "ManaOS構造取得",

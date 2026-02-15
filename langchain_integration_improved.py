@@ -55,7 +55,7 @@ from base_integration import BaseIntegration
 class LangChainIntegration(BaseIntegration):
     """LangChain統合クラス（改善版）"""
     
-    def __init__(self, ollama_url: str = "http://localhost:11434", model_name: str = "qwen2.5:7b"):
+    def __init__(self, ollama_url: str = "http://127.0.0.1:11434", model_name: str = "qwen2.5:7b"):
         """
         初期化
         
@@ -169,7 +169,7 @@ class LangChainIntegration(BaseIntegration):
 class LangGraphIntegration(BaseIntegration):
     """LangGraph統合クラス（改善版）"""
     
-    def __init__(self, ollama_url: str = "http://localhost:11434", model_name: str = "qwen2.5:7b"):
+    def __init__(self, ollama_url: str = "http://127.0.0.1:11434", model_name: str = "qwen2.5:7b"):
         """
         初期化
         

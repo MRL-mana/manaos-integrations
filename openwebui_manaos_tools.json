@@ -4,7 +4,7 @@
         {
             "name": "ask_orchestrator",
             "description": "室温・湿度・天気・照明操作など、ローカル環境に関する情報取得や操作を行う。自然文で投げる汎用オーケストレーター。一般的な知識や検索はこのツールを使わず検索で対応する。",
-            "url": "http://localhost:5106/api/execute",
+            "url": "http://127.0.0.1:5106/api/execute",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
@@ -20,7 +20,7 @@
         {
             "name": "memory_store",
             "description": "記憶に情報を保存します",
-            "url": "http://localhost:9500/api/memory/store",
+            "url": "http://127.0.0.1:9510/api/memory/store",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
@@ -41,7 +41,7 @@
         {
             "name": "memory_recall",
             "description": "記憶から情報を検索します",
-            "url": "http://localhost:9500/api/memory/recall",
+            "url": "http://127.0.0.1:9510/api/memory/recall",
             "method": "GET",
             "parameters": {
                 "query": {
@@ -64,7 +64,7 @@
         {
             "name": "learning_record",
             "description": "学習システムに使用パターンを記録します",
-            "url": "http://localhost:5126/api/record",
+            "url": "http://127.0.0.1:5126/api/record",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
@@ -88,37 +88,37 @@
         {
             "name": "learning_analyze",
             "description": "学習システムでパターンを分析します",
-            "url": "http://localhost:5126/api/analyze",
+            "url": "http://127.0.0.1:5126/api/analyze",
             "method": "GET"
         },
         {
             "name": "learning_get_preferences",
             "description": "学習された好みを取得します",
-            "url": "http://localhost:5126/api/preferences",
+            "url": "http://127.0.0.1:5126/api/preferences",
             "method": "GET"
         },
         {
             "name": "learning_get_optimizations",
             "description": "最適化提案を取得します",
-            "url": "http://localhost:5126/api/optimizations",
+            "url": "http://127.0.0.1:5126/api/optimizations",
             "method": "GET"
         },
         {
             "name": "personality_get_persona",
             "description": "現在の人格プロフィールを取得します",
-            "url": "http://localhost:5123/api/persona",
+            "url": "http://127.0.0.1:5123/api/persona",
             "method": "GET"
         },
         {
             "name": "personality_get_prompt",
             "description": "人格プロンプトを取得します",
-            "url": "http://localhost:5123/api/persona/prompt",
+            "url": "http://127.0.0.1:5123/api/persona/prompt",
             "method": "GET"
         },
         {
             "name": "personality_apply",
             "description": "プロンプトに人格を適用します",
-            "url": "http://localhost:5123/api/persona/apply",
+            "url": "http://127.0.0.1:5123/api/persona/apply",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
@@ -138,7 +138,7 @@
         {
             "name": "personality_update",
             "description": "人格プロフィールを更新します",
-            "url": "http://localhost:5123/api/persona",
+            "url": "http://127.0.0.1:5123/api/persona",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
@@ -154,7 +154,7 @@
         {
             "name": "autonomy_add_task",
             "description": "自律タスクを追加します",
-            "url": "http://localhost:5124/api/tasks",
+            "url": "http://127.0.0.1:5124/api/tasks",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
@@ -189,43 +189,43 @@
         {
             "name": "autonomy_execute_tasks",
             "description": "条件をチェックして自律タスクを実行します",
-            "url": "http://localhost:5124/api/execute",
+            "url": "http://127.0.0.1:5124/api/execute",
             "method": "POST"
         },
         {
             "name": "autonomy_list_tasks",
             "description": "自律タスク一覧を取得します",
-            "url": "http://localhost:5124/api/tasks",
+            "url": "http://127.0.0.1:5124/api/tasks",
             "method": "GET"
         },
         {
             "name": "autonomy_get_level",
             "description": "現在の自律レベルを取得します",
-            "url": "http://localhost:5124/api/status",
+            "url": "http://127.0.0.1:5124/api/status",
             "method": "GET"
         },
         {
             "name": "secretary_morning_routine",
             "description": "朝のルーチンを実行します",
-            "url": "http://localhost:5125/api/morning",
+            "url": "http://127.0.0.1:5125/api/morning",
             "method": "POST"
         },
         {
             "name": "secretary_noon_routine",
             "description": "昼のルーチンを実行します",
-            "url": "http://localhost:5125/api/noon",
+            "url": "http://127.0.0.1:5125/api/noon",
             "method": "POST"
         },
         {
             "name": "secretary_evening_routine",
             "description": "夜のルーチンを実行します",
-            "url": "http://localhost:5125/api/evening",
+            "url": "http://127.0.0.1:5125/api/evening",
             "method": "POST"
         },
         {
             "name": "obsidian_create_note",
             "description": "Obsidianにノートを作成します",
-            "url": "http://localhost:9500/api/obsidian/create",
+            "url": "http://127.0.0.1:9510/api/obsidian/create",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
@@ -250,7 +250,7 @@
         {
             "name": "obsidian_search_notes",
             "description": "Obsidianでノートを検索します",
-            "url": "http://localhost:9500/api/obsidian/search",
+            "url": "http://127.0.0.1:9510/api/obsidian/search",
             "method": "GET",
             "parameters": {
                 "query": {
@@ -263,7 +263,7 @@
         {
             "name": "vscode_open_file",
             "description": "VS Codeでファイルを開きます",
-            "url": "http://localhost:9500/api/vscode/open",
+            "url": "http://127.0.0.1:9510/api/vscode/open",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
@@ -283,7 +283,7 @@
         {
             "name": "vscode_open_folder",
             "description": "VS Codeでフォルダを開きます",
-            "url": "http://localhost:9500/api/vscode/open-folder",
+            "url": "http://127.0.0.1:9510/api/vscode/open-folder",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
@@ -298,3 +298,4 @@
         }
     ]
 }
+

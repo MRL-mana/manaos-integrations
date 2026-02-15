@@ -29,7 +29,7 @@ n8n start
 
 ブラウザで以下のURLを開いてください：
 ```
-http://localhost:5678
+http://127.0.0.1:5678
 ```
 
 ## 設定
@@ -51,7 +51,7 @@ n8n start
 
 ## 初回セットアップ
 
-1. ブラウザで `http://localhost:5678` を開く
+1. ブラウザで `http://127.0.0.1:5678` を開く
 2. 初回アクセス時にアカウント作成画面が表示されます
 3. ユーザー名、メールアドレス、パスワードを入力
 4. ログイン後、Settings → API からAPIキーを作成
@@ -80,7 +80,7 @@ notepad "$env:USERPROFILE\.cursor\mcp.json"
 ```json
 "n8n": {
   "env": {
-    "N8N_BASE_URL": "http://localhost:5678",
+    "N8N_BASE_URL": "http://127.0.0.1:5678",
     "N8N_API_KEY": "ここにAPIキーを貼り付け"
   }
 }
@@ -90,7 +90,7 @@ notepad "$env:USERPROFILE\.cursor\mcp.json"
 
 | 項目 | このはサーバー | 母艦（ローカル） |
 |------|---------------|-----------------|
-| アクセスURL | http://100.93.120.33:5678 | http://localhost:5678 |
+| アクセスURL | http://100.93.120.33:5678 | http://127.0.0.1:5678 |
 | インストール方法 | Docker | npm |
 | データ保存場所 | Dockerボリューム | `%USERPROFILE%\.n8n` |
 | 起動方法 | `docker start trinity-n8n` | `n8n start` |

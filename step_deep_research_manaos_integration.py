@@ -28,13 +28,13 @@ class StepDeepResearchManaOSIntegration:
         
         self.service_id = self.config.get("service_id", "5121")
         self.service_name = self.config.get("service_name", "Step Deep Research")
-        self.service_url = f"http://localhost:{self.service_id}"
+        self.service_url = f"http://127.0.0.1:{self.service_id}"
         
         # オーケストレーター初期化
         self.orchestrator = StepDeepResearchOrchestrator(self.config)
         
         # Intent Router URL
-        self.intent_router_url = "http://localhost:5100"
+        self.intent_router_url = "http://127.0.0.1:5100"
     
     def register_with_intent_router(self) -> bool:
         """

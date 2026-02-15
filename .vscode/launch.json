@@ -37,10 +37,10 @@
       "envFile": "${workspaceFolder}/.env"
     },
     {
-      "name": "Python: LLMルーティングAPI",
+      "name": "Python: LLMルーティングMCP",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/manaos_llm_routing_api.py",
+      "module": "llm_routing_mcp_server",
       "console": "integratedTerminal",
       "justMyCode": true,
       "env": {

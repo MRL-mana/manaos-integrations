@@ -49,7 +49,7 @@ Get-ScheduledTask -TaskName "ComfyUI Auto Start" | Get-ScheduledTaskInfo
 
 1. **システムを再起動**
 2. **ComfyUIが自動的に起動することを確認**
-   - http://localhost:8188 にアクセス
+   - http://127.0.0.1:8188 にアクセス
    - タスクマネージャーでpythonプロセスを確認
 
 ### 手動でテスト
@@ -60,7 +60,7 @@ Start-ScheduledTask -TaskName "ComfyUI Auto Start"
 
 # 数秒待ってから確認
 Start-Sleep -Seconds 5
-Invoke-WebRequest -Uri "http://localhost:8188"
+Invoke-WebRequest -Uri "http://127.0.0.1:8188"
 ```
 
 ---

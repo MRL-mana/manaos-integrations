@@ -43,7 +43,7 @@ class GPUParallelExecutor:
         self.active_tasks: Dict[str, asyncio.Task] = {}
         self.completed_tasks: List[Dict[str, Any]] = []
         
-        self.ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
+        self.ollama_url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
     
     async def execute_parallel(
         self,

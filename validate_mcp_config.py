@@ -17,16 +17,16 @@ sys.path.insert(0, str(Path(__file__).parent))
 REQUIRED_ENV_VARS = {
     "manaos_unified_mcp_server": [
         # 必須ではないが推奨
-        ("COMFYUI_URL", False, "http://localhost:8188"),
-        ("MANAOS_INTEGRATION_API_URL", False, "http://localhost:9500"),
+        ("COMFYUI_URL", False, "http://127.0.0.1:8188"),
+        ("MANAOS_INTEGRATION_API_URL", False, "http://127.0.0.1:9510"),
         ("OBSIDIAN_VAULT_PATH", False, "/app/obsidian_vault"),
     ],
     "n8n_mcp_server": [
-        ("N8N_BASE_URL", False, "http://localhost:5678"),
+        ("N8N_BASE_URL", False, "http://127.0.0.1:5678"),
         ("N8N_API_KEY", True, None),  # APIキーは必須
     ],
     "svi_mcp_server": [
-        ("COMFYUI_URL", False, "http://localhost:8188"),
+        ("COMFYUI_URL", False, "http://127.0.0.1:8188"),
     ],
 }
 

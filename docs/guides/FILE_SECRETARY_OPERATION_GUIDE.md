@@ -46,7 +46,7 @@ python file_secretary_api.py
 
 # 3. Slack Integration起動（別ターミナル）
 export PORT=5114
-export FILE_SECRETARY_URL=http://localhost:5120
+export FILE_SECRETARY_URL=http://127.0.0.1:5120
 python slack_integration.py
 ```
 
@@ -154,7 +154,7 @@ lsof -i :5120
 | `GOOGLE_DRIVE_TOKEN` | Google Driveトークンファイル | `token.json` |
 | `ROWS_API_KEY` | Rows APIキー | - |
 | `FILE_SECRETARY_SPREADSHEET_ID` | RowsスプレッドシートID | - |
-| `COMFYUI_URL` | ComfyUI API URL | `http://localhost:8188` |
+| `COMFYUI_URL` | ComfyUI API URL | `http://127.0.0.1:8188` |
 | `COMFYUI_OUTPUT_DIR` | ComfyUI出力ディレクトリ | `output` |
 | `OCR_TEXT_DIR` | OCRテキスト保存ディレクトリ | `ocr_texts` |
 

@@ -65,7 +65,7 @@
 - **対応**: `POST /api/voice/synthesize/stream` を追加。テキストを。！？\n で文分割し、各文を TTS してストリーム返却。形式は 4 バイト長（LE）+ WAV バイナリの繰り返し。ヘッダー `X-Voice-Stream-Format: length-prefixed-wav`。
 
 ### 3.5 E2E テスト ✅ 対応済
-- **対応**: `scripts/voice/test_voice_e2e.py` を追加。`/api/voice/health`, `/api/voice/metrics`, `/api/voice/synthesize` を実行。`--audio` で WAV を指定すると transcribe / conversation も実行。`python scripts/voice/test_voice_e2e.py --base http://localhost:9500`
+- **対応**: `scripts/voice/test_voice_e2e.py` を追加。`/api/voice/health`, `/api/voice/metrics`, `/api/voice/synthesize` を実行。`--audio` で WAV を指定すると transcribe / conversation も実行。`python scripts/voice/test_voice_e2e.py --base http://127.0.0.1:9510`
 
 ### 3.6 設定の一元化 ✅ 対応済
 - **対応**: 起動時に `voice_config.json` または `config/voice_config.json` を読み、`voice` セクションのキーを環境変数に反映。`voice_config.json.example` を参照。環境変数が未設定の場合のみ上書きする設計も可能（現状は上書き）。
@@ -103,3 +103,4 @@
 | 3.4 | `POST /api/voice/synthesize/stream` で文単位 TTS ストリーミング |
 
 *最終更新: 問題点・改善点・強化ポイントは対応済み。*
+

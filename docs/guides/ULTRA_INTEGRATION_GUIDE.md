@@ -116,7 +116,7 @@ result = client.chat_with_github(
 
 ```bash
 # 環境変数設定
-export COMFYUI_URL=http://localhost:8188
+export COMFYUI_URL=http://127.0.0.1:8188
 ```
 
 ### CivitAI設定

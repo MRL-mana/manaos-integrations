@@ -43,7 +43,7 @@ except ImportError:
 
 # 設定
 OBSIDIAN_VAULT_PATH = os.getenv("OBSIDIAN_VAULT_PATH", str(Path.home() / "Documents" / "Obsidian Vault"))
-ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://localhost:5106")
+ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://127.0.0.1:5106")
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 
 

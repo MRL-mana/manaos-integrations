@@ -94,70 +94,70 @@ cd portal_voice_integration_mcp_server && pip install -r requirements.txt && cd 
       "command": "python",
       "args": ["-m", "unified_api_mcp_server.server"],
       "env": {
-        "MANAOS_INTEGRATION_API_URL": "http://localhost:9500"
+        "MANAOS_INTEGRATION_API_URL": "http://127.0.0.1:9510"
       }
     },
     "step-deep-research": {
       "command": "python",
       "args": ["-m", "step_deep_research_mcp_server.server"],
       "env": {
-        "STEP_DEEP_RESEARCH_URL": "http://localhost:5121"
+        "STEP_DEEP_RESEARCH_URL": "http://127.0.0.1:5121"
       }
     },
     "gallery-api": {
       "command": "python",
       "args": ["-m", "gallery_api_mcp_server.server"],
       "env": {
-        "GALLERY_API_URL": "http://localhost:5559"
+        "GALLERY_API_URL": "http://127.0.0.1:5559"
       }
     },
     "system-status": {
       "command": "python",
       "args": ["-m", "system_status_mcp_server.server"],
       "env": {
-        "SYSTEM_STATUS_URL": "http://localhost:5112"
+        "SYSTEM_STATUS_URL": "http://127.0.0.1:5112"
       }
     },
     "ssot-api": {
       "command": "python",
       "args": ["-m", "ssot_mcp_server.server"],
       "env": {
-        "SSOT_API_URL": "http://localhost:5120"
+        "SSOT_API_URL": "http://127.0.0.1:5120"
       }
     },
     "service-monitor": {
       "command": "python",
       "args": ["-m", "service_monitor_mcp_server.server"],
       "env": {
-        "SERVICE_MONITOR_URL": "http://localhost:5111"
+        "SERVICE_MONITOR_URL": "http://127.0.0.1:5111"
       }
     },
     "web-voice": {
       "command": "python",
       "args": ["-m", "web_voice_mcp_server.server"],
       "env": {
-        "WEB_VOICE_API_URL": "http://localhost:5115"
+        "WEB_VOICE_API_URL": "http://127.0.0.1:5115"
       }
     },
     "portal-integration": {
       "command": "python",
       "args": ["-m", "portal_integration_mcp_server.server"],
       "env": {
-        "PORTAL_API_URL": "http://localhost:5108"
+        "PORTAL_API_URL": "http://127.0.0.1:5108"
       }
     },
     "slack-integration": {
       "command": "python",
       "args": ["-m", "slack_integration_mcp_server.server"],
       "env": {
-        "SLACK_API_URL": "http://localhost:5114"
+        "SLACK_API_URL": "http://127.0.0.1:5114"
       }
     },
     "portal-voice-integration": {
       "command": "python",
       "args": ["-m", "portal_voice_integration_mcp_server.server"],
       "env": {
-        "PORTAL_VOICE_API_URL": "http://localhost:5116"
+        "PORTAL_VOICE_API_URL": "http://127.0.0.1:5116"
       }
     }
   }
@@ -208,17 +208,17 @@ python -m gallery_api_mcp_server.server
 
 ```bash
 # ヘルスチェック
-curl http://localhost:9500/health  # Unified API
-curl http://localhost:5121/health  # Step Deep Research
-curl http://localhost:5559/health  # Gallery API
-curl http://localhost:5112/health  # System Status
-curl http://localhost:5120/health  # SSOT API
-curl http://localhost:5111/health  # Service Monitor
-curl http://localhost:5115/health  # Web Voice
-curl http://localhost:5108/health  # Portal Integration
-curl http://localhost:5114/health  # Slack Integration
-curl http://localhost:5116/health  # Portal Voice Integration
-curl http://localhost:9501/api/llm/health  # LLM Routing API
+curl http://127.0.0.1:9510/health  # Unified API
+curl http://127.0.0.1:5121/health  # Step Deep Research
+curl http://127.0.0.1:5559/health  # Gallery API
+curl http://127.0.0.1:5112/health  # System Status
+curl http://127.0.0.1:5120/health  # SSOT API
+curl http://127.0.0.1:5111/health  # Service Monitor
+curl http://127.0.0.1:5115/health  # Web Voice
+curl http://127.0.0.1:5108/health  # Portal Integration
+curl http://127.0.0.1:5114/health  # Slack Integration
+curl http://127.0.0.1:5116/health  # Portal Voice Integration
+curl http://127.0.0.1:9510/api/llm/health  # LLM Routing API
 ```
 
 ---
@@ -244,7 +244,7 @@ curl http://localhost:9501/api/llm/health  # LLM Routing API
 ### Dockerコンテナが起動しない
 
 1. Docker Desktopが起動しているか確認
-2. ポートが使用中でないか確認: `netstat -an | findstr :9500`
+2. ポートが使用中でないか確認: `netstat -an | findstr :9510`
 3. ログを確認: `docker-compose logs <service-name>`
 
 ### サービス間の通信エラー
@@ -272,3 +272,4 @@ curl http://localhost:9501/api/llm/health  # LLM Routing API
 2. **パフォーマンス**: リソース使用量の監視
 3. **最適化**: 必要に応じて設定を調整
 4. **監視**: ログとメトリクスの設定
+

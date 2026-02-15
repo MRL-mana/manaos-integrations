@@ -82,7 +82,7 @@ class SecretarySystem:
     
     def __init__(
         self,
-        orchestrator_url: str = "http://localhost:5106",
+        orchestrator_url: str = "http://127.0.0.1:5106",
         db_path: Optional[Path] = None,
         config_path: Optional[Path] = None
     ):

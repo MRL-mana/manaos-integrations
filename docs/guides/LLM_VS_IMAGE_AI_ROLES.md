@@ -99,7 +99,7 @@ LLM には限界がある：
 
 **→ ComfyUI。**
 
-- `generate_50_mana_mufufu_manaos.py` / `gallery_api_server.py` が ComfyUI（`COMFYUI_URL`, デフォルト `http://localhost:8188`）に送信。
+- `generate_50_mana_mufufu_manaos.py` / `gallery_api_server.py` が ComfyUI（`COMFYUI_URL`, デフォルト `http://127.0.0.1:8188`）に送信。
 - ベースパスは `C:/ComfyUI`（`COMFYUI_BASE` で変更可）。
 - WebUI（AUTOMATIC1111）はこのリポジトリでは使っていない。
 

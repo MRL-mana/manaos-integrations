@@ -73,7 +73,7 @@ docker-compose up -d
 ### 1. OpenWebUIにアクセス
 
 ```
-http://localhost:3001
+http://127.0.0.1:3001
 ```
 
 ### 2. Tool Serverの登録確認
@@ -118,7 +118,7 @@ python test_tool_server_integration.py
 
 1. **Tool Serverが起動しているか確認**:
    ```powershell
-   Invoke-WebRequest -Uri "http://localhost:9503/health"
+   Invoke-WebRequest -Uri "http://127.0.0.1:9503/health"
    ```
 
 2. **Tool Serverを再起動**:
@@ -130,7 +130,7 @@ python test_tool_server_integration.py
 
 1. **ComfyUIが起動しているか確認**:
    ```powershell
-   Invoke-WebRequest -Uri "http://localhost:8188"
+   Invoke-WebRequest -Uri "http://127.0.0.1:8188"
    ```
 
 2. **ComfyUIを起動**:
@@ -158,22 +158,22 @@ python test_tool_server_integration.py
 ### Tool Server
 
 - **ポート**: 9503
-- **URL**: http://localhost:9503
-- **OpenAPI**: http://localhost:9503/openapi.json
+- **URL**: http://127.0.0.1:9503
+- **OpenAPI**: http://127.0.0.1:9503/openapi.json
 - **起動スクリプト**: `START_TOOL_SERVER_HOST.ps1`
 - **自動起動設定**: `setup_tool_server_auto_start.ps1`
 
 ### ComfyUI
 
 - **ポート**: 8188
-- **URL**: http://localhost:8188
+- **URL**: http://127.0.0.1:8188
 - **起動スクリプト**: `start_comfyui_svi.ps1`
 - **自動起動設定**: `setup_comfyui_auto_start.ps1`
 
 ### OpenWebUI
 
 - **ポート**: 3001
-- **URL**: http://localhost:3001
+- **URL**: http://127.0.0.1:3001
 - **起動方法**: `docker-compose up -d`
 
 ---

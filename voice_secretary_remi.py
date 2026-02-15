@@ -26,9 +26,9 @@ from manaos_logger import get_logger
 logger = get_logger(__name__)
 
 # 設定
-INTENT_ROUTER_URL = os.getenv("INTENT_ROUTER_URL", "http://localhost:5100")
-UNIFIED_API_URL = os.getenv("UNIFIED_API_URL", "http://localhost:9500")
-LLM_ROUTING_URL = os.getenv("LLM_ROUTING_URL", "http://localhost:5110")
+INTENT_ROUTER_URL = os.getenv("INTENT_ROUTER_URL", "http://127.0.0.1:5100")
+UNIFIED_API_URL = os.getenv("UNIFIED_API_URL", "http://127.0.0.1:9510")
+LLM_ROUTING_URL = os.getenv("LLM_ROUTING_URL", "http://127.0.0.1:5111")
 NOTION_AVAILABLE = os.getenv("NOTION_API_KEY") is not None
 SLACK_AVAILABLE = os.getenv("SLACK_WEBHOOK_URL") is not None
 

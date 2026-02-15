@@ -68,7 +68,7 @@ class TaskCritic:
     
     def __init__(
         self,
-        ollama_url: str = "http://localhost:11434",
+        ollama_url: str = "http://127.0.0.1:11434",
         model: str = "qwen2.5:14b",  # 中型モデル（判断が必要）
         config_path: Optional[Path] = None
     ):
@@ -107,7 +107,7 @@ class TaskCritic:
                 schema = {
                     "required": ["model"],
                     "fields": {
-                        "ollama_url": {"type": str, "default": "http://localhost:11434"},
+                        "ollama_url": {"type": str, "default": "http://127.0.0.1:11434"},
                         "model": {"type": str}
                     }
                 }
@@ -134,7 +134,7 @@ class TaskCritic:
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
         return {
-            "ollama_url": "http://localhost:11434",
+            "ollama_url": "http://127.0.0.1:11434",
             "model": "qwen2.5:14b",
             "evaluation_criteria": self._get_default_evaluation_criteria(),
             "evaluation_prompt_template": self._get_default_evaluation_prompt_template(),

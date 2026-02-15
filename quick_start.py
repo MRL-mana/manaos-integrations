@@ -39,12 +39,12 @@ def print_menu():
 def start_api_server():
     """統合APIサーバーを起動"""
     print("\n統合APIサーバーを起動中...")
-    print("ブラウザで http://localhost:9500/health にアクセスしてください")
+    print("ブラウザで http://127.0.0.1:9510/health にアクセスしてください")
     print("Ctrl+Cで停止")
     print()
     
     initialize_integrations()
-    app.run(host="0.0.0.0", port=9500, debug=True)
+    app.run(host="0.0.0.0", port=9510, debug=True)
 
 
 def test_workflow_automation():

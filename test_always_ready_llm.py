@@ -15,7 +15,7 @@ def check_ollama():
     """Ollamaサーバーの状態確認"""
     print("[確認] Ollamaサーバー確認中...")
     try:
-        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        response = requests.get("http://127.0.0.1:11434/api/tags", timeout=5)
         if response.status_code == 200:
             models = response.json().get("models", [])
             print(f"[OK] Ollama起動中（モデル数: {len(models)}）")
@@ -60,10 +60,10 @@ def check_n8n():
     """n8nサーバーの状態確認"""
     print("\n[確認] n8nサーバー確認中...")
     try:
-        response = requests.get("http://localhost:5678/healthz", timeout=5)
+        response = requests.get("http://127.0.0.1:5678/healthz", timeout=5)
         if response.status_code == 200:
             print("[OK] n8n起動中")
-            print("   URL: http://localhost:5678")
+            print("   URL: http://127.0.0.1:5678")
             return True
         else:
             print(f"[WARN] n8n応答異常: {response.status_code}")
@@ -80,7 +80,7 @@ def check_unified_api():
     """統合APIサーバーの状態確認"""
     print("\n[確認] 統合APIサーバー確認中...")
     try:
-        response = requests.get("http://localhost:9500/health", timeout=5)
+        response = requests.get("http://127.0.0.1:9510/health", timeout=5)
         if response.status_code == 200:
             print("[OK] 統合APIサーバー起動中")
             return True
@@ -110,7 +110,7 @@ def test_basic_chat():
         try:
             import requests
             ollama_response = requests.post(
-                "http://localhost:11434/api/generate",
+                "http://127.0.0.1:11434/api/generate",
                 json={
                     "model": "llama3.2:3b",
                     "prompt": "こんにちは！短く挨拶してください。",
@@ -154,7 +154,7 @@ def test_basic_chat():
     except Exception as e:
         print(f"[ERROR] テスト失敗: {e}")
         print("   ヒント: n8nワークフローをインポートしてください")
-        print("   - http://localhost:5678 にアクセス")
+        print("   - http://127.0.0.1:5678 にアクセス")
         print("   - ワークフロー → インポート")
         print("   - n8n_workflows/always_ready_llm_workflow.json を選択")
         return False

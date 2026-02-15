@@ -177,7 +177,7 @@ STYLE_BERT_VITS2_SPEAKER_ID=0  # レミのスピーカーID
 python unified_api_server.py
 
 # テスト
-curl -X POST http://localhost:9500/api/voice/synthesize `
+curl -X POST http://127.0.0.1:9510/api/voice/synthesize `
   -H "Content-Type: application/json" `
   -d "{\"text\": \"こんにちは、レミです。\"}"
 ```
@@ -225,3 +225,4 @@ curl -X POST http://localhost:9500/api/voice/synthesize `
 ---
 
 **レミ声固定、完成！** 🎉
+

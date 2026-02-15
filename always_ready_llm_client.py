@@ -60,9 +60,9 @@ class AlwaysReadyLLMClient:
     def __init__(
         self,
         n8n_webhook_url: str = None,
-        ollama_url: str = "http://localhost:11434",
-        lm_studio_url: str = "http://localhost:1234/v1",
-        cache_api_url: str = "http://localhost:9500/api/cache",
+        ollama_url: str = "http://127.0.0.1:11434",
+        lm_studio_url: str = "http://127.0.0.1:1234/v1",
+        cache_api_url: str = "http://127.0.0.1:9510/api/cache",
         use_cache: bool = True,
         default_model: ModelType = ModelType.MEDIUM,  # デフォルトをMEDIUM（14B）に変更
         prefer_lm_studio: bool = True  # LM Studioを優先

@@ -395,7 +395,7 @@ if __name__ == '__main__':
     thread = threading.Thread(target=background_task, daemon=True)
     thread.start()
 
-    print("ダッシュボード: http://localhost:9600")
+    print("ダッシュボード: http://127.0.0.1:9600")
     # Flask-SocketIO は debug=True の際に Werkzeug を弾くことがあるため、
     # 開発/ローカル用途では allow_unsafe_werkzeug=True で明示的に許可する。
     # （本番運用は eventlet/gevent 等の本番用サーバー推奨）

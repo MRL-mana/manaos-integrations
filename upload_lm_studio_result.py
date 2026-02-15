@@ -7,7 +7,7 @@ import os
 
 if sys.platform == 'win32':
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
 
 from google_drive_integration import GoogleDriveIntegration
 

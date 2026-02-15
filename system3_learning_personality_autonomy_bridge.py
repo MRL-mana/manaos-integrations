@@ -16,9 +16,9 @@ except ImportError:
 logger = get_logger(__name__)
 
 # System3 各コンポーネントの URL
-LEARNING_URL = os.getenv("LEARNING_SYSTEM_URL", "http://localhost:5126").rstrip("/")
-PERSONALITY_URL = os.getenv("PERSONALITY_SYSTEM_URL", "http://localhost:5123").rstrip("/")
-AUTONOMY_URL = os.getenv("AUTONOMY_SYSTEM_URL", "http://localhost:5124").rstrip("/")
+LEARNING_URL = os.getenv("LEARNING_SYSTEM_URL", "http://127.0.0.1:5126").rstrip("/")
+PERSONALITY_URL = os.getenv("PERSONALITY_SYSTEM_URL", "http://127.0.0.1:5123").rstrip("/")
+AUTONOMY_URL = os.getenv("AUTONOMY_SYSTEM_URL", "http://127.0.0.1:5124").rstrip("/")
 
 
 def get_learning_preferences() -> Dict[str, Any]:

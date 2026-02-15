@@ -21,7 +21,7 @@
 LM Studioサーバーが起動していることを確認：
 
 ```powershell
-Invoke-WebRequest -Uri "http://localhost:1234/v1/models" -Method GET
+Invoke-WebRequest -Uri "http://127.0.0.1:1234/v1/models" -Method GET
 ```
 
 **期待される結果：**
@@ -43,14 +43,10 @@ difficulty_routing:
 ### ステップ3: LLMルーティングAPIの起動
 
 ```powershell
-.\start_llm_routing_api.ps1
+py -3.10 .\unified_api_server.py
 ```
 
-または、手動で起動：
-
-```powershell
-python manaos_llm_routing_api.py
-```
+（既定ポートは `9510`。変更する場合は `$env:PORT = "9510"` を設定）
 
 ### ステップ4: 動作確認
 
@@ -100,7 +96,7 @@ import requests
 
 # 難易度ルーティングを使用
 response = requests.post(
-    "http://localhost:9501/api/llm/route",
+   "http://127.0.0.1:9510/api/llm/route",
     json={
         "prompt": "このコードを最適化してください",
         "context": {
@@ -228,21 +224,21 @@ preferences = {
 
 ### LLMルーティングAPIが起動しない
 
-1. **ポート9501が使用中か確認**
+1. **ポート9510が使用中か確認**
    ```powershell
-   Get-NetTCPConnection -LocalPort 9501
+   Get-NetTCPConnection -LocalPort 9510
    ```
 
 2. **LM Studioサーバーが起動しているか確認**
    ```powershell
-   Invoke-WebRequest -Uri "http://localhost:1234/v1/models" -Method GET
+   Invoke-WebRequest -Uri "http://127.0.0.1:1234/v1/models" -Method GET
    ```
 
 ### モデルが選択されない
 
 1. **利用可能なモデルを確認**
    ```powershell
-   Invoke-WebRequest -Uri "http://localhost:1234/v1/models" -Method GET
+   Invoke-WebRequest -Uri "http://127.0.0.1:1234/v1/models" -Method GET
    ```
 
 2. **設定ファイルのモデル名を確認**
@@ -263,7 +259,7 @@ preferences = {
 
 - `llm_router_enhanced.py` - 難易度ルーティング実装
 - `llm_difficulty_analyzer.py` - 難易度分析エンジン
-- `manaos_llm_routing_api.py` - LLMルーティングAPI
+- `llm_routing_mcp_server/` - LLMルーティングMCPサーバー
 - `llm_routing_config_lm_studio.yaml` - 設定ファイル
 
 ---

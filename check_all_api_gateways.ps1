@@ -8,7 +8,7 @@ Write-Host ""
 $devices = @(
     @{
         Name = "ManaOS"
-        Endpoint = "http://localhost:5106/health"
+        Endpoint = "http://127.0.0.1:5106/health"
         Type = "Local"
     },
     @{

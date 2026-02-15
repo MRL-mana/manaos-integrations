@@ -51,7 +51,7 @@
 
 ### ステップ1: Open WebUIでExternal Toolsを設定
 
-1. **Open WebUIにアクセス**: `http://localhost:3001`
+1. **Open WebUIにアクセス**: `http://127.0.0.1:3001`
 2. **設定画面を開く**: 右上の⚙️アイコンをクリック
 3. **「External Tools」タブ**を選択
 4. **「Add Tool」**をクリック

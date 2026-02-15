@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class SVIWan22VideoIntegration:
     """SVI × Wan 2.2動画生成統合クラス"""
     
-    def __init__(self, base_url: str = "http://localhost:8188"):
+    def __init__(self, base_url: str = "http://127.0.0.1:8188"):
         """
         初期化
         

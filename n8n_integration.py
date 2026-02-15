@@ -46,7 +46,7 @@ class N8NIntegration(BaseIntegration):
         except ImportError:
             pass
         
-        self.base_url = (base_url or os.getenv("N8N_BASE_URL", "http://localhost:5678")).rstrip("/")
+        self.base_url = (base_url or os.getenv("N8N_BASE_URL", "http://127.0.0.1:5678")).rstrip("/")
         self.api_key = api_key or os.getenv("N8N_API_KEY")
         self.session = None
         

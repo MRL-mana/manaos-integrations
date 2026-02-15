@@ -14,7 +14,7 @@
 | `realtime_client.html` | リアルタイム音声のブラウザクライアント（母艦 WebSocket に接続） |
 | `serve_voice_client.py` | 母艦で上記 HTML を配信（`http://<母艦>:8766` を Pixel 7 で開く） |
 | **Pixel 7 コンパニオンモード** | |
-| 統合API `/companion` | **母艦で統合API(9500)起動後**、Pixel 7 で `http://<母艦IP>:9500/companion` を開く。テキスト＋音声＋TTS＋デバイス操作＋Obsidian＋n8n |
+| 統合API `/companion` | **母艦で統合API(9500)起動後**、Pixel 7 で `http://<母艦IP>:9510/companion` を開く。テキスト＋音声＋TTS＋デバイス操作＋Obsidian＋n8n |
 | `pixel7_companion_client.html` | コンパニオンモード用クライアント（PWA・オフラインバッファ・デバイス状態・クイックアクション対応） |
 | `companion_manifest.json` | PWA manifest（ホーム画面追加用） |
 | `companion_sw.js` | Service Worker（オフラインキャッシュ） |

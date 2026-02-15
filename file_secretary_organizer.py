@@ -29,7 +29,7 @@ except ImportError:
 class FileOrganizer:
     """ファイル整理ワーカー"""
     
-    def __init__(self, db: FileSecretaryDB, ollama_url: str = "http://localhost:11434", model: str = "qwen2.5:14b", use_memory: bool = True):
+    def __init__(self, db: FileSecretaryDB, ollama_url: str = "http://127.0.0.1:11434", model: str = "qwen2.5:14b", use_memory: bool = True):
         """
         初期化
         

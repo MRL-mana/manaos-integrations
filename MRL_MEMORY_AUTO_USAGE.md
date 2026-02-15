@@ -82,7 +82,7 @@ python test_mrl_memory_usage.py
 `.env`ファイルで設定可能:
 
 - `MRL_MEMORY_API_KEY`: APIキー（認証用）
-- `MRL_MEMORY_API_URL`: API URL（デフォルト: http://localhost:5105）
+- `MRL_MEMORY_API_URL`: API URL（デフォルト: http://127.0.0.1:5105）
 - `FWPKM_WRITE_MODE`: 書き込みモード（`sampled`/`full`）
 - `FWPKM_WRITE_ENABLED`: 書き込み有効化（`1`/`0`）
 - `FWPKM_REVIEW_EFFECT`: 復習効果（`1`/`0`）

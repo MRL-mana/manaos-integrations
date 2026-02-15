@@ -15,8 +15,8 @@ import requests
 # Windowsコンソールのエンコーディング設定
 if sys.platform == "win32":
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 def check_port(port):
     """ポートが使用されているか確認"""
@@ -87,7 +87,7 @@ def start_service(script_name):
 def check_health(port, name):
     """ヘルスチェック"""
     try:
-        response = requests.get(f"http://localhost:{port}/health", timeout=3)
+        response = requests.get(f"http://127.0.0.1:{port}/health", timeout=3)
         if response.status_code == 200:
             return True
     except Exception:
@@ -108,7 +108,7 @@ def main():
         ("Intent Router", 5100, "intent_router.py"),
         ("Task Planner", 5101, "task_planner.py"),
         ("Content Generation", 5109, "content_generation_loop.py"),
-        ("Unified API Server", 9502, "unified_api_server.py")
+        ("Unified API Server", 9510, "unified_api_server.py")
     ]
     
     print("[1] 既存プロセスを確認・停止中...")

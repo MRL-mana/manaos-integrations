@@ -6,9 +6,9 @@
 
 ## ✅ 前提条件
 
-- ✅ Tool Serverがホストから起動中（`http://localhost:9503`）
-- ✅ OpenWebUIが起動中（`http://localhost:3001`）
-- ✅ OpenAPI仕様が利用可能（`http://localhost:9503/openapi.json`）
+- ✅ Tool Serverがホストから起動中（`http://127.0.0.1:9503`）
+- ✅ OpenWebUIが起動中（`http://127.0.0.1:3001`）
+- ✅ OpenAPI仕様が利用可能（`http://127.0.0.1:9503/openapi.json`）
 
 ---
 
@@ -17,7 +17,7 @@
 ### Step 1: OpenWebUIにアクセス
 
 ```
-http://localhost:3001
+http://127.0.0.1:3001
 ```
 
 ### Step 2: 設定画面を開く
@@ -32,9 +32,9 @@ http://localhost:3001
 
    ```
    Name: manaOS Tool Server
-   URL: http://localhost:9503
+   URL: http://127.0.0.1:9503
    OpenAPI Spec: ON（チェックを入れる）
-   OpenAPI Spec URL: http://localhost:9503/openapi.json
+   OpenAPI Spec URL: http://127.0.0.1:9503/openapi.json
    ```
 
 3. **「Save」**をクリック
@@ -65,15 +65,15 @@ dockerコンテナの状態を確認して
 
 ```powershell
 # Tool Serverの状態確認
-curl http://localhost:9503/health
+curl http://127.0.0.1:9503/health
 
 # サービス状態確認
 $body = @{service_type = "docker"} | ConvertTo-Json
-Invoke-RestMethod -Uri "http://localhost:9503/api/tools/service_status" `
+Invoke-RestMethod -Uri "http://127.0.0.1:9503/api/tools/service_status" `
     -Method POST -Body $body -ContentType "application/json"
 
 # OpenAPI仕様の確認
-curl http://localhost:9503/openapi.json
+curl http://127.0.0.1:9503/openapi.json
 ```
 
 ---
@@ -96,12 +96,12 @@ curl http://localhost:9503/openapi.json
 
 1. Tool Serverが正常に起動しているか確認
    ```powershell
-   curl http://localhost:9503/health
+   curl http://127.0.0.1:9503/health
    ```
 
 2. OpenAPI仕様のURLを確認
    ```
-   http://localhost:9503/openapi.json
+   http://127.0.0.1:9503/openapi.json
    ```
 
 ### LLMがツールを呼び出さない

@@ -17,9 +17,9 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
 if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-COMFYUI_URL = "http://localhost:8188"
+COMFYUI_URL = "http://127.0.0.1:8188"
 OUTPUT_DIR = Path("C:/ComfyUI/output")
 GENERATION_METADATA_DB = Path("C:/ComfyUI/input/mana_favorites/generation_metadata.json")
 

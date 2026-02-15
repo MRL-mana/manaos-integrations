@@ -22,9 +22,9 @@ echo 2. 音声入力を使う場合
 echo    start_pixel7_realtime_voice.bat を実行（WebSocket 8765）
 echo.
 echo 3. Pixel 7 のブラウザで以下を開く
-echo    http://^<母艦のIP^>:9500/companion
-echo    例: http://192.168.1.5:9500/companion
-echo    例: http://100.x.x.x:9500/companion (Tailscale)
+echo    http://^<母艦のIP^>:9510/companion
+echo    例: http://192.168.1.5:9510/companion
+echo    例: http://100.x.x.x:9510/companion (Tailscale)
 echo.
 echo [できること]
 echo  - テキスト入力でLLMと会話

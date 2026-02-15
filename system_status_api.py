@@ -57,7 +57,7 @@ def check_service_health(port: int, timeout: Optional[float] = None) -> Dict[str
         timeout = timeout_config.get("health_check", 5.0)
     try:
         response = httpx.get(
-            f"http://localhost:{port}/health",
+            f"http://127.0.0.1:{port}/health",
             timeout=timeout
         )
         if response.status_code == 200:

@@ -20,8 +20,8 @@ import fitz  # PyMuPDF
 # Windowsでのエンコーディング修正
 if sys.platform == 'win32':
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
 
 logging.basicConfig(
     level=logging.INFO,
@@ -43,7 +43,7 @@ class WSL2VisionLLM:
         self.vision_model = vision_model
         self.wsl_distro = "Ubuntu-22.04"
         # WSL2内で動いているOllamaでも、APIはlocalhostで叩ける（Windows→WSL2転送）
-        self.ollama_url = "http://localhost:11434"
+        self.ollama_url = "http://127.0.0.1:11434"
     
     def _call_wsl2_ollama_api(self, endpoint: str, method: str = "GET", json_data: dict = None) -> Optional[Dict]:
         """Ollama APIを呼び出す（Windows側から直接HTTP）"""

@@ -7,7 +7,7 @@ import sys
 from datetime import datetime
 
 # Webhook URL（先ほど取得したもの）
-WEBHOOK_URL = "http://localhost:5679/webhook/comfyui-generated"
+WEBHOOK_URL = "http://127.0.0.1:5679/webhook/comfyui-generated"
 
 def execute_webhook(payload=None):
     """Webhookを実行"""
@@ -62,7 +62,7 @@ def execute_webhook(payload=None):
             # タイムアウトは正常（ワークフローが非同期で実行中）
             print(f"[OK] リクエストを送信しました（タイムアウトは正常です）")
             print(f"     ワークフローはバックグラウンドで実行中です")
-            print(f"     n8nのWeb UI (http://localhost:5679) で実行状況を確認してください")
+            print(f"     n8nのWeb UI (http://127.0.0.1:5679) で実行状況を確認してください")
             return True
     except Exception as e:
         print(f"[NG] エラーが発生しました: {e}")

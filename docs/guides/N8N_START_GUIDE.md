@@ -61,7 +61,7 @@ Test-NetConnection -ComputerName localhost -Port 5678
 
 ### Step 2: ブラウザで確認
 
-1. **ブラウザで開く**: http://localhost:5678
+1. **ブラウザで開く**: http://127.0.0.1:5678
 2. **ログイン画面が表示されればOK**
 
 ---

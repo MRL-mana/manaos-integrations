@@ -20,12 +20,12 @@ try:
     else:
         print("[INFO] .envファイルが見つかりません。環境変数を直接設定します。")
         # Secretsは直書きしません。必要なものは環境変数/.envで設定してください。
-        os.environ["COMFYUI_URL"] = "http://localhost:8188"
+        os.environ["COMFYUI_URL"] = "http://127.0.0.1:8188"
         print("[OK] 環境変数を直接設定しました")
 except ImportError:
     print("[WARN] python-dotenvがインストールされていません")
     # Secretsは直書きしません。必要なものは環境変数/.envで設定してください。
-    os.environ["COMFYUI_URL"] = "http://localhost:8188"
+    os.environ["COMFYUI_URL"] = "http://127.0.0.1:8188"
 
 print("\n" + "=" * 60)
 print("ComfyUI & CivitAI 統合テスト")
@@ -38,7 +38,7 @@ print("-" * 60)
 try:
     from comfyui_integration import ComfyUIIntegration
     
-    comfyui_url = os.getenv("COMFYUI_URL", "http://localhost:8188")
+    comfyui_url = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
     comfyui = ComfyUIIntegration(base_url=comfyui_url)
     
     if comfyui.is_available():
@@ -106,7 +106,7 @@ print("   → またはローカルでComfyUIを起動")
 print()
 print("2. 統合APIサーバーでの動作確認:")
 print("   → python unified_api_server.py を起動")
-print("   → POST http://localhost:9500/api/comfyui/generate")
-print("   → GET http://localhost:9500/api/civitai/search?query=realistic")
+print("   → POST http://127.0.0.1:9510/api/comfyui/generate")
+print("   → GET http://127.0.0.1:9510/api/civitai/search?query=realistic")
 print()
 

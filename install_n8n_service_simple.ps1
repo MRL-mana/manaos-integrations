@@ -178,7 +178,7 @@ if ($service.Status -eq "Running") {
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host "次のステップ" -ForegroundColor Cyan
     Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "1. ブラウザで http://localhost:5679 を開いてください" -ForegroundColor White
+    Write-Host "1. ブラウザで http://127.0.0.1:5679 を開いてください" -ForegroundColor White
     Write-Host "2. サービス管理:" -ForegroundColor White
     Write-Host "   - 開始: Start-Service n8n" -ForegroundColor Gray
     Write-Host "   - 停止: Stop-Service n8n" -ForegroundColor Gray

@@ -77,7 +77,7 @@ $body = @{
     steps = 20
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://localhost:9500/api/comfyui/generate" `
+Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/comfyui/generate" `
     -Method POST `
     -Body $body `
     -ContentType "application/json"
@@ -127,6 +127,7 @@ Invoke-RestMethod -Uri "http://localhost:9500/api/comfyui/generate" `
 
 **所要時間:** 約3分  
 **難易度:** ⭐⭐（簡単）
+
 
 
 

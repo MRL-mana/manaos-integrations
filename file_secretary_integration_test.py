@@ -101,7 +101,7 @@ def test_restore():
 def test_api():
     """APIテスト"""
     print("\n=== APIテスト ===")
-    api_url = "http://localhost:5120"
+    api_url = "http://127.0.0.1:5120"
     
     try:
         # ヘルスチェック

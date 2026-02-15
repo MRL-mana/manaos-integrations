@@ -1048,8 +1048,8 @@ def _get_cors_origins() -> List[str]:
         return [o.strip() for o in raw.split(",") if o.strip()]
     # Safe default for local UI tools (Open WebUI etc.)
     return [
-        "http://localhost:3000",
-        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
     ]
@@ -1412,6 +1412,146 @@ def api_comfyui_history():
         return _json_error("history_failed", 500, error="internal_error")
 
 
+def _get_or_init_enhanced_llm_router() -> Optional["EnhancedLLMRouter"]:
+    """拡張LLMルーティング（難易度対応）を取得（必要なら遅延初期化）。"""
+    router = integrations.get("enhanced_llm_routing")
+    if router is not None:
+        return router  # type: ignore[return-value]
+
+    if not ENHANCED_LLM_ROUTING_AVAILABLE:
+        return None
+
+    try:
+        router = EnhancedLLMRouter(
+            lm_studio_url=os.getenv("LM_STUDIO_URL", "http://127.0.0.1:1234/v1"),
+            ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"),
+        )
+        integrations["enhanced_llm_routing"] = router
+        return router
+    except Exception as e:
+        logger.warning(f"Enhanced LLM router init failed: {e}")
+        return None
+
+
+@app.route("/api/llm/health", methods=["GET"])
+def api_llm_health():
+    """LLMルーティングのヘルス（利用可能モデル数など）"""
+    router = _get_or_init_enhanced_llm_router()
+    if not router:
+        return _json_error("llm_routing_not_initialized", 503, error="unavailable")
+
+    try:
+        models = router.get_available_models()
+        return (
+            jsonify(
+                {
+                    "status": "ok",
+                    "llm_server": getattr(router, "llm_server", "unknown"),
+                    "available_models": len(models),
+                    "models": models,
+                }
+            ),
+            200,
+        )
+    except Exception as e:
+        logger.warning(f"LLM health error: {e}")
+        return _json_error("llm_health_failed", 500, error="internal_error")
+
+
+@app.route("/api/llm/models", methods=["GET"])
+@app.route("/api/llm/models-enhanced", methods=["GET"])
+def api_llm_models():
+    """利用可能なモデル一覧を返す"""
+    router = _get_or_init_enhanced_llm_router()
+    if not router:
+        return _json_error("llm_routing_not_initialized", 503, error="unavailable")
+
+    try:
+        return jsonify({"models": router.get_available_models()}), 200
+    except Exception as e:
+        logger.warning(f"LLM models error: {e}")
+        return _json_error("llm_models_failed", 500, error="internal_error")
+
+
+@app.route("/api/llm/analyze", methods=["POST"])
+def api_llm_analyze():
+    """プロンプト難易度を分析（LLM呼び出しなし）"""
+    data = request.get_json(silent=True) or {}
+    prompt = (data.get("prompt") or "").strip()
+    if not prompt:
+        return _json_error("prompt is required", 400, error="bad_request")
+
+    context = data.get("context") or {}
+    if not isinstance(context, dict):
+        context = {}
+
+    # 互換: code_context をトップレベルで渡された場合も拾う
+    code_context = data.get("code_context")
+    if code_context and isinstance(code_context, str):
+        context.setdefault("code_context", code_context)
+
+    router = _get_or_init_enhanced_llm_router()
+    if not router:
+        return _json_error("llm_routing_not_initialized", 503, error="unavailable")
+
+    try:
+        analyzer = getattr(router, "analyzer", None)
+        if analyzer is None:
+            return _json_error("difficulty_analyzer_unavailable", 503, error="unavailable")
+
+        score = float(analyzer.calculate_difficulty(prompt, context))
+        level = str(analyzer.get_difficulty_level(score))
+        recommended = str(analyzer.get_recommended_model(score))
+
+        return (
+            jsonify(
+                {
+                    "difficulty_score": score,
+                    "difficulty_level": level,
+                    "recommended_model": recommended,
+                }
+            ),
+            200,
+        )
+    except Exception as e:
+        logger.warning(f"LLM analyze error: {e}")
+        return _json_error("llm_analyze_failed", 500, error="internal_error")
+
+
+@app.route("/api/llm/route", methods=["POST"])
+@app.route("/api/llm/route-enhanced", methods=["POST"])
+def api_llm_route():
+    """LLMリクエストを難易度でルーティングして実行"""
+    data = request.get_json(silent=True) or {}
+    prompt = (data.get("prompt") or "").strip()
+    if not prompt:
+        return _json_error("prompt is required", 400, error="bad_request")
+
+    context = data.get("context") or {}
+    if not isinstance(context, dict):
+        context = {}
+
+    preferences = data.get("preferences") or {}
+    if not isinstance(preferences, dict):
+        preferences = {}
+
+    # 互換: code_context をトップレベルで渡された場合も拾う
+    code_context = data.get("code_context")
+    if code_context and isinstance(code_context, str):
+        context.setdefault("code_context", code_context)
+
+    router = _get_or_init_enhanced_llm_router()
+    if not router:
+        return _json_error("llm_routing_not_initialized", 503, error="unavailable")
+
+    try:
+        result = router.route(prompt=prompt, context=context, preferences=preferences)
+        return jsonify(result), 200
+    except Exception as e:
+        logger.warning(f"LLM route error: {e}")
+        return _json_error("llm_route_failed", 500, error="internal_error")
+
+
 # 統合システムのインスタンス
 integrations: Dict[str, Any] = {}
 
@@ -1614,7 +1754,7 @@ def initialize_integrations():
             (
                 "comfyui",
                 lambda: ComfyUIIntegration(
-            base_url=os.getenv("COMFYUI_URL", "http://localhost:8188")
+            base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
                 ),
             )
         )
@@ -1625,7 +1765,7 @@ def initialize_integrations():
             (
                 "svi_wan22",
                 lambda: SVIWan22VideoIntegration(
-            base_url=os.getenv("COMFYUI_URL", "http://localhost:8188")
+            base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
                 ),
             )
         )
@@ -1636,7 +1776,7 @@ def initialize_integrations():
             (
                 "ltx2",
                 lambda: LTX2VideoIntegration(
-            base_url=os.getenv("COMFYUI_URL", "http://localhost:8188")
+            base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
                 ),
             )
         )
@@ -1647,7 +1787,7 @@ def initialize_integrations():
             (
                 "ltx2_infinity",
                 lambda: LTX2InfinityIntegration(
-                    base_url=os.getenv("COMFYUI_URL", "http://localhost:8188")
+                    base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
                 ),
             )
         )
@@ -1680,7 +1820,7 @@ def initialize_integrations():
             (
                 "langchain",
                 lambda: LangChainIntegration(
-            ollama_url=os.getenv("OLLAMA_URL", "http://localhost:11434"),
+            ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"),
                     model_name=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
                 ),
             )
@@ -1689,7 +1829,7 @@ def initialize_integrations():
             (
                 "langgraph",
                 lambda: LangGraphIntegration(
-            ollama_url=os.getenv("OLLAMA_URL", "http://localhost:11434"),
+            ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"),
                     model_name=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
                 ),
             )
@@ -1731,8 +1871,8 @@ def initialize_integrations():
             (
                 "enhanced_llm_routing",
                 lambda: EnhancedLLMRouter(
-            lm_studio_url=os.getenv("LM_STUDIO_URL", "http://localhost:1234/v1"),
-                    ollama_url=os.getenv("OLLAMA_URL", "http://localhost:11434"),
+            lm_studio_url=os.getenv("LM_STUDIO_URL", "http://127.0.0.1:1234/v1"),
+                    ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"),
                 ),
             )
         )
@@ -1778,7 +1918,7 @@ def initialize_integrations():
             (
                 "n8n",
                 lambda: N8NIntegration(
-            base_url=os.getenv("N8N_BASE_URL", "http://localhost:5678"),
+            base_url=os.getenv("N8N_BASE_URL", "http://127.0.0.1:5678"),
                     api_key=os.getenv("N8N_API_KEY"),
                 ),
             )
@@ -1790,7 +1930,7 @@ def initialize_integrations():
             (
                 "excel_llm",
                 lambda: ExcelLLMIntegration(
-            ollama_url=os.getenv("OLLAMA_URL", "http://localhost:11434"),
+            ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"),
                     model=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
                 ),
             )

@@ -56,9 +56,8 @@
 ```
 
 **期待される結果：**
-- ✅ LM Studioサーバー: 起動中 (`http://localhost:1234`)
-- ✅ LLMルーティングAPI: 起動中 (`http://localhost:9501`)
-- ✅ 統合APIサーバー: 起動中 (`http://localhost:9500`)
+- ✅ LM Studioサーバー: 起動中 (`http://127.0.0.1:1234`)
+- ✅ Unified API（LLMルーティング含む）: 起動中 (`http://127.0.0.1:9510`)
 
 ---
 
@@ -67,7 +66,7 @@
 すべてのサービスが起動したら：
 
 1. **CursorでローカルLLMを使用**
-   - Cursorの設定で `http://localhost:1234/v1` が設定済み
+   - Cursorの設定で `http://127.0.0.1:1234/v1` が設定済み
    - モデルを選択して使用開始
 
 2. **MCPサーバー経由でLLMルーティングを使用**
@@ -75,8 +74,7 @@
    - ツール経由でLLMルーティング機能を使用可能
 
 3. **API経由でLLMルーティングを使用**
-   - `http://localhost:9501/api/llm/route` でルーティングAPIを使用
-   - `http://localhost:9500/api/llm/route` で統合API経由でも使用可能
+   - `http://127.0.0.1:9510/api/llm/route` でルーティングAPIを使用
 
 ---
 

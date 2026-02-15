@@ -15,7 +15,7 @@
         ]
     },
     "api": {
-        "url": "http://localhost:5106/api/execute",
+        "url": "http://127.0.0.1:5106/api/execute",
         "method": "POST",
         "body_key": "query"
     }

@@ -1,8 +1,8 @@
 # LLMルーティング設定（LM Studio用）- 32Bモデル対応版
 # 難易度に応じた自動モデル選択と複数モデルの使い分け
 
-lm_studio_url: "http://localhost:1234/v1"
-ollama_url: "http://localhost:11434"
+lm_studio_url: "http://127.0.0.1:1234/v1"
+ollama_url: "http://127.0.0.1:11434"
 
 # 使用するLLMサーバー（"lm_studio" or "ollama"）
 llm_server: "lm_studio"

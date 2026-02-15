@@ -15,8 +15,8 @@ from typing import Dict, Any, List
 
 # Windows環境でのUTF-8出力設定
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 def test_service(name: str, port: int, test_func) -> Dict[str, Any]:
     """サービスをテスト"""
@@ -38,7 +38,7 @@ def test_intent_router(port: int) -> Dict[str, Any]:
     """Intent Routerテスト"""
     try:
         response = httpx.post(
-            f"http://localhost:{port}/api/classify",
+            f"http://127.0.0.1:{port}/api/classify",
             json={"text": "画像を生成して"},
             timeout=30  # タイムアウトを延長
         )
@@ -55,13 +55,13 @@ def test_task_planner(port: int) -> Dict[str, Any]:
     """Task Plannerテスト"""
     try:
         # まずヘルスチェック
-        health_response = httpx.get(f"http://localhost:{port}/health", timeout=5)
+        health_response = httpx.get(f"http://127.0.0.1:{port}/health", timeout=5)
         if health_response.status_code != 200:
             return {"success": False, "error": f"Health check failed: {health_response.status_code}"}
         
         # プラン作成（タイムアウトは長めに設定、フォールバック機能で動作するはず）
         response = httpx.post(
-            f"http://localhost:{port}/api/plan",
+            f"http://127.0.0.1:{port}/api/plan",
             json={"text": "画像を生成して"},
             timeout=90  # タイムアウトをさらに延長（フォールバックが動作するまで待つ）
         )
@@ -73,7 +73,7 @@ def test_task_planner(port: int) -> Dict[str, Any]:
         # タイムアウトでも、フォールバック機能が動作している可能性がある
         # ヘルスチェックが通っていればOKとする
         try:
-            health_response = httpx.get(f"http://localhost:{port}/health", timeout=5)
+            health_response = httpx.get(f"http://127.0.0.1:{port}/health", timeout=5)
             if health_response.status_code == 200:
                 return {"success": True, "note": "Service is running but LLM timeout (fallback may work)"}
         except Exception:
@@ -88,13 +88,13 @@ def test_task_critic(port: int) -> Dict[str, Any]:
     """Task Criticテスト"""
     try:
         # まずヘルスチェック
-        health_response = httpx.get(f"http://localhost:{port}/health", timeout=5)
+        health_response = httpx.get(f"http://127.0.0.1:{port}/health", timeout=5)
         if health_response.status_code != 200:
             return {"success": False, "error": f"Health check failed: {health_response.status_code}"}
         
         # 評価（タイムアウトは長めに設定、フォールバック機能で動作するはず）
         response = httpx.post(
-            f"http://localhost:{port}/api/evaluate",
+            f"http://127.0.0.1:{port}/api/evaluate",
             json={
                 "intent_type": "image_generation",
                 "original_input": "画像を生成して",
@@ -112,7 +112,7 @@ def test_task_critic(port: int) -> Dict[str, Any]:
         # タイムアウトでも、フォールバック機能が動作している可能性がある
         # ヘルスチェックが通っていればOKとする
         try:
-            health_response = httpx.get(f"http://localhost:{port}/health", timeout=5)
+            health_response = httpx.get(f"http://127.0.0.1:{port}/health", timeout=5)
             if health_response.status_code == 200:
                 return {"success": True, "note": "Service is running but LLM timeout (fallback may work)"}
         except Exception:
@@ -127,7 +127,7 @@ def test_rag_memory(port: int) -> Dict[str, Any]:
     """RAG Memoryテスト"""
     try:
         response = httpx.post(
-            f"http://localhost:{port}/api/add",
+            f"http://127.0.0.1:{port}/api/add",
             json={
                 "content": "テストメモリ",
                 "importance_score": 0.8
@@ -146,7 +146,7 @@ def test_rag_memory(port: int) -> Dict[str, Any]:
 def test_task_queue(port: int) -> Dict[str, Any]:
     """Task Queueテスト"""
     try:
-        response = httpx.get(f"http://localhost:{port}/api/status", timeout=5)
+        response = httpx.get(f"http://127.0.0.1:{port}/api/status", timeout=5)
         if response.status_code == 200:
             return {"success": True, "status": response.json()}
         return {"success": False, "error": f"Status: {response.status_code}"}
@@ -158,7 +158,7 @@ def test_task_queue(port: int) -> Dict[str, Any]:
 def test_ui_operations(port: int) -> Dict[str, Any]:
     """UI Operationsテスト"""
     try:
-        response = httpx.get(f"http://localhost:{port}/api/mode", timeout=5)
+        response = httpx.get(f"http://127.0.0.1:{port}/api/mode", timeout=5)
         if response.status_code == 200:
             return {"success": True, "mode": response.json().get("mode")}
         return {"success": False, "error": f"Status: {response.status_code}"}
@@ -170,7 +170,7 @@ def test_ui_operations(port: int) -> Dict[str, Any]:
 def test_unified_orchestrator(port: int) -> Dict[str, Any]:
     """Unified Orchestratorテスト"""
     try:
-        response = httpx.get(f"http://localhost:{port}/health", timeout=5)
+        response = httpx.get(f"http://127.0.0.1:{port}/health", timeout=5)
         if response.status_code == 200:
             return {"success": True}
         return {"success": False, "error": f"Status: {response.status_code}"}
@@ -182,7 +182,7 @@ def test_unified_orchestrator(port: int) -> Dict[str, Any]:
 def test_executor(port: int) -> Dict[str, Any]:
     """Executorテスト"""
     try:
-        response = httpx.get(f"http://localhost:{port}/health", timeout=5)
+        response = httpx.get(f"http://127.0.0.1:{port}/health", timeout=5)
         if response.status_code == 200:
             return {"success": True}
         return {"success": False, "error": f"Status: {response.status_code}"}
@@ -194,7 +194,7 @@ def test_executor(port: int) -> Dict[str, Any]:
 def test_portal_integration(port: int) -> Dict[str, Any]:
     """Portal Integrationテスト"""
     try:
-        response = httpx.get(f"http://localhost:{port}/health", timeout=5)
+        response = httpx.get(f"http://127.0.0.1:{port}/health", timeout=5)
         if response.status_code == 200:
             return {"success": True}
         return {"success": False, "error": f"Status: {response.status_code}"}
@@ -206,7 +206,7 @@ def test_portal_integration(port: int) -> Dict[str, Any]:
 def test_content_generation(port: int) -> Dict[str, Any]:
     """Content Generationテスト"""
     try:
-        response = httpx.get(f"http://localhost:{port}/health", timeout=5)
+        response = httpx.get(f"http://127.0.0.1:{port}/health", timeout=5)
         if response.status_code == 200:
             return {"success": True}
         return {"success": False, "error": f"Status: {response.status_code}"}
@@ -218,7 +218,7 @@ def test_content_generation(port: int) -> Dict[str, Any]:
 def test_llm_optimization(port: int) -> Dict[str, Any]:
     """LLM Optimizationテスト"""
     try:
-        response = httpx.get(f"http://localhost:{port}/health", timeout=5)
+        response = httpx.get(f"http://127.0.0.1:{port}/health", timeout=5)
         if response.status_code == 200:
             return {"success": True}
         return {"success": False, "error": f"Status: {response.status_code}"}

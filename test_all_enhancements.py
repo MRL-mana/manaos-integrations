@@ -10,8 +10,8 @@ import os
 # WindowsのコンソールエンコーディングをUTF-8に設定
 if sys.platform == 'win32':
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
 
 print("=" * 60)
 print("ManaOS 全強化ポイント動作確認")

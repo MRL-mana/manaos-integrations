@@ -12,30 +12,33 @@ from datetime import datetime
 
 # WindowsのコンソールエンコーディングをUTF-8に設定
 if sys.platform == 'win32':
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
 
 # チェック対象サービス
 SERVICES = {
-    "Intent Router": "http://localhost:5100/health",
-    "Task Planner": "http://localhost:5101/health",
-    "Task Critic": "http://localhost:5102/health",
-    "RAG Memory": "http://localhost:5103/health",
-    "Task Queue": "http://localhost:5104/health",
-    "UI Operations": "http://localhost:5105/health",
-    "Unified Orchestrator": "http://localhost:5106/health",
-    "Executor Enhanced": "http://localhost:5107/health",
-    "Portal Integration": "http://localhost:5108/health",
-    "Content Generation": "http://localhost:5109/health",
-    "LLM Optimization": "http://localhost:5110/health",
-    "System Status API": "http://localhost:5112/health",
-    "Personality System": "http://localhost:5123/health",
-    "Autonomy System": "http://localhost:5124/health",
-    "Secretary System": "http://localhost:5125/health",
-    "Learning System API": "http://localhost:5126/health",
-    "Metrics Collector": "http://localhost:5127/health",
-    "Performance Dashboard": "http://localhost:5128/health",
+    "Intent Router": "http://127.0.0.1:5100/health",
+    "Task Planner": "http://127.0.0.1:5101/health",
+    "Task Critic": "http://127.0.0.1:5102/health",
+    "RAG Memory": "http://127.0.0.1:5103/health",
+    "Task Queue": "http://127.0.0.1:5104/health",
+    "MRL Memory": "http://127.0.0.1:5105/health",
+    "Unified Orchestrator": "http://127.0.0.1:5106/health",
+    "Executor Enhanced": "http://127.0.0.1:5107/health",
+    "Portal Integration": "http://127.0.0.1:5108/health",
+    "Content Generation": "http://127.0.0.1:5109/health",
+    "LLM Routing MCP": "http://127.0.0.1:5111/health",
+    "Video Pipeline": "http://127.0.0.1:5112/health",
+    "Personality System": "http://127.0.0.1:5123/health",
+    "Autonomy System": "http://127.0.0.1:5124/health",
+    "Secretary System": "http://127.0.0.1:5125/health",
+    "Learning System API": "http://127.0.0.1:5126/health",
+    "Metrics Collector": "http://127.0.0.1:5127/health",
+    "Performance Dashboard": "http://127.0.0.1:5128/health",
+    "Pico HID MCP": "http://127.0.0.1:5136/health",
+    "Unified API": "http://127.0.0.1:9510/health",
+    "MCP API Server": "http://127.0.0.1:9502/health",
+    "Gallery API": "http://127.0.0.1:5559/health",
 }
 
 async def check_service(name: str, url: str):

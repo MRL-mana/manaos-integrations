@@ -54,7 +54,7 @@ python scripts/auto_skill_runner.py log_analysis --log_file logs/app.log
 `local_llm_helper.py`を使用してOllama経由でLLMを呼び出します。
 
 **設定:**
-- Ollamaが起動していること（`http://localhost:11434`）
+- Ollamaが起動していること（`http://127.0.0.1:11434`）
 - モデルがインストールされていること（デフォルト: `qwen3:4b`）
 
 ### 方法2: unified_api_server
@@ -62,7 +62,7 @@ python scripts/auto_skill_runner.py log_analysis --log_file logs/app.log
 `unified_api_server.py`の`/api/lfm25/chat`エンドポイントを使用します。
 
 **設定:**
-- `UNIFIED_API_SERVER_URL`環境変数（デフォルト: `http://localhost:9500`）
+- `UNIFIED_API_SERVER_URL`環境変数（デフォルト: `http://127.0.0.1:9510`）
 
 ### フォールバック
 
@@ -135,12 +135,12 @@ python scripts/auto_skill_runner.py git_ops
 
 1. **Ollamaが起動しているか確認**
    ```bash
-   curl http://localhost:11434/api/tags
+   curl http://127.0.0.1:11434/api/tags
    ```
 
 2. **unified_api_serverが起動しているか確認**
    ```bash
-   curl http://localhost:9500/status
+   curl http://127.0.0.1:9510/status
    ```
 
 3. **フォールバック動作**
@@ -171,3 +171,4 @@ python scripts/auto_skill_runner.py git_ops
 - ✅ スケジューラー対応
 
 **準備は完了しています。`python scripts/auto_skill_runner.py daily_ops`を実行するだけです！**
+

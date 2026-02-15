@@ -172,7 +172,7 @@ python start_vscode_cursor_services.py
 **対処**:
 ```powershell
 # 1. ポート使用状況を確認
-netstat -ano | findstr ":9500 :5103 :5104 :5111"
+netstat -ano | findstr ":9510 :5103 :5104 :5111"
 
 # 2. ManaOSプロセスを停止
 python emergency_stop.py

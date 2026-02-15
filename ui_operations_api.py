@@ -62,9 +62,9 @@ class UIOperationsAPI:
     
     def __init__(
         self,
-        intent_router_url: str = "http://localhost:5100",
-        task_planner_url: str = "http://localhost:5101",
-        task_queue_url: str = "http://localhost:5104",
+        intent_router_url: str = "http://127.0.0.1:5100",
+        task_planner_url: str = "http://127.0.0.1:5101",
+        task_queue_url: str = "http://127.0.0.1:5104",
         cost_db_path: Optional[Path] = None,
         config_path: Optional[Path] = None
     ):

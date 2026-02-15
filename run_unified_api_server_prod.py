@@ -22,7 +22,7 @@ def main():
     from unified_api_server import app
 
     host = os.getenv("MANAOS_INTEGRATION_HOST", "127.0.0.1")
-    port = int(os.getenv("MANAOS_INTEGRATION_PORT", "9500"))
+    port = int(os.getenv("MANAOS_INTEGRATION_PORT", "9510"))
 
     # Waitress tuning
     threads = int(os.getenv("MANAOS_WAITRESS_THREADS", "8"))

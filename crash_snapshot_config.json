@@ -6,7 +6,7 @@
   "cleanup_days": 30,
   "services": {
     "task_queue": {
-      "url": "http://localhost:5104",
+      "url": "http://127.0.0.1:5104",
       "enabled": true
     }
   }

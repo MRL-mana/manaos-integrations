@@ -200,7 +200,7 @@ export OBSIDIAN_VAULT_PATH="C:/Users/mana4/Documents/Obsidian Vault"
 export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
 
 # n8n設定
-export N8N_BASE_URL="http://localhost:5678"
+export N8N_BASE_URL="http://127.0.0.1:5678"
 export N8N_API_KEY="your-api-key-here"
 
 # Google Drive認証情報

@@ -6,7 +6,7 @@ Write-Host ""
 # インストール済みモデル一覧
 Write-Host "[1] インストール済みモデル一覧" -ForegroundColor Yellow
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:11434/api/tags" -UseBasicParsing -TimeoutSec 5
+    $response = Invoke-WebRequest -Uri "http://127.0.0.1:11434/api/tags" -UseBasicParsing -TimeoutSec 5
     $tags = $response.Content | ConvertFrom-Json
     if ($tags.models) {
         Write-Host ""
@@ -24,7 +24,7 @@ try {
 Write-Host ""
 Write-Host "[2] 実行中のモデル（メモリにロード済み）" -ForegroundColor Yellow
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:11434/api/ps" -UseBasicParsing -TimeoutSec 5
+    $response = Invoke-WebRequest -Uri "http://127.0.0.1:11434/api/ps" -UseBasicParsing -TimeoutSec 5
     $processes = $response.Content | ConvertFrom-Json
     if ($processes.processes -and $processes.processes.Count -gt 0) {
         Write-Host ""

@@ -10,8 +10,8 @@ import time
 # Windows環境でのエンコーディング問題を回避
 if sys.platform == "win32":
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -24,7 +24,7 @@ print()
 print("【環境変数の確認】")
 if not os.getenv("N8N_BASE_URL"):
     # n8nのデフォルトURLを設定
-    os.environ["N8N_BASE_URL"] = "http://localhost:5678"
+    os.environ["N8N_BASE_URL"] = "http://127.0.0.1:5678"
     print(f"  [OK] N8N_BASE_URLを設定: {os.getenv('N8N_BASE_URL')}")
 else:
     print(f"  [OK] N8N_BASE_URL: {os.getenv('N8N_BASE_URL')}")

@@ -14,7 +14,7 @@ import requests
 import json
 from typing import Dict, Any
 
-API_BASE = "http://localhost:9500"
+API_BASE = "http://127.0.0.1:9510"
 
 
 def test_rows_module():

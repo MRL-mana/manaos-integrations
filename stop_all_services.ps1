@@ -24,7 +24,7 @@ Write-Host ""
 # LLM Routing APIサーバーの停止
 Write-Host "2. LLM Routing APIサーバーを停止..." -ForegroundColor Cyan
 $routingProcesses = Get-Process python -ErrorAction SilentlyContinue | Where-Object { 
-    $_.CommandLine -like "*manaos_llm_routing_api*" 
+    $_.CommandLine -like "*llm_routing_mcp_server*" 
 }
 
 if ($routingProcesses) {

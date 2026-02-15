@@ -17,7 +17,7 @@
 
 1. 設定画面を開く
 2. 「**External Tools**」タブを選択
-3. `http://host.docker.internal:9500` の接続が表示されているか確認
+3. `http://host.docker.internal:9510` の接続が表示されているか確認
 4. 接続をクリックして、ツール一覧に以下の関数が表示されているか確認：
    - `generateImageComfyUI`
    - `uploadToGoogleDrive`
@@ -76,7 +76,7 @@ generateImageComfyUI関数を呼び出して、プロンプト「美しい風景
 ### OpenAPI仕様の確認
 
 ```powershell
-curl http://localhost:9500/openapi.json
+curl http://127.0.0.1:9510/openapi.json
 ```
 
 ### Open WebUIのツール一覧確認

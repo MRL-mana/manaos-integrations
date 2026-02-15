@@ -298,7 +298,7 @@ class LLMDashboard:
         print("=" * 60)
         print("📊 LLMメトリクスダッシュボード")
         print("=" * 60)
-        print(f"📍 http://localhost:{port}")
+        print(f"📍 http://127.0.0.1:{port}")
         print("=" * 60)
         
         self.app.run(host=host, port=port, debug=debug)

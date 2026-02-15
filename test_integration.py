@@ -13,8 +13,8 @@ from pathlib import Path
 # WindowsのコンソールエンコーディングをUTF-8に設定
 if sys.platform == 'win32':
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
 
 # テスト対象のインポート
 try:
@@ -158,8 +158,8 @@ async def test_service_health():
     print("\n🏥 サービスヘルスチェック開始...")
     
     services = {
-        "Metrics Collector": "http://localhost:5127/health",
-        "Learning System API": "http://localhost:5126/health",
+        "Metrics Collector": "http://127.0.0.1:5127/health",
+        "Learning System API": "http://127.0.0.1:5126/health",
     }
     
     results = {}

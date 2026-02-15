@@ -100,42 +100,42 @@ python -m gallery_api_mcp_server.server
       "command": "python",
       "args": ["-m", "unified_api_mcp_server.server"],
       "env": {
-        "MANAOS_INTEGRATION_API_URL": "http://localhost:9500"
+        "MANAOS_INTEGRATION_API_URL": "http://127.0.0.1:9510"
       }
     },
     "step-deep-research": {
       "command": "python",
       "args": ["-m", "step_deep_research_mcp_server.server"],
       "env": {
-        "STEP_DEEP_RESEARCH_URL": "http://localhost:5121"
+        "STEP_DEEP_RESEARCH_URL": "http://127.0.0.1:5121"
       }
     },
     "gallery-api": {
       "command": "python",
       "args": ["-m", "gallery_api_mcp_server.server"],
       "env": {
-        "GALLERY_API_URL": "http://localhost:5559"
+        "GALLERY_API_URL": "http://127.0.0.1:5559"
       }
     },
     "system-status": {
       "command": "python",
       "args": ["-m", "system_status_mcp_server.server"],
       "env": {
-        "SYSTEM_STATUS_URL": "http://localhost:5112"
+        "SYSTEM_STATUS_URL": "http://127.0.0.1:5112"
       }
     },
     "ssot-api": {
       "command": "python",
       "args": ["-m", "ssot_mcp_server.server"],
       "env": {
-        "SSOT_API_URL": "http://localhost:5120"
+        "SSOT_API_URL": "http://127.0.0.1:5120"
       }
     },
     "service-monitor": {
       "command": "python",
       "args": ["-m", "service_monitor_mcp_server.server"],
       "env": {
-        "SERVICE_MONITOR_URL": "http://localhost:5111"
+        "SERVICE_MONITOR_URL": "http://127.0.0.1:5111"
       }
     }
   }
@@ -254,23 +254,23 @@ docker-compose -f docker-compose.manaos-services.yml down
 ### Unified API Server
 
 ```bash
-MANAOS_INTEGRATION_API_URL=http://localhost:9500
-COMFYUI_URL=http://localhost:8188
-SEARXNG_BASE_URL=http://localhost:8080
+MANAOS_INTEGRATION_API_URL=http://127.0.0.1:9510
+COMFYUI_URL=http://127.0.0.1:8188
+SEARXNG_BASE_URL=http://127.0.0.1:8080
 OBSIDIAN_VAULT_PATH=/path/to/vault
 ```
 
 ### Step Deep Research Service
 
 ```bash
-STEP_DEEP_RESEARCH_URL=http://localhost:5121
+STEP_DEEP_RESEARCH_URL=http://127.0.0.1:5121
 ```
 
 ### Gallery API Server
 
 ```bash
-GALLERY_API_URL=http://localhost:5559
-COMFYUI_URL=http://localhost:8188
+GALLERY_API_URL=http://127.0.0.1:5559
+COMFYUI_URL=http://127.0.0.1:8188
 GALLERY_IMAGES_DIR=/path/to/images
 ```
 
@@ -350,7 +350,7 @@ AI: gallery_generate_imageツールを使用して画像を生成します
 
 1. サーバーが起動しているか確認：
    ```bash
-   curl http://localhost:9500/health
+   curl http://127.0.0.1:9510/health
    ```
 
 2. ファイアウォール設定を確認
@@ -386,3 +386,4 @@ AI: gallery_generate_imageツールを使用して画像を生成します
 2. **ドキュメント**: APIドキュメントの作成
 3. **最適化**: パフォーマンスの最適化
 4. **監視**: ログとメトリクスの設定
+

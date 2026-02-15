@@ -14,7 +14,7 @@ if 'OLLAMA_URL' not in content:
     if content and not content.endswith('\n'):
         content += '\n'
     content += '\n# Ollama設定（Mem0統合用）\n'
-    content += 'OLLAMA_URL=http://localhost:11434\n'
+    content += 'OLLAMA_URL=http://127.0.0.1:11434\n'
     content += 'OLLAMA_MODEL=qwen2.5:7b\n'
     
     env_path.write_text(content, encoding='utf-8')

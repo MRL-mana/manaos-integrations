@@ -4,7 +4,7 @@
 kind: server_monitor
 action: check
 service_name: "unified_api_server"
-port: 9500
+port: 9510
 notify:
   slack: false
 idempotency_key: "server_check_2026-01-13_001"
@@ -22,7 +22,7 @@ idempotency_key: "server_check_2026-01-13_001"
 # kind: server_monitor
 # action: check_and_restart
 # service_name: "unified_api_server"
-# port: 9500
+# port: 9510
 # script: "unified_api_server.py"
 # auto_restart: true
 # notify:

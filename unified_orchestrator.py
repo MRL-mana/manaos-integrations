@@ -161,12 +161,12 @@ class UnifiedOrchestrator:
 
     def __init__(
         self,
-        intent_router_url: str = "http://localhost:5100",
-        task_planner_url: str = "http://localhost:5101",
-        task_critic_url: str = "http://localhost:5102",
-        task_queue_url: str = "http://localhost:5104",
+        intent_router_url: str = "http://127.0.0.1:5100",
+        task_planner_url: str = "http://127.0.0.1:5101",
+        task_critic_url: str = "http://127.0.0.1:5102",
+        task_queue_url: str = "http://127.0.0.1:5104",
         executor_url: Optional[str] = None,
-        rag_memory_url: str = "http://localhost:5103",
+        rag_memory_url: str = "http://127.0.0.1:5103",
         learning_system_url: Optional[str] = None,
         config_path: Optional[Path] = None,
     ):
@@ -198,7 +198,7 @@ class UnifiedOrchestrator:
         # デフォルトでLearning System API URLを設定（設定ファイルで上書き可能）
         if not self.learning_system_url:
             self.learning_system_url = self.config.get(
-                "learning_system_url", "http://localhost:5126"
+                "learning_system_url", "http://127.0.0.1:5126"
             )
 
         # Learning Systemを直接インポートして使用（APIサーバーがない場合のフォールバック）
@@ -215,7 +215,7 @@ class UnifiedOrchestrator:
         self.metrics_collector = None
         if METRICS_AVAILABLE and self.config.get("enable_metrics", True):
             try:
-                metrics_url = self.config.get("metrics_collector_url", "http://localhost:5127")
+                metrics_url = self.config.get("metrics_collector_url", "http://127.0.0.1:5127")
                 # API経由で使用（直接インポートも可能）
                 self.metrics_collector_url = metrics_url
                 logger.info(f"✅ Metrics Collector統合完了: {metrics_url}")
@@ -307,10 +307,10 @@ class UnifiedOrchestrator:
             "max_retries": 3,
             "save_to_memory": True,
             "memory_importance_threshold": 0.6,
-            "learning_system_url": "http://localhost:5126",
+            "learning_system_url": "http://127.0.0.1:5126",
             "enable_learning": True,
             "enable_metrics": True,
-            "metrics_collector_url": "http://localhost:5127",
+            "metrics_collector_url": "http://127.0.0.1:5127",
             "enable_retry": True,
             "retry_initial_delay": 1.0,
             "retry_max_delay": 60.0,

@@ -18,16 +18,8 @@ if (
     sys.platform == "win32"
     and getattr(sys.stdout, "encoding", "") in _ENCODINGS_TO_NORMALIZE
 ):
-    sys.stdout = io.TextIOWrapper(
-        sys.stdout.buffer,
-        encoding="utf-8",
-        errors="replace",
-    )
-    sys.stderr = io.TextIOWrapper(
-        sys.stderr.buffer,
-        encoding="utf-8",
-        errors="replace",
-    )
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 
 class VSCodeManaOSIntegration:
@@ -90,26 +82,28 @@ class VSCodeManaOSIntegration:
     
     def create_vscode_manaos_settings(self) -> Dict[str, Any]:
         """VSCode用ManaOS設定を作成"""
+        unified_api_port = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9510"))
+        unified_api_url = os.getenv("MANAOS_INTEGRATION_API_URL") or f"http://127.0.0.1:{unified_api_port}"
         return {
             "manaos": {
                 "enabled": True,
                 "integrationPath": str(self.manaos_path),
-                "apiUrl": "http://localhost:9502",
+                "apiUrl": unified_api_url,
                 "memory": {
                     "enabled": True,
                     "type": "mrl",
-                    "apiUrl": "http://localhost:5105",
+                    "apiUrl": "http://127.0.0.1:5105",
                     "autoSync": True,
                     "syncInterval": 5000
                 },
                 "learning": {
                     "enabled": True,
-                    "apiUrl": "http://localhost:5126",
+                    "apiUrl": "http://127.0.0.1:5126",
                     "adaptiveOptimization": True
                 },
                 "llmRouting": {
                     "enabled": True,
-                    "apiUrl": "http://localhost:5111",
+                    "apiUrl": "http://127.0.0.1:5111",
                     "smartRouting": True
                 },
                 "autoStart": True,
@@ -129,6 +123,8 @@ class VSCodeManaOSIntegration:
     
     def create_vscode_mcp_servers(self) -> Dict[str, Any]:
         """VSCode用に最低限のManaOS MCPサーバー設定を作成"""
+        unified_api_port = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9510"))
+        unified_api_url = os.getenv("MANAOS_INTEGRATION_API_URL") or f"http://127.0.0.1:{unified_api_port}"
         return {
             # VS Codeから ComfyUI生成などを呼ぶために必須
             "manaos-unified-api": {
@@ -136,7 +132,7 @@ class VSCodeManaOSIntegration:
                 "args": ["-m", "unified_api_mcp_server.server"],
                 "env": {
                     "PYTHONPATH": str(self.manaos_path),
-                    "MANAOS_INTEGRATION_API_URL": "http://localhost:9502",
+                    "MANAOS_INTEGRATION_API_URL": unified_api_url,
                     "MANAOS_LOG_TO_STDERR": "1",
                 },
                 "cwd": str(self.manaos_path),
@@ -170,6 +166,9 @@ class VSCodeManaOSIntegration:
         py_cmd = "py" if sys.platform == "win32" else "python"
         py_args_prefix = ["-3.10"] if sys.platform == "win32" else []
 
+        unified_api_port = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9510"))
+        unified_api_url = os.getenv("MANAOS_INTEGRATION_API_URL") or f"http://127.0.0.1:{unified_api_port}"
+
         return {
             "manaos-unified-api": {
                 "command": py_cmd,
@@ -180,7 +179,7 @@ class VSCodeManaOSIntegration:
                 ],
                 "env": {
                     "PYTHONPATH": str(self.manaos_path),
-                    "MANAOS_INTEGRATION_API_URL": "http://localhost:9502",
+                    "MANAOS_INTEGRATION_API_URL": unified_api_url,
                     "MANAOS_LOG_TO_STDERR": "1",
                 },
                 "cwd": str(self.manaos_path),

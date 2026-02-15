@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import aiohttp
 import os
 
-OPEN_WEBUI_BASE_URL = os.getenv("OPEN_WEBUI_BASE_URL", "http://localhost:8080")
+OPEN_WEBUI_BASE_URL = os.getenv("OPEN_WEBUI_BASE_URL", "http://127.0.0.1:8080")
 
 app = FastAPI(
     title="User Info Proxy API",
