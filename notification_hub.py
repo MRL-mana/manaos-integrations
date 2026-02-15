@@ -5,16 +5,14 @@ Slackを一次通知先に固定、Discord/メールを転送
 """
 
 import json
-import logging
+from manaos_logger import get_logger
 import time
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import uuid
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+logger = get_logger(__name__)
 # 既存の通知システムをインポート
 try:
     from notification_system import NotificationSystem

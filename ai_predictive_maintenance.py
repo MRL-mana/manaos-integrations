@@ -7,7 +7,7 @@
 import json
 import time
 import psutil
-import logging
+from manaos_logger import get_logger
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -28,11 +28,7 @@ try:
 except ImportError:
     LLM_AVAILABLE = False
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass

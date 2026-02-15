@@ -14,8 +14,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import logging
-
+from manaos_logger import get_logger
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -24,9 +23,7 @@ if sys.platform == "win32":
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent))
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+logger = get_logger(__name__)
 app = Flask(__name__)
 CORS(app)
 

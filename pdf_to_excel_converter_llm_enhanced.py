@@ -10,7 +10,7 @@ PDF→Excel変換（LLM強化版）
 
 import os
 import sys
-import logging
+from manaos_logger import get_logger
 import pandas as pd
 from pathlib import Path
 from typing import Optional, Dict, Any, List
@@ -45,11 +45,7 @@ except ImportError:
     print("警告: PyMuPDFが見つかりません")
 
 # ログ設定
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - [%(levelname)s] %(message)s'
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class PDFToExcelConverterLLMEnhanced:

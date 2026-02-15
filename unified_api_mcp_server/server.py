@@ -6,11 +6,9 @@ Unified API Serverのすべての機能をMCPツールとして提供
 import os
 import sys
 import json
-import logging
 import requests
 from typing import Any, Dict, List, Optional
 from pathlib import Path
-import io
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
@@ -20,19 +18,17 @@ if sys.platform == "win32":
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# MCP SDKのインポート
-try:
+from mcp_common import check_mcp_available, get_mcp_logger
+
+MCP_AVAILABLE = check_mcp_available()
+if MCP_AVAILABLE:
     from mcp.server import Server
     from mcp.server.stdio import stdio_server
     from mcp.types import Tool, TextContent
 
-    MCP_AVAILABLE = True
-except ImportError:
-    MCP_AVAILABLE = False
-    logging.warning("MCP SDKがインストールされていません。pip install mcp を実行してください。")
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_mcp_logger(__name__)
+if not MCP_AVAILABLE:
+    logger.warning("MCP SDKがインストールされていません。pip install mcp を実行してください。")
 
 # APIエンドポイント
 # NOTE:

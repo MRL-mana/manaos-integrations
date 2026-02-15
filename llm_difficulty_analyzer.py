@@ -4,13 +4,10 @@ LLM難易度判定エンジン
 """
 
 import re
-import logging
+from manaos_logger import get_logger
 from typing import Dict, Any, List, Optional
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
+logger = get_logger(__name__)
 class DifficultyAnalyzer:
     """プロンプトの難易度を分析"""
     

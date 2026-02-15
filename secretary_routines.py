@@ -3,14 +3,12 @@
 朝・昼・夜のルーチンを自動実行
 """
 
-import logging
+from manaos_logger import get_logger
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+logger = get_logger(__name__)
 # 標準APIをインポート
 try:
     import manaos_core_api as manaos

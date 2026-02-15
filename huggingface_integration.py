@@ -3,7 +3,7 @@ Hugging Face統合サービス（ManaOS統合版）
 モデル検索・ダウンロード・画像生成をManaOSに統合
 """
 
-import logging
+from manaos_logger import get_logger
 import os
 import sys
 from pathlib import Path
@@ -11,9 +11,7 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 import json
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+logger = get_logger(__name__)
 # Hugging Face統合
 
 # 親ディレクトリをパスに追加

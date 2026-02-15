@@ -40,6 +40,7 @@ core = [
     "pandas>=2.0.0",
     "numpy>=1.24.0",
     "mcp>=0.9.0",
+    "Pillow>=10.0.0",
     "pyserial>=3.5",
     "pynput>=1.7.0",
     "mss>=9.0.0",

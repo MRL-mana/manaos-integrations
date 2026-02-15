@@ -10,7 +10,7 @@ import shutil
 import hashlib
 import schedule
 import time
-import logging
+from manaos_logger import get_logger
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from datetime import datetime
@@ -22,11 +22,7 @@ try:
 except ImportError:
     GoogleDriveIntegration = None
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass

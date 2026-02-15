@@ -303,3 +303,6 @@ migrated_from_konoha/user_data_backups/
 
 # JWT secret key (auto-generated)
 .jwt_secret
+
+# pytest debug
+_pytest_debug*.txt

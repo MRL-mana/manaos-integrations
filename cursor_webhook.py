@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import logging
+from manaos_logger import get_logger
 from logging.handlers import RotatingFileHandler
 import os
 import hmac
@@ -19,7 +20,6 @@ except Exception:
 
 app = Flask(__name__)
 CORS(app)
-logging.basicConfig(level=os.getenv("MANAOS_LOG_LEVEL", "INFO"))
 logger = logging.getLogger("manaos.cursor_webhook")
 
 # File logging (rotating)

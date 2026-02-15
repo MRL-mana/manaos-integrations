@@ -6,56 +6,29 @@ Cursorから直接ManaOSのLLMルーティング機能を使用可能にする
 import os
 import sys
 import json
-import logging
 from typing import Any, Dict, List, Optional
 import requests
-import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from pathlib import Path
 
-try:
-    from manaos_logger import get_logger
-except ImportError:
-    from logging import getLogger as get_logger
+# 親ディレクトリをパスに追加
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# MCP SDKのインポート
-try:
+from mcp_common import check_mcp_available, start_health_thread, get_mcp_logger
+
+MCP_AVAILABLE = check_mcp_available()
+if MCP_AVAILABLE:
     from mcp.server import Server
     from mcp.server.stdio import stdio_server
     from mcp.types import Tool, TextContent
-    MCP_AVAILABLE = True
-except ImportError:
-    MCP_AVAILABLE = False
 
-logger = get_logger(__name__)
+logger = get_mcp_logger(__name__)
 if not MCP_AVAILABLE:
     logger.warning("MCP SDKがインストールされていません。pip install mcp を実行してください。")
 
 # APIエンドポイント
 UNIFIED_API_URL = os.getenv("MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510")
 
-# ヘルスチェック用HTTPサーバー
-class HealthCheckHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == "/health":
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps({"status": "healthy", "service": "llm-routing"}).encode())
-        else:
-            self.send_error(404)
-    
-    def log_message(self, format, *args):
-        # ログを抑制
-        pass
-
-def start_health_server(port: int = 5111):
-    """ヘルスチェック用HTTPサーバーを起動"""
-    try:
-        server = HTTPServer(("127.0.0.1", port), HealthCheckHandler)
-        logger.info(f"ヘルスチェックサーバー起動: ポート {port}")
-        server.serve_forever()
-    except Exception as e:
-        logger.error(f"ヘルスチェックサーバー起動エラー: {e}")
+# ヘルスチェック HTTP (mcp_common 使用)
 
 # MCPサーバーの初期化
 if MCP_AVAILABLE:
@@ -276,8 +249,7 @@ async def main():
     
     # ヘルスチェックサーバーをバックグラウンドで起動
     health_port = int(os.getenv("PORT", "5111"))
-    health_thread = threading.Thread(target=start_health_server, args=(health_port,), daemon=True)
-    health_thread.start()
+    start_health_thread("llm-routing", health_port)
     
     async with stdio_server() as (read_stream, write_stream):
         await app.run(read_stream, write_stream, app.create_initialization_options())
@@ -286,22 +258,6 @@ async def main():
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

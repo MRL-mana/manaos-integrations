@@ -6,7 +6,7 @@
 
 import json
 import asyncio
-import logging
+from manaos_logger import get_logger
 import time
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -15,10 +15,7 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 import requests
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class DeviceStatus(Enum):

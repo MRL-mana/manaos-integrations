@@ -3,16 +3,14 @@ Stable Diffusion画像生成器
 diffusersライブラリを使用した画像生成
 """
 
-import logging
+from manaos_logger import get_logger
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 import torch
 from PIL import Image
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+logger = get_logger(__name__)
 try:
     from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
     from diffusers.utils import export_to_gif

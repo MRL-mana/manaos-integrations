@@ -1,13 +1,9 @@
 # ManaOS 依存パッケージ（統合版）
 #
-# 【推奨】機能別に分割されたrequirementsファイルを使用してください:
-# - requirements-core.txt: コア依存（必須）
-# - requirements-training.txt: 学習関連（CASTLE-EX）
-# - requirements-voice.txt: 音声機能統合
-# - requirements-comfy.txt: ComfyUI統合
-# - requirements-dev.txt: 開発環境
+# 【推奨】pyproject.toml の optional-dependencies を使用:
+#   pip install -e ".[core,dev]"
 #
-# インストール例:
+# または機能別に分割されたrequirementsファイルを使用:
 #   pip install -r requirements-core.txt -r requirements-dev.txt
 #
 # --- コア ---
@@ -15,27 +11,4 @@
 
 # --- 開発環境 ---
 -r requirements-dev.txt
-
-# --- 追加パッケージ（コアに含まれないもの）---
-
-# MCP (Model Context Protocol)
-mcp>=0.9.0
-
-# 画像処理
-Pillow>=10.0.0
-
-# Windows自動化 & Pico HID
-pyserial>=3.5
-pynput>=1.7.0
-mss>=9.0.0
-
-# ドキュメント（オプション）
-sphinx>=7.1.0
-sphinx-rtd-theme>=1.3.0
-
-# 音声機能統合（オプション — 個別にインストール推奨）
-# faster-whisper>=1.0.0
-# openai-whisper>=20231117
-# pyaudio>=0.2.14
-# webrtcvad>=2.0.10
 # websockets>=11.0

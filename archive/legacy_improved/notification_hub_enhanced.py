@@ -7,7 +7,7 @@ Device Health Monitorと統合
 
 import os
 import json
-import logging
+from manaos_logger import get_logger
 import time
 import requests
 from pathlib import Path
@@ -24,14 +24,10 @@ try:
     NOTIFICATION_HUB_AVAILABLE = True
 except ImportError:
     NOTIFICATION_HUB_AVAILABLE = False
-    logger = logging.getLogger(__name__)
-    logger.warning("既存のNotification Hubが利用できません")
+logger = get_logger(__name__)
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+if not NOTIFICATION_HUB_AVAILABLE:
+    logger.warning("既存のNotification Hubが利用できません")
 
 
 @dataclass

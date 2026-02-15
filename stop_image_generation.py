@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""画像生成サービス（ComfyUI）を停止するスクリプト"""
+"""画像生成サービス（ComfyUI）を停止するスクリプト
 
-import subprocess
+プロセス終了には ProcessManager (manaos_process_manager) を使用。
+"""
+
 import sys
-import io
 import time
 import requests
+from manaos_process_manager import get_process_manager
 
 if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
+pm = get_process_manager("ComfyUIStop")
 
 COMFYUI_URL = "http://127.0.0.1:8188"
 COMFYUI_PORT = 8188

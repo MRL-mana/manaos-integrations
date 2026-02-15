@@ -4,15 +4,12 @@
 """
 
 import os
-import logging
+from manaos_logger import get_logger
 import requests
 from typing import Dict, Any, Optional, List
 from llm_difficulty_analyzer import DifficultyAnalyzer
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
+logger = get_logger(__name__)
 class EnhancedLLMRouter:
     """難易度ルーティング対応のLLMルーター"""
     

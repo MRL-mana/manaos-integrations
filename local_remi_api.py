@@ -28,6 +28,8 @@ import psutil
 import subprocess
 import json
 import time
+
+from manaos_process_manager import get_process_manager as _get_pm
 import asyncio
 import httpx
 import io
@@ -319,18 +321,16 @@ async def get_tasks():
 
     # 重要プロセス検出
     important_processes = []
-    for proc in psutil.process_iter(["name", "cpu_percent", "memory_percent"]):
-        try:
-            name = proc.info["name"].lower()
-            if any(k in name for k in ["python", "ollama", "comfy", "stable", "kohya", "lora"]):
-                if proc.info["cpu_percent"] > 5:
-                    important_processes.append({
-                        "name": proc.info["name"],
-                        "cpu": round(proc.info["cpu_percent"], 1),
-                        "ram": round(proc.info["memory_percent"], 1)
-                    })
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            continue
+    pm = _get_pm()
+    for p in pm.list_top_processes(sort_by="cpu", limit=50):
+        name = (p.get("name") or "").lower()
+        if any(k in name for k in ["python", "ollama", "comfy", "stable", "kohya", "lora"]):
+            if p.get("cpu_percent", 0) > 5:
+                important_processes.append({
+                    "name": p["name"],
+                    "cpu": round(p.get("cpu_percent", 0), 1),
+                    "ram": round(p.get("memory_mb", 0) / (psutil.virtual_memory().total / (1024**2)) * 100, 1),
+                })
 
     return {
         "docker_containers": containers,
@@ -598,17 +598,11 @@ async def widget(token: str = Query("")):
 async def emergency_stop():
     """Emergency stop - kill GPU-heavy processes"""
     audit_logger.warning("EMERGENCY STOP triggered")
-    stopped = []
-    for proc in psutil.process_iter(["name", "cpu_percent"]):
-        try:
-            name = proc.info["name"].lower()
-            if any(k in name for k in ["comfy", "kohya", "stable-diffusion"]):
-                proc.terminate()
-                stopped.append(proc.info["name"])
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            continue
-    add_notification("emergency", f"Emergency stop: {len(stopped)} processes killed")
-    return {"stopped": stopped, "message": f"Stopped {len(stopped)} processes"}
+    pm = _get_pm()
+    killed = pm.kill_processes_by_keywords(["comfy", "kohya", "stable-diffusion"])
+    stopped = [f"process_{i}" for i in range(killed)]  # ProcessManager 経由
+    add_notification("emergency", f"Emergency stop: {killed} processes killed")
+    return {"stopped": stopped, "message": f"Stopped {killed} processes"}
 
 
 # ============================================================
@@ -687,15 +681,9 @@ async def run_action(action_name: str, arg: Optional[str] = Query(None)):
     if "special" in action:
         if action["special"] == "clear_vram":
             # Kill GPU-heavy python processes (not essential ones)
-            cleared = []
-            for proc in psutil.process_iter(["name", "cmdline", "cpu_percent"]):
-                try:
-                    cmdline = " ".join(proc.info.get("cmdline") or [])
-                    if any(k in cmdline.lower() for k in ["comfy", "kohya", "stable-diffusion", "train"]):
-                        proc.terminate()
-                        cleared.append(proc.info["name"])
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
+            pm = _get_pm()
+            killed = pm.kill_processes_by_keywords(["comfy", "kohya", "stable-diffusion", "train"])
+            cleared = [f"process_{i}" for i in range(killed)]
             # Also try to clear CUDA cache via a quick Python call
             try:
                 subprocess.run(
@@ -709,16 +697,10 @@ async def run_action(action_name: str, arg: Optional[str] = Query(None)):
 
     # Kill process type
     if "kill" in action:
-        killed = []
-        for proc in psutil.process_iter(["name", "cmdline"]):
-            try:
-                cmdline = " ".join(proc.info.get("cmdline") or [])
-                if action["kill"] in cmdline:
-                    proc.terminate()
-                    killed.append(proc.info["name"])
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
-        add_notification("action", f"{action['name']}: killed {len(killed)} processes")
+        pm = _get_pm()
+        killed_count = pm.kill_processes_by_keywords([action["kill"]])
+        killed = [f"process_{i}" for i in range(killed_count)]
+        add_notification("action", f"{action['name']}: killed {killed_count} processes")
         return {"action": action_name, "killed": killed}
 
     # Command type

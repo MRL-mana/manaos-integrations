@@ -7,7 +7,7 @@
 
 import os
 import json
-import logging
+from manaos_logger import get_logger
 import httpx
 import time
 import subprocess
@@ -17,8 +17,7 @@ from pathlib import Path
 from dataclasses import dataclass, asdict
 import threading
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass
