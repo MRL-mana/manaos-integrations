@@ -21,6 +21,8 @@ from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverit
 from manaos_timeout_config import get_timeout_config
 from manaos_config_validator import ConfigValidator
 
+from _paths import AUTONOMY_SYSTEM_PORT, MRL_MEMORY_PORT, ORCHESTRATOR_PORT, TASK_QUEUE_PORT
+
 # ロガーの初期化
 logger = get_logger(__name__)
 
@@ -34,12 +36,17 @@ app = Flask(__name__)
 CORS(app)
 
 # サービスURL
+DEFAULT_ORCHESTRATOR_URL = f"http://127.0.0.1:{ORCHESTRATOR_PORT}"
+DEFAULT_UI_OPERATIONS_URL = f"http://127.0.0.1:{MRL_MEMORY_PORT}"
+DEFAULT_TASK_QUEUE_URL = f"http://127.0.0.1:{TASK_QUEUE_PORT}"
+DEFAULT_AUTONOMY_SYSTEM_URL = f"http://127.0.0.1:{AUTONOMY_SYSTEM_PORT}"
+
 SERVICES = {
-    "unified_orchestrator": "http://127.0.0.1:5106",
-    "ui_operations": "http://127.0.0.1:5105",
-    "task_queue": "http://127.0.0.1:5104",
+    "unified_orchestrator": os.getenv("ORCHESTRATOR_URL", DEFAULT_ORCHESTRATOR_URL).rstrip("/"),
+    "ui_operations": os.getenv("UI_OPERATIONS_URL", DEFAULT_UI_OPERATIONS_URL).rstrip("/"),
+    "task_queue": os.getenv("TASK_QUEUE_URL", DEFAULT_TASK_QUEUE_URL).rstrip("/"),
 }
-AUTONOMY_SYSTEM_URL = os.getenv("AUTONOMY_SYSTEM_URL", "http://127.0.0.1:5124").rstrip("/")
+AUTONOMY_SYSTEM_URL = os.getenv("AUTONOMY_SYSTEM_URL", DEFAULT_AUTONOMY_SYSTEM_URL).rstrip("/")
 
 # 外部クライアント用: Portal → 5106 のタイムアウト（短めで切る。LLM待ちでUX死ぬの防止）
 ORCHESTRATOR_CLIENT_TIMEOUT = float(os.getenv("PORTAL_ORCHESTRATOR_TIMEOUT", "12"))

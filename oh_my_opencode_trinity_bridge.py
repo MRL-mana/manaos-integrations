@@ -15,9 +15,25 @@ from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from manaos_timeout_config import get_timeout_config
 
+from _paths import (
+    INTENT_ROUTER_PORT,
+    LEARNING_SYSTEM_PORT,
+    ORCHESTRATOR_PORT,
+    RAG_MEMORY_PORT,
+    TASK_CRITIC_PORT,
+    TASK_PLANNER_PORT,
+)
+
 logger = get_logger(__name__)
 error_handler = ManaOSErrorHandler("OHMyOpenCodeTrinityBridge")
 timeout_config = get_timeout_config()
+
+DEFAULT_INTENT_ROUTER_URL = f"http://127.0.0.1:{INTENT_ROUTER_PORT}"
+DEFAULT_TASK_PLANNER_URL = f"http://127.0.0.1:{TASK_PLANNER_PORT}"
+DEFAULT_TASK_CRITIC_URL = f"http://127.0.0.1:{TASK_CRITIC_PORT}"
+DEFAULT_RAG_MEMORY_URL = f"http://127.0.0.1:{RAG_MEMORY_PORT}"
+DEFAULT_LEARNING_SYSTEM_URL = f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}"
+DEFAULT_ORCHESTRATOR_URL = f"http://127.0.0.1:{ORCHESTRATOR_PORT}"
 
 
 @dataclass
@@ -56,12 +72,12 @@ class TrinityBridge:
     
     def __init__(
         self,
-        intent_router_url: str = "http://127.0.0.1:5100",
-        task_planner_url: str = "http://127.0.0.1:5101",
-        task_critic_url: str = "http://127.0.0.1:5102",
-        rag_memory_url: str = "http://127.0.0.1:5103",
-        learning_system_url: str = "http://127.0.0.1:5126",
-        orchestrator_url: str = "http://127.0.0.1:5106"
+        intent_router_url: Optional[str] = None,
+        task_planner_url: Optional[str] = None,
+        task_critic_url: Optional[str] = None,
+        rag_memory_url: Optional[str] = None,
+        learning_system_url: Optional[str] = None,
+        orchestrator_url: Optional[str] = None,
     ):
         """
         初期化
@@ -74,12 +90,12 @@ class TrinityBridge:
             learning_system_url: Learning System API URL
             orchestrator_url: Unified Orchestrator API URL
         """
-        self.intent_router_url = intent_router_url
-        self.task_planner_url = task_planner_url
-        self.task_critic_url = task_critic_url
-        self.rag_memory_url = rag_memory_url
-        self.learning_system_url = learning_system_url
-        self.orchestrator_url = orchestrator_url
+        self.intent_router_url = intent_router_url or DEFAULT_INTENT_ROUTER_URL
+        self.task_planner_url = task_planner_url or DEFAULT_TASK_PLANNER_URL
+        self.task_critic_url = task_critic_url or DEFAULT_TASK_CRITIC_URL
+        self.rag_memory_url = rag_memory_url or DEFAULT_RAG_MEMORY_URL
+        self.learning_system_url = learning_system_url or DEFAULT_LEARNING_SYSTEM_URL
+        self.orchestrator_url = orchestrator_url or DEFAULT_ORCHESTRATOR_URL
         
         # HTTPクライアント
         self.http_client = httpx.AsyncClient(timeout=timeout_config.get("api_call", 5.0))
