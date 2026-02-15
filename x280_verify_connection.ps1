@@ -8,32 +8,33 @@ Write-Host ""
 
 # 1. Check if API Gateway is running
 Write-Host "[1/4] Checking API Gateway process..." -ForegroundColor Yellow
-$process = Get-Process python -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*manaos_x280*" -or (Get-NetTCPConnection -LocalPort 5120 -ErrorAction SilentlyContinue -OwningProcess $_.Id) }
+$x280Port = if ($env:X280_API_PORT) { [int]$env:X280_API_PORT } else { 5120 }
+$process = Get-Process python -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*manaos_x280*" -or (Get-NetTCPConnection -LocalPort $x280Port -ErrorAction SilentlyContinue -OwningProcess $_.Id) }
 if ($process) {
     Write-Host "[OK] API Gateway process found (PID: $($process.Id))" -ForegroundColor Green
 } else {
     Write-Host "[WARN] API Gateway process not found" -ForegroundColor Yellow
 }
 
-# 2. Check port 5120
-Write-Host "[2/4] Checking port 5120..." -ForegroundColor Yellow
+# 2. Check port
+Write-Host "[2/4] Checking port $x280Port..." -ForegroundColor Yellow
 try {
-    $connections = Get-NetTCPConnection -LocalPort 5120 -ErrorAction SilentlyContinue
+    $connections = Get-NetTCPConnection -LocalPort $x280Port -ErrorAction SilentlyContinue
     if ($connections) {
-        Write-Host "[OK] Port 5120 is listening" -ForegroundColor Green
+        Write-Host "[OK] Port $x280Port is listening" -ForegroundColor Green
         foreach ($conn in $connections) {
             Write-Host "  State: $($conn.State)" -ForegroundColor Gray
             Write-Host "  LocalAddress: $($conn.LocalAddress)" -ForegroundColor Gray
             Write-Host "  LocalPort: $($conn.LocalPort)" -ForegroundColor Gray
         }
     } else {
-        Write-Host "[WARN] Port 5120 is not listening" -ForegroundColor Yellow
+        Write-Host "[WARN] Port $x280Port is not listening" -ForegroundColor Yellow
     }
 } catch {
     Write-Host "[INFO] Could not check port (CIM unavailable)" -ForegroundColor Gray
-    $netstat = netstat -ano | Select-String ":5120"
+    $netstat = netstat -ano | Select-String ":$x280Port"
     if ($netstat) {
-        Write-Host "[OK] Port 5120 found in netstat:" -ForegroundColor Green
+        Write-Host "[OK] Port $x280Port found in netstat:" -ForegroundColor Green
         Write-Host $netstat -ForegroundColor Gray
     }
 }
@@ -50,8 +51,13 @@ if ($LASTEXITCODE -eq 0 -and -not ($firewallRule -match "指定された規則�
 
 # 4. Test local connection
 Write-Host "[4/4] Testing local connection..." -ForegroundColor Yellow
+$x280ApiBaseUrl = if ($env:X280_API_URL) {
+    $env:X280_API_URL.TrimEnd('/')
+} else {
+    "http://127.0.0.1:$x280Port"
+}
 try {
-    $response = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/health" -TimeoutSec 5
+    $response = Invoke-RestMethod -Uri "$x280ApiBaseUrl/api/health" -TimeoutSec 5
     Write-Host "[SUCCESS] Local connection works!" -ForegroundColor Green
     Write-Host "  Status: $($response.status)" -ForegroundColor Cyan
 } catch {

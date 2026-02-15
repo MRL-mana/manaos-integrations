@@ -361,37 +361,59 @@ class UnifiedMemory:
         """
         results = []
         
-        # Obsidianから検索
+        # Obsidianから検索（タイムアウトで保護）
         if self.obsidian:
             try:
-                obsidian_results = self.obsidian.search_notes(query)
-                
-                # スコープでフィルタ
-                if scope != "all":
-                    obsidian_results = self._filter_by_scope(obsidian_results, scope)
-                
+                from concurrent.futures import ThreadPoolExecutor, TimeoutError
+
+                timeout_sec = float(os.getenv("OBSIDIAN_SEARCH_TIMEOUT_SEC", "3"))
+                executor = ThreadPoolExecutor(max_workers=1)
+                future = executor.submit(self.obsidian.search_notes, query)
+                try:
+                    obsidian_results = future.result(timeout=timeout_sec)
+                except TimeoutError:
+                    future.cancel()
+                    logger.warning("Obsidian検索がタイムアウトしました。ローカルキャッシュのみで応答します")
+                    obsidian_results = []
+                finally:
+                    executor.shutdown(wait=False, cancel_futures=True)
+
                 # 統一フォーマットに変換
                 for note_path in obsidian_results[:limit]:
                     try:
                         # Pathオブジェクトから内容を読み込む
                         if isinstance(note_path, Path):
-                            content_str = self.obsidian.read_note(note_path.name)
+                            try:
+                                content_str = note_path.read_text(encoding="utf-8")
+                            except Exception:
+                                content_str = self.obsidian.read_note(note_path.name)
                             if content_str:
                                 # フロントマターを解析して辞書形式に変換
                                 note_dict = self._parse_note_content(note_path, content_str)
                                 formatted = self._note_to_unified_format(note_dict)
-                                if formatted:
+                                if formatted and self._is_in_scope(formatted.get("timestamp", ""), scope):
                                     results.append(formatted)
                     except Exception as e:
                         logger.warning(f"ノート処理エラー ({note_path}): {e}")
-            
+
             except Exception as e:
                 logger.warning(f"Obsidian検索エラー: {e}")
         
-        # ローカルキャッシュから検索
+        # ローカルキャッシュから検索（タイムアウトで保護）
         try:
-            cache_results = self._search_local_cache(query, scope, limit)
-            results.extend(cache_results)
+            from concurrent.futures import ThreadPoolExecutor, TimeoutError
+
+            cache_timeout = float(os.getenv("LOCAL_CACHE_SEARCH_TIMEOUT_SEC", "2"))
+            executor = ThreadPoolExecutor(max_workers=1)
+            future = executor.submit(self._search_local_cache, query, scope, limit)
+            try:
+                cache_results = future.result(timeout=cache_timeout)
+                results.extend(cache_results)
+            except TimeoutError:
+                future.cancel()
+                logger.warning("ローカルキャッシュ検索がタイムアウトしました")
+            finally:
+                executor.shutdown(wait=False, cancel_futures=True)
         except Exception as e:
             logger.warning(f"ローカルキャッシュ検索エラー: {e}")
         
@@ -401,33 +423,28 @@ class UnifiedMemory:
         logger.info(f"[Recall] query: {query}, results: {len(results)}")
         return results[:limit]
     
-    def _filter_by_scope(
-        self,
-        results: List[Dict[str, Any]],
-        scope: str
-    ) -> List[Dict[str, Any]]:
-        """スコープでフィルタ"""
-        now = datetime.now()
-        
-        for result in results:
-            timestamp_str = result.get("frontmatter", {}).get("created", "")
-            if not timestamp_str:
-                continue
-            
-            try:
-                timestamp = datetime.fromisoformat(timestamp_str)
-                delta = now - timestamp
-                
-                if scope == "today" and delta.days > 0:
-                    results.remove(result)
-                elif scope == "week" and delta.days > 7:
-                    results.remove(result)
-                elif scope == "month" and delta.days > 30:
-                    results.remove(result)
-            except (ValueError, KeyError):
-                continue
-        
-        return results
+    def _is_in_scope(self, timestamp_str: str, scope: str) -> bool:
+        """スコープに合致するか判定"""
+        if scope == "all":
+            return True
+
+        if not timestamp_str:
+            return False
+
+        try:
+            timestamp = datetime.fromisoformat(timestamp_str)
+        except (ValueError, TypeError):
+            return False
+
+        delta = datetime.now() - timestamp
+        if scope == "today":
+            return delta.days <= 0
+        if scope == "week":
+            return delta.days <= 7
+        if scope == "month":
+            return delta.days <= 30
+
+        return True
     
     def _parse_note_content(self, path: Path, content: str) -> Dict[str, Any]:
         """ノート内容からメタデータを抽出して辞書化"""

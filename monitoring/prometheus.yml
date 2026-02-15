@@ -1,0 +1,127 @@
+# Prometheus Configuration for ManaOS Services
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'manaos-cluster'
+    environment: 'production'
+
+# Alertmanager configuration (optional)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# Rule files
+rule_files:
+  # - "alerts/*.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus自体のメトリクス
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # ManaOS Unified API
+  - job_name: 'unified-api'
+    static_configs:
+      - targets: ['localhost:9502']
+        labels:
+          service: 'unified-api'
+          tier: 'core'
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # MRL Memory Integration (正しいポート: 5105)
+  - job_name: 'mrl-memory'
+    static_configs:
+      - targets: ['localhost:5105']
+        labels:
+          service: 'mrl-memory'
+          tier: 'core'
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Learning System (正しいポート: 5126)
+  - job_name: 'learning-system'
+    static_configs:
+      - targets: ['localhost:5126']
+        labels:
+          service: 'learning-system'
+          tier: 'core'
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # LLM Routing (正しいポート: 5111)
+  - job_name: 'llm-routing'
+    static_configs:
+      - targets: ['localhost:5111']
+        labels:
+          service: 'llm-routing'
+          tier: 'core'
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Video Pipeline (正しいポート: 5112)
+  - job_name: 'video-pipeline'
+    static_configs:
+      - targets: ['localhost:5112']
+        labels:
+          service: 'video-pipeline'
+          tier: 'core'
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Gallery API
+  - job_name: 'gallery-api'
+    static_configs:
+      - targets: ['localhost:5559']
+        labels:
+          service: 'gallery-api'
+          tier: 'infrastructure'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Ollama (LLMインフラ)
+  - job_name: 'ollama'
+    static_configs:
+      - targets: ['localhost:11434']
+        labels:
+          service: 'ollama'
+          tier: 'infrastructure'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Pico HID MCP (デバイス制御)
+  - job_name: 'pico-hid-mcp'
+    static_configs:
+      - targets: ['localhost:5136']
+        labels:
+          service: 'pico-hid-mcp'
+          tier: 'optional'
+    metrics_path: '/health'
+    scrape_interval: 30s
+
+  # Moltbot Gateway (外部統合)
+  - job_name: 'moltbot-gateway'
+    static_configs:
+      - targets: ['localhost:8088']
+        labels:
+          service: 'moltbot-gateway'
+          tier: 'optional'
+    metrics_path: '/moltbot/metrics'
+    scrape_interval: 30s
+
+  # cAdvisor（コンテナメトリクス）
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          service: 'cadvisor'
+          tier: 'monitoring'
+    metrics_path: '/metrics'
+    scrape_interval: 15s

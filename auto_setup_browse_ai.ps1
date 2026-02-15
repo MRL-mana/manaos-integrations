@@ -4,13 +4,24 @@
 Write-Host "🚀 Browse AI統合自動セットアップ開始" -ForegroundColor Green
 Write-Host ""
 
+# n8n base URL（env優先）
+$n8nBaseUrl = if ($env:N8N_URL) {
+    $env:N8N_URL.TrimEnd('/')
+} elseif ($env:N8N_PORT) {
+    ("http://127.0.0.1:{0}" -f $env:N8N_PORT).TrimEnd('/')
+} else {
+    "http://127.0.0.1:5678"
+}
+
+$n8nPortNumber = if ($env:N8N_PORT) { [int]$env:N8N_PORT } else { 5678 }
+
 # Step 1: n8n確認
 Write-Host "📋 Step 1: n8n確認中..." -ForegroundColor Yellow
-$n8nPort = Test-NetConnection -ComputerName 127.0.0.1 -Port 5678 -InformationLevel Quiet
+$n8nPort = Test-NetConnection -ComputerName 127.0.0.1 -Port $n8nPortNumber -InformationLevel Quiet
 $portalPort = Test-NetConnection -ComputerName 127.0.0.1 -Port 5000 -InformationLevel Quiet
 
 if ($n8nPort) {
-    Write-Host "✅ n8nは起動しています (ポート5678)" -ForegroundColor Green
+    Write-Host "✅ n8nは起動しています ($n8nBaseUrl)" -ForegroundColor Green
 } else {
     Write-Host "❌ n8nが起動していません" -ForegroundColor Red
     Write-Host "   n8nを起動してください" -ForegroundColor Yellow
@@ -57,7 +68,7 @@ Write-Host "3. 「ワークフローをインポート」をクリック" -Foreg
 Write-Host "4. ファイルを選択: $workflowPath" -ForegroundColor White
 Write-Host ""
 Write-Host "【方法B: n8n直接アクセス】" -ForegroundColor Cyan
-Write-Host "1. ブラウザで開く: http://127.0.0.1:5678" -ForegroundColor White
+Write-Host "1. ブラウザで開く: $n8nBaseUrl" -ForegroundColor White
 Write-Host "2. ログイン（必要に応じて）" -ForegroundColor White
 Write-Host "3. 「Workflows」→「Import from File」" -ForegroundColor White
 Write-Host "4. ファイルを選択: $workflowPath" -ForegroundColor White
@@ -69,7 +80,7 @@ Write-Host ""
 Write-Host "✅ ワークフローインポート後:" -ForegroundColor Green
 Write-Host ""
 Write-Host "1. Webhook URL確認:" -ForegroundColor Cyan
-Write-Host "   http://127.0.0.1:5678/webhook/browse-ai-webhook" -ForegroundColor White
+Write-Host "   $n8nBaseUrl/webhook/browse-ai-webhook" -ForegroundColor White
 Write-Host ""
 Write-Host "2. Browse AIアカウント作成（手動）:" -ForegroundColor Cyan
 Write-Host "   https://www.browse.ai/" -ForegroundColor White

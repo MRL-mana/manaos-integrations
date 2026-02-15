@@ -15,6 +15,11 @@ if (Test-Path $mcpConfigPath) {
     } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
 }
 
+$comfyUiPort = if ($env:COMFYUI_PORT) { [int]$env:COMFYUI_PORT } else { 8188 }
+$unifiedApiPort = if ($env:MANAOS_INTEGRATION_PORT) { [int]$env:MANAOS_INTEGRATION_PORT } else { 9502 }
+$comfyUiBaseUrl = if ($env:COMFYUI_URL) { $env:COMFYUI_URL.TrimEnd('/') } else { "http://127.0.0.1:$comfyUiPort" }
+$unifiedApiBaseUrl = if ($env:MANAOS_INTEGRATION_API_URL) { $env:MANAOS_INTEGRATION_API_URL.TrimEnd('/') } else { "http://127.0.0.1:$unifiedApiPort" }
+
 # 統合版manaos_mcp_server.pyの設定を追加
 $manaosUnifiedConfig = @{
     command = "python"
@@ -23,8 +28,8 @@ $manaosUnifiedConfig = @{
     )
     env = @{
         PYTHONPATH = "C:\Users\mana4\Desktop\manaos_integrations"
-        MANAOS_INTEGRATION_API_URL = "http://127.0.0.1:9510"
-        COMFYUI_URL = "http://127.0.0.1:8188"
+        MANAOS_INTEGRATION_API_URL = $unifiedApiBaseUrl
+        COMFYUI_URL = $comfyUiBaseUrl
         OBSIDIAN_VAULT_PATH = "C:\Users\mana4\Documents\Obsidian Vault"
     }
     cwd = "C:\Users\mana4\Desktop\manaos_integrations"

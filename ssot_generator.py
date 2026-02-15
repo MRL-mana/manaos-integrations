@@ -16,6 +16,24 @@ from pathlib import Path
 from threading import Lock
 import time
 
+try:
+    from manaos_integrations._paths import (
+        CRASH_SNAPSHOT_PORT,
+        ORCHESTRATOR_PORT,
+        TASK_QUEUE_PORT,
+    )
+except Exception:  # pragma: no cover
+    try:
+        from _paths import (  # type: ignore
+            CRASH_SNAPSHOT_PORT,
+            ORCHESTRATOR_PORT,
+            TASK_QUEUE_PORT,
+        )
+    except Exception:  # pragma: no cover
+        TASK_QUEUE_PORT = int(os.getenv("TASK_QUEUE_PORT", "5104"))
+        ORCHESTRATOR_PORT = int(os.getenv("ORCHESTRATOR_PORT", "5106"))
+        CRASH_SNAPSHOT_PORT = int(os.getenv("CRASH_SNAPSHOT_PORT", "5113"))
+
 logger = get_logger(__name__)
 # SSOTファイルパス
 SSOT_FILE = Path(__file__).parent / "manaos_status.json"
@@ -28,7 +46,7 @@ SERVICES = [
     {"name": "Task Critic", "port": 5102, "script": "task_critic.py"},
     {"name": "RAG Memory", "port": 5103, "script": "rag_memory_enhanced.py"},
     {"name": "Task Queue", "port": 5104, "script": "task_queue_system.py"},
-    {"name": "UI Operations", "port": 5105, "script": "ui_operations_api.py"},
+    {"name": "UI Operations", "port": 5110, "script": "ui_operations_api.py"},
     {"name": "Unified Orchestrator", "port": 5106, "script": "unified_orchestrator.py"},
     {"name": "Executor Enhanced", "port": 5107, "script": "task_executor_enhanced.py"},
     {"name": "Portal Integration", "port": 5108, "script": "portal_integration_api.py"},
@@ -162,7 +180,11 @@ class SSOTGenerator:
         try:
             # Task Queueから取得
             response = httpx.get(
-                "http://127.0.0.1:5104/api/status",
+                os.getenv(
+                    "TASK_QUEUE_URL",
+                    f"http://127.0.0.1:{TASK_QUEUE_PORT}",
+                )
+                + "/api/status",
                 timeout=2
             )
             if response.status_code == 200:
@@ -186,7 +208,11 @@ class SSOTGenerator:
         # Unified Orchestratorから実行履歴を取得
         try:
             response = httpx.get(
-                "http://127.0.0.1:5106/api/history?limit=5",
+                os.getenv(
+                    "ORCHESTRATOR_URL",
+                    f"http://127.0.0.1:{ORCHESTRATOR_PORT}",
+                )
+                + "/api/history?limit=5",
                 timeout=2
             )
             if response.status_code == 200:
@@ -210,7 +236,11 @@ class SSOTGenerator:
         # Crash Snapshotから最新エラーを取得
         try:
             response = httpx.get(
-                "http://127.0.0.1:5113/api/snapshots?limit=1",
+                os.getenv(
+                    "CRASH_SNAPSHOT_URL",
+                    f"http://127.0.0.1:{CRASH_SNAPSHOT_PORT}",
+                )
+                + "/api/snapshots?limit=1",
                 timeout=2
             )
             if response.status_code == 200:

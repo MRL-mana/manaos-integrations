@@ -312,7 +312,7 @@ MANAOS_SERVICES = {
     "task_critic": {"port": 5102, "name": "Task Critic"},
     "rag_memory": {"port": 5103, "name": "RAG Memory"},
     "task_queue": {"port": 5104, "name": "Task Queue"},
-    "ui_operations": {"port": 5105, "name": "UI Operations"},
+    "ui_operations": {"port": 5110, "name": "UI Operations"},
     "unified_orchestrator": {"port": 5106, "name": "Unified Orchestrator"},
     "executor_enhanced": {"port": 5107, "name": "Executor Enhanced"},
     "portal_integration": {"port": 5108, "name": "Portal Integration"},
@@ -330,7 +330,7 @@ MANAOS_SERVICES = {
 
 # 統合システム定義
 INTEGRATION_SERVICES = {
-    "unified_api": {"port": 9510, "name": "Unified API Server"},
+    "unified_api": {"port": 9502, "name": "Unified API Server"},
     "command_hub": {"port": 9404, "name": "Command Hub"},
     "enhanced_api": {"port": 9406, "name": "Enhanced API"},
     "monitoring": {"port": 9407, "name": "Monitoring"},

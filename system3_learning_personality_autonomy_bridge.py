@@ -9,6 +9,16 @@ import httpx
 from typing import Dict, Any, List
 
 try:
+    from manaos_integrations._paths import AUTONOMY_SYSTEM_PORT, LEARNING_SYSTEM_PORT, PERSONALITY_SYSTEM_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import AUTONOMY_SYSTEM_PORT, LEARNING_SYSTEM_PORT, PERSONALITY_SYSTEM_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        LEARNING_SYSTEM_PORT = int(os.getenv("LEARNING_SYSTEM_PORT", "5126"))
+        PERSONALITY_SYSTEM_PORT = int(os.getenv("PERSONALITY_SYSTEM_PORT", "5123"))
+        AUTONOMY_SYSTEM_PORT = int(os.getenv("AUTONOMY_SYSTEM_PORT", "5124"))
+
+try:
     from manaos_logger import get_logger
 except ImportError:
     import logging
@@ -16,9 +26,9 @@ except ImportError:
 logger = get_logger(__name__)
 
 # System3 各コンポーネントの URL
-LEARNING_URL = os.getenv("LEARNING_SYSTEM_URL", "http://127.0.0.1:5126").rstrip("/")
-PERSONALITY_URL = os.getenv("PERSONALITY_SYSTEM_URL", "http://127.0.0.1:5123").rstrip("/")
-AUTONOMY_URL = os.getenv("AUTONOMY_SYSTEM_URL", "http://127.0.0.1:5124").rstrip("/")
+LEARNING_URL = os.getenv("LEARNING_SYSTEM_URL", f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}").rstrip("/")
+PERSONALITY_URL = os.getenv("PERSONALITY_SYSTEM_URL", f"http://127.0.0.1:{PERSONALITY_SYSTEM_PORT}").rstrip("/")
+AUTONOMY_URL = os.getenv("AUTONOMY_SYSTEM_URL", f"http://127.0.0.1:{AUTONOMY_SYSTEM_PORT}").rstrip("/")
 
 
 def get_learning_preferences() -> Dict[str, Any]:

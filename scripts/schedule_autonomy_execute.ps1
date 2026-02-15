@@ -6,7 +6,8 @@ param(
     [int] $IntervalMinutes = 10
 )
 
-$baseUrl = if ($env:AUTONOMY_URL) { $env:AUTONOMY_URL.TrimEnd("/") } else { "http://127.0.0.1:5124" }
+$autonomyPort = if ($env:AUTONOMY_PORT) { [int]$env:AUTONOMY_PORT } else { 5124 }
+$baseUrl = if ($env:AUTONOMY_URL) { $env:AUTONOMY_URL.TrimEnd("/") } else { "http://127.0.0.1:$autonomyPort" }
 $uri = "$baseUrl/api/execute"
 
 Write-Host "Autonomy 定期実行を開始します。間隔: $IntervalMinutes 分。停止は Ctrl+C。"

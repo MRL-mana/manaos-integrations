@@ -4,6 +4,9 @@ $env:PYTHONIOENCODING = "utf-8"
 $env:PYTHONLEGACYWINDOWSSTDIO = "1"
 $env:PYTHONUTF8 = "1"
 
+$comfyUiPort = if ($env:COMFYUI_PORT) { [int]$env:COMFYUI_PORT } else { 8188 }
+$comfyUiBaseUrl = if ($env:COMFYUI_URL) { $env:COMFYUI_URL.TrimEnd('/') } else { "http://127.0.0.1:$comfyUiPort" }
+
 Write-Host "============================================================"
 Write-Host "ComfyUI起動（エンコーディング修正付き）"
 Write-Host "============================================================"
@@ -21,12 +24,12 @@ if (Test-Path $comfyuiPath) {
     Set-Location $comfyuiPath
     # 8188が既に使用中なら起動済みとみなす（重複起動によるErrno 10048を回避）
     try {
-        $inUse = Get-NetTCPConnection -LocalPort 8188 -State Listen -ErrorAction SilentlyContinue
+        $inUse = Get-NetTCPConnection -LocalPort $comfyUiPort -State Listen -ErrorAction SilentlyContinue
     } catch {
         $inUse = $null
     }
     if ($inUse) {
-        Write-Host "ComfyUIは既に起動しています: http://127.0.0.1:8188"
+        Write-Host "ComfyUIは既に起動しています: $comfyUiBaseUrl"
         Write-Host "（再起動したい場合は restart_comfyui_quick.bat を使ってください）"
     } else {
         python main.py

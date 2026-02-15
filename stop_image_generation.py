@@ -16,7 +16,9 @@ if sys.platform == 'win32':
 
 pm = get_process_manager("ComfyUIStop")
 
-COMFYUI_URL = "http://127.0.0.1:8188"
+from _paths import COMFYUI_PORT
+
+COMFYUI_URL = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
 COMFYUI_PORT = 8188
 
 def check_comfyui_running():

@@ -7,6 +7,14 @@ import os
 from pathlib import Path
 import time
 
+try:
+    from manaos_integrations._paths import N8N_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import N8N_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        N8N_PORT = int(os.getenv("N8N_PORT", "5678"))
+
 # Windows環境でのエンコーディング問題を回避
 if sys.platform == "win32":
     import io
@@ -24,7 +32,7 @@ print()
 print("【環境変数の確認】")
 if not os.getenv("N8N_BASE_URL"):
     # n8nのデフォルトURLを設定
-    os.environ["N8N_BASE_URL"] = "http://127.0.0.1:5678"
+    os.environ["N8N_BASE_URL"] = f"http://127.0.0.1:{N8N_PORT}"
     print(f"  [OK] N8N_BASE_URLを設定: {os.getenv('N8N_BASE_URL')}")
 else:
     print(f"  [OK] N8N_BASE_URL: {os.getenv('N8N_BASE_URL')}")

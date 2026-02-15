@@ -9,6 +9,19 @@ from pathlib import Path
 from manaos_logger import get_logger
 import io
 
+try:
+    from manaos_integrations._paths import N8N_PORT, OLLAMA_PORT, UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import N8N_PORT, OLLAMA_PORT, UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        N8N_PORT = int(os.getenv("N8N_PORT", "5678"))
+        OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9502"))
+
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
+
 # Windows環境でのエンコーディング問題を回避
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -58,8 +71,8 @@ def check_services():
     print("=" * 60)
     
     services = {
-        "Ollama": "http://127.0.0.1:11434",
-        "n8n": "http://127.0.0.1:5678"
+        "Ollama": DEFAULT_OLLAMA_URL,
+        "n8n": os.getenv("N8N_BASE_URL", f"http://127.0.0.1:{N8N_PORT}")
     }
     
     import requests
@@ -120,7 +133,7 @@ def start_server():
         initialize_integrations()
         
         # ポートとホストを取得
-        port = int(os.getenv("MANAOS_INTEGRATION_PORT", 9510))
+        port = int(os.getenv("MANAOS_INTEGRATION_PORT", str(UNIFIED_API_PORT)))
         host = os.getenv("MANAOS_INTEGRATION_HOST", "127.0.0.1")
         
         print(f"\nサーバー起動: http://{host}:{port}")

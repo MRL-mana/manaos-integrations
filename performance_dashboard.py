@@ -13,6 +13,14 @@ from pathlib import Path
 from flask import Flask, jsonify, request, render_template_string
 from flask_cors import CORS
 
+try:
+    from manaos_integrations._paths import METRICS_COLLECTOR_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import METRICS_COLLECTOR_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        METRICS_COLLECTOR_PORT = int(os.getenv("METRICS_COLLECTOR_PORT", "5127"))
+
 # 統一モジュールのインポート
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
@@ -31,7 +39,10 @@ app = Flask(__name__)
 CORS(app)
 
 # Metrics Collector URL
-METRICS_COLLECTOR_URL = os.getenv("METRICS_COLLECTOR_URL", "http://127.0.0.1:5127")
+METRICS_COLLECTOR_URL = os.getenv(
+    "METRICS_COLLECTOR_URL",
+    f"http://127.0.0.1:{METRICS_COLLECTOR_PORT}",
+)
 
 
 # HTMLテンプレート

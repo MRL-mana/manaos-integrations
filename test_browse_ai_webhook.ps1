@@ -4,6 +4,19 @@ param(
     [string]$WebhookUrl = "http://127.0.0.1:5678/webhook-test/browse-ai-webhook"
 )
 
+# n8n base URL（env優先）
+$n8nBaseUrl = if ($env:N8N_URL) {
+    $env:N8N_URL.TrimEnd('/')
+} elseif ($env:N8N_PORT) {
+    ("http://127.0.0.1:{0}" -f $env:N8N_PORT).TrimEnd('/')
+} else {
+    "http://127.0.0.1:5678"
+}
+
+if (-not $PSBoundParameters.ContainsKey('WebhookUrl')) {
+    $WebhookUrl = "$n8nBaseUrl/webhook-test/browse-ai-webhook"
+}
+
 Write-Host "Browse AI Webhook Test Start" -ForegroundColor Green
 Write-Host ""
 Write-Host "Webhook URL: $WebhookUrl" -ForegroundColor Cyan

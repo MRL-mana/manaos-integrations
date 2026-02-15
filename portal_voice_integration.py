@@ -13,6 +13,20 @@ from typing import Dict, Any, Optional
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+try:
+    from manaos_integrations._paths import (
+        ORCHESTRATOR_PORT,
+        SLACK_INTEGRATION_PORT,
+        WINDOWS_AUTOMATION_PORT,
+    )
+except Exception:  # pragma: no cover
+    try:
+        from _paths import ORCHESTRATOR_PORT, SLACK_INTEGRATION_PORT, WINDOWS_AUTOMATION_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        ORCHESTRATOR_PORT = int(os.getenv("ORCHESTRATOR_PORT", "5106"))
+        SLACK_INTEGRATION_PORT = int(os.getenv("SLACK_INTEGRATION_PORT", "5114"))
+        WINDOWS_AUTOMATION_PORT = int(os.getenv("WINDOWS_AUTOMATION_PORT", "5115"))
+
 # 統一モジュールのインポート
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
@@ -31,9 +45,9 @@ app = Flask(__name__)
 CORS(app)
 
 # 設定
-ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://127.0.0.1:5106")
-SLACK_INTEGRATION_URL = os.getenv("SLACK_INTEGRATION_URL", "http://127.0.0.1:5114")
-WEB_VOICE_URL = os.getenv("WEB_VOICE_URL", "http://127.0.0.1:5115")
+ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", f"http://127.0.0.1:{ORCHESTRATOR_PORT}")
+SLACK_INTEGRATION_URL = os.getenv("SLACK_INTEGRATION_URL", f"http://127.0.0.1:{SLACK_INTEGRATION_PORT}")
+WEB_VOICE_URL = os.getenv("WEB_VOICE_URL", f"http://127.0.0.1:{WINDOWS_AUTOMATION_PORT}")
 
 def execute_via_orchestrator(text: str, source: str = "portal", user: str = "portal_user") -> Dict[str, Any]:
     """Unified Orchestrator経由で実行"""

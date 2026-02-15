@@ -16,6 +16,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+try:
+    from manaos_integrations._paths import UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9502"))
+
 # NOTE:
 # このスクリプト内で PHASE1_REFLECTION を変更しても「サーバープロセス」には影響しない。
 # OFF条件のログを取りたい場合は、サーバー起動側で PHASE1_REFLECTION=off を設定すること。
@@ -26,7 +34,7 @@ except ImportError:
     print("requests が必要です: pip install requests")
     sys.exit(1)
 
-API_URL = os.environ.get("PHASE1_API_URL", "http://127.0.0.1:9510")
+API_URL = os.environ.get("PHASE1_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}")
 CHAT_URL = f"{API_URL}/api/llm/chat"
 TIMEOUT = int(os.environ.get("PHASE1_API_TIMEOUT", "120"))
 

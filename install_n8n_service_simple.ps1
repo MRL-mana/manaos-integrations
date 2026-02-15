@@ -173,12 +173,17 @@ if ($wmiService) {
 Write-Host ""
 
 if ($service.Status -eq "Running") {
+    $n8nBaseUrl = if ($env:N8N_URL) {
+        $env:N8N_URL.TrimEnd('/')
+    } else {
+        "http://127.0.0.1:5679"
+    }
     Write-Host "[OK] n8nサービスが正常に起動しました" -ForegroundColor Green
     Write-Host ""
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host "次のステップ" -ForegroundColor Cyan
     Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "1. ブラウザで http://127.0.0.1:5679 を開いてください" -ForegroundColor White
+    Write-Host "1. ブラウザで $n8nBaseUrl を開いてください" -ForegroundColor White
     Write-Host "2. サービス管理:" -ForegroundColor White
     Write-Host "   - 開始: Start-Service n8n" -ForegroundColor Gray
     Write-Host "   - 停止: Stop-Service n8n" -ForegroundColor Gray

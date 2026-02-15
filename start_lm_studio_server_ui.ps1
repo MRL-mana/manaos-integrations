@@ -9,6 +9,10 @@ Write-Host "LM StudioサーバーUI自動起動"
 Write-Host "=" * 60
 Write-Host ""
 
+# LM Studio API base URL（env優先、/v1吸収）
+$lmStudioRawUrl = if ($env:LM_STUDIO_URL) { $env:LM_STUDIO_URL.TrimEnd('/') } else { "http://127.0.0.1:1234" }
+$lmStudioApiBaseUrl = if ($lmStudioRawUrl -match "/v1$") { $lmStudioRawUrl } else { "$lmStudioRawUrl/v1" }
+
 # LM Studioプロセスを確認
 $lmStudioProcess = Get-Process -Name "LM Studio" -ErrorAction SilentlyContinue
 if (-not $lmStudioProcess) {
@@ -31,7 +35,7 @@ if (-not $lmStudioProcess) {
 Write-Host ""
 Write-Host "[確認中] サーバーの状態を確認中..." -ForegroundColor Yellow
 try {
-    $response = Invoke-WebRequest -Uri "http://127.0.0.1:1234/v1/models" -Method GET -TimeoutSec 2 -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "$lmStudioApiBaseUrl/models" -Method GET -TimeoutSec 2 -ErrorAction Stop
     Write-Host "[✅] LM Studioサーバーは既に起動しています！" -ForegroundColor Green
     $models = ($response.Content | ConvertFrom-Json).data
     Write-Host "利用可能なモデル数: $($models.Count)" -ForegroundColor Cyan

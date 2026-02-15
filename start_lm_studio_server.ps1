@@ -5,6 +5,10 @@ Write-Host "LM Studioサーバー起動"
 Write-Host "=" * 60
 Write-Host ""
 
+# URL（環境変数で上書き可能）
+$lmStudioRawUrl = if ($env:LM_STUDIO_URL) { $env:LM_STUDIO_URL.TrimEnd('/') } else { "http://127.0.0.1:1234" }
+$lmStudioApiBaseUrl = if ($lmStudioRawUrl -match '/v1$') { $lmStudioRawUrl } else { "$lmStudioRawUrl/v1" }
+
 # LM Studioのパスを検索
 $lmStudioPaths = @(
     "$env:LOCALAPPDATA\Programs\LM Studio\LM Studio.exe",
@@ -57,7 +61,7 @@ $serverStarted = $false
 
 while ($retryCount -lt $maxRetries -and -not $serverStarted) {
     try {
-        $response = Invoke-WebRequest -Uri "http://127.0.0.1:1234/v1/models" -Method GET -TimeoutSec 2 -ErrorAction Stop
+        $response = Invoke-WebRequest -Uri "$lmStudioApiBaseUrl/models" -Method GET -TimeoutSec 2 -ErrorAction Stop
         $serverStarted = $true
         Write-Host "   [OK] LM Studioサーバーが起動しています！" -ForegroundColor Green
         

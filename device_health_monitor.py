@@ -50,6 +50,16 @@ class DeviceHealthMonitor:
         self.config_path = Path(config_path)
         self.config = self._load_config()
         self.devices = self.config.get("devices", [])
+        
+        # 環境変数でデバイスエンドポイントを上書き
+        for device in self.devices:
+            device_type = device.get("type", "").upper()
+            env_key = f"{device_type}_HEALTH_URL"
+            env_url = os.getenv(env_key)
+            if env_url:
+                device["api_endpoint"] = env_url
+                logger.info(f"Device {device['name']} endpoint overridden by {env_key}: {env_url}")
+        
         self.check_interval = self.config.get("check_interval", 30)
         self.alert_thresholds = self.config.get("alert_thresholds", {
             "cpu_warning": 80.0,

@@ -15,6 +15,16 @@ from enum import Enum
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+try:
+    from manaos_integrations._paths import INTENT_ROUTER_PORT, TASK_PLANNER_PORT, TASK_QUEUE_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import INTENT_ROUTER_PORT, TASK_PLANNER_PORT, TASK_QUEUE_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        INTENT_ROUTER_PORT = int(os.getenv("INTENT_ROUTER_PORT", "5100"))
+        TASK_PLANNER_PORT = int(os.getenv("TASK_PLANNER_PORT", "5101"))
+        TASK_QUEUE_PORT = int(os.getenv("TASK_QUEUE_PORT", "5104"))
+
 # 統一モジュールのインポート
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
@@ -62,9 +72,9 @@ class UIOperationsAPI:
     
     def __init__(
         self,
-        intent_router_url: str = "http://127.0.0.1:5100",
-        task_planner_url: str = "http://127.0.0.1:5101",
-        task_queue_url: str = "http://127.0.0.1:5104",
+        intent_router_url: str = f"http://127.0.0.1:{INTENT_ROUTER_PORT}",
+        task_planner_url: str = f"http://127.0.0.1:{TASK_PLANNER_PORT}",
+        task_queue_url: str = f"http://127.0.0.1:{TASK_QUEUE_PORT}",
         cost_db_path: Optional[Path] = None,
         config_path: Optional[Path] = None
     ):
@@ -500,7 +510,7 @@ def get_cost_endpoint():
 
 
 if __name__ == '__main__':
-    port = int(os.getenv("PORT", 5105))
+    port = int(os.getenv("PORT", 5110))
     logger.info(f"🎮 UI操作機能API起動中... (ポート: {port})")
     init_ui_api()
     app.run(host='0.0.0.0', port=port, debug=os.getenv("DEBUG", "False").lower() == "true")

@@ -157,7 +157,14 @@ def call_llm_api(prompt: str) -> Optional[str]:
     # 方法2: unified_api_server経由
     try:
         print("🤖 unified_api_server経由でLLMを呼び出し中...")
-        api_url = os.getenv("UNIFIED_API_SERVER_URL", "http://127.0.0.1:9510")
+        try:
+            from manaos_integrations._paths import UNIFIED_API_PORT
+        except Exception:  # pragma: no cover
+            try:
+                from _paths import UNIFIED_API_PORT  # type: ignore
+            except Exception:  # pragma: no cover
+                UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9502"))
+        api_url = os.getenv("UNIFIED_API_SERVER_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}")
         response = requests.post(
             f"{api_url}/api/lfm25/chat",
             json={

@@ -5,6 +5,9 @@ Write-Host "n8n ローカルインストール" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
+$n8nPort = if ($env:N8N_PORT) { $env:N8N_PORT } else { "5678" }
+$n8nBaseUrl = if ($env:N8N_URL) { $env:N8N_URL.TrimEnd('/') } else { "http://127.0.0.1:$n8nPort" }
+
 # Node.jsの確認
 Write-Host "[1/5] Node.jsの確認..." -ForegroundColor Yellow
 $nodeVersion = node --version 2>$null
@@ -36,11 +39,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host ""
 
-# ポート5678の確認
-Write-Host "[3/5] ポート5678の確認..." -ForegroundColor Yellow
-$portInUse = Get-NetTCPConnection -LocalPort 5678 -ErrorAction SilentlyContinue
+# ポート確認
+Write-Host "[3/5] ポート$n8nPort の確認..." -ForegroundColor Yellow
+$portInUse = Get-NetTCPConnection -LocalPort ([int]$n8nPort) -ErrorAction SilentlyContinue
 if ($portInUse) {
-    Write-Host "[警告] ポート5678は既に使用されています" -ForegroundColor Yellow
+    Write-Host "[警告] ポート$n8nPort は既に使用されています" -ForegroundColor Yellow
     Write-Host "別のポートを使用するか、既存のプロセスを終了してください" -ForegroundColor Yellow
     Write-Host ""
     $useDifferentPort = Read-Host "別のポートを使用しますか？ (y/n)"
@@ -50,13 +53,15 @@ if ($portInUse) {
             $customPort = "5679"
         }
         $env:N8N_PORT = $customPort
+        $n8nPort = $customPort
+        if (-not $env:N8N_URL) { $n8nBaseUrl = "http://127.0.0.1:$n8nPort" }
         Write-Host "[OK] ポート $customPort を使用します" -ForegroundColor Green
     } else {
-        Write-Host "[NG] ポート5678が使用中のため、n8nを起動できません" -ForegroundColor Red
+        Write-Host "[NG] ポート$n8nPort が使用中のため、n8nを起動できません" -ForegroundColor Red
         exit 1
     }
 } else {
-    Write-Host "[OK] ポート5678は使用可能です" -ForegroundColor Green
+    Write-Host "[OK] ポート$n8nPort は使用可能です" -ForegroundColor Green
 }
 Write-Host ""
 
@@ -79,24 +84,17 @@ Write-Host "n8n起動中..." -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "ブラウザで以下のURLを開いてください:" -ForegroundColor Yellow
-if ($env:N8N_PORT) {
-    Write-Host "  http://127.0.0.1:$env:N8N_PORT" -ForegroundColor Cyan
-} else {
-    Write-Host "  http://127.0.0.1:5678" -ForegroundColor Cyan
-}
+Write-Host "  $n8nBaseUrl" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "停止するには Ctrl+C を押してください" -ForegroundColor Gray
 Write-Host ""
 
 # 環境変数を設定
 $env:N8N_USER_FOLDER = $n8nDataDir
+$env:N8N_PORT = $n8nPort
 
 # n8nを起動
-if ($env:N8N_PORT) {
-    n8n start --port $env:N8N_PORT
-} else {
-    n8n start
-}
+n8n start --port $n8nPort
 
 
 

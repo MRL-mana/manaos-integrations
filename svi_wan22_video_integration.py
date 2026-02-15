@@ -5,11 +5,13 @@ ComfyUIを使用した無限長動画生成機能
 
 import requests
 import json
+import os
 import time
 from typing import Optional, Dict, List, Any, Union
 from pathlib import Path
 from manaos_logger import get_logger
 from datetime import datetime
+from _paths import COMFYUI_PORT
 
 logger = get_logger(__name__)
 
@@ -17,13 +19,15 @@ logger = get_logger(__name__)
 class SVIWan22VideoIntegration:
     """SVI × Wan 2.2動画生成統合クラス"""
     
-    def __init__(self, base_url: str = "http://127.0.0.1:8188"):
+    def __init__(self, base_url: str = None):
         """
         初期化
         
         Args:
             base_url: ComfyUIサーバーのベースURL
         """
+        if base_url is None:
+            base_url = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
         self.base_url = base_url.rstrip('/')
         self.session = requests.Session()
         self.client_id = str(time.time())

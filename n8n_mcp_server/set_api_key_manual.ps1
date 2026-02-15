@@ -3,7 +3,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [string]$ApiKey,
-    [string]$BaseUrl = "http://127.0.0.1:5679"
+    [string]$BaseUrl = ""
 )
 
 $mcpConfigPath = "$env:USERPROFILE\.cursor\mcp.json"
@@ -12,6 +12,11 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "n8n APIキー設定" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
+
+if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
+    $n8nPort = if ($env:N8N_PORT) { $env:N8N_PORT } else { "5679" }
+    $BaseUrl = if ($env:N8N_URL) { $env:N8N_URL.TrimEnd('/') } else { "http://127.0.0.1:$n8nPort" }
+}
 
 # 設定ファイルを読み込む
 if (-not (Test-Path $mcpConfigPath)) {

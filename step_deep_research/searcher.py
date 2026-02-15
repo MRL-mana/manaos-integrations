@@ -4,6 +4,7 @@
 検索エージェント（Searcher）
 """
 
+import os
 import httpx
 from typing import Dict, Any, List
 from datetime import datetime
@@ -12,6 +13,15 @@ from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from .schemas import SearchResult, TaskTool
 from .source_quality_filter import SourceQualityFilter
+
+try:
+    from manaos_integrations._paths import RAG_MEMORY_PORT, SEARXNG_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import RAG_MEMORY_PORT, SEARXNG_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        SEARXNG_PORT = int(os.getenv("SEARXNG_PORT", "8080"))
+        RAG_MEMORY_PORT = int(os.getenv("RAG_MEMORY_PORT", "5103"))
 
 logger = get_logger(__name__)
 error_handler = ManaOSErrorHandler("StepDeepResearchSearcher")
@@ -30,8 +40,14 @@ class Searcher:
         self.config = config
         self.sources = config.get("sources", ["web", "rag"])
         self.max_results_per_query = config.get("max_results_per_query", 10)
-        self.searxng_url = config.get("searxng_url", "http://127.0.0.1:8080")
-        self.rag_api_url = config.get("rag_api_url", "http://127.0.0.1:5103")
+        self.searxng_url = config.get(
+            "searxng_url",
+            os.getenv("SEARXNG_URL", f"http://127.0.0.1:{SEARXNG_PORT}"),
+        )
+        self.rag_api_url = config.get(
+            "rag_api_url",
+            os.getenv("RAG_MEMORY_URL", f"http://127.0.0.1:{RAG_MEMORY_PORT}"),
+        )
         
         # ソース品質フィルタ初期化
         self.quality_filter = SourceQualityFilter()

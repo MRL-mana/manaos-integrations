@@ -22,6 +22,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from mcp_common import check_mcp_available, start_health_thread, get_mcp_logger
 
+try:
+    from manaos_integrations._paths import MRL_MEMORY_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import MRL_MEMORY_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        MRL_MEMORY_PORT = int(os.getenv("MRL_MEMORY_PORT", "5105"))
+
 MCP_AVAILABLE = check_mcp_available()
 if MCP_AVAILABLE:
     from mcp.server import Server
@@ -38,7 +46,7 @@ if not MCP_AVAILABLE:
     logger.warning("MCP SDKがインストールされていません。pip install mcp を実行してください。")
 
 # ── 設定 ─────────────────────────────────────────
-API_BASE = os.getenv("MRL_MEMORY_API_URL", "http://127.0.0.1:5105")
+API_BASE = os.getenv("MRL_MEMORY_API_URL", f"http://127.0.0.1:{MRL_MEMORY_PORT}")
 API_KEY = os.getenv("MRL_MEMORY_API_KEY", os.getenv("API_KEY", ""))
 HEALTH_PORT = int(os.getenv("MRL_MEMORY_MCP_HEALTH_PORT", "5113"))
 TIMEOUT = 15  # seconds

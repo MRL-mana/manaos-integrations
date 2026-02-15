@@ -10,6 +10,10 @@ Write-Host ""
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptDir
 
+# URL（環境変数で上書き可能）
+$ollamaBaseUrl = if ($env:OLLAMA_URL) { $env:OLLAMA_URL.TrimEnd('/') } else { "http://127.0.0.1:11434" }
+$unifiedApiBaseUrl = if ($env:MANAOS_INTEGRATION_API_URL) { $env:MANAOS_INTEGRATION_API_URL.TrimEnd('/') } else { "http://127.0.0.1:9502" }
+
 # 1. GitHub統合の依存関係
 Write-Host "[1/8] GitHub統合の依存関係をインストール中..." -ForegroundColor Yellow
 pip install PyGithub --quiet
@@ -63,7 +67,7 @@ if (Test-Path $envFile) {
 OBSIDIAN_VAULT_PATH=C:\Users\mana4\Documents\Obsidian Vault
 
 # Ollama設定（LLMルーティング用）
-OLLAMA_URL=http://127.0.0.1:11434
+OLLAMA_URL=$ollamaBaseUrl
 OLLAMA_MODEL=qwen2.5:7b
 
 # GitHub統合（オプション）
@@ -87,7 +91,7 @@ Write-Host "統合システムのセットアップが完了しました！" -Fo
 Write-Host ""
 Write-Host "次のステップ:" -ForegroundColor Cyan
 Write-Host "  1. 統合APIサーバーを再起動してください" -ForegroundColor White
-Write-Host "  2. http://127.0.0.1:9510/api/integrations/status で状態を確認" -ForegroundColor White
+Write-Host "  2. $unifiedApiBaseUrl/api/integrations/status で状態を確認" -ForegroundColor White
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 

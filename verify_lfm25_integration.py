@@ -6,6 +6,7 @@ LFM 2.5統合効果確認スクリプト
 
 import requests
 import json
+import os
 import sys
 import time
 
@@ -14,6 +15,15 @@ if sys.platform == "win32":
     import io
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
+try:
+    from manaos_integrations._paths import INTENT_ROUTER_PORT, UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import INTENT_ROUTER_PORT, UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9510"))
+        INTENT_ROUTER_PORT = int(os.getenv("INTENT_ROUTER_PORT", "5100"))
 
 def check_service(port, name):
     """サービスが動作しているか確認"""
@@ -32,7 +42,7 @@ def test_intent_router():
         test_data = {"text": "こんにちは"}
         start_time = time.time()
         response = requests.post(
-            "http://127.0.0.1:5100/api/classify",
+            f"http://127.0.0.1:{INTENT_ROUTER_PORT}/api/classify",
             json=test_data,
             timeout=10
         )
@@ -56,7 +66,8 @@ def test_unified_api():
     """Unified API Serverのテスト"""
     print("[2] Unified API Server動作確認...")
     try:
-        response = requests.get("http://127.0.0.1:9510/ready", timeout=8)
+        base_url = os.getenv("MANAOS_INTEGRATION_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}")
+        response = requests.get(f"{base_url}/ready", timeout=8)
         if response.status_code == 200:
             print("  [OK] 動作確認成功")
             return True
@@ -78,10 +89,10 @@ def main():
     print()
     
     services = [
-        ("Intent Router", 5100),
+        ("Intent Router", INTENT_ROUTER_PORT),
         ("Task Planner", 5101),
         ("Content Generation", 5109),
-        ("Unified API Server", 9510)
+        ("Unified API Server", UNIFIED_API_PORT)
     ]
     
     all_running = True

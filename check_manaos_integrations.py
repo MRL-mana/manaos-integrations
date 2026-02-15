@@ -9,6 +9,14 @@ import sys
 import os
 from pathlib import Path
 
+try:
+    from manaos_integrations._paths import FILE_SECRETARY_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import FILE_SECRETARY_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        FILE_SECRETARY_PORT = int(os.getenv("FILE_SECRETARY_PORT", "5120"))
+
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
@@ -131,7 +139,11 @@ def check_secretary_system():
         # API確認
         import httpx
         try:
-            response = httpx.get("http://127.0.0.1:5120/health", timeout=2.0)
+            base_url = os.getenv(
+                "FILE_SECRETARY_URL",
+                f"http://127.0.0.1:{FILE_SECRETARY_PORT}",
+            )
+            response = httpx.get(f"{base_url}/health", timeout=2.0)
             if response.status_code == 200:
                 print("✅ File Secretary API: 実行中")
             else:

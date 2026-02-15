@@ -3,11 +3,14 @@
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptDir
 
+$pixel7BridgePort = if ($env:PIXEL7_BRIDGE_PORT) { $env:PIXEL7_BRIDGE_PORT } else { "5122" }
+$pixel7BridgeBaseUrl = if ($env:PIXEL7_BRIDGE_URL) { $env:PIXEL7_BRIDGE_URL.TrimEnd('/') } else { "http://127.0.0.1:$pixel7BridgePort" }
+
 $PIXEL7_TAILSCALE_IP = if ($env:PIXEL7_TAILSCALE_IP) { $env:PIXEL7_TAILSCALE_IP } else { "100.84.2.125" }
 $PIXEL7_ADB_PORT = if ($env:PIXEL7_ADB_PORT) { $env:PIXEL7_ADB_PORT } else { "5555" }
 
 try {
-    $r = Invoke-WebRequest -Uri "http://127.0.0.1:5122/health" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+    $r = Invoke-WebRequest -Uri "$pixel7BridgeBaseUrl/health" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
     Write-Host "Pixel 7 ブリッジは既に起動中です (5122)."
     exit 0
 } catch {}
@@ -26,8 +29,8 @@ Start-Process python -ArgumentList "pixel7_adb_bridge.py" -WindowStyle Hidden -W
 
 Start-Sleep -Seconds 2
 try {
-    $r = Invoke-WebRequest -Uri "http://127.0.0.1:5122/health" -UseBasicParsing -TimeoutSec 3
-    Write-Host "Pixel 7 ブリッジを起動しました (http://127.0.0.1:5122)" -ForegroundColor Green
+    $r = Invoke-WebRequest -Uri "$pixel7BridgeBaseUrl/health" -UseBasicParsing -TimeoutSec 3
+    Write-Host "Pixel 7 ブリッジを起動しました ($pixel7BridgeBaseUrl)" -ForegroundColor Green
 } catch {
-    Write-Host "起動を開始しました。数秒後に http://127.0.0.1:5122 で確認してください。" -ForegroundColor Yellow
+    Write-Host "起動を開始しました。数秒後に $pixel7BridgeBaseUrl で確認してください。" -ForegroundColor Yellow
 }

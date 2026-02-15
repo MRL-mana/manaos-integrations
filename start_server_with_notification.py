@@ -53,7 +53,7 @@ if __name__ == "__main__":
         init_thread = start_initialization_background()
         
         # ポートとホストを取得
-        port = int(os.getenv("MANAOS_INTEGRATION_PORT", 9510))
+        port = int(os.getenv("MANAOS_INTEGRATION_PORT", 9502))
         host = os.getenv("MANAOS_INTEGRATION_HOST", "127.0.0.1")
         
         print(f"\nサーバー起動: http://{host}:{port}")

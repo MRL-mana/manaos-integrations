@@ -3,19 +3,25 @@
 Write-Host "🔍 n8nの実行履歴を確認中..." -ForegroundColor Yellow
 Write-Host ""
 
-# n8nのAPIエンドポイント（ローカル）
-$n8nUrl = "http://127.0.0.1:5678"
+# n8nのAPIエンドポイント（env優先）
+$n8nBaseUrl = if ($env:N8N_URL) {
+    $env:N8N_URL.TrimEnd('/')
+} elseif ($env:N8N_PORT) {
+    ("http://127.0.0.1:{0}" -f $env:N8N_PORT).TrimEnd('/')
+} else {
+    "http://127.0.0.1:5678"
+}
 
 try {
     Write-Host "n8nに接続中..." -ForegroundColor Cyan
     
     # n8nのヘルスチェック
-    $healthCheck = Invoke-RestMethod -Uri "$n8nUrl/healthz" -Method Get -ErrorAction Stop
+    $healthCheck = Invoke-RestMethod -Uri "$n8nBaseUrl/healthz" -Method Get -ErrorAction Stop
     Write-Host "✅ n8nは起動しています" -ForegroundColor Green
     Write-Host ""
     
     Write-Host "📋 確認手順:" -ForegroundColor Yellow
-    Write-Host "1. ブラウザで http://127.0.0.1:5678 を開く" -ForegroundColor White
+    Write-Host "1. ブラウザで $n8nBaseUrl を開く" -ForegroundColor White
     Write-Host "2. 左メニューから「Executions」をクリック" -ForegroundColor White
     Write-Host "3. 最新の実行を確認:" -ForegroundColor White
     Write-Host "   - Browse AI Webhookノードでデータを受信しているか" -ForegroundColor White
@@ -35,7 +41,7 @@ try {
     Write-Host "エラー: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host ""
     Write-Host "n8nが起動しているか確認してください:" -ForegroundColor Yellow
-    Write-Host "  http://127.0.0.1:5678" -ForegroundColor White
+    Write-Host "  $n8nBaseUrl" -ForegroundColor White
     Write-Host ""
 }
 

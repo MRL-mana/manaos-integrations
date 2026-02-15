@@ -21,8 +21,9 @@ $services = @(
 $allRunning = $true
 
 foreach ($service in $services) {
+    $serviceBaseUrl = if ($env:INTEGRATION_BASE_URL) { $env:INTEGRATION_BASE_URL.TrimEnd('/') } else { "http://127.0.0.1:$($service.Port)" }
     try {
-        $response = Invoke-WebRequest -Uri "http://127.0.0.1:$($service.Port)/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
+        $response = Invoke-WebRequest -Uri "$serviceBaseUrl/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
         Write-Host "  ✓ $($service.Name): 動作中" -ForegroundColor Green
     } catch {
         $portCheck = Test-NetConnection -ComputerName 127.0.0.1 -Port $service.Port -WarningAction SilentlyContinue -InformationLevel Quiet
@@ -64,7 +65,9 @@ try {
         text = "こんにちは"
     } | ConvertTo-Json
     
-    $response = Invoke-RestMethod -Uri "http://127.0.0.1:5100/api/classify" -Method Post -Body $testData -ContentType "application/json" -TimeoutSec 5
+    $intentRouterPort = if ($env:INTENT_ROUTER_PORT) { [int]$env:INTENT_ROUTER_PORT } else { 5100 }
+    $intentRouterBaseUrl = if ($env:INTENT_ROUTER_URL) { $env:INTENT_ROUTER_URL.TrimEnd('/') } else { "http://127.0.0.1:$intentRouterPort" }
+    $response = Invoke-RestMethod -Uri "$intentRouterBaseUrl/api/classify" -Method Post -Body $testData -ContentType "application/json" -TimeoutSec 5
     
     Write-Host "  ✓ Intent Router: 動作確認成功" -ForegroundColor Green
     Write-Host "    意図タイプ: $($response.intent_type)" -ForegroundColor Gray

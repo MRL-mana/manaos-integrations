@@ -5,7 +5,16 @@ ManaOSへの統合完了確認スクリプト
 """
 
 import sys
+import os
 from pathlib import Path
+
+try:
+    from manaos_integrations._paths import UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9502"))
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -160,7 +169,7 @@ def main():
     print("   result = manaos.act('base_ai_chat', {'prompt': 'こんにちは'})")
     print()
     print("2. Unified API Server経由:")
-    print("   curl 'http://127.0.0.1:9510/api/brave/search?query=Python'")
+    print(f"   curl 'http://127.0.0.1:{UNIFIED_API_PORT}/api/brave/search?query=Python'")
     print()
     print("3. MCP Server経由（Cursorから）:")
     print("   brave_search(query='Python')")

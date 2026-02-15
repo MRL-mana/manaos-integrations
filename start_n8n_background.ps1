@@ -5,10 +5,13 @@ Write-Host "n8nをバックグラウンドで起動中..." -ForegroundColor Cyan
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptDir
 
-# ポート5679の確認
-$portInUse = Get-NetTCPConnection -LocalPort 5679 -ErrorAction SilentlyContinue
+$n8nPort = if ($env:N8N_PORT) { $env:N8N_PORT } else { "5679" }
+$n8nBaseUrl = if ($env:N8N_URL) { $env:N8N_URL.TrimEnd('/') } else { "http://127.0.0.1:$n8nPort" }
+
+# ポート確認
+$portInUse = Get-NetTCPConnection -LocalPort ([int]$n8nPort) -ErrorAction SilentlyContinue
 if ($portInUse) {
-    Write-Host "[OK] n8nは既に起動中です (ポート 5679)" -ForegroundColor Green
+    Write-Host "[OK] n8nは既に起動中です (ポート $n8nPort)" -ForegroundColor Green
     exit 0
 }
 
@@ -20,7 +23,7 @@ if (-not (Test-Path $n8nDataDir)) {
 
 # 環境変数を設定
 $env:N8N_USER_FOLDER = $n8nDataDir
-$env:N8N_PORT = "5679"
+$env:N8N_PORT = $n8nPort
 $env:N8N_LICENSE_KEY = "b01a8246-6a35-4221-917e-b5b25028a21b"
 
 # ログファイル
@@ -33,15 +36,15 @@ $errorLogFile = Join-Path $logDir "n8n_error.log"
 
 # バックグラウンドで起動
 Write-Host "n8nを起動しています..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir'; `$env:N8N_USER_FOLDER='$n8nDataDir'; `$env:N8N_PORT='5679'; `$env:N8N_LICENSE_KEY='b01a8246-6a35-4221-917e-b5b25028a21b'; n8n start --port 5679" -WindowStyle Minimized
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir'; `$env:N8N_USER_FOLDER='$n8nDataDir'; `$env:N8N_PORT='$n8nPort'; `$env:N8N_LICENSE_KEY='b01a8246-6a35-4221-917e-b5b25028a21b'; n8n start --port $n8nPort" -WindowStyle Minimized
 
 Start-Sleep -Seconds 5
 
 # 起動確認
-$portCheck = Get-NetTCPConnection -LocalPort 5679 -ErrorAction SilentlyContinue
+$portCheck = Get-NetTCPConnection -LocalPort ([int]$n8nPort) -ErrorAction SilentlyContinue
 if ($portCheck) {
     Write-Host "[OK] n8nが起動しました" -ForegroundColor Green
-    Write-Host "  URL: http://127.0.0.1:5679" -ForegroundColor Cyan
+    Write-Host "  URL: $n8nBaseUrl" -ForegroundColor Cyan
 } else {
     Write-Host "[WARNING] n8nの起動確認ができませんでした（起動に時間がかかる可能性があります）" -ForegroundColor Yellow
     Write-Host "  ログを確認してください: logs/n8n.log" -ForegroundColor Gray

@@ -30,7 +30,7 @@ python check_services_health.py
 ### 個別確認（PowerShell）
 ```powershell
 # Unified API (メインエントリーポイント)
-Invoke-RestMethod http://127.0.0.1:9510/health
+Invoke-RestMethod http://127.0.0.1:9502/health
 
 # MRL Memory
 Invoke-RestMethod http://127.0.0.1:5103/health
@@ -46,7 +46,7 @@ Invoke-RestMethod http://127.0.0.1:5111/health
 
 | サービス | ポート | URL |
 |---------|--------|-----|
-| Unified API | 9510 | http://127.0.0.1:9510 |
+| Unified API | 9502 | http://127.0.0.1:9502 |
 | MRL Memory | 5103 | http://127.0.0.1:5103 |
 | Learning System | 5104 | http://127.0.0.1:5104 |
 | LLM Routing | 5111 | http://127.0.0.1:5111 |
@@ -62,7 +62,7 @@ python check_services_health.py
 
 ### ポート競合確認
 ```powershell
-netstat -ano | findstr ":9510"
+netstat -ano | findstr ":9502"
 netstat -ano | findstr ":5103"
 netstat -ano | findstr ":5104"
 netstat -ano | findstr ":5111"

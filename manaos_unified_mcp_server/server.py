@@ -14,6 +14,14 @@ from manaos_logger import get_logger
 import io
 import httpx
 
+try:
+    from manaos_integrations._paths import SEARXNG_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import SEARXNG_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        SEARXNG_PORT = int(os.getenv("SEARXNG_PORT", "8080"))
+
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -203,7 +211,10 @@ def get_integration(name: str):
             elif name == "searxng":
                 from searxng_integration import SearXNGIntegration
 
-                searxng_url = os.getenv("SEARXNG_BASE_URL", "http://127.0.0.1:8080")
+                searxng_url = os.getenv(
+                    "SEARXNG_BASE_URL",
+                    f"http://127.0.0.1:{SEARXNG_PORT}",
+                )
                 _integrations[name] = SearXNGIntegration(base_url=searxng_url)
             elif name == "brave_search":
                 from brave_search_integration import BraveSearchIntegration
@@ -946,7 +957,7 @@ async def list_tools() -> list[Tool]:
         [
             Tool(
                 name="phase1_run_off_3rounds",
-                description="Phase1 OFF 3往復テストを実行。unified_api_server が PHASE1_REFLECTION=off で起動している必要あり。API (127.0.0.1:9510) に接続してログを採取し、集計結果を返す。",
+                description="Phase1 OFF 3往復テストを実行。unified_api_server が PHASE1_REFLECTION=off で起動している必要あり。API (127.0.0.1:9502) に接続してログを採取し、集計結果を返す。",
                 inputSchema={"type": "object", "properties": {}},
             ),
             Tool(

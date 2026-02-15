@@ -13,30 +13,40 @@ if (-not (Test-Path $logDir)) {
 }
 
 # System 3に必要なサービス
+$intrinsicScorePort = if ($env:INTRINSIC_MOTIVATION_PORT) { $env:INTRINSIC_MOTIVATION_PORT } else { "5130" }
+$todoQueuePort = if ($env:TODO_QUEUE_PORT) { $env:TODO_QUEUE_PORT } else { "5134" }
+$learningPort = if ($env:LEARNING_SYSTEM_PORT) { $env:LEARNING_SYSTEM_PORT } else { "5126" }
+$ragPort = if ($env:RAG_MEMORY_PORT) { $env:RAG_MEMORY_PORT } else { "5103" }
+
+$intrinsicScoreBaseUrl = if ($env:INTRINSIC_MOTIVATION_URL) { $env:INTRINSIC_MOTIVATION_URL.TrimEnd('/') } else { "http://127.0.0.1:$intrinsicScorePort" }
+$todoQueueBaseUrl = if ($env:TODO_METRICS_URL) { $env:TODO_METRICS_URL.TrimEnd('/').Replace('/api/metrics','') } else { "http://127.0.0.1:$todoQueuePort" }
+$learningBaseUrl = if ($env:LEARNING_SYSTEM_URL) { $env:LEARNING_SYSTEM_URL.TrimEnd('/') } else { "http://127.0.0.1:$learningPort" }
+$ragBaseUrl = if ($env:RAG_MEMORY_URL) { $env:RAG_MEMORY_URL.TrimEnd('/') } else { "http://127.0.0.1:$ragPort" }
+
 $services = @(
     @{
         Name      = "Intrinsic Score API"
         Script    = "intrinsic_motivation.py"
-        Port      = 5130
-        HealthUrl = "http://127.0.0.1:5130/api/score"
+        Port      = $intrinsicScorePort
+        HealthUrl = "$intrinsicScoreBaseUrl/api/score"
     },
     @{
         Name      = "Todo Queue API"
         Script    = "intrinsic_todo_queue.py"
-        Port      = 5134
-        HealthUrl = "http://127.0.0.1:5134/api/metrics"
+        Port      = $todoQueuePort
+        HealthUrl = "$todoQueueBaseUrl/api/metrics"
     },
     @{
         Name      = "Learning System API"
         Script    = "learning_system_api.py"
-        Port      = 5126
-        HealthUrl = "http://127.0.0.1:5126/health"
+        Port      = $learningPort
+        HealthUrl = "$learningBaseUrl/health"
     },
     @{
         Name      = "RAG Memory API"
         Script    = "rag_memory_enhanced.py"
-        Port      = 5103
-        HealthUrl = "http://127.0.0.1:5103/health"
+        Port      = $ragPort
+        HealthUrl = "$ragBaseUrl/health"
     }
 )
 

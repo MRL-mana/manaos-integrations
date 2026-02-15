@@ -5,6 +5,18 @@ GPU使用状況の確認
 import subprocess
 import platform
 import requests
+import os
+
+try:
+    from manaos_integrations._paths import OLLAMA_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import OLLAMA_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 
 def check_nvidia_smi():
     """nvidia-smiでGPU状態を確認"""
@@ -45,7 +57,7 @@ def check_ollama_gpu():
     
     try:
         # Ollamaのモデル情報を取得
-        response = requests.get("http://127.0.0.1:11434/api/tags", timeout=5)
+        response = requests.get(f"{DEFAULT_OLLAMA_URL}/api/tags", timeout=5)
         if response.status_code == 200:
             models = response.json().get("models", [])
             print(f"利用可能なモデル数: {len(models)}")
@@ -56,7 +68,7 @@ def check_ollama_gpu():
                 print(f"\nモデル '{model_name}' の詳細情報:")
                 
                 show_response = requests.post(
-                    "http://127.0.0.1:11434/api/show",
+                    f"{DEFAULT_OLLAMA_URL}/api/show",
                     json={"name": model_name},
                     timeout=10
                 )

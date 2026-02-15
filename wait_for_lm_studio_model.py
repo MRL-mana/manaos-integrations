@@ -5,6 +5,18 @@
 import sys
 import requests
 import time
+import os
+
+try:
+    from manaos_integrations._paths import LM_STUDIO_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import LM_STUDIO_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        LM_STUDIO_PORT = int(os.getenv("LM_STUDIO_PORT", "1234"))
+
+
+DEFAULT_LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", f"http://127.0.0.1:{LM_STUDIO_PORT}")
 
 if sys.platform == 'win32':
     import io
@@ -40,7 +52,7 @@ def wait_for_model(model_name: str, check_interval: int = 30, max_wait: int = 36
         
         try:
             # LM Studio APIからモデル一覧を取得
-            r = requests.get('http://127.0.0.1:1234/v1/models', timeout=5)
+            r = requests.get(f"{DEFAULT_LM_STUDIO_URL}/v1/models", timeout=5)
             if r.status_code == 200:
                 models_data = r.json().get('data', [])
                 available_models = [model.get('id', '') for model in models_data]

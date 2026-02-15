@@ -1,6 +1,6 @@
 {
   "routing_enabled": true,
-  "routing_endpoint": "http://127.0.0.1:9510/api/llm/route",
+  "routing_endpoint": "http://127.0.0.1:9502/api/llm/route",
   "default_model": "Qwen2.5-Coder-7B-Instruct",
   "preferences": {
     "prefer_speed": true,

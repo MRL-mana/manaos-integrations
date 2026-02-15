@@ -21,7 +21,7 @@
     {"name": "Payment Integration", "port": 5119, "script": "payment_integration.py"},
     {"name": "SSOT API", "port": 5120, "script": "ssot_api.py"},
     {"name": "Step Deep Research", "port": 5121, "script": "step_deep_research_service.py"},
-    {"name": "Unified API Server", "port": 9510, "script": "unified_api_server.py"}
+    {"name": "Unified API Server", "port": 9502, "script": "unified_api_server.py"}
   ],
   "check_interval": 30,
   "max_restarts": 5,

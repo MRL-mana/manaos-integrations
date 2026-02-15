@@ -4,6 +4,20 @@
 SearXNG + ローカルLLM統合の使用例
 """
 
+import os
+
+try:
+    from manaos_integrations._paths import OLLAMA_PORT, SEARXNG_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import OLLAMA_PORT, SEARXNG_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+        SEARXNG_PORT = int(os.getenv("SEARXNG_PORT", "8080"))
+
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
+
 from searxng_llm_integration import (
     SearXNGLLMIntegration,
     search_for_ollama,
@@ -18,8 +32,11 @@ def example_1_simple_search_with_llm():
     print("=" * 60)
     
     integration = SearXNGLLMIntegration(
-        searxng_url="http://127.0.0.1:8080",
-        ollama_url="http://127.0.0.1:11434",
+        searxng_url=os.getenv(
+            "SEARXNG_BASE_URL",
+            f"http://127.0.0.1:{SEARXNG_PORT}",
+        ),
+        ollama_url=DEFAULT_OLLAMA_URL,
         model_name="qwen2.5:7b"
     )
     
@@ -100,10 +117,13 @@ def example_4_ollama_function_calling():
     
     print("\n💡 使用方法:")
     print("""
+    import os
     import requests
+
+    OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:" + os.getenv("OLLAMA_PORT", "11434"))
     
     response = requests.post(
-        "http://127.0.0.1:11434/api/chat",
+        f"{OLLAMA_URL}/api/chat",
         json={
             "model": "qwen2.5:7b",
             "messages": [

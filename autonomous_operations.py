@@ -45,7 +45,7 @@ class AutonomousOperations:
         self.monitor_thread: Optional[threading.Thread] = None
         
         # サービス定義（Unified API は /ready で初期化完了を確認、タイムアウト長め）
-        unified_api_port = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9510"))
+        unified_api_port = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9502"))
         self.services = [
             {
                 "name": "MRL Memory",
@@ -94,7 +94,10 @@ class AutonomousOperations:
             import requests
             path = service.get("path", "/health")
             timeout = service.get("timeout", 5)
-            url = f"http://127.0.0.1:{service['port']}{path}"
+            # 環境変数でURLを上書き可能に
+            service_name_upper = service['name'].upper().replace(" ", "_")
+            base_url = os.getenv(f"{service_name_upper}_URL", f"http://127.0.0.1:{service['port']}")
+            url = f"{base_url}{path}"
             response = requests.get(url, timeout=timeout)
             return response.status_code == 200
         except Exception as e:

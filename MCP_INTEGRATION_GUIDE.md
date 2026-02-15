@@ -7,7 +7,7 @@
 | MRL Memory | 5103 | ✅ Python | Listen |
 | Learning System | 5104 | ✅ Python | Listen |
 | LLM Routing | 5111 | ✅ Python | Listen |
-| Unified API | 9510 | ✅ Python | Listen (初期化中) |
+| Unified API | 9502 | ✅ Python | Listen (初期化中) |
 
 ## 🔌 MCP接続設定
 
@@ -28,7 +28,7 @@
       "url": "http://127.0.0.1:5111"
     },
     "manaos-unified-api": {
-      "url": "http://127.0.0.1:9510"
+      "url": "http://127.0.0.1:9502"
     }
   }
 }
@@ -57,7 +57,7 @@
       "url": "http://127.0.0.1:5111"
     },
     "manaos-unified-api": {
-      "url": "http://127.0.0.1:9510"
+      "url": "http://127.0.0.1:9502"
     }
   }
 }
@@ -80,7 +80,7 @@ services = {
     "MRL Memory": "http://127.0.0.1:5103",
     "Learning System": "http://127.0.0.1:5104",
     "LLM Routing": "http://127.0.0.1:5111",
-    "Unified API": "http://127.0.0.1:9510"
+    "Unified API": "http://127.0.0.1:9502"
 }
 
 for name, url in services.items():
@@ -98,7 +98,7 @@ $services = @{
     "MRL Memory" = "http://127.0.0.1:5103/health"
     "Learning System" = "http://127.0.0.1:5104/health"
     "LLM Routing" = "http://127.0.0.1:5111/health"
-    "Unified API" = "http://127.0.0.1:9510/health"
+    "Unified API" = "http://127.0.0.1:9502/health"
 }
 
 foreach ($service in $services.GetEnumerator()) {
@@ -131,7 +131,7 @@ python c:\Users\mana4\Desktop\manaos_integrations\start_vscode_cursor_services.p
 
 **解決策:**
 - さらに 30-60秒待機
-- /ready エンドポイントで初期化状態確認（Unified API のみ / 9510）
+- /ready エンドポイントで初期化状態確認（Unified API のみ / 9502）
 
 ### 症状: Cursor/VSCode で MCP が表示されない
 

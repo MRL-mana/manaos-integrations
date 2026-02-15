@@ -11,10 +11,18 @@ import os
 import io
 from pathlib import Path
 
+try:
+    from manaos_integrations._paths import N8N_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import N8N_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        N8N_PORT = int(os.getenv("N8N_PORT", "5678"))
+
 
 def import_workflow(
     workflow_path,
-    n8n_url="http://127.0.0.1:5678",
+    n8n_url=os.getenv("N8N_BASE_URL", f"http://127.0.0.1:{N8N_PORT}"),
     api_key=None,
 ):
     """
@@ -22,7 +30,7 @@ def import_workflow(
 
     Args:
         workflow_path: ワークフローJSONファイルのパス
-        n8n_url: n8nのURL（デフォルト: http://127.0.0.1:5678）
+        n8n_url: n8nのURL（デフォルトはN8N_BASE_URL）
         api_key: n8n APIキー（オプション）
     """
     # ワークフローファイルを読み込む
@@ -116,14 +124,14 @@ def main():
         print("OK: Import completed!")
         print()
         print("Next steps:")
-        print("1. Check workflow in n8n: http://127.0.0.1:5678")
+        print(f"1. Check workflow in n8n: {n8n_url}")
         print("2. Activate workflow")
-        print("3. Check webhook URL: http://127.0.0.1:5678/webhook/browse-ai-webhook")
+        print(f"3. Check webhook URL: {n8n_url}/webhook/browse-ai-webhook")
     else:
         print("WARNING: Auto import failed")
         print()
         print("Manual import method:")
-        print("1. Open browser: http://127.0.0.1:5678")
+        print(f"1. Open browser: {n8n_url}")
         print("2. Login if needed")
         print("3. Workflows -> Import from File")
         print(f"4. Select file: {workflow_path}")

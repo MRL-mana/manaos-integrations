@@ -11,6 +11,18 @@ from pathlib import Path
 import json
 import hashlib
 from datetime import datetime
+import os
+
+try:
+    from manaos_integrations._paths import OLLAMA_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import OLLAMA_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 
 # 統一モジュールのインポート
 try:
@@ -503,7 +515,7 @@ class InferenceMemoryUpdater:
     def __init__(
         self,
         chunk_processor: ChunkMemoryProcessor,
-        ollama_url: str = "http://127.0.0.1:11434"
+        ollama_url: str = DEFAULT_OLLAMA_URL
     ):
         self.chunk_processor = chunk_processor
         self.ollama_url = ollama_url

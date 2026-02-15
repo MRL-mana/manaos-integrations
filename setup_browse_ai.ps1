@@ -4,17 +4,26 @@
 Write-Host "🚀 Browse AI Integration Setup Started" -ForegroundColor Green
 Write-Host ""
 
+# n8n base URL（env優先）
+$n8nBaseUrl = if ($env:N8N_URL) {
+    $env:N8N_URL.TrimEnd('/')
+} elseif ($env:N8N_PORT) {
+    ("http://127.0.0.1:{0}" -f $env:N8N_PORT).TrimEnd('/')
+} else {
+    "http://127.0.0.1:5678"
+}
+
 # Step 1: n8n Check
 Write-Host "📋 Step 1: Checking n8n..." -ForegroundColor Yellow
 try {
     # Try to check if n8n is running (without auth for now)
-    $response = Invoke-WebRequest -Uri "http://127.0.0.1:5678" -Method Get -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri $n8nBaseUrl -Method Get -ErrorAction Stop
     Write-Host "✅ n8n is running normally" -ForegroundColor Green
-    Write-Host "   Access: http://127.0.0.1:5678" -ForegroundColor Cyan
+    Write-Host "   Access: $n8nBaseUrl" -ForegroundColor Cyan
     Write-Host "   Note: API may require authentication" -ForegroundColor Yellow
 } catch {
     Write-Host "⚠️  Cannot connect to n8n" -ForegroundColor Yellow
-    Write-Host "   Check: http://127.0.0.1:5678" -ForegroundColor Cyan
+    Write-Host "   Check: $n8nBaseUrl" -ForegroundColor Cyan
     Write-Host "   If n8n is not running, start it first" -ForegroundColor Yellow
     Write-Host "   Error: $_" -ForegroundColor Gray
 }
@@ -70,7 +79,7 @@ Write-Host "   3. Click 'Import Workflow'" -ForegroundColor Gray
 Write-Host "   4. Select file: $workflowPath" -ForegroundColor Gray
 Write-Host ""
 Write-Host "   Method B: Via API" -ForegroundColor White
-Write-Host "   curl -X POST http://127.0.0.1:5678/rest/workflows \" -ForegroundColor Gray
+Write-Host "   curl -X POST $n8nBaseUrl/rest/workflows \" -ForegroundColor Gray
 Write-Host "     -H 'Content-Type: application/json' \" -ForegroundColor Gray
 Write-Host "     -d @$workflowPath" -ForegroundColor Gray
 Write-Host ""
@@ -86,7 +95,7 @@ Write-Host "      - Name: 'CivitAI Sale Monitor'" -ForegroundColor Gray
 Write-Host "      - URL: https://civitai.com/models?onSale=true" -ForegroundColor Gray
 Write-Host "      - Monitor type: Change detection" -ForegroundColor Gray
 Write-Host "   4. Webhook setup:" -ForegroundColor White
-Write-Host "      - URL: http://127.0.0.1:5678/webhook/browse-ai-webhook" -ForegroundColor Gray
+Write-Host "      - URL: $n8nBaseUrl/webhook/browse-ai-webhook" -ForegroundColor Gray
 Write-Host "      - Or: Use ngrok for external access" -ForegroundColor Gray
 Write-Host ""
 
@@ -94,7 +103,7 @@ Write-Host ""
 Write-Host "📋 Step 6: Webhook URL acquisition..." -ForegroundColor Yellow
 Write-Host "   After importing the workflow, the following URL will be the webhook endpoint:" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "   Local: http://127.0.0.1:5678/webhook/browse-ai-webhook" -ForegroundColor White
+Write-Host "   Local: $n8nBaseUrl/webhook/browse-ai-webhook" -ForegroundColor White
 Write-Host ""
 Write-Host "   For external access (Recommended):" -ForegroundColor Yellow
 Write-Host "   ngrok http 5678" -ForegroundColor White

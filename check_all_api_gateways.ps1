@@ -4,11 +4,14 @@
 Write-Host "=== API Gateway Health Check ===" -ForegroundColor Cyan
 Write-Host ""
 
+$orchestratorPort = if ($env:ORCHESTRATOR_PORT) { [int]$env:ORCHESTRATOR_PORT } else { 5106 }
+$orchestratorBaseUrl = if ($env:ORCHESTRATOR_URL) { $env:ORCHESTRATOR_URL.TrimEnd('/') } else { "http://127.0.0.1:$orchestratorPort" }
+
 # Device API Gateway endpoints
 $devices = @(
     @{
         Name = "ManaOS"
-        Endpoint = "http://127.0.0.1:5106/health"
+        Endpoint = "$orchestratorBaseUrl/health"
         Type = "Local"
     },
     @{

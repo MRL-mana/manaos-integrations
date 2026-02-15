@@ -21,6 +21,16 @@ from collections import Counter
 
 from system3_http_retry import http_get_json_retry
 
+try:
+    from manaos_integrations._paths import INTRINSIC_MOTIVATION_PORT, LEARNING_SYSTEM_PORT, TODO_QUEUE_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import INTRINSIC_MOTIVATION_PORT, LEARNING_SYSTEM_PORT, TODO_QUEUE_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        LEARNING_SYSTEM_PORT = int(os.getenv("LEARNING_SYSTEM_PORT", "5126"))
+        INTRINSIC_MOTIVATION_PORT = int(os.getenv("INTRINSIC_MOTIVATION_PORT", "5130"))
+        TODO_QUEUE_PORT = int(os.getenv("TODO_QUEUE_PORT", "5134"))
+
 # 設定（環境変数から取得、デフォルト値あり）
 VAULT_PATH = Path(os.getenv("OBSIDIAN_VAULT_PATH", r"C:\Users\mana4\Documents\Obsidian Vault"))
 INTEGRATIONS_DIR = Path(
@@ -30,9 +40,15 @@ LOGS_DIR = INTEGRATIONS_DIR / "logs"
 OUT_DIR = VAULT_PATH / "ManaOS" / "System" / "Learning"
 
 # API URLs
-LEARNING_SYSTEM_URL = "http://127.0.0.1:5126"
-INTRINSIC_SCORE_URL = "http://127.0.0.1:5130/api/score"
-TODO_METRICS_URL = "http://127.0.0.1:5134/api/metrics"
+LEARNING_SYSTEM_URL = os.getenv("LEARNING_SYSTEM_URL", f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}")
+INTRINSIC_SCORE_URL = os.getenv(
+    "INTRINSIC_SCORE_URL",
+    f"http://127.0.0.1:{INTRINSIC_MOTIVATION_PORT}/api/score",
+)
+TODO_METRICS_URL = os.getenv(
+    "TODO_METRICS_URL",
+    f"http://127.0.0.1:{TODO_QUEUE_PORT}/api/metrics",
+)
 
 
 def http_get_json(url: str, timeout: int = 5) -> dict:

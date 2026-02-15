@@ -48,8 +48,8 @@ class ChatGPTMCPIntegrationServer:
             version="1.0.0",
         )
 
-        self.trinity_url = "http://127.0.0.1:8097"
-        self.manaos_url = "http://127.0.0.1:9200"
+        self.trinity_url = os.getenv("TRINITY_URL", "http://127.0.0.1:8097")
+        self.manaos_url = os.getenv("MANAOS_URL", "http://127.0.0.1:9200")
 
         logger.info("🤖 ChatGPT MCP Integration Server 初期化")
 
@@ -282,7 +282,7 @@ class ChatGPTMCPIntegrationServer:
                 import requests
 
                 response = requests.get(
-                    "http://127.0.0.1:8097/api/x280/screenshot",
+                    f"{self.trinity_url}/api/x280/screenshot",
                     timeout=10,
                 )
                 return response.json()
@@ -395,7 +395,7 @@ class ChatGPTMCPIntegrationServer:
                 result["message"] = "ManaOSの状態を確認しました"
             elif action == "x280" and target == "screenshot":
                 response = requests.get(
-                    "http://127.0.0.1:8097/api/x280/screenshot",
+                    f"{self.trinity_url}/api/x280/screenshot",
                     timeout=10,
                 )
                 result["data"] = response.json()

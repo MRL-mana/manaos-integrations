@@ -37,14 +37,14 @@ class ManaOSServiceManager:
     """ManaOSサービスマネージャー"""
 
     _DEFAULT_UNIFIED_API_PORT = int(
-        os.getenv("MANAOS_UNIFIED_API_PORT", "9510")
+        os.getenv("MANAOS_UNIFIED_API_PORT", "9502")
     )
     
     SERVICES = [
         {
             "name": "MRL Memory",
             "module": "mrl_memory_integration",
-            "port": 5105,
+            "port": 5110,
             "description": "記憶管理システム"
         },
         {

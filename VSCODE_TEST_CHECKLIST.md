@@ -106,7 +106,7 @@ Ctrl+Shift+P → "Tasks: Run Task" → "ManaOS: MRLメモリを起動"
 同様に以下も確認:
 - [ ] "ManaOS: 学習システムを起動" (ポート5104)
 - [ ] "ManaOS: LLMルーティングを起動" (ポート5111)
-- [ ] "ManaOS: 統合APIを起動" (ポート9510)
+- [ ] "ManaOS: 統合APIを起動" (ポート9502)
 
 ---
 
@@ -135,7 +135,7 @@ Ctrl+Shift+P → "Tasks: Run Task" → "🚨 ManaOS: 緊急停止"
 
 #### ✅ 期待結果:
 - [ ] デバッグが開始される
-- [ ] ポート9510でサービスが起動する
+- [ ] ポート9502でサービスが起動する
 - [ ] ブレークポイントで停止する（該当行が実行された場合）
 - [ ] 変数ウォッチが機能する
 - [ ] ステップ実行（F10, F11）が機能する
@@ -329,7 +329,7 @@ if (Test-Path ".venv\Scripts\python.exe") {
 
 # 4. サービスの起動確認（ポートリスニング）
 Write-Host "`n[4] サービス起動確認" -ForegroundColor Yellow
-$ports = @(9510, 5111, 5104, 5103)
+$ports = @(9502, 5111, 5104, 5103)
 foreach ($port in $ports) {
     try {
         $response = Invoke-RestMethod -Uri "http://127.0.0.1:$port/health" -TimeoutSec 2

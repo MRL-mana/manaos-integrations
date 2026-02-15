@@ -5,6 +5,7 @@
 """
 
 import json
+import os
 import time
 import psutil
 from manaos_logger import get_logger
@@ -70,13 +71,18 @@ class AIPredictiveMaintenance:
             except Exception as e:
                 logger.warning(f"既存の予測メンテナンスシステムの初期化エラー: {e}")
         
-        # LLM設定
-        self.llm_url = self.config.get("llm_url", DEFAULT_OLLAMA_GENERATE_URL)
+        # LLM設定（環境変数優先）
+        ollama_base = os.getenv("OLLAMA_URL")
+        if ollama_base:
+            self.llm_url = f"{ollama_base.rstrip('/')}/api/generate"
+        else:
+            self.llm_url = self.config.get("llm_url", DEFAULT_OLLAMA_GENERATE_URL)
         self.llm_model = self.config.get("llm_model", "llama3.2:3b")
         
-        # デバイス監視設定
-        self.device_health_monitor_url = self.config.get(
-            "device_health_monitor_url", DEFAULT_DEVICE_HEALTH_MONITOR_URL
+        # デバイス監視設定（環境変数優先）
+        self.device_health_monitor_url = os.getenv(
+            "MANAOS_INTEGRATION_API_URL",
+            self.config.get("device_health_monitor_url", DEFAULT_DEVICE_HEALTH_MONITOR_URL)
         )
         
         # メンテナンス推奨履歴

@@ -12,7 +12,9 @@ import time
 if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-GALLERY_API = "http://127.0.0.1:5559/api/images"
+from _paths import GALLERY_PORT
+
+GALLERY_API = os.getenv("GALLERY_API_URL", f"http://127.0.0.1:{GALLERY_PORT}") + "/api/images"
 
 try:
     response = requests.get(GALLERY_API)

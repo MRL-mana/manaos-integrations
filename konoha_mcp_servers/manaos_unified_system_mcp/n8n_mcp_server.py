@@ -13,10 +13,18 @@ import requests
 from mcp.server import Server
 from mcp.types import Tool, TextContent
 
+try:
+    from manaos_integrations._paths import N8N_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import N8N_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        N8N_PORT = int(os.getenv("N8N_PORT", "5678"))
+
 if __package__ in (None, ""):
     sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
-N8N_BASE = os.getenv("N8N_BASE", "http://127.0.0.1:5678")
+N8N_BASE = os.getenv("N8N_BASE", f"http://127.0.0.1:{N8N_PORT}")
 N8N_USER = os.getenv("N8N_USER", "mana")
 N8N_PASSWORD = os.getenv("N8N_PASSWORD", "trinity2025")
 N8N_API_KEY = os.getenv("N8N_API_KEY", "")

@@ -12,6 +12,14 @@ from typing import Any, Dict, List, Optional
 from pathlib import Path
 import io
 
+try:
+    from manaos_integrations._paths import WINDOWS_AUTOMATION_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import WINDOWS_AUTOMATION_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        WINDOWS_AUTOMATION_PORT = int(os.getenv("WINDOWS_AUTOMATION_PORT", "5115"))
+
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -33,7 +41,7 @@ except ImportError:
 logger = get_logger(__name__)
 
 # APIエンドポイント
-WEB_VOICE_API_URL = os.getenv("WEB_VOICE_API_URL", "http://127.0.0.1:5115")
+WEB_VOICE_API_URL = os.getenv("WEB_VOICE_API_URL", f"http://127.0.0.1:{WINDOWS_AUTOMATION_PORT}")
 
 # MCPサーバーの初期化
 if MCP_AVAILABLE:

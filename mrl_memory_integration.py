@@ -63,6 +63,9 @@ def _load_dotenv(env_path: str = ".env") -> None:
 
 
 # 重要: Flaskのグローバル初期化（APISecurity/Rollout等）より先に.envを読む
+# 起動ディレクトリに依存しないよう、まずこのスクリプト配置ディレクトリの .env を読む
+_load_dotenv(str(Path(__file__).resolve().with_name(".env")))
+# 互換性のため、従来どおりカレントディレクトリの .env もあれば上書きで読む
 _load_dotenv()
 
 
@@ -419,7 +422,12 @@ try:
     @app.route('/health', methods=['GET'])
     def health():
         """ヘルスチェック"""
-        return jsonify({"status": "healthy", "service": "MRL Memory API"})
+        return jsonify({
+            "status": "healthy",
+            "service": "MRL Memory API",
+            "auth_required": security.require_auth,
+            "api_key_configured": bool(security.api_key),
+        })
 
     @app.route('/api/metrics', methods=['GET'])
     @require_auth_decorator
@@ -608,7 +616,7 @@ if __name__ == "__main__":
         
         # セキュリティ設定を確認（デバッグ用）
         api_key = os.getenv("MRL_MEMORY_API_KEY") or os.getenv("API_KEY")
-        require_auth = os.getenv("REQUIRE_AUTH", "1")
+        require_auth = os.getenv("MRL_MEMORY_REQUIRE_AUTH") or os.getenv("REQUIRE_AUTH", "1")
         logger.info(f"API起動時設定: require_auth={require_auth}, api_key={'SET' if api_key else 'NOT SET'}")
         
         port = int(os.getenv("PORT", 5105))

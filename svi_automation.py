@@ -15,6 +15,20 @@ from watchdog.events import FileSystemEventHandler
 from manaos_logger import get_logger
 import requests
 
+try:
+    from manaos_integrations._paths import UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9510"))
+
+
+DEFAULT_UNIFIED_API_URL = os.getenv(
+    "MANAOS_INTEGRATION_API_URL",
+    f"http://127.0.0.1:{UNIFIED_API_PORT}",
+).rstrip("/")
+
 logger = get_logger(__name__)
 
 try:
@@ -61,7 +75,7 @@ class SVIAutomation:
     def __init__(
         self,
         svi_integration: Optional[SVIWan22VideoIntegration] = None,
-        api_base_url: str = "http://127.0.0.1:9510"
+        api_base_url: str = DEFAULT_UNIFIED_API_URL
     ):
         """
         初期化

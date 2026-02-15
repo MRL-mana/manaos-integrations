@@ -9,7 +9,7 @@ $services = @(
     @{Name="Task Critic"; Port=5102; Script="task_critic.py"},
     @{Name="RAG記憶進化"; Port=5103; Script="rag_memory_enhanced.py"},
     @{Name="汎用タスクキュー"; Port=5104; Script="task_queue_system.py"},
-    @{Name="UI操作機能"; Port=5105; Script="ui_operations_api.py"},
+    @{Name="UI操作機能"; Port=5110; Script="ui_operations_api.py"},
     @{Name="統合オーケストレーター"; Port=5106; Script="unified_orchestrator.py"},
     @{Name="Executor拡張"; Port=5107; Script="task_executor_enhanced.py"},
     @{Name="Portal統合"; Port=5108; Script="portal_integration_api.py"},

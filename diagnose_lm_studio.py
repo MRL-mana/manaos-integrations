@@ -7,6 +7,17 @@ import os
 import requests
 import json
 
+try:
+    from manaos_integrations._paths import LM_STUDIO_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import LM_STUDIO_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        LM_STUDIO_PORT = int(os.getenv("LM_STUDIO_PORT", "1234"))
+
+
+DEFAULT_LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", f"http://127.0.0.1:{LM_STUDIO_PORT}")
+
 if sys.platform == 'win32':
     import io
     sys.stdout.reconfigure(encoding='utf-8')
@@ -18,7 +29,7 @@ print("=" * 60)
 # 1. LM Studioサーバー確認
 print("\n【1】LM Studioサーバー確認")
 try:
-    r = requests.get('http://127.0.0.1:1234/v1/models', timeout=5)
+    r = requests.get(f"{DEFAULT_LM_STUDIO_URL}/v1/models", timeout=5)
     if r.status_code == 200:
         print("✓ LM Studioサーバー: 起動中")
         models_data = r.json().get('data', [])
@@ -78,7 +89,7 @@ test_model = "qwen2.5-coder-32b-instruct"
 print(f"テストモデル: {test_model}")
 
 try:
-    url = "http://127.0.0.1:1234/v1/chat/completions"
+    url = f"{DEFAULT_LM_STUDIO_URL}/v1/chat/completions"
     data = {
         "model": test_model,
         "messages": [{"role": "user", "content": "test"}],

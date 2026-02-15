@@ -12,6 +12,14 @@ from typing import Any, Dict, List, Optional
 from pathlib import Path
 import io
 
+try:
+    from manaos_integrations._paths import LLM_ROUTING_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import LLM_ROUTING_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        LLM_ROUTING_PORT = int(os.getenv("LLM_ROUTING_PORT", "5111"))
+
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -33,7 +41,7 @@ except ImportError:
 logger = get_logger(__name__)
 
 # APIエンドポイント
-SERVICE_MONITOR_URL = os.getenv("SERVICE_MONITOR_URL", "http://127.0.0.1:5111")
+SERVICE_MONITOR_URL = os.getenv("SERVICE_MONITOR_URL", f"http://127.0.0.1:{LLM_ROUTING_PORT}")
 
 # MCPサーバーの初期化
 if MCP_AVAILABLE:

@@ -5,10 +5,19 @@
 3つのシステムを統合管理し、連携を強化
 """
 
+import os
 import json
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 from pathlib import Path
+
+try:
+    from manaos_integrations._paths import ORCHESTRATOR_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import ORCHESTRATOR_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        ORCHESTRATOR_PORT = int(os.getenv("ORCHESTRATOR_PORT", "5106"))
 
 # 統一モジュールのインポート
 from manaos_logger import get_logger
@@ -36,7 +45,7 @@ class PersonalityAutonomySecretaryIntegration:
 
     def __init__(
         self,
-        orchestrator_url: str = "http://127.0.0.1:5106",
+        orchestrator_url: str = f"http://127.0.0.1:{ORCHESTRATOR_PORT}",
         learning_system_url: Optional[str] = None,
     ):
         """

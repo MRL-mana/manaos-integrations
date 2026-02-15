@@ -12,6 +12,27 @@ import sys
 from pathlib import Path
 from typing import Any, Dict
 
+try:
+    from manaos_integrations._paths import (
+        LEARNING_SYSTEM_PORT,
+        LLM_ROUTING_PORT,
+        MRL_MEMORY_PORT,
+        UNIFIED_API_PORT,
+    )
+except Exception:  # pragma: no cover
+    try:
+        from _paths import (  # type: ignore
+            LEARNING_SYSTEM_PORT,
+            LLM_ROUTING_PORT,
+            MRL_MEMORY_PORT,
+            UNIFIED_API_PORT,
+        )
+    except Exception:  # pragma: no cover
+        MRL_MEMORY_PORT = int(os.getenv("MRL_MEMORY_PORT", "5105"))
+        LEARNING_SYSTEM_PORT = int(os.getenv("LEARNING_SYSTEM_PORT", "5126"))
+        LLM_ROUTING_PORT = int(os.getenv("LLM_ROUTING_PORT", "5111"))
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9510"))
+
 
 _ENCODINGS_TO_NORMALIZE = ("cp932", "cp936", "cp949")
 if (
@@ -82,7 +103,7 @@ class VSCodeManaOSIntegration:
     
     def create_vscode_manaos_settings(self) -> Dict[str, Any]:
         """VSCode用ManaOS設定を作成"""
-        unified_api_port = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9510"))
+        unified_api_port = int(os.getenv("MANAOS_UNIFIED_API_PORT", str(UNIFIED_API_PORT)))
         unified_api_url = os.getenv("MANAOS_INTEGRATION_API_URL") or f"http://127.0.0.1:{unified_api_port}"
         return {
             "manaos": {
@@ -92,18 +113,27 @@ class VSCodeManaOSIntegration:
                 "memory": {
                     "enabled": True,
                     "type": "mrl",
-                    "apiUrl": "http://127.0.0.1:5105",
+                    "apiUrl": os.getenv(
+                        "MRL_MEMORY_API_URL",
+                        f"http://127.0.0.1:{MRL_MEMORY_PORT}",
+                    ),
                     "autoSync": True,
                     "syncInterval": 5000
                 },
                 "learning": {
                     "enabled": True,
-                    "apiUrl": "http://127.0.0.1:5126",
+                    "apiUrl": os.getenv(
+                        "LEARNING_SYSTEM_URL",
+                        f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}",
+                    ),
                     "adaptiveOptimization": True
                 },
                 "llmRouting": {
                     "enabled": True,
-                    "apiUrl": "http://127.0.0.1:5111",
+                    "apiUrl": os.getenv(
+                        "LLM_ROUTING_URL",
+                        f"http://127.0.0.1:{LLM_ROUTING_PORT}",
+                    ),
                     "smartRouting": True
                 },
                 "autoStart": True,

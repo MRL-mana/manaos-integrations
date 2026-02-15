@@ -253,7 +253,10 @@ def main():
         from _paths import OLLAMA_PORT
         default_ollama_url = f"http://127.0.0.1:{OLLAMA_PORT}"
     except Exception:
-        default_ollama_url = "http://127.0.0.1:11434"
+        try:
+            default_ollama_url = f"http://127.0.0.1:{int(os.getenv('OLLAMA_PORT', '11434'))}"
+        except Exception:
+            default_ollama_url = "http://127.0.0.1:" + os.getenv("OLLAMA_PORT", "11434")
     ollama_url = manager.get("OLLAMA_URL", default_ollama_url)
     print(f"OLLAMA_URL: {ollama_url}")
     

@@ -150,7 +150,7 @@ services:
     - MCP_API_PORT=9502
     - MCP_API_HOST=0.0.0.0
     - COMFYUI_URL=${COMFYUI_URL:-http://host.docker.internal:8188}
-    - MANAOS_API_URL=${MANAOS_API_URL:-http://host.docker.internal:9510}
+    - MANAOS_API_URL=${MANAOS_API_URL:-http://host.docker.internal:9502}
     - OBSIDIAN_VAULT_PATH=${OBSIDIAN_VAULT_PATH:-C:/Users/mana4/Documents/Obsidian Vault}
     - SEARXNG_BASE_URL=${SEARXNG_BASE_URL:-http://host.docker.internal:8080}
     - OPENWEBUI_URL=${OPENWEBUI_URL:-http://host.docker.internal:3001}
@@ -195,7 +195,7 @@ services:
     - TZ=Asia/Tokyo
     - TOOL_SERVER_PORT=9503
     - COMFYUI_URL=${COMFYUI_URL:-http://host.docker.internal:8188}
-    - MANAOS_API_URL=${MANAOS_API_URL:-http://host.docker.internal:9510}
+    - MANAOS_API_URL=${MANAOS_API_URL:-http://host.docker.internal:9502}
     volumes:
     - ./logs:/app/logs
     - ./tool_server/main.py:/app/main.py:ro

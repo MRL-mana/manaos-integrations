@@ -9,6 +9,14 @@ import os
 import time
 from pathlib import Path
 
+try:
+    from manaos_integrations._paths import MRL_MEMORY_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import MRL_MEMORY_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        MRL_MEMORY_PORT = int(os.getenv("MRL_MEMORY_PORT", "5105"))
+
 # .envファイルを読み込み
 env_path = Path(".env")
 if env_path.exists():
@@ -19,7 +27,7 @@ if env_path.exists():
                 key, value = line.split('=', 1)
                 os.environ[key.strip()] = value.strip()
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:5105")
+API_BASE_URL = os.getenv("API_BASE_URL", f"http://127.0.0.1:{MRL_MEMORY_PORT}")
 API_KEY = os.getenv("API_KEY", "")
 
 def warmup_api(count: int = 20):

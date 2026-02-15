@@ -666,7 +666,7 @@ ACTIONS = {
         "timeout": 90,
     },
     "manaos_release_9502": {
-        "name": "Release Unified API Port (9510)",
+        "name": "Release Unified API Port (9502)",
         "cmd": [
             _powershell_exe(),
             "-NoProfile",
@@ -675,7 +675,7 @@ ACTIONS = {
             "-File",
             str(_WORKSPACE_ROOT / "manaos_integrations" / "restart_unified_api_port9502.ps1"),
             "-Port",
-            "9510",
+            "9502",
         ],
         "background": False,
         "timeout": 90,
@@ -876,7 +876,7 @@ async def send_chat(
                 "使えるコマンドだよ：\n"
                 "- /health : ManaOSのヘルスチェック\n"
                 "- /start  : ManaOSサービス起動（まとめて）\n"
-                "- /release9502 : 9510ポート解放（Unified API用・互換エイリアス）\n"
+                "- /release9502 : 9502ポート解放（Unified API用・互換エイリアス）\n"
                 "- /read <path> [start] [end] : ファイル読む（1-based行番号）\n"
                 "- /grep <pattern> [glob] : ワークスペース検索\n"
                 "- /gitdiff : git diff（差分）\n"
@@ -985,7 +985,7 @@ async def send_chat(
                         "-File",
                         str(_WORKSPACE_ROOT / "manaos_integrations" / "restart_unified_api_port9502.ps1"),
                         "-Port",
-                        "9510",
+                        "9502",
                     ],
                     capture_output=True,
                     text=True,
@@ -995,7 +995,7 @@ async def send_chat(
                 err = (result.stderr or "").strip()
                 reply = (out[-1200:] if out else "") or (err[-1200:] if err else "ポート解放を実行したよ")
             except Exception as e:
-                reply = f"9510解放失敗: {e}"
+                reply = f"9502解放失敗: {e}"
 
             chat_history.append({"role": "assistant", "content": reply, "ts": datetime.now().isoformat()})
             _save_chat_history()

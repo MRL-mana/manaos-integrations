@@ -56,14 +56,15 @@ def _env_int(name: str, default: int) -> int:
 
 
 try:
-    from ._paths import OLLAMA_PORT, LM_STUDIO_PORT  # type: ignore
+    from ._paths import N8N_PORT, OLLAMA_PORT, LM_STUDIO_PORT  # type: ignore
 except Exception:  # pragma: no cover
     try:
-        from _paths import OLLAMA_PORT, LM_STUDIO_PORT  # type: ignore
+        from _paths import N8N_PORT, OLLAMA_PORT, LM_STUDIO_PORT  # type: ignore
     except Exception:  # pragma: no cover
         try:
-            from manaos_integrations._paths import OLLAMA_PORT, LM_STUDIO_PORT
+            from manaos_integrations._paths import N8N_PORT, OLLAMA_PORT, LM_STUDIO_PORT
         except Exception:  # pragma: no cover
+            N8N_PORT = _env_int("N8N_PORT", 5678)
             OLLAMA_PORT = _env_int("OLLAMA_PORT", 11434)
             LM_STUDIO_PORT = _env_int("LM_STUDIO_PORT", 1234)
 
@@ -1580,6 +1581,59 @@ def api_llm_route():
         return _json_error("llm_route_failed", 500, error="internal_error")
 
 
+@app.route("/api/memory/store", methods=["POST"])
+def api_memory_store():
+    """記憶への保存（互換エンドポイント）"""
+    if not MEMORY_BRIDGE_AVAILABLE or bridge_memory_store is None:
+        return _json_error("memory_bridge_unavailable", 503, error="unavailable")
+
+    data = request.get_json(silent=True) or {}
+    content = data.get("content") or data
+    if content is None:
+        return _json_error("content is required", 400, error="bad_request")
+
+    try:
+        memory_id = bridge_memory_store(
+            {"content": content, "metadata": data.get("metadata", {})},
+            data.get("format_type", "auto"),
+            memory_unified=integrations.get("memory_unified"),
+            mem0_integration=integrations.get("mem0"),
+        )
+        return jsonify({"memory_id": memory_id}), 200
+    except Exception as e:
+        logger.warning(f"Memory store error: {e}")
+        return _json_error("memory_store_failed", 500, error="internal_error")
+
+
+@app.route("/api/memory/recall", methods=["GET"])
+def api_memory_recall():
+    """記憶からの検索（互換エンドポイント）"""
+    if not MEMORY_BRIDGE_AVAILABLE or bridge_memory_recall is None:
+        return _json_error("memory_bridge_unavailable", 503, error="unavailable")
+
+    query = (request.args.get("query") or "").strip()
+    if not query:
+        return _json_error("query is required", 400, error="bad_request")
+
+    scope = request.args.get("scope", "all")
+    try:
+        limit = int(request.args.get("limit", 10))
+    except Exception:
+        limit = 10
+
+    try:
+        results = bridge_memory_recall(
+            query=query,
+            scope=scope,
+            limit=limit,
+            memory_unified=integrations.get("memory_unified"),
+        )
+        return jsonify({"count": len(results), "results": results}), 200
+    except Exception as e:
+        logger.warning(f"Memory recall error: {e}")
+        return _json_error("memory_recall_failed", 500, error="internal_error")
+
+
 # 統合システムのインスタンス
 integrations: Dict[str, Any] = {}
 
@@ -1946,7 +2000,10 @@ def initialize_integrations():
             (
                 "n8n",
                 lambda: N8NIntegration(
-            base_url=os.getenv("N8N_BASE_URL", "http://127.0.0.1:5678"),
+            base_url=os.getenv(
+                "N8N_BASE_URL",
+                f"http://127.0.0.1:{N8N_PORT}",
+            ),
                     api_key=os.getenv("N8N_API_KEY"),
                 ),
             )

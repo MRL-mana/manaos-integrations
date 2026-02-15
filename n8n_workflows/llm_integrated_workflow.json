@@ -92,7 +92,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=http://127.0.0.1:9510/api/obsidian/create",
+        "url": "=http://127.0.0.1:9502/api/obsidian/create",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [

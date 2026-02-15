@@ -75,13 +75,14 @@ Write-Host "[OK] Ready to start" -ForegroundColor Green
 # 6. Set environment variables and start
 Write-Host ""
 Write-Host "Starting X280 API Gateway..." -ForegroundColor Cyan
-$env:X280_API_PORT = "5120"
+$x280Port = if ($env:X280_API_PORT) { [int]$env:X280_API_PORT } else { 5120 }
+$env:X280_API_PORT = "$x280Port"
 $env:X280_API_HOST = "0.0.0.0"
 
 # Start API Gateway
 Write-Host "Running: python x280_api_gateway.py" -ForegroundColor Yellow
 Write-Host "Host: 0.0.0.0" -ForegroundColor Gray
-Write-Host "Port: 5120" -ForegroundColor Gray
+Write-Host "Port: $x280Port" -ForegroundColor Gray
 Write-Host ""
 
 # Start in background using Start-Process
@@ -96,16 +97,21 @@ Start-Sleep -Seconds 8
 # Check if it's running
 Write-Host ""
 Write-Host "Checking API Gateway status..." -ForegroundColor Yellow
+$x280ApiBaseUrl = if ($env:X280_API_URL) {
+    $env:X280_API_URL.TrimEnd('/')
+} else {
+    "http://127.0.0.1:$x280Port"
+}
 try {
-    $response = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/health" -TimeoutSec 5
+    $response = Invoke-RestMethod -Uri "$x280ApiBaseUrl/api/health" -TimeoutSec 5
     Write-Host "[SUCCESS] API Gateway is running!" -ForegroundColor Green
     Write-Host "  Status: $($response.status)" -ForegroundColor Cyan
     Write-Host "  Process ID: $($process.Id)" -ForegroundColor Cyan
-    Write-Host "  Port: 5120" -ForegroundColor Cyan
-    Write-Host "  Documentation: http://127.0.0.1:5120/docs" -ForegroundColor Cyan
+    Write-Host "  Port: $x280Port" -ForegroundColor Cyan
+    Write-Host "  Documentation: $x280ApiBaseUrl/docs" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "To check from remote:" -ForegroundColor Yellow
-    Write-Host "  http://100.127.121.20:5120/api/health" -ForegroundColor Cyan
+    Write-Host "  http://100.127.121.20:$x280Port/api/health" -ForegroundColor Cyan
 } catch {
     Write-Host "[WARNING] Could not verify API Gateway status" -ForegroundColor Yellow
     Write-Host "  Error: $_" -ForegroundColor Yellow
@@ -113,7 +119,7 @@ try {
     Write-Host ""
     Write-Host "Please check manually:" -ForegroundColor Yellow
     Write-Host "  1. Check if process is running: Get-Process -Id $($process.Id)" -ForegroundColor Gray
-    Write-Host "  2. Check port: netstat -ano | findstr :5120" -ForegroundColor Gray
+    Write-Host "  2. Check port: netstat -ano | findstr :$x280Port" -ForegroundColor Gray
     Write-Host "  3. Check logs if available" -ForegroundColor Gray
 }
 

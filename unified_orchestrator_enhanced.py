@@ -12,6 +12,42 @@ from datetime import datetime
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 
+try:
+    from manaos_integrations._paths import (
+        AUTONOMY_SYSTEM_PORT,
+        INTENT_ROUTER_PORT,
+        ORCHESTRATOR_PORT,
+        PERSONALITY_SYSTEM_PORT,
+        RAG_MEMORY_PORT,
+        SECRETARY_SYSTEM_PORT,
+        TASK_CRITIC_PORT,
+        TASK_PLANNER_PORT,
+        TASK_QUEUE_PORT,
+    )
+except Exception:  # pragma: no cover
+    try:
+        from _paths import (  # type: ignore
+            AUTONOMY_SYSTEM_PORT,
+            INTENT_ROUTER_PORT,
+            ORCHESTRATOR_PORT,
+            PERSONALITY_SYSTEM_PORT,
+            RAG_MEMORY_PORT,
+            SECRETARY_SYSTEM_PORT,
+            TASK_CRITIC_PORT,
+            TASK_PLANNER_PORT,
+            TASK_QUEUE_PORT,
+        )
+    except Exception:  # pragma: no cover
+        INTENT_ROUTER_PORT = int(os.getenv("INTENT_ROUTER_PORT", "5100"))
+        TASK_PLANNER_PORT = int(os.getenv("TASK_PLANNER_PORT", "5101"))
+        TASK_CRITIC_PORT = int(os.getenv("TASK_CRITIC_PORT", "5102"))
+        RAG_MEMORY_PORT = int(os.getenv("RAG_MEMORY_PORT", "5103"))
+        TASK_QUEUE_PORT = int(os.getenv("TASK_QUEUE_PORT", "5104"))
+        ORCHESTRATOR_PORT = int(os.getenv("ORCHESTRATOR_PORT", "5106"))
+        PERSONALITY_SYSTEM_PORT = int(os.getenv("PERSONALITY_SYSTEM_PORT", "5123"))
+        AUTONOMY_SYSTEM_PORT = int(os.getenv("AUTONOMY_SYSTEM_PORT", "5124"))
+        SECRETARY_SYSTEM_PORT = int(os.getenv("SECRETARY_SYSTEM_PORT", "5125"))
+
 # 統一モジュールのインポート
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
@@ -40,16 +76,16 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
     
     def __init__(
         self,
-        intent_router_url: str = "http://127.0.0.1:5100",
-        task_planner_url: str = "http://127.0.0.1:5101",
-        task_critic_url: str = "http://127.0.0.1:5102",
-        task_queue_url: str = "http://127.0.0.1:5104",
+        intent_router_url: str = f"http://127.0.0.1:{INTENT_ROUTER_PORT}",
+        task_planner_url: str = f"http://127.0.0.1:{TASK_PLANNER_PORT}",
+        task_critic_url: str = f"http://127.0.0.1:{TASK_CRITIC_PORT}",
+        task_queue_url: str = f"http://127.0.0.1:{TASK_QUEUE_PORT}",
         executor_url: Optional[str] = None,
-        rag_memory_url: str = "http://127.0.0.1:5103",
+        rag_memory_url: str = f"http://127.0.0.1:{RAG_MEMORY_PORT}",
         learning_system_url: Optional[str] = None,
-        personality_url: str = "http://127.0.0.1:5123",
-        autonomy_url: str = "http://127.0.0.1:5124",
-        secretary_url: str = "http://127.0.0.1:5125",
+        personality_url: str = f"http://127.0.0.1:{PERSONALITY_SYSTEM_PORT}",
+        autonomy_url: str = f"http://127.0.0.1:{AUTONOMY_SYSTEM_PORT}",
+        secretary_url: str = f"http://127.0.0.1:{SECRETARY_SYSTEM_PORT}",
         config_path: Optional[Path] = None
     ):
         """
@@ -105,7 +141,7 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
         
         try:
             self.autonomy_enhanced = AutonomySystemEnhanced(
-                orchestrator_url=f"http://127.0.0.1:5106",
+                orchestrator_url=f"http://127.0.0.1:{ORCHESTRATOR_PORT}",
                 learning_system_url=learning_system_url
             )
             logger.info("✅ Autonomy System Enhanced統合完了")
@@ -115,7 +151,7 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
         
         try:
             self.secretary_optimized = SecretarySystemOptimized(
-                orchestrator_url=f"http://127.0.0.1:5106"
+                orchestrator_url=f"http://127.0.0.1:{ORCHESTRATOR_PORT}"
             )
             logger.info("✅ Secretary System Optimized統合完了")
         except Exception as e:

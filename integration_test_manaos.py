@@ -5,10 +5,19 @@ ManaOS統合テストスクリプト
 
 import sys
 import io
+import os
 import requests
 import json
 from pathlib import Path
 from datetime import datetime
+
+try:
+    from manaos_integrations._paths import UNIFIED_API_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import UNIFIED_API_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9502"))
 
 # Windowsでの文字エンコーディング問題を回避
 if sys.platform == "win32":
@@ -17,20 +26,20 @@ if sys.platform == "win32":
 
 # ManaOS既存サービスのエンドポイント
 MANAOS_SERVICES = {
-    "command_hub": "http://127.0.0.1:9404",
-    "enhanced_api": "http://127.0.0.1:9406",
-    "monitoring": "http://127.0.0.1:9407",
-    "ocr_api": "http://127.0.0.1:9409",
-    "gallery_api": "http://127.0.0.1:5559",
-    "task_executor": "http://127.0.0.1:5176",
-    "unified_portal": "http://127.0.0.1:9408"
+    "command_hub": os.getenv("COMMAND_HUB_URL", "http://127.0.0.1:9404"),
+    "enhanced_api": os.getenv("ENHANCED_API_URL", "http://127.0.0.1:9406"),
+    "monitoring": os.getenv("MONITORING_URL", "http://127.0.0.1:9407"),
+    "ocr_api": os.getenv("OCR_API_URL", "http://127.0.0.1:9409"),
+    "gallery_api": os.getenv("GALLERY_API_URL", "http://127.0.0.1:5559"),
+    "task_executor": os.getenv("TASK_EXECUTOR_URL", "http://127.0.0.1:5176"),
+    "unified_portal": os.getenv("UNIFIED_PORTAL_URL", "http://127.0.0.1:9408")
 }
 
 # 統合システムのエンドポイント
 INTEGRATION_SERVICES = {
-    "unified_api": "http://127.0.0.1:9510",
-    "realtime_dashboard": "http://127.0.0.1:9600",
-    "master_control": "http://127.0.0.1:9700"
+    "unified_api": os.getenv("MANAOS_INTEGRATION_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}"),
+    "realtime_dashboard": os.getenv("REALTIME_DASHBOARD_URL", "http://127.0.0.1:9600"),
+    "master_control": os.getenv("MASTER_CONTROL_URL", "http://127.0.0.1:9700")
 }
 
 

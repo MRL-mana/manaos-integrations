@@ -30,18 +30,24 @@ if (-not (Test-Path $apiScript)) {
 }
 
 # Set environment variables
-$env:X280_API_PORT = "5120"
+$x280Port = if ($env:X280_API_PORT) { [int]$env:X280_API_PORT } else { 5120 }
+$env:X280_API_PORT = "$x280Port"
 $env:X280_HOST = "0.0.0.0"
 
 # Start API Gateway in background
-Write-Host "Starting API Gateway on port 5120..." -ForegroundColor Yellow
+Write-Host "Starting API Gateway on port $x280Port..." -ForegroundColor Yellow
 Start-Process python -ArgumentList $apiScript -WindowStyle Hidden
 
 Start-Sleep -Seconds 3
 
 # Check if it's running
 try {
-    $response = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/health" -TimeoutSec 5
+    $x280ApiBaseUrl = if ($env:X280_API_URL) {
+        $env:X280_API_URL.TrimEnd('/')
+    } else {
+        "http://127.0.0.1:$x280Port"
+    }
+    $response = Invoke-RestMethod -Uri "$x280ApiBaseUrl/api/health" -TimeoutSec 5
     Write-Host "SUCCESS: API Gateway is running!" -ForegroundColor Green
     Write-Host "Status: $($response.status)" -ForegroundColor Cyan
 } catch {

@@ -6,6 +6,7 @@
 
 import json
 import asyncio
+import os
 from manaos_logger import get_logger
 import time
 from pathlib import Path
@@ -15,7 +16,14 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 import requests
 
-from _paths import ORCHESTRATOR_PORT
+try:
+    from manaos_integrations._paths import ORCHESTRATOR_PORT, PIXEL7_BRIDGE_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import ORCHESTRATOR_PORT, PIXEL7_BRIDGE_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        ORCHESTRATOR_PORT = int(os.getenv("ORCHESTRATOR_PORT", "5106"))
+        PIXEL7_BRIDGE_PORT = int(os.getenv("PIXEL7_BRIDGE_PORT", "5122"))
 
 logger = get_logger(__name__)
 
@@ -153,7 +161,10 @@ class DeviceOrchestrator:
                         "device_id": "pixel7",
                         "device_name": "Pixel 7",
                         "device_type": "pixel7",
-                        "api_endpoint": "http://127.0.0.1:5122",
+                        "api_endpoint": os.getenv(
+                            "PIXEL7_BRIDGE_URL",
+                            f"http://127.0.0.1:{PIXEL7_BRIDGE_PORT}",
+                        ),
                         "capabilities": ["camera", "storage"],
                     },
                 ]

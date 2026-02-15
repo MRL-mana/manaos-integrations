@@ -13,6 +13,14 @@ from datetime import datetime, timedelta
 import sys
 from urllib.request import Request, urlopen
 
+try:
+    from manaos_integrations._paths import MRL_MEMORY_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import MRL_MEMORY_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        MRL_MEMORY_PORT = int(os.getenv("MRL_MEMORY_PORT", "5105"))
+
 # タスクスケジューラ等で cwd が異なる場合に備え、スクリプト基準で cwd と .env を設定
 _BASE_DIR = Path(__file__).resolve().parent
 if _BASE_DIR.exists():
@@ -41,7 +49,7 @@ def _load_dotenv(env_path: str = ".env") -> None:
 _load_dotenv(str(_BASE_DIR / ".env"))
 _load_dotenv(".env")  # 相対パスでも読む（cwd 変更済み）
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:5105")
+API_BASE_URL = os.getenv("API_BASE_URL", f"http://127.0.0.1:{MRL_MEMORY_PORT}")
 API_KEY = os.getenv("MRL_MEMORY_API_KEY") or os.getenv("API_KEY", "")
 
 

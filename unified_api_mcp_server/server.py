@@ -34,7 +34,7 @@ if not MCP_AVAILABLE:
 
 # APIエンドポイント
 # NOTE:
-# - ManaOSの統合APIはデフォルト 9510（Docker/WSL の 9500-9503 衝突回避）
+# - ManaOSの統合APIはデフォルト 9502（Docker/WSL の 9500-9503 衝突回避）
 # - 必要に応じて環境変数 `MANAOS_INTEGRATION_API_URL` で上書き可能
 UNIFIED_API_URL = (
     os.getenv("MANAOS_INTEGRATION_API_URL")

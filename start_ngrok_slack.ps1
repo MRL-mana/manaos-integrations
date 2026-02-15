@@ -3,6 +3,8 @@
 Write-Host "=== ngrok トンネル起動（Slack Integration） ===" -ForegroundColor Cyan
 Write-Host ""
 
+$ngrokBaseUrl = if ($env:NGROK_URL) { $env:NGROK_URL.TrimEnd('/') } else { "http://127.0.0.1:4040" }
+
 # ngrokの場所
 $ngrokPath = "C:\Users\mana4\Desktop\ngrok\ngrok.exe"
 
@@ -33,7 +35,7 @@ Write-Host ""
 Start-Process powershell -ArgumentList @(
     "-NoExit",
     "-Command",
-    "cd C:\Users\mana4\Desktop\ngrok; Write-Host '=== ngrok トンネル（Slack Integration） ===' -ForegroundColor Cyan; Write-Host ''; Write-Host 'ポート5114を公開中...' -ForegroundColor Yellow; Write-Host ''; Write-Host 'Web UI: http://127.0.0.1:4040' -ForegroundColor Green; Write-Host ''; Write-Host 'URLが表示されたら、以下の形式でSlack Appに設定してください:' -ForegroundColor White; Write-Host 'https://xxxx-xxxx-xxxx.ngrok-free.app/slack/events' -ForegroundColor Cyan; Write-Host ''; Write-Host '停止する場合は Ctrl+C を押してください' -ForegroundColor Gray; Write-Host ''; .\ngrok.exe http 5114"
+    "cd C:\Users\mana4\Desktop\ngrok; Write-Host '=== ngrok トンネル（Slack Integration） ===' -ForegroundColor Cyan; Write-Host ''; Write-Host 'ポート5114を公開中...' -ForegroundColor Yellow; Write-Host ''; Write-Host 'Web UI: $ngrokBaseUrl' -ForegroundColor Green; Write-Host ''; Write-Host 'URLが表示されたら、以下の形式でSlack Appに設定してください:' -ForegroundColor White; Write-Host 'https://xxxx-xxxx-xxxx.ngrok-free.app/slack/events' -ForegroundColor Cyan; Write-Host ''; Write-Host '停止する場合は Ctrl+C を押してください' -ForegroundColor Gray; Write-Host ''; .\ngrok.exe http 5114"
 )
 
 Write-Host ""

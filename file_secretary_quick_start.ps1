@@ -7,7 +7,9 @@ Write-Host "=== File Secretary クイック起動 ===" -ForegroundColor Cyan
 Write-Host ""
 
 # 環境変数設定
-$env:PORT = "5120"
+$fileSecretaryPort = if ($env:FILE_SECRETARY_PORT) { $env:FILE_SECRETARY_PORT } else { "5120" }
+$env:PORT = $fileSecretaryPort
+$env:FILE_SECRETARY_URL = "http://127.0.0.1:$fileSecretaryPort"
 $env:FILE_SECRETARY_DB_PATH = "file_secretary.db"
 $env:INBOX_PATH = Join-Path $ScriptDir "00_INBOX"
 
@@ -48,7 +50,7 @@ Start-Sleep -Seconds 3
 Write-Host ""
 Write-Host "📊 状態確認中..." -ForegroundColor Yellow
 try {
-    $response = Invoke-WebRequest -Uri "http://127.0.0.1:5120/health" -TimeoutSec 2 -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "$env:FILE_SECRETARY_URL/health" -TimeoutSec 2 -ErrorAction Stop
     Write-Host "✅ APIサーバー: 正常応答" -ForegroundColor Green
 } catch {
     Write-Host "⚠️ APIサーバー: 応答なし" -ForegroundColor Yellow

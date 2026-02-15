@@ -12,6 +12,14 @@ from typing import Any, Dict, List, Optional
 from pathlib import Path
 import io
 
+try:
+    from manaos_integrations._paths import SLACK_INTEGRATION_PORT
+except Exception:  # pragma: no cover
+    try:
+        from _paths import SLACK_INTEGRATION_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        SLACK_INTEGRATION_PORT = int(os.getenv("SLACK_INTEGRATION_PORT", "5114"))
+
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
@@ -29,7 +37,7 @@ except ImportError:
 
 logger = get_logger(__name__)
 
-SLACK_API_URL = os.getenv("SLACK_API_URL", "http://127.0.0.1:5114")
+SLACK_API_URL = os.getenv("SLACK_API_URL", f"http://127.0.0.1:{SLACK_INTEGRATION_PORT}")
 
 if MCP_AVAILABLE:
     app = Server("slack-integration")
