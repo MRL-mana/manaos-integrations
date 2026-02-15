@@ -35,6 +35,15 @@ from manaos_async_client import AsyncUnifiedAPIClient
 from unified_cache_system import get_unified_cache
 from metrics_collector_optimized import MetricsCollectorOptimized, MetricType
 
+from _paths import (
+    AUTONOMY_SYSTEM_PORT,
+    LEARNING_SYSTEM_PORT,
+    ORCHESTRATOR_PORT,
+    PERSONALITY_SYSTEM_PORT,
+    RAG_MEMORY_PORT,
+    SECRETARY_SYSTEM_PORT,
+)
+
 # ローカルLLMシステム
 try:
     from llm_optimization import LLMOptimization
@@ -73,18 +82,25 @@ error_handler = ManaOSErrorHandler("ManaOSCompleteIntegration")
 # キャッシュシステムの取得
 cache_system = get_unified_cache()
 
+DEFAULT_ORCHESTRATOR_URL = f"http://127.0.0.1:{ORCHESTRATOR_PORT}"
+DEFAULT_RAG_MEMORY_URL = f"http://127.0.0.1:{RAG_MEMORY_PORT}"
+DEFAULT_LEARNING_SYSTEM_URL = f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}"
+DEFAULT_PERSONALITY_URL = f"http://127.0.0.1:{PERSONALITY_SYSTEM_PORT}"
+DEFAULT_AUTONOMY_URL = f"http://127.0.0.1:{AUTONOMY_SYSTEM_PORT}"
+DEFAULT_SECRETARY_URL = f"http://127.0.0.1:{SECRETARY_SYSTEM_PORT}"
+
 
 class ManaOSCompleteIntegration:
     """マナOS完全統合システム"""
     
     def __init__(
         self,
-        orchestrator_url: str = "http://127.0.0.1:5106",
-        rag_memory_url: str = "http://127.0.0.1:5103",
-        learning_system_url: str = "http://127.0.0.1:5126",
-        personality_url: str = "http://127.0.0.1:5123",
-        autonomy_url: str = "http://127.0.0.1:5124",
-        secretary_url: str = "http://127.0.0.1:5125"
+        orchestrator_url: Optional[str] = None,
+        rag_memory_url: Optional[str] = None,
+        learning_system_url: Optional[str] = None,
+        personality_url: Optional[str] = None,
+        autonomy_url: Optional[str] = None,
+        secretary_url: Optional[str] = None,
     ):
         """
         初期化
@@ -97,10 +113,17 @@ class ManaOSCompleteIntegration:
             autonomy_url: Autonomy System API URL
             secretary_url: Secretary System API URL
         """
+        self.orchestrator_url = orchestrator_url or DEFAULT_ORCHESTRATOR_URL
+        self.rag_memory_url = rag_memory_url or DEFAULT_RAG_MEMORY_URL
+        self.learning_system_url = learning_system_url or DEFAULT_LEARNING_SYSTEM_URL
+        self.personality_url = personality_url or DEFAULT_PERSONALITY_URL
+        self.autonomy_url = autonomy_url or DEFAULT_AUTONOMY_URL
+        self.secretary_url = secretary_url or DEFAULT_SECRETARY_URL
+
         # マナOSコアシステム
         self.orchestrator = UnifiedOrchestrator(
-            rag_memory_url=rag_memory_url,
-            learning_system_url=learning_system_url
+            rag_memory_url=self.rag_memory_url,
+            learning_system_url=self.learning_system_url,
         )
         
         # 記憶系・学習系（直接インポート）
@@ -135,8 +158,8 @@ class ManaOSCompleteIntegration:
         
         try:
             self.autonomy = AutonomySystemEnhanced(
-                orchestrator_url=orchestrator_url,
-                learning_system_url=learning_system_url
+                orchestrator_url=self.orchestrator_url,
+                learning_system_url=self.learning_system_url,
             )
             logger.info("✅ Autonomy System Enhanced統合完了")
         except Exception as e:
@@ -144,7 +167,7 @@ class ManaOSCompleteIntegration:
             self.autonomy = None
         
         try:
-            self.secretary = SecretarySystemOptimized(orchestrator_url=orchestrator_url)
+            self.secretary = SecretarySystemOptimized(orchestrator_url=self.orchestrator_url)
             logger.info("✅ Secretary System Optimized統合完了")
         except Exception as e:
             logger.warning(f"⚠️ Secretary System統合エラー: {e}")
@@ -152,8 +175,8 @@ class ManaOSCompleteIntegration:
         
         try:
             self.pas_integration = PersonalityAutonomySecretaryIntegration(
-                orchestrator_url=orchestrator_url,
-                learning_system_url=learning_system_url
+                orchestrator_url=self.orchestrator_url,
+                learning_system_url=self.learning_system_url,
             )
             logger.info("✅ Personality-Autonomy-Secretary Integration統合完了")
         except Exception as e:
