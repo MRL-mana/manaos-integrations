@@ -9,6 +9,7 @@ import os
 import time
 import hashlib
 import hmac
+import warnings
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, Optional, Callable
@@ -71,6 +72,30 @@ class JWTManager:
                 logger.warning('JWT_SECRET_KEY 未設定。.jwt_secret に自動生成しました')
         self._algorithm = 'HS256'
 
+        self._raw_secret_bytes = self.secret_key.encode('utf-8')
+        self._accept_legacy_short_key = os.getenv('JWT_ACCEPT_LEGACY_SHORT_KEY', '').strip().lower() in {
+            '1', 'true', 'yes', 'y', 'on'
+        }
+        self._signing_key = self._derive_signing_key(self._raw_secret_bytes)
+
+        if len(self._raw_secret_bytes) < 32:
+            logger.warning(
+                'JWT_SECRET_KEY が短すぎます（%d bytes）。互換性を保つため、署名/検証にはSHA-256で派生した32 bytes鍵を使用します。'
+                ' 既存の「短鍵で署名されたトークン」を受け入れる必要がある場合は JWT_ACCEPT_LEGACY_SHORT_KEY=1 を設定してください。',
+                len(self._raw_secret_bytes),
+            )
+
+    @staticmethod
+    def _derive_signing_key(raw_secret_bytes: bytes) -> bytes:
+        """HS256用の署名鍵を導出。
+
+        - 32 bytes以上ならそのまま利用（既存トークン互換）
+        - 32 bytes未満ならSHA-256で安定的に32 bytesへ派生（PyJWTの警告回避）
+        """
+        if len(raw_secret_bytes) >= 32:
+            return raw_secret_bytes
+        return hashlib.sha256(raw_secret_bytes).digest()
+
     def generate_token(self, user_id: str, expires_in: int = 3600) -> str:
         """トークンを生成"""
         try:
@@ -80,7 +105,7 @@ class JWTManager:
                 'exp': int(time.time()) + expires_in,
                 'iat': int(time.time()),
             }
-            return _jwt.encode(payload, self.secret_key, algorithm=self._algorithm)
+            return _jwt.encode(payload, self._signing_key, algorithm=self._algorithm)
         except ImportError:
             logger.error('PyJWT がインストールされていません: pip install pyjwt')
             raise
@@ -89,7 +114,16 @@ class JWTManager:
         """トークンを検証"""
         try:
             import jwt as _jwt
-            return _jwt.decode(token, self.secret_key, algorithms=[self._algorithm])
+            try:
+                return _jwt.decode(token, self._signing_key, algorithms=[self._algorithm])
+            except Exception:
+                # 互換性: 以前の短い鍵で署名されたトークンを受け入れたい場合のみ試行
+                if self._accept_legacy_short_key and len(self._raw_secret_bytes) < 32:
+                    with warnings.catch_warnings():
+                        # PyJWTの鍵長警告は意図的に抑制（互換検証用）
+                        warnings.filterwarnings('ignore', category=Warning)
+                        return _jwt.decode(token, self._raw_secret_bytes, algorithms=[self._algorithm])
+                raise
         except ImportError:
             logger.error('PyJWT がインストールされていません: pip install pyjwt')
             return None
