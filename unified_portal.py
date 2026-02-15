@@ -12,12 +12,23 @@ import httpx
 import time
 from typing import Dict, Any, Optional, List
 
+try:
+    from ._paths import OLLAMA_PORT  # type: ignore
+except Exception:
+    try:
+        from _paths import OLLAMA_PORT  # type: ignore
+    except Exception:
+        try:
+            from manaos_integrations._paths import OLLAMA_PORT
+        except Exception:
+            OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
 logger = get_logger(__name__)
 app = Flask(__name__)
 CORS(app)
 
 # 設定
-OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "qwen2.5:3b")
 
 # 会話履歴管理
@@ -593,7 +604,7 @@ PORTAL_HTML = """<!DOCTYPE html>
                     <a href="http://127.0.0.1:5057" target="_blank" class="service-link">
                         🔍 RAG API Server (ポート5057)
                     </a>
-                    <a href="http://127.0.0.1:11434" target="_blank" class="service-link">
+                    <a href="http://127.0.0.1:__OLLAMA_PORT__" target="_blank" class="service-link">
                         🦙 Ollama (ポート11434)
                     </a>
                 </div>
@@ -776,6 +787,8 @@ PORTAL_HTML = """<!DOCTYPE html>
 </body>
 </html>
 """
+
+PORTAL_HTML = PORTAL_HTML.replace("__OLLAMA_PORT__", str(OLLAMA_PORT))
 
 
 if __name__ == "__main__":

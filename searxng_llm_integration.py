@@ -9,6 +9,20 @@ import os
 from typing import Optional, Dict, List, Any
 from pathlib import Path
 
+try:
+    from ._paths import OLLAMA_PORT  # type: ignore
+except Exception:  # pragma: no cover
+    try:
+        from _paths import OLLAMA_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        try:
+            from manaos_integrations._paths import OLLAMA_PORT
+        except Exception:  # pragma: no cover
+            OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}").rstrip("/")
+
 from searxng_integration import SearXNGIntegration
 
 # LangChain統合（オプション）
@@ -36,7 +50,7 @@ class SearXNGLLMIntegration:
     def __init__(
         self,
         searxng_url: Optional[str] = None,
-        ollama_url: str = "http://127.0.0.1:11434",
+        ollama_url: str = DEFAULT_OLLAMA_URL,
         model_name: str = "qwen2.5:7b"
     ):
         """

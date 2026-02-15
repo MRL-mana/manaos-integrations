@@ -40,6 +40,18 @@ try:
 except ImportError:
     requests = None
 
+try:
+    from _paths import OLLAMA_PORT, VOICEVOX_PORT
+except Exception:  # pragma: no cover
+    OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+    VOICEVOX_PORT = int(os.getenv("VOICEVOX_PORT", "50021"))
+
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
+DEFAULT_VOICEVOX_URL = os.getenv(
+    "VOICEVOX_URL", f"http://127.0.0.1:{VOICEVOX_PORT}"
+)
+
 # video_pipeline モジュール
 try:
     from video_pipeline import VideoPipeline, LocalLLMClient, VoicevoxTTS, MOVIEPY_AVAILABLE
@@ -463,7 +475,7 @@ async def _list_models() -> str:
         loop = asyncio.get_running_loop()
 
         def _fetch():
-            r = requests.get("http://127.0.0.1:11434/api/tags", timeout=5)
+            r = requests.get(f"{DEFAULT_OLLAMA_URL}/api/tags", timeout=5)
             return r.json().get("models", [])
 
         models = await loop.run_in_executor(None, _fetch)
@@ -505,7 +517,7 @@ async def _system_check() -> str:
 
     # Ollama
     try:
-        r = requests.get("http://127.0.0.1:11434/api/tags", timeout=3)
+        r = requests.get(f"{DEFAULT_OLLAMA_URL}/api/tags", timeout=3)
         models = [m["name"] for m in r.json().get("models", [])]
         checks["ollama"] = {"connected": True, "models": models}
     except Exception:
@@ -513,7 +525,7 @@ async def _system_check() -> str:
 
     # VOICEVOX
     try:
-        r = requests.get("http://127.0.0.1:50021/version", timeout=3)
+        r = requests.get(f"{DEFAULT_VOICEVOX_URL}/version", timeout=3)
         checks["voicevox"] = {"connected": True, "version": r.text.strip('"')}
     except Exception:
         checks["voicevox"] = {"connected": False}

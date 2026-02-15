@@ -86,16 +86,42 @@ except ImportError:
 # 設定
 # ========================================
 
+
+def _env_int(name: str, default: int) -> int:
+    try:
+        return int(os.getenv(name, str(default)))
+    except Exception:
+        return default
+
+
+try:
+    from ._paths import OLLAMA_PORT, VOICEVOX_PORT
+except Exception:
+    try:
+        from _paths import OLLAMA_PORT, VOICEVOX_PORT  # type: ignore
+    except Exception:
+        try:
+            from manaos_integrations._paths import OLLAMA_PORT, VOICEVOX_PORT
+        except Exception:
+            OLLAMA_PORT = _env_int("OLLAMA_PORT", 11434)
+            VOICEVOX_PORT = _env_int("VOICEVOX_PORT", 50021)
+
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
+DEFAULT_VOICEVOX_URL = os.getenv(
+    "VOICEVOX_URL", f"http://127.0.0.1:{VOICEVOX_PORT}"
+)
+
 DEFAULT_CONFIG = {
     # Ollama
-    "ollama_url": "http://127.0.0.1:11434",
+    "ollama_url": DEFAULT_OLLAMA_URL,
     "models": {
         "quality": "dolphin-llama3:8b",  # 品質担当: ナレーション原稿
         "speed": "dolphin-mistral:7b",  # 速度担当: タイトル・テロップ
         "vision": "llava:latest",  # 視覚担当: 画像解析
     },
     # VOICEVOX
-    "voicevox_url": "http://127.0.0.1:50021",
+    "voicevox_url": DEFAULT_VOICEVOX_URL,
     "voicevox_speaker_id": 3,  # デフォルトスピーカー
     "voicevox_speed": 1.1,
     # 動画設定
@@ -133,7 +159,7 @@ DEFAULT_CONFIG = {
 class LocalLLMClient:
     """Ollama API経由でローカルLLMにリクエスト"""
 
-    def __init__(self, ollama_url: str = "http://127.0.0.1:11434"):
+    def __init__(self, ollama_url: str = DEFAULT_OLLAMA_URL):
         self.ollama_url = ollama_url
 
     def generate(
@@ -210,7 +236,7 @@ class VoicevoxTTS:
 
     def __init__(
         self,
-        url: str = "http://127.0.0.1:50021",
+        url: str = DEFAULT_VOICEVOX_URL,
         speaker_id: int = 3,
         speed: float = 1.1,
     ):
@@ -774,7 +800,7 @@ def demo():
 
     # Ollamaチェック
     try:
-        resp = requests.get("http://127.0.0.1:11434/api/tags", timeout=5)
+        resp = requests.get(f"{DEFAULT_OLLAMA_URL}/api/tags", timeout=5)
         models = [m["name"] for m in resp.json().get("models", [])]
         print(f"  ✅ Ollama ({len(models)}モデル)")
         for m in models:
