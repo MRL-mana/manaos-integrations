@@ -8,7 +8,7 @@
 
 ```bash
 # 統合APIサーバーが起動しているか確認
-curl http://127.0.0.1:9510/health
+curl http://127.0.0.1:9502/health
 
 # 起動していない場合、起動
 cd /root/manaos_integrations  # または適切なディレクトリ
@@ -32,7 +32,7 @@ cd C:\Users\mana\Desktop\x280_setup  # またはスクリプトがある場所
 Get-Process -Name "tailscale"
 
 # ブラウザで緊急パネルを開く
-Start-Process "http://100.73.247.100:9510/emergency"
+Start-Process "http://100.73.247.100:9502/emergency"
 ```
 
 ### Step 3: Android（Pixel 7）で手動テスト
@@ -41,7 +41,7 @@ Start-Process "http://100.73.247.100:9510/emergency"
 2. 母艦（100.93.120.33）が「接続済み」になっているか確認
 3. Chromeで以下を開く：
    ```
-   http://100.73.247.100:9510/emergency
+   http://100.73.247.100:9502/emergency
    ```
 
 ### Step 4: Android自動化設定（MacroDroid推奨）
@@ -54,7 +54,7 @@ Start-Process "http://100.73.247.100:9510/emergency"
    - **トリガー**: 「USB接続」→「USBデバイス接続時」
    - **アクション1**: 「アプリ起動」→「Tailscale」
    - **アクション2**: 「待機」→「3秒」
-   - **アクション3**: 「Webページを開く」→ URL: `http://100.73.247.100:9510/emergency`
+   - **アクション3**: 「Webページを開く」→ URL: `http://100.73.247.100:9502/emergency`
 
 3. **マクロを有効化**
    - マクロ名: 「緊急パネル起動」
@@ -84,7 +84,7 @@ Start-Process "http://100.73.247.100:9510/emergency"
 **確認事項**:
 1. 母艦の統合APIサーバーが起動しているか
    ```bash
-   curl http://127.0.0.1:9510/health
+   curl http://127.0.0.1:9502/health
    ```
 
 2. Tailscaleが接続されているか
@@ -122,7 +122,7 @@ Start-Process "http://100.73.247.100:9510/emergency"
 
 **通信経路**:
 ```
-Pixel 7 (LTE/5G) → Tailscale → 母艦 (100.93.120.33:9510)
+Pixel 7 (LTE/5G) → Tailscale → 母艦 (100.93.120.33:9502)
 ```
 
 **借りPC側**:

@@ -102,7 +102,7 @@ python unified_api_server.py
 ManaOS統合APIサーバーを起動中...
 ComfyUI統合を初期化しました
 CivitAI統合を初期化しました
-サーバー起動: http://0.0.0.0:9510
+サーバー起動: http://0.0.0.0:9502
 ```
 
 ---
@@ -121,7 +121,7 @@ python test_comfyui_civitai.py
 
 ```powershell
 # CivitAI検索テスト
-Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/civitai/search?query=realistic&limit=3" -Method GET
+Invoke-RestMethod -Uri "http://127.0.0.1:9502/api/civitai/search?query=realistic&limit=3" -Method GET
 
 # ComfyUI画像生成テスト
 $body = @{
@@ -131,7 +131,7 @@ $body = @{
     steps = 20
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/comfyui/generate" `
+Invoke-RestMethod -Uri "http://127.0.0.1:9502/api/comfyui/generate" `
     -Method POST `
     -Body $body `
     -ContentType "application/json"
@@ -163,7 +163,7 @@ python test_api_endpoints.py
 
 3. ✅ 統合APIサーバーの状態確認
    ```powershell
-   Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/integrations/status" -Method GET
+   Invoke-RestMethod -Uri "http://127.0.0.1:9502/api/integrations/status" -Method GET
    # comfyui.available = true
    # civitai.available = true
    ```

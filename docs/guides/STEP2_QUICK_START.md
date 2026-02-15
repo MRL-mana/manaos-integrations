@@ -106,7 +106,7 @@ Google Drive認証が完了したら:
 2. ✅ Google Drive統合が動作
    ```powershell
    # 統合APIサーバーで確認
-   Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/integrations/status" -Method GET
+   Invoke-RestMethod -Uri "http://127.0.0.1:9502/api/integrations/status" -Method GET
    # google_drive.available = true
    ```
 
@@ -116,7 +116,7 @@ Google Drive認証が完了したら:
        file_path = "C:\path\to\test.png"
    } | ConvertTo-Json
 
-   Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/google_drive/upload" `
+   Invoke-RestMethod -Uri "http://127.0.0.1:9502/api/google_drive/upload" `
        -Method POST `
        -Body $body `
        -ContentType "application/json"

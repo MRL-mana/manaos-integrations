@@ -46,7 +46,7 @@ difficulty_routing:
 py -3.10 .\unified_api_server.py
 ```
 
-（既定ポートは `9510`。変更する場合は `$env:PORT = "9510"` を設定）
+（既定ポートは `9502`。変更する場合は `$env:PORT = "9502"` を設定）
 
 ### ステップ4: 動作確認
 
@@ -96,7 +96,7 @@ import requests
 
 # 難易度ルーティングを使用
 response = requests.post(
-   "http://127.0.0.1:9510/api/llm/route",
+   "http://127.0.0.1:9502/api/llm/route",
     json={
         "prompt": "このコードを最適化してください",
         "context": {
@@ -224,9 +224,9 @@ preferences = {
 
 ### LLMルーティングAPIが起動しない
 
-1. **ポート9510が使用中か確認**
+1. **ポート9502が使用中か確認**
    ```powershell
-   Get-NetTCPConnection -LocalPort 9510
+   Get-NetTCPConnection -LocalPort 9502
    ```
 
 2. **LM Studioサーバーが起動しているか確認**

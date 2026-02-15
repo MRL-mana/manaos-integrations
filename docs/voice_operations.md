@@ -51,7 +51,7 @@ python unified_api_server.py
 ```
 
 - 起動ログに「✅ 音声機能統合を初期化タスクに追加しました」が出ていれば音声は有効
-- デフォルトで `http://127.0.0.1:9510` で待ち受け
+- デフォルトで `http://127.0.0.1:9502` で待ち受け
 - **TTSストリーミング**: `POST /api/voice/synthesize/stream` で長文を文単位でストリーム返却（先頭から再生可能）
 
 ### 3.2 秘書レミ（スタンドアロン）の起動
@@ -94,7 +94,7 @@ python voice_realtime_streaming.py
 
 ```powershell
 # 統合APIが起動している前提
-curl http://127.0.0.1:9510/api/voice/health
+curl http://127.0.0.1:9502/api/voice/health
 ```
 
 期待例: `{"status":"ok","stt":"ok","tts":"ok"}`
@@ -102,13 +102,13 @@ curl http://127.0.0.1:9510/api/voice/health
 ### 4.2 メトリクス確認
 
 ```powershell
-curl http://127.0.0.1:9510/api/voice/metrics
+curl http://127.0.0.1:9502/api/voice/metrics
 ```
 
 ### 4.3 動作確認スクリプト（推奨）
 
 ```powershell
-python scripts\voice\check_voice_ready.py --base http://127.0.0.1:9510
+python scripts\voice\check_voice_ready.py --base http://127.0.0.1:9502
 ```
 
 - ヘルス・メトリクス・TTS 1回を実行し、運用開始可能か判定
@@ -116,9 +116,9 @@ python scripts\voice\check_voice_ready.py --base http://127.0.0.1:9510
 ### 4.4 E2Eテスト
 
 ```powershell
-python scripts\voice\test_voice_e2e.py --base http://127.0.0.1:9510
+python scripts\voice\test_voice_e2e.py --base http://127.0.0.1:9502
 # 音声ファイルで会話まで確認する場合
-python scripts\voice\test_voice_e2e.py --base http://127.0.0.1:9510 --audio path\to\sample.wav
+python scripts\voice\test_voice_e2e.py --base http://127.0.0.1:9502 --audio path\to\sample.wav
 ```
 
 ## 5. 運用開始チェックリスト
@@ -126,8 +126,8 @@ python scripts\voice\test_voice_e2e.py --base http://127.0.0.1:9510 --audio path
 | # | 項目 | 確認方法 |
 |---|------|----------|
 | 1 | VOICEVOX（または Style-Bert-VITS2）起動 | ブラウザで `http://127.0.0.1:50021/speakers` 等にアクセス |
-| 2 | 統合API起動 | `curl http://127.0.0.1:9510/health` が 200 |
-| 3 | 音声ヘルス OK | `curl http://127.0.0.1:9510/api/voice/health` で `status: ok` |
+| 2 | 統合API起動 | `curl http://127.0.0.1:9502/health` が 200 |
+| 3 | 音声ヘルス OK | `curl http://127.0.0.1:9502/api/voice/health` で `status: ok` |
 | 4 | TTS 動作 | `test_voice_e2e.py` の synthesize が成功 |
 | 5 | （任意）秘書レミ | `voice_secretary_remi.py` 起動後マイクで「レミ」で応答 |
 | 6 | （任意）webrtcvad | `python -c "import webrtcvad; print('OK')"` |
@@ -147,8 +147,8 @@ python scripts\voice\test_voice_e2e.py --base http://127.0.0.1:9510 --audio path
 
 | 用途 | コマンド |
 |------|----------|
-| 運用開始可否チェック | `scripts\voice\check_voice_ready.bat` または `python scripts/voice/check_voice_ready.py --base http://127.0.0.1:9510` |
-| E2Eテスト | `scripts\voice\run_voice_e2e.bat` または `python scripts/voice/test_voice_e2e.py --base http://127.0.0.1:9510` |
+| 運用開始可否チェック | `scripts\voice\check_voice_ready.bat` または `python scripts/voice/check_voice_ready.py --base http://127.0.0.1:9502` |
+| E2Eテスト | `scripts\voice\run_voice_e2e.bat` または `python scripts/voice/test_voice_e2e.py --base http://127.0.0.1:9502` |
 | 音声設定の初回セットアップ | `scripts\voice\setup_voice_config.bat` |
 | 統合API起動（案内付き） | `scripts\voice\start_unified_api_with_voice.bat` |
 | 秘書レミ起動 | `scripts\voice\start_voice_secretary.bat` |

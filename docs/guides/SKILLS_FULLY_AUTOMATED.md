@@ -62,7 +62,7 @@ python scripts/auto_skill_runner.py log_analysis --log_file logs/app.log
 `unified_api_server.py`の`/api/lfm25/chat`エンドポイントを使用します。
 
 **設定:**
-- `UNIFIED_API_SERVER_URL`環境変数（デフォルト: `http://127.0.0.1:9510`）
+- `UNIFIED_API_SERVER_URL`環境変数（デフォルト: `http://127.0.0.1:9502`）
 
 ### フォールバック
 
@@ -140,7 +140,7 @@ python scripts/auto_skill_runner.py git_ops
 
 2. **unified_api_serverが起動しているか確認**
    ```bash
-   curl http://127.0.0.1:9510/status
+   curl http://127.0.0.1:9502/status
    ```
 
 3. **フォールバック動作**

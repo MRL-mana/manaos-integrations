@@ -42,7 +42,7 @@ python wait_and_test.py
 ```
 
 または、ブラウザで：
-- http://127.0.0.1:9510/health
+- http://127.0.0.1:9502/health
 
 ---
 

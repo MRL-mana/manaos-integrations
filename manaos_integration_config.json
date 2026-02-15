@@ -26,7 +26,7 @@
       "description": "タスクキューを管理するサービス"
     },
     "ui_operations": {
-      "port": 5105,
+      "port": 5110,
       "name": "UI Operations",
       "description": "UI操作を管理するサービス"
     },
@@ -50,20 +50,10 @@
       "name": "Content Generation",
       "description": "コンテンツ生成サービス"
     },
-    "llm_routing": {
-      "port": 5111,
-      "name": "LLM Routing MCP",
-      "description": "LLMルーティングMCPサービス"
-    },
     "mrl_memory": {
       "port": 5105,
       "name": "MRL Memory",
       "description": "MRLメモリサービス"
-    },
-    "video_pipeline": {
-      "port": 5112,
-      "name": "Video Pipeline",
-      "description": "動画パイプラインサービス"
     },
     "web_voice": {
       "port": 5115,
@@ -101,11 +91,33 @@
       "description": "外部Mem0ストレージ連携サービス"
     }
   },
+  "mcp_services": {
+    "learning_system": {
+      "port": 5126,
+      "name": "Learning System API",
+      "description": "学習・自動改善システムMCPサービス"
+    },
+    "llm_routing": {
+      "port": 5111,
+      "name": "LLM Routing MCP",
+      "description": "LLMルーティングMCPサービス"
+    },
+    "video_pipeline": {
+      "port": 5112,
+      "name": "Video Pipeline MCP",
+      "description": "動画パイプラインMCPサービス"
+    },
+    "pico_hid": {
+      "port": 5136,
+      "name": "Pico HID MCP",
+      "description": "マウス/キーボード操作MCPサービス"
+    }
+  },
   "integration_services": {
     "unified_api": {
-      "port": 9510,
+      "port": 9502,
       "name": "Unified API Server",
-      "description": "統合APIサーバー"
+      "description": "統合APIサーバー（実際の動作ポート）"
     },
     "command_hub": {
       "port": 9404,

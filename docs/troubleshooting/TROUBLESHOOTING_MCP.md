@@ -124,7 +124,7 @@
       "command": "python",
       "args": ["-m", "llm_routing_mcp_server.server"],
       "env": {
-            "MANAOS_INTEGRATION_API_URL": "http://127.0.0.1:9510",
+            "MANAOS_INTEGRATION_API_URL": "http://127.0.0.1:9502",
             "LLM_ROUTING_API_URL": "http://127.0.0.1:5111"
       },
       "cwd": "C:\\Users\\mana4\\Desktop\\manaos_integrations"

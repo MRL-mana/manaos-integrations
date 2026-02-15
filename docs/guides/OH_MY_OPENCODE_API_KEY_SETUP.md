@@ -105,13 +105,13 @@ python unified_api_server.py
 ### 1. ヘルスチェック
 
 ```bash
-curl http://127.0.0.1:9510/health
+curl http://127.0.0.1:9502/health
 ```
 
 ### 2. OH MY OPENCODE実行テスト
 
 ```bash
-curl -X POST http://127.0.0.1:9510/api/oh_my_opencode/execute \
+curl -X POST http://127.0.0.1:9502/api/oh_my_opencode/execute \
   -H "Content-Type: application/json" \
   -d '{
     "task_description": "PythonでHello Worldを出力するコードを生成してください",

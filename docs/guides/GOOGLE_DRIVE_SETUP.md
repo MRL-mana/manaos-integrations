@@ -147,7 +147,7 @@ $body = @{
     folder_id = ""  # オプション: フォルダID
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/google_drive/upload" `
+Invoke-RestMethod -Uri "http://127.0.0.1:9502/api/google_drive/upload" `
     -Method POST `
     -Body $body `
     -ContentType "application/json"

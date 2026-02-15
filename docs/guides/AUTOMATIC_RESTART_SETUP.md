@@ -132,7 +132,7 @@ SLACK_WEBHOOK_URL=https://hooks.slack.com/services/<YOUR>/<WEBHOOK>/<URL>
 
 ```bash
 # crontab -e
-*/5 * * * * curl -f http://127.0.0.1:9510/health || systemctl restart manaos-api
+*/5 * * * * curl -f http://127.0.0.1:9502/health || systemctl restart manaos-api
 ```
 
 ### Prometheus監視（オプション）

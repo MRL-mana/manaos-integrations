@@ -94,7 +94,7 @@ cd portal_voice_integration_mcp_server && pip install -r requirements.txt && cd 
       "command": "python",
       "args": ["-m", "unified_api_mcp_server.server"],
       "env": {
-        "MANAOS_INTEGRATION_API_URL": "http://127.0.0.1:9510"
+        "MANAOS_INTEGRATION_API_URL": "http://127.0.0.1:9502"
       }
     },
     "step-deep-research": {
@@ -208,7 +208,7 @@ python -m gallery_api_mcp_server.server
 
 ```bash
 # ヘルスチェック
-curl http://127.0.0.1:9510/health  # Unified API
+curl http://127.0.0.1:9502/health  # Unified API
 curl http://127.0.0.1:5121/health  # Step Deep Research
 curl http://127.0.0.1:5559/health  # Gallery API
 curl http://127.0.0.1:5112/health  # System Status
@@ -218,7 +218,7 @@ curl http://127.0.0.1:5115/health  # Web Voice
 curl http://127.0.0.1:5108/health  # Portal Integration
 curl http://127.0.0.1:5114/health  # Slack Integration
 curl http://127.0.0.1:5116/health  # Portal Voice Integration
-curl http://127.0.0.1:9510/api/llm/health  # LLM Routing API
+curl http://127.0.0.1:9502/api/llm/health  # LLM Routing API
 ```
 
 ---
@@ -244,7 +244,7 @@ curl http://127.0.0.1:9510/api/llm/health  # LLM Routing API
 ### Dockerコンテナが起動しない
 
 1. Docker Desktopが起動しているか確認
-2. ポートが使用中でないか確認: `netstat -an | findstr :9510`
+2. ポートが使用中でないか確認: `netstat -an | findstr :9502`
 3. ログを確認: `docker-compose logs <service-name>`
 
 ### サービス間の通信エラー

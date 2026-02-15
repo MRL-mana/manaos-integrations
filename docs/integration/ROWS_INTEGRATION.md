@@ -44,7 +44,7 @@ Rowsは「Excel × Notion × ChatGPT」のようなAIスプレッドシートツ
 ```bash
 # Rows API設定
 ROWS_API_KEY=your_rows_api_key_here
-ROWS_WEBHOOK_URL=http://127.0.0.1:9510/api/rows/webhook
+ROWS_WEBHOOK_URL=http://127.0.0.1:9502/api/rows/webhook
 
 # n8n連携（オプション）
 N8N_WEBHOOK_URL=http://127.0.0.1:5678/webhook/rows-manaos-integration
@@ -154,14 +154,14 @@ Content-Type: application/json
 import requests
 
 # 1. スプレッドシートを作成
-response = requests.post("http://127.0.0.1:9510/api/rows/spreadsheets", json={
+response = requests.post("http://127.0.0.1:9502/api/rows/spreadsheets", json={
     "title": "売上分析",
     "description": "月次売上データの分析"
 })
 spreadsheet_id = response.json()["spreadsheet"]["id"]
 
 # 2. データを送信
-requests.post("http://127.0.0.1:9510/api/rows/data/send", json={
+requests.post("http://127.0.0.1:9502/api/rows/data/send", json={
     "spreadsheet_id": spreadsheet_id,
     "data": [
         {"月": "2024-01", "売上": 1000000, "利益": 300000},
@@ -171,7 +171,7 @@ requests.post("http://127.0.0.1:9510/api/rows/data/send", json={
 })
 
 # 3. AIで傾向分析
-response = requests.post("http://127.0.0.1:9510/api/rows/ai/query", json={
+response = requests.post("http://127.0.0.1:9502/api/rows/ai/query", json={
     "spreadsheet_id": spreadsheet_id,
     "query": "この売上データ、傾向分析してグラフ出して"
 })
@@ -184,7 +184,7 @@ print(response.json()["result"])
 import requests
 
 # スプレッドシートのデータを要約してSlackに送信
-response = requests.post("http://127.0.0.1:9510/api/rows/export/slack", json={
+response = requests.post("http://127.0.0.1:9502/api/rows/export/slack", json={
     "spreadsheet_id": "sp_xxxxx",
     "sheet_name": "Sheet1",
     "channel": "#manaos-notifications"

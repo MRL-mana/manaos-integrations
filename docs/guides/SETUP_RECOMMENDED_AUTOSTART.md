@@ -57,7 +57,7 @@ Get-ScheduledTask -TaskName "manaOS-API-Server"
    cd C:\Users\mana4\OneDrive\Desktop\manaos_integrations
    python check_server_status.py
    ```
-   またはブラウザで: http://127.0.0.1:9510/health
+   またはブラウザで: http://127.0.0.1:9502/health
 
 3. **n8nの確認**
    ```powershell

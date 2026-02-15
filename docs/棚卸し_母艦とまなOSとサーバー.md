@@ -39,7 +39,7 @@
 
 | ポート | サービス | スクリプト | 備考 |
 |--------|----------|------------|------|
-| **9510** | ManaOS 統合API | `unified_api_server.py` | メインエントリ。外部サービス連携の窓口 |
+| **9502** | ManaOS 統合API | `unified_api_server.py` | メインエントリ。外部サービス連携の窓口 |
 | **5111** | LLM Routing MCP | `llm_routing_mcp_server` | LM Studio / Ollama のルーティング（healthのみ） |
 
 ### 2.2 コア・オーケストレーション（51xx系）

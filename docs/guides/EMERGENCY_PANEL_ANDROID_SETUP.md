@@ -76,7 +76,7 @@ Google Play Storeで「Tasker」を検索してインストール。
 2. 「Webページ」カテゴリを選択
 3. 「Webページを開く」を選択
 4. 設定:
-   - **URL**: `http://100.73.247.100:9510/emergency`
+   - **URL**: `http://100.73.247.100:9502/emergency`
    - **ブラウザ**: 「Chrome」（またはお好みのブラウザ）
 
 #### アクション4（オプション）: 画面ロック解除
@@ -155,7 +155,7 @@ Google Play Storeで「Tasker」を検索してインストール。
 1. 「+」ボタンをタップ
 2. 「アプリ」→「URLを開く」
 3. 設定:
-   - **URL**: `http://100.73.247.100:9510/emergency`
+   - **URL**: `http://100.73.247.100:9502/emergency`
    - **ブラウザ**: Chromeを選択
 
 ### Step 4: 終了タスク（USB切断時）
@@ -192,7 +192,7 @@ Google Play Storeで「Tasker」を検索してインストール。
 
 1. Pixel 7でTailscaleアプリを開く
 2. 母艦（100.93.120.33）が「接続済み」になっているか確認
-3. Chromeで `http://100.73.247.100:9510/emergency` を開く
+3. Chromeで `http://100.73.247.100:9502/emergency` を開く
 4. 緊急パネルが表示されることを確認
 
 ### 2. 自動化テスト
@@ -232,7 +232,7 @@ Google Play Storeで「Tasker」を検索してインストール。
 
 **確認事項**:
 1. Tailscaleが接続されているか
-2. URLが正しいか（`http://100.73.247.100:9510/emergency`）
+2. URLが正しいか（`http://100.73.247.100:9502/emergency`）
 3. 母艦の統合APIサーバーが起動しているか
 4. 手動でURLを開けるか確認
 
@@ -275,7 +275,7 @@ MacroDroid/Taskerで以下を追加：
 ## 📚 参考情報
 
 - 母艦（新PC）Tailscale IP: `100.73.247.100`
-- 緊急パネルURL: `http://100.73.247.100:9510/emergency`
+- 緊急パネルURL: `http://100.73.247.100:9502/emergency`
 - MacroDroid公式サイト: https://www.macrodroid.com/
 - Tasker公式サイト: https://tasker.joaoapps.com/
 

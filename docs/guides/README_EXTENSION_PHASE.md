@@ -52,12 +52,12 @@ result = manaos.act("llm_call", {
 
 ```bash
 # LLMルーティング
-curl -X POST http://127.0.0.1:9510/api/llm/route \
+curl -X POST http://127.0.0.1:9502/api/llm/route \
   -H "Content-Type: application/json" \
   -d '{"task_type": "conversation", "prompt": "こんにちは"}'
 
 # 朝のルーチン
-curl -X POST http://127.0.0.1:9510/api/secretary/morning
+curl -X POST http://127.0.0.1:9502/api/secretary/morning
 ```
 
 ---
@@ -147,7 +147,7 @@ result = secretary.evening_routine()
 1. n8nを開く（http://127.0.0.1:5678）
 2. ワークフロー → インポート
 3. `n8n_workflows/core_routines/` のJSONファイルをインポート
-4. Webhook URLを設定: `http://127.0.0.1:9510/api/secretary/{morning|noon|evening}`
+4. Webhook URLを設定: `http://127.0.0.1:9502/api/secretary/{morning|noon|evening}`
 5. スケジュールを設定
 
 ---
@@ -290,7 +290,7 @@ python test_api_endpoints_extension.py
 
 1. ポートが使用されていないか確認
    ```bash
-   netstat -ano | findstr :9510  # Windows
+   netstat -ano | findstr :9502  # Windows
    ```
 
 2. 依存関係がインストールされているか確認
