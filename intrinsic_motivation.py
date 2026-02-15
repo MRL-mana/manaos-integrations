@@ -16,6 +16,7 @@ from enum import Enum
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from manaos_timeout_config import get_timeout_config
+from _paths import LEARNING_SYSTEM_PORT, METRICS_COLLECTOR_PORT, ORCHESTRATOR_PORT
 
 # ロガーの初期化
 logger = get_logger(__name__)
@@ -25,6 +26,10 @@ error_handler = ManaOSErrorHandler("IntrinsicMotivation")
 
 # タイムアウト設定の取得
 timeout_config = get_timeout_config()
+
+DEFAULT_ORCHESTRATOR_URL = f"http://127.0.0.1:{ORCHESTRATOR_PORT}"
+DEFAULT_LEARNING_SYSTEM_URL = f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}"
+DEFAULT_METRICS_COLLECTOR_URL = f"http://127.0.0.1:{METRICS_COLLECTOR_PORT}"
 
 
 class TaskCategory(str, Enum):
@@ -73,9 +78,9 @@ class IntrinsicMotivation:
 
     def __init__(
         self,
-        orchestrator_url: str = "http://127.0.0.1:5106",
-        learning_system_url: str = "http://127.0.0.1:5126",
-        metrics_collector_url: str = "http://127.0.0.1:5127",
+        orchestrator_url: Optional[str] = None,
+        learning_system_url: Optional[str] = None,
+        metrics_collector_url: Optional[str] = None,
         config_path: Optional[Path] = None,
     ):
         """
@@ -87,9 +92,9 @@ class IntrinsicMotivation:
             metrics_collector_url: Metrics Collector API URL
             config_path: 設定ファイルのパス
         """
-        self.orchestrator_url = orchestrator_url
-        self.learning_system_url = learning_system_url
-        self.metrics_collector_url = metrics_collector_url
+        self.orchestrator_url = orchestrator_url or DEFAULT_ORCHESTRATOR_URL
+        self.learning_system_url = learning_system_url or DEFAULT_LEARNING_SYSTEM_URL
+        self.metrics_collector_url = metrics_collector_url or DEFAULT_METRICS_COLLECTOR_URL
 
         self.config_path = config_path or Path(__file__).parent / "intrinsic_motivation_config.json"
         self.config = self._load_config()

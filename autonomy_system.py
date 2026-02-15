@@ -26,6 +26,7 @@ from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from manaos_timeout_config import get_timeout_config
 from manaos_config_validator import ConfigValidator
+from _paths import INTRINSIC_MOTIVATION_PORT, ORCHESTRATOR_PORT
 
 # ロガーの初期化
 logger = get_logger(__name__)
@@ -38,6 +39,9 @@ timeout_config = get_timeout_config()
 
 # 設定ファイル検証の初期化
 config_validator = ConfigValidator("AutonomySystem")
+
+DEFAULT_ORCHESTRATOR_URL = f"http://127.0.0.1:{ORCHESTRATOR_PORT}"
+DEFAULT_INTRINSIC_MOTIVATION_URL = f"http://127.0.0.1:{INTRINSIC_MOTIVATION_PORT}"
 
 # L0〜L6 ラベル（get_status 用）
 LEVEL_NAMES = {
@@ -85,7 +89,7 @@ class AutonomySystem:
 
     def __init__(
         self,
-        orchestrator_url: str = "http://127.0.0.1:5106",
+        orchestrator_url: Optional[str] = None,
         learning_system_url: Optional[str] = None,
         intrinsic_motivation_url: Optional[str] = None,
         config_path: Optional[Path] = None
@@ -98,9 +102,9 @@ class AutonomySystem:
             learning_system_url: Learning System API URL（オプション）
             config_path: 設定ファイルのパス
         """
-        self.orchestrator_url = orchestrator_url
+        self.orchestrator_url = orchestrator_url or DEFAULT_ORCHESTRATOR_URL
         self.learning_system_url = learning_system_url
-        self.intrinsic_motivation_url = intrinsic_motivation_url or "http://127.0.0.1:5130"
+        self.intrinsic_motivation_url = intrinsic_motivation_url or DEFAULT_INTRINSIC_MOTIVATION_URL
 
         self.config_path = config_path or Path(__file__).parent / "autonomy_config.json"
         self.config = self._load_config()
