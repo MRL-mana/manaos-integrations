@@ -6,13 +6,16 @@ import requests
 import time
 import sys
 import io
+import os
+
+from _paths import COMFYUI_PORT, GALLERY_PORT
 
 # Windowsでのエンコーディング問題を回避
 if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-COMFYUI_URL = "http://127.0.0.1:8188"
-GALLERY_API = "http://127.0.0.1:5559/api/generate"
+COMFYUI_URL = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
+GALLERY_API = os.getenv("GALLERY_GENERATE_API", f"http://127.0.0.1:{GALLERY_PORT}/api/generate")
 
 print("=" * 60)
 print("ComfyUI接続確認と画像生成")

@@ -44,6 +44,24 @@ from datetime import datetime
 from typing import Optional, List
 from pathlib import Path
 
+from _paths import (
+    COMFYUI_PORT,
+    FILE_SECRETARY_PORT,
+    LEARNING_SYSTEM_PORT,
+    LLM_ROUTING_PORT,
+    MCP_API_SERVER_PORT,
+    MRL_MEMORY_PORT,
+    OLLAMA_PORT,
+    ORCHESTRATOR_PORT,
+    RAG_MEMORY_PORT,
+    SECRETARY_API_PORT,
+    SECRETARY_SYSTEM_PORT,
+    TASK_QUEUE_PORT,
+    UNIFIED_API_PORT,
+    VOICEVOX_PORT,
+    INTENT_ROUTER_PORT,
+)
+
 
 # ============================================================
 # Workspace helpers
@@ -248,7 +266,7 @@ def check_comfyui_queue():
     """Check ComfyUI queue status"""
     try:
         import urllib.request
-        req = urllib.request.urlopen("http://127.0.0.1:8188/prompt", timeout=2)
+        req = urllib.request.urlopen(f"http://127.0.0.1:{COMFYUI_PORT}/prompt", timeout=2)
         data = json.loads(req.read())
         return {"queue_remaining": data.get("exec_info", {}).get("queue_remaining", 0)}
     except Exception:
@@ -259,7 +277,7 @@ def check_ollama_models():
     """List loaded Ollama models"""
     try:
         import urllib.request
-        req = urllib.request.urlopen("http://127.0.0.1:11434/api/tags", timeout=3)
+        req = urllib.request.urlopen(f"http://127.0.0.1:{OLLAMA_PORT}/api/tags", timeout=3)
         data = json.loads(req.read())
         models = [m["name"] for m in data.get("models", [])]
         return {"models": models, "count": len(models), "status": "online"}
@@ -345,7 +363,7 @@ async def get_tasks():
 # VOICEVOX TTS
 # ============================================================
 
-VOICEVOX_URL = "http://127.0.0.1:50021"
+VOICEVOX_URL = os.getenv("VOICEVOX_URL", f"http://127.0.0.1:{VOICEVOX_PORT}")
 
 
 async def verify_token_or_query(request: Request):
@@ -743,7 +761,7 @@ async def list_actions():
 # Chat Proxy (Phase 3)
 # ============================================================
 
-OLLAMA_URL = "http://127.0.0.1:11434"
+OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 
 # Chat history (persisted to file)
 CHAT_HISTORY_FILE = os.path.join(os.path.dirname(__file__), "logs", "chat_history.json")
@@ -1945,9 +1963,11 @@ async def log_requests(request: Request, call_next):
 # Secretary & ManaOS Integration
 # ============================================================
 
-SECRETARY_API = "http://127.0.0.1:5003"
-SSOT_API = "http://127.0.0.1:5120"
-UNIFIED_API = "http://127.0.0.1:9510"
+SECRETARY_API = os.getenv("SECRETARY_API_URL", f"http://127.0.0.1:{SECRETARY_API_PORT}")
+SSOT_API = os.getenv("SSOT_API_URL", f"http://127.0.0.1:{FILE_SECRETARY_PORT}")
+UNIFIED_API = os.getenv("UNIFIED_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}")
+SECRETARY_SYSTEM_API = os.getenv("SECRETARY_SYSTEM_URL", f"http://127.0.0.1:{SECRETARY_SYSTEM_PORT}")
+ORCHESTRATOR_API = os.getenv("ORCHESTRATOR_URL", f"http://127.0.0.1:{ORCHESTRATOR_PORT}")
 
 
 async def _proxy_get(url: str, timeout: float = 10.0) -> dict:
@@ -1968,11 +1988,11 @@ async def _proxy_post(url: str, data: dict = None, timeout: float = 15.0) -> dic
 async def secretary_status():
     """Check all secretary and ManaOS service health"""
     services = {
-        "secretary_api": {"url": f"{SECRETARY_API}/health", "port": 5003},
-        "ssot_api": {"url": f"{SSOT_API}/health", "port": 5120},
-        "unified_api": {"url": f"{UNIFIED_API}/health", "port": 9500},
-        "secretary_system": {"url": "http://127.0.0.1:5125/health", "port": 5125},
-        "orchestrator": {"url": "http://127.0.0.1:5106/health", "port": 5106},
+        "secretary_api": {"url": f"{SECRETARY_API}/health", "port": SECRETARY_API_PORT},
+        "ssot_api": {"url": f"{SSOT_API}/health", "port": FILE_SECRETARY_PORT},
+        "unified_api": {"url": f"{UNIFIED_API}/health", "port": UNIFIED_API_PORT},
+        "secretary_system": {"url": f"{SECRETARY_SYSTEM_API}/health", "port": SECRETARY_SYSTEM_PORT},
+        "orchestrator": {"url": f"{ORCHESTRATOR_API}/health", "port": ORCHESTRATOR_PORT},
     }
     results = {}
     for name, info in services.items():
@@ -1989,7 +2009,7 @@ async def secretary_status():
 async def get_reminders():
     """Get pending reminders from Secretary System"""
     try:
-        data = await _proxy_get("http://127.0.0.1:5125/api/reminders")
+        data = await _proxy_get(f"{SECRETARY_SYSTEM_API}/api/reminders")
         return data
     except httpx.ConnectError:
         return {"error": "Secretary System offline (port 5125)", "hint": "Start secretary_system.py"}
@@ -2008,7 +2028,7 @@ async def add_reminder(
         payload = {"title": title, "repeat_type": repeat}
         if due:
             payload["due_date"] = due
-        data = await _proxy_post("http://127.0.0.1:5125/api/reminders", payload)
+        data = await _proxy_post(f"{SECRETARY_SYSTEM_API}/api/reminders", payload)
         return data
     except httpx.ConnectError:
         return {"error": "Secretary System offline (port 5125)"}
@@ -2020,7 +2040,7 @@ async def add_reminder(
 async def daily_report():
     """Generate daily report via Secretary System"""
     try:
-        data = await _proxy_post("http://127.0.0.1:5125/api/reports/daily")
+        data = await _proxy_post(f"{SECRETARY_SYSTEM_API}/api/reports/daily")
         return data
     except httpx.ConnectError:
         return {"error": "Secretary System offline (port 5125)"}
@@ -2032,7 +2052,7 @@ async def daily_report():
 async def get_reports(report_type: str = Query("daily"), limit: int = Query(5)):
     """Get past reports from Secretary System"""
     try:
-        data = await _proxy_get(f"http://127.0.0.1:5125/api/reports?type={report_type}&limit={limit}")
+        data = await _proxy_get(f"{SECRETARY_SYSTEM_API}/api/reports?type={report_type}&limit={limit}")
         return data
     except httpx.ConnectError:
         return {"error": "Secretary System offline (port 5125)"}
@@ -2044,11 +2064,18 @@ async def get_reports(report_type: str = Query("daily"), limit: int = Query(5)):
 async def manaos_services():
     """List all ManaOS services and their status"""
     service_map = {
-        "unified_api": 9510, "llm_routing": 5111, "mcp_api": 9502,
-        "intent_router": 5100, "rag_memory": 5103, "task_queue": 5104,
-        "orchestrator": 5106, "service_monitor": 5111,
-        "secretary_system": 5125, "file_secretary": 5120,
-        "mrl_memory": 5105, "learning_system": 5126,
+        "unified_api": UNIFIED_API_PORT,
+        "llm_routing": LLM_ROUTING_PORT,
+        "mcp_api": MCP_API_SERVER_PORT,
+        "intent_router": INTENT_ROUTER_PORT,
+        "rag_memory": RAG_MEMORY_PORT,
+        "task_queue": TASK_QUEUE_PORT,
+        "orchestrator": ORCHESTRATOR_PORT,
+        "service_monitor": LLM_ROUTING_PORT,
+        "secretary_system": SECRETARY_SYSTEM_PORT,
+        "file_secretary": FILE_SECRETARY_PORT,
+        "mrl_memory": MRL_MEMORY_PORT,
+        "learning_system": LEARNING_SYSTEM_PORT,
     }
     async def _check(client, name, port):
         try:
