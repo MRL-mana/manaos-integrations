@@ -15,7 +15,7 @@ from typing import Dict, Any, Optional
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from _paths import FILE_SECRETARY_PORT
 
 logger = get_service_logger("file-secretary-monitor")

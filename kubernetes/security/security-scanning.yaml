@@ -1,0 +1,617 @@
+# Security Scanning Automation
+# Automated SAST, container scanning, and dependency vulnerability detection
+# Integrated into CI/CD pipeline
+
+---
+# Trivy Operator for Runtime Security Scanning
+# Automatically scans images, configs, and vulnerabilities
+# Ref: https://aquasecurity.github.io/trivy-operator/
+
+---
+# Trivy Operator Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: trivy-system
+  labels:
+    name: trivy-system
+    pod-security.kubernetes.io/enforce: baseline
+
+---
+# Trivy Operator ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: trivy-operator
+  namespace: trivy-system
+
+---
+# Trivy Operator ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: trivy-operator
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["aquasecurity.github.io"]
+  resources: ["*"]
+  verbs: ["*"]
+
+---
+# Trivy Operator ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: trivy-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: trivy-operator
+subjects:
+- kind: ServiceAccount
+  name: trivy-operator
+  namespace: trivy-system
+
+---
+# Trivy Operator ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trivy-operator
+  namespace: trivy-system
+data:
+  scanJob.podTemplateContainerSecurityContext: |
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    privileged: false
+    readOnlyRootFilesystem: true
+  vulnerabilityReports.scanner: Trivy
+  trivy.severity: CRITICAL,HIGH,MEDIUM
+  trivy.ignoreUnfixed: "false"
+  trivy.timeout: "5m0s"
+
+---
+# Trivy CronJob for Scheduled Scanning
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: trivy-scan-production
+  namespace: trivy-system
+spec:
+  # Run daily at 3 AM
+  schedule: "0 3 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: trivy-operator
+          containers:
+          - name: trivy-scanner
+            image: aquasec/trivy:0.48.0
+            command:
+            - /bin/sh
+            - -c
+            - |
+              #!/bin/sh
+              set -e
+              
+              echo "Starting Trivy scan for production images..."
+              
+              # Get all images in production namespace
+              kubectl get pods -n manaos-production -o jsonpath='{.items[*].spec.containers[*].image}' | tr ' ' '\n' | sort -u > /tmp/images.txt
+              
+              # Scan each image
+              while read image; do
+                echo "Scanning $image..."
+                trivy image --severity HIGH,CRITICAL --format json --output /tmp/scan-results-$(echo $image | tr '/:' '_').json $image
+              done < /tmp/images.txt
+              
+              echo "Scan completed. Results saved."
+            volumeMounts:
+            - name: scan-results
+              mountPath: /tmp
+          volumes:
+          - name: scan-results
+            emptyDir: {}
+          restartPolicy: OnFailure
+
+---
+# GitHub Actions Security Scanning Workflow
+# Add this to: .github/workflows/security-scan.yml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-scan-workflow
+  namespace: manaos-production
+data:
+  security-scan.yml: |
+    name: Security Scanning
+    
+    on:
+      push:
+        branches: [main, develop]
+      pull_request:
+        branches: [main, develop]
+      schedule:
+        # Run daily at 2 AM UTC
+        - cron: '0 2 * * *'
+    
+    jobs:
+      # SAST: Static Application Security Testing
+      sast-scan:
+        name: SAST Code Analysis
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        
+        - name: Run Semgrep SAST
+          uses: returntocorp/semgrep-action@v1
+          with:
+            config: >-
+              p/security-audit
+              p/secrets
+              p/owasp-top-ten
+              p/python
+        
+        - name: Upload SAST results
+          uses: github/codeql-action/upload-sarif@v2
+          if: always()
+          with:
+            sarif_file: semgrep.sarif
+      
+      # Dependency Vulnerability Scanning
+      dependency-scan:
+        name: Dependency Vulnerability Scan
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        
+        - name: Set up Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: '3.10'
+        
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+        
+        - name: Run Safety check
+          run: |
+            pip install safety
+            safety check --json --output safety-report.json || true
+        
+        - name: Run pip-audit
+          run: |
+            pip install pip-audit
+            pip-audit --format json --output pip-audit-report.json || true
+        
+        - name: Upload dependency scan results
+          uses: actions/upload-artifact@v3
+          with:
+            name: dependency-scan-results
+            path: |
+              safety-report.json
+              pip-audit-report.json
+      
+      # Container Image Scanning with Trivy
+      container-scan:
+        name: Container Image Scan
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        
+        - name: Build Docker image
+          run: |
+            docker build -t manaos/unified-api:${{ github.sha }} .
+        
+        - name: Run Trivy vulnerability scanner
+          uses: aquasecurity/trivy-action@master
+          with:
+            image-ref: manaos/unified-api:${{ github.sha }}
+            format: 'sarif'
+            output: 'trivy-results.sarif'
+            severity: 'CRITICAL,HIGH'
+        
+        - name: Upload Trivy results to GitHub Security
+          uses: github/codeql-action/upload-sarif@v2
+          if: always()
+          with:
+            sarif_file: 'trivy-results.sarif'
+        
+        - name: Fail if critical vulnerabilities found
+          uses: aquasecurity/trivy-action@master
+          with:
+            image-ref: manaos/unified-api:${{ github.sha }}
+            format: 'table'
+            exit-code: '1'
+            severity: 'CRITICAL'
+      
+      # Secrets Scanning
+      secrets-scan:
+        name: Secrets Detection
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+        
+        - name: Run TruffleHog secrets scan
+          uses: trufflesecurity/trufflehog@main
+          with:
+            path: ./
+            base: ${{ github.event.repository.default_branch }}
+            head: HEAD
+        
+        - name: Run GitLeaks
+          uses: gitleaks/gitleaks-action@v2
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      # Kubernetes Manifest Scanning
+      k8s-manifest-scan:
+        name: Kubernetes Security Scan
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        
+        - name: Run Kubesec
+          run: |
+            curl -sSL https://github.com/controlplaneio/kubesec/releases/download/v2.13.0/kubesec_linux_amd64.tar.gz | tar xz
+            ./kubesec scan kubernetes/**/*.yaml > kubesec-results.json
+        
+        - name: Run Checkov for IaC scanning
+          uses: bridgecrewio/checkov-action@master
+          with:
+            directory: kubernetes/
+            framework: kubernetes
+            output_format: sarif
+            output_file_path: checkov-results.sarif
+        
+        - name: Upload Checkov results
+          uses: github/codeql-action/upload-sarif@v2
+          if: always()
+          with:
+            sarif_file: 'checkov-results.sarif'
+      
+      # License Compliance Scan
+      license-scan:
+        name: License Compliance Check
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+        
+        - name: Set up Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: '3.10'
+        
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+        
+        - name: Run pip-licenses
+          run: |
+            pip install pip-licenses
+            pip-licenses --format=json --output-file=licenses.json
+            pip-licenses --format=markdown --output-file=licenses.md
+        
+        - name: Check for GPL licenses (fail if found)
+          run: |
+            if grep -qi "GPL" licenses.md; then
+              echo "❌ GPL license detected! This may conflict with proprietary code."
+              exit 1
+            fi
+        
+        - name: Upload license report
+          uses: actions/upload-artifact@v3
+          with:
+            name: license-report
+            path: licenses.*
+
+---
+# Pre-commit hooks for local security scanning
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pre-commit-config
+  namespace: manaos-production
+data:
+  .pre-commit-config.yaml: |
+    # Local security checks before committing
+    # Install: pip install pre-commit && pre-commit install
+    
+    repos:
+    # Secrets detection
+    - repo: https://github.com/trufflesecurity/trufflehog
+      rev: v3.63.2
+      hooks:
+      - id: trufflehog
+        name: TruffleHog secrets detection
+        entry: bash -c 'trufflehog git file://. --since-commit HEAD --only-verified --fail'
+    
+    # Python security
+    - repo: https://github.com/PyCQA/bandit
+      rev: 1.7.5
+      hooks:
+      - id: bandit
+        name: Bandit security linter
+        args: ['-r', 'manaos_integrations/', '-ll']
+    
+    # YAML/JSON validation
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.5.0
+      hooks:
+      - id: check-yaml
+      - id: check-json
+      - id: detect-private-key
+      - id: detect-aws-credentials
+        args: ['--allow-missing-credentials']
+    
+    # Secrets scanning with detect-secrets
+    - repo: https://github.com/Yelp/detect-secrets
+      rev: v1.4.0
+      hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+
+---
+# OWASP Dependency-Check Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dependency-check-config
+  namespace: trivy-system
+data:
+  run-dependency-check.sh: |
+    #!/bin/bash
+    # OWASP Dependency-Check for comprehensive vulnerability scanning
+    
+    set -e
+    
+    echo "Running OWASP Dependency-Check..."
+    
+    # Download Dependency-Check if not present
+    if [ ! -f dependency-check/bin/dependency-check.sh ]; then
+      VERSION="9.0.9"
+      curl -Lo dependency-check.zip "https://github.com/jeremylong/DependencyCheck/releases/download/v${VERSION}/dependency-check-${VERSION}-release.zip"
+      unzip dependency-check.zip
+      rm dependency-check.zip
+    fi
+    
+    # Run scan
+    ./dependency-check/bin/dependency-check.sh \
+      --scan ./manaos_integrations \
+      --format HTML \
+      --format JSON \
+      --out ./dependency-check-report \
+      --suppression ./dependency-check-suppressions.xml \
+      --failOnCVSS 7
+    
+    echo "✅ Dependency-Check completed. Report: dependency-check-report/dependency-check-report.html"
+  
+  dependency-check-suppressions.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+      <!-- Example: Suppress false positives -->
+      <!-- 
+      <suppress>
+        <notes>False positive - not using vulnerable functionality</notes>
+        <cve>CVE-2023-12345</cve>
+      </suppress>
+      -->
+    </suppressions>
+
+---
+# Security Policy Enforcement with OPA/Gatekeeper
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opa-policies
+  namespace: kube-system
+data:
+  deny-privileged-containers.rego: |
+    package kubernetes.admission
+    
+    deny[msg] {
+      input.request.kind.kind == "Pod"
+      container := input.request.object.spec.containers[_]
+      container.securityContext.privileged
+      msg := sprintf("Privileged container is not allowed: %v", [container.name])
+    }
+  
+  require-resource-limits.rego: |
+    package kubernetes.admission
+    
+    deny[msg] {
+      input.request.kind.kind == "Pod"
+      container := input.request.object.spec.containers[_]
+      not container.resources.limits
+      msg := sprintf("Container %v must have resource limits", [container.name])
+    }
+  
+  deny-latest-tag.rego: |
+    package kubernetes.admission
+    
+    deny[msg] {
+      input.request.kind.kind == "Pod"
+      container := input.request.object.spec.containers[_]
+      endswith(container.image, ":latest")
+      msg := sprintf("Container %v cannot use 'latest' tag", [container.name])
+    }
+  
+  require-non-root.rego: |
+    package kubernetes.admission
+    
+    deny[msg] {
+      input.request.kind.kind == "Pod"
+      input.request.object.metadata.namespace == "manaos-production"
+      not input.request.object.spec.securityContext.runAsNonRoot
+      msg := "Production pods must run as non-root user"
+    }
+
+---
+# Prometheus Alerts for Security Issues
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-alerts
+  namespace: monitoring
+data:
+  security-alerts.yaml: |
+    groups:
+    - name: security_alerts
+      interval: 30s
+      rules:
+      # Alert on critical vulnerabilities
+      - alert: CriticalVulnerabilityDetected
+        expr: trivy_vulnerability_count{severity="CRITICAL"} > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: "Critical vulnerability detected in {{ $labels.image }}"
+          description: "Image {{ $labels.image }} has {{ $value }} critical vulnerabilities. Update immediately."
+      
+      # Alert on high vulnerabilities
+      - alert: HighVulnerabilityDetected
+        expr: trivy_vulnerability_count{severity="HIGH"} > 5
+        for: 10m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "Multiple high vulnerabilities in {{ $labels.image }}"
+          description: "Image {{ $labels.image }} has {{ $value }} high vulnerabilities. Plan upgrade."
+      
+      # Alert on secrets exposed
+      - alert: SecretsExposedInLogs
+        expr: |
+          sum(rate({namespace="manaos-production"} |~ "(?i)(password|api[_-]?key|secret|token)\\s*[=:]\\s*['\"]?\\w{8,}" [5m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: "Secrets potentially exposed in logs"
+          description: "Detected potential secret leakage in application logs. Immediate investigation required."
+      
+      # Alert on failed security scans in CI/CD
+      - alert: SecurityScanFailed
+        expr: github_workflow_run_conclusion{workflow="Security Scanning", conclusion="failure"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "Security scan failed in CI/CD"
+          description: "Security scanning workflow failed. Check GitHub Actions for details."
+
+---
+# Documentation
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-scanning-docs
+  namespace: trivy-system
+data:
+  README.md: |
+    # Security Scanning Automation
+    
+    ## Overview
+    
+    This system provides automated security scanning at multiple levels:
+    
+    1. **SAST (Static Analysis)**: Semgrep, Bandit for Python code
+    2. **Dependency Scanning**: Safety, pip-audit, OWASP Dependency-Check
+    3. **Container Scanning**: Trivy for Docker images
+    4. **Secrets Detection**: TruffleHog, GitLeaks, detect-secrets
+    5. **IaC Scanning**: Kubesec, Checkov for Kubernetes manifests
+    6. **License Compliance**: pip-licenses for license checking
+    7. **Runtime Security**: Trivy Operator for deployed workloads
+    
+    ## Local Development
+    
+    ### Install Pre-commit Hooks
+    
+    ```bash
+    pip install pre-commit
+    pre-commit install
+    ```
+    
+    ### Run Manual Scans
+    
+    ```bash
+    # SAST scan
+    semgrep --config=p/security-audit .
+    
+    # Dependency scan
+    pip install safety && safety check
+    
+    # Container scan
+    trivy image manaos/unified-api:latest
+    
+    # Secrets scan
+    trufflehog git file://. --since-commit HEAD
+    ```
+    
+    ## CI/CD Integration
+    
+    Security scans run automatically on:
+    - Every push to main/develop
+    - Every pull request
+    - Daily scheduled scan at 2 AM UTC
+    
+    ## Vulnerability Management
+    
+    ### Critical Vulnerabilities (CVSS 9.0-10.0)
+    - **Action**: Block deployment immediately
+    - **SLA**: Fix within 24 hours
+    - **Approval**: Security team required
+    
+    ### High Vulnerabilities (CVSS 7.0-8.9)
+    - **Action**: Create ticket, plan fix
+    - **SLA**: Fix within 7 days
+    - **Approval**: Engineering manager
+    
+    ### Medium Vulnerabilities (CVSS 4.0-6.9)
+    - **Action**: Create ticket
+    - **SLA**: Fix within 30 days
+    - **Approval**: Team lead
+    
+    ### Low Vulnerabilities (CVSS 0.1-3.9)
+    - **Action**: Track, fix in regular cycle
+    - **SLA**: Best effort
+    
+    ## Suppressing False Positives
+    
+    ### Trivy
+    Create `.trivyignore` file:
+    ```
+    # Reason for suppression
+    CVE-2023-12345
+    ```
+    
+    ### Dependency-Check
+    Add to `dependency-check-suppressions.xml`
+    
+    ### Semgrep
+    Add inline comment:
+    ```python
+    # nosemgrep: python.lang.security.audit.dangerous-spawn.dangerous-spawn
+    ```

@@ -18,7 +18,7 @@ from mrl_memory_ttl_manager import TTLManager
 # 統一モジュールのインポート
 try:
     from unified_logging import get_service_logger
-logger = get_service_logger("mrl-memory-system")
+    logger = get_service_logger("mrl-memory-system")
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """マナ好みのクイック画像生成"""
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from pathlib import Path
 from datetime import datetime
 

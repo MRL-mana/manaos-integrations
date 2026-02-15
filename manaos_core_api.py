@@ -3,7 +3,7 @@ manaOS 標準API（単一I/O - 共通API化のコア）
 全機能はこの4つのAPIを通じてアクセス
 """
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import os
 import re
 from typing import Dict, Any, Optional, List, Tuple

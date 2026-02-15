@@ -17,6 +17,7 @@ from pathlib import Path
 from datetime import datetime
 import json
 from typing import Optional
+from manaos_logger import get_service_logger
 
 
 class ManaOSLogFormatter(logging.Formatter):

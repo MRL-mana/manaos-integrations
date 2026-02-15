@@ -8,7 +8,7 @@ import os
 import json
 import subprocess
 import shutil
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import time
 from pathlib import Path
 from typing import Dict, Any, List, Optional

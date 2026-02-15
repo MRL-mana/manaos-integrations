@@ -4,7 +4,7 @@ A/Bテスト機能
 """
 
 import json
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import time
 from typing import Dict, Any, List, Optional
 from datetime import datetime

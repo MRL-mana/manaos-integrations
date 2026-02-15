@@ -17,10 +17,21 @@ spec:
         app: mrl-memory
         tier: core
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: mrl-memory
         image: manaos/mrl-memory:latest
         imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities:
+            drop: ["ALL"]
         ports:
         - containerPort: 9507
           name: http

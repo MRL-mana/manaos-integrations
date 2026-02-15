@@ -5,12 +5,13 @@
 全サービスで統一されたエラーハンドリングを提供
 """
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import traceback
 from enum import Enum
 from typing import Dict, Any, Optional
 from datetime import datetime
 from dataclasses import dataclass, asdict
+from manaos_logger import get_service_logger
 
 logger = get_service_logger("manaos-error-handler")
 

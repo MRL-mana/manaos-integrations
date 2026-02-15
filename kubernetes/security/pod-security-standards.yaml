@@ -1,0 +1,284 @@
+# Pod Security Standards - Namespace Level Configuration
+# Kubernetes 1.25+ Pod Security Admission Controller
+# Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+
+---
+# Production Namespace - Restricted Profile
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: manaos-production
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    # Version of the Pod Security Standard to use
+    pod-security.kubernetes.io/enforce-version: latest
+
+---
+# Staging Namespace - Restricted Profile
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: manaos-staging
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+
+---
+# Development Namespace - Baseline Profile
+# More permissive for development flexibility
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: manaos-development
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: baseline
+    pod-security.kubernetes.io/warn: baseline
+    pod-security.kubernetes.io/enforce-version: latest
+
+---
+# Monitoring Namespace - Baseline Profile
+# Some monitoring tools need elevated permissions
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+
+---
+# Example: Compliant Pod for Restricted Profile
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secure-manaos-api
+  namespace: manaos-production
+  labels:
+    app: manaos-api
+    security-tier: restricted
+spec:
+  # Security Context at Pod level
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+    # Drop all capabilities
+    seccompProfile:
+      type: RuntimeDefault
+  
+  containers:
+  - name: api
+    image: manaos/unified-api:latest
+    imagePullPolicy: Always
+    
+    # Security Context at Container level
+    securityContext:
+      allowPrivilegeEscalation: false
+      runAsNonRoot: true
+      runAsUser: 10001
+      runAsGroup: 10001
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
+    
+    # Resource limits (required for restricted profile)
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+    
+    # Volume mounts for read-only root filesystem
+    volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+    - name: cache
+      mountPath: /app/cache
+    - name: logs
+      mountPath: /app/logs
+    
+    ports:
+    - containerPort: 9510
+      protocol: TCP
+    
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 9510
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: 9510
+      initialDelaySeconds: 5
+      periodSeconds: 5
+  
+  volumes:
+  # EmptyDir volumes for writable directories
+  - name: tmp
+    emptyDir: {}
+  - name: cache
+    emptyDir: {}
+  - name: logs
+    emptyDir: {}
+
+---
+# Service Account with minimal permissions
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: manaos-api-sa
+  namespace: manaos-production
+  labels:
+    app: manaos-api
+automountServiceAccountToken: false  # Disable unless needed
+
+---
+# Role for minimal API permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: manaos-api-role
+  namespace: manaos-production
+rules:
+# Only allow reading ConfigMaps and Secrets
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+# Allow reading service endpoints for service discovery
+- apiGroups: [""]
+  resources: ["endpoints", "services"]
+  verbs: ["get", "list"]
+
+---
+# RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: manaos-api-rolebinding
+  namespace: manaos-production
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: manaos-api-role
+subjects:
+- kind: ServiceAccount
+  name: manaos-api-sa
+  namespace: manaos-production
+
+---
+# Pod Security Standards Validation Webhook (Optional)
+# For custom validation beyond built-in standards
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: pod-security-validation
+webhooks:
+- name: validate.pod-security.manaos.local
+  clientConfig:
+    service:
+      name: pod-security-webhook
+      namespace: kube-system
+      path: "/validate"
+    caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi4uLgotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0t
+  rules:
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: [""]
+    apiVersions: ["v1"]
+    resources: ["pods"]
+  admissionReviewVersions: ["v1", "v1beta1"]
+  sideEffects: None
+  failurePolicy: Fail  # Fail closed for security
+  namespaceSelector:
+    matchExpressions:
+    - key: pod-security.kubernetes.io/enforce
+      operator: In
+      values: ["restricted"]
+
+---
+# NetworkPolicy for Pod Security (Preview)
+# Deny all ingress/egress by default, allow only specific traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: manaos-production
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+# Allow API pods to communicate with databases and external services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-traffic
+  namespace: manaos-production
+spec:
+  podSelector:
+    matchLabels:
+      app: manaos-api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    - podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 9510
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow HTTPS to external services
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+  # Allow internal service communication
+  - to:
+    - podSelector:
+        matchLabels:
+          app: mrl-memory
+    - podSelector:
+        matchLabels:
+          app: learning-system
+    - podSelector:
+        matchLabels:
+          app: llm-routing
+    ports:
+    - protocol: TCP
+      port: 8001
+    - protocol: TCP
+      port: 8002
+    - protocol: TCP
+      port: 8003

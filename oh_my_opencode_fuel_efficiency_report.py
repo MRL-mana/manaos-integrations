@@ -12,7 +12,7 @@ from collections import defaultdict
 from pathlib import Path
 import json
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler
 
 logger = get_service_logger("oh-my-opencode-fuel-efficiency-report")

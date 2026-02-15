@@ -116,3 +116,5 @@ def get_logger(name: str, **kwargs) -> logging.Logger:
 # デフォルトロガー
 default_logger = setup_logger("ManaOS", level=logging.INFO)
 
+# エイリアス: unified_logging との互換性
+get_service_logger = get_logger

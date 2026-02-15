@@ -3,7 +3,7 @@ LLMリトライ機能
 エラー時の自動リトライとフォールバック
 """
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import time
 from typing import Callable, Any, Optional, Dict, List
 from functools import wraps

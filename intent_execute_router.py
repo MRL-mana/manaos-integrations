@@ -12,7 +12,7 @@ from typing import Dict, Any, Optional
 from _paths import INTENT_ROUTER_PORT, ORCHESTRATOR_PORT, UNIFIED_API_PORT
 
 try:
-    from manaos_logger import get_logger
+    from manaos_logger import get_logger, get_service_logger
 except ImportError:
     import logging
     def get_logger(n): return logging.getLogger(n)

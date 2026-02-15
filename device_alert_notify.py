@@ -11,7 +11,7 @@ from typing import Dict, Any, List
 from _paths import PORTAL_INTEGRATION_PORT, UNIFIED_API_PORT
 
 try:
-    from manaos_logger import get_logger
+    from manaos_logger import get_logger, get_service_logger
 except ImportError:
     import logging
     def get_logger(n): return logging.getLogger(n)

@@ -8,7 +8,7 @@ Trinity System統合
 from typing import Dict, Any, Optional
 from enum import Enum
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from .schemas import Plan, ResearchResults, CritiqueResult
 
 logger = get_service_logger("trinity-integration")

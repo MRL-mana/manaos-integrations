@@ -9,7 +9,7 @@ from typing import Dict, Any, List, Optional
 from enum import Enum
 from dataclasses import dataclass
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from .schemas import ResearchResults
 from .budget_guard import StopReason
 from .budget_guard import StopReason as BudgetStopReason

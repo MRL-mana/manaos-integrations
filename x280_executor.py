@@ -20,7 +20,7 @@ except Exception:  # pragma: no cover
     except Exception:  # pragma: no cover
         X280_NODE_MANAGER_PORT = int(os.getenv("X280_NODE_MANAGER_PORT", "5121"))
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 
 logger = get_service_logger("x280-executor")

@@ -142,10 +142,24 @@ python -m pytest tests/ --cov=. --cov-report=term-missing
 - **[Dockerデプロイメント](DOCKER_DEPLOYMENT.md)** - Docker/Docker Composeでのコンテナ実行ガイド
 - **[Kubernetesデプロイメント](KUBERNETES_DEPLOYMENT.md)** - Kubernetes/Helmでのクラウドデプロイガイド
 - **[ArgoCD GitOpsガイド](ARGOCD_GITOPS_GUIDE.md)** - GitOpsによる自動デプロイメント
+- **[エンタープライズセキュリティ＆オブザーバビリティ](ENTERPRISE_SECURITY_OBSERVABILITY_GUIDE.md)** - 本番環境向けセキュリティ強化・バックアップ・監視の総合ガイド
 
 ### MCP・セキュリティ
 - **[MCPサーバーガイド](docs/guides/MCP_SERVERS_GUIDE.md)** - MCP設定と使い方
 - **[セキュリティ](docs/guides/SECURITY_HARDENING.md)** - API認証・ハードニング
+
+### Kubernetesエンタープライズ機能
+- **[Pod Security Standards](kubernetes/security/pod-security-standards.yaml)** - Pod セキュリティ標準（Restricted/Baseline）
+- **[Network Policies](kubernetes/security/network-policies.yaml)** - ゼロトラスト・マイクロセグメンテーション
+- **[RBAC & ServiceAccounts](kubernetes/security/rbac-service-accounts.yaml)** - 最小権限の原則に基づくロール管理
+- **[セキュリティスキャン自動化](kubernetes/security/security-scanning.yaml)** - SAST/依存関係/コンテナスキャン
+
+### バックアップ・災害対策
+- **[Velero バックアップ設定](kubernetes/backup/velero-config.yaml)** - 自動バックアップ・DR手順
+
+### オブザーバビリティ
+- **[Jaeger 分散トレーシング](kubernetes/observability/jaeger-tracing.yaml)** - マイクロサービス間のリクエストフロー可視化
+- **[Loki ログ集約](kubernetes/observability/loki-logging.yaml)** - Grafana Loki によるログ管理
 
 ### テスト・品質保証
 - **[テストガイド](TESTING_GUIDE.md)** - ユニット/統合/E2Eテストの実行方法

@@ -19,7 +19,7 @@ from collections import defaultdict, deque
 from datetime import datetime, timedelta
 
 try:
-    from manaos_logger import get_logger
+    from manaos_logger import get_logger, get_service_logger
 except ImportError:
     import logging
 

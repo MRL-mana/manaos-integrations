@@ -7,7 +7,7 @@ WSL2内のOllama Vision LLMを使用
 
 import os
 import sys
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import pandas as pd
 import base64
 import subprocess

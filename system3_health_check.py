@@ -37,7 +37,7 @@ except Exception:  # pragma: no cover
 
 try:
     from unified_logging import get_service_logger
-logger = get_service_logger("system3-health-check")
+    logger = get_service_logger("system3-health-check")
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)

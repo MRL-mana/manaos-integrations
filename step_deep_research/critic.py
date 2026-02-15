@@ -19,7 +19,7 @@ except Exception:  # pragma: no cover
 
 DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from .schemas import CritiqueResult, RubricScores, Citation
 from .rubric import load_rubric, get_rubric_min_pass_score

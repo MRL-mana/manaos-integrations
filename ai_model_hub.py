@@ -6,7 +6,7 @@ AI Model Hub - Web UI付きローカルLLMチャットインターフェース
 from flask import Flask, render_template_string, request, jsonify, Response
 from flask_cors import CORS
 import os
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import httpx
 import json
 import time

@@ -12,7 +12,7 @@ from typing import Optional, Dict, List, Any, Callable
 from datetime import datetime, timedelta
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import requests
 
 try:

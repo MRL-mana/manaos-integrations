@@ -8,7 +8,7 @@ import json
 import os
 import time
 import psutil
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 from pathlib import Path

@@ -8,7 +8,7 @@ import requests
 from typing import Any, Sequence
 from mcp.server import Server
 from mcp.types import Tool, TextContent, ImageContent
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 
 # ロギング設定
 logger = get_service_logger("server")

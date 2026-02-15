@@ -11,7 +11,7 @@ import time
 from typing import List, Dict
 from pathlib import Path
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from _paths import (
     MRL_MEMORY_PORT,
     LEARNING_SYSTEM_PORT,

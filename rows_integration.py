@@ -10,7 +10,7 @@ import requests
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 
 try:
     from manaos_integrations._paths import UNIFIED_API_PORT

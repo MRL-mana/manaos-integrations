@@ -4,7 +4,7 @@ Server-Sent Events (SSE) によるリアルタイム回答
 """
 
 import json
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import time
 from typing import Iterator, Dict, Any, Optional
 from flask import Response, stream_with_context

@@ -28,7 +28,7 @@ except Exception:  # pragma: no cover
         WINDOWS_AUTOMATION_PORT = int(os.getenv("WINDOWS_AUTOMATION_PORT", "5115"))
 
 # 統一モジュールのインポート
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from manaos_timeout_config import get_timeout_config
 

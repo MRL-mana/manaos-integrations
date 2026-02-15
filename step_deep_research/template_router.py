@@ -9,7 +9,7 @@ import re
 from typing import Dict, Any, Optional
 from pathlib import Path
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from .utils import load_prompt_template
 
 logger = get_service_logger("template-router")

@@ -12,7 +12,7 @@ from typing import Dict, Any, List, Optional
 # 統一モジュールのインポート
 try:
     from unified_logging import get_service_logger
-logger = get_service_logger("mrl-memory-promoter")
+    logger = get_service_logger("mrl-memory-promoter")
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)

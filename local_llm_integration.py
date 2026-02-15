@@ -6,7 +6,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from typing import Dict, Any, Optional
 import httpx
 import asyncio

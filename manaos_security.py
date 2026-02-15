@@ -17,7 +17,7 @@ from functools import wraps
 from flask import request, jsonify, g
 from collections import defaultdict
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_jwt import (
     accept_legacy_short_key,
     derive_hs256_signing_key,

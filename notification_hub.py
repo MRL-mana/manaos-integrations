@@ -5,7 +5,7 @@ Slackを一次通知先に固定、Discord/メールを転送
 """
 
 import json
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import time
 from pathlib import Path
 from typing import Dict, Any, Optional, List

@@ -14,7 +14,7 @@ import json
 # 統一モジュールのインポート
 try:
     from unified_logging import get_service_logger
-logger = get_service_logger("mrl-memory-metrics")
+    logger = get_service_logger("mrl-memory-metrics")
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)

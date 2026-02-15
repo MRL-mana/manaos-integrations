@@ -3,7 +3,7 @@ Stable Diffusion画像生成器
 diffusersライブラリを使用した画像生成
 """
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime

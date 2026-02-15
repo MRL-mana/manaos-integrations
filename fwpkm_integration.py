@@ -38,7 +38,7 @@ from fwpkm_core import ChunkMemoryProcessor, InferenceMemoryUpdater
 # 統一モジュールのインポート
 try:
     from unified_logging import get_service_logger
-logger = get_service_logger("fwpkm-integration")
+    logger = get_service_logger("fwpkm-integration")
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)

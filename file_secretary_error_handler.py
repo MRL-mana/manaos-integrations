@@ -9,7 +9,7 @@ import time
 from typing import Optional, Callable, Any
 from functools import wraps
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 
 logger = get_service_logger("file-secretary-error-handler")

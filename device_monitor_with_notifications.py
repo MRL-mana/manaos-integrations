@@ -4,7 +4,7 @@
 Device Health MonitorとNotification Hub Enhancedを統合
 """
 
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import signal
 import sys
 from pathlib import Path

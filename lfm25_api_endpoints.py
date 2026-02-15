@@ -4,7 +4,7 @@ unified_api_server.pyに追加するエンドポイント
 """
 
 from flask import request, jsonify
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from typing import Dict, Any
 
 logger = get_service_logger("lfm25-api-endpoints")

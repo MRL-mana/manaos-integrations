@@ -10,7 +10,7 @@ import re
 import sys
 from pathlib import Path
 from typing import Any, Optional, Sequence
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import io
 import httpx
 

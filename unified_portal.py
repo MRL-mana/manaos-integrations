@@ -7,7 +7,7 @@ Unified Portal - 統合ポータル
 from flask import Flask, render_template_string, request, jsonify
 from flask_cors import CORS
 import os
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 import httpx
 import time
 from typing import Dict, Any, Optional, List

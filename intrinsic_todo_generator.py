@@ -12,7 +12,7 @@ from pathlib import Path
 from dataclasses import dataclass, asdict
 
 # 統一モジュールのインポート
-from manaos_logger import get_logger
+from manaos_logger import get_logger, get_service_logger
 from obsidian_integration import ObsidianIntegration
 
 from _paths import LEARNING_SYSTEM_PORT, METRICS_COLLECTOR_PORT, TASK_CRITIC_PORT
