@@ -25,6 +25,13 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
+try:
+    from manaos_integrations._paths import OLLAMA_PORT
+except Exception:
+    OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
+DEFAULT_OLLAMA_URL = f"http://127.0.0.1:{OLLAMA_PORT}"
+
 
 class ManaOSServiceManager:
     """ManaOSサービスマネージャー"""
@@ -207,9 +214,9 @@ class ManaOSServiceManager:
                 # ローカル疎通チェック用途の Ollama URL は 127.0.0.1 に固定する。
                 # 特に Unified API の /ready を安定させるため、該当サービスは強制上書き。
                 if name in ("Unified API", "LLM Routing"):
-                    env["OLLAMA_URL"] = "http://127.0.0.1:11434"
+                    env["OLLAMA_URL"] = DEFAULT_OLLAMA_URL
                 else:
-                    env.setdefault("OLLAMA_URL", "http://127.0.0.1:11434")
+                    env.setdefault("OLLAMA_URL", DEFAULT_OLLAMA_URL)
             
                 # プロセス起動（Windowsではウィンドウを非表示）
                 creation_flags = 0

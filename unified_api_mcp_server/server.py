@@ -18,6 +18,8 @@ if sys.platform == "win32":
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from _paths import ORCHESTRATOR_PORT, UNIFIED_API_PORT
+
 from mcp_common import check_mcp_available, get_mcp_logger
 
 MCP_AVAILABLE = check_mcp_available()
@@ -34,8 +36,11 @@ if not MCP_AVAILABLE:
 # NOTE:
 # - ManaOSの統合APIはデフォルト 9510（Docker/WSL の 9500-9503 衝突回避）
 # - 必要に応じて環境変数 `MANAOS_INTEGRATION_API_URL` で上書き可能
-UNIFIED_API_URL = (os.getenv("MANAOS_INTEGRATION_API_URL") or "http://127.0.0.1:9510").rstrip("/")
-ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://127.0.0.1:5106")
+UNIFIED_API_URL = (
+    os.getenv("MANAOS_INTEGRATION_API_URL")
+    or f"http://127.0.0.1:{UNIFIED_API_PORT}"
+).rstrip("/")
+ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", f"http://127.0.0.1:{ORCHESTRATOR_PORT}")
 
 # MCPサーバーの初期化
 if MCP_AVAILABLE:

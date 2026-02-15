@@ -16,6 +16,13 @@ from dataclasses import dataclass, asdict
 from collections import defaultdict
 import math
 
+try:
+    from _paths import OLLAMA_PORT
+except Exception:
+    OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
+
 # 統一モジュールのインポート
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
@@ -61,7 +68,7 @@ class RAGMemoryEnhancedV2:
     def __init__(
         self,
         db_path: Optional[Path] = None,
-        ollama_url: str = "http://127.0.0.1:11434",
+        ollama_url: str = DEFAULT_OLLAMA_URL,
         model: str = "qwen2.5:14b",
         embedding_model: str = "nomic-embed-text"
     ):

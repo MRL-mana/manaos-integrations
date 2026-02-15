@@ -249,7 +249,12 @@ def main():
     manager = get_env_manager()
     
     # 環境変数を取得
-    ollama_url = manager.get("OLLAMA_URL", "http://127.0.0.1:11434")
+    try:
+        from _paths import OLLAMA_PORT
+        default_ollama_url = f"http://127.0.0.1:{OLLAMA_PORT}"
+    except Exception:
+        default_ollama_url = "http://127.0.0.1:11434"
+    ollama_url = manager.get("OLLAMA_URL", default_ollama_url)
     print(f"OLLAMA_URL: {ollama_url}")
     
     # 検証
