@@ -7,6 +7,7 @@ MCPサーバー整理・重複削除スクリプト
 import json
 import subprocess
 import os
+import re
 from datetime import datetime
 
 class MCPCleanupAnalyzer:
@@ -27,13 +28,18 @@ class MCPCleanupAnalyzer:
         """稼働中のMCPプロセスを取得"""
         try:
             result = subprocess.run(
-                "ps aux | grep -E '(mcp|trinity).*\.py' | grep -v grep",
-                shell=True, capture_output=True, text=True
+                ["ps", "aux"],
+                capture_output=True,
+                text=True,
+                check=False,
             )
+            pattern = re.compile(r"(mcp|trinity).*\.py")
             
             processes = []
             for line in result.stdout.split('\n'):
                 if line.strip():
+                    if not pattern.search(line):
+                        continue
                     parts = line.split()
                     if len(parts) > 10:
                         pid = parts[1]
@@ -196,14 +202,14 @@ class MCPCleanupAnalyzer:
         for script, count in analysis['script_counts'].items():
             if count > 1:
                 self.log(f"重複プロセス停止: {script} ({count}個)")
-                subprocess.run(f"pkill -f {script}", shell=True)
+                subprocess.run(["pkill", "-f", script], check=False)
         
         # 最適化された設定を作成
         optimized_config = self.create_optimized_config(analysis)
         
         # バックアップ作成
         backup_path = f"/root/.cursor/mcp.json.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        subprocess.run(f"cp {self.mcp_config_path} {backup_path}", shell=True)
+        subprocess.run(["cp", self.mcp_config_path, backup_path], check=False)
         self.log(f"設定バックアップ作成: {backup_path}")
         
         # 最適化された設定を保存
