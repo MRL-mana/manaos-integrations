@@ -1,0 +1,109 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: manaos
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/MRL-mana/manaos-integrations.git
+    targetRevision: master
+    path: manaos_integrations/helm
+    helm:
+      releaseName: manaos
+      values: |
+        # 本番環境用の設定
+        global:
+          namespace: manaos
+          imagePullPolicy: IfNotPresent
+        
+        unifiedApi:
+          replicaCount: 5
+          image:
+            repository: mrlmana/manaos-unified-api
+            tag: latest
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          autoscaling:
+            enabled: true
+            minReplicas: 5
+            maxReplicas: 20
+            targetCPUUtilizationPercentage: 70
+            targetMemoryUtilizationPercentage: 80
+        
+        mrlMemory:
+          replicaCount: 3
+          autoscaling:
+            enabled: true
+            minReplicas: 3
+            maxReplicas: 10
+        
+        learningSystem:
+          replicaCount: 3
+          autoscaling:
+            enabled: true
+            minReplicas: 3
+            maxReplicas: 10
+        
+        ingress:
+          enabled: true
+          className: nginx
+          annotations:
+            cert-manager.io/cluster-issuer: "letsencrypt-prod"
+            nginx.ingress.kubernetes.io/ssl-redirect: "true"
+            nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+          hosts:
+            - host: api.manaos.io
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            - secretName: manaos-tls
+              hosts:
+                - api.manaos.io
+        
+        monitoring:
+          prometheus:
+            enabled: true
+            retention: 30d
+            storage:
+              size: 100Gi
+          grafana:
+            enabled: true
+            adminPassword: "change-me-in-production"
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: manaos
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  
+  revisionHistoryLimit: 10
+  
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas

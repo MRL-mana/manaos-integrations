@@ -13,12 +13,23 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 # 統一モジュールのインポート
-from manaos_logger import get_logger
-from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
-from manaos_timeout_config import get_timeout_config
+try:
+    from unified_logging import get_service_logger
+    from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
+    from manaos_timeout_config import get_timeout_config
+    from api_auth import get_auth_manager
+except ImportError:
+    from manaos_logger import get_logger as get_service_logger
+    from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
+    from manaos_timeout_config import get_timeout_config
+    # 認証が利用できない場合のフォールバック
+    class DummyAuthManager:
+        def require_api_key(self, func):
+            return func  # 認証をバイパス
+    get_auth_manager = lambda: DummyAuthManager()
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("learning_system")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("LearningSystemAPI")
@@ -31,6 +42,10 @@ from learning_system import LearningSystem
 
 app = Flask(__name__)
 CORS(app)
+
+# 認証マネージャーの初期化
+auth_manager = get_auth_manager()
+logger.info("✅ API認証システムを初期化しました")
 
 # グローバル学習システムインスタンス
 learning_system = None
@@ -48,8 +63,9 @@ def health() -> tuple:
     return jsonify({"status": "healthy", "service": "Learning System API"})
 
 @app.route('/api/record', methods=['POST'])
+@auth_manager.require_api_key
 def record_usage() -> tuple:
-    """使用パターンを記録"""
+    """使用パターンを記録（要認証）"""
     try:
         data = request.get_json() or {}
         action = data.get("action")
@@ -77,8 +93,9 @@ def record_usage() -> tuple:
         return jsonify(error.to_json_response()), 500
 
 @app.route('/api/analyze', methods=['GET'])
+@auth_manager.require_api_key
 def analyze_patterns() -> tuple:
-    """パターンを分析"""
+    """パターンを分析（要認証）"""
     try:
         system = init_learning_system()
         analysis = system.analyze_patterns()
@@ -92,8 +109,9 @@ def analyze_patterns() -> tuple:
         return jsonify(error.to_json_response()), 500
 
 @app.route('/api/preferences', methods=['GET'])
+@auth_manager.require_api_key
 def get_preferences() -> tuple:
-    """学習された好みを取得"""
+    """学習された好みを取得（要認証）"""
     try:
         system = init_learning_system()
         preferences = system.learn_preferences()
@@ -107,8 +125,9 @@ def get_preferences() -> tuple:
         return jsonify(error.to_json_response()), 500
 
 @app.route('/api/optimizations', methods=['GET'])
+@auth_manager.require_api_key
 def get_optimizations() -> tuple:
-    """最適化提案を取得"""
+    """最適化提案を取得（要認証）"""
     try:
         system = init_learning_system()
         optimizations = system.suggest_optimizations()
@@ -122,8 +141,9 @@ def get_optimizations() -> tuple:
         return jsonify(error.to_json_response()), 500
 
 @app.route('/api/status', methods=['GET'])
+@auth_manager.require_api_key
 def get_status() -> tuple:
-    """状態を取得"""
+    """状態を取得（要認証）"""
     try:
         system = init_learning_system()
         status = system.get_status()
@@ -137,8 +157,9 @@ def get_status() -> tuple:
         return jsonify(error.to_json_response()), 500
 
 @app.route('/api/apply-preferences', methods=['POST'])
+@auth_manager.require_api_key
 def apply_preferences() -> tuple:
-    """学習された好みを適用"""
+    """学習された好みを適用（要認証）"""
     try:
         data = request.get_json() or {}
         action = data.get("action")

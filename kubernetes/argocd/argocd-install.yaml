@@ -1,0 +1,123 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+data:
+  # アプリケーションのヘルスチェック設定
+  resource.customizations.health.argoproj.io_Application: |
+    hs = {}
+    hs.status = "Progressing"
+    hs.message = ""
+    if obj.status ~= nil then
+      if obj.status.health ~= nil then
+        hs.status = obj.status.health.status
+        if obj.status.health.message ~= nil then
+          hs.message = obj.status.health.message
+        end
+      end
+    end
+    return hs
+  
+  # リソース除外設定
+  resource.exclusions: |
+    - apiGroups:
+      - "*"
+      kinds:
+      - ProviderConfigUsage
+  
+  # リポジトリ設定
+  repositories: |
+    - type: git
+      url: https://github.com/MRL-mana/manaos-integrations.git
+    - type: helm
+      url: https://prometheus-community.github.io/helm-charts
+      name: prometheus-community
+    - type: helm
+      url: https://grafana.github.io/helm-charts
+      name: grafana
+  
+  # Webhook設定（GitHub）
+  webhook.github.secret: "argocd-github-webhook"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+data:
+  # RBAC設定
+  policy.default: role:readonly
+  policy.csv: |
+    # 管理者
+    p, role:admin, applications, *, */*, allow
+    p, role:admin, clusters, *, *, allow
+    p, role:admin, repositories, *, *, allow
+    p, role:admin, projects, *, *, allow
+    
+    # 開発者
+    p, role:developer, applications, get, */*, allow
+    p, role:developer, applications, sync, */*, allow
+    p, role:developer, applications, create, */*, allow
+    p, role:developer, applications, update, */*, allow
+    
+    # 読み取り専用
+    p, role:readonly, applications, get, */*, allow
+    p, role:readonly, projects, get, *, allow
+    
+    # グループマッピング
+    g, admin-group, role:admin
+    g, developer-group, role:developer
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+data:
+  # Slack通知設定
+  service.slack: |
+    token: $slack-token
+  
+  # 通知テンプレート
+  template.app-deployed: |
+    message: |
+      Application {{.app.metadata.name}} is now running.
+      Sync Status: {{.app.status.sync.status}}
+      Health Status: {{.app.status.health.status}}
+  
+  template.app-sync-failed: |
+    message: |
+      Application {{.app.metadata.name}} sync failed!
+      Error: {{.app.status.operationState.message}}
+  
+  # トリガー設定
+  trigger.on-deployed: |
+    - when: app.status.operationState.phase in ['Succeeded']
+      send: [app-deployed]
+  
+  trigger.on-sync-failed: |
+    - when: app.status.operationState.phase in ['Error', 'Failed']
+      send: [app-sync-failed]
+  
+  # サブスクリプション
+  subscriptions: |
+    - recipients:
+      - slack:manaos-deployments
+      triggers:
+      - on-deployed
+      - on-sync-failed
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-notifications-secret
+  namespace: argocd
+type: Opaque
+stringData:
+  slack-token: "xoxb-your-slack-token"

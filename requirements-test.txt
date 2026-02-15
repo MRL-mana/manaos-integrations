@@ -1,0 +1,34 @@
+# テスト実行用の追加依存関係
+
+# テストフレームワーク
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-timeout>=2.1.0
+pytest-xdist>=3.3.0  # 並列実行
+
+# HTTPクライアント（E2Eテスト用）
+aiohttp>=3.8.0
+httpx>=0.24.0
+
+# モック・スタブ
+pytest-mock>=3.11.0
+responses>=0.23.0
+aioresponses>=0.7.4
+
+# FastAPI テスト
+fastapi[all]>=0.100.0
+httpx>=0.24.1
+
+# データ検証
+pydantic>=2.0.0
+
+# ロギング
+structlog>=23.1.0
+
+# パフォーマンステスト
+locust>=2.15.0
+
+# レポート生成
+pytest-html>=3.2.0
+pytest-json-report>=1.5.0

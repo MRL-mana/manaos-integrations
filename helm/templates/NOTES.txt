@@ -1,0 +1,40 @@
+🎉 ManaOS がデプロイされました！
+
+📊 サービスURL:
+{{- if .Values.ingress.enabled }}
+  Unified API:    https://{{ (index .Values.ingress.hosts 0).host }}
+  Grafana:        https://{{ (index .Values.ingress.hosts 1).host }}
+  Prometheus:     https://{{ (index .Values.ingress.hosts 2).host }}
+{{- else }}
+  kubectl port-forward を使用してアクセス:
+  
+  Unified API:
+    kubectl port-forward -n {{ .Values.global.namespace }} svc/unified-api 9502:9502
+    http://localhost:9502
+  
+  Grafana:
+    kubectl port-forward -n {{ .Values.global.namespace }} svc/grafana 3000:3000
+    http://localhost:3000 (admin/{{ .Values.monitoring.grafana.adminPassword }})
+  
+  Prometheus:
+    kubectl port-forward -n {{ .Values.global.namespace }} svc/prometheus 9090:9090
+    http://localhost:9090
+{{- end }}
+
+🔍 サービス状態の確認:
+  kubectl get pods -n {{ .Values.global.namespace }}
+  kubectl get svc -n {{ .Values.global.namespace }}
+  kubectl get hpa -n {{ .Values.global.namespace }}
+
+📝 ログの確認:
+  kubectl logs -n {{ .Values.global.namespace }} -l app=unified-api -f
+  kubectl logs -n {{ .Values.global.namespace }} -l app=mrl-memory -f
+
+⚙️ 設定の更新:
+  helm upgrade manaos ./helm -n {{ .Values.global.namespace }}
+
+🗑️ アンインストール:
+  helm uninstall manaos -n {{ .Values.global.namespace }}
+
+📚 詳細なドキュメント:
+  https://github.com/MRL-mana/manaos-integrations/blob/master/KUBERNETES_DEPLOYMENT.md

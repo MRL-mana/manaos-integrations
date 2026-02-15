@@ -22,23 +22,35 @@ from _paths import COMFYUI_PORT, GALLERY_PORT as DEFAULT_GALLERY_PORT
 
 # 統一モジュールのインポート
 try:
-    from manaos_logger import get_logger
+    from unified_logging import get_service_logger
     from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
     from manaos_timeout_config import get_timeout_config
+    from api_auth import get_auth_manager
 except ImportError:
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    get_logger = lambda name: logging.getLogger(name)
-    class ManaOSErrorHandler:
-        def handle_exception(self, e, **kwargs):
-            pass
-    ErrorCategory = type('ErrorCategory', (), {})
-    ErrorSeverity = type('ErrorSeverity', (), {})
-    def get_timeout_config():
-        return {"api_call": 30.0, "workflow_execution": 300.0}
+    try:
+        from manaos_logger import get_logger as get_service_logger
+        from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
+        from manaos_timeout_config import get_timeout_config
+        from api_auth import get_auth_manager
+    except ImportError:
+        import logging
+        logging.basicConfig(level=logging.INFO)
+        get_service_logger = lambda name: logging.getLogger(name)
+        class ManaOSErrorHandler:
+            def handle_exception(self, e, **kwargs):
+                pass
+        ErrorCategory = type('ErrorCategory', (), {})
+        ErrorSeverity = type('ErrorSeverity', (), {})
+        def get_timeout_config():
+            return {"api_call": 30.0, "workflow_execution": 300.0}
+        # 認証が利用できない場合のフォールバック
+        class DummyAuthManager:
+            def require_api_key(self, func):
+                return func  # 認証をバイパス
+        get_auth_manager = lambda: DummyAuthManager()
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("gallery_api")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("GalleryAPI")
@@ -46,6 +58,10 @@ error_handler = ManaOSErrorHandler("GalleryAPI")
 # Flaskアプリの初期化
 app = Flask(__name__)
 CORS(app)
+
+# 認証マネージャーの初期化
+auth_manager = get_auth_manager()
+logger.info("✅ API認証システムを初期化しました")
 
 # 設定
 COMFYUI_URL = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
@@ -639,8 +655,9 @@ def health():
 
 
 @app.route("/api/generate", methods=["POST"])
+@auth_manager.require_api_key
 def generate():
-    """画像生成ジョブを開始"""
+    """画像生成ジョブを開始（要認証）"""
     try:
         data = request.json
         prompt = data.get("prompt")

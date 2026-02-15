@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unified-api
+  namespace: manaos
+  labels:
+    app: unified-api
+    tier: core
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: unified-api
+  template:
+    metadata:
+      labels:
+        app: unified-api
+        tier: core
+    spec:
+      containers:
+      - name: unified-api
+        image: manaos/unified-api:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9502
+          name: http
+          protocol: TCP
+        env:
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: manaos-config
+              key: UNIFIED_API_PORT
+        - name: WORKER_PROCESSES
+          valueFrom:
+            configMapKeyRef:
+              name: manaos-config
+              key: WORKER_PROCESSES
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: manaos-config
+              key: LOG_LEVEL
+        - name: BRAVE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: manaos-secrets
+              key: BRAVE_API_KEY
+              optional: true
+        - name: CIVITAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: manaos-secrets
+              key: CIVITAI_API_KEY
+              optional: true
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9502
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9502
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: unified-api-data-pvc
+      - name: logs
+        persistentVolumeClaim:
+          claimName: unified-api-logs-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unified-api
+  namespace: manaos
+  labels:
+    app: unified-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: unified-api
+  ports:
+  - port: 9502
+    targetPort: 9502
+    protocol: TCP
+    name: http
+  sessionAffinity: ClientIP
