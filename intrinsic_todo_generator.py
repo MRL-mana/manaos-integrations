@@ -15,7 +15,13 @@ from dataclasses import dataclass, asdict
 from manaos_logger import get_logger
 from obsidian_integration import ObsidianIntegration
 
+from _paths import LEARNING_SYSTEM_PORT, METRICS_COLLECTOR_PORT, TASK_CRITIC_PORT
+
 logger = get_logger(__name__)
+
+DEFAULT_LEARNING_SYSTEM_URL = f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}"
+DEFAULT_METRICS_COLLECTOR_URL = f"http://127.0.0.1:{METRICS_COLLECTOR_PORT}"
+DEFAULT_TASK_CRITIC_URL = f"http://127.0.0.1:{TASK_CRITIC_PORT}"
 
 
 @dataclass
@@ -49,9 +55,9 @@ class IntrinsicTodoGenerator:
 
     def __init__(
         self,
-        learning_system_url: str = "http://127.0.0.1:5126",
-        metrics_collector_url: str = "http://127.0.0.1:5127",
-        task_critic_url: str = "http://127.0.0.1:5102",
+        learning_system_url: Optional[str] = None,
+        metrics_collector_url: Optional[str] = None,
+        task_critic_url: Optional[str] = None,
         storage_path: Optional[Path] = None
     ):
         """
@@ -63,9 +69,9 @@ class IntrinsicTodoGenerator:
             task_critic_url: Task Critic API URL
             storage_path: 保存パス
         """
-        self.learning_system_url = learning_system_url
-        self.metrics_collector_url = metrics_collector_url
-        self.task_critic_url = task_critic_url
+        self.learning_system_url = learning_system_url or DEFAULT_LEARNING_SYSTEM_URL
+        self.metrics_collector_url = metrics_collector_url or DEFAULT_METRICS_COLLECTOR_URL
+        self.task_critic_url = task_critic_url or DEFAULT_TASK_CRITIC_URL
         self.storage_path = storage_path or Path(__file__).parent / "intrinsic_todos.json"
 
         # ToDoリスト

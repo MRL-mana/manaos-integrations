@@ -15,7 +15,12 @@ from dataclasses import dataclass, asdict
 # 統一モジュールのインポート
 from manaos_logger import get_logger
 
+from _paths import INTRINSIC_MOTIVATION_PORT, LEARNING_SYSTEM_PORT
+
 logger = get_logger(__name__)
+
+DEFAULT_INTRINSIC_MOTIVATION_URL = f"http://127.0.0.1:{INTRINSIC_MOTIVATION_PORT}"
+DEFAULT_LEARNING_SYSTEM_URL = f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}"
 
 
 @dataclass
@@ -35,8 +40,8 @@ class IntrinsicMotivationMetrics:
 
     def __init__(
         self,
-        intrinsic_motivation_url: str = "http://127.0.0.1:5130",
-        learning_system_url: str = "http://127.0.0.1:5126",
+        intrinsic_motivation_url: Optional[str] = None,
+        learning_system_url: Optional[str] = None,
         storage_path: Optional[Path] = None
     ):
         """
@@ -47,8 +52,8 @@ class IntrinsicMotivationMetrics:
             learning_system_url: Learning System API URL
             storage_path: メトリクス保存パス
         """
-        self.intrinsic_motivation_url = intrinsic_motivation_url
-        self.learning_system_url = learning_system_url
+        self.intrinsic_motivation_url = intrinsic_motivation_url or DEFAULT_INTRINSIC_MOTIVATION_URL
+        self.learning_system_url = learning_system_url or DEFAULT_LEARNING_SYSTEM_URL
         self.storage_path = storage_path or Path(__file__).parent / "intrinsic_motivation_metrics.json"
 
         # メトリクスデータ

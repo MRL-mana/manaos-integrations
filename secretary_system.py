@@ -22,6 +22,8 @@ from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverit
 from manaos_timeout_config import get_timeout_config
 from manaos_config_validator import ConfigValidator
 
+from _paths import ORCHESTRATOR_PORT
+
 # ロガーの初期化
 logger = get_logger(__name__)
 
@@ -33,6 +35,8 @@ timeout_config = get_timeout_config()
 
 # 設定ファイル検証の初期化
 config_validator = ConfigValidator("SecretarySystem")
+
+DEFAULT_ORCHESTRATOR_URL = f"http://127.0.0.1:{ORCHESTRATOR_PORT}"
 
 
 class ReminderType(str, Enum):
@@ -82,7 +86,7 @@ class SecretarySystem:
     
     def __init__(
         self,
-        orchestrator_url: str = "http://127.0.0.1:5106",
+        orchestrator_url: Optional[str] = None,
         db_path: Optional[Path] = None,
         config_path: Optional[Path] = None
     ):
@@ -94,7 +98,7 @@ class SecretarySystem:
             db_path: データベースパス
             config_path: 設定ファイルのパス
         """
-        self.orchestrator_url = orchestrator_url
+        self.orchestrator_url = orchestrator_url or DEFAULT_ORCHESTRATOR_URL
         
         self.config_path = config_path or Path(__file__).parent / "secretary_config.json"
         self.config = self._load_config()

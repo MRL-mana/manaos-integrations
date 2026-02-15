@@ -14,6 +14,8 @@ from pathlib import Path
 from collections import deque
 from dataclasses import dataclass, asdict
 
+from _paths import LLM_ROUTING_PORT, OLLAMA_PORT
+
 # 既存の予測メンテナンスシステムをインポート
 try:
     from predictive_maintenance import PredictiveMaintenance
@@ -29,6 +31,9 @@ except ImportError:
     LLM_AVAILABLE = False
 
 logger = get_logger(__name__)
+
+DEFAULT_OLLAMA_GENERATE_URL = f"http://127.0.0.1:{OLLAMA_PORT}/api/generate"
+DEFAULT_DEVICE_HEALTH_MONITOR_URL = f"http://127.0.0.1:{LLM_ROUTING_PORT}"
 
 
 @dataclass
@@ -66,11 +71,13 @@ class AIPredictiveMaintenance:
                 logger.warning(f"既存の予測メンテナンスシステムの初期化エラー: {e}")
         
         # LLM設定
-        self.llm_url = self.config.get("llm_url", "http://127.0.0.1:11434/api/generate")
+        self.llm_url = self.config.get("llm_url", DEFAULT_OLLAMA_GENERATE_URL)
         self.llm_model = self.config.get("llm_model", "llama3.2:3b")
         
         # デバイス監視設定
-        self.device_health_monitor_url = self.config.get("device_health_monitor_url", "http://127.0.0.1:5111")
+        self.device_health_monitor_url = self.config.get(
+            "device_health_monitor_url", DEFAULT_DEVICE_HEALTH_MONITOR_URL
+        )
         
         # メンテナンス推奨履歴
         self.recommendations_file = Path(self.config.get("recommendations_file", "maintenance_recommendations.json"))
@@ -88,9 +95,9 @@ class AIPredictiveMaintenance:
         else:
             # デフォルト設定を作成
             default_config = {
-                "llm_url": "http://127.0.0.1:11434/api/generate",
+                "llm_url": DEFAULT_OLLAMA_GENERATE_URL,
                 "llm_model": "llama3.2:3b",
-                "device_health_monitor_url": "http://127.0.0.1:5111",
+                "device_health_monitor_url": DEFAULT_DEVICE_HEALTH_MONITOR_URL,
                 "recommendations_file": "maintenance_recommendations.json",
                 "predictions_file": "maintenance_predictions.json",
                 "prediction_thresholds": {

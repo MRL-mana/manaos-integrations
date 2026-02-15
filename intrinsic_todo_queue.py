@@ -19,7 +19,11 @@ from flask_cors import CORS
 
 from manaos_logger import get_logger
 
+from _paths import INTRINSIC_MOTIVATION_PORT
+
 logger = get_logger(__name__)
+
+DEFAULT_INTRINSIC_MOTIVATION_URL = f"http://127.0.0.1:{INTRINSIC_MOTIVATION_PORT}"
 
 
 class TodoState(str, Enum):
@@ -63,7 +67,7 @@ class IntrinsicTodoQueue:
     def __init__(
         self,
         storage_path: Optional[Path] = None,
-        intrinsic_motivation_url: str = "http://127.0.0.1:5130",
+        intrinsic_motivation_url: Optional[str] = None,
     ):
         """
         初期化
@@ -73,7 +77,7 @@ class IntrinsicTodoQueue:
             intrinsic_motivation_url: Intrinsic Motivation API URL
         """
         self.storage_path = storage_path or Path(__file__).parent / "intrinsic_todos.json"
-        self.intrinsic_motivation_url = intrinsic_motivation_url
+        self.intrinsic_motivation_url = intrinsic_motivation_url or DEFAULT_INTRINSIC_MOTIVATION_URL
 
         # ToDoリスト
         self.todos: List[IntrinsicTodo] = []
@@ -685,7 +689,7 @@ def init_todo_queue():
 
 
 # グローバル変数（healthcheck用）
-intrinsic_motivation_url = "http://127.0.0.1:5130"
+intrinsic_motivation_url = DEFAULT_INTRINSIC_MOTIVATION_URL
 
 
 @app.route("/health", methods=["GET"])
