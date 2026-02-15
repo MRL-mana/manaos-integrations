@@ -34,7 +34,6 @@ import asyncio
 import httpx
 import io
 import os
-from manaos_logger import get_logger
 import logging
 import secrets
 import base64
@@ -132,8 +131,8 @@ def _is_patch_path_allowed(path: str) -> bool:
 API_TOKEN = os.getenv("REMI_API_TOKEN", "")
 if not API_TOKEN:
     API_TOKEN = secrets.token_hex(32)
-    print(f"[Remi] Generated API token: {API_TOKEN}")
-    print(f"[Remi] Set REMI_API_TOKEN env var to persist this token")
+    # トークン値をログに出力しない（セキュリティ）
+    print("[Remi] API token auto-generated. Set REMI_API_TOKEN env var to persist.")
 
 security = HTTPBearer(auto_error=False)
 
@@ -149,7 +148,7 @@ async def verify_token(credentials: Optional[HTTPAuthorizationCredentials] = Dep
 LOG_DIR = os.path.join(os.path.dirname(__file__), "logs")
 os.makedirs(LOG_DIR, exist_ok=True)
 
-audit_logger = get_logger("remi_audit")
+audit_logger = logging.getLogger("remi_audit")
 audit_logger.setLevel(logging.INFO)
 _handler = logging.FileHandler(os.path.join(LOG_DIR, "remi_api_audit.log"), encoding="utf-8")
 _handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
@@ -159,7 +158,6 @@ audit_logger.addHandler(_handler)
 # Lifespan (replaces deprecated @app.on_event)
 # ============================================================
 _monitor_task = None
-
 
 @asynccontextmanager
 async def lifespan(app):
@@ -198,7 +196,6 @@ _last_suggestion_keys: dict = {}  # key -> timestamp for dedup (15 min)
 # ============================================================
 # System Status
 # ============================================================
-
 
 def get_gpu_info():
     """Get GPU info via nvidia-smi"""
@@ -425,7 +422,6 @@ async def get_speakers():
 # Dashboard (Pixel 7向け)
 # ============================================================
 
-
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard():
     """Pixel 7 status dashboard (PWA)"""
@@ -598,7 +594,6 @@ async def widget(token: str = Query("")):
 # Emergency Stop
 # ============================================================
 
-
 @app.post("/emergency-stop", dependencies=[Depends(verify_token)])
 async def emergency_stop():
     """Emergency stop - kill GPU-heavy processes"""
@@ -754,7 +749,6 @@ OLLAMA_URL = "http://127.0.0.1:11434"
 CHAT_HISTORY_FILE = os.path.join(os.path.dirname(__file__), "logs", "chat_history.json")
 MAX_CHAT_HISTORY = 50
 
-
 def _load_chat_history() -> List[dict]:
     """Load chat history from disk"""
     try:
@@ -764,7 +758,6 @@ def _load_chat_history() -> List[dict]:
     except Exception:
         pass
     return []
-
 
 def _save_chat_history():
     """Save chat history to disk"""
@@ -812,7 +805,6 @@ def _patch_buffer_get_b64_or_raise() -> str:
     if _PATCH_B64_BUFFER:
         return _PATCH_B64_BUFFER
     raise ValueError("buffer is empty. use /patchbegin then /patchadd")
-
 
 @app.post("/chat", dependencies=[Depends(verify_token)])
 async def send_chat(
@@ -1741,7 +1733,6 @@ async def clear_chat_history():
 # Notifications (Phase 3)
 # ============================================================
 
-
 def add_notification(category: str, message: str):
     """Add notification (dedup same message within 5 min)"""
     now = datetime.now()
@@ -1781,7 +1772,6 @@ async def mark_notifications_read():
 # ============================================================
 # Proactive Suggestions
 # ============================================================
-
 
 def add_suggestion(key: str, message: str, action: str = "", icon: str = "💡"):
     """Add a proactive suggestion (dedup same key within 15 min)"""
@@ -1937,7 +1927,6 @@ async def background_monitor():
 # ============================================================
 # Request Logging Middleware
 # ============================================================
-
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):

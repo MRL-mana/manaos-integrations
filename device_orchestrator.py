@@ -191,8 +191,8 @@ class DeviceOrchestrator:
                         try:
                             health_data = response.json()
                             device.current_load = health_data.get("cpu_percent", 0.0) / 100.0
-                        except Exception:
-                            pass
+                        except (ValueError, KeyError) as e:
+                            logger.debug("%s のヘルスデータ解析失敗: %s", device.device_name, e)
                     else:
                         device.status = DeviceStatus.OFFLINE
                 except Exception as e:

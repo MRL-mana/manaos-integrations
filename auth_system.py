@@ -9,7 +9,7 @@ import json
 import hashlib
 import secrets
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 from dataclasses import dataclass, asdict
@@ -346,11 +346,12 @@ class AuthSystem:
         if not user:
             raise ValueError(f"ユーザーが見つかりません: {user_id}")
         
+        now = datetime.now(timezone.utc)
         payload = {
             "user_id": user_id,
             "role": user.role.value,
-            "exp": datetime.utcnow() + timedelta(hours=expires_hours),
-            "iat": datetime.utcnow()
+            "exp": now + timedelta(hours=expires_hours),
+            "iat": now
         }
         
         token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)

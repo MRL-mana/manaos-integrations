@@ -8,6 +8,9 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
 import psutil
+from manaos_logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class CostOptimization:
@@ -38,8 +41,8 @@ class CostOptimization:
                     self.usage_history = state.get("usage_history", [])[-1000:]
                     self.cost_history = state.get("cost_history", [])[-1000:]
                     self.optimization_suggestions = state.get("suggestions", [])[-100:]
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("状態ファイル読み込み失敗: %s", e)
     
     def _save_state(self):
         """状態を保存"""

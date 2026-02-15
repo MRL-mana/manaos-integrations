@@ -216,8 +216,8 @@ def cursor_webhook():
                 "remote_addr": request.remote_addr,
                 "timestamp": int(time.time())
             }, ensure_ascii=False))
-        except Exception:
-            pass
+        except Exception as audit_err:
+            logger.debug("監査ログ書き込み失敗: %s", audit_err)
         return jsonify({"ok": False, "error": str(e)}), 500
 
 

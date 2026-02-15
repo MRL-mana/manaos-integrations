@@ -90,7 +90,6 @@ async def execute_cmd_command(command: str, timeout: int = 60) -> Dict[str, Any]
             *command.split(),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            shell=True
         )
         
         try:

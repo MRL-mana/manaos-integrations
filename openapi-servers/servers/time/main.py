@@ -77,7 +77,7 @@ def get_current_utc():
     """
     Returns the current time in UTC in ISO format.
     """
-    return {"utc": datetime.utcnow().replace(tzinfo=timezone.utc).isoformat()}
+    return {"utc": datetime.now(timezone.utc).isoformat()}
 
 
 @app.get("/get_current_local_time", summary="Current Local Time")

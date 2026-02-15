@@ -81,7 +81,7 @@ def _adb_shell(command: str, timeout: int = 60) -> Dict[str, Any]:
 
 async def run_adb_shell(command: str, timeout: int = 60) -> Dict[str, Any]:
     """非同期で ADB shell 実行"""
-    return await asyncio.get_event_loop().run_in_executor(
+    return await asyncio.get_running_loop().run_in_executor(
         None, lambda: _adb_shell(command, timeout)
     )
 
@@ -256,7 +256,7 @@ class FileTransferRequest(BaseModel):
 @app.post("/api/file/push")
 async def file_push(req: FileTransferRequest):
     """母艦のファイルを Pixel 7 に送る"""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     out = await loop.run_in_executor(None, lambda: _adb_push_sync(req.local_path, req.remote_path))
     if not out["ok"]:
         raise HTTPException(status_code=500, detail=out["stderr"] or "push failed")
@@ -266,7 +266,7 @@ async def file_push(req: FileTransferRequest):
 @app.post("/api/file/pull")
 async def file_pull(req: FileTransferRequest):
     """Pixel 7 のファイルを母艦に取得（remote_path → local_path）"""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     out = await loop.run_in_executor(
         None, lambda: _adb_pull_sync(req.remote_path, req.local_path)
     )
@@ -278,7 +278,7 @@ async def file_pull(req: FileTransferRequest):
 @app.get("/api/screenshot")
 async def get_screenshot():
     """Pixel 7 のスクリーンショットを取得し、保存パスを返す"""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     path = await loop.run_in_executor(None, _screencap_sync)
     if not path:
         raise HTTPException(status_code=500, detail="screencap failed")

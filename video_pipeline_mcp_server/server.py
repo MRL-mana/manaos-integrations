@@ -327,7 +327,7 @@ async def _generate_narration(args: dict) -> str:
     style = args.get("style", "エモーショナルで読者の興奮を誘うレビュー")
     max_tokens = args.get("max_tokens", 1024)
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     narration = await loop.run_in_executor(
         None, lambda: pipeline.generate_narration(topic, style, max_tokens)
     )
@@ -347,7 +347,7 @@ async def _generate_titles(args: dict) -> str:
     narration = args.get("narration", "")
     num = args.get("num_subtitles", 5)
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     data = await loop.run_in_executor(
         None, lambda: pipeline.generate_title_and_subtitles(topic, narration, num)
     )
@@ -369,7 +369,7 @@ async def _analyze_image(args: dict) -> str:
     if not os.path.exists(image_path):
         return f"エラー: 画像が見つかりません: {image_path}"
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     llm = _get_llm()
     description = await loop.run_in_executor(
         None, lambda: llm.analyze_image(image_path, prompt)
@@ -402,7 +402,7 @@ async def _create_promo_video(args: dict) -> str:
     output = args.get("output_path", "") or None
     speaker_id = args.get("speaker_id", None)
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(
         None,
         lambda: pipeline.create_promo_video(
@@ -427,7 +427,7 @@ async def _create_slideshow(args: dict) -> str:
     duration = args.get("duration_per_image", 5.0)
     output = args.get("output_path", "") or None
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(
         None,
         lambda: pipeline.create_simple_slideshow(images, audio, output, duration),
@@ -446,7 +446,7 @@ async def _uncensored_generate(args: dict) -> str:
     temperature = args.get("temperature", 0.8)
     max_tokens = args.get("max_tokens", 2048)
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     text = await loop.run_in_executor(
         None,
         lambda: llm.generate(prompt, model, system, temperature, max_tokens),
@@ -460,7 +460,7 @@ async def _uncensored_generate(args: dict) -> str:
 
 async def _list_models() -> str:
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         def _fetch():
             r = requests.get("http://127.0.0.1:11434/api/tags", timeout=5)
