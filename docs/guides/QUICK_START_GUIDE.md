@@ -112,7 +112,7 @@ import requests
 
 # 難易度分析
 response = requests.post(
-    "http://127.0.0.1:9510/api/llm/analyze",
+    "http://127.0.0.1:9502/api/llm/analyze",
     json={
         "prompt": "この関数のタイポを修正して",
         "context": {
@@ -124,7 +124,7 @@ print(response.json())
 
 # ルーティング実行
 response = requests.post(
-    "http://127.0.0.1:9510/api/llm/route-enhanced",
+    "http://127.0.0.1:9502/api/llm/route-enhanced",
     json={
         "prompt": "この関数のタイポを修正して",
         "context": {

@@ -21,7 +21,7 @@ ManaOSに統合された「SVI × Wan 2.2」動画生成機能の使用方法を
    - モデルファイル（wan2.2.safetensors）が準備されていること
 
 3. **ManaOS統合APIサーバー**: 起動していること
-   - デフォルトURL: `http://127.0.0.1:9510`
+   - デフォルトURL: `http://127.0.0.1:9502`
    - 環境変数 `MANAOS_INTEGRATION_PORT` で変更可能
 
 ---
@@ -62,7 +62,7 @@ else:
 #### 動画生成
 
 ```bash
-curl -X POST http://127.0.0.1:9510/api/svi/generate \
+curl -X POST http://127.0.0.1:9502/api/svi/generate \
   -H "Content-Type: application/json" \
   -d '{
     "start_image_path": "path/to/start_image.png",
@@ -77,7 +77,7 @@ curl -X POST http://127.0.0.1:9510/api/svi/generate \
 #### 動画延長
 
 ```bash
-curl -X POST http://127.0.0.1:9510/api/svi/extend \
+curl -X POST http://127.0.0.1:9502/api/svi/extend \
   -H "Content-Type: application/json" \
   -d '{
     "previous_video_path": "path/to/previous_video.mp4",
@@ -91,7 +91,7 @@ curl -X POST http://127.0.0.1:9510/api/svi/extend \
 #### ストーリー動画生成
 
 ```bash
-curl -X POST http://127.0.0.1:9510/api/svi/story \
+curl -X POST http://127.0.0.1:9502/api/svi/story \
   -H "Content-Type: application/json" \
   -d '{
     "start_image_path": "path/to/start_image.png",

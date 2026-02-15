@@ -102,7 +102,7 @@ Pixel 7 を USB で接続した状態で、母艦で以下を実行すると **l
 - **コンパニオンモード（X風UI）**: テキスト＋音声＋TTS を統合した常設UI。
   1. **母艦で** 統合API（9500）を起動。
   2. **音声入力を使う場合** `scripts\voice\start_pixel7_realtime_voice.bat` で WebSocket 8765 を起動。
-  3. **Pixel 7 のブラウザで** `http://<母艦のIP>:9510/companion` を開く。
+  3. **Pixel 7 のブラウザで** `http://<母艦のIP>:9502/companion` を開く。
   4. テキスト入力・マイクボタン（音声）で会話し、応答を Pixel 7 で読み上げ可能。
 - **意図分類（Intent Router）**: 「Pixel 7 のバッテリー教えて」「デバイス状態」などは `device_status` 意図に分類されます。キーワード: Pixel 7、ピクセル7、バッテリー、デバイス、オンライン、スマホ、端末、リソース。
 - **OpenAPI**: `unified_api/openapi.py` に上記パスが定義されており、Open WebUI External Tools 等から呼び出せます。

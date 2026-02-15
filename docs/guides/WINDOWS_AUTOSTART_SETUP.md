@@ -84,7 +84,7 @@ cd C:\Users\mana4\OneDrive\Desktop\manaos_integrations
 python check_server_status.py
 
 # またはブラウザで
-# http://127.0.0.1:9510/health
+# http://127.0.0.1:9502/health
 ```
 
 ---
@@ -123,7 +123,7 @@ cd C:\Users\mana4\OneDrive\Desktop\manaos_integrations
 
 3. **ポートが使用中でないか確認**:
    ```powershell
-   netstat -ano | findstr :9510
+   netstat -ano | findstr :9502
    ```
 
 ---

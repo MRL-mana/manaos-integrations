@@ -1,0 +1,181 @@
+# ManaOS サービス依存関係定義
+# このファイルはサービス起動順序の自動決定に使用されます
+
+# ===== コアサービス =====
+core_services:
+  # LLMルーティング（最優先起動）
+  llm_routing:
+    port: 5111
+    depends_on: []
+    optional_deps:
+      - ollama
+      - lm_studio
+    health_check: /health
+    startup_time: 5
+    
+  # MRL Memory（メモリサービス）
+  mrl_memory:
+    port: 5105
+    depends_on: []
+    optional_deps: []
+    health_check: /health
+    startup_time: 3
+    
+  # Learning System（学習システム）
+  learning_system:
+    port: 5126
+    depends_on:
+      - mrl_memory
+    optional_deps: []
+    health_check: /health
+    startup_time: 5
+    
+  # Video Pipeline（動画処理）
+  video_pipeline:
+    port: 5112
+    depends_on: []
+    optional_deps:
+      - comfyui
+    health_check: /health
+    startup_time: 3
+    
+  # Unified API（統合API - コア依存）
+  unified_api:
+    port: 9502
+    depends_on:
+      - mrl_memory
+      - llm_routing
+    optional_deps:
+      - ollama
+      - gallery_api
+      - comfyui
+    health_check: /health
+    startup_time: 10
+
+# ===== インフラサービス =====
+infrastructure:
+  # Ollama（ローカルLLM）
+  ollama:
+    port: 11434
+    depends_on: []
+    optional_deps: []
+    health_check: /api/tags
+    startup_time: 15
+    external: true
+    
+  # Gallery API（画像管理）
+  gallery_api:
+    port: 5559
+    depends_on: []
+    optional_deps: []
+    health_check: /health
+    startup_time: 5
+    
+  # ComfyUI（画像生成）
+  comfyui:
+    port: 8188
+    depends_on: []
+    optional_deps: []
+    health_check: /system_stats
+    startup_time: 20
+    external: true
+
+# ===== MCPサービス =====
+mcp_services:
+  # Pico HID MCP（マウス/キーボード操作）
+  pico_hid:
+    port: 5136
+    depends_on: []
+    optional_deps: []
+    health_check: /health
+    startup_time: 3
+
+# ===== オプショナルサービス =====
+optional_services:
+  # Moltbot Gateway
+  moltbot_gateway:
+    port: 8088
+    depends_on:
+      - unified_api
+    optional_deps: []
+    health_check: /moltbot/health
+    startup_time: 5
+    
+  # LM Studio
+  lm_studio:
+    port: 1234
+    depends_on: []
+    optional_deps: []
+    health_check: /v1/models
+    startup_time: 10
+    external: true
+    
+  # n8n（ワークフロー自動化）
+  n8n:
+    port: 5678
+    depends_on: []
+    optional_deps:
+      - unified_api
+    health_check: /healthz
+    startup_time: 15
+    external: true
+
+# ===== UI/Dashboard =====
+ui_services:
+  # UI Operations
+  ui_operations:
+    port: 5110
+    depends_on:
+      - unified_api
+    optional_deps: []
+    health_check: /health
+    startup_time: 5
+
+# ===== 起動プロファイル =====
+profiles:
+  # 最小構成（開発用）
+  minimal:
+    - mrl_memory
+    - llm_routing
+    - unified_api
+    
+  # 標準構成（通常使用）
+  standard:
+    - mrl_memory
+    - llm_routing
+    - learning_system
+    - video_pipeline
+    - unified_api
+    - ollama
+    - gallery_api
+    
+  # フル構成（すべて起動）
+  full:
+    - mrl_memory
+    - llm_routing
+    - learning_system
+    - video_pipeline
+    - unified_api
+    - pico_hid
+    - ollama
+    - gallery_api
+    - comfyui
+    - moltbot_gateway
+    - ui_operations
+
+# ===== 起動設定 =====
+startup_config:
+  # サービス間の起動待機時間（秒）
+  service_wait_time: 2
+  
+  # ヘルスチェックのリトライ回数
+  health_check_retries: 10
+  
+  # ヘルスチェックの間隔（秒）
+  health_check_interval: 3
+  
+  # 並列起動の最大数
+  max_parallel_startup: 3
+  
+  # タイムアウト（秒）
+  startup_timeout: 60

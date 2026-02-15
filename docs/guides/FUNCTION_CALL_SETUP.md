@@ -21,7 +21,7 @@
 3. 「**接続を追加**」ボタンをクリック
 4. 以下の情報を入力：
 
-   - **URL**: `http://host.docker.internal:9510`
+   - **URL**: `http://host.docker.internal:9502`
    - **OpenAPI Spec**: **ON**（緑）にする
    - OpenAPI Spec URL: `openapi.json`
    - **認証**: 空白でOK

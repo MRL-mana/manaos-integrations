@@ -100,7 +100,7 @@ python -m gallery_api_mcp_server.server
       "command": "python",
       "args": ["-m", "unified_api_mcp_server.server"],
       "env": {
-        "MANAOS_INTEGRATION_API_URL": "http://127.0.0.1:9510"
+        "MANAOS_INTEGRATION_API_URL": "http://127.0.0.1:9502"
       }
     },
     "step-deep-research": {
@@ -254,7 +254,7 @@ docker-compose -f docker-compose.manaos-services.yml down
 ### Unified API Server
 
 ```bash
-MANAOS_INTEGRATION_API_URL=http://127.0.0.1:9510
+MANAOS_INTEGRATION_API_URL=http://127.0.0.1:9502
 COMFYUI_URL=http://127.0.0.1:8188
 SEARXNG_BASE_URL=http://127.0.0.1:8080
 OBSIDIAN_VAULT_PATH=/path/to/vault
@@ -350,7 +350,7 @@ AI: gallery_generate_imageツールを使用して画像を生成します
 
 1. サーバーが起動しているか確認：
    ```bash
-   curl http://127.0.0.1:9510/health
+   curl http://127.0.0.1:9502/health
    ```
 
 2. ファイアウォール設定を確認

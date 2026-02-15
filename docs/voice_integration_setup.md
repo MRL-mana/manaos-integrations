@@ -114,7 +114,7 @@ python unified_api_server.py
 
 ```powershell
 # 音声ファイル（WAV形式）を用意してテスト
-curl -X POST http://127.0.0.1:9510/api/voice/transcribe `
+curl -X POST http://127.0.0.1:9502/api/voice/transcribe `
   -F "audio=@test_audio.wav" `
   -F "sample_rate=16000"
 ```
@@ -122,7 +122,7 @@ curl -X POST http://127.0.0.1:9510/api/voice/transcribe `
 #### 音声合成（TTS）テスト
 
 ```powershell
-curl -X POST http://127.0.0.1:9510/api/voice/synthesize `
+curl -X POST http://127.0.0.1:9502/api/voice/synthesize `
   -H "Content-Type: application/json" `
   -d "{\"text\": \"こんにちは、レミです。\"}"
 ```
@@ -131,7 +131,7 @@ curl -X POST http://127.0.0.1:9510/api/voice/synthesize `
 
 ```powershell
 # 音声ファイルを送信して、音声応答を取得
-curl -X POST http://127.0.0.1:9510/api/voice/conversation `
+curl -X POST http://127.0.0.1:9502/api/voice/conversation `
   -F "audio=@user_audio.wav" `
   -F "sample_rate=16000" `
   -o response.wav

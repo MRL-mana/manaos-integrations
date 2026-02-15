@@ -95,7 +95,7 @@ python svi_example_story_video.py
 import requests
 
 # 動画生成
-response = requests.post("http://127.0.0.1:9510/api/svi/generate", json={
+response = requests.post("http://127.0.0.1:9502/api/svi/generate", json={
     "start_image_path": "/path/to/image.png",
     "prompt": "beautiful landscape",
     "video_length_seconds": 5

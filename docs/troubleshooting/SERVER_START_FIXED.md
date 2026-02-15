@@ -30,9 +30,9 @@ python check_server_status.py
 ```
 
 または、ブラウザで以下にアクセス:
-- http://127.0.0.1:9510/health
-- http://127.0.0.1:9510/status
-- http://127.0.0.1:9510/ready
+- http://127.0.0.1:9502/health
+- http://127.0.0.1:9502/status
+- http://127.0.0.1:9502/ready
 
 ---
 

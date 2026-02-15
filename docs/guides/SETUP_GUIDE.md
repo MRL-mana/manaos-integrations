@@ -80,17 +80,17 @@ MANAOS_INTEGRATION_HOST=0.0.0.0
 
 ### ヘルスチェック
 ```bash
-GET http://127.0.0.1:9510/health
+GET http://127.0.0.1:9502/health
 ```
 
 ### 統合システム状態
 ```bash
-GET http://127.0.0.1:9510/api/integrations/status
+GET http://127.0.0.1:9502/api/integrations/status
 ```
 
 ### LangChainチャット
 ```bash
-POST http://127.0.0.1:9510/api/langchain/chat
+POST http://127.0.0.1:9502/api/langchain/chat
 Content-Type: application/json
 
 {
@@ -101,7 +101,7 @@ Content-Type: application/json
 
 ### Obsidianノート作成
 ```bash
-POST http://127.0.0.1:9510/api/obsidian/create
+POST http://127.0.0.1:9502/api/obsidian/create
 Content-Type: application/json
 
 {

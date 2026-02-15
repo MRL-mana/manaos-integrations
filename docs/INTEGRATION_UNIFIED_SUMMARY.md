@@ -55,7 +55,7 @@
 |------|------|------------|
 | `PHASE2_MEMO_INJECT` | 会話に Phase2 メモを注入 | off |
 | `PORTAL_INTEGRATION_URL` | Portal API（アラート取得） | http://127.0.0.1:5108 |
-| `UNIFIED_API_URL` | 統合API（通知送信） | http://127.0.0.1:9510 |
+| `UNIFIED_API_URL` | 統合API（通知送信） | http://127.0.0.1:9502 |
 | `SLACK_WEBHOOK_URL` | アラート通知先（必須） | - |
 | `INTENT_ROUTER_URL` | Intent Router | http://127.0.0.1:5100 |
 | `ORCHESTRATOR_URL` | オーケストレーター | http://127.0.0.1:5106 |

@@ -236,7 +236,7 @@ $body = @{
     steps = 20
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/comfyui/generate" `
+Invoke-RestMethod -Uri "http://127.0.0.1:9502/api/comfyui/generate" `
     -Method POST `
     -Body $body `
     -ContentType "application/json"

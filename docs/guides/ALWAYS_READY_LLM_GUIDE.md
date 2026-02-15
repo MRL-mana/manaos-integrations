@@ -259,7 +259,7 @@ def call_llm_with_cache(message: str, model: str = "llama3.2:3b"):
     
     # キャッシュチェック
     cache_response = requests.get(
-        "http://127.0.0.1:9510/api/cache/get",
+        "http://127.0.0.1:9502/api/cache/get",
         params={"key": cache_key}
     )
     
@@ -285,7 +285,7 @@ def call_llm_with_cache(message: str, model: str = "llama3.2:3b"):
     
     # キャッシュに保存
     requests.post(
-        "http://127.0.0.1:9510/api/cache/set",
+        "http://127.0.0.1:9502/api/cache/set",
         json={
             "key": cache_key,
             "value": result,

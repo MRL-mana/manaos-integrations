@@ -128,7 +128,7 @@ scripts\voice\start_voice_secretary.bat
 | `VOICEVOX_URL` | VOICEVOX API URL | `http://127.0.0.1:50021` |
 | `VOICEVOX_SPEAKER_ID` | スピーカーID | `3` |
 | `INTENT_ROUTER_URL` | Intent Router URL | `http://127.0.0.1:5100` |
-| `UNIFIED_API_URL` | 統合API URL | `http://127.0.0.1:9510` |
+| `UNIFIED_API_URL` | 統合API URL | `http://127.0.0.1:9502` |
 | `LLM_ROUTING_URL` | LLMルーティングURL | `http://127.0.0.1:5111` |
 
 ---
@@ -193,7 +193,7 @@ def task_registration_callback(text: str, intent_result: dict) -> bool:
     if intent_result.get("intent_type") == "task_execution":
         # タスクキューに登録
         response = httpx.post(
-            "http://127.0.0.1:9510/api/task/queue/add",
+            "http://127.0.0.1:9502/api/task/queue/add",
             json={"input_text": text, "priority": "medium"}
         )
         return response.status_code == 200

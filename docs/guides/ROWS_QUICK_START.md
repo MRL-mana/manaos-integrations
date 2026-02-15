@@ -7,7 +7,7 @@
 ```bash
 # .envファイルまたは環境変数に設定
 export ROWS_API_KEY="your_rows_api_key_here"
-export ROWS_WEBHOOK_URL="http://127.0.0.1:9510/api/rows/webhook"
+export ROWS_WEBHOOK_URL="http://127.0.0.1:9502/api/rows/webhook"
 export N8N_WEBHOOK_URL="http://127.0.0.1:5678/webhook/rows-manaos-integration"  # オプション
 ```
 
@@ -34,7 +34,7 @@ python test_rows_integration.py
 ```python
 import requests
 
-response = requests.post("http://127.0.0.1:9510/api/rows/spreadsheets", json={
+response = requests.post("http://127.0.0.1:9502/api/rows/spreadsheets", json={
     "title": "テストスプレッドシート",
     "description": "テスト用"
 })
@@ -46,7 +46,7 @@ print(f"作成完了: {spreadsheet_id}")
 ### データを送信
 
 ```python
-response = requests.post("http://127.0.0.1:9510/api/rows/data/send", json={
+response = requests.post("http://127.0.0.1:9502/api/rows/data/send", json={
     "spreadsheet_id": spreadsheet_id,
     "data": [
         {"日付": "2025-01-28", "売上": 100000, "利益": 30000},
@@ -60,7 +60,7 @@ response = requests.post("http://127.0.0.1:9510/api/rows/data/send", json={
 ### AIで分析
 
 ```python
-response = requests.post("http://127.0.0.1:9510/api/rows/ai/query", json={
+response = requests.post("http://127.0.0.1:9502/api/rows/ai/query", json={
     "spreadsheet_id": spreadsheet_id,
     "query": "この売上データ、傾向分析してグラフ出して"
 })
@@ -124,7 +124,7 @@ tail -f logs/unified_api_server.log
 
 ```bash
 # サーバーが起動しているか確認
-curl http://127.0.0.1:9510/health
+curl http://127.0.0.1:9502/health
 
 # サーバーを起動
 python unified_api_server.py
