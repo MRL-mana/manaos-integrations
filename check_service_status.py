@@ -10,6 +10,31 @@ import httpx
 import asyncio
 from datetime import datetime
 
+from _paths import (
+    AUTONOMY_SYSTEM_PORT,
+    CONTENT_GENERATION_PORT,
+    EXECUTOR_ENHANCED_PORT,
+    GALLERY_PORT,
+    INTENT_ROUTER_PORT,
+    LEARNING_SYSTEM_PORT,
+    LLM_ROUTING_PORT,
+    MCP_API_SERVER_PORT,
+    METRICS_COLLECTOR_PORT,
+    MRL_MEMORY_PORT,
+    ORCHESTRATOR_PORT,
+    PERFORMANCE_DASHBOARD_PORT,
+    PERSONALITY_SYSTEM_PORT,
+    PICO_HID_PORT,
+    PORTAL_INTEGRATION_PORT,
+    RAG_MEMORY_PORT,
+    SECRETARY_SYSTEM_PORT,
+    TASK_CRITIC_PORT,
+    TASK_PLANNER_PORT,
+    TASK_QUEUE_PORT,
+    UNIFIED_API_PORT,
+    VIDEO_PIPELINE_PORT,
+)
+
 # WindowsのコンソールエンコーディングをUTF-8に設定
 if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8')
@@ -17,28 +42,28 @@ if sys.platform == 'win32':
 
 # チェック対象サービス
 SERVICES = {
-    "Intent Router": "http://127.0.0.1:5100/health",
-    "Task Planner": "http://127.0.0.1:5101/health",
-    "Task Critic": "http://127.0.0.1:5102/health",
-    "RAG Memory": "http://127.0.0.1:5103/health",
-    "Task Queue": "http://127.0.0.1:5104/health",
-    "MRL Memory": "http://127.0.0.1:5105/health",
-    "Unified Orchestrator": "http://127.0.0.1:5106/health",
-    "Executor Enhanced": "http://127.0.0.1:5107/health",
-    "Portal Integration": "http://127.0.0.1:5108/health",
-    "Content Generation": "http://127.0.0.1:5109/health",
-    "LLM Routing MCP": "http://127.0.0.1:5111/health",
-    "Video Pipeline": "http://127.0.0.1:5112/health",
-    "Personality System": "http://127.0.0.1:5123/health",
-    "Autonomy System": "http://127.0.0.1:5124/health",
-    "Secretary System": "http://127.0.0.1:5125/health",
-    "Learning System API": "http://127.0.0.1:5126/health",
-    "Metrics Collector": "http://127.0.0.1:5127/health",
-    "Performance Dashboard": "http://127.0.0.1:5128/health",
-    "Pico HID MCP": "http://127.0.0.1:5136/health",
-    "Unified API": "http://127.0.0.1:9510/health",
-    "MCP API Server": "http://127.0.0.1:9502/health",
-    "Gallery API": "http://127.0.0.1:5559/health",
+    "Intent Router": f"http://127.0.0.1:{INTENT_ROUTER_PORT}/health",
+    "Task Planner": f"http://127.0.0.1:{TASK_PLANNER_PORT}/health",
+    "Task Critic": f"http://127.0.0.1:{TASK_CRITIC_PORT}/health",
+    "RAG Memory": f"http://127.0.0.1:{RAG_MEMORY_PORT}/health",
+    "Task Queue": f"http://127.0.0.1:{TASK_QUEUE_PORT}/health",
+    "MRL Memory": f"http://127.0.0.1:{MRL_MEMORY_PORT}/health",
+    "Unified Orchestrator": f"http://127.0.0.1:{ORCHESTRATOR_PORT}/health",
+    "Executor Enhanced": f"http://127.0.0.1:{EXECUTOR_ENHANCED_PORT}/health",
+    "Portal Integration": f"http://127.0.0.1:{PORTAL_INTEGRATION_PORT}/health",
+    "Content Generation": f"http://127.0.0.1:{CONTENT_GENERATION_PORT}/health",
+    "LLM Routing MCP": f"http://127.0.0.1:{LLM_ROUTING_PORT}/health",
+    "Video Pipeline": f"http://127.0.0.1:{VIDEO_PIPELINE_PORT}/health",
+    "Personality System": f"http://127.0.0.1:{PERSONALITY_SYSTEM_PORT}/health",
+    "Autonomy System": f"http://127.0.0.1:{AUTONOMY_SYSTEM_PORT}/health",
+    "Secretary System": f"http://127.0.0.1:{SECRETARY_SYSTEM_PORT}/health",
+    "Learning System API": f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}/health",
+    "Metrics Collector": f"http://127.0.0.1:{METRICS_COLLECTOR_PORT}/health",
+    "Performance Dashboard": f"http://127.0.0.1:{PERFORMANCE_DASHBOARD_PORT}/health",
+    "Pico HID MCP": f"http://127.0.0.1:{PICO_HID_PORT}/health",
+    "Unified API": f"http://127.0.0.1:{UNIFIED_API_PORT}/health",
+    "MCP API Server": f"http://127.0.0.1:{MCP_API_SERVER_PORT}/health",
+    "Gallery API": f"http://127.0.0.1:{GALLERY_PORT}/health",
 }
 
 async def check_service(name: str, url: str):
