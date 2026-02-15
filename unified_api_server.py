@@ -48,6 +48,34 @@ error_handler = ManaOSErrorHandler("UnifiedAPIServer")
 timeout_config = get_timeout_config()
 
 
+def _env_int(name: str, default: int) -> int:
+    try:
+        return int(os.getenv(name, str(default)))
+    except Exception:
+        return default
+
+
+try:
+    from ._paths import OLLAMA_PORT, LM_STUDIO_PORT  # type: ignore
+except Exception:  # pragma: no cover
+    try:
+        from _paths import OLLAMA_PORT, LM_STUDIO_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        try:
+            from manaos_integrations._paths import OLLAMA_PORT, LM_STUDIO_PORT
+        except Exception:  # pragma: no cover
+            OLLAMA_PORT = _env_int("OLLAMA_PORT", 11434)
+            LM_STUDIO_PORT = _env_int("LM_STUDIO_PORT", 1234)
+
+
+def get_ollama_url() -> str:
+    return os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
+
+
+def get_lm_studio_url() -> str:
+    return os.getenv("LM_STUDIO_URL", f"http://127.0.0.1:{LM_STUDIO_PORT}/v1")
+
+
 def _missing_env_vars(required: List[str]) -> List[str]:
     return [key for key in required if not (os.getenv(key) or "").strip()]
 
@@ -1423,8 +1451,8 @@ def _get_or_init_enhanced_llm_router() -> Optional["EnhancedLLMRouter"]:
 
     try:
         router = EnhancedLLMRouter(
-            lm_studio_url=os.getenv("LM_STUDIO_URL", "http://127.0.0.1:1234/v1"),
-            ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"),
+            lm_studio_url=get_lm_studio_url(),
+            ollama_url=get_ollama_url(),
         )
         integrations["enhanced_llm_routing"] = router
         return router
@@ -1820,7 +1848,7 @@ def initialize_integrations():
             (
                 "langchain",
                 lambda: LangChainIntegration(
-            ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"),
+            ollama_url=get_ollama_url(),
                     model_name=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
                 ),
             )
@@ -1829,7 +1857,7 @@ def initialize_integrations():
             (
                 "langgraph",
                 lambda: LangGraphIntegration(
-            ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"),
+            ollama_url=get_ollama_url(),
                     model_name=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
                 ),
             )
@@ -1871,8 +1899,8 @@ def initialize_integrations():
             (
                 "enhanced_llm_routing",
                 lambda: EnhancedLLMRouter(
-            lm_studio_url=os.getenv("LM_STUDIO_URL", "http://127.0.0.1:1234/v1"),
-                    ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"),
+            lm_studio_url=get_lm_studio_url(),
+                    ollama_url=get_ollama_url(),
                 ),
             )
         )
@@ -1930,7 +1958,7 @@ def initialize_integrations():
             (
                 "excel_llm",
                 lambda: ExcelLLMIntegration(
-            ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"),
+            ollama_url=get_ollama_url(),
                     model=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
                 ),
             )
@@ -2188,7 +2216,7 @@ def _perform_readiness_checks(integrations: Dict[str, Any]) -> Dict[str, Dict[st
             # モデルリストを取得
             import requests
 
-            ollama_url = getattr(llm_routing, "ollama_url", "http://127.0.0.1:11434")
+            ollama_url = getattr(llm_routing, "ollama_url", get_ollama_url())
             # Some environments route `localhost` via proxy/IPv6 unexpectedly.
             # Normalize to 127.0.0.1 for a local readiness check.
             ollama_url = ollama_url.replace("http://localhost", "http://127.0.0.1").replace(

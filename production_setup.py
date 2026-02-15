@@ -14,6 +14,20 @@ from manaos_logger import get_logger
 
 logger = get_logger("ProductionSetup")
 
+try:
+    from ._paths import OLLAMA_PORT  # type: ignore
+except Exception:  # pragma: no cover
+    try:
+        from _paths import OLLAMA_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        try:
+            from manaos_integrations._paths import OLLAMA_PORT
+        except Exception:  # pragma: no cover
+            OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}").rstrip("/")
+
 
 class ProductionSetup:
     """本番運用セットアップ"""
@@ -52,7 +66,7 @@ class ProductionSetup:
         }
         
         optional_vars = {
-            "OLLAMA_URL": "http://127.0.0.1:11434",
+            "OLLAMA_URL": DEFAULT_OLLAMA_URL,
             "MANAOS_TIMEOUT_LLM_CALL": None,
             "MANAOS_TIMEOUT_API_CALL": None
         }

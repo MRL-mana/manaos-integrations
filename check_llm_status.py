@@ -8,8 +8,15 @@ import sys
 import httpx
 from pathlib import Path
 
+import os
+
+from _paths import OLLAMA_PORT
+
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
+
+DEFAULT_OLLAMA_URL = f"http://127.0.0.1:{OLLAMA_PORT}"
+OLLAMA_URL = os.getenv("OLLAMA_URL", DEFAULT_OLLAMA_URL).rstrip("/")
 
 def check_ollama_status():
     """Ollamaの状態確認"""
@@ -28,7 +35,7 @@ def check_ollama_status():
             print("❌ Ollamaプロセス: 停止中")
         
         # API確認
-        response = httpx.get("http://127.0.0.1:11434/api/tags", timeout=5.0)
+        response = httpx.get(f"{OLLAMA_URL}/api/tags", timeout=5.0)
         if response.status_code == 200:
             data = response.json()
             models = data.get("models", [])
@@ -36,7 +43,7 @@ def check_ollama_status():
             print(f"   利用可能モデル数: {len(models)}")
             
             # 実行中モデル確認
-            ps_response = httpx.get("http://127.0.0.1:11434/api/ps", timeout=5.0)
+            ps_response = httpx.get(f"{OLLAMA_URL}/api/ps", timeout=5.0)
             if ps_response.status_code == 200:
                 running = ps_response.json()
                 if running:
@@ -116,7 +123,7 @@ def check_file_secretary_llm():
         # FileOrganizerのデフォルト設定を確認
         print("✅ File Secretary: FileOrganizer使用")
         print("   デフォルト設定:")
-        print("     - ollama_url: http://127.0.0.1:11434")
+        print(f"     - ollama_url: {OLLAMA_URL}")
         print("     - model: llama3.2:3b")
         return True
     except Exception as e:

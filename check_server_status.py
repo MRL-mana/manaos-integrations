@@ -1,13 +1,17 @@
 """サーバーの状態を確認するスクリプト"""
+import os
 import requests
 import time
 import json
+
+from _paths import UNIFIED_API_PORT
 
 print("初期化の進行を確認中...")
 time.sleep(5)
 
 try:
-    r = requests.get('http://127.0.0.1:9510/status', timeout=5)
+    base_url = os.getenv("MANAOS_INTEGRATION_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}").rstrip("/")
+    r = requests.get(f"{base_url}/status", timeout=5)
     data = r.json()
     
     print(f"Status: {data.get('status')}")

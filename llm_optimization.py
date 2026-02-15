@@ -33,6 +33,20 @@ error_handler = ManaOSErrorHandler("LLMOptimization")
 # タイムアウト設定の取得
 timeout_config = get_timeout_config()
 
+try:
+    from ._paths import OLLAMA_PORT  # type: ignore
+except Exception:  # pragma: no cover
+    try:
+        from _paths import OLLAMA_PORT  # type: ignore
+    except Exception:  # pragma: no cover
+        try:
+            from manaos_integrations._paths import OLLAMA_PORT
+        except Exception:  # pragma: no cover
+            OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}").rstrip("/")
+
 # 設定ファイル検証の初期化
 config_validator = ConfigValidator("LLMOptimization")
 
@@ -72,7 +86,7 @@ class LLMOptimization:
     
     def __init__(
         self,
-        ollama_url: str = "http://127.0.0.1:11434",
+        ollama_url: str = DEFAULT_OLLAMA_URL,
         config_path: Optional[Path] = None
     ):
         """
@@ -115,7 +129,7 @@ class LLMOptimization:
                 schema = {
                     "required": [],
                     "fields": {
-                        "ollama_url": {"type": str, "default": "http://127.0.0.1:11434"},
+                        "ollama_url": {"type": str, "default": DEFAULT_OLLAMA_URL},
                         "filter_model": {"type": str, "default": "llama3.2:1b"}
                     }
                 }
@@ -142,7 +156,7 @@ class LLMOptimization:
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
         return {
-            "ollama_url": "http://127.0.0.1:11434",
+            "ollama_url": DEFAULT_OLLAMA_URL,
             "filter_model": "llama3.2:1b",
             "role_models": {
                 "conversation": {
