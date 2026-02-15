@@ -8,6 +8,7 @@ import hashlib
 import json
 import time
 import logging
+import os
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 from enum import Enum
@@ -15,7 +16,9 @@ from enum import Enum
 try:
     from _paths import OLLAMA_PORT, LM_STUDIO_PORT, UNIFIED_API_PORT
 except Exception:
-    OLLAMA_PORT, LM_STUDIO_PORT, UNIFIED_API_PORT = 11434, 1234, 9510
+    OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+    LM_STUDIO_PORT = int(os.getenv("LM_STUDIO_PORT", "1234"))
+    UNIFIED_API_PORT = int(os.getenv("PORT", os.getenv("UNIFIED_API_PORT", "9510")))
 
 try:
     from manaos_logger import get_logger
@@ -85,9 +88,15 @@ class AlwaysReadyLLMClient:
             prefer_lm_studio: LM Studioを優先するか
         """
         self.n8n_webhook_url = n8n_webhook_url
-        self.ollama_url = ollama_url or f"http://127.0.0.1:{OLLAMA_PORT}"
-        self.lm_studio_url = lm_studio_url or f"http://127.0.0.1:{LM_STUDIO_PORT}/v1"
-        self.cache_api_url = cache_api_url or f"http://127.0.0.1:{UNIFIED_API_PORT}/api/cache"
+        self.ollama_url = ollama_url or os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
+        self.lm_studio_url = lm_studio_url or os.getenv(
+            "LM_STUDIO_URL",
+            f"http://127.0.0.1:{LM_STUDIO_PORT}/v1",
+        )
+        self.cache_api_url = cache_api_url or os.getenv(
+            "CACHE_API_URL",
+            f"http://127.0.0.1:{UNIFIED_API_PORT}/api/cache",
+        )
         self.use_cache = use_cache
         self.default_model = default_model
         self.prefer_lm_studio = prefer_lm_studio

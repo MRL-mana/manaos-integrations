@@ -9,6 +9,12 @@ import time
 from typing import Iterator, Dict, Any, Optional
 from flask import Response, stream_with_context
 import requests
+import os
+
+try:
+    from _paths import OLLAMA_PORT
+except Exception:
+    OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
 
 logger = get_logger(__name__)
 
@@ -16,14 +22,14 @@ logger = get_logger(__name__)
 class StreamingLLM:
     """ストリーミング対応LLMクラス"""
     
-    def __init__(self, base_url: str = "http://127.0.0.1:11434"):
+    def __init__(self, base_url: Optional[str] = None):
         """
         初期化
         
         Args:
             base_url: OllamaのベースURL
         """
-        self.base_url = base_url
+        self.base_url = base_url or os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
     
     def stream_chat(
         self,

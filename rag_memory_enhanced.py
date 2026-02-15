@@ -12,6 +12,14 @@
 from rag_memory_enhanced_v2 import RAGMemoryEnhancedV2, MemoryEntry  # noqa: F401
 from typing import Dict, Any, Optional, List, Tuple
 from pathlib import Path
+import os
+
+try:
+    from _paths import OLLAMA_PORT
+except Exception:
+    OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
+DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 
 # 統一モジュールのインポート
 try:
@@ -32,7 +40,7 @@ class RAGMemoryEnhanced(RAGMemoryEnhancedV2):
     def __init__(
         self,
         db_path: Optional[Path] = None,
-        ollama_url: str = "http://127.0.0.1:11434",
+        ollama_url: str = DEFAULT_OLLAMA_URL,
         model: str = "qwen2.5:14b",
         config_path: Optional[Path] = None,
         **kwargs

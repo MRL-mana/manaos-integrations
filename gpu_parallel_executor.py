@@ -14,6 +14,11 @@ from datetime import datetime
 import os
 import requests
 
+try:
+    from _paths import OLLAMA_PORT
+except Exception:
+    OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
 logger = get_logger(__name__)
 
 
@@ -45,7 +50,7 @@ class GPUParallelExecutor:
         self.active_tasks: Dict[str, asyncio.Task] = {}
         self.completed_tasks: List[Dict[str, Any]] = []
         
-        self.ollama_url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+        self.ollama_url = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
     
     async def execute_parallel(
         self,

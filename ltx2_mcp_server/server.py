@@ -22,7 +22,9 @@ if sys.platform == "win32":
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-API_URL = os.getenv("MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510").rstrip("/")
+from _paths import UNIFIED_API_PORT
+
+API_URL = os.getenv("MANAOS_INTEGRATION_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}").rstrip("/")
 server = Server("ltx2")
 
 

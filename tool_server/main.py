@@ -26,6 +26,11 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
+# パスを追加（サブディレクトリ実行でも _paths 等を解決できるようにする）
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from _paths import COMFYUI_PORT, UNIFIED_API_PORT
+
 logger = get_logger(__name__)
 
 app = FastAPI(
@@ -538,7 +543,7 @@ async def generate_image(request: GenerateImageRequest):
     logger.info(f"generate_image called: prompt='{request.prompt[:50]}...'")
 
     try:
-        comfyui_url = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
+        comfyui_url = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
 
         # ComfyUIが利用可能かチェック
         try:
@@ -555,7 +560,7 @@ async def generate_image(request: GenerateImageRequest):
             )
 
         # 統合APIサーバー経由で画像生成（既存の実装を利用）
-        unified_api_url = os.getenv("MANAOS_API_URL", "http://127.0.0.1:9510")
+        unified_api_url = os.getenv("MANAOS_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}")
 
         payload = {
             "prompt": request.prompt,

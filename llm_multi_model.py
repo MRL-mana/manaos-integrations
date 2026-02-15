@@ -7,6 +7,12 @@ from manaos_logger import get_logger
 from typing import Dict, Any, List, Optional, Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
+import os
+
+try:
+    from _paths import OLLAMA_PORT
+except Exception:
+    OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
 
 logger = get_logger(__name__)
 
@@ -14,7 +20,7 @@ logger = get_logger(__name__)
 class MultiModelManager:
     """マルチモデル管理クラス"""
     
-    def __init__(self, models: List[str], base_url: str = "http://127.0.0.1:11434"):
+    def __init__(self, models: List[str], base_url: Optional[str] = None):
         """
         初期化
         
@@ -23,7 +29,7 @@ class MultiModelManager:
             base_url: OllamaのベースURL
         """
         self.models = models
-        self.base_url = base_url
+        self.base_url = base_url or os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
         self.model_stats = {model: {"calls": 0, "successes": 0, "errors": 0} for model in models}
     
     def query_all(

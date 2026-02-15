@@ -16,6 +16,11 @@ from collections import deque
 import subprocess
 import platform
 
+try:
+    from _paths import OLLAMA_PORT
+except Exception:
+    OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
+
 logger = get_logger(__name__)
 
 
@@ -83,7 +88,7 @@ class GPUOptimizer:
         """モデルを事前ロード（GPUメモリに常駐）"""
         import requests
         
-        ollama_url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+        ollama_url = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
         
         for model in self.config.preload_models:
             try:
@@ -301,7 +306,7 @@ class GPUOptimizer:
         """GPUでLLM呼び出しを実行"""
         import requests
         
-        ollama_url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+        ollama_url = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
         
         # GPUを最大限使用
         response = requests.post(
@@ -327,7 +332,7 @@ class GPUOptimizer:
         """GPUでバッチ処理を実行"""
         import requests
         
-        ollama_url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+        ollama_url = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
         
         # 複数のプロンプトを並列処理
         tasks = []
@@ -362,7 +367,7 @@ class GPUOptimizer:
         """CPUモードでフォールバック"""
         import requests
         
-        ollama_url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+        ollama_url = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
         
         response = requests.post(
             f"{ollama_url}/api/chat",
