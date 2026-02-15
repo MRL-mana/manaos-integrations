@@ -172,9 +172,11 @@ class AutomatedDeploymentPipeline:
             実行結果
         """
         try:
+            import shlex
+            cmd = shlex.split(command) if isinstance(command, str) else command
             result = subprocess.run(
-                command,
-                shell=True,
+                cmd,
+                shell=False,
                 capture_output=True,
                 text=True,
                 timeout=timeout,

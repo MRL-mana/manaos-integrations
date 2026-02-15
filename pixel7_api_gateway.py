@@ -54,7 +54,6 @@ async def execute_android_command(command: str, timeout: int = 60) -> Dict[str, 
             *command.split(),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            shell=True
         )
 
         try:

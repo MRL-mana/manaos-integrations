@@ -23,30 +23,34 @@ _SERVICE_PORTS = [
     ("Unified API", UNIFIED_API_PORT),
 ]
 
-pm = get_process_manager()
+def main():
+    pm = get_process_manager()
 
-print("[STOP] ManaOS サービスプロセスを停止中...")
-for name, port in _SERVICE_PORTS:
-    killed = pm.kill_processes_by_port(port)
-    if killed:
-        print(f"  {name} (:{port}) → {killed} プロセス停止")
-    else:
-        print(f"  {name} (:{port}) → 実行中のプロセスなし")
-time.sleep(3)
+    print("[STOP] ManaOS サービスプロセスを停止中...")
+    for name, port in _SERVICE_PORTS:
+        killed = pm.kill_processes_by_port(port)
+        if killed:
+            print(f"  {name} (:{port}) → {killed} プロセス停止")
+        else:
+            print(f"  {name} (:{port}) → 実行中のプロセスなし")
+    time.sleep(3)
 
-print("[START] サービスを再起動中...")
-subprocess.Popen(
-    "python start_vscode_cursor_services.py",
-    shell=True,
-    cwd=str(Path(__file__).resolve().parent),
-)
-print("[WAIT] 45秒待機中...")
-time.sleep(45)
+    print("[START] サービスを再起動中...")
+    subprocess.Popen(
+        ["python", "start_vscode_cursor_services.py"],
+        cwd=str(Path(__file__).resolve().parent),
+    )
+    print("[WAIT] 45秒待機中...")
+    time.sleep(45)
 
-print("[CHECK] ポート状態:")
-for name, port in _SERVICE_PORTS:
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = sock.connect_ex(("127.0.0.1", port))
-    sock.close()
-    status = "Open ✓" if result == 0 else "Closed ✗"
-    print(f"  {name} (:{port}): {status}")
+    print("[CHECK] ポート状態:")
+    for name, port in _SERVICE_PORTS:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex(("127.0.0.1", port))
+        sock.close()
+        status = "Open ✓" if result == 0 else "Closed ✗"
+        print(f"  {name} (:{port}): {status}")
+
+
+if __name__ == "__main__":
+    main()

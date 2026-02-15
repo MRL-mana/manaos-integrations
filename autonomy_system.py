@@ -840,8 +840,8 @@ def dashboard():
         if runbook_state_path.exists():
             try:
                 runbook_last_runs = json.loads(runbook_state_path.read_text(encoding="utf-8"))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("runbook state読み込み失敗: %s", e)
         audit_tail = []
         try:
             from autonomy_gates import get_audit_log_path
@@ -853,10 +853,10 @@ def dashboard():
                     if line:
                         try:
                             audit_tail.append(json.loads(line))
-                        except Exception:
-                            pass
-        except Exception:
-            pass
+                        except (json.JSONDecodeError, ValueError):
+                            pass  # 不正行はスキップ
+        except Exception as e:
+            logger.debug("監査ログ取得失敗: %s", e)
         return jsonify({
             "autonomy_level": status.get("autonomy_level_int", 0),
             "autonomy_level_name": status.get("autonomy_level_name", "L?"),

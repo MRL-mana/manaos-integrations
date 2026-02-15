@@ -67,12 +67,7 @@ def create_llm_callback():
     
     def llm_callback(text: str) -> str:
         """同期ラッパー"""
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        return loop.run_until_complete(llm_chat_async(text))
+        return asyncio.run(llm_chat_async(text))
     
     return llm_callback
 
@@ -96,12 +91,7 @@ def create_intent_router_callback():
     
     def intent_router_callback(text: str) -> Dict[str, Any]:
         """同期ラッパー"""
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        return loop.run_until_complete(classify_intent_async(text))
+        return asyncio.run(classify_intent_async(text))
     
     return intent_router_callback
 
@@ -128,12 +118,7 @@ def create_task_registration_callback():
     
     def task_registration_callback(text: str, intent_result: Dict[str, Any]) -> bool:
         """同期ラッパー"""
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        return loop.run_until_complete(register_task_async(text, intent_result))
+        return asyncio.run(register_task_async(text, intent_result))
     
     return task_registration_callback
 
@@ -175,12 +160,7 @@ def create_conversation_save_callback():
     
     def conversation_save_callback(conversation_entry: Dict[str, Any]) -> None:
         """同期ラッパー"""
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        loop.run_until_complete(save_conversation_async(conversation_entry))
+        asyncio.run(save_conversation_async(conversation_entry))
     
     return conversation_save_callback
 

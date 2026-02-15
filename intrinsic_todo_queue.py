@@ -291,13 +291,7 @@ class IntrinsicTodoQueue:
                 # 非同期実行
                 import asyncio
 
-                try:
-                    loop = asyncio.get_event_loop()
-                except RuntimeError:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-
-                result = loop.run_until_complete(orchestrator.execute(task_description))
+                result = asyncio.run(orchestrator.execute(task_description))
 
                 execution_result = {
                     "success": result.status.value == "completed",

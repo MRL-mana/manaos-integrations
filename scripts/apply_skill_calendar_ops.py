@@ -11,7 +11,7 @@ import json
 import yaml
 import requests
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional, List
 
 # Google Calendar API
@@ -249,9 +249,9 @@ def list_events(data: Dict[str, Any]) -> Dict[str, Any]:
     try:
         # デフォルトの時刻を設定
         if not start_time:
-            start_time = datetime.utcnow().isoformat() + 'Z'
+            start_time = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         if not end_time:
-            end_time = (datetime.utcnow() + timedelta(days=7)).isoformat() + 'Z'
+            end_time = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat().replace("+00:00", "Z")
         
         events_result = service.events().list(
             calendarId=calendar_id,

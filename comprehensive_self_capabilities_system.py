@@ -720,8 +720,8 @@ class ComprehensiveSelfCapabilitiesSystem:
                         try:
                             self.auto_optimization._clear_cache()
                             actions_taken.append("キャッシュクリア")
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug("キャッシュクリア失敗: %s", e)
                     
                     # メモリ使用率が高いプロセスを終了（オプション）
                     if memory_percent > 95:
@@ -759,8 +759,8 @@ class ComprehensiveSelfCapabilitiesSystem:
                                 shutil.rmtree(temp_dir)
                                 temp_dir.mkdir(parents=True, exist_ok=True)
                                 actions_taken.append(f"一時ディレクトリクリア: {temp_dir}")
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug("一時ディレクトリクリア失敗 %s: %s", temp_dir, e)
                     
                     # 古いログファイルを削除
                     log_dir = Path("logs")
@@ -836,8 +836,8 @@ class ComprehensiveSelfCapabilitiesSystem:
                 response = requests.get(f"{primary_url}/health", timeout=5)
                 if response.status_code == 200:
                     return {"success": True, "message": f"プライマリURL接続OK: {primary_url}"}
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("プライマリURL接続失敗 %s: %s", primary_url, e)
             
             # フォールバックURLを試す
             for fallback_url in fallback_urls:

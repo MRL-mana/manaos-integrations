@@ -159,21 +159,17 @@ class PerformanceOptimizer:
         try:
             import asyncio
             try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            
-            if loop.is_running():
-                # 既にイベントループが実行中の場合は、新しいタスクとしてスケジュール
+                asyncio.get_running_loop()
+                # 既にイベントループが実行中 — スレッドで実行
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     future = executor.submit(
                         lambda: asyncio.run(self.optimize_all_services_health_check())
                     )
                     results["services_health_check"] = future.result(timeout=30)
-            else:
-                results["services_health_check"] = loop.run_until_complete(
+            except RuntimeError:
+                # イベントループなし — asyncio.run() で安全に実行
+                results["services_health_check"] = asyncio.run(
                     self.optimize_all_services_health_check()
                 )
         except Exception as e:
