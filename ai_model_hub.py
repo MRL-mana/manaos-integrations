@@ -12,12 +12,14 @@ import json
 import time
 from typing import Dict, Any, Optional, List
 
+from _paths import OLLAMA_PORT
+
 logger = get_logger(__name__)
 app = Flask(__name__)
 CORS(app)
 
 # Ollama設定
-OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "qwen2.5:3b")
 
 # プロンプトテンプレート

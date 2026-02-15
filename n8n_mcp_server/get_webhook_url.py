@@ -6,7 +6,8 @@ import os
 import sys
 
 # n8nの設定
-N8N_BASE_URL = os.getenv("N8N_BASE_URL", "http://127.0.0.1:5679")
+DEFAULT_N8N_BASE_URL = f"http://127.0.0.1:{os.getenv('N8N_PORT', '5678')}"
+N8N_BASE_URL = os.getenv("N8N_BASE_URL", DEFAULT_N8N_BASE_URL).rstrip("/")
 N8N_API_KEY = os.getenv("N8N_API_KEY")
 
 

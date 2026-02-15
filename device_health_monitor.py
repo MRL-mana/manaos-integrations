@@ -14,6 +14,8 @@ from typing import Dict, Any, List, Optional
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from manaos_logger import get_logger
+
+from _paths import ORCHESTRATOR_PORT
 # ログ設定
 logger = get_logger(__name__)
 
@@ -71,7 +73,7 @@ class DeviceHealthMonitor:
                     {
                         "name": "ManaOS",
                         "type": "manaos",
-                        "api_endpoint": "http://127.0.0.1:5106/health"
+                        "api_endpoint": f"http://127.0.0.1:{ORCHESTRATOR_PORT}/health"
                     },
                     {
                         "name": "Mothership",

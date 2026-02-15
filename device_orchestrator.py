@@ -15,6 +15,8 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 import requests
 
+from _paths import ORCHESTRATOR_PORT
+
 logger = get_logger(__name__)
 
 
@@ -120,7 +122,7 @@ class DeviceOrchestrator:
                         "device_id": "manaos",
                         "device_name": "ManaOS",
                         "device_type": "manaos",
-                        "api_endpoint": "http://127.0.0.1:5106",
+                        "api_endpoint": f"http://127.0.0.1:{ORCHESTRATOR_PORT}",
                         "capabilities": ["compute", "storage"],
                     },
                     {

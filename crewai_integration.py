@@ -27,6 +27,9 @@ except ImportError:
 
 # ベースクラスのインポート
 from base_integration import BaseIntegration
+from _paths import OLLAMA_PORT
+
+DEFAULT_OLLAMA_URL = f"http://127.0.0.1:{OLLAMA_PORT}"
 
 
 class CrewAIIntegration(BaseIntegration):
@@ -34,7 +37,7 @@ class CrewAIIntegration(BaseIntegration):
     
     def __init__(
         self,
-        ollama_url: str = "http://127.0.0.1:11434",
+        ollama_url: str = DEFAULT_OLLAMA_URL,
         model_name: str = "qwen2.5:7b"
     ):
         """

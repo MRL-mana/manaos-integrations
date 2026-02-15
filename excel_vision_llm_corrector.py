@@ -15,13 +15,15 @@ from typing import Dict, Any, Optional, List
 from PIL import Image
 import io
 
+from _paths import OLLAMA_PORT
+
 # Windowsでのエンコーディング修正
 if sys.platform == 'win32':
     import io as io_module
     sys.stdout.reconfigure(encoding='utf-8')
     sys.stderr.reconfigure(encoding='utf-8')
 
-OLLAMA_URL = "http://127.0.0.1:11434"
+OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 
 
 class ExcelVisionLLMCorrector:

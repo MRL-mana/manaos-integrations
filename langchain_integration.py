@@ -50,12 +50,15 @@ except ImportError:
 
 # ベースクラスのインポート
 from base_integration import BaseIntegration
+from _paths import OLLAMA_PORT
+
+DEFAULT_OLLAMA_URL = f"http://127.0.0.1:{OLLAMA_PORT}"
 
 
 class LangChainIntegration(BaseIntegration):
     """LangChain統合クラス（改善版）"""
     
-    def __init__(self, ollama_url: str = "http://127.0.0.1:11434", model_name: str = "qwen2.5:7b"):
+    def __init__(self, ollama_url: str = DEFAULT_OLLAMA_URL, model_name: str = "qwen2.5:7b"):
         """
         初期化
         

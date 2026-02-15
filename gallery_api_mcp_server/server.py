@@ -20,6 +20,8 @@ if sys.platform == "win32":
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from _paths import GALLERY_PORT
+
 # MCP SDKのインポート
 try:
     from mcp.server import Server
@@ -33,7 +35,7 @@ except ImportError:
 logger = get_logger(__name__)
 
 # APIエンドポイント
-GALLERY_API_URL = os.getenv("GALLERY_API_URL", "http://127.0.0.1:5559")
+GALLERY_API_URL = os.getenv("GALLERY_API_URL", f"http://127.0.0.1:{GALLERY_PORT}")
 
 # MCPサーバーの初期化
 if MCP_AVAILABLE:

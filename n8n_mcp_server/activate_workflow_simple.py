@@ -9,7 +9,8 @@ import json
 from datetime import datetime
 
 # n8nの設定
-N8N_BASE_URL = os.getenv("N8N_BASE_URL", "http://127.0.0.1:5679")
+DEFAULT_N8N_BASE_URL = f"http://127.0.0.1:{os.getenv('N8N_PORT', '5678')}"
+N8N_BASE_URL = os.getenv("N8N_BASE_URL", DEFAULT_N8N_BASE_URL).rstrip("/")
 N8N_API_KEY = os.getenv("N8N_API_KEY")
 
 
@@ -98,7 +99,7 @@ if __name__ == "__main__":
             "timestamp": datetime.now().isoformat()
         }
 
-        webhook_url = "http://127.0.0.1:5679/webhook/comfyui-generated"
+        webhook_url = f"{N8N_BASE_URL}/webhook/comfyui-generated"
 
         print(f"Webhook URL: {webhook_url}")
         print("送信ペイロード:")

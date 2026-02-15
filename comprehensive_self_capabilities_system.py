@@ -23,6 +23,8 @@ from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverit
 from manaos_timeout_config import get_timeout_config
 from manaos_config_validator import ConfigValidator
 
+from _paths import N8N_PORT
+
 # ロガーの初期化
 logger = get_logger(__name__)
 
@@ -506,9 +508,9 @@ class ComprehensiveSelfCapabilitiesSystem:
             import time
             
             # 接続先URLを取得
-            url = context.get("url", "http://127.0.0.1:5678")
+            url = context.get("url", f"http://127.0.0.1:{N8N_PORT}")
             host = context.get("host", "localhost")
-            port = context.get("port", 5678)
+            port = context.get("port", N8N_PORT)
             
             # 接続テスト
             max_retries = 3

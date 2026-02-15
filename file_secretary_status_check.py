@@ -12,6 +12,8 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+from _paths import FILE_SECRETARY_PORT
+
 def check_processes():
     """プロセス確認"""
     print("=== プロセス確認 ===")
@@ -34,7 +36,7 @@ def check_api():
     """API確認"""
     print("\n=== API確認 ===")
     try:
-        response = httpx.get("http://127.0.0.1:5120/health", timeout=5.0)
+        response = httpx.get(f"http://127.0.0.1:{FILE_SECRETARY_PORT}/health", timeout=5.0)
         if response.status_code == 200:
             data = response.json()
             print(f"✅ APIサーバー: 正常 ({data.get('version')})")

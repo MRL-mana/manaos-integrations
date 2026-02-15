@@ -17,6 +17,10 @@ from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass, asdict
 
+from _paths import OLLAMA_PORT
+
+DEFAULT_OLLAMA_URL = f"http://127.0.0.1:{OLLAMA_PORT}"
+
 # 統一モジュールのインポート
 try:
     from http_session_pool import get_http_session_pool
@@ -74,7 +78,7 @@ class LLMRouter:
 
         self.config_path = Path(config_path)
         self.config = self._load_config()
-        self.ollama_url = self.config.get("ollama_url", "http://127.0.0.1:11434")
+        self.ollama_url = self.config.get("ollama_url", DEFAULT_OLLAMA_URL)
         self.routing_config = self.config.get("routing", {})
         self.audit_config = self.config.get("audit_log", {})
 
@@ -119,7 +123,7 @@ class LLMRouter:
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定を返す"""
         return {
-            "ollama_url": "http://127.0.0.1:11434",
+            "ollama_url": DEFAULT_OLLAMA_URL,
             "routing": {
                 "conversation": {
                     "primary": "lfm2.5:1.2b",

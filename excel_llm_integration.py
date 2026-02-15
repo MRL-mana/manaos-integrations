@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from manaos_logger import get_logger
 
+from _paths import OLLAMA_PORT
+
 logger = get_logger(__name__)
 
 # excel_llm_processor.pyからExcelLLMProcessorをインポート
@@ -38,7 +40,7 @@ class ExcelLLMIntegration:
             ollama_url: Ollama URL（環境変数OLLAMA_URLからも取得可能）
             model: 使用するモデル名（環境変数OLLAMA_MODELからも取得可能）
         """
-        self.ollama_url = ollama_url or os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+        self.ollama_url = ollama_url or os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
         self.model = model or os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
         self.processor = None
         
