@@ -31,8 +31,21 @@ error_handler = ManaOSErrorHandler("AuthSystem")
 # タイムアウト設定の取得
 timeout_config = get_timeout_config()
 
-# JWT秘密鍵（本番環境では環境変数から取得）
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", secrets.token_urlsafe(32))
+# JWT秘密鍵（.env の JWT_SECRET_KEY を参照。未設定時はファイルに永続化）
+def _get_or_create_jwt_secret() -> str:
+    """JWT秘密鍵を取得。未設定時はファイルに永続化して毎回同じ値を返す"""
+    key = os.getenv("JWT_SECRET_KEY", "").strip()
+    if key:
+        return key
+    secret_file = Path(__file__).parent / ".jwt_secret"
+    if secret_file.exists():
+        return secret_file.read_text().strip()
+    key = secrets.token_urlsafe(32)
+    secret_file.write_text(key)
+    secret_file.chmod(0o600)
+    return key
+
+JWT_SECRET_KEY = _get_or_create_jwt_secret()
 JWT_ALGORITHM = "HS256"
 
 

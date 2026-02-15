@@ -10,13 +10,15 @@ import time
 import hashlib
 import hmac
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Dict, Any, Optional, Callable
 from functools import wraps
 from flask import request, jsonify, g
 from collections import defaultdict
-import logging
 
-logger = logging.getLogger(__name__)
+from manaos_logger import get_logger
+
+logger = get_logger(__name__)
 
 # APIキー管理
 class APIKeyManager:
@@ -51,72 +53,48 @@ class APIKeyManager:
         return []
 
 
-# JWT認証（簡易版）
+# JWT認証（PyJWTライブラリベース）
 class JWTManager:
-    """JWT認証管理（簡易実装）"""
-    
+    """JWT認証管理（PyJWTライブラリ使用）"""
+
     def __init__(self, secret_key: Optional[str] = None):
-        self.secret_key = secret_key or os.getenv('JWT_SECRET_KEY', 'default-secret-key-change-in-production')
-    
+        self.secret_key = secret_key or os.getenv('JWT_SECRET_KEY', '')
+        if not self.secret_key:
+            # auth_system.py の永続化鍵を参照
+            secret_file = Path(__file__).parent / '.jwt_secret'
+            if secret_file.exists():
+                self.secret_key = secret_file.read_text().strip()
+            else:
+                import secrets as _secrets
+                self.secret_key = _secrets.token_urlsafe(32)
+                secret_file.write_text(self.secret_key)
+                logger.warning('JWT_SECRET_KEY 未設定。.jwt_secret に自動生成しました')
+        self._algorithm = 'HS256'
+
     def generate_token(self, user_id: str, expires_in: int = 3600) -> str:
         """トークンを生成"""
-        import base64
-        import json
-        
-        header = {"alg": "HS256", "typ": "JWT"}
-        payload = {
-            "user_id": user_id,
-            "exp": int(time.time()) + expires_in,
-            "iat": int(time.time())
-        }
-        
-        # 簡易実装（本番環境ではjose等のライブラリを使用）
-        header_b64 = base64.urlsafe_b64encode(json.dumps(header).encode()).decode().rstrip('=')
-        payload_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip('=')
-        
-        signature = hmac.new(
-            self.secret_key.encode(),
-            f"{header_b64}.{payload_b64}".encode(),
-            hashlib.sha256
-        ).digest()
-        sig_b64 = base64.urlsafe_b64encode(signature).decode().rstrip('=')
-        
-        return f"{header_b64}.{payload_b64}.{sig_b64}"
-    
+        try:
+            import jwt as _jwt
+            payload = {
+                'user_id': user_id,
+                'exp': int(time.time()) + expires_in,
+                'iat': int(time.time()),
+            }
+            return _jwt.encode(payload, self.secret_key, algorithm=self._algorithm)
+        except ImportError:
+            logger.error('PyJWT がインストールされていません: pip install pyjwt')
+            raise
+
     def validate_token(self, token: str) -> Optional[Dict[str, Any]]:
         """トークンを検証"""
         try:
-            import base64
-            import json
-            
-            parts = token.split('.')
-            if len(parts) != 3:
-                return None
-            
-            header_b64, payload_b64, sig_b64 = parts
-            
-            # 署名検証
-            signature = base64.urlsafe_b64decode(sig_b64 + '==')
-            expected_sig = hmac.new(
-                self.secret_key.encode(),
-                f"{header_b64}.{payload_b64}".encode(),
-                hashlib.sha256
-            ).digest()
-            
-            if not hmac.compare_digest(signature, expected_sig):
-                return None
-            
-            # ペイロード取得
-            payload_json = base64.urlsafe_b64decode(payload_b64 + '==')
-            payload = json.loads(payload_json)
-            
-            # 有効期限チェック
-            if payload.get('exp', 0) < int(time.time()):
-                return None
-            
-            return payload
+            import jwt as _jwt
+            return _jwt.decode(token, self.secret_key, algorithms=[self._algorithm])
+        except ImportError:
+            logger.error('PyJWT がインストールされていません: pip install pyjwt')
+            return None
         except Exception as e:
-            logger.warning(f"トークン検証エラー: {e}")
+            logger.warning(f'トークン検証エラー: {e}')
             return None
 
 
@@ -179,10 +157,13 @@ class InputValidator:
         if len(text) > max_length:
             return False, f"テキストは{max_length}文字以下である必要があります"
         
-        # SQLインジェクション対策
-        dangerous_patterns = ["';", "--", "/*", "*/", "xp_", "sp_"]
+        # 注: SQLインジェクション対策はパラメータ化クエリで行うべき。
+        # このバリデーションは補助的な入力サニタイズのみ。
+        dangerous_patterns = ["';", "--", "/*", "*/", "xp_", "sp_", "UNION SELECT", "DROP TABLE", "INSERT INTO"]
+        text_lower = text.lower()
         for pattern in dangerous_patterns:
-            if pattern.lower() in text.lower():
+            if pattern.lower() in text_lower:
+                logger.warning(f"不正な入力パターンを検出: {pattern!r}")
                 return False, "不正な文字列が検出されました"
         
         return True, None

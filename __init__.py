@@ -1,26 +1,8 @@
-"""
-ManaOS外部システム統合モジュール
-"""
+"""ManaOS外部システム統合モジュール"""
 
-__version__ = "1.0.0"
+try:
+    from importlib.metadata import version as _version
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    __version__ = _version("manaos-integrations")
+except Exception:
+    __version__ = "2.6.0"

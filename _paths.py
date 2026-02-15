@@ -29,3 +29,17 @@ PROJECT_ROOT: Path = INTEGRATIONS_DIR.parent
 # ---------- ログ ----------
 LOGS_DIR: Path = INTEGRATIONS_DIR / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
+
+# ---------- サービスポート定数 ----------
+# 環境変数で上書き可能。ハードコードの代わりにここを参照すること。
+MRL_MEMORY_PORT: int = int(os.getenv("MRL_MEMORY_PORT", "5105"))
+LEARNING_SYSTEM_PORT: int = int(os.getenv("LEARNING_SYSTEM_PORT", "5126"))
+LLM_ROUTING_PORT: int = int(os.getenv("LLM_ROUTING_PORT", "5111"))
+VIDEO_PIPELINE_PORT: int = int(os.getenv("VIDEO_PIPELINE_PORT", "5112"))
+WINDOWS_AUTOMATION_PORT: int = int(os.getenv("WINDOWS_AUTOMATION_PORT", "5115"))
+PICO_HID_PORT: int = int(os.getenv("PICO_HID_PORT", "5136"))
+UNIFIED_API_PORT: int = int(os.getenv("PORT", os.getenv("UNIFIED_API_PORT", "9510")))
+OLLAMA_PORT: int = int(os.getenv("OLLAMA_PORT", "11434"))
+GALLERY_PORT: int = int(os.getenv("GALLERY_PORT", "5559"))
+COMFYUI_PORT: int = int(os.getenv("COMFYUI_PORT", "8188"))
+MOLTBOT_GATEWAY_PORT: int = int(os.getenv("MOLTBOT_GATEWAY_PORT", "8088"))
