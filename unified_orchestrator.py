@@ -19,6 +19,15 @@ from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from manaos_timeout_config import get_timeout_config
 from manaos_config_validator import ConfigValidator
+from _paths import (
+    INTENT_ROUTER_PORT,
+    LEARNING_SYSTEM_PORT,
+    METRICS_COLLECTOR_PORT,
+    RAG_MEMORY_PORT,
+    TASK_CRITIC_PORT,
+    TASK_PLANNER_PORT,
+    TASK_QUEUE_PORT,
+)
 
 # ロガーの初期化（インポート前に必要）
 logger = get_logger(__name__)
@@ -57,6 +66,14 @@ timeout_config = get_timeout_config()
 
 # 設定ファイル検証の初期化
 config_validator = ConfigValidator("UnifiedOrchestrator")
+
+DEFAULT_INTENT_ROUTER_URL = f"http://127.0.0.1:{INTENT_ROUTER_PORT}"
+DEFAULT_TASK_PLANNER_URL = f"http://127.0.0.1:{TASK_PLANNER_PORT}"
+DEFAULT_TASK_CRITIC_URL = f"http://127.0.0.1:{TASK_CRITIC_PORT}"
+DEFAULT_TASK_QUEUE_URL = f"http://127.0.0.1:{TASK_QUEUE_PORT}"
+DEFAULT_RAG_MEMORY_URL = f"http://127.0.0.1:{RAG_MEMORY_PORT}"
+DEFAULT_LEARNING_SYSTEM_URL = f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}"
+DEFAULT_METRICS_COLLECTOR_URL = f"http://127.0.0.1:{METRICS_COLLECTOR_PORT}"
 
 
 class ExecutionStatus(str, Enum):
@@ -161,12 +178,12 @@ class UnifiedOrchestrator:
 
     def __init__(
         self,
-        intent_router_url: str = "http://127.0.0.1:5100",
-        task_planner_url: str = "http://127.0.0.1:5101",
-        task_critic_url: str = "http://127.0.0.1:5102",
-        task_queue_url: str = "http://127.0.0.1:5104",
+        intent_router_url: Optional[str] = None,
+        task_planner_url: Optional[str] = None,
+        task_critic_url: Optional[str] = None,
+        task_queue_url: Optional[str] = None,
         executor_url: Optional[str] = None,
-        rag_memory_url: str = "http://127.0.0.1:5103",
+        rag_memory_url: Optional[str] = None,
         learning_system_url: Optional[str] = None,
         config_path: Optional[Path] = None,
     ):
@@ -183,12 +200,12 @@ class UnifiedOrchestrator:
             learning_system_url: Learning System API URL（オプション）
             config_path: 設定ファイルのパス
         """
-        self.intent_router_url = intent_router_url
-        self.task_planner_url = task_planner_url
-        self.task_critic_url = task_critic_url
-        self.task_queue_url = task_queue_url
+        self.intent_router_url = intent_router_url or DEFAULT_INTENT_ROUTER_URL
+        self.task_planner_url = task_planner_url or DEFAULT_TASK_PLANNER_URL
+        self.task_critic_url = task_critic_url or DEFAULT_TASK_CRITIC_URL
+        self.task_queue_url = task_queue_url or DEFAULT_TASK_QUEUE_URL
         self.executor_url = executor_url
-        self.rag_memory_url = rag_memory_url
+        self.rag_memory_url = rag_memory_url or DEFAULT_RAG_MEMORY_URL
         self.learning_system_url = learning_system_url
 
         self.config_path = config_path or Path(__file__).parent / "unified_orchestrator_config.json"
@@ -198,7 +215,7 @@ class UnifiedOrchestrator:
         # デフォルトでLearning System API URLを設定（設定ファイルで上書き可能）
         if not self.learning_system_url:
             self.learning_system_url = self.config.get(
-                "learning_system_url", "http://127.0.0.1:5126"
+                "learning_system_url", DEFAULT_LEARNING_SYSTEM_URL
             )
 
         # Learning Systemを直接インポートして使用（APIサーバーがない場合のフォールバック）
@@ -215,7 +232,9 @@ class UnifiedOrchestrator:
         self.metrics_collector = None
         if METRICS_AVAILABLE and self.config.get("enable_metrics", True):
             try:
-                metrics_url = self.config.get("metrics_collector_url", "http://127.0.0.1:5127")
+                metrics_url = self.config.get(
+                    "metrics_collector_url", DEFAULT_METRICS_COLLECTOR_URL
+                )
                 # API経由で使用（直接インポートも可能）
                 self.metrics_collector_url = metrics_url
                 logger.info(f"✅ Metrics Collector統合完了: {metrics_url}")
@@ -307,10 +326,10 @@ class UnifiedOrchestrator:
             "max_retries": 3,
             "save_to_memory": True,
             "memory_importance_threshold": 0.6,
-            "learning_system_url": "http://127.0.0.1:5126",
+            "learning_system_url": DEFAULT_LEARNING_SYSTEM_URL,
             "enable_learning": True,
             "enable_metrics": True,
-            "metrics_collector_url": "http://127.0.0.1:5127",
+            "metrics_collector_url": DEFAULT_METRICS_COLLECTOR_URL,
             "enable_retry": True,
             "retry_initial_delay": 1.0,
             "retry_max_delay": 60.0,
