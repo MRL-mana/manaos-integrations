@@ -13,6 +13,11 @@ from dataclasses import dataclass
 from enum import Enum
 
 try:
+    from _paths import OLLAMA_PORT, LM_STUDIO_PORT, UNIFIED_API_PORT
+except Exception:
+    OLLAMA_PORT, LM_STUDIO_PORT, UNIFIED_API_PORT = 11434, 1234, 9510
+
+try:
     from manaos_logger import get_logger
     _logger = get_logger(__name__)
 except ImportError:
@@ -60,9 +65,9 @@ class AlwaysReadyLLMClient:
     def __init__(
         self,
         n8n_webhook_url: str = None,
-        ollama_url: str = "http://127.0.0.1:11434",
-        lm_studio_url: str = "http://127.0.0.1:1234/v1",
-        cache_api_url: str = "http://127.0.0.1:9510/api/cache",
+        ollama_url: Optional[str] = None,
+        lm_studio_url: Optional[str] = None,
+        cache_api_url: Optional[str] = None,
         use_cache: bool = True,
         default_model: ModelType = ModelType.MEDIUM,  # デフォルトをMEDIUM（14B）に変更
         prefer_lm_studio: bool = True  # LM Studioを優先
@@ -80,9 +85,9 @@ class AlwaysReadyLLMClient:
             prefer_lm_studio: LM Studioを優先するか
         """
         self.n8n_webhook_url = n8n_webhook_url
-        self.ollama_url = ollama_url
-        self.lm_studio_url = lm_studio_url
-        self.cache_api_url = cache_api_url
+        self.ollama_url = ollama_url or f"http://127.0.0.1:{OLLAMA_PORT}"
+        self.lm_studio_url = lm_studio_url or f"http://127.0.0.1:{LM_STUDIO_PORT}/v1"
+        self.cache_api_url = cache_api_url or f"http://127.0.0.1:{UNIFIED_API_PORT}/api/cache"
         self.use_cache = use_cache
         self.default_model = default_model
         self.prefer_lm_studio = prefer_lm_studio
