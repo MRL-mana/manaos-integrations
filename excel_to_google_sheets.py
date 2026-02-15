@@ -11,7 +11,7 @@ import sys
 from manaos_logger import get_logger
 import time
 
-logger = get_logger(__name__)
+logger = get_service_logger("excel-to-google-sheets")
 
 # Windowsでのエンコーディング修正（cp932で落ちるのを防ぐ）
 if sys.platform == "win32":

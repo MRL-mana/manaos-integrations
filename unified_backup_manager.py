@@ -22,7 +22,7 @@ try:
 except ImportError:
     GoogleDriveIntegration = None
 
-logger = get_logger(__name__)
+logger = get_service_logger("unified-backup-manager")
 
 
 @dataclass

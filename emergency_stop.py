@@ -26,7 +26,7 @@ from _paths import (
     MOLTBOT_GATEWAY_PORT,
 )
 
-logger = get_logger(__name__)
+logger = get_service_logger("emergency-stop")
 
 
 class EmergencyStop:

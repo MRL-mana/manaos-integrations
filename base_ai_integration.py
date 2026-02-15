@@ -10,7 +10,7 @@ from manaos_logger import get_logger
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
-logger = get_logger(__name__)
+logger = get_service_logger("base-ai-integration")
 
 
 @dataclass

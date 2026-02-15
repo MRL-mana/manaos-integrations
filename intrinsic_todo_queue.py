@@ -21,7 +21,7 @@ from manaos_logger import get_logger
 
 from _paths import INTRINSIC_MOTIVATION_PORT
 
-logger = get_logger(__name__)
+logger = get_service_logger("intrinsic-todo-queue")
 
 DEFAULT_INTRINSIC_MOTIVATION_URL = f"http://127.0.0.1:{INTRINSIC_MOTIVATION_PORT}"
 

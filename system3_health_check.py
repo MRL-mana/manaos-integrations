@@ -36,8 +36,8 @@ except Exception:  # pragma: no cover
         RAG_MEMORY_PORT = int(os.getenv("RAG_MEMORY_PORT", "5103"))
 
 try:
-    from manaos_logger import get_logger
-    logger = get_logger(__name__)
+    from unified_logging import get_service_logger
+logger = get_service_logger("system3-health-check")
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)

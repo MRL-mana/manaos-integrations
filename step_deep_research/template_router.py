@@ -12,7 +12,7 @@ from pathlib import Path
 from manaos_logger import get_logger
 from .utils import load_prompt_template
 
-logger = get_logger(__name__)
+logger = get_service_logger("template-router")
 
 
 class TemplateRouter:

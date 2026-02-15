@@ -65,7 +65,7 @@ from autonomy_system_enhanced import AutonomySystemEnhanced
 from secretary_system_optimized import SecretarySystemOptimized
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("unified-orchestrator-enhanced")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("UnifiedOrchestratorEnhanced")

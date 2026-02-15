@@ -29,7 +29,7 @@ DEFAULT_UNIFIED_API_URL = os.getenv(
     f"http://127.0.0.1:{UNIFIED_API_PORT}",
 ).rstrip("/")
 
-logger = get_logger(__name__)
+logger = get_service_logger("svi-automation")
 
 try:
     from svi_wan22_video_integration import SVIWan22VideoIntegration

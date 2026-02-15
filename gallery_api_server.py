@@ -28,12 +28,15 @@ try:
     from api_auth import get_auth_manager
 except ImportError:
     try:
-        from manaos_logger import get_logger as get_service_logger
-        from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
-        from manaos_timeout_config import get_timeout_config
-        from api_auth import get_auth_manager
+    from unified_logging import get_service_logger
+    logger = get_service_logger("gallery")
+except ImportError:
+    try:
+        from unified_logging import get_service_logger
+logger = get_service_logger("gallery")
     except ImportError:
         import logging
+        logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
         get_service_logger = lambda name: logging.getLogger(name)
         class ManaOSErrorHandler:

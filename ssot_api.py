@@ -16,7 +16,7 @@ from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("ssot-api")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("SSOT")

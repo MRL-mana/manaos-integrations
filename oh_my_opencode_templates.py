@@ -8,9 +8,8 @@ TaskType別の既定プロンプト
 from typing import Dict, Any, Optional
 from enum import Enum
 
-from manaos_logger import get_logger
-
-logger = get_logger(__name__)
+from unified_logging import get_service_logger
+logger = get_service_logger("oh-my-opencode-templates")
 
 
 class TaskType(str, Enum):

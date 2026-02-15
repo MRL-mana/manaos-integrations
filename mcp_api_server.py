@@ -25,7 +25,7 @@ if sys.platform == "win32":
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent))
 
-logger = get_logger(__name__)
+logger = get_service_logger("mcp")
 app = Flask(__name__)
 CORS(app)
 

@@ -12,7 +12,7 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 import uuid
 
-logger = get_logger(__name__)
+logger = get_service_logger("notification-hub")
 # 既存の通知システムをインポート
 try:
     from notification_system import NotificationSystem

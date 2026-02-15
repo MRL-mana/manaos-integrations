@@ -6,7 +6,7 @@ from manaos_logger import get_logger
 from pathlib import Path
 from datetime import datetime
 
-logger = get_logger(__name__)
+logger = get_service_logger("quick-mana-image-gen")
 
 
 def generate_mana_favorite_image():

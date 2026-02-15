@@ -15,7 +15,7 @@ try:
 except ImportError:
     import logging
     def get_logger(n): return logging.getLogger(n)
-logger = get_logger(__name__)
+logger = get_service_logger("device-alert-notify")
 
 # Portal API URL（デバイスアラート取得）
 DEFAULT_PORTAL_URL = f"http://127.0.0.1:{PORTAL_INTEGRATION_PORT}"

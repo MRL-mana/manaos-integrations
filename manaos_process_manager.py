@@ -25,11 +25,16 @@ from datetime import datetime
 import psutil
 
 try:
-    from manaos_logger import get_logger
-    logger = get_logger(__name__)
+    from unified_logging import get_service_logger
+    logger = get_service_logger("manaos-process-manager")
 except ImportError:
-    import logging
-    logging.basicConfig(level=logging.INFO)
+    try:
+        from unified_logging import get_service_logger
+logger = get_service_logger("manaos-process-manager")
+    except ImportError:
+        import logging
+        logger = logging.getLogger(__name__)
+        logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
 try:

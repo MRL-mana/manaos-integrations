@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 import uuid
 
-logger = get_logger(__name__)
+logger = get_service_logger("memory-unified")
 # Obsidian統合をインポート
 try:
     from obsidian_integration import ObsidianIntegration

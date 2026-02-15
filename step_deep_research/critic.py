@@ -26,7 +26,7 @@ from .rubric import load_rubric, get_rubric_min_pass_score
 from .utils import load_prompt_template, format_prompt, parse_yaml_response
 from .critic_guard import CriticGuard
 
-logger = get_logger(__name__)
+logger = get_service_logger("critic")
 error_handler = ManaOSErrorHandler("StepDeepResearchCritic")
 
 

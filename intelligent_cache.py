@@ -12,9 +12,8 @@ from typing import Dict, Any, Optional, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from collections import OrderedDict
-from manaos_logger import get_logger
-
-logger = get_logger(__name__)
+from unified_logging import get_service_logger
+logger = get_service_logger("intelligent-cache")
 
 
 @dataclass

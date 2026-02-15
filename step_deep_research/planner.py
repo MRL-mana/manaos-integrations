@@ -25,7 +25,7 @@ from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverit
 from .schemas import Plan, SuccessCriterion, TodoItem, Risk, TaskTool, TaskPriority
 from .utils import load_prompt_template, format_prompt, parse_yaml_response
 
-logger = get_logger(__name__)
+logger = get_service_logger("planner")
 error_handler = ManaOSErrorHandler("StepDeepResearchPlanner")
 
 

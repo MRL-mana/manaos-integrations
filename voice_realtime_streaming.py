@@ -16,9 +16,8 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
 from voice_integration import create_stt_engine, create_tts_engine, VoiceConversationLoop
-from manaos_logger import get_logger
-
-logger = get_logger(__name__)
+from unified_logging import get_service_logger
+logger = get_service_logger("voice-realtime-streaming")
 
 
 class RealtimeVoiceStreaming:

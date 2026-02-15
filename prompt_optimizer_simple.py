@@ -8,7 +8,7 @@ from manaos_logger import get_logger
 from typing import Dict, Optional, Any
 import re
 
-logger = get_logger(__name__)
+logger = get_service_logger("prompt-optimizer-simple")
 
 
 class SimplePromptOptimizer:

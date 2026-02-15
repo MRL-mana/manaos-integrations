@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover
         SEARXNG_PORT = int(os.getenv("SEARXNG_PORT", "8080"))
         RAG_MEMORY_PORT = int(os.getenv("RAG_MEMORY_PORT", "5103"))
 
-logger = get_logger(__name__)
+logger = get_service_logger("searcher")
 error_handler = ManaOSErrorHandler("StepDeepResearchSearcher")
 
 

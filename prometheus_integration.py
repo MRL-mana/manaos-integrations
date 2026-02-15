@@ -7,9 +7,8 @@ Prometheus形式のメトリクスをエクスポート
 
 from typing import Dict, Any, List
 from datetime import datetime
-from manaos_logger import get_logger
-
-logger = get_logger(__name__)
+from unified_logging import get_service_logger
+logger = get_service_logger("prometheus-integration")
 
 try:
     from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST

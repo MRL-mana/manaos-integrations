@@ -17,7 +17,7 @@ from obsidian_integration import ObsidianIntegration
 
 from _paths import LEARNING_SYSTEM_PORT, METRICS_COLLECTOR_PORT
 
-logger = get_logger(__name__)
+logger = get_service_logger("reward-loop")
 
 DEFAULT_LEARNING_SYSTEM_URL = f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}"
 DEFAULT_METRICS_COLLECTOR_URL = f"http://127.0.0.1:{METRICS_COLLECTOR_PORT}"

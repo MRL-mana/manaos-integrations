@@ -14,7 +14,7 @@ from .schemas import ResearchResults
 from .budget_guard import StopReason
 from .budget_guard import StopReason as BudgetStopReason
 
-logger = get_logger(__name__)
+logger = get_service_logger("fail-safe")
 
 
 class FailSafeMode(str, Enum):

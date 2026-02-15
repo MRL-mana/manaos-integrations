@@ -18,9 +18,8 @@ if sys.platform == "win32":
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from manaos_logger import get_logger
-
-logger = get_logger(__name__)
+from unified_logging import get_service_logger
+logger = get_service_logger("start-all-new-systems")
 
 
 async def initialize_all_systems():

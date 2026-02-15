@@ -10,9 +10,8 @@ from pathlib import Path
 
 from step_deep_research.orchestrator import StepDeepResearchOrchestrator
 from step_deep_research.cache_system import CacheSystem
-from manaos_logger import get_logger
-
-logger = get_logger(__name__)
+from unified_logging import get_service_logger
+logger = get_service_logger("one-minute-check")
 
 
 def one_minute_check():

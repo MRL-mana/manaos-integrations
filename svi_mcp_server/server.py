@@ -22,7 +22,7 @@ sys.path.insert(0, str(sys_path))
 
 from svi_wan22_video_integration import SVIWan22VideoIntegration
 
-logger = get_logger(__name__)
+logger = get_service_logger("server")
 
 # 環境変数から設定を読み込み
 COMFYUI_URL = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")

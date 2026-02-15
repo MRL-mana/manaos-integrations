@@ -13,7 +13,7 @@ try:
 except ImportError:
     import logging
     def get_logger(n): return logging.getLogger(n)
-logger = get_logger(__name__)
+logger = get_service_logger("memory-integration-bridge")
 
 # UnifiedMemory
 MEMORY_UNIFIED = None

@@ -12,7 +12,7 @@ from enum import Enum
 from pathlib import Path
 import json
 
-logger = get_logger(__name__)
+logger = get_service_logger("llm-error-handling")
 
 
 class ErrorType(Enum):

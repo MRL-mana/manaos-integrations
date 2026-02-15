@@ -27,7 +27,7 @@ from .budget_guard import BudgetGuard, StopReason
 from .fail_safe import FailSafeGuard, FailSafeMode
 from .cache_system import CacheSystem
 
-logger = get_logger(__name__)
+logger = get_service_logger("orchestrator")
 error_handler = ManaOSErrorHandler("StepDeepResearchOrchestrator")
 
 

@@ -18,7 +18,7 @@ from _paths import OLLAMA_PORT
 
 DEFAULT_OLLAMA_URL = f"http://127.0.0.1:{OLLAMA_PORT}"
 
-logger = get_logger(__name__)
+logger = get_service_logger("file-secretary-organizer")
 
 # 記憶機能統合（オプション）
 try:

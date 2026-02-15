@@ -7,8 +7,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
-from manaos_logger import get_logger
-logger = get_logger(__name__)
+from unified_logging import get_service_logger
+logger = get_service_logger("hf-api-endpoint")
 # ManaOS統合APIをインポート
 from manaos_core_api import get_manaos_api
 

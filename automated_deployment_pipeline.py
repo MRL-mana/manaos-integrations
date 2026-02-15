@@ -16,7 +16,7 @@ from datetime import datetime
 from dataclasses import dataclass, asdict
 import requests
 
-logger = get_logger(__name__)
+logger = get_service_logger("automated-deployment-pipeline")
 
 
 @dataclass

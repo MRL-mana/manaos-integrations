@@ -14,7 +14,7 @@ from manaos_logger import get_logger
 
 from _paths import UNIFIED_API_PORT
 
-logger = get_logger(__name__)
+logger = get_service_logger("distributed-execution")
 
 
 class NodeStatus(Enum):

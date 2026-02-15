@@ -40,7 +40,7 @@ from manaos_error_handler import (
 from manaos_timeout_config import get_timeout_config
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("payment-integration")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("PaymentIntegration")

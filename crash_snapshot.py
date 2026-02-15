@@ -23,7 +23,7 @@ from manaos_timeout_config import get_timeout_config
 from _paths import TASK_QUEUE_PORT
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("crash-snapshot")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("CrashSnapshot")

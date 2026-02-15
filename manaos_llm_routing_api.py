@@ -10,7 +10,7 @@ from manaos_logger import get_logger
 from typing import Dict, Any, Optional
 from llm_router_enhanced import EnhancedLLMRouter
 
-logger = get_logger(__name__)
+logger = get_service_logger("manaos-llm-routing-api")
 app = Flask(__name__)
 CORS(app)
 

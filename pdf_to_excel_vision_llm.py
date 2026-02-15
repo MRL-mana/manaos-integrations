@@ -40,7 +40,7 @@ except ImportError:
     print("警告: ocr_multi_providerが見つかりません")
 
 # ログ設定
-logger = get_logger(__name__)
+logger = get_service_logger("pdf-to-excel-vision-llm")
 
 try:
     from manaos_integrations._paths import OLLAMA_PORT

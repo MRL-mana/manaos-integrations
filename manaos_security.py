@@ -24,7 +24,7 @@ from manaos_jwt import (
     get_or_create_jwt_secret,
 )
 
-logger = get_logger(__name__)
+logger = get_service_logger("manaos-security")
 
 # APIキー管理
 class APIKeyManager:

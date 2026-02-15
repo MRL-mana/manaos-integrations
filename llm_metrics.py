@@ -11,7 +11,7 @@ from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
 
-logger = get_logger(__name__)
+logger = get_service_logger("llm-metrics")
 
 
 class LLMMetrics:

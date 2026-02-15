@@ -9,9 +9,8 @@ from dataclasses import dataclass
 from typing import Dict, Any, List, Optional
 from enum import Enum
 
-from manaos_logger import get_logger
-
-logger = get_logger(__name__)
+from unified_logging import get_service_logger
+logger = get_service_logger("regression-tests")
 
 
 class TestCategory(str, Enum):

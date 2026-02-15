@@ -25,7 +25,7 @@ except Exception:  # pragma: no cover
         ORCHESTRATOR_PORT = int(os.getenv("ORCHESTRATOR_PORT", "5106"))
         PIXEL7_BRIDGE_PORT = int(os.getenv("PIXEL7_BRIDGE_PORT", "5122"))
 
-logger = get_logger(__name__)
+logger = get_service_logger("device-orchestrator")
 
 
 class DeviceStatus(Enum):

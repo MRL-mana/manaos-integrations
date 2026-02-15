@@ -28,7 +28,7 @@ try:
 except ImportError:
     pass
 
-logger = get_logger(__name__)
+logger = get_service_logger("manaos-core-api")
 
 
 class ManaOSCoreAPI:

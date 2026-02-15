@@ -17,7 +17,7 @@ from manaos_logger import get_logger
 
 from _paths import ORCHESTRATOR_PORT
 # ログ設定
-logger = get_logger(__name__)
+logger = get_service_logger("device-health-monitor")
 
 
 @dataclass

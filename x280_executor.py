@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 
-logger = get_logger(__name__)
+logger = get_service_logger("x280-executor")
 error_handler = ManaOSErrorHandler("Pixel7Executor")
 
 # ピクセル7 Node ManagerのURL

@@ -20,7 +20,7 @@ from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverit
 from unified_cache_system import get_unified_cache
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("learning-system-enhanced")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("LearningSystemEnhanced")

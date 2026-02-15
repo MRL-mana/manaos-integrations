@@ -15,7 +15,7 @@ from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from .schemas import Plan, ResearchResults, CritiqueResult
 
-logger = get_logger(__name__)
+logger = get_service_logger("reverse-data-generator")
 error_handler = ManaOSErrorHandler("ReverseDataGenerator")
 
 

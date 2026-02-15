@@ -13,7 +13,7 @@ from manaos_logger import get_logger
 
 from _paths import OLLAMA_PORT
 
-logger = get_logger(__name__)
+logger = get_service_logger("excel-llm-integration")
 
 # excel_llm_processor.pyからExcelLLMProcessorをインポート
 try:

@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional
 from datetime import datetime
 
 # 標準ライブラリのみ使用（依存関係を最小化）
-logger = get_logger(__name__)
+logger = get_service_logger("autonomous-operations")
 
 
 class AutonomousOperations:

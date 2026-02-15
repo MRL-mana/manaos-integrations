@@ -14,7 +14,7 @@ from enum import Enum
 import json
 from pathlib import Path
 
-logger = get_logger(__name__)
+logger = get_service_logger("alert-system")
 
 
 class AlertSeverity(Enum):

@@ -8,7 +8,7 @@ import time
 from typing import Callable, Any, Optional, Dict, List
 from functools import wraps
 
-logger = get_logger(__name__)
+logger = get_service_logger("llm-retry")
 
 
 class RetryConfig:

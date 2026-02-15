@@ -7,7 +7,7 @@ import re
 from manaos_logger import get_logger
 from typing import Dict, Any, List, Optional
 
-logger = get_logger(__name__)
+logger = get_service_logger("llm-difficulty-analyzer")
 class DifficultyAnalyzer:
     """プロンプトの難易度を分析"""
     

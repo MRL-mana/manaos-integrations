@@ -12,7 +12,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 from dataclasses import dataclass, asdict
 
-logger = get_logger(__name__)
+logger = get_service_logger("manaos-error-handler")
 
 
 class ErrorSeverity(Enum):

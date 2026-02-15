@@ -19,7 +19,7 @@ try:
 except Exception:
     OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
 
-logger = get_logger(__name__)
+logger = get_service_logger("gpu-parallel-executor")
 
 
 @dataclass

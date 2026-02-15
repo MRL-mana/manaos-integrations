@@ -21,7 +21,7 @@ from manaos_config_validator import ConfigValidator
 from _paths import OLLAMA_PORT
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("task-critic")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("TaskCritic")

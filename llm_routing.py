@@ -28,7 +28,7 @@ try:
     USE_SESSION_POOL = True
 except ImportError:
     USE_SESSION_POOL = False
-logger = get_logger(__name__)
+logger = get_service_logger("llm-routing")
 
 if not USE_SESSION_POOL:
     logger.warning("http_session_poolまたはmanaos_timeout_configが見つかりません。デフォルト設定を使用します。")

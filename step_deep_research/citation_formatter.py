@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from manaos_logger import get_logger
 from .schemas import Citation
 
-logger = get_logger(__name__)
+logger = get_service_logger("citation-formatter")
 
 
 @dataclass

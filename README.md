@@ -147,6 +147,10 @@ python -m pytest tests/ --cov=. --cov-report=term-missing
 - **[MCPサーバーガイド](docs/guides/MCP_SERVERS_GUIDE.md)** - MCP設定と使い方
 - **[セキュリティ](docs/guides/SECURITY_HARDENING.md)** - API認証・ハードニング
 
+### テスト・品質保証
+- **[テストガイド](TESTING_GUIDE.md)** - ユニット/統合/E2Eテストの実行方法
+- **[テスト実行スクリプト](run_tests.ps1)** - 簡単なテスト実行用PowerShellスクリプト
+
 ---
 
 ## 重要（セキュリティ）

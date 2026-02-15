@@ -12,7 +12,7 @@ from functools import wraps
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 
-logger = get_logger(__name__)
+logger = get_service_logger("file-secretary-error-handler")
 error_handler = ManaOSErrorHandler("FileSecretary")
 
 

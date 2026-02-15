@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional
 from llm_router_enhanced import EnhancedLLMRouter
 from llm_routing_logger import logger as routing_logger
 
-logger = get_logger(__name__)
+logger = get_service_logger("manaos-llm-routing-api-enhanced")
 app = Flask(__name__)
 CORS(app)
 

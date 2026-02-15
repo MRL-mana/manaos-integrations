@@ -17,7 +17,7 @@ from .writer import Writer
 from .budget_guard import BudgetGuard, StopReason
 from .fail_safe import FailSafeGuard
 
-logger = get_logger(__name__)
+logger = get_service_logger("research-loop")
 error_handler = ManaOSErrorHandler("StepDeepResearchLoop")
 
 

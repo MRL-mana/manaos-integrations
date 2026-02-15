@@ -30,7 +30,7 @@ from manaos_jwt import (
 )
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("auth-system")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("AuthSystem")

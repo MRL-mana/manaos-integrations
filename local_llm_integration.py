@@ -19,7 +19,7 @@ except Exception:  # pragma: no cover
     except Exception:  # pragma: no cover
         N8N_PORT = int(os.getenv("N8N_PORT", "5678"))
 
-logger = get_logger(__name__)
+logger = get_service_logger("local-llm-integration")
 # 既存の統合APIサーバーを拡張（オプション）
 try:
     from unified_api_server import app as base_app

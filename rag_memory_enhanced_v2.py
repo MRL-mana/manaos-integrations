@@ -33,7 +33,7 @@ from database_connection_pool import get_pool
 from unified_cache_system import get_unified_cache
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("rag-memory-enhanced-v2")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("RAGMemoryV2")

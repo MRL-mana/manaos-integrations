@@ -10,9 +10,8 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 from step_deep_research.orchestrator import StepDeepResearchOrchestrator
-from manaos_logger import get_logger
-
-logger = get_logger(__name__)
+from unified_logging import get_service_logger
+logger = get_service_logger("api-server")
 
 app = Flask(__name__)
 CORS(app)

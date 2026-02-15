@@ -13,7 +13,7 @@ from manaos_logger import get_logger
 from datetime import datetime
 from _paths import COMFYUI_PORT
 
-logger = get_logger(__name__)
+logger = get_service_logger("svi-wan22-video-integration")
 
 
 class SVIWan22VideoIntegration:

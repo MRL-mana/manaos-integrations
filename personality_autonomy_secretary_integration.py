@@ -31,7 +31,7 @@ from learning_memory_integration import LearningMemoryIntegration
 from unified_cache_system import get_unified_cache
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("personality-autonomy-secretary-integration")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("PersonalityAutonomySecretaryIntegration")

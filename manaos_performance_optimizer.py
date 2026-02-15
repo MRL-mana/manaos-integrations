@@ -26,7 +26,7 @@ from http_session_pool import get_http_session_pool
 from config_cache import get_config_cache
 
 # ロガーの初期化
-logger = get_logger(__name__)
+logger = get_service_logger("manaos-performance-optimizer")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("PerformanceOptimizer")

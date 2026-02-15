@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 import sqlite3
 
-logger = get_logger(__name__)
+logger = get_service_logger("llm-conversation-history")
 
 
 class ConversationHistory:

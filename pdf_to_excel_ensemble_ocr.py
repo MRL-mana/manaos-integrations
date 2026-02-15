@@ -44,7 +44,7 @@ except ImportError:
     LLM_AVAILABLE = False
     print("警告: local_llm_helperが見つかりません")
 
-logger = get_logger(__name__)
+logger = get_service_logger("pdf-to-excel-ensemble-ocr")
 
 
 class EnsembleOCR:

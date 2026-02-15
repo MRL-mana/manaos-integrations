@@ -10,7 +10,7 @@ from typing import Dict, Any, Optional, List
 from llm_difficulty_analyzer import DifficultyAnalyzer
 from _paths import LM_STUDIO_PORT, OLLAMA_PORT
 
-logger = get_logger(__name__)
+logger = get_service_logger("llm-router-enhanced")
 class EnhancedLLMRouter:
     """難易度ルーティング対応のLLMルーター"""
     

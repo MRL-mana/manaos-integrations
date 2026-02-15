@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from _paths import COMFYUI_PORT, UNIFIED_API_PORT
 
-logger = get_logger(__name__)
+logger = get_service_logger("main")
 
 app = FastAPI(
     title="manaOS Tool Server",
