@@ -18,6 +18,7 @@ from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from manaos_timeout_config import get_timeout_config
 from manaos_config_validator import ConfigValidator
+from _paths import OLLAMA_PORT, RAG_MEMORY_PORT
 
 # ロガーの初期化
 logger = get_logger(__name__)
@@ -30,6 +31,9 @@ timeout_config = get_timeout_config()
 
 # 設定ファイル検証の初期化
 config_validator = ConfigValidator("ContentGeneration")
+
+DEFAULT_OLLAMA_URL = f"http://127.0.0.1:{OLLAMA_PORT}"
+DEFAULT_RAG_MEMORY_URL = f"http://127.0.0.1:{RAG_MEMORY_PORT}"
 
 
 @dataclass
@@ -52,9 +56,9 @@ class ContentGenerationLoop:
     
     def __init__(
         self,
-        ollama_url: str = "http://127.0.0.1:11434",
+        ollama_url: Optional[str] = None,
         model: str = "qwen2.5:14b",
-        rag_memory_url: str = "http://127.0.0.1:5103",
+        rag_memory_url: Optional[str] = None,
         db_path: Optional[Path] = None,
         config_path: Optional[Path] = None
     ):
@@ -68,9 +72,9 @@ class ContentGenerationLoop:
             db_path: データベースパス
             config_path: 設定ファイルのパス
         """
-        self.ollama_url = ollama_url
+        self.ollama_url = ollama_url or DEFAULT_OLLAMA_URL
         self.model = model
-        self.rag_memory_url = rag_memory_url
+        self.rag_memory_url = rag_memory_url or DEFAULT_RAG_MEMORY_URL
         self.config_path = config_path or Path(__file__).parent / "content_generation_config.json"
         self.config = self._load_config()
         
@@ -91,7 +95,7 @@ class ContentGenerationLoop:
                 schema = {
                     "required": [],
                     "fields": {
-                        "ollama_url": {"type": str, "default": "http://127.0.0.1:11434"},
+                        "ollama_url": {"type": str, "default": DEFAULT_OLLAMA_URL},
                         "model": {"type": str, "default": "qwen2.5:14b"},
                         "auto_generate": {"type": bool, "default": True}
                     }
@@ -119,7 +123,7 @@ class ContentGenerationLoop:
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
         return {
-            "ollama_url": "http://127.0.0.1:11434",
+            "ollama_url": DEFAULT_OLLAMA_URL,
             "model": "qwen2.5:14b",
             "auto_generate": True,
             "generation_rules": {

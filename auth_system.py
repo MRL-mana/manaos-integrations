@@ -9,6 +9,7 @@ import json
 import hashlib
 import secrets
 import sqlite3
+import warnings
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional, List
 from pathlib import Path
@@ -21,6 +22,12 @@ import jwt
 from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from manaos_timeout_config import get_timeout_config
+from manaos_jwt import (
+    JWT_ALGORITHM,
+    accept_legacy_short_key,
+    derive_hs256_signing_key,
+    get_or_create_jwt_secret,
+)
 
 # ロガーの初期化
 logger = get_logger(__name__)
@@ -31,22 +38,8 @@ error_handler = ManaOSErrorHandler("AuthSystem")
 # タイムアウト設定の取得
 timeout_config = get_timeout_config()
 
-# JWT秘密鍵（.env の JWT_SECRET_KEY を参照。未設定時はファイルに永続化）
-def _get_or_create_jwt_secret() -> str:
-    """JWT秘密鍵を取得。未設定時はファイルに永続化して毎回同じ値を返す"""
-    key = os.getenv("JWT_SECRET_KEY", "").strip()
-    if key:
-        return key
-    secret_file = Path(__file__).parent / ".jwt_secret"
-    if secret_file.exists():
-        return secret_file.read_text().strip()
-    key = secrets.token_urlsafe(32)
-    secret_file.write_text(key)
-    secret_file.chmod(0o600)
-    return key
-
-JWT_SECRET_KEY = _get_or_create_jwt_secret()
-JWT_ALGORITHM = "HS256"
+JWT_SECRET_KEY = get_or_create_jwt_secret()
+JWT_SIGNING_KEY = derive_hs256_signing_key(JWT_SECRET_KEY)
 
 
 class Role(str, Enum):
@@ -354,7 +347,7 @@ class AuthSystem:
             "iat": now
         }
         
-        token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+        token = jwt.encode(payload, JWT_SIGNING_KEY, algorithm=JWT_ALGORITHM)
         
         logger.info(f"✅ トークン作成完了: {user_id}")
         return token
@@ -370,7 +363,16 @@ class AuthSystem:
             ペイロード（検証成功時）
         """
         try:
-            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+            try:
+                payload = jwt.decode(token, JWT_SIGNING_KEY, algorithms=[JWT_ALGORITHM])
+                return payload
+            except Exception:
+                # 互換性: 短いJWT_SECRET_KEYをそのまま使っていた旧トークンを受け入れる場合
+                if accept_legacy_short_key() and len(JWT_SECRET_KEY.encode("utf-8")) < 32:
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings('ignore', category=Warning)
+                        return jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+                raise
             return payload
         except jwt.ExpiredSignatureError:
             logger.warning("トークンの有効期限が切れています")

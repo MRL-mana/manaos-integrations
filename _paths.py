@@ -33,7 +33,13 @@ LOGS_DIR.mkdir(exist_ok=True)
 # ---------- サービスポート定数 ----------
 # 環境変数で上書き可能。ハードコードの代わりにここを参照すること。
 MRL_MEMORY_PORT: int = int(os.getenv("MRL_MEMORY_PORT", "5105"))
+RAG_MEMORY_PORT: int = int(os.getenv("RAG_MEMORY_PORT", "5103"))
+INTENT_ROUTER_PORT: int = int(os.getenv("INTENT_ROUTER_PORT", "5100"))
+TASK_PLANNER_PORT: int = int(os.getenv("TASK_PLANNER_PORT", "5101"))
+TASK_CRITIC_PORT: int = int(os.getenv("TASK_CRITIC_PORT", "5102"))
+TASK_QUEUE_PORT: int = int(os.getenv("TASK_QUEUE_PORT", "5104"))
 LEARNING_SYSTEM_PORT: int = int(os.getenv("LEARNING_SYSTEM_PORT", "5126"))
+METRICS_COLLECTOR_PORT: int = int(os.getenv("METRICS_COLLECTOR_PORT", "5127"))
 LLM_ROUTING_PORT: int = int(os.getenv("LLM_ROUTING_PORT", "5111"))
 VIDEO_PIPELINE_PORT: int = int(os.getenv("VIDEO_PIPELINE_PORT", "5112"))
 WINDOWS_AUTOMATION_PORT: int = int(os.getenv("WINDOWS_AUTOMATION_PORT", "5115"))

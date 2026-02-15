@@ -18,6 +18,7 @@ from manaos_logger import get_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from manaos_timeout_config import get_timeout_config
 from manaos_config_validator import ConfigValidator
+from _paths import INTENT_ROUTER_PORT, OLLAMA_PORT
 
 # ロガーの初期化
 logger = get_logger(__name__)
@@ -30,6 +31,9 @@ timeout_config = get_timeout_config()
 
 # 設定ファイル検証の初期化
 config_validator = ConfigValidator("TaskPlanner")
+
+DEFAULT_OLLAMA_URL = f"http://127.0.0.1:{OLLAMA_PORT}"
+DEFAULT_INTENT_ROUTER_URL = f"http://127.0.0.1:{INTENT_ROUTER_PORT}"
 
 
 class TaskStatus(str, Enum):
@@ -86,9 +90,9 @@ class TaskPlanner:
     
     def __init__(
         self,
-        ollama_url: str = "http://127.0.0.1:11434",
+        ollama_url: Optional[str] = None,
         model: str = "qwen2.5:14b",  # 中型モデル（推論が必要）
-        intent_router_url: str = "http://127.0.0.1:5100",
+        intent_router_url: Optional[str] = None,
         config_path: Optional[Path] = None
     ):
         """
@@ -100,9 +104,9 @@ class TaskPlanner:
             intent_router_url: Intent Router API URL
             config_path: 設定ファイルのパス
         """
-        self.ollama_url = ollama_url
+        self.ollama_url = ollama_url or DEFAULT_OLLAMA_URL
         self.model = model
-        self.intent_router_url = intent_router_url
+        self.intent_router_url = intent_router_url or DEFAULT_INTENT_ROUTER_URL
         self.config_path = config_path or Path(__file__).parent / "task_planner_config.json"
         self.config = self._load_config()
         
@@ -128,9 +132,9 @@ class TaskPlanner:
                 schema = {
                     "required": ["model"],
                     "fields": {
-                        "ollama_url": {"type": str, "default": "http://127.0.0.1:11434"},
+                        "ollama_url": {"type": str, "default": DEFAULT_OLLAMA_URL},
                         "model": {"type": str},
-                        "intent_router_url": {"type": str, "default": "http://127.0.0.1:5100"},
+                        "intent_router_url": {"type": str, "default": DEFAULT_INTENT_ROUTER_URL},
                         "max_steps": {"type": int, "default": 10},
                         "default_priority": {"type": str, "default": "medium"}
                     }
@@ -158,9 +162,9 @@ class TaskPlanner:
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
         return {
-            "ollama_url": "http://127.0.0.1:11434",
+            "ollama_url": DEFAULT_OLLAMA_URL,
             "model": "qwen2.5:14b",
-            "intent_router_url": "http://127.0.0.1:5100",
+            "intent_router_url": DEFAULT_INTENT_ROUTER_URL,
             "action_templates": self._get_default_action_templates(),
             "planning_prompt_template": self._get_default_planning_prompt_template(),
             "max_steps": 10,

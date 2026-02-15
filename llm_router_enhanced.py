@@ -8,12 +8,13 @@ from manaos_logger import get_logger
 import requests
 from typing import Dict, Any, Optional, List
 from llm_difficulty_analyzer import DifficultyAnalyzer
+from _paths import LM_STUDIO_PORT, OLLAMA_PORT
 
 logger = get_logger(__name__)
 class EnhancedLLMRouter:
     """難易度ルーティング対応のLLMルーター"""
     
-    def __init__(self, lm_studio_url: str = "http://127.0.0.1:1234/v1", ollama_url: str = "http://127.0.0.1:11434"):
+    def __init__(self, lm_studio_url: Optional[str] = None, ollama_url: Optional[str] = None):
         """
         初期化
         
@@ -22,8 +23,8 @@ class EnhancedLLMRouter:
             ollama_url: OllamaのAPI URL
         """
         self.analyzer = DifficultyAnalyzer()
-        self.lm_studio_url = lm_studio_url
-        self.ollama_url = ollama_url
+        self.lm_studio_url = lm_studio_url or f"http://127.0.0.1:{LM_STUDIO_PORT}/v1"
+        self.ollama_url = ollama_url or f"http://127.0.0.1:{OLLAMA_PORT}"
         
         # モデル設定（LM Studio用）
         self.models = {
