@@ -11,11 +11,14 @@ import hashlib
 import subprocess
 import os
 
+from _paths import COMFYUI_PORT, GALLERY_PORT
+
 if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-COMFYUI_URL = "http://127.0.0.1:8188"
-GALLERY_API = "http://127.0.0.1:5559/api/generate"
+COMFYUI_URL = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
+GALLERY_API = os.getenv("GALLERY_GENERATE_API", f"http://127.0.0.1:{GALLERY_PORT}/api/generate")
+GALLERY_IMAGES_API = os.getenv("GALLERY_IMAGES_API", f"http://127.0.0.1:{GALLERY_PORT}/api/images")
 
 print("=" * 60)
 print("Gallery API強制再起動と画像生成")
@@ -39,7 +42,7 @@ print()
 # 2. Gallery API確認と再起動案内
 print("2. Gallery API確認:")
 try:
-    response = requests.get("http://127.0.0.1:5559/api/images", timeout=2)
+    response = requests.get(GALLERY_IMAGES_API, timeout=2)
     if response.status_code == 200:
         print("   [OK] Gallery API起動中")
         print("   注意: モデル検索エラーが発生している可能性があります")

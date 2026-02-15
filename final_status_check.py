@@ -6,12 +6,15 @@ import requests
 import sys
 import io
 from datetime import datetime
+import os
+
+from _paths import COMFYUI_PORT, GALLERY_PORT
 
 if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-COMFYUI_URL = "http://127.0.0.1:8188"
-GALLERY_API = "http://127.0.0.1:5559/api"
+COMFYUI_URL = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
+GALLERY_API = os.getenv("GALLERY_API", f"http://127.0.0.1:{GALLERY_PORT}/api").rstrip("/")
 
 print("=" * 60)
 print("最終状態確認")

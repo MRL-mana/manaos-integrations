@@ -18,6 +18,7 @@ except ImportError:
 
 # ベースクラスのインポート
 from base_integration import BaseIntegration
+from _paths import OLLAMA_PORT
 
 
 class Mem0Integration(BaseIntegration):
@@ -66,7 +67,7 @@ class Mem0Integration(BaseIntegration):
         try:
             # デフォルト設定
             # OpenAI APIは保留のため、Ollamaを使用（無料、ローカル）
-            ollama_url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+            ollama_url = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
             ollama_model = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
             
             default_config = {

@@ -5,12 +5,15 @@
 import requests
 import sys
 import io
+import os
 from pathlib import Path
+
+from _paths import COMFYUI_PORT
 
 if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-COMFYUI_URL = "http://127.0.0.1:8188"
+COMFYUI_URL = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
 COMFYUI_OUTPUT_DIR = Path("C:/ComfyUI/output")
 
 print("=" * 60)
