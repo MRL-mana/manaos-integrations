@@ -44,8 +44,15 @@ class AutoX280CLITransfer:
             try:
                 # SSH接続テスト
                 result = subprocess.run(
-                    f"ssh -o ConnectTimeout=1 -o BatchMode=yes {self.x280_user}@{ip} 'echo SSH接続成功'",
-                    shell=True,
+                    [
+                        "ssh",
+                        "-o",
+                        "ConnectTimeout=1",
+                        "-o",
+                        "BatchMode=yes",
+                        f"{self.x280_user}@{ip}",
+                        "echo SSH接続成功",
+                    ],
                     capture_output=True,
                     text=True,
                     timeout=2
@@ -69,8 +76,11 @@ class AutoX280CLITransfer:
         x280_dir = f"{self.x280_desktop}/PDF変換結果_X280最終版_{timestamp}"
         
         print(f"📁 X280にディレクトリ作成: {x280_dir}")
-        create_dir_cmd = f"ssh {self.x280_user}@{x280_ip} 'mkdir -p {x280_dir}'"
-        result = subprocess.run(create_dir_cmd, shell=True, capture_output=True, text=True)
+        result = subprocess.run(
+            ["ssh", f"{self.x280_user}@{x280_ip}", f"mkdir -p {x280_dir}"],
+            capture_output=True,
+            text=True,
+        )
         
         if result.returncode != 0:
             print(f"❌ ディレクトリ作成失敗: {result.stderr}")
@@ -78,8 +88,11 @@ class AutoX280CLITransfer:
         
         # ファイル転送
         print("📤 ファイル転送中...")
-        transfer_cmd = f"scp -r {self.source_dir}/* {self.x280_user}@{x280_ip}:{x280_dir}/"
-        result = subprocess.run(transfer_cmd, shell=True, capture_output=True, text=True)
+        result = subprocess.run(
+            ["scp", "-r", str(self.source_dir), f"{self.x280_user}@{x280_ip}:{x280_dir}/"],
+            capture_output=True,
+            text=True,
+        )
         
         if result.returncode != 0:
             print(f"❌ ファイル転送失敗: {result.stderr}")
@@ -87,8 +100,11 @@ class AutoX280CLITransfer:
         
         # 転送結果確認
         print("🔍 転送結果確認...")
-        check_cmd = f"ssh {self.x280_user}@{x280_ip} 'ls -la {x280_dir}/'"
-        result = subprocess.run(check_cmd, shell=True, capture_output=True, text=True)
+        result = subprocess.run(
+            ["ssh", f"{self.x280_user}@{x280_ip}", f"ls -la {x280_dir}/"],
+            capture_output=True,
+            text=True,
+        )
         
         if result.returncode == 0:
             print("✅ 転送成功！")
@@ -134,13 +150,28 @@ echo "📁 ファイル場所: {x280_dir}"
 """
         
         # X280上でランチャー作成
-        launcher_cmd = f"ssh {self.x280_user}@{x280_ip} 'cat > {x280_dir}/X280用PDF変換結果を開く.sh << \"EOF\"\n{launcher_script}\nEOF'"
-        result = subprocess.run(launcher_cmd, shell=True, capture_output=True, text=True)
+        remote_cmd = (
+            f"cat > {x280_dir}/X280用PDF変換結果を開く.sh << \"EOF\"\n"
+            f"{launcher_script}\n"
+            "EOF"
+        )
+        result = subprocess.run(
+            ["ssh", f"{self.x280_user}@{x280_ip}", remote_cmd],
+            capture_output=True,
+            text=True,
+        )
         
         if result.returncode == 0:
             # 実行権限付与
-            chmod_cmd = f"ssh {self.x280_user}@{x280_ip} 'chmod +x {x280_dir}/X280用PDF変換結果を開く.sh'"
-            subprocess.run(chmod_cmd, shell=True, capture_output=True, text=True)
+            subprocess.run(
+                [
+                    "ssh",
+                    f"{self.x280_user}@{x280_ip}",
+                    f"chmod +x {x280_dir}/X280用PDF変換結果を開く.sh",
+                ],
+                capture_output=True,
+                text=True,
+            )
             print(f"✅ X280用ランチャー作成完了: {x280_dir}/X280用PDF変換結果を開く.sh")
             return True
         else:
@@ -151,8 +182,15 @@ echo "📁 ファイル場所: {x280_dir}"
         """X280上でランチャー実行"""
         print("\n🚀 X280上でランチャー実行中...")
         
-        launcher_cmd = f"ssh {self.x280_user}@{x280_ip} 'cd {x280_dir} && ./X280用PDF変換結果を開く.sh'"
-        result = subprocess.run(launcher_cmd, shell=True, capture_output=True, text=True)
+        result = subprocess.run(
+            [
+                "ssh",
+                f"{self.x280_user}@{x280_ip}",
+                f"cd {x280_dir} && ./X280用PDF変換結果を開く.sh",
+            ],
+            capture_output=True,
+            text=True,
+        )
         
         if result.returncode == 0:
             print("✅ X280ランチャー実行完了")

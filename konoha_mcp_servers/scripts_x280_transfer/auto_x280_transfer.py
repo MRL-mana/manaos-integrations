@@ -28,11 +28,10 @@ class AutoX280Transfer:
         """ホストのPingテスト"""
         try:
             result = subprocess.run(
-                f"ping -c 1 -W 1 {host}",
-                shell=True,
+                ["ping", "-c", "1", "-W", "1", host],
                 capture_output=True,
                 text=True,
-                timeout=3
+                timeout=3,
             )
             return result.returncode == 0
         except Exception:
@@ -42,11 +41,18 @@ class AutoX280Transfer:
         """SSH接続テスト"""
         try:
             result = subprocess.run(
-                f"ssh -o ConnectTimeout=3 -o BatchMode=yes mana@{host} 'echo SSH接続成功'",
-                shell=True,
+                [
+                    "ssh",
+                    "-o",
+                    "ConnectTimeout=3",
+                    "-o",
+                    "BatchMode=yes",
+                    f"mana@{host}",
+                    "echo SSH接続成功",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
             return result.returncode == 0
         except Exception:
@@ -61,8 +67,11 @@ class AutoX280Transfer:
         x280_dir = f"~/Desktop/PDF変換結果_{timestamp}"
         
         print(f"📁 X280にディレクトリ作成: {x280_dir}")
-        create_dir_cmd = f"ssh mana@{host} 'mkdir -p {x280_dir}'"
-        result = subprocess.run(create_dir_cmd, shell=True, capture_output=True, text=True)
+        result = subprocess.run(
+            ["ssh", f"mana@{host}", f"mkdir -p {x280_dir}"],
+            capture_output=True,
+            text=True,
+        )
         
         if result.returncode != 0:
             print(f"❌ ディレクトリ作成失敗: {result.stderr}")
@@ -70,8 +79,11 @@ class AutoX280Transfer:
         
         # ファイル転送
         print("📤 ファイル転送中...")
-        transfer_cmd = f"scp -r {self.source_dir}/* mana@{host}:{x280_dir}/"
-        result = subprocess.run(transfer_cmd, shell=True, capture_output=True, text=True)
+        result = subprocess.run(
+            ["scp", "-r", str(self.source_dir), f"mana@{host}:{x280_dir}/"],
+            capture_output=True,
+            text=True,
+        )
         
         if result.returncode != 0:
             print(f"❌ ファイル転送失敗: {result.stderr}")
@@ -79,8 +91,11 @@ class AutoX280Transfer:
         
         # 転送結果確認
         print("🔍 転送結果確認...")
-        check_cmd = f"ssh mana@{host} 'ls -la {x280_dir}/'"
-        result = subprocess.run(check_cmd, shell=True, capture_output=True, text=True)
+        result = subprocess.run(
+            ["ssh", f"mana@{host}", f"ls -la {x280_dir}/"],
+            capture_output=True,
+            text=True,
+        )
         
         if result.returncode == 0:
             print("✅ 転送成功！")
