@@ -1,7 +1,7 @@
 # n8nライセンスキーをアクティベートするスクリプト
 
 $licenseKey = "b01a8246-6a35-4221-917e-b5b25028a21b"
-$n8nUrl = "http://localhost:5679"
+$n8nUrl = "http://127.0.0.1:5679"
 
 Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
 Write-Host "║                                                                    ║" -ForegroundColor Cyan
@@ -22,7 +22,7 @@ try {
 
 Write-Host ""
 Write-Host "[2] ブラウザでn8nのWeb UIを開きます..." -ForegroundColor Yellow
-Start-Process "http://localhost:5679/settings/license"
+Start-Process "http://127.0.0.1:5679/settings/license"
 
 Write-Host ""
 Write-Host "   ✅ ブラウザを開きました" -ForegroundColor Green

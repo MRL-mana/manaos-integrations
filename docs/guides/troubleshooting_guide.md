@@ -302,7 +302,7 @@ print(f"タイムアウト設定: {timeout}秒")
 ```python
 import requests
 try:
-    response = requests.get("http://localhost:5100/health", timeout=5)
+    response = requests.get("http://127.0.0.1:5100/health", timeout=5)
     print(f"接続成功: {response.status_code}")
 except Exception as e:
     print(f"接続エラー: {e}")

@@ -150,7 +150,7 @@ curl http://100.127.121.20:5120/
 
 ```bash
 # このはサーバーから
-curl http://localhost:5121/api/status
+curl http://127.0.0.1:5121/api/status
 ```
 
 ## 使用方法
@@ -160,7 +160,7 @@ curl http://localhost:5121/api/status
 #### X280でコマンドを実行
 
 ```bash
-curl -X POST http://localhost:5121/api/execute \
+curl -X POST http://127.0.0.1:5121/api/execute \
   -H "Content-Type: application/json" \
   -d '{"command": "powershell.exe -Command \"Get-Process | Select-Object -First 5\"", "timeout": 30}'
 ```
@@ -168,14 +168,14 @@ curl -X POST http://localhost:5121/api/execute \
 #### X280のリソース情報を取得
 
 ```bash
-curl http://localhost:5121/api/resources
+curl http://127.0.0.1:5121/api/resources
 ```
 
 #### ファイル転送
 
 ```bash
 # ローカルからX280へアップロード
-curl -X POST http://localhost:5121/api/transfer \
+curl -X POST http://127.0.0.1:5121/api/transfer \
   -H "Content-Type: application/json" \
   -d '{
     "local_path": "/root/test.txt",
@@ -184,7 +184,7 @@ curl -X POST http://localhost:5121/api/transfer \
   }'
 
 # X280からローカルへダウンロード
-curl -X POST http://localhost:5121/api/transfer \
+curl -X POST http://127.0.0.1:5121/api/transfer \
   -H "Content-Type: application/json" \
   -d '{
     "local_path": "/root/downloaded.txt",
@@ -201,18 +201,18 @@ import httpx
 # X280 Node Managerに接続
 async with httpx.AsyncClient() as client:
     # ステータス確認
-    response = await client.get("http://localhost:5121/api/status")
+    response = await client.get("http://127.0.0.1:5121/api/status")
     print(response.json())
     
     # コマンド実行
     response = await client.post(
-        "http://localhost:5121/api/execute",
+        "http://127.0.0.1:5121/api/execute",
         json={"command": "hostname", "timeout": 10}
     )
     print(response.json())
     
     # リソース情報取得
-    response = await client.get("http://localhost:5121/api/resources")
+    response = await client.get("http://127.0.0.1:5121/api/resources")
     print(response.json())
 ```
 
@@ -222,7 +222,7 @@ ManaOS PortalにX280管理画面を追加する場合は、`portal_integration_a
 
 ```python
 # X280 Node Managerへの接続
-X280_NODE_MANAGER_URL = "http://localhost:5121"
+X280_NODE_MANAGER_URL = "http://127.0.0.1:5121"
 
 @app.get("/api/x280/status")
 async def get_x280_status():

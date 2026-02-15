@@ -4,7 +4,7 @@ n8nの状態を確認するスクリプト
 import requests
 import sys
 
-N8N_BASE_URL = "http://localhost:5679"
+N8N_BASE_URL = "http://127.0.0.1:5679"
 
 def check_n8n_status():
     """n8nの状態を確認"""

@@ -22,11 +22,11 @@ if sys.platform == "win32":
     # PowerShellのパイプ等でstdoutが壊れないようにガード
     try:
         if hasattr(sys.stdout, "buffer"):
-            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     except Exception:
         pass
 
-COMFYUI_URL = os.getenv("COMFYUI_URL", "http://localhost:8188")
+COMFYUI_URL = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
 COMFYUI_POST_TIMEOUT = int(os.getenv("COMFYUI_POST_TIMEOUT", "90"))
 COMFYUI_MAX_RETRIES = int(os.getenv("COMFYUI_MAX_RETRIES", "2"))
 COMFYUI_BASE = Path(os.getenv("COMFYUI_BASE", "C:/ComfyUI"))
@@ -1247,7 +1247,7 @@ if not _check_comfyui_ready():
     print("")
     print("[ERROR] ComfyUI に接続できません。")
     print(f"  {COMFYUI_URL} が起動しているか確認してください。")
-    print("  ブラウザで http://localhost:8188 を開けるか確認してから、再度実行してください。")
+    print("  ブラウザで http://127.0.0.1:8188 を開けるか確認してから、再度実行してください。")
     sys.exit(1)
 print("✅ OK")
 

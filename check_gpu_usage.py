@@ -45,7 +45,7 @@ def check_ollama_gpu():
     
     try:
         # Ollamaのモデル情報を取得
-        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        response = requests.get("http://127.0.0.1:11434/api/tags", timeout=5)
         if response.status_code == 200:
             models = response.json().get("models", [])
             print(f"利用可能なモデル数: {len(models)}")
@@ -56,7 +56,7 @@ def check_ollama_gpu():
                 print(f"\nモデル '{model_name}' の詳細情報:")
                 
                 show_response = requests.post(
-                    "http://localhost:11434/api/show",
+                    "http://127.0.0.1:11434/api/show",
                     json={"name": model_name},
                     timeout=10
                 )

@@ -7,7 +7,7 @@ Write-Host "=" * 60 -ForegroundColor Cyan
 Write-Host ""
 
 Write-Host "方法1: Web UIから手動実行（推奨）" -ForegroundColor Yellow
-Write-Host "1. ブラウザで http://localhost:5679 を開く" -ForegroundColor White
+Write-Host "1. ブラウザで http://127.0.0.1:5679 を開く" -ForegroundColor White
 Write-Host "2. ワークフロー一覧で「ManaOS Image Generation Workflow」を開く" -ForegroundColor White
 Write-Host "3. 右上のトグルスイッチを一度OFFにする" -ForegroundColor White
 Write-Host "4. 2-3秒待つ" -ForegroundColor White
@@ -17,7 +17,7 @@ Write-Host ""
 
 Write-Host "方法2: API経由で実行" -ForegroundColor Yellow
 Write-Host "まず、新しいAPIキーを取得してください:" -ForegroundColor White
-Write-Host "1. http://localhost:5679 を開く" -ForegroundColor White
+Write-Host "1. http://127.0.0.1:5679 を開く" -ForegroundColor White
 Write-Host "2. 右上のユーザーアイコン → Settings → API" -ForegroundColor White
 Write-Host "3. 「Create API Key」をクリック" -ForegroundColor White
 Write-Host "4. 生成されたAPIキーをコピー" -ForegroundColor White

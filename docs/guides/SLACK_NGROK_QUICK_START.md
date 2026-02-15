@@ -10,7 +10,7 @@ ngrokを起動しました。数秒待ってから確認してください。
 
 ### 方法1: ngrokのWeb UIで確認（推奨）
 
-1. **ブラウザで開く**: http://localhost:4040
+1. **ブラウザで開く**: http://127.0.0.1:4040
 2. **「Forwarding」セクションを確認**
 3. **表示されたURLをコピー**（例: `https://xxxx-xxxx-xxxx.ngrok.io`）
 
@@ -18,7 +18,7 @@ ngrokを起動しました。数秒待ってから確認してください。
 
 ngrokを起動したPowerShellウィンドウで、以下のような行を探してください：
 ```
-Forwarding  https://xxxx-xxxx-xxxx.ngrok.io -> http://localhost:5114
+Forwarding  https://xxxx-xxxx-xxxx.ngrok.io -> http://127.0.0.1:5114
 ```
 
 このURLをコピーしてください。
@@ -82,8 +82,8 @@ $config = Get-Content "notification_hub_enhanced_config.json" | ConvertFrom-Json
 $env:SLACK_WEBHOOK_URL = $config.slack_webhook_url
 $env:SLACK_VERIFICATION_TOKEN = "your_token"
 $env:PORT = "5114"
-$env:FILE_SECRETARY_URL = "http://localhost:5120"
-$env:ORCHESTRATOR_URL = "http://localhost:5106"
+$env:FILE_SECRETARY_URL = "http://127.0.0.1:5120"
+$env:ORCHESTRATOR_URL = "http://127.0.0.1:5106"
 Start-Process python -ArgumentList "slack_integration.py" -WindowStyle Normal
 ```
 
@@ -143,7 +143,7 @@ Botから返信が来れば成功です！
 **ngrok経由でSlack Integrationを公開する準備ができました！**
 
 次のステップ:
-1. ngrok URLを確認（http://localhost:4040 またはターミナルウィンドウ）
+1. ngrok URLを確認（http://127.0.0.1:4040 またはターミナルウィンドウ）
 2. Slack AppのEvent Subscriptionsに設定
 3. Verification Tokenを設定
 4. Slack Integrationを再起動

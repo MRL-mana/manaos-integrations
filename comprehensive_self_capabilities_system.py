@@ -511,7 +511,7 @@ class ComprehensiveSelfCapabilitiesSystem:
             import time
             
             # 接続先URLを取得
-            url = context.get("url", "http://localhost:5678")
+            url = context.get("url", "http://127.0.0.1:5678")
             host = context.get("host", "localhost")
             port = context.get("port", 5678)
             

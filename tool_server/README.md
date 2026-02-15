@@ -72,7 +72,7 @@ python main.py
 
 ## 📋 OpenWebUIでの設定
 
-1. OpenWebUIにアクセス: `http://localhost:3001`
+1. OpenWebUIにアクセス: `http://127.0.0.1:3001`
 2. 設定画面（右上の⚙️）→「External Tools」タブ
 3. 「Add Tool」をクリック
 4. 以下の情報を入力：
@@ -92,20 +92,20 @@ python main.py
 
 ```powershell
 # ヘルスチェック
-curl http://localhost:9503/health
+curl http://127.0.0.1:9503/health
 
 # サービス状態確認
-curl -X POST http://localhost:9503/api/tools/service_status \
+curl -X POST http://127.0.0.1:9503/api/tools/service_status \
   -H "Content-Type: application/json" \
   -d '{"service_type": "docker"}'
 
 # エラー検知
-curl -X POST http://localhost:9503/api/tools/check_errors \
+curl -X POST http://127.0.0.1:9503/api/tools/check_errors \
   -H "Content-Type: application/json" \
   -d '{"log_type": "docker", "service_name": "open-webui", "lines": 50}'
 
 # 画像生成（ComfyUIが起動している場合）
-curl -X POST http://localhost:9503/api/tools/generate_image \
+curl -X POST http://127.0.0.1:9503/api/tools/generate_image \
   -H "Content-Type: application/json" \
   -d '{"prompt": "美しい風景", "width": 512, "height": 512}'
 ```

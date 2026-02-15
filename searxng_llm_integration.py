@@ -36,7 +36,7 @@ class SearXNGLLMIntegration:
     def __init__(
         self,
         searxng_url: Optional[str] = None,
-        ollama_url: str = "http://localhost:11434",
+        ollama_url: str = "http://127.0.0.1:11434",
         model_name: str = "qwen2.5:7b"
     ):
         """

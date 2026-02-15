@@ -38,8 +38,8 @@ cd llm_routing_mcp_server
       "command": "python",
       "args": ["-m", "llm_routing_mcp_server.server"],
       "env": {
-        "MANAOS_INTEGRATION_API_URL": "http://localhost:9500",
-        "LLM_ROUTING_API_URL": "http://localhost:9501"
+        "MANAOS_INTEGRATION_API_URL": "http://127.0.0.1:9510",
+        "PORT": "5111"
       },
       "cwd": "C:\\Users\\mana4\\Desktop\\manaos_integrations"
     }
@@ -147,8 +147,8 @@ Cursorのチャットで:
 
 ### 環境変数
 
-- `MANAOS_INTEGRATION_API_URL`: 統合APIサーバーのURL（デフォルト: http://localhost:9500）
-- `LLM_ROUTING_API_URL`: LLMルーティングAPIサーバーのURL（デフォルト: http://localhost:9501）
+- `MANAOS_INTEGRATION_API_URL`: Unified APIサーバーのURL（デフォルト: http://127.0.0.1:9510）
+- `PORT`: 本MCPサーバーのヘルスチェックHTTPポート（デフォルト: 5111）
 
 ---
 

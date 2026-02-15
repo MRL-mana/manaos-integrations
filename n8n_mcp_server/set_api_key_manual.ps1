@@ -3,7 +3,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [string]$ApiKey,
-    [string]$BaseUrl = "http://localhost:5679"
+    [string]$BaseUrl = "http://127.0.0.1:5679"
 )
 
 $mcpConfigPath = "$env:USERPROFILE\.cursor\mcp.json"

@@ -5,7 +5,7 @@
 Consoleタブで以下のエラーが表示される：
 
 1. **WebSocket接続エラー**: `ws://localhost:3001/ws/socket.io/` への接続が失敗
-2. **GET エラー**: `http://localhost:3001/app/version.json` が `ERR_EMPTY_RESPONSE` を返す
+2. **GET エラー**: `http://127.0.0.1:3001/app/version.json` が `ERR_EMPTY_RESPONSE` を返す
 
 ## 🔍 原因
 
@@ -29,7 +29,7 @@ docker ps -a --filter "name=open-webui" --format "{{.Names}}|{{.Status}}"
 
 **解決方法**:
 1. **1～2分待機**
-2. **OpenWebUIにアクセス**: `http://localhost:3001`
+2. **OpenWebUIにアクセス**: `http://127.0.0.1:3001`
 3. **応答があるか確認**
 
 ### Step 3: OpenWebUIのログを確認

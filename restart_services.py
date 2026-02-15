@@ -13,7 +13,7 @@ print('[WAIT] Waiting 45 seconds for startup...')
 time.sleep(45)
 
 print('[CHECK] Port status:')
-for port in [5103, 5104, 5111, 9502]:
+for port in [5105, 5126, 5111, 9510]:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex(('127.0.0.1', port))
     sock.close()

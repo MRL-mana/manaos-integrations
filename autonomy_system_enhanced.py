@@ -43,7 +43,7 @@ class AutonomySystemEnhanced:
     
     def __init__(
         self,
-        orchestrator_url: str = "http://localhost:5106",
+        orchestrator_url: str = "http://127.0.0.1:5106",
         learning_system_url: Optional[str] = None,
         config_path: Optional[Path] = None
     ):

@@ -21,12 +21,12 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $results = @()
 
 foreach ($service in $services) {
-    $portCheck = Test-NetConnection -ComputerName localhost -Port $service.Port -WarningAction SilentlyContinue -InformationLevel Quiet
+    $portCheck = Test-NetConnection -ComputerName 127.0.0.1 -Port $service.Port -WarningAction SilentlyContinue -InformationLevel Quiet
     
     $healthStatus = "Unknown"
     if ($portCheck) {
         try {
-            $response = Invoke-WebRequest -Uri "http://localhost:$($service.Port)/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
+            $response = Invoke-WebRequest -Uri "http://127.0.0.1:$($service.Port)/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
             $healthStatus = "Healthy ($($response.StatusCode))"
         } catch {
             $healthStatus = "Port Open but No Response"

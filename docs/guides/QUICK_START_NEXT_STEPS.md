@@ -15,7 +15,7 @@
    - `/api/tools/generate_image` → `/generate_image`
 
 3. **Tool Serverの起動確認**
-   - Tool Serverは正常に起動中（http://localhost:9503）
+   - Tool Serverは正常に起動中（http://127.0.0.1:9503）
    - OpenAPI仕様も正常に取得可能
 
 ### ⏳ 次のステップ
@@ -43,7 +43,7 @@ docker-compose -f docker-compose.always-ready-llm.yml up -d openwebui
 ### Step 2: OpenWebUIにアクセス
 
 1. **ブラウザでOpenWebUIを開く**
-   - http://localhost:3001 にアクセス
+   - http://127.0.0.1:3001 にアクセス
 
 2. **ログイン（必要に応じて）**
    - 初回アクセスの場合、アカウントを作成
@@ -52,7 +52,7 @@ docker-compose -f docker-compose.always-ready-llm.yml up -d openwebui
 
 1. **「外部ツール」設定画面を開く**
    - 左サイドバーの「設定」→「外部ツール」をクリック
-   - または、URLから直接: http://localhost:3001/admin/settings/external-tools
+   - または、URLから直接: http://127.0.0.1:3001/admin/settings/external-tools
 
 2. **「接続を追加」をクリック**
 
@@ -113,7 +113,7 @@ docker-compose -f docker-compose.always-ready-llm.yml up -d openwebui
 ### 優先度1: OpenWebUIの起動確認
 
 1. **OpenWebUIが起動しているか確認**
-   - http://localhost:3001 にアクセス
+   - http://127.0.0.1:3001 にアクセス
    - 起動していない場合、起動
 
 ### 優先度2: Tool Serverの登録
@@ -143,9 +143,9 @@ docker-compose -f docker-compose.always-ready-llm.yml up -d openwebui
 
 ## 📋 確認チェックリスト
 
-- [ ] OpenWebUIが起動中（http://localhost:3001）
-- [ ] Tool Serverが起動中（http://localhost:9503/health）
-- [ ] OpenAPI仕様が取得できる（http://localhost:9503/openapi.json）
+- [ ] OpenWebUIが起動中（http://127.0.0.1:3001）
+- [ ] Tool Serverが起動中（http://127.0.0.1:9503/health）
+- [ ] OpenAPI仕様が取得できる（http://127.0.0.1:9503/openapi.json）
 - [ ] OpenWebUIの「外部ツール」設定画面でTool Serverを登録
 - [ ] Tool Serverの接続状態が「Connected」
 - [ ] 「関数呼び出し」が「有効 (Enabled)」または「自動 (Auto)」に設定

@@ -1,7 +1,7 @@
 # FWPKM統合設定
 
 # Ollama設定
-ollama_url: "http://localhost:11434"
+ollama_url: "http://127.0.0.1:11434"
 
 # チャンク処理設定
 chunk_processing:

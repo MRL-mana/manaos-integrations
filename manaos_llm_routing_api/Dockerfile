@@ -19,11 +19,11 @@ ENV PYTHONUNBUFFERED=1
 ENV TZ=Asia/Tokyo
 ENV FLASK_APP=manaos_llm_routing_api.py
 ENV FLASK_ENV=production
-ENV PORT=9501
+ENV PORT=5111
 
-EXPOSE 9501
+EXPOSE 5111
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-    CMD curl -f http://localhost:9501/api/llm/health || exit 1
+    CMD curl -f http://localhost:5111/health || exit 1
 
 CMD ["python", "-u", "manaos_llm_routing_api.py"]

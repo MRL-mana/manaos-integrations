@@ -20,7 +20,7 @@
 
 ```bash
 # 確認
-curl http://localhost:5678/rest/workflows
+curl http://127.0.0.1:5678/rest/workflows
 ```
 
 ### 3. Slack Webhook URL
@@ -147,7 +147,7 @@ curl http://localhost:5678/rest/workflows
     },
     {
       "parameters": {
-        "url": "http://localhost:5000/api/manaos/judge",
+        "url": "http://127.0.0.1:5000/api/manaos/judge",
         "method": "POST",
         "authentication": "none",
         "sendBody": true,
@@ -228,13 +228,13 @@ curl http://localhost:5678/rest/workflows
 
 ```bash
 # n8n API経由
-curl -X POST http://localhost:5678/rest/workflows \
+curl -X POST http://127.0.0.1:5678/rest/workflows \
   -H "Content-Type: application/json" \
   -H "X-N8N-API-KEY: your-api-key" \
   -d @browse_ai_workflow.json
 
 # または Portal UI経由
-# http://localhost:5000 → n8nセクション → インポート
+# http://127.0.0.1:5000 → n8nセクション → インポート
 ```
 
 ### 2.3 Webhook URL取得
@@ -242,7 +242,7 @@ curl -X POST http://localhost:5678/rest/workflows \
 ワークフロー実行後、Webhook URLを取得:
 
 ```
-http://localhost:5678/webhook/browse-ai-webhook
+http://127.0.0.1:5678/webhook/browse-ai-webhook
 ```
 
 または、外部公開する場合:
@@ -260,7 +260,7 @@ https://your-domain.com/webhook/browse-ai-webhook
 1. **Browse AIダッシュボード**にアクセス
 2. **各ロボットの設定**を開く
 3. **Webhook設定**:
-   - URL: `http://localhost:5678/webhook/browse-ai-webhook`
+   - URL: `http://127.0.0.1:5678/webhook/browse-ai-webhook`
    - または: `https://your-domain.com/webhook/browse-ai-webhook`
    - Method: POST
    - Headers: なし（必要に応じて追加）

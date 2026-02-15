@@ -34,7 +34,7 @@ except ImportError:
 
 def wait_for_ready(max_wait: int = 120, poll_interval: int = 5):
     """サーバーがreadyになるまで待つ"""
-    base_url = "http://localhost:9500"
+    base_url = "http://127.0.0.1:9510"
     start_time = time.time()
     
     while time.time() - start_time < max_wait:

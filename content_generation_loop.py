@@ -52,9 +52,9 @@ class ContentGenerationLoop:
     
     def __init__(
         self,
-        ollama_url: str = "http://localhost:11434",
+        ollama_url: str = "http://127.0.0.1:11434",
         model: str = "qwen2.5:14b",
-        rag_memory_url: str = "http://localhost:5103",
+        rag_memory_url: str = "http://127.0.0.1:5103",
         db_path: Optional[Path] = None,
         config_path: Optional[Path] = None
     ):
@@ -91,7 +91,7 @@ class ContentGenerationLoop:
                 schema = {
                     "required": [],
                     "fields": {
-                        "ollama_url": {"type": str, "default": "http://localhost:11434"},
+                        "ollama_url": {"type": str, "default": "http://127.0.0.1:11434"},
                         "model": {"type": str, "default": "qwen2.5:14b"},
                         "auto_generate": {"type": bool, "default": True}
                     }
@@ -119,7 +119,7 @@ class ContentGenerationLoop:
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
         return {
-            "ollama_url": "http://localhost:11434",
+            "ollama_url": "http://127.0.0.1:11434",
             "model": "qwen2.5:14b",
             "auto_generate": True,
             "generation_rules": {

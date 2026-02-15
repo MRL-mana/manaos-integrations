@@ -22,10 +22,10 @@ $allRunning = $true
 
 foreach ($service in $services) {
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:$($service.Port)/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
+        $response = Invoke-WebRequest -Uri "http://127.0.0.1:$($service.Port)/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
         Write-Host "  ✓ $($service.Name): 動作中" -ForegroundColor Green
     } catch {
-        $portCheck = Test-NetConnection -ComputerName localhost -Port $service.Port -WarningAction SilentlyContinue -InformationLevel Quiet
+        $portCheck = Test-NetConnection -ComputerName 127.0.0.1 -Port $service.Port -WarningAction SilentlyContinue -InformationLevel Quiet
         if ($portCheck) {
             Write-Host "  ⚠ $($service.Name): ポートは開いています" -ForegroundColor Yellow
         } else {
@@ -64,7 +64,7 @@ try {
         text = "こんにちは"
     } | ConvertTo-Json
     
-    $response = Invoke-RestMethod -Uri "http://localhost:5100/api/classify" -Method Post -Body $testData -ContentType "application/json" -TimeoutSec 5
+    $response = Invoke-RestMethod -Uri "http://127.0.0.1:5100/api/classify" -Method Post -Body $testData -ContentType "application/json" -TimeoutSec 5
     
     Write-Host "  ✓ Intent Router: 動作確認成功" -ForegroundColor Green
     Write-Host "    意図タイプ: $($response.intent_type)" -ForegroundColor Gray

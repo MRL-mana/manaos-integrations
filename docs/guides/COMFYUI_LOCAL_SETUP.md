@@ -136,7 +136,7 @@ python main.py --port 8188
 ### 1. ブラウザで確認
 
 ```
-http://localhost:8188
+http://127.0.0.1:8188
 ```
 
 ComfyUIのUIが表示されればOK。
@@ -145,7 +145,7 @@ ComfyUIのUIが表示されればOK。
 
 ```powershell
 # システム統計を取得
-Invoke-RestMethod -Uri "http://localhost:8188/system_stats" -Method GET
+Invoke-RestMethod -Uri "http://127.0.0.1:8188/system_stats" -Method GET
 ```
 
 ### 3. 統合APIサーバーから確認
@@ -213,7 +213,7 @@ python main.py --port 8188 --lowvram
 
 ```powershell
 # 環境変数を設定
-$env:COMFYUI_URL = "http://localhost:8188"
+$env:COMFYUI_URL = "http://127.0.0.1:8188"
 # またはリモートの場合
 $env:COMFYUI_URL = "http://163.44.120.49:8188"
 ```
@@ -236,7 +236,7 @@ $body = @{
     steps = 20
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://localhost:9500/api/comfyui/generate" `
+Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/comfyui/generate" `
     -Method POST `
     -Body $body `
     -ContentType "application/json"
@@ -271,4 +271,5 @@ Register-ScheduledTask -TaskName "ComfyUI" -Action $action -Trigger $trigger -De
 2. **CPU使用**: GPUがない場合でもCPUで動作します（遅い）
 3. **モデル配置**: `ComfyUI/models/checkpoints/`にモデルを配置
 4. **カスタムノード**: `ComfyUI/custom_nodes/`にカスタムノードを配置
+
 

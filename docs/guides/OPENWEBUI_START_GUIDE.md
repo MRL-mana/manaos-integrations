@@ -32,7 +32,7 @@ docker-compose -f docker-compose.always-ready-llm.yml up -d openwebui
 ブラウザで以下のURLにアクセス：
 
 ```
-http://localhost:3001
+http://127.0.0.1:3001
 ```
 
 ## 🐛 トラブルシューティング

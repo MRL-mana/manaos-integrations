@@ -64,7 +64,7 @@
    - Tool Serverの使用を促す内容が入力されているか確認
 
 3. **Tool Serverの状態**
-   - Tool Serverが起動中か確認（http://localhost:9503）
+   - Tool Serverが起動中か確認（http://127.0.0.1:9503）
    - OpenAPI仕様が正しく取得できるか確認
 
 ## 🎯 使い方
@@ -108,7 +108,7 @@
 **原因**: Tool Serverが正しく登録されていない可能性があります
 
 **解決方法**:
-1. Tool Serverが起動中か確認（http://localhost:9503）
+1. Tool Serverが起動中か確認（http://127.0.0.1:9503）
 2. OpenWebUIの設定でTool Serverが正しく登録されているか確認
 3. OpenAPI仕様が正しく取得できるか確認
 

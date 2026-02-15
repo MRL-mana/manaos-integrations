@@ -12,25 +12,25 @@ from datetime import datetime
 
 # Windowsでの文字エンコーディング問題を回避
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 # ManaOS既存サービスのエンドポイント
 MANAOS_SERVICES = {
-    "command_hub": "http://localhost:9404",
-    "enhanced_api": "http://localhost:9406",
-    "monitoring": "http://localhost:9407",
-    "ocr_api": "http://localhost:9409",
-    "gallery_api": "http://localhost:5559",
-    "task_executor": "http://localhost:5176",
-    "unified_portal": "http://localhost:9408"
+    "command_hub": "http://127.0.0.1:9404",
+    "enhanced_api": "http://127.0.0.1:9406",
+    "monitoring": "http://127.0.0.1:9407",
+    "ocr_api": "http://127.0.0.1:9409",
+    "gallery_api": "http://127.0.0.1:5559",
+    "task_executor": "http://127.0.0.1:5176",
+    "unified_portal": "http://127.0.0.1:9408"
 }
 
 # 統合システムのエンドポイント
 INTEGRATION_SERVICES = {
-    "unified_api": "http://localhost:9500",
-    "realtime_dashboard": "http://localhost:9600",
-    "master_control": "http://localhost:9700"
+    "unified_api": "http://127.0.0.1:9510",
+    "realtime_dashboard": "http://127.0.0.1:9600",
+    "master_control": "http://127.0.0.1:9700"
 }
 
 

@@ -41,7 +41,7 @@ def _load_dotenv(env_path: str = ".env") -> None:
 _load_dotenv(str(_BASE_DIR / ".env"))
 _load_dotenv(".env")  # 相対パスでも読む（cwd 変更済み）
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:5105")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:5105")
 API_KEY = os.getenv("MRL_MEMORY_API_KEY") or os.getenv("API_KEY", "")
 
 

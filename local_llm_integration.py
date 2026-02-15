@@ -27,9 +27,9 @@ app = Flask(__name__)
 CORS(app)
 
 # ローカルLLMシステムURL
-FREE_ASSISTANT_URL = "http://localhost:8501"
-SARA_API_URL = "http://localhost:8000"
-N8N_URL = "http://localhost:5678"
+FREE_ASSISTANT_URL = "http://127.0.0.1:8501"
+SARA_API_URL = "http://127.0.0.1:8000"
+N8N_URL = "http://127.0.0.1:5678"
 
 # 統合システム管理
 local_llm_systems = {

@@ -7,7 +7,7 @@ import requests
 import json
 from datetime import datetime
 
-API_BASE = "http://localhost:9500"
+API_BASE = "http://127.0.0.1:9510"
 
 
 def quick_test():

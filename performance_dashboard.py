@@ -31,7 +31,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Metrics Collector URL
-METRICS_COLLECTOR_URL = os.getenv("METRICS_COLLECTOR_URL", "http://localhost:5127")
+METRICS_COLLECTOR_URL = os.getenv("METRICS_COLLECTOR_URL", "http://127.0.0.1:5127")
 
 
 # HTMLテンプレート

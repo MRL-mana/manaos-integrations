@@ -29,7 +29,7 @@ class CriticAgent:
             config: Critic設定
         """
         self.config = config
-        self.ollama_url = config.get("ollama_url", "http://localhost:11434")
+        self.ollama_url = config.get("ollama_url", "http://127.0.0.1:11434")
         self.model = config.get("model", "llama3.2:3b")
         self.min_pass_score = config.get("min_pass_score", 14)
         self.max_iterations = config.get("max_iterations", 3)

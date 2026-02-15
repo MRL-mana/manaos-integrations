@@ -15,7 +15,7 @@ python start_server_with_notification.py
 ```
 
 **確認ポイント**:
-- サーバーが起動し、`http://127.0.0.1:9500`でリッスンしている
+- サーバーが起動し、`http://127.0.0.1:9510`でリッスンしている
 - 起動通知がSlackに送信される（設定されている場合）
 - エラーメッセージが表示されない
 
@@ -76,7 +76,7 @@ python test_3_consecutive.py
 
 1. ポート9500が使用中でないか確認:
    ```bash
-   netstat -ano | findstr :9500
+   netstat -ano | findstr :9510
    ```
 
 2. 使用中のプロセスを終了:
@@ -92,7 +92,7 @@ python test_3_consecutive.py
 
 1. `/status`で進捗を確認:
    ```bash
-   curl http://localhost:9500/status
+   curl http://127.0.0.1:9510/status
    ```
 
 2. 失敗しているチェックを確認:
@@ -113,6 +113,7 @@ python test_3_consecutive.py
 ---
 
 **準備完了**: 2025-12-29
+
 
 
 

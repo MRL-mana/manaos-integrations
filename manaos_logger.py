@@ -16,8 +16,8 @@ from datetime import datetime
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 # ログディレクトリ
 LOG_DIR = Path(__file__).parent / "logs"

@@ -102,7 +102,7 @@ Pixel 7 を USB で接続した状態で、母艦で以下を実行すると **l
 - **コンパニオンモード（X風UI）**: テキスト＋音声＋TTS を統合した常設UI。
   1. **母艦で** 統合API（9500）を起動。
   2. **音声入力を使う場合** `scripts\voice\start_pixel7_realtime_voice.bat` で WebSocket 8765 を起動。
-  3. **Pixel 7 のブラウザで** `http://<母艦のIP>:9500/companion` を開く。
+  3. **Pixel 7 のブラウザで** `http://<母艦のIP>:9510/companion` を開く。
   4. テキスト入力・マイクボタン（音声）で会話し、応答を Pixel 7 で読み上げ可能。
 - **意図分類（Intent Router）**: 「Pixel 7 のバッテリー教えて」「デバイス状態」などは `device_status` 意図に分類されます。キーワード: Pixel 7、ピクセル7、バッテリー、デバイス、オンライン、スマホ、端末、リソース。
 - **OpenAPI**: `unified_api/openapi.py` に上記パスが定義されており、Open WebUI External Tools 等から呼び出せます。
@@ -288,7 +288,7 @@ sudo systemctl status pixel7-node-manager
 #### ピクセル7でコマンドを実行
 
 ```bash
-curl -X POST http://localhost:5123/api/execute \
+curl -X POST http://127.0.0.1:5123/api/execute \
   -H "Content-Type: application/json" \
   -d '{"command": "getprop ro.product.model", "timeout": 10}'
 ```
@@ -296,14 +296,14 @@ curl -X POST http://localhost:5123/api/execute \
 #### ピクセル7のリソース情報を取得
 
 ```bash
-curl http://localhost:5123/api/resources
+curl http://127.0.0.1:5123/api/resources
 ```
 
 #### ファイル転送
 
 ```bash
 # ローカルからピクセル7へアップロード
-curl -X POST http://localhost:5123/api/transfer \
+curl -X POST http://127.0.0.1:5123/api/transfer \
   -H "Content-Type: application/json" \
   -d '{
     "local_path": "/root/test.txt",
@@ -312,7 +312,7 @@ curl -X POST http://localhost:5123/api/transfer \
   }'
 
 # ピクセル7からローカルへダウンロード
-curl -X POST http://localhost:5123/api/transfer \
+curl -X POST http://127.0.0.1:5123/api/transfer \
   -H "Content-Type: application/json" \
   -d '{
     "local_path": "/root/downloaded.txt",
@@ -329,18 +329,18 @@ import httpx
 # Pixel7 Node Managerに接続
 async with httpx.AsyncClient() as client:
     # ステータス確認
-    response = await client.get("http://localhost:5123/api/status")
+    response = await client.get("http://127.0.0.1:5123/api/status")
     print(response.json())
 
     # Androidコマンド実行
     response = await client.post(
-        "http://localhost:5123/api/execute",
+        "http://127.0.0.1:5123/api/execute",
         json={"command": "getprop ro.product.model", "timeout": 10}
     )
     print(response.json())
 
     # リソース情報取得
-    response = await client.get("http://localhost:5123/api/resources")
+    response = await client.get("http://127.0.0.1:5123/api/resources")
     print(response.json())
 ```
 

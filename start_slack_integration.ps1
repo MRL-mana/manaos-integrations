@@ -17,8 +17,8 @@ if (Test-Path $configPath) {
 # 環境変数を設定
 Write-Host "`n[2] 環境変数を設定中..." -ForegroundColor Yellow
 $env:PORT = "5114"
-$env:FILE_SECRETARY_URL = "http://localhost:5120"
-$env:ORCHESTRATOR_URL = "http://localhost:5106"
+$env:FILE_SECRETARY_URL = "http://127.0.0.1:5120"
+$env:ORCHESTRATOR_URL = "http://127.0.0.1:5106"
 
 if ($webhookUrl) {
     $env:SLACK_WEBHOOK_URL = $webhookUrl
@@ -55,14 +55,14 @@ if (Test-Path $scriptPath) {
     # 起動確認
     Write-Host "`n[5] 起動確認中..." -ForegroundColor Yellow
     try {
-        $response = Invoke-RestMethod -Uri "http://localhost:5114/health" -Method Get -TimeoutSec 5 -ErrorAction Stop
+        $response = Invoke-RestMethod -Uri "http://127.0.0.1:5114/health" -Method Get -TimeoutSec 5 -ErrorAction Stop
         if ($response.status -eq "healthy") {
             Write-Host "  [OK] Slack Integrationが正常に起動しました" -ForegroundColor Green
-            Write-Host "  URL: http://localhost:5114" -ForegroundColor Cyan
+            Write-Host "  URL: http://127.0.0.1:5114" -ForegroundColor Cyan
         }
     } catch {
         Write-Host "  [WARN] 起動確認に失敗しました（起動中かもしれません）" -ForegroundColor Yellow
-        Write-Host "  数秒後に再度確認してください: curl http://localhost:5114/health" -ForegroundColor Cyan
+        Write-Host "  数秒後に再度確認してください: curl http://127.0.0.1:5114/health" -ForegroundColor Cyan
     }
 } else {
     Write-Host "  [ERROR] スクリプトが見つかりません: $scriptPath" -ForegroundColor Red
@@ -71,7 +71,7 @@ if (Test-Path $scriptPath) {
 
 Write-Host "`n=== 完了 ===" -ForegroundColor Cyan
 Write-Host "`n使用方法:" -ForegroundColor Yellow
-Write-Host "  Slack Events API: http://localhost:5114/api/slack/events" -ForegroundColor White
-Write-Host "  ヘルスチェック: http://localhost:5114/health" -ForegroundColor White
+Write-Host "  Slack Events API: http://127.0.0.1:5114/api/slack/events" -ForegroundColor White
+Write-Host "  ヘルスチェック: http://127.0.0.1:5114/health" -ForegroundColor White
 Write-Host "`n停止方法:" -ForegroundColor Yellow
 Write-Host "  Get-Process python | Where-Object {`$_.CommandLine -like '*slack_integration.py*' } | Stop-Process" -ForegroundColor White

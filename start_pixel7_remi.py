@@ -12,17 +12,17 @@ import json
 SERVICES = [
     {
         "name": "Open WebUI (Docker)",
-        "check_url": "http://localhost:3001",
+        "check_url": "http://127.0.0.1:3001",
         "start_cmd": None,  # Already in docker-compose
     },
     {
         "name": "VOICEVOX (Docker)",
-        "check_url": "http://localhost:50021/version",
+        "check_url": "http://127.0.0.1:50021/version",
         "start_cmd": None,  # Already in docker-compose
     },
     {
         "name": "Local Remi API",
-        "check_url": "http://localhost:5050/health",
+        "check_url": "http://127.0.0.1:5050/health",
         "start_cmd": [
             "powershell.exe",
             "-ExecutionPolicy",
@@ -91,14 +91,14 @@ def main():
     # 2. Wait for Docker services
     print("\n[*] Waiting for services...")
     for i in range(30):
-        owui_ok = check_service("http://localhost:3001")
-        vv_ok = check_service("http://localhost:50021/version")
+        owui_ok = check_service("http://127.0.0.1:3001")
+        vv_ok = check_service("http://127.0.0.1:50021/version")
         if owui_ok and vv_ok:
             break
         time.sleep(2)
 
     # 3. Remi API (host)
-    if not check_service("http://localhost:5050/health"):
+    if not check_service("http://127.0.0.1:5050/health"):
         start_remi_api()
         time.sleep(3)
 

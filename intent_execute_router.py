@@ -17,9 +17,9 @@ except ImportError:
 logger = get_logger(__name__)
 
 # 統合API URL（自サーバー）
-UNIFIED_API_URL = os.getenv("UNIFIED_API_URL", "http://localhost:9500").rstrip("/")
+UNIFIED_API_URL = os.getenv("UNIFIED_API_URL", "http://127.0.0.1:9510").rstrip("/")
 # Intent Router URL
-INTENT_ROUTER_URL = os.getenv("INTENT_ROUTER_URL", "http://localhost:5100").rstrip("/")
+INTENT_ROUTER_URL = os.getenv("INTENT_ROUTER_URL", "http://127.0.0.1:5100").rstrip("/")
 
 
 def classify_intent(text: str) -> Dict[str, Any]:
@@ -85,7 +85,7 @@ def execute_by_intent(
 
     # 3. フォールバック: オーケストレーターに転送
     try:
-        orch_url = os.getenv("ORCHESTRATOR_URL", "http://localhost:5106").rstrip("/")
+        orch_url = os.getenv("ORCHESTRATOR_URL", "http://127.0.0.1:5106").rstrip("/")
         r = httpx.post(
             f"{orch_url}/api/execute",
             json={"query": text, "auto_evaluate": True},

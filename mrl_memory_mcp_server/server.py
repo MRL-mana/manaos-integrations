@@ -33,7 +33,7 @@ except ImportError:
     requests = None
 
 # ── 設定 ─────────────────────────────────────────
-API_BASE = os.getenv("MRL_MEMORY_API_URL", "http://localhost:5105")
+API_BASE = os.getenv("MRL_MEMORY_API_URL", "http://127.0.0.1:5105")
 API_KEY = os.getenv("MRL_MEMORY_API_KEY", os.getenv("API_KEY", ""))
 HEALTH_PORT = int(os.getenv("MRL_MEMORY_MCP_HEALTH_PORT", "5113"))
 TIMEOUT = 15  # seconds

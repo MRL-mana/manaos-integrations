@@ -9,12 +9,12 @@ $workDir = Get-Location
 $pythonPath = "python"
 
 # 1. LLMルーティングAPIを起動
-Write-Host "[1] LLMルーティングAPIを起動中..." -ForegroundColor Yellow
+Write-Host "[1] LLM Routing MCP を起動中..." -ForegroundColor Yellow
 
 # 既存のプロセスを停止
 Get-Process -Name python -ErrorAction SilentlyContinue | Where-Object {
     $cmdLine = (Get-WmiObject Win32_Process -Filter "ProcessId = $($_.Id)").CommandLine
-    $cmdLine -like "*manaos_llm_routing_api*"
+    $cmdLine -like "*llm_routing_mcp_server*"
 } | ForEach-Object {
     Write-Host "   既存のプロセスを停止: PID $($_.Id)" -ForegroundColor Gray
     Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
@@ -23,8 +23,8 @@ Get-Process -Name python -ErrorAction SilentlyContinue | Where-Object {
 Start-Sleep -Seconds 2
 
 # 新しいプロセスを起動
-$llmApiProcess = Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$workDir'; `$env:PYTHONIOENCODING='utf-8'; python manaos_llm_routing_api.py" -WindowStyle Minimized -PassThru
-Write-Host "   [OK] LLMルーティングAPIを起動しました (PID: $($llmApiProcess.Id))" -ForegroundColor Green
+$llmApiProcess = Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$workDir'; `$env:PYTHONIOENCODING='utf-8'; `$env:MANAOS_LOG_TO_STDERR='1'; python -m llm_routing_mcp_server" -WindowStyle Minimized -PassThru
+Write-Host "   [OK] LLM Routing MCP を起動しました (PID: $($llmApiProcess.Id))" -ForegroundColor Green
 Start-Sleep -Seconds 5
 
 # 2. 統合APIサーバーを起動
@@ -43,7 +43,7 @@ Get-Process -Name python -ErrorAction SilentlyContinue | Where-Object {
 Start-Sleep -Seconds 2
 
 # 新しいプロセスを起動
-$unifiedApiProcess = Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$workDir'; `$env:PYTHONIOENCODING='utf-8'; python unified_api_server.py" -WindowStyle Minimized -PassThru
+$unifiedApiProcess = Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$workDir'; `$env:PYTHONIOENCODING='utf-8'; `$env:PORT='9510'; py -3.10 unified_api_server.py" -WindowStyle Minimized -PassThru
 Write-Host "   [OK] 統合APIサーバーを起動しました (PID: $($unifiedApiProcess.Id))" -ForegroundColor Green
 Start-Sleep -Seconds 5
 
@@ -54,24 +54,20 @@ Start-Sleep -Seconds 5
 
 $allOk = $true
 
-# LLMルーティングAPI
+# LLM Routing MCP health
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:9501/api/llm/health" -Method GET -TimeoutSec 5 -ErrorAction Stop
-    Write-Host "   [OK] LLMルーティングAPI: 起動中" -ForegroundColor Green
-    $status = $response.Content | ConvertFrom-Json
-    Write-Host "      ステータス: $($status.status)" -ForegroundColor Gray
-    Write-Host "      LLMサーバー: $($status.llm_server)" -ForegroundColor Gray
+    Invoke-RestMethod -Uri "http://127.0.0.1:5111/health" -Method GET -TimeoutSec 5 -ErrorAction Stop | Out-Null
+    Write-Host "   [OK] LLM Routing MCP: 起動中" -ForegroundColor Green
 } catch {
-    Write-Host "   [NG] LLMルーティングAPI: 起動失敗または応答なし" -ForegroundColor Red
+    Write-Host "   [NG] LLM Routing MCP: 起動失敗または応答なし" -ForegroundColor Red
     Write-Host "      エラー: $($_.Exception.Message)" -ForegroundColor Gray
     $allOk = $false
 }
 
 # 統合APIサーバー
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:9500/health" -Method GET -TimeoutSec 5 -ErrorAction Stop
+    $status = Invoke-RestMethod -Uri "http://127.0.0.1:9510/health" -Method GET -TimeoutSec 5 -ErrorAction Stop
     Write-Host "   [OK] 統合APIサーバー: 起動中" -ForegroundColor Green
-    $status = $response.Content | ConvertFrom-Json
     Write-Host "      ステータス: $($status.status)" -ForegroundColor Gray
 } catch {
     Write-Host "   [NG] 統合APIサーバー: 起動失敗または応答なし" -ForegroundColor Red
@@ -92,7 +88,7 @@ Write-Host ""
 Write-Host "実行中のプロセス:" -ForegroundColor Cyan
 Get-Process -Name python -ErrorAction SilentlyContinue | Where-Object {
     $cmdLine = (Get-WmiObject Win32_Process -Filter "ProcessId = $($_.Id)").CommandLine
-    $cmdLine -like "*manaos_llm_routing*" -or $cmdLine -like "*unified_api_server*"
+    $cmdLine -like "*llm_routing_mcp_server*" -or $cmdLine -like "*unified_api_server*"
 } | ForEach-Object {
     $cmdLine = (Get-WmiObject Win32_Process -Filter "ProcessId = $($_.Id)").CommandLine
     Write-Host "  PID $($_.Id): $($cmdLine.Substring(0, [Math]::Min(80, $cmdLine.Length)))..." -ForegroundColor Gray

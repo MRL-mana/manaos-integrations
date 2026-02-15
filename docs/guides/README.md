@@ -14,7 +14,7 @@ pip install -r requirements.txt
 
 ```bash
 # ComfyUI
-export COMFYUI_URL=http://localhost:8188
+export COMFYUI_URL=http://127.0.0.1:8188
 
 # Google Drive
 export GOOGLE_DRIVE_CREDENTIALS=credentials.json
@@ -24,7 +24,7 @@ export GOOGLE_DRIVE_TOKEN=token.json
 export CIVITAI_API_KEY=your_api_key
 
 # Ollama
-export OLLAMA_URL=http://localhost:11434
+export OLLAMA_URL=http://127.0.0.1:11434
 export OLLAMA_MODEL=qwen2.5:7b
 
 # Obsidian

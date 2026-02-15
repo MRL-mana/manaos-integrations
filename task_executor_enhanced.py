@@ -74,8 +74,8 @@ class TaskExecutorEnhanced:
     
     def __init__(
         self,
-        n8n_url: str = "http://localhost:5678",
-        task_critic_url: str = "http://localhost:5102",
+        n8n_url: str = "http://127.0.0.1:5678",
+        task_critic_url: str = "http://127.0.0.1:5102",
         config_path: Optional[Path] = None
     ):
         """
@@ -104,8 +104,8 @@ class TaskExecutorEnhanced:
                 schema = {
                     "required": [],
                     "fields": {
-                        "n8n_url": {"type": str, "default": "http://localhost:5678"},
-                        "task_critic_url": {"type": str, "default": "http://localhost:5102"},
+                        "n8n_url": {"type": str, "default": "http://127.0.0.1:5678"},
+                        "task_critic_url": {"type": str, "default": "http://127.0.0.1:5102"},
                         "timeout_seconds": {"type": int, "default": 300},
                         "retry_on_failure": {"type": bool, "default": True},
                         "max_retries": {"type": int, "default": 3}
@@ -134,8 +134,8 @@ class TaskExecutorEnhanced:
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
         return {
-            "n8n_url": "http://localhost:5678",
-            "task_critic_url": "http://localhost:5102",
+            "n8n_url": "http://127.0.0.1:5678",
+            "task_critic_url": "http://127.0.0.1:5102",
             "timeout_seconds": 300,
             "retry_on_failure": True,
             "max_retries": 3

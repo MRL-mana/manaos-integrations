@@ -76,7 +76,7 @@ class Mem0Integration(BaseIntegration):
                     "provider": "ollama",
                     "config": {
                         "model": "qwen2.5:7b",
-                        "base_url": "http://localhost:11434"
+                        "base_url": "http://127.0.0.1:11434"
                     }
                 }
             }

@@ -157,7 +157,7 @@ def call_llm_api(prompt: str) -> Optional[str]:
     # 方法2: unified_api_server経由
     try:
         print("🤖 unified_api_server経由でLLMを呼び出し中...")
-        api_url = os.getenv("UNIFIED_API_SERVER_URL", "http://localhost:9500")
+        api_url = os.getenv("UNIFIED_API_SERVER_URL", "http://127.0.0.1:9510")
         response = requests.post(
             f"{api_url}/api/lfm25/chat",
             json={

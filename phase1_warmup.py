@@ -19,7 +19,7 @@ if env_path.exists():
                 key, value = line.split('=', 1)
                 os.environ[key.strip()] = value.strip()
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:5105")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:5105")
 API_KEY = os.getenv("API_KEY", "")
 
 def warmup_api(count: int = 20):

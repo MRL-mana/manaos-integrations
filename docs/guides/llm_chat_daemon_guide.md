@@ -174,7 +174,7 @@ Remove-Item "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\LLMChatD
 .\llm_chat_daemon.ps1 -Status
 
 # ブラウザでAI Model Hubを開く
-Start-Process "http://localhost:5080"
+Start-Process "http://127.0.0.1:5080"
 ```
 
 ### 2. 自動起動を設定

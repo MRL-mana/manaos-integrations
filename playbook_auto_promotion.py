@@ -17,8 +17,8 @@ import json
 VAULT_PATH = Path(os.getenv("OBSIDIAN_VAULT_PATH", r"C:\Users\mana4\Documents\Obsidian Vault"))
 PLAYBOOK_DIR = VAULT_PATH / "ManaOS" / "System" / "Playbook_Review"
 DAILY_DIR = VAULT_PATH / "ManaOS" / "System" / "Daily"
-TODO_METRICS_URL = "http://localhost:5134/api/metrics"
-SCORE_URL = "http://localhost:5130/api/score"
+TODO_METRICS_URL = "http://127.0.0.1:5134/api/metrics"
+SCORE_URL = "http://127.0.0.1:5130/api/score"
 
 # Tier定義
 TIER_CRITERIA = {
@@ -307,8 +307,8 @@ if __name__ == "__main__":
     import io
 
     if sys.platform == "win32":
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
 
     print("=" * 60)
     print("System 3 Playbook Auto Promotion")

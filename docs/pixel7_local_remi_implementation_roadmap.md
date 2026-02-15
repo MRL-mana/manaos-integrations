@@ -281,12 +281,12 @@ import base64
 def generate_voice(text: str, speaker_id: int = 1):
     # VOICEVOX API呼び出し
     query = requests.post(
-        'http://localhost:50021/audio_query',
+        'http://127.0.0.1:50021/audio_query',
         params={'text': text, 'speaker': speaker_id}
     ).json()
     
     audio = requests.post(
-        'http://localhost:50021/synthesis',
+        'http://127.0.0.1:50021/synthesis',
         params={'speaker': speaker_id},
         json=query
     ).content

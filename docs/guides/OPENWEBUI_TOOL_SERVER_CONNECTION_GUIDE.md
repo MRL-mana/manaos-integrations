@@ -35,13 +35,13 @@ OpenAPI URL: `http://192.168.0.10:9503/openapi.json`
 ### Step 1: OpenWebUIにアクセス
 
 1. **ブラウザでOpenWebUIを開く**
-   - http://localhost:3001 にアクセス
+   - http://127.0.0.1:3001 にアクセス
    - ログイン（必要に応じて）
 
 ### Step 2: 「外部ツール」設定画面を開く
 
 1. **左サイドバーの「設定」→「外部ツール」をクリック**
-   - または、URLから直接: http://localhost:3001/admin/settings/external-tools
+   - または、URLから直接: http://127.0.0.1:3001/admin/settings/external-tools
 
 ### Step 3: 「接続を追加」をクリック
 
@@ -98,8 +98,8 @@ OpenAPI URL: `http://192.168.0.10:9503/openapi.json`
    - 「Connected」になっているか確認
    - 「Disconnected」または「Error」の場合、以下を確認：
      - URLが正しいか（`host.docker.internal`を使用しているか）
-     - Tool Serverが起動中か（http://localhost:9503/health）
-     - OpenAPI仕様が取得できるか（http://localhost:9503/openapi.json）
+     - Tool Serverが起動中か（http://127.0.0.1:9503/health）
+     - OpenAPI仕様が取得できるか（http://127.0.0.1:9503/openapi.json）
 
 ---
 
@@ -109,8 +109,8 @@ OpenAPI URL: `http://192.168.0.10:9503/openapi.json`
 
 ブラウザで以下にアクセス：
 
-- `http://localhost:9503/openapi.json`
-- `http://localhost:9503/health`
+- `http://127.0.0.1:9503/openapi.json`
+- `http://127.0.0.1:9503/health`
 
 ### 2) OpenWebUIコンテナからホストへ届くか確認
 
@@ -164,7 +164,7 @@ docker exec open-webui curl http://host.docker.internal:9503/openapi.json
 
 **解決方法:**
 1. URLを `http://host.docker.internal:9503` に変更
-2. Tool Serverが起動中か確認（http://localhost:9503/health）
+2. Tool Serverが起動中か確認（http://127.0.0.1:9503/health）
 3. OpenWebUIコンテナから接続確認（上記のcurlコマンド）
 
 ### 問題2: ツールが表示されない
@@ -203,9 +203,9 @@ docker exec open-webui curl http://host.docker.internal:9503/openapi.json
 ### ✅ 完璧な状態
 
 - Tool Server：FastAPIで正常起動 ✅
-  `http://localhost:9503`
+  `http://127.0.0.1:9503`
 - OpenWebUI：Dockerで正常起動 ✅
-  `http://localhost:3001`
+  `http://127.0.0.1:3001`
 - エンドポイント構造：公式と一致 ✅
   `/service_status` `/check_errors` `/generate_image`
 - OpenAPI：取得できる ✅
@@ -224,8 +224,8 @@ docker exec open-webui curl http://host.docker.internal:9503/openapi.json
 
 ## 📋 確認チェックリスト
 
-- [ ] Tool Serverが起動中（http://localhost:9503/health）
-- [ ] OpenAPI仕様が取得できる（http://localhost:9503/openapi.json）
+- [ ] Tool Serverが起動中（http://127.0.0.1:9503/health）
+- [ ] OpenAPI仕様が取得できる（http://127.0.0.1:9503/openapi.json）
 - [ ] OpenWebUIの「外部ツール」設定画面でTool Serverを登録
 - [ ] **URL: `http://host.docker.internal:9503`**（`localhost`ではない）
 - [ ] **OpenAPI URL: `http://host.docker.internal:9503/openapi.json`**（`localhost`ではない）

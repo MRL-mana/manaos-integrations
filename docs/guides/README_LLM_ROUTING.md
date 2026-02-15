@@ -78,7 +78,7 @@ result = manaos.act("llm_call", {
 設定ファイル: `llm_routing_config.yaml`
 
 ```yaml
-ollama_url: "http://localhost:11434"
+ollama_url: "http://127.0.0.1:11434"
 
 routing:
   conversation:

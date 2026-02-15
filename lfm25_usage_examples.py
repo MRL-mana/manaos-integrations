@@ -219,7 +219,7 @@ def example_10_api_usage():
     
     import requests
     
-    api_url = "http://localhost:9500"
+    api_url = "http://127.0.0.1:9510"
     
     # LFM 2.5チャット
     response = requests.post(

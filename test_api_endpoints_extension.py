@@ -8,14 +8,14 @@ import io
 
 # Windows環境でのエンコーディング問題を回避
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 import requests
 import json
 from typing import Dict, Any
 
-BASE_URL = "http://localhost:9500"
+BASE_URL = "http://127.0.0.1:9510"
 
 
 def test_llm_routing():

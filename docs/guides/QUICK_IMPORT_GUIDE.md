@@ -2,7 +2,7 @@
 
 ## 🎯 状況
 
-Portal UI（http://localhost:5000）が起動していないため、**n8nに直接アクセス**します。
+Portal UI（http://127.0.0.1:5000）が起動していないため、**n8nに直接アクセス**します。
 
 ---
 
@@ -12,7 +12,7 @@ Portal UI（http://localhost:5000）が起動していないため、**n8nに直
 
 ブラウザで以下を開いてください:
 ```
-http://localhost:5678
+http://127.0.0.1:5678
 ```
 
 **自動で開くはずです**（実行済み）
@@ -43,7 +43,7 @@ http://localhost:5678
 
 ワークフローを開いて、「Browse AI Webhook」ノードのURLを確認:
 ```
-http://localhost:5678/webhook/browse-ai-webhook
+http://127.0.0.1:5678/webhook/browse-ai-webhook
 ```
 
 ---

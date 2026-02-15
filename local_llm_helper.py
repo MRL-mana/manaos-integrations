@@ -10,8 +10,8 @@ import subprocess
 import os
 from typing import Optional, Dict, Any, List
 
-OLLAMA_URL = "http://localhost:11434"
-LM_STUDIO_URL = "http://localhost:1234/v1"
+OLLAMA_URL = "http://127.0.0.1:11434"
+LM_STUDIO_URL = "http://127.0.0.1:1234/v1"
 USE_WSL2 = os.environ.get("OLLAMA_USE_WSL2", "true").lower() == "true"
 
 def _should_use_lm_studio() -> bool:
@@ -34,7 +34,7 @@ def _check_wsl2_ollama() -> bool:
     """WSL2内でOllamaが起動しているか確認"""
     try:
         result = subprocess.run(
-            ["wsl", "-d", "Ubuntu-22.04", "--", "bash", "-c", "curl -s http://localhost:11434/api/tags"],
+            ["wsl", "-d", "Ubuntu-22.04", "--", "bash", "-c", "curl -s http://127.0.0.1:11434/api/tags"],
             capture_output=True,
             timeout=5,
             text=True

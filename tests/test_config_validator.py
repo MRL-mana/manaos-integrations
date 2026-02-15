@@ -258,8 +258,8 @@ class TestValidateEnv:
         assert len(errors) == 2
 
     def test_required_present(self, monkeypatch):
-        monkeypatch.setenv("COMFYUI_URL", "http://localhost:8188")
-        monkeypatch.setenv("OLLAMA_URL", "http://localhost:11434")
+        monkeypatch.setenv("COMFYUI_URL", "http://127.0.0.1:8188")
+        monkeypatch.setenv("OLLAMA_URL", "http://127.0.0.1:11434")
         ok, errors = validate_env(
             required=["COMFYUI_URL", "OLLAMA_URL"], recommended=[]
         )

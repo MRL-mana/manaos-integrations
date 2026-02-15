@@ -40,16 +40,16 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
     
     def __init__(
         self,
-        intent_router_url: str = "http://localhost:5100",
-        task_planner_url: str = "http://localhost:5101",
-        task_critic_url: str = "http://localhost:5102",
-        task_queue_url: str = "http://localhost:5104",
+        intent_router_url: str = "http://127.0.0.1:5100",
+        task_planner_url: str = "http://127.0.0.1:5101",
+        task_critic_url: str = "http://127.0.0.1:5102",
+        task_queue_url: str = "http://127.0.0.1:5104",
         executor_url: Optional[str] = None,
-        rag_memory_url: str = "http://localhost:5103",
+        rag_memory_url: str = "http://127.0.0.1:5103",
         learning_system_url: Optional[str] = None,
-        personality_url: str = "http://localhost:5123",
-        autonomy_url: str = "http://localhost:5124",
-        secretary_url: str = "http://localhost:5125",
+        personality_url: str = "http://127.0.0.1:5123",
+        autonomy_url: str = "http://127.0.0.1:5124",
+        secretary_url: str = "http://127.0.0.1:5125",
         config_path: Optional[Path] = None
     ):
         """
@@ -105,7 +105,7 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
         
         try:
             self.autonomy_enhanced = AutonomySystemEnhanced(
-                orchestrator_url=f"http://localhost:5106",
+                orchestrator_url=f"http://127.0.0.1:5106",
                 learning_system_url=learning_system_url
             )
             logger.info("✅ Autonomy System Enhanced統合完了")
@@ -115,7 +115,7 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
         
         try:
             self.secretary_optimized = SecretarySystemOptimized(
-                orchestrator_url=f"http://localhost:5106"
+                orchestrator_url=f"http://127.0.0.1:5106"
             )
             logger.info("✅ Secretary System Optimized統合完了")
         except Exception as e:

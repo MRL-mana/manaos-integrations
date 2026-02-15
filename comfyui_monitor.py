@@ -17,11 +17,11 @@ if sys.platform == "win32":
         import io
 
         if hasattr(sys.stdout, "buffer"):
-            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     except Exception:
         pass
 
-COMFYUI_URL = os.getenv("COMFYUI_URL", "http://localhost:8188")
+COMFYUI_URL = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 CHECK_INTERVAL = int(os.getenv("COMFYUI_MONITOR_INTERVAL", "60"))
 QUEUE_WARN_THRESHOLD = int(os.getenv("COMFYUI_QUEUE_WARN", "5"))

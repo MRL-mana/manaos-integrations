@@ -39,7 +39,7 @@ if ($unifiedProcesses) {
 # LLM Routing APIサーバーの既存プロセスを確認
 $routingProcesses = Get-Process python -ErrorAction SilentlyContinue | Where-Object { 
     $cmdLine = (Get-WmiObject Win32_Process -Filter "ProcessId = $($_.Id)").CommandLine
-    $cmdLine -like "*manaos_llm_routing_api*" 
+    $cmdLine -like "*llm_routing_mcp_server*" 
 }
 
 if ($routingProcesses) {
@@ -65,7 +65,7 @@ Write-Host "[2] Unified APIサーバーを起動..." -ForegroundColor Yellow
 try {
     $unifiedProcess = Start-Process python -ArgumentList "unified_api_server.py" -WorkingDirectory $scriptDir -WindowStyle Hidden -PassThru
     Write-Host "   ✅ Unified APIサーバーを起動しました (PID: $($unifiedProcess.Id))" -ForegroundColor Green
-    Write-Host "   URL: http://localhost:9500" -ForegroundColor Gray
+    Write-Host "   URL: http://127.0.0.1:9510" -ForegroundColor Gray
 } catch {
     Write-Host "   ❌ Unified APIサーバーの起動に失敗しました: $_" -ForegroundColor Red
     exit 1
@@ -75,9 +75,9 @@ Write-Host ""
 Write-Host "[3] LLM Routing APIサーバーを起動..." -ForegroundColor Yellow
 
 try {
-    $routingProcess = Start-Process python -ArgumentList "manaos_llm_routing_api_enhanced.py" -WorkingDirectory $scriptDir -WindowStyle Hidden -PassThru
-    Write-Host "   ✅ LLM Routing APIサーバーを起動しました (PID: $($routingProcess.Id))" -ForegroundColor Green
-    Write-Host "   URL: http://localhost:9501" -ForegroundColor Gray
+    $routingProcess = Start-Process python -ArgumentList "-m llm_routing_mcp_server" -WorkingDirectory $scriptDir -WindowStyle Hidden -PassThru
+    Write-Host "   ✅ LLM Routingサーバーを起動しました (PID: $($routingProcess.Id))" -ForegroundColor Green
+    Write-Host "   URL: http://127.0.0.1:5111" -ForegroundColor Gray
 } catch {
     Write-Host "   ❌ LLM Routing APIサーバーの起動に失敗しました: $_" -ForegroundColor Red
     exit 1
@@ -91,7 +91,7 @@ Start-Sleep -Seconds 5
 Write-Host ""
 Write-Host "   Unified APIサーバー:" -ForegroundColor Cyan
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:9500/health" -Method GET -TimeoutSec 5 -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "http://127.0.0.1:9510/health" -Method GET -TimeoutSec 5 -ErrorAction Stop
     Write-Host "   ✅ 正常に起動しています ($($response.StatusCode))" -ForegroundColor Green
 } catch {
     Write-Host "   ⚠️  起動確認に失敗しました（起動に時間がかかっている可能性があります）" -ForegroundColor Yellow
@@ -101,12 +101,8 @@ try {
 Write-Host ""
 Write-Host "   LLM Routing APIサーバー:" -ForegroundColor Cyan
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:9501/api/llm/health" -Method GET -TimeoutSec 5 -ErrorAction Stop
-    $result = $response.Content | ConvertFrom-Json
-    Write-Host "   ✅ 正常に起動しています" -ForegroundColor Green
-    Write-Host "      ステータス: $($result.status)" -ForegroundColor Gray
-    Write-Host "      LLMサーバー: $($result.llm_server)" -ForegroundColor Gray
-    Write-Host "      利用可能モデル数: $($result.available_models)" -ForegroundColor Gray
+    $response = Invoke-WebRequest -Uri "http://127.0.0.1:5111/health" -Method GET -TimeoutSec 5 -ErrorAction Stop
+    Write-Host "   ✅ 正常に起動しています ($($response.StatusCode))" -ForegroundColor Green
 } catch {
     Write-Host "   ⚠️  起動確認に失敗しました（起動に時間がかかっている可能性があります）" -ForegroundColor Yellow
 }
@@ -119,8 +115,8 @@ Write-Host "║                                                                 
 Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Green
 Write-Host ""
 Write-Host "📋 利用可能なエンドポイント:" -ForegroundColor Yellow
-Write-Host "   - Unified API: http://localhost:9500" -ForegroundColor Gray
-Write-Host "   - LLM Routing API: http://localhost:9501" -ForegroundColor Gray
+Write-Host "   - Unified API: http://127.0.0.1:9510" -ForegroundColor Gray
+Write-Host "   - LLM Routing: http://127.0.0.1:5111" -ForegroundColor Gray
 Write-Host ""
 Write-Host "📋 MCPサーバー:" -ForegroundColor Yellow
 Write-Host "   - llm-routing: 正常動作" -ForegroundColor Green

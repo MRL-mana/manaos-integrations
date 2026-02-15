@@ -17,7 +17,7 @@
 import requests
 
 response = requests.post(
-    "http://localhost:9501/api/llm/route",
+  "http://127.0.0.1:9510/api/llm/route",
     json={
         "prompt": "このコードを最適化してください",
         "context": {

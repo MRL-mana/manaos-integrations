@@ -28,7 +28,7 @@
 1. モデルを選択したら、「**Start Server**」ボタンを探す
 2. 「**Start Server**」ボタンを**クリック**
 3. サーバーが起動すると、以下のような表示が確認できます：
-   - `Server running on http://localhost:1234`
+   - `Server running on http://127.0.0.1:1234`
    - `OpenAI Compatible API` が有効になっている
    - ボタンが「Stop Server」に変わる
 
@@ -43,13 +43,13 @@
 .\check_running_status.ps1
 
 # または直接確認
-Invoke-WebRequest -Uri "http://localhost:1234/v1/models" -Method GET
+Invoke-WebRequest -Uri "http://127.0.0.1:1234/v1/models" -Method GET
 ```
 
 **期待される結果：**
 - ✅ LM Studioサーバー: 起動中
-- ✅ LLMルーティングAPI: 起動中 (`http://localhost:9501`)
-- ✅ 統合APIサーバー: 起動中 (`http://localhost:9500`)
+- ✅ LLMルーティングAPI: 起動中 (`http://127.0.0.1:9510`)
+- ✅ 統合APIサーバー: 起動中 (`http://127.0.0.1:9510`)
 
 ---
 
@@ -104,6 +104,7 @@ Invoke-WebRequest -Uri "http://localhost:1234/v1/models" -Method GET
 ---
 
 **サーバーが起動すれば完全運用開始です！🎉**
+
 
 
 

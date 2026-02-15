@@ -13,8 +13,8 @@ System 3 Learning Idle (Background Learning)
 import sys
 import io
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 import os
 import time
@@ -160,7 +160,7 @@ def execute_idle_learning_job() -> Dict[str, Any]:
         try:
             import urllib.request
             import json as jjson
-            todo_metrics_url = "http://localhost:5134/api/metrics"
+            todo_metrics_url = "http://127.0.0.1:5134/api/metrics"
             req = urllib.request.Request(todo_metrics_url, headers={"Accept": "application/json"})
             with urllib.request.urlopen(req, timeout=3) as resp:
                 todo_data = jjson.loads(resp.read().decode("utf-8"))

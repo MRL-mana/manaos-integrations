@@ -18,8 +18,8 @@ pip install -r requirements.txt
 # Tool Serverを起動
 Write-Host ""
 Write-Host "Tool Serverを起動します..." -ForegroundColor Green
-Write-Host "  URL: http://localhost:9503" -ForegroundColor Gray
-Write-Host "  OpenAPI Spec: http://localhost:9503/openapi.json" -ForegroundColor Gray
+Write-Host "  URL: http://127.0.0.1:9503" -ForegroundColor Gray
+Write-Host "  OpenAPI Spec: http://127.0.0.1:9503/openapi.json" -ForegroundColor Gray
 Write-Host ""
 
 python main.py

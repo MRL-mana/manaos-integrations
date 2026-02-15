@@ -166,7 +166,7 @@ import requests
 
 # 難易度分析
 response = requests.post(
-    "http://localhost:9500/api/llm/analyze",
+    "http://127.0.0.1:9510/api/llm/analyze",
     json={
         "prompt": "この関数のタイポを修正して",
         "context": {
@@ -178,7 +178,7 @@ print(response.json())
 
 # ルーティング実行
 response = requests.post(
-    "http://localhost:9500/api/llm/route-enhanced",
+    "http://127.0.0.1:9510/api/llm/route-enhanced",
     json={
         "prompt": "この関数のタイポを修正して",
         "context": {
@@ -231,7 +231,8 @@ python example_usage.py
 
 - `llm_difficulty_analyzer.py` - 難易度判定エンジン
 - `llm_router_enhanced.py` - ルーティングロジック
-- `manaos_llm_routing_api.py` - Flask APIサーバー（スタンドアロン）
+- `llm_routing_mcp_server/` - LLMルーティングMCPサーバー（現行）
+- `manaos_llm_routing_api.py` - （レガシー）Flask APIサーバー
 - `unified_api_server.py` - 統合APIサーバー（拡張済み）
 
 ### 設定・テスト
@@ -293,6 +294,7 @@ python example_usage.py
 ---
 
 **これで"Cursor = 実装・編集の司令塔"が完成！🔥**
+
 
 
 

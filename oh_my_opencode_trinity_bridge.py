@@ -56,12 +56,12 @@ class TrinityBridge:
     
     def __init__(
         self,
-        intent_router_url: str = "http://localhost:5100",
-        task_planner_url: str = "http://localhost:5101",
-        task_critic_url: str = "http://localhost:5102",
-        rag_memory_url: str = "http://localhost:5103",
-        learning_system_url: str = "http://localhost:5126",
-        orchestrator_url: str = "http://localhost:5106"
+        intent_router_url: str = "http://127.0.0.1:5100",
+        task_planner_url: str = "http://127.0.0.1:5101",
+        task_critic_url: str = "http://127.0.0.1:5102",
+        rag_memory_url: str = "http://127.0.0.1:5103",
+        learning_system_url: str = "http://127.0.0.1:5126",
+        orchestrator_url: str = "http://127.0.0.1:5106"
     ):
         """
         初期化

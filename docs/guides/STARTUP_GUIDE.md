@@ -32,17 +32,17 @@ python start_server_direct.py
 ```
 
 3. **起動確認**:
-   - サーバーが `http://127.0.0.1:9500` で起動することを確認
+   - サーバーが `http://127.0.0.1:9510` で起動することを確認
    - 初期化メッセージが表示されることを確認
 
 4. **別のターミナルで状態確認**:
 
 ```bash
 # ヘルスチェック
-curl http://localhost:9500/health
+curl http://127.0.0.1:9510/health
 
 # 詳細状態
-curl http://localhost:9500/status
+curl http://127.0.0.1:9510/status
 ```
 
 ---
@@ -84,6 +84,7 @@ curl http://localhost:9500/status
 ---
 
 **次のステップ**: 新しいターミナルウィンドウで `python start_server_direct.py` を実行してサーバーを起動してください。
+
 
 
 

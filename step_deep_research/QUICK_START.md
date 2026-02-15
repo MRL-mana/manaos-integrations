@@ -9,8 +9,8 @@
 ### 前提条件
 
 - ManaOSがインストール済み
-- Ollamaが起動している（`http://localhost:11434`）
-- SearXNGが起動している（`http://localhost:8080`、オプション）
+- Ollamaが起動している（`http://127.0.0.1:11434`）
+- SearXNGが起動している（`http://127.0.0.1:8080`、オプション）
 
 ### 設定確認
 
@@ -58,7 +58,7 @@ print(f"レポートパス: {result['report_path']}")
 
 ```bash
 # ジョブ作成
-curl -X POST http://localhost:5121/api/jobs \
+curl -X POST http://127.0.0.1:5121/api/jobs \
   -H "Content-Type: application/json" \
   -d '{"query": "RDPとTailscaleを比較して"}'
 
@@ -66,10 +66,10 @@ curl -X POST http://localhost:5121/api/jobs \
 # {"job_id": "abc123", "status": "created"}
 
 # ジョブ実行
-curl -X POST http://localhost:5121/api/jobs/abc123/execute
+curl -X POST http://127.0.0.1:5121/api/jobs/abc123/execute
 
 # ジョブ状態確認
-curl http://localhost:5121/api/jobs/abc123
+curl http://127.0.0.1:5121/api/jobs/abc123
 ```
 
 ---

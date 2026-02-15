@@ -9,7 +9,7 @@ import json
 
 if sys.platform == 'win32':
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
 
 print("=" * 60)
 print("LM Studio 診断ツール")
@@ -18,7 +18,7 @@ print("=" * 60)
 # 1. LM Studioサーバー確認
 print("\n【1】LM Studioサーバー確認")
 try:
-    r = requests.get('http://localhost:1234/v1/models', timeout=5)
+    r = requests.get('http://127.0.0.1:1234/v1/models', timeout=5)
     if r.status_code == 200:
         print("✓ LM Studioサーバー: 起動中")
         models_data = r.json().get('data', [])
@@ -78,7 +78,7 @@ test_model = "qwen2.5-coder-32b-instruct"
 print(f"テストモデル: {test_model}")
 
 try:
-    url = "http://localhost:1234/v1/chat/completions"
+    url = "http://127.0.0.1:1234/v1/chat/completions"
     data = {
         "model": test_model,
         "messages": [{"role": "user", "content": "test"}],

@@ -96,7 +96,7 @@ def generate_mana_favorite_image():
                 }
                 
                 response = requests.post(
-                    "http://localhost:8188/api/prompt",
+                    "http://127.0.0.1:8188/api/prompt",
                     json={"prompt": payload},
                     timeout=5
                 )

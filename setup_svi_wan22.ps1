@@ -213,7 +213,7 @@ Write-Host "1. ComfyUIを起動:" -ForegroundColor Yellow
 Write-Host "   .\start_comfyui_local.ps1 -ComfyUIPath `"$ComfyUIPath`"" -ForegroundColor Gray
 Write-Host ""
 Write-Host "2. ComfyUI Managerでカスタムノードをインストール:" -ForegroundColor Yellow
-Write-Host "   - ブラウザで http://localhost:8188 にアクセス" -ForegroundColor Gray
+Write-Host "   - ブラウザで http://127.0.0.1:8188 にアクセス" -ForegroundColor Gray
 Write-Host "   - 「Manager」ボタンをクリック" -ForegroundColor Gray
 Write-Host "   - 「Install Missing Custom Nodes」を実行" -ForegroundColor Gray
 Write-Host ""

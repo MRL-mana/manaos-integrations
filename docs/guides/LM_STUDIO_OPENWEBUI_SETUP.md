@@ -25,7 +25,7 @@
    - 「Start Server」または「サーバーを開始」をクリック
 4. **URLとポートを確認**
    - 通常は以下のいずれか：
-     - `http://localhost:1234`
+     - `http://127.0.0.1:1234`
      - `http://127.0.0.1:1234`
    - **OpenAI Compatible API** と表示されていればOK
 
@@ -50,7 +50,7 @@ docker-compose -f docker-compose.always-ready-llm.yml logs -f openwebui
 
 1. **ブラウザで開く**
    ```
-   http://localhost:3001
+   http://127.0.0.1:3001
    ```
    ⚠️ **注意**: ポート3000が既に使用されている場合（例：Grafana）、ポート3001で起動します。
 
@@ -85,7 +85,7 @@ docker-compose -f docker-compose.always-ready-llm.yml logs -f openwebui
 
 ```powershell
 # LM StudioのAPIが応答するか確認
-curl http://localhost:1234/v1/models
+curl http://127.0.0.1:1234/v1/models
 ```
 
 ### Open WebUIからLM Studioに接続確認
@@ -163,10 +163,10 @@ curl http://localhost:1234/v1/models
 
 これで以下が利用可能になりました：
 
-- ✅ **Open WebUI**: `http://localhost:3001`
-- ✅ **LM Studio**: `http://localhost:1234`
-- ✅ **Ollama**: `http://localhost:11434`
-- ✅ **n8n**: `http://localhost:5678`
+- ✅ **Open WebUI**: `http://127.0.0.1:3001`
+- ✅ **LM Studio**: `http://127.0.0.1:1234`
+- ✅ **Ollama**: `http://127.0.0.1:11434`
+- ✅ **n8n**: `http://127.0.0.1:5678`
 
 Open WebUIからLM StudioとOllamaの両方のモデルを使用できます！
 

@@ -34,7 +34,7 @@ except ImportError:
     requests = None
 
 # ── 設定 ─────────────────────────────────────────
-API_BASE = os.getenv("LEARNING_SYSTEM_API_URL", "http://localhost:5126")
+API_BASE = os.getenv("LEARNING_SYSTEM_API_URL", "http://127.0.0.1:5126")
 HEALTH_PORT = int(os.getenv("LEARNING_MCP_HEALTH_PORT", "5114"))
 TIMEOUT = 10
 

@@ -96,7 +96,7 @@ $env:SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/..."
 n8nワークフロー操作を使う場合：
 
 ```powershell
-$env:N8N_BASE_URL = "http://localhost:5678"
+$env:N8N_BASE_URL = "http://127.0.0.1:5678"
 $env:N8N_API_KEY = "your-api-key"
 ```
 

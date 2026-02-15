@@ -179,7 +179,7 @@ VSCode: 同じ拡張機能をインストール（または .vscode/extensions.j
 
 ### ステップ3: MCP設定
 - CursorのMCP設定は使えません
-- REST API（http://127.0.0.1:9500）経由でアクセス
+- REST API（http://127.0.0.1:9510）経由でアクセス
 
 ---
 

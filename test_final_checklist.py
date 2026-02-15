@@ -13,7 +13,7 @@ from datetime import datetime
 # UTF-8エンコーディング設定
 sys.stdout.reconfigure(encoding='utf-8')
 
-BASE_URL = "http://localhost:9500"
+BASE_URL = "http://127.0.0.1:9510"
 TIMEOUT = 30
 
 def print_header(title: str):

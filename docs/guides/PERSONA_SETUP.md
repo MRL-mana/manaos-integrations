@@ -60,7 +60,7 @@ persona:
 サーバー再起動後、以下のコマンドで人格設定が適用されているか確認できます：
 
 ```bash
-curl -X POST http://localhost:9500/api/llm/chat \
+curl -X POST http://127.0.0.1:9510/api/llm/chat \
   -H "Content-Type: application/json" \
   -d '{
     "messages": [{"role": "user", "content": "こんにちは！"}],
@@ -79,6 +79,7 @@ curl -X POST http://localhost:9500/api/llm/chat \
 - 人格設定は`chat`メソッド（`/api/llm/chat`エンドポイント）でのみ適用されます
 - `route`メソッド（`/api/llm/route`エンドポイント）には適用されません
 - システムプロンプトは会話の先頭に自動的に追加されます
+
 
 
 

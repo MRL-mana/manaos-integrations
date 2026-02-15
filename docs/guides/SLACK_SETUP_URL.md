@@ -72,8 +72,8 @@ $config = Get-Content "notification_hub_enhanced_config.json" | ConvertFrom-Json
 $env:SLACK_WEBHOOK_URL = $config.slack_webhook_url
 $env:SLACK_VERIFICATION_TOKEN = "your_token"
 $env:PORT = "5114"
-$env:FILE_SECRETARY_URL = "http://localhost:5120"
-$env:ORCHESTRATOR_URL = "http://localhost:5106"
+$env:FILE_SECRETARY_URL = "http://127.0.0.1:5120"
+$env:ORCHESTRATOR_URL = "http://127.0.0.1:5106"
 Start-Process python -ArgumentList "slack_integration.py" -WindowStyle Normal
 ```
 

@@ -9,7 +9,7 @@ import sys
 import io
 
 # 標準出力のエンコーディングを設定
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+sys.stdout.reconfigure(encoding='utf-8')
 
 from notification_hub_enhanced import NotificationHubEnhanced
 

@@ -19,7 +19,7 @@ Write-Host ""
 # 1. ComfyUI起動確認
 Write-Host "[1] ComfyUI起動確認..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "http://localhost:8188/system_stats" -Method GET -TimeoutSec 3 -ErrorAction SilentlyContinue
+    $response = Invoke-RestMethod -Uri "http://127.0.0.1:8188/system_stats" -Method GET -TimeoutSec 3 -ErrorAction SilentlyContinue
     if ($response) {
         Write-Host "   [OK] ComfyUIは起動中です" -ForegroundColor Green
     } else {
@@ -36,10 +36,10 @@ Write-Host ""
 Write-Host "[2] 統合APIサーバーを起動します..." -ForegroundColor Yellow
 $apiServerProcess = Get-Process python -ErrorAction SilentlyContinue | Where-Object {
     $_.CommandLine -like "*unified_api_server.py*" -or 
-    (Get-NetTCPConnection -LocalPort 9500 -ErrorAction SilentlyContinue)
+    (Get-NetTCPConnection -LocalPort 9510 -ErrorAction SilentlyContinue)
 }
 
-if ($apiServerProcess -or (Get-NetTCPConnection -LocalPort 9500 -ErrorAction SilentlyContinue)) {
+if ($apiServerProcess -or (Get-NetTCPConnection -LocalPort 9510 -ErrorAction SilentlyContinue)) {
     Write-Host "   [OK] 統合APIサーバーは既に起動中です" -ForegroundColor Green
 } else {
     Write-Host "   統合APIサーバーを起動中..." -ForegroundColor Gray
@@ -53,12 +53,12 @@ Write-Host ""
 # 3. 動作確認
 Write-Host "[3] 動作確認..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "http://localhost:9500/health" -Method GET -TimeoutSec 5 -ErrorAction SilentlyContinue
+    $response = Invoke-RestMethod -Uri "http://127.0.0.1:9510/health" -Method GET -TimeoutSec 5 -ErrorAction SilentlyContinue
     if ($response) {
         Write-Host "   [OK] 統合APIサーバーは正常に動作しています" -ForegroundColor Green
         
         # 統合システム状態を表示
-        $statusResponse = Invoke-RestMethod -Uri "http://localhost:9500/api/integrations/status" -Method GET -TimeoutSec 5 -ErrorAction SilentlyContinue
+        $statusResponse = Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/integrations/status" -Method GET -TimeoutSec 5 -ErrorAction SilentlyContinue
         if ($statusResponse) {
             Write-Host ""
             Write-Host "   統合システム状態:" -ForegroundColor Gray

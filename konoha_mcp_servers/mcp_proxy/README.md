@@ -53,19 +53,19 @@ tail -f /root/logs/mcp_proxy/mcp_proxy.log
 ### ヘルスチェック
 
 ```bash
-curl http://localhost:3011/health
+curl http://127.0.0.1:3011/health
 ```
 
 ### サーバー一覧
 
 ```bash
-curl http://localhost:3011/servers
+curl http://127.0.0.1:3011/servers
 ```
 
 ### MCPリクエスト送信
 
 ```bash
-curl -X POST http://localhost:3011/mcp \
+curl -X POST http://127.0.0.1:3011/mcp \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer your-token" \
   -d '{
@@ -79,7 +79,7 @@ curl -X POST http://localhost:3011/mcp \
 ### メトリクス取得
 
 ```bash
-curl http://localhost:3011/metrics
+curl http://127.0.0.1:3011/metrics
 ```
 
 ## 設定
@@ -133,9 +133,9 @@ python3 mcp_proxy_server.py
 
 ```bash
 # ヘルスチェック
-curl http://localhost:3011/health
+curl http://127.0.0.1:3011/health
 
 # サーバー一覧
-curl http://localhost:3011/servers
+curl http://127.0.0.1:3011/servers
 ```
 

@@ -14,7 +14,7 @@
 
 1. **n8n確認**
 ```bash
-curl http://localhost:5678/rest/workflows
+curl http://127.0.0.1:5678/rest/workflows
 ```
 
 2. **Slack Webhook URL準備**
@@ -34,7 +34,7 @@ curl http://localhost:5678/rest/workflows
 
 **方法A: Portal UI経由（推奨）**
 
-1. Portal UIにアクセス: http://localhost:5000
+1. Portal UIにアクセス: http://127.0.0.1:5000
 2. n8nセクションを開く
 3. 「ワークフローをインポート」をクリック
 4. `n8n_workflows/browse_ai_manaos_integration.json` を選択
@@ -43,7 +43,7 @@ curl http://localhost:5678/rest/workflows
 **方法B: API経由**
 
 ```bash
-curl -X POST http://localhost:5678/rest/workflows \
+curl -X POST http://127.0.0.1:5678/rest/workflows \
   -H "Content-Type: application/json" \
   -H "X-N8N-API-KEY: your-api-key" \
   -d @manaos_integrations/n8n_workflows/browse_ai_manaos_integration.json
@@ -67,7 +67,7 @@ export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/<YOUR>/<WEBHOOK>/<URL
 ワークフロー実行後、Webhook URLを取得:
 
 ```
-http://localhost:5678/webhook/browse-ai-webhook
+http://127.0.0.1:5678/webhook/browse-ai-webhook
 ```
 
 **外部公開する場合**（推奨）:
@@ -82,7 +82,7 @@ http://localhost:5678/webhook/browse-ai-webhook
    - URL: https://civitai.com/models?onSale=true
    - 監視タイプ: 変更検知
 3. **Webhook設定**:
-   - URL: `http://localhost:5678/webhook/browse-ai-webhook`
+   - URL: `http://127.0.0.1:5678/webhook/browse-ai-webhook`
    - または: `https://your-domain.com/webhook/browse-ai-webhook`
 4. **テスト実行**: ロボットを手動実行して動作確認
 
@@ -210,7 +210,7 @@ n8nワークフローで自動保存（任意）:
 
 ### 2. n8nワークフローインポート（10分）
 
-1. Portal UI: http://localhost:5000
+1. Portal UI: http://127.0.0.1:5000
 2. n8nセクション → ワークフローインポート
 3. `browse_ai_manaos_integration.json` をインポート
 
@@ -235,11 +235,11 @@ n8nワークフローで自動保存（任意）:
 
 1. **n8nワークフローが有効か確認**
    ```bash
-   curl http://localhost:5678/rest/workflows
+   curl http://127.0.0.1:5678/rest/workflows
    ```
 
 2. **Webhook URL確認**
-   - ローカル: `http://localhost:5678/webhook/browse-ai-webhook`
+   - ローカル: `http://127.0.0.1:5678/webhook/browse-ai-webhook`
    - 外部: ngrok使用
 
 3. **n8nログ確認**

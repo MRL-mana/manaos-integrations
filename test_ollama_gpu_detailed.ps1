@@ -48,13 +48,13 @@ if ($ollamaProcesses) {
 # 5. Ollama APIでモデル情報を取得
 Write-Host "`n[5] Ollama APIでモデル情報を取得" -ForegroundColor Yellow
 try {
-    $models = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -Method Get -TimeoutSec 10
+    $models = Invoke-RestMethod -Uri "http://127.0.0.1:11434/api/tags" -Method Get -TimeoutSec 10
     if ($models.models -and $models.models.Count -gt 0) {
         $firstModel = $models.models[0]
         Write-Host "  モデル: $($firstModel.name)" -ForegroundColor Green
         
         # モデルの詳細情報を取得
-        $modelInfo = Invoke-RestMethod -Uri "http://localhost:11434/api/show" -Method Post -Body (@{name=$firstModel.name} | ConvertTo-Json) -ContentType "application/json" -TimeoutSec 10
+        $modelInfo = Invoke-RestMethod -Uri "http://127.0.0.1:11434/api/show" -Method Post -Body (@{name=$firstModel.name} | ConvertTo-Json) -ContentType "application/json" -TimeoutSec 10
         Write-Host "  モデル情報取得成功" -ForegroundColor Green
         # GPU関連の情報があれば表示
         if ($modelInfo.details) {

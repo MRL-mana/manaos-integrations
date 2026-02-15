@@ -75,7 +75,7 @@ class LLMRouter:
 
         self.config_path = Path(config_path)
         self.config = self._load_config()
-        self.ollama_url = self.config.get("ollama_url", "http://localhost:11434")
+        self.ollama_url = self.config.get("ollama_url", "http://127.0.0.1:11434")
         self.routing_config = self.config.get("routing", {})
         self.audit_config = self.config.get("audit_log", {})
 
@@ -120,7 +120,7 @@ class LLMRouter:
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定を返す"""
         return {
-            "ollama_url": "http://localhost:11434",
+            "ollama_url": "http://127.0.0.1:11434",
             "routing": {
                 "conversation": {
                     "primary": "lfm2.5:1.2b",

@@ -14,8 +14,8 @@ import io
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -34,7 +34,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # APIエンドポイント
-SERVICE_MONITOR_URL = os.getenv("SERVICE_MONITOR_URL", "http://localhost:5111")
+SERVICE_MONITOR_URL = os.getenv("SERVICE_MONITOR_URL", "http://127.0.0.1:5111")
 
 # MCPサーバーの初期化
 if MCP_AVAILABLE:

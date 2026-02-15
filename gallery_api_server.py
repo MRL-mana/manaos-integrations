@@ -46,7 +46,7 @@ app = Flask(__name__)
 CORS(app)
 
 # 設定
-COMFYUI_URL = os.getenv("COMFYUI_URL", "http://localhost:8188")
+COMFYUI_URL = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
 GALLERY_PORT = int(os.getenv("GALLERY_PORT", 5559))
 IMAGES_DIR = Path(os.getenv("GALLERY_IMAGES_DIR", "gallery_images"))
 IMAGES_DIR.mkdir(exist_ok=True)

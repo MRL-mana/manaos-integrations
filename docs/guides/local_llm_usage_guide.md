@@ -47,7 +47,7 @@ POST /api/ollama/generate
 **使用例:**
 ```bash
 # プロンプト最適化を有効化してチャット
-curl -X POST http://localhost:5000/api/ollama/chat \
+curl -X POST http://127.0.0.1:5000/api/ollama/chat \
   -H "Content-Type: application/json" \
   -d '{
     "model": "qwen3:4b",
@@ -57,8 +57,8 @@ curl -X POST http://localhost:5000/api/ollama/chat \
 ```
 
 **アクセス方法:**
-- **Unified API Gateway**: `http://localhost:5000/api/ollama/chat`
-- **直接API**: `http://localhost:11434/api/chat`（Ollama直接）
+- **Unified API Gateway**: `http://127.0.0.1:5000/api/ollama/chat`
+- **直接API**: `http://127.0.0.1:11434/api/chat`（Ollama直接）
 
 ---
 
@@ -80,7 +80,7 @@ GET /api/rag/status
 
 **使用例:**
 ```bash
-curl -X POST http://localhost:8000/api/rag/query \
+curl -X POST http://127.0.0.1:8000/api/rag/query \
   -H "Content-Type: application/json" \
   -d '{"query": "アルバイトと正社員の違いは？"}'
 ```
@@ -246,7 +246,7 @@ def llm_batch():
   "name": "Ollama Chat (Optimized)",
   "type": "httpRequest",
   "parameters": {
-    "url": "http://localhost:5000/api/ollama/chat",
+    "url": "http://127.0.0.1:5000/api/ollama/chat",
     "method": "POST",
     "body": {
       "model": "qwen3:4b",
@@ -318,12 +318,12 @@ if rag.metrics:
 
 ```bash
 # RAG API
-curl -X POST http://localhost:8000/api/rag/query \
+curl -X POST http://127.0.0.1:8000/api/rag/query \
   -H "Content-Type: application/json" \
   -d '{"query": "質問内容"}'
 
 # Ollama統合API（プロンプト最適化付き）
-curl -X POST http://localhost:5000/api/ollama/chat \
+curl -X POST http://127.0.0.1:5000/api/ollama/chat \
   -H "Content-Type: application/json" \
   -d '{
     "model": "qwen3:4b",

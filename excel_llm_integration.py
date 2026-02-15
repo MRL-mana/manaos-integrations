@@ -38,7 +38,7 @@ class ExcelLLMIntegration:
             ollama_url: Ollama URL（環境変数OLLAMA_URLからも取得可能）
             model: 使用するモデル名（環境変数OLLAMA_MODELからも取得可能）
         """
-        self.ollama_url = ollama_url or os.getenv("OLLAMA_URL", "http://localhost:11434")
+        self.ollama_url = ollama_url or os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
         self.model = model or os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
         self.processor = None
         

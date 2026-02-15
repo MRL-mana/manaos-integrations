@@ -12,9 +12,11 @@ from collections import deque
 import os
 
 # APIエンドポイント
-UNIFIED_API_URL = "http://localhost:9500"
-ROUTING_API_URL = "http://localhost:9501"
-LM_STUDIO_URL = "http://localhost:1234/v1"
+UNIFIED_API_URL = os.getenv(
+    "MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510"
+).rstrip("/")
+ROUTING_API_URL = UNIFIED_API_URL
+LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", "http://127.0.0.1:1234/v1").rstrip("/")
 
 # 監視履歴（最新100件）
 monitoring_history = deque(maxlen=100)
@@ -33,7 +35,7 @@ class ServiceMonitor:
                 "response_time_ms": 0
             },
             "llm_routing_api": {
-                "name": "LLMルーティングAPI",
+                "name": "LLMルーティング（Unified API）",
                 "url": f"{ROUTING_API_URL}/api/llm/health",
                 "status": "unknown",
                 "last_check": None,

@@ -329,7 +329,7 @@ Phase1 で事故るのはだいたいここ。
 
 ## 8.4 統一APIから Moltbot を呼ぶ（まなOS本体連携）
 
-まなOS統一API（例: 9500）経由で Plan を送信できる。n8n・Open WebUI・他サービスから HTTP で呼べる。
+まなOS統一API（例: 9510）経由で Plan を送信できる。n8n・Open WebUI・他サービスから HTTP で呼べる。
 
 | メソッド | パス | 概要 |
 |----------|------|------|
@@ -340,7 +340,7 @@ Phase1 で事故るのはだいたいここ。
 | POST | /api/secretary/file-organize | 秘書経由でファイル整理 Plan 送信（学習・記憶と連携） |
 
 - 統一API の .env に `MOLTBOT_GATEWAY_URL`（例: http://127.0.0.1:8088）と `MOLTBOT_GATEWAY_SECRET` を設定する。
-- 疎通確認: リポジトリルートで `.\moltbot_gateway\deploy\check_unified_api_moltbot.ps1`（統一API 9500 と Moltbot Gateway 8088 が起動していること）。
+- 疎通確認: リポジトリルートで `.\moltbot_gateway\deploy\check_unified_api_moltbot.ps1`（統一API 9510 と Moltbot Gateway 8088 が起動していること）。
 - 自律・秘書からプログラムで送る場合は `PersonalityAutonomySecretaryIntegration.submit_file_organize_plan(user_hint, path, intent)` を使うと学習記録も残る。
 
 ---

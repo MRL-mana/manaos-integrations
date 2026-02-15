@@ -14,14 +14,14 @@ if (-not $webhookUrl) {
 # 環境変数を設定
 $env:SLACK_WEBHOOK_URL = $webhookUrl
 $env:PORT = "5114"
-$env:FILE_SECRETARY_URL = "http://localhost:5120"
-$env:ORCHESTRATOR_URL = "http://localhost:5106"
+$env:FILE_SECRETARY_URL = "http://127.0.0.1:5120"
+$env:ORCHESTRATOR_URL = "http://127.0.0.1:5106"
 
 Write-Host "設定完了:" -ForegroundColor Cyan
 Write-Host "  SLACK_WEBHOOK_URL: 設定済み"
 Write-Host "  PORT: 5114"
-Write-Host "  FILE_SECRETARY_URL: http://localhost:5120"
-Write-Host "  ORCHESTRATOR_URL: http://localhost:5106"
+Write-Host "  FILE_SECRETARY_URL: http://127.0.0.1:5120"
+Write-Host "  ORCHESTRATOR_URL: http://127.0.0.1:5106"
 Write-Host ""
 
 # 既存のSlack Integrationプロセスを確認
@@ -46,7 +46,7 @@ Start-Sleep -Seconds 3
 Write-Host ""
 Write-Host "ヘルスチェック中..." -ForegroundColor Cyan
 try {
-    $response = Invoke-RestMethod -Uri "http://localhost:5114/health" -Method Get -TimeoutSec 5
+    $response = Invoke-RestMethod -Uri "http://127.0.0.1:5114/health" -Method Get -TimeoutSec 5
     Write-Host "✅ Slack Integration起動成功！" -ForegroundColor Green
     Write-Host "   ステータス: $($response.status)" -ForegroundColor Cyan
 } catch {

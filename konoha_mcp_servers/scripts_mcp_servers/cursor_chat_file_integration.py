@@ -504,7 +504,7 @@ function insertChatMessage(html) {
             
             # WebUIを起動
             print("🚀 Chat File Integration WebUI起動中...")
-            print("🌐 URL: http://localhost:8093")
+            print("🌐 URL: http://127.0.0.1:8093")
             
             uvicorn.run(app, host="0.0.0.0", port=8093)
             

@@ -29,7 +29,7 @@ if env_path.exists():
             api_key = line.split("=", 1)[1].strip()
             break
 
-base_url = "http://localhost:5105"
+base_url = "http://127.0.0.1:5105"
 headers = {"Content-Type": "application/json"}
 if api_key:
     headers["X-API-Key"] = api_key
@@ -166,7 +166,7 @@ Working Memoryを更新
 環境変数（`.env`ファイル）で設定可能:
 
 - `MRL_MEMORY_API_KEY`: APIキー（認証用）
-- `MRL_MEMORY_API_URL`: API URL（デフォルト: http://localhost:5105）
+- `MRL_MEMORY_API_URL`: API URL（デフォルト: http://127.0.0.1:5105）
 - `REQUIRE_AUTH`: 認証必須かどうか（デフォルト: 1）
 - `RATE_LIMIT_PER_MIN`: レート制限（デフォルト: 60）
 - `MAX_INPUT_CHARS`: 最大入力文字数（デフォルト: 200000）

@@ -376,7 +376,7 @@ Closes #123
 
 ## テスト方法
 1. サービスを起動
-2. `http://localhost:9500/new-endpoint`にアクセス
+2. `http://127.0.0.1:9510/new-endpoint`にアクセス
 3. 期待結果: ...
 
 ## スクリーンショット（該当する場合）
@@ -522,11 +522,11 @@ def test_health_endpoint_returns_healthy_status():
     assert data["status"] == "healthy"
 
 
-@pytest.mark.parametrize("port", [9500, 5103, 5104, 5111])
+@pytest.mark.parametrize("port", [9510, 5105, 5126, 5111])
 def test_all_services_are_healthy(port):
     """All services should be healthy"""
     import requests
-    response = requests.get(f"http://localhost:{port}/health", timeout=5)
+    response = requests.get(f"http://127.0.0.1:{port}/health", timeout=5)
     assert response.status_code == 200
 ```
 
@@ -606,3 +606,4 @@ pytest --cov=. --cov-report=html
 **ハッピーコーディング！** 🚀
 
 **最終更新**: 2026年2月7日
+

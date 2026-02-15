@@ -86,9 +86,9 @@ class TaskPlanner:
     
     def __init__(
         self,
-        ollama_url: str = "http://localhost:11434",
+        ollama_url: str = "http://127.0.0.1:11434",
         model: str = "qwen2.5:14b",  # 中型モデル（推論が必要）
-        intent_router_url: str = "http://localhost:5100",
+        intent_router_url: str = "http://127.0.0.1:5100",
         config_path: Optional[Path] = None
     ):
         """
@@ -128,9 +128,9 @@ class TaskPlanner:
                 schema = {
                     "required": ["model"],
                     "fields": {
-                        "ollama_url": {"type": str, "default": "http://localhost:11434"},
+                        "ollama_url": {"type": str, "default": "http://127.0.0.1:11434"},
                         "model": {"type": str},
-                        "intent_router_url": {"type": str, "default": "http://localhost:5100"},
+                        "intent_router_url": {"type": str, "default": "http://127.0.0.1:5100"},
                         "max_steps": {"type": int, "default": 10},
                         "default_priority": {"type": str, "default": "medium"}
                     }
@@ -158,9 +158,9 @@ class TaskPlanner:
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
         return {
-            "ollama_url": "http://localhost:11434",
+            "ollama_url": "http://127.0.0.1:11434",
             "model": "qwen2.5:14b",
-            "intent_router_url": "http://localhost:5100",
+            "intent_router_url": "http://127.0.0.1:5100",
             "action_templates": self._get_default_action_templates(),
             "planning_prompt_template": self._get_default_planning_prompt_template(),
             "max_steps": 10,

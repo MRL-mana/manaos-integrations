@@ -52,12 +52,12 @@ result = manaos.act("llm_call", {
 
 ```bash
 # LLMルーティング
-curl -X POST http://localhost:9500/api/llm/route \
+curl -X POST http://127.0.0.1:9510/api/llm/route \
   -H "Content-Type: application/json" \
   -d '{"task_type": "conversation", "prompt": "こんにちは"}'
 
 # 朝のルーチン
-curl -X POST http://localhost:9500/api/secretary/morning
+curl -X POST http://127.0.0.1:9510/api/secretary/morning
 ```
 
 ---
@@ -144,10 +144,10 @@ result = secretary.evening_routine()
 
 ### n8nワークフロー
 
-1. n8nを開く（http://localhost:5678）
+1. n8nを開く（http://127.0.0.1:5678）
 2. ワークフロー → インポート
 3. `n8n_workflows/core_routines/` のJSONファイルをインポート
-4. Webhook URLを設定: `http://localhost:9500/api/secretary/{morning|noon|evening}`
+4. Webhook URLを設定: `http://127.0.0.1:9510/api/secretary/{morning|noon|evening}`
 5. スケジュールを設定
 
 ---
@@ -252,7 +252,7 @@ python test_api_endpoints_extension.py
 
 2. **Ollama URL**（環境変数）
    ```bash
-   export OLLAMA_URL="http://localhost:11434"
+   export OLLAMA_URL="http://127.0.0.1:11434"
    ```
 
 ### オプション設定
@@ -290,7 +290,7 @@ python test_api_endpoints_extension.py
 
 1. ポートが使用されていないか確認
    ```bash
-   netstat -ano | findstr :9500  # Windows
+   netstat -ano | findstr :9510  # Windows
    ```
 
 2. 依存関係がインストールされているか確認
@@ -355,6 +355,7 @@ manaOS拡張フェーズの実装を完了しました。
 
 **最終更新**: 2025-12-28  
 **実装完了**: ✅ 全フェーズ完了
+
 
 
 

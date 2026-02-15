@@ -126,7 +126,7 @@ result = manaos.act("lfm25_call", {
 
 ```bash
 # LFM 2.5チャット
-curl -X POST http://localhost:9500/api/lfm25/chat \
+curl -X POST http://127.0.0.1:9510/api/lfm25/chat \
   -H "Content-Type: application/json" \
   -d '{
     "message": "こんにちは！",
@@ -134,14 +134,14 @@ curl -X POST http://localhost:9500/api/lfm25/chat \
   }'
 
 # LFM 2.5軽量会話
-curl -X POST http://localhost:9500/api/lfm25/lightweight \
+curl -X POST http://127.0.0.1:9510/api/lfm25/lightweight \
   -H "Content-Type: application/json" \
   -d '{
     "message": "今日のタスクを整理してください"
   }'
 
 # LFM 2.5状態確認
-curl http://localhost:9500/api/lfm25/status
+curl http://127.0.0.1:9510/api/lfm25/status
 ```
 
 ---
@@ -167,3 +167,4 @@ python lfm25_usage_examples.py
 ---
 
 **最終更新**: 2025-01-28
+

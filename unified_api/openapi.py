@@ -10,7 +10,7 @@ def build_openapi_spec() -> Dict[str, Any]:
 
     NOTE: 互換のため、URLは従来どおり host.docker.internal をデフォルトにする。
     """
-    base_url = os.getenv("MANAOS_OPENAPI_SERVER_URL", "http://host.docker.internal:9500").rstrip(
+    base_url = os.getenv("MANAOS_OPENAPI_SERVER_URL", "http://host.docker.internal:9510").rstrip(
         "/"
     )
 
@@ -23,6 +23,107 @@ def build_openapi_spec() -> Dict[str, Any]:
         },
         "servers": [{"url": base_url, "description": "ローカルサーバー"}],
         "paths": {
+            "/api/llm/health": {
+                "get": {
+                    "summary": "LLMルーティング ヘルス",
+                    "description": "LLMルーティング（難易度ルーティング）の稼働確認と利用可能モデル数を返します",
+                    "operationId": "getLlmRoutingHealth",
+                    "responses": {
+                        "200": {"description": "成功"},
+                        "503": {"description": "未初期化/利用不可"},
+                    },
+                }
+            },
+            "/api/llm/models": {
+                "get": {
+                    "summary": "利用可能モデル一覧",
+                    "description": "LLMルーティングで利用可能なモデル一覧を返します",
+                    "operationId": "getLlmModels",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "未初期化/利用不可"}},
+                }
+            },
+            "/api/llm/models-enhanced": {
+                "get": {
+                    "summary": "利用可能モデル一覧（拡張）",
+                    "description": "互換のため /api/llm/models と同等のレスポンスを返します",
+                    "operationId": "getLlmModelsEnhanced",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "未初期化/利用不可"}},
+                }
+            },
+            "/api/llm/analyze": {
+                "post": {
+                    "summary": "難易度分析",
+                    "description": "プロンプトの難易度を分析し、推奨モデルを返します（LLM呼び出しなし）",
+                    "operationId": "postLlmAnalyze",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prompt": {"type": "string"},
+                                        "context": {"type": "object"},
+                                        "code_context": {"type": "string"},
+                                    },
+                                    "required": ["prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}, "503": {"description": "未初期化/利用不可"}},
+                }
+            },
+            "/api/llm/route": {
+                "post": {
+                    "summary": "LLMルーティング実行",
+                    "description": "難易度に応じてモデルを選択し、LLMを実行します",
+                    "operationId": "postLlmRoute",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prompt": {"type": "string"},
+                                        "context": {"type": "object"},
+                                        "preferences": {"type": "object"},
+                                        "code_context": {"type": "string"},
+                                    },
+                                    "required": ["prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}, "503": {"description": "未初期化/利用不可"}},
+                }
+            },
+            "/api/llm/route-enhanced": {
+                "post": {
+                    "summary": "LLMルーティング実行（拡張）",
+                    "description": "互換のため /api/llm/route と同等の動作をします",
+                    "operationId": "postLlmRouteEnhanced",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prompt": {"type": "string"},
+                                        "context": {"type": "object"},
+                                        "preferences": {"type": "object"},
+                                        "code_context": {"type": "string"},
+                                    },
+                                    "required": ["prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}, "503": {"description": "未初期化/利用不可"}},
+                }
+            },
             "/api/comfyui/generate": {
                 "post": {
                     "summary": "ComfyUIで画像を生成",

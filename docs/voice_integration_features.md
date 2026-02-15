@@ -127,9 +127,9 @@ scripts\voice\start_voice_secretary.bat
 | `VOICE_TTS_ENGINE` | TTSエンジン | `voicevox` |
 | `VOICEVOX_URL` | VOICEVOX API URL | `http://127.0.0.1:50021` |
 | `VOICEVOX_SPEAKER_ID` | スピーカーID | `3` |
-| `INTENT_ROUTER_URL` | Intent Router URL | `http://localhost:5100` |
-| `UNIFIED_API_URL` | 統合API URL | `http://localhost:9500` |
-| `LLM_ROUTING_URL` | LLMルーティングURL | `http://localhost:5110` |
+| `INTENT_ROUTER_URL` | Intent Router URL | `http://127.0.0.1:5100` |
+| `UNIFIED_API_URL` | 統合API URL | `http://127.0.0.1:9510` |
+| `LLM_ROUTING_URL` | LLMルーティングURL | `http://127.0.0.1:5111` |
 
 ---
 
@@ -171,7 +171,7 @@ import httpx
 def intent_router_callback(text: str) -> dict:
     """Intent Routerコールバック"""
     response = httpx.post(
-        "http://localhost:5100/api/classify",
+        "http://127.0.0.1:5100/api/classify",
         json={"text": text}
     )
     return response.json()
@@ -193,7 +193,7 @@ def task_registration_callback(text: str, intent_result: dict) -> bool:
     if intent_result.get("intent_type") == "task_execution":
         # タスクキューに登録
         response = httpx.post(
-            "http://localhost:9500/api/task/queue/add",
+            "http://127.0.0.1:9510/api/task/queue/add",
             json={"input_text": text, "priority": "medium"}
         )
         return response.status_code == 200
@@ -220,3 +220,4 @@ conversation_loop = VoiceConversationLoop(
 ---
 
 **秘書レミ完全体、完成！** 🎉
+

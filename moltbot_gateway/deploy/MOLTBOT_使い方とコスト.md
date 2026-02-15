@@ -100,14 +100,14 @@ n8n・Open WebUI・自分で書いたスクリプトから HTTP で呼べる。
 
    ```powershell
    # Plan 送信（list_only）
-   Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:9500/api/moltbot/plan" `
+   Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:9510/api/moltbot/plan" `
      -ContentType "application/json" -Body '{"intent":"list_only","path":"~/Downloads"}'
 
    # 結果取得（返ってきた plan_id を指定）
-   Invoke-RestMethod -Uri "http://127.0.0.1:9500/api/moltbot/plan/plan-YYYYMMDD-HHMMSS/result"
+   Invoke-RestMethod -Uri "http://127.0.0.1:9510/api/moltbot/plan/plan-YYYYMMDD-HHMMSS/result"
 
    # 秘書経由（学習・記憶と連携）
-   Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:9500/api/secretary/file-organize" `
+   Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:9510/api/secretary/file-organize" `
      -ContentType "application/json" -Body '{"path":"~/Downloads","user_hint":"一覧取得"}'
    ```
 
@@ -170,3 +170,4 @@ r = i.submit_file_organize_plan(user_hint="Downloads確認", path="~/Downloads",
 
 **Cursor のチャットから**
 「list_only して」「Downloads の一覧取って」などと書くと、AI がタスク実行や `python manaos_moltbot_runner.py list_only` を提案してくれる。そのまま実行すればよい。
+

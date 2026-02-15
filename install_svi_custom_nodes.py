@@ -13,11 +13,11 @@ import io
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 import os
-COMFYUI_URL = os.getenv("COMFYUI_URL", "http://localhost:8188")
+COMFYUI_URL = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
 # ComfyUIパスを環境変数から取得（デフォルト: C:/ComfyUI）
 COMFYUI_PATH = Path(os.getenv("COMFYUI_PATH", "C:/ComfyUI"))
 CUSTOM_NODES_PATH = COMFYUI_PATH / "custom_nodes"
@@ -183,7 +183,7 @@ def main():
         print("[WARN] 一部のカスタムノードのインストールに失敗しました")
         print("手動でインストールしてください:")
         print("1. ComfyUIを起動")
-        print("2. ブラウザで http://localhost:8188 にアクセス")
+        print("2. ブラウザで http://127.0.0.1:8188 にアクセス")
         print("3. 「Manager」→「Install Missing Custom Nodes」を実行")
     
     return success_count == len(REQUIRED_CUSTOM_NODES)

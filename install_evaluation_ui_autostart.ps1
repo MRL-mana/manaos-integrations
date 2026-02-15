@@ -44,5 +44,5 @@ $sc.Save()
 [System.Runtime.Interopservices.Marshal]::ReleaseComObject($WshShell) | Out-Null
 
 Write-Host 'Autostart registered. Shortcut:' $shortcutPath
-Write-Host 'From next logon http://localhost:9601/ starts automatically.'
+Write-Host 'From next logon http://127.0.0.1:9601/ starts automatically.'
 Write-Host 'To remove: install_evaluation_ui_autostart.ps1 -Uninstall'

@@ -10,9 +10,9 @@ import time
 
 # Windowsでのエンコーディング問題を回避
 if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-GALLERY_API = "http://localhost:5559/api/images"
+GALLERY_API = "http://127.0.0.1:5559/api/images"
 
 try:
     response = requests.get(GALLERY_API)
@@ -27,7 +27,7 @@ try:
 
         # 最新の10枚の画像URLを開く
         for i, img in enumerate(images[:10], 1):
-            url = f"http://localhost:5559/images/{img['filename']}"
+            url = f"http://127.0.0.1:5559/images/{img['filename']}"
             print(f"{i}. {img['filename']}")
             print(f"   URL: {url}")
 
@@ -44,7 +44,7 @@ try:
 
         print("=" * 60)
         print("ギャラリーページも開きます...")
-        webbrowser.open("http://localhost:5559/")
+        webbrowser.open("http://127.0.0.1:5559/")
     else:
         print(f"エラー: HTTP {response.status_code}")
         print(response.text)

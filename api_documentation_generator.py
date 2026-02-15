@@ -27,7 +27,7 @@ def generate_openapi_spec() -> Dict[str, Any]:
         },
         "servers": [
             {
-                "url": "http://localhost:5000",
+                "url": "http://127.0.0.1:5000",
                 "description": "ローカル開発環境"
             },
             {

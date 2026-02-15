@@ -20,7 +20,7 @@ Write-Host ""
 # 現在のモデルを確認
 Write-Host "[2] 現在のモデルを確認中..." -ForegroundColor Yellow
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:1234/v1/models" -Method GET -TimeoutSec 3 -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "http://127.0.0.1:1234/v1/models" -Method GET -TimeoutSec 3 -ErrorAction Stop
     $models = ($response.Content | ConvertFrom-Json).data
     $availableModels = $models | ForEach-Object { $_.id }
     

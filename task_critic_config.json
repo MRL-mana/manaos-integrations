@@ -1,5 +1,5 @@
 {
-  "ollama_url": "http://localhost:11434",
+  "ollama_url": "http://127.0.0.1:11434",
   "model": "llama3.2:3b",
   "success_threshold": 0.7,
   "partial_success_threshold": 0.4,

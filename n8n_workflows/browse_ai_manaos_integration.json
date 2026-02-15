@@ -44,7 +44,7 @@
     },
     {
       "parameters": {
-        "url": "http://localhost:5000/api/manaos/judge",
+        "url": "http://127.0.0.1:5000/api/manaos/judge",
         "method": "POST",
         "authentication": "none",
         "sendBody": true,

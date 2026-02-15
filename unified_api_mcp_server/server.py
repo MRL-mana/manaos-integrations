@@ -14,8 +14,8 @@ import io
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -36,10 +36,10 @@ logger = logging.getLogger(__name__)
 
 # APIエンドポイント
 # NOTE:
-# - ManaOSの統合APIは通常 9502 を使用する
+# - ManaOSの統合APIはデフォルト 9510（Docker/WSL の 9500-9503 衝突回避）
 # - 必要に応じて環境変数 `MANAOS_INTEGRATION_API_URL` で上書き可能
-UNIFIED_API_URL = (os.getenv("MANAOS_INTEGRATION_API_URL") or "http://localhost:9502").rstrip("/")
-ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://localhost:5106")
+UNIFIED_API_URL = (os.getenv("MANAOS_INTEGRATION_API_URL") or "http://127.0.0.1:9510").rstrip("/")
+ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://127.0.0.1:5106")
 
 # MCPサーバーの初期化
 if MCP_AVAILABLE:

@@ -81,7 +81,7 @@ class GPUOptimizer:
         """モデルを事前ロード（GPUメモリに常駐）"""
         import requests
         
-        ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
+        ollama_url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
         
         for model in self.config.preload_models:
             try:
@@ -299,7 +299,7 @@ class GPUOptimizer:
         """GPUでLLM呼び出しを実行"""
         import requests
         
-        ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
+        ollama_url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
         
         # GPUを最大限使用
         response = requests.post(
@@ -325,7 +325,7 @@ class GPUOptimizer:
         """GPUでバッチ処理を実行"""
         import requests
         
-        ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
+        ollama_url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
         
         # 複数のプロンプトを並列処理
         tasks = []
@@ -360,7 +360,7 @@ class GPUOptimizer:
         """CPUモードでフォールバック"""
         import requests
         
-        ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
+        ollama_url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
         
         response = requests.post(
             f"{ollama_url}/api/chat",

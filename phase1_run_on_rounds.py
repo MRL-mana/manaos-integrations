@@ -15,7 +15,7 @@ except ImportError:
     print("requests が必要です: pip install requests", file=sys.stderr)
     sys.exit(1)
 
-API_URL = os.environ.get("PHASE1_API_URL", "http://localhost:9500")
+API_URL = os.environ.get("PHASE1_API_URL", "http://127.0.0.1:9510")
 CHAT_URL = f"{API_URL}/api/llm/chat"
 TIMEOUT = int(os.environ.get("PHASE1_API_TIMEOUT", "300"))
 

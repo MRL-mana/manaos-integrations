@@ -5,14 +5,13 @@
     {"name": "Task Critic", "port": 5102, "script": "task_critic.py"},
     {"name": "RAG Memory", "port": 5103, "script": "rag_memory_enhanced.py"},
     {"name": "Task Queue", "port": 5104, "script": "task_queue_system.py"},
-    {"name": "UI Operations", "port": 5105, "script": "ui_operations_api.py"},
+    {"name": "MRL Memory", "port": 5105, "script": "mrl_memory_integration"},
     {"name": "Unified Orchestrator", "port": 5106, "script": "unified_orchestrator.py"},
     {"name": "Executor Enhanced", "port": 5107, "script": "task_executor_enhanced.py"},
     {"name": "Portal Integration", "port": 5108, "script": "portal_integration_api.py"},
     {"name": "Content Generation", "port": 5109, "script": "content_generation_loop.py"},
-    {"name": "LLM Optimization", "port": 5110, "script": "llm_optimization.py"},
-    {"name": "Service Monitor", "port": 5111, "script": "service_monitor.py"},
-    {"name": "System Status API", "port": 5112, "script": "system_status_api.py"},
+    {"name": "LLM Routing MCP", "port": 5111, "script": "llm_routing_mcp_server"},
+    {"name": "Video Pipeline", "port": 5112, "script": "video_pipeline_mcp_server"},
     {"name": "Crash Snapshot", "port": 5113, "script": "crash_snapshot.py"},
     {"name": "Slack Integration", "port": 5114, "script": "slack_integration.py"},
     {"name": "Web Voice Interface", "port": 5115, "script": "web_voice_interface.py"},
@@ -22,7 +21,7 @@
     {"name": "Payment Integration", "port": 5119, "script": "payment_integration.py"},
     {"name": "SSOT API", "port": 5120, "script": "ssot_api.py"},
     {"name": "Step Deep Research", "port": 5121, "script": "step_deep_research_service.py"},
-    {"name": "Unified API Server", "port": 9500, "script": "unified_api_server.py"}
+    {"name": "Unified API Server", "port": 9510, "script": "unified_api_server.py"}
   ],
   "health_check": {
     "timeout_seconds": 2.0,

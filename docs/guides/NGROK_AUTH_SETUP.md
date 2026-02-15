@@ -78,7 +78,7 @@ Version                       3.x.x
 Region                        United States (us)
 Latency                       45ms
 Web Interface                 http://127.0.0.1:4040
-Forwarding                    https://xxxx-xxxx-xxxx.ngrok-free.app -> http://localhost:5678
+Forwarding                    https://xxxx-xxxx-xxxx.ngrok-free.app -> http://127.0.0.1:5678
 ```
 
 ---

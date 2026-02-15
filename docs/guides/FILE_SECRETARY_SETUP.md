@@ -46,8 +46,8 @@ python file_secretary_api.py
 
 ```bash
 export PORT=5114
-export FILE_SECRETARY_URL=http://localhost:5120
-export ORCHESTRATOR_URL=http://localhost:5106
+export FILE_SECRETARY_URL=http://127.0.0.1:5120
+export ORCHESTRATOR_URL=http://127.0.0.1:5106
 python slack_integration.py
 ```
 
@@ -57,13 +57,13 @@ python slack_integration.py
 
 ```bash
 # ヘルスチェック
-curl http://localhost:5120/health
+curl http://127.0.0.1:5120/health
 
 # INBOX状況取得
-curl http://localhost:5120/api/inbox/status
+curl http://127.0.0.1:5120/api/inbox/status
 
 # ファイル検索
-curl "http://localhost:5120/api/files/search?query=日報"
+curl "http://127.0.0.1:5120/api/files/search?query=日報"
 ```
 
 ### Slackテスト

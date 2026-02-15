@@ -51,7 +51,7 @@ if ($LASTEXITCODE -eq 0 -and -not ($firewallRule -match "指定された規則�
 # 4. Test local connection
 Write-Host "[4/4] Testing local connection..." -ForegroundColor Yellow
 try {
-    $response = Invoke-RestMethod -Uri "http://localhost:5120/api/health" -TimeoutSec 5
+    $response = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/health" -TimeoutSec 5
     Write-Host "[SUCCESS] Local connection works!" -ForegroundColor Green
     Write-Host "  Status: $($response.status)" -ForegroundColor Cyan
 } catch {

@@ -609,7 +609,7 @@ class RowsIntegration:
             return None
         
         # ManaOS統合API経由でNotionに同期
-        manaos_api_url = os.getenv("MANAOS_INTEGRATION_API_URL", "http://localhost:9500")
+        manaos_api_url = os.getenv("MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510")
         try:
             payload = {
                 "action": "notion_sync",

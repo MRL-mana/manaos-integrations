@@ -13,7 +13,7 @@ from datetime import datetime
 # UTF-8エンコーディング設定
 sys.stdout.reconfigure(encoding='utf-8')
 
-BASE_URL = "http://localhost:9500"
+BASE_URL = "http://127.0.0.1:9510"
 HEALTH_TIMEOUT = 1
 READY_TIMEOUT = 60  # 最大60秒ポーリング
 READY_POLL_INTERVAL = 2  # 2秒間隔

@@ -13,9 +13,9 @@ try {
     $ngrokProcess = Start-Process ngrok -ArgumentList "http", "5114" -PassThru -WindowStyle Normal -ErrorAction Stop
     Write-Host "✅ ngrok起動成功（PID: $($ngrokProcess.Id)）" -ForegroundColor Green
     Write-Host "`n数秒待ってから、以下のURLを確認してください:" -ForegroundColor Cyan
-    Write-Host "  http://localhost:4040" -ForegroundColor White
+    Write-Host "  http://127.0.0.1:4040" -ForegroundColor White
     Write-Host "`nまたは、以下のコマンドでURLを取得:" -ForegroundColor Cyan
-    Write-Host "  Invoke-RestMethod http://localhost:4040/api/tunnels | ConvertTo-Json" -ForegroundColor White
+    Write-Host "  Invoke-RestMethod http://127.0.0.1:4040/api/tunnels | ConvertTo-Json" -ForegroundColor White
 } catch {
     Write-Host "❌ ngrok起動失敗: $_" -ForegroundColor Red
     Write-Host "`n手動でngrokを起動してください:" -ForegroundColor Yellow

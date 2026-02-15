@@ -87,11 +87,11 @@ python --version  # 3.11以上
 pip install -r requirements-core.txt
 
 # 3. 個別サービスをテスト起動
-python -m mrl_memory_system
+python -m mrl_memory_integration
 # → エラーメッセージを確認
 
 # 4. ポート競合確認
-netstat -ano | findstr "9500 5103 5104 5111"
+netstat -ano | findstr "9510 5105 5126 5111"
 # → すでに使用されている場合は停止
 ```
 
@@ -137,10 +137,10 @@ Ctrl+Shift+P → "Tasks: Run Task" →
 または、PowerShellで直接：
 
 ```powershell
-python -m mrl_memory_system          # ポート5103
-python -m learning_system_api        # ポート5104
+python -m mrl_memory_integration     # ポート5105
+python -m learning_system_api        # ポート5126
 python -m llm_routing_mcp_server     # ポート5111
-python -m unified_api_mcp_server     # ポート9500
+python -m unified_api_server         # ポート9510
 ```
 
 ---
@@ -272,7 +272,7 @@ View → Terminal  # または Ctrl+`
 ```python
 # REST API経由でアクセス
 import requests
-response = requests.get("http://127.0.0.1:9500/tools")
+response = requests.get("http://127.0.0.1:9502/api/mcp/tools")
 ```
 
 詳細: [VSCODE_VS_CURSOR.md#MCP統合](VSCODE_VS_CURSOR.md#mcp統合の違い)
@@ -372,8 +372,8 @@ response = requests.get("http://127.0.0.1:9500/tools")
 # 起動ログに表示される
 
 # 2. 個別サービスの応答時間を測定
-Measure-Command { Invoke-RestMethod http://localhost:9500/health }
-Measure-Command { Invoke-RestMethod http://localhost:5103/health }
+Measure-Command { Invoke-RestMethod http://127.0.0.1:9510/health }
+Measure-Command { Invoke-RestMethod http://127.0.0.1:5105/health }
 
 # 3. メモリ使用量を確認
 Get-Process python | Select-Object Name, CPU, WorkingSet64 | Format-Table
@@ -419,7 +419,7 @@ Get-Process python | Select-Object Name, CPU, WorkingSet64 | Format-Table
 1. **サービスを段階的に起動**
    ```
    # 必要なサービスだけ起動
-   python -m unified_api_mcp_server  # メインのみ
+   python -m unified_api_server  # 統合APIのみ
    ```
 
 2. **System3自律監視を無効化**
@@ -458,20 +458,20 @@ cat .gitignore | findstr ".env"
 
 ---
 
-### Q22: ポート9500が外部に公開されますか？
+### Q22: ポート9510が外部に公開されますか？
 
 **A:** いいえ。デフォルトでローカルのみ（`127.0.0.1`）：
 
 ```python
 # unified_api_server.py
-uvicorn.run(app, host="127.0.0.1", port=9500)
+uvicorn.run(app, host="127.0.0.1", port=9510)
 #                      ^^^^^^^^^^^
 #                      ローカルのみ
 ```
 
 外部公開したい場合（VPNなど）:
 ```python
-uvicorn.run(app, host="0.0.0.0", port=9500)  # すべてのNICで待ち受け
+uvicorn.run(app, host="0.0.0.0", port=9510)  # すべてのNICで待ち受け
 ```
 
 ただし、認証なしなので**推奨しません**。

@@ -54,11 +54,11 @@
 | 変数 | 説明 | デフォルト |
 |------|------|------------|
 | `PHASE2_MEMO_INJECT` | 会話に Phase2 メモを注入 | off |
-| `PORTAL_INTEGRATION_URL` | Portal API（アラート取得） | http://localhost:5108 |
-| `UNIFIED_API_URL` | 統合API（通知送信） | http://localhost:9500 |
+| `PORTAL_INTEGRATION_URL` | Portal API（アラート取得） | http://127.0.0.1:5108 |
+| `UNIFIED_API_URL` | 統合API（通知送信） | http://127.0.0.1:9510 |
 | `SLACK_WEBHOOK_URL` | アラート通知先（必須） | - |
-| `INTENT_ROUTER_URL` | Intent Router | http://localhost:5100 |
-| `ORCHESTRATOR_URL` | オーケストレーター | http://localhost:5106 |
+| `INTENT_ROUTER_URL` | Intent Router | http://127.0.0.1:5100 |
+| `ORCHESTRATOR_URL` | オーケストレーター | http://127.0.0.1:5106 |
 
 ## 新しい API 一覧
 
@@ -78,3 +78,4 @@ start_unified_api_and_moltbot.bat
 scripts\check_manaos_stack.bat
 .\scripts\check_manaos_stack.ps1 -Extended
 ```
+

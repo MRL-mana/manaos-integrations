@@ -12,13 +12,13 @@ import time
 # Windowsコンソールのエンコーディング設定
 if sys.platform == "win32":
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 def check_service(port, name):
     """サービスが動作しているか確認"""
     try:
-        response = requests.get(f"http://localhost:{port}/health", timeout=2)
+        response = requests.get(f"http://127.0.0.1:{port}/health", timeout=2)
         if response.status_code == 200:
             return True
     except Exception:
@@ -32,7 +32,7 @@ def test_intent_router():
         test_data = {"text": "こんにちは"}
         start_time = time.time()
         response = requests.post(
-            "http://localhost:5100/api/classify",
+            "http://127.0.0.1:5100/api/classify",
             json=test_data,
             timeout=10
         )
@@ -56,7 +56,7 @@ def test_unified_api():
     """Unified API Serverのテスト"""
     print("[2] Unified API Server動作確認...")
     try:
-        response = requests.get("http://localhost:9502/ready", timeout=8)
+        response = requests.get("http://127.0.0.1:9510/ready", timeout=8)
         if response.status_code == 200:
             print("  [OK] 動作確認成功")
             return True
@@ -81,7 +81,7 @@ def main():
         ("Intent Router", 5100),
         ("Task Planner", 5101),
         ("Content Generation", 5109),
-        ("Unified API Server", 9502)
+        ("Unified API Server", 9510)
     ]
     
     all_running = True

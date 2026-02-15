@@ -10,7 +10,7 @@ from pathlib import Path
 if sys.platform == "win32" and hasattr(sys.stdout, "buffer"):
     import io
 
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 # 起動ログ（デバッグ用：eval_ui_debug.log に追記）
 _debug_log = Path(__file__).parent / "eval_ui_debug.log"
@@ -62,7 +62,7 @@ if not evaluation_web_file.exists():
     app = Flask(__name__)
 
     COMFYUI_OUTPUT_DIR = Path(os.getenv("COMFYUI_OUTPUT_DIR", "C:/ComfyUI/output"))
-    COMFYUI_URL = os.getenv("COMFYUI_URL", "http://localhost:8188")
+    COMFYUI_URL = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
     # generate_50 と同じベースでメタデータを参照（COMFYUI_BASE または OUTPUT の親）
     _comfyui_base = os.getenv("COMFYUI_BASE") or os.getenv("COMFYUI_PATH")
     if _comfyui_base:
@@ -1769,7 +1769,7 @@ if not evaluation_web_file.exists():
         print("=" * 60)
         print("画像評価Webサーバー起動（ポート9601）")
         print("=" * 60)
-        print(f"ローカルアクセス: http://localhost:{PORT}")
+        print(f"ローカルアクセス: http://127.0.0.1:{PORT}")
         print(f"外部アクセス（同一Wi-Fi）: http://{local_ip}:{PORT}")
         print(f"Pixel 7からアクセス: http://{local_ip}:{PORT}")
         print("=" * 60)

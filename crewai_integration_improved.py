@@ -34,7 +34,7 @@ class CrewAIIntegration(BaseIntegration):
     
     def __init__(
         self,
-        ollama_url: str = "http://localhost:11434",
+        ollama_url: str = "http://127.0.0.1:11434",
         model_name: str = "qwen2.5:7b"
     ):
         """

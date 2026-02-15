@@ -45,7 +45,7 @@ ManaOS では次のように対応しています。
 ### 呼び出し例
 
 ```http
-POST http://localhost:5106/api/execute
+POST http://127.0.0.1:5106/api/execute
 Content-Type: application/json
 
 {
@@ -151,7 +151,7 @@ AIクライアントには **1ツールだけ** 定義します。
 
 | 用途 | エンドポイント | 備考 |
 |------|----------------|------|
-| 直接オーケストレータを叩く | `POST http://localhost:5106/api/execute` | ボディ: `{"query": "自然文"}` または `{"text": "自然文"}` |
+| 直接オーケストレータを叩く | `POST http://127.0.0.1:5106/api/execute` | ボディ: `{"query": "自然文"}` または `{"text": "自然文"}` |
 | Portal 経由（同一ホストで Portal がある場合） | `POST http://<PortalのURL>/api/ask_orchestrator` | ボディ: `{"query": "自然文"}` |
 
 ### 2. AI クライアントへのツール追加
@@ -168,7 +168,7 @@ AIクライアントには **1ツールだけ** 定義します。
 
 ```bash
 # オーケストレータ直接
-curl -X POST http://localhost:5106/api/execute -H "Content-Type: application/json" -d "{\"query\": \"部屋の温度教えて\"}"
+curl -X POST http://127.0.0.1:5106/api/execute -H "Content-Type: application/json" -d "{\"query\": \"部屋の温度教えて\"}"
 
 # Portal 経由（Portal が起動している場合）
 curl -X POST http://<PortalのURL>/api/ask_orchestrator -H "Content-Type: application/json" -d "{\"query\": \"部屋の温度教えて\"}"
@@ -231,7 +231,7 @@ python scripts/test_ask_orchestrator_safety.py
 | 2. 同時 2 発（並列） | 同じ query を 2 スレッドで同時送信 → 同じ `meta.trace_id`（inflight で 1 回に収束） |
 | 3. unknown → skill_not_found | 「東京タワーの高さは？」等 → `status === "skill_not_found"`（LLM フォールバック用） |
 
-環境変数 `PORTAL_URL`（デフォルト `http://localhost:5108`）で Portal の URL を指定できる。
+環境変数 `PORTAL_URL`（デフォルト `http://127.0.0.1:5108`）で Portal の URL を指定できる。
 
 ### 9. Portal → 5106 の転送ヘッダ（上流追跡）
 
@@ -444,16 +444,16 @@ scripts\start_orchestrator_production.ps1
 scripts\check_orchestrator_production_ready.bat
 
 # 5106 と Portal のヘルス
-curl -s http://localhost:5106/health
-curl -s http://localhost:5108/health
+curl -s http://127.0.0.1:5106/health
+curl -s http://127.0.0.1:5108/health
 
 # 集計取得（Portal 経由）
-curl -s http://localhost:5108/api/orchestrator/stats
+curl -s http://127.0.0.1:5108/api/orchestrator/stats
 ```
 
 ### 統合ダッシュボードでの集計表示
 
-**ManaOS 統合状態ダッシュボード**（`system_integration_dashboard.py`、ポート 9400）に **ask_orchestrator 集計** カードを追加済み。Portal が起動していれば、ダッシュボードの `/api/status` 取得後に Portal の `/api/orchestrator/stats` をプロキシして表示する。環境変数 `PORTAL_URL`（デフォルト `http://localhost:5108`）で Portal の URL を指定できる。
+**ManaOS 統合状態ダッシュボード**（`system_integration_dashboard.py`、ポート 9400）に **ask_orchestrator 集計** カードを追加済み。Portal が起動していれば、ダッシュボードの `/api/status` 取得後に Portal の `/api/orchestrator/stats` をプロキシして表示する。環境変数 `PORTAL_URL`（デフォルト `http://127.0.0.1:5108`）で Portal の URL を指定できる。
 
 **ManaOS 統合 API（9500）** からも `GET /api/orchestrator/stats` で集計を取得できる（Portal へのプロキシ）。9500 を使っているクライアントは同じ URL で集計を叩ける。
 

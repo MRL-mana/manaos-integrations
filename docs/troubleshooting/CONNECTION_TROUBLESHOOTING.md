@@ -12,7 +12,7 @@ OpenWebUIの「外部ツール」設定画面でTool Serverを登録しても、
 
 ```powershell
 # Tool Serverのヘルスチェック
-curl http://localhost:9503/health
+curl http://127.0.0.1:9503/health
 ```
 
 **期待される結果:**
@@ -28,7 +28,7 @@ curl http://localhost:9503/health
 
 ```powershell
 # OpenAPI仕様の取得
-curl http://localhost:9503/openapi.json
+curl http://127.0.0.1:9503/openapi.json
 ```
 
 **期待される結果:**
@@ -87,13 +87,13 @@ OpenWebUIの「外部ツール」設定画面で以下を確認：
 
 1. **URL (APIベースURL)**
    - ✅ `http://host.docker.internal:9503`
-   - ❌ `http://localhost:9503`（これは間違い）
+   - ❌ `http://127.0.0.1:9503`（これは間違い）
    - ❌ `http://127.0.0.1:9503`（これも間違い）
 
 2. **OpenAPI仕様URL**
    - ✅ `http://host.docker.internal:9503/openapi.json`
    - ✅ `openapi.json`（相対パス、URLが正しく設定されている場合）
-   - ❌ `http://localhost:9503/openapi.json`（これは間違い）
+   - ❌ `http://127.0.0.1:9503/openapi.json`（これは間違い）
 
 3. **認証 (Authentication)**
    - ✅ 「なし (None)」または「パブリック (Public)」
@@ -110,7 +110,7 @@ OpenWebUIの「外部ツール」設定画面で以下を確認：
    - `localhost`を使用していないか確認
 
 2. **Tool Serverが起動中か確認**
-   - `curl http://localhost:9503/health`
+   - `curl http://127.0.0.1:9503/health`
 
 3. **OpenWebUIコンテナから接続できるか確認**
    - `docker exec open-webui curl http://host.docker.internal:9503/health`
@@ -202,8 +202,8 @@ docker run -d --network host ...
 
 ### Tool Server側
 
-- [ ] Tool Serverが起動中（`curl http://localhost:9503/health`）
-- [ ] OpenAPI仕様が取得できる（`curl http://localhost:9503/openapi.json`）
+- [ ] Tool Serverが起動中（`curl http://127.0.0.1:9503/health`）
+- [ ] OpenAPI仕様が取得できる（`curl http://127.0.0.1:9503/openapi.json`）
 - [ ] ポート9503がリッスンしている（`netstat -ano | findstr :9503`）
 - [ ] ファイアウォールがブロックしていない
 
@@ -228,7 +228,7 @@ docker run -d --network host ...
 ### 優先度1: 基本的な確認
 
 1. **Tool Serverが起動中か確認**
-   - `curl http://localhost:9503/health`
+   - `curl http://127.0.0.1:9503/health`
 
 2. **OpenWebUIコンテナから接続できるか確認**
    - `docker exec open-webui curl http://host.docker.internal:9503/health`

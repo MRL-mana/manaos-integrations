@@ -15,7 +15,7 @@
 
 | 目的 | コマンド |
 |------|----------|
-| 9500・8088 の疎通 | `scripts\check_manaos_stack.bat` または `scripts\check_manaos_stack.ps1` |
+| 9510・8088 の疎通 | `scripts\check_manaos_stack.bat` または `scripts\check_manaos_stack.ps1` |
 | 全サービス疎通 | `.\scripts\check_manaos_stack.ps1 -Extended` |
 | デバイス状態（MCP） | `device_get_status` / `device_discover` |
 | MoltBot 稼働（MCP） | `moltbot_health` |
@@ -34,12 +34,12 @@
 1. **秘書ファイル整理**: MCP `secretary_file_organize`（path=~/Downloads, intent=list_only）→ 8088 が起動していること
 2. **デバイス一覧**: MCP `device_get_status` でオンライン数・キュー確認
 3. **Pixel 7 音声**: 上記で 8765/8766 起動 → Pixel 7 ブラウザで `http://<母艦IP>:8766`、WebSocket に `ws://<母艦IP>:8765`
-4. **NanoKVM**: ブラウザで `http://127.0.0.1:9500/api/nanokvm/console_url` で URL 取得 → ログイン
+4. **NanoKVM**: ブラウザで `http://127.0.0.1:9510/api/nanokvm/console_url` で URL 取得 → ログイン
 
 ## トラブル時
 
-- **9500 や 8088 が応答しない**: `start_unified_api_and_moltbot.bat` を再実行。起動後は `scripts\check_manaos_stack.bat` で両方 OK か確認。
-- **MCP がつながらない**: 統合API が 9500 で起動しているか確認（ブラウザで `http://127.0.0.1:9500/health` が 200 なら OK）。
+- **9510 や 8088 が応答しない**: `start_unified_api_and_moltbot.bat` を再実行。起動後は `scripts\check_manaos_stack.bat` で両方 OK か確認。
+- **MCP がつながらない**: 統合API が 9510 で起動しているか確認（ブラウザで `http://127.0.0.1:9510/health` が 200 なら OK）。
 - **秘書ファイル整理が失敗する**: MoltBot Gateway (8088) が起動しているか確認。.env に `MOLTBOT_GATEWAY_URL=http://127.0.0.1:8088` を設定。
 
 ## 参照

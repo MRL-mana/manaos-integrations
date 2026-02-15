@@ -39,4 +39,4 @@ You're live. 📈💰
 - `get_trend_by_date_range`: Get daily price trends (max 30 days)
 - `get_current_date`: Get current date
 
-🖥️ API Docs: http://localhost:8000/docs
+🖥️ API Docs: http://127.0.0.1:8000/docs

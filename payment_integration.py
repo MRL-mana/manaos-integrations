@@ -31,7 +31,7 @@ app = Flask(__name__)
 CORS(app)
 
 # 設定
-REVENUE_TRACKER_URL = os.getenv("REVENUE_TRACKER_URL", "http://localhost:5117")
+REVENUE_TRACKER_URL = os.getenv("REVENUE_TRACKER_URL", "http://127.0.0.1:5117")
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
 PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
@@ -181,8 +181,8 @@ def process_paypal_payment(amount: float, currency: str = "JPY", product_id: Opt
                     "custom": json.dumps(metadata) if metadata else None
                 }],
                 "redirect_urls": {
-                    "return_url": os.getenv("PAYPAL_RETURN_URL", "http://localhost:5119/api/payment/paypal/return"),
-                    "cancel_url": os.getenv("PAYPAL_CANCEL_URL", "http://localhost:5119/api/payment/paypal/cancel")
+                    "return_url": os.getenv("PAYPAL_RETURN_URL", "http://127.0.0.1:5119/api/payment/paypal/return"),
+                    "cancel_url": os.getenv("PAYPAL_CANCEL_URL", "http://127.0.0.1:5119/api/payment/paypal/cancel")
                 }
             })
             

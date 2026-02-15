@@ -386,7 +386,7 @@ def dashboard():
     return render_template_string(DASHBOARD_HTML)
 
 
-PORTAL_URL = os.getenv("PORTAL_URL", "http://localhost:5108")
+PORTAL_URL = os.getenv("PORTAL_URL", "http://127.0.0.1:5108")
 
 
 @app.route("/api/orchestrator/stats", methods=["GET"])

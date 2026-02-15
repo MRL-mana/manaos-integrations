@@ -36,24 +36,24 @@ def generate_runbook(
 
 | サービス名 | ポート | 起動スクリプト | Health URL |
 |-----------|--------|---------------|------------|
-| Intrinsic Score API | 5130 | `intrinsic_score_api.py` | `http://localhost:5130/api/score` |
-| Task Queue | 5104 | `task_queue_system.py` | `http://localhost:5104/health` |
-| Unified Orchestrator | 5106 | `unified_orchestrator.py` | `http://localhost:5106/health` |
-| Unified API Server | 9500 | `unified_api_server.py` | `http://localhost:9500/health` |
+| Intrinsic Score API | 5130 | `intrinsic_score_api.py` | `http://127.0.0.1:5130/api/score` |
+| Task Queue | 5104 | `task_queue_system.py` | `http://127.0.0.1:5104/health` |
+| Unified Orchestrator | 5106 | `unified_orchestrator.py` | `http://127.0.0.1:5106/health` |
+| Unified API Server | 9510 | `unified_api_server.py` | `http://127.0.0.1:9510/health` |
 
 ### Status & Monitoring
 
 | サービス名 | ポート | 起動スクリプト | Health URL |
 |-----------|--------|---------------|------------|
-| System Status API | 5112 | `system_status_api.py` | `http://localhost:5112/api/health` |
+| System Status API | 5112 | `system_status_api.py` | `http://127.0.0.1:5112/api/health` |
 | SSOT Generator | - | `ssot_generator.py` | - |
 
 ### Integration Services
 
 | サービス名 | ポート | 起動スクリプト | Health URL |
 |-----------|--------|---------------|------------|
-| Slack Integration | 5114 | `slack_integration.py` | `http://localhost:5114/api/health` |
-| Portal Integration | 5108 | `portal_integration_api.py` | `http://localhost:5108/api/health` |
+| Slack Integration | 5114 | `slack_integration.py` | `http://127.0.0.1:5114/api/health` |
+| Portal Integration | 5108 | `portal_integration_api.py` | `http://127.0.0.1:5108/api/health` |
 
 ---
 
@@ -66,7 +66,7 @@ def generate_runbook(
 1. **状態確認**
    ```powershell
    # 全ポート確認
-   netstat -ano | findstr "5130 5104 5106 9500 5112"
+    netstat -ano | findstr "5130 5104 5106 9510 5112"
 
    # プロセス確認
    Get-Process python | Where-Object {{$_.Path -like "*manaos*"}}
@@ -81,10 +81,10 @@ def generate_runbook(
 3. **動作確認**
    ```powershell
    # Health check
-   Invoke-RestMethod http://localhost:5130/api/score
-   Invoke-RestMethod http://localhost:5104/health
-   Invoke-RestMethod http://localhost:5106/health
-   Invoke-RestMethod http://localhost:9500/health
+   Invoke-RestMethod http://127.0.0.1:5130/api/score
+   Invoke-RestMethod http://127.0.0.1:5104/health
+   Invoke-RestMethod http://127.0.0.1:5106/health
+    Invoke-RestMethod http://127.0.0.1:9510/health
    ```
 
 **所要時間**: 約5分
@@ -109,7 +109,7 @@ cd C:\\Users\\mana4\\Desktop\\manaos_integrations
 python intrinsic_score_api.py
 
 # 4. 確認
-Invoke-RestMethod http://localhost:5130/api/health
+Invoke-RestMethod http://127.0.0.1:5130/api/health
 ```
 
 #### Task Queue (5104) が死んだ
@@ -123,7 +123,7 @@ cd C:\\Users\\mana4\\Desktop\\manaos_integrations
 python task_queue_system.py
 
 # 3. 確認
-Invoke-RestMethod http://localhost:5104/health
+Invoke-RestMethod http://127.0.0.1:5104/health
 ```
 
 #### Unified Orchestrator (5106) が死んだ
@@ -137,21 +137,21 @@ cd C:\\Users\\mana4\\Desktop\\manaos_integrations
 python unified_orchestrator.py
 
 # 3. 確認
-Invoke-RestMethod http://localhost:5106/api/health
+Invoke-RestMethod http://127.0.0.1:5106/api/health
 ```
 
-#### Unified API Server (9500) が死んだ
+#### Unified API Server (9510) が死んだ
 
 ```powershell
 # 1. ポート確認
-netstat -ano | findstr "9500"
+netstat -ano | findstr "9510"
 
 # 2. 再起動
 cd C:\\Users\\mana4\\Desktop\\manaos_integrations
 python unified_api_server.py
 
 # 3. 確認
-Invoke-RestMethod http://localhost:9500/health
+Invoke-RestMethod http://127.0.0.1:9510/health
 ```
 
 ---
@@ -292,8 +292,8 @@ Get-ScheduledTaskInfo -TaskName "System3_Status_Update"
 **対処法**:
 ```powershell
 # 1. サービス状態確認
-   Invoke-RestMethod http://localhost:5130/api/score -ErrorAction SilentlyContinue
-   Invoke-RestMethod http://localhost:5104/health -ErrorAction SilentlyContinue
+   Invoke-RestMethod http://127.0.0.1:5130/api/score -ErrorAction SilentlyContinue
+   Invoke-RestMethod http://127.0.0.1:5104/health -ErrorAction SilentlyContinue
 
 # 2. サービス起動
 cd C:\\Users\\mana4\\Desktop\\manaos_integrations
@@ -385,7 +385,7 @@ if __name__ == "__main__":
     import sys
     import io
     if sys.platform == 'win32':
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
     path = generate_runbook()
     print(f"OK Runbook generated: {path}")

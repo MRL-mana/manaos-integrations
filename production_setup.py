@@ -52,7 +52,7 @@ class ProductionSetup:
         }
         
         optional_vars = {
-            "OLLAMA_URL": "http://localhost:11434",
+            "OLLAMA_URL": "http://127.0.0.1:11434",
             "MANAOS_TIMEOUT_LLM_CALL": None,
             "MANAOS_TIMEOUT_API_CALL": None
         }
@@ -131,7 +131,7 @@ class ProductionSetup:
         for service in services:
             try:
                 response = httpx.get(
-                    f"http://localhost:{service['port']}/health",
+                    f"http://127.0.0.1:{service['port']}/health",
                     timeout=2
                 )
                 results[service["name"]] = response.status_code == 200

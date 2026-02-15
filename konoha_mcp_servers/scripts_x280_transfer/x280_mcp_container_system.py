@@ -157,7 +157,7 @@ EXPOSE 8080
 
 # ヘルスチェック
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \\
-    CMD curl -f http://localhost:8080/health || exit 1
+    CMD curl -f http://127.0.0.1:8080/health || exit 1
 
 # アプリケーション起動
 CMD ["python", "pdf_excel_converter.py"]
@@ -190,7 +190,7 @@ EXPOSE 8081
 
 # ヘルスチェック
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \\
-    CMD curl -f http://localhost:8081/health || exit 1
+    CMD curl -f http://127.0.0.1:8081/health || exit 1
 
 # アプリケーション起動
 CMD ["python", "google_drive_integration.py"]
@@ -223,7 +223,7 @@ EXPOSE 8082
 
 # ヘルスチェック
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \\
-    CMD curl -f http://localhost:8082/health || exit 1
+    CMD curl -f http://127.0.0.1:8082/health || exit 1
 
 # アプリケーション起動
 CMD ["node", "mcp-server.js"]
@@ -487,18 +487,18 @@ sleep 10
 
 # ヘルスチェック
 echo "✅ ヘルスチェック実行中..."
-curl -f http://localhost:8080/health && echo "PDF変換システム: OK"
-curl -f http://localhost:8081/health && echo "Google Drive統合: OK"
-curl -f http://localhost:8082/health && echo "MCPサーバー: OK"
-curl -f http://localhost:8083/health && echo "監視ダッシュボード: OK"
+curl -f http://127.0.0.1:8080/health && echo "PDF変換システム: OK"
+curl -f http://127.0.0.1:8081/health && echo "Google Drive統合: OK"
+curl -f http://127.0.0.1:8082/health && echo "MCPサーバー: OK"
+curl -f http://127.0.0.1:8083/health && echo "監視ダッシュボード: OK"
 
 echo ""
 echo "🎉 X280 MCP・コンテナ統合システム起動完了！"
 echo "🌐 アクセスURL:"
-echo "  - PDF変換: http://localhost:8080"
-echo "  - Google Drive: http://localhost:8081"
-echo "  - MCPサーバー: http://localhost:8082"
-echo "  - 監視ダッシュボード: http://localhost:8083"
+echo "  - PDF変換: http://127.0.0.1:8080"
+echo "  - Google Drive: http://127.0.0.1:8081"
+echo "  - MCPサーバー: http://127.0.0.1:8082"
+echo "  - 監視ダッシュボード: http://127.0.0.1:8083"
 echo "  - 統合プロキシ: http://localhost"
 """
         

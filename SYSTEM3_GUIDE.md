@@ -181,12 +181,12 @@ python autonomous_operations.py
 
 2. **ポート確認**:
    ```powershell
-   netstat -ano | findstr ":9500 :5103 :5104 :5111"
+   netstat -ano | findstr ":9510 :5103 :5104 :5111"
    ```
 
 3. **手動ヘルスチェック**:
    ```powershell
-   Invoke-RestMethod http://127.0.0.1:9500/health
+   Invoke-RestMethod http://127.0.0.1:9510/health
    ```
 
 ## 📁 関連ファイル
@@ -202,3 +202,4 @@ python autonomous_operations.py
 **最終更新**: 2026年2月7日  
 **バージョン**: 1.0.0  
 **System3レベル**: 監視・検知（復旧は計画中）
+

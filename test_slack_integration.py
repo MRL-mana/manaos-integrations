@@ -87,7 +87,7 @@ def test_api_integration():
     """API統合テスト"""
     print("=== API統合テスト ===\n")
     
-    api_url = "http://localhost:5120"
+    api_url = "http://127.0.0.1:5120"
     
     try:
         # ヘルスチェック

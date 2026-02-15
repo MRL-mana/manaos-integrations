@@ -41,7 +41,7 @@ Start-Sleep -Seconds 5
 $portCheck = Get-NetTCPConnection -LocalPort 5679 -ErrorAction SilentlyContinue
 if ($portCheck) {
     Write-Host "[OK] n8nが起動しました" -ForegroundColor Green
-    Write-Host "  URL: http://localhost:5679" -ForegroundColor Cyan
+    Write-Host "  URL: http://127.0.0.1:5679" -ForegroundColor Cyan
 } else {
     Write-Host "[WARNING] n8nの起動確認ができませんでした（起動に時間がかかる可能性があります）" -ForegroundColor Yellow
     Write-Host "  ログを確認してください: logs/n8n.log" -ForegroundColor Gray

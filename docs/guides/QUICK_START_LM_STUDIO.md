@@ -3,8 +3,7 @@
 ## 🚀 クイックスタート
 
 ### 現在の状態
-- ✅ LLMルーティングAPI: 起動中 (`http://localhost:9501`)
-- ✅ 統合APIサーバー: 起動中 (`http://localhost:9500`)
+- ✅ Unified API（LLMルーティング含む）: 起動中 (`http://127.0.0.1:9510`)
 - ⚠️  LM Studioサーバー: **手動起動が必要**
 
 ---
@@ -20,7 +19,7 @@
 2. モデルが選択されていることを確認
 3. 「**Start Server**」ボタンをクリック
 4. サーバーが起動すると、以下のような表示が確認できます：
-   - `Server running on http://localhost:1234`
+   - `Server running on http://127.0.0.1:1234`
    - `OpenAI Compatible API` が有効になっている
 
 ### ステップ3: 起動確認
@@ -31,7 +30,7 @@
 ```
 
 または、ブラウザで以下にアクセス：
-- `http://localhost:1234/v1/models`
+- `http://127.0.0.1:1234/v1/models`
 
 ---
 
@@ -46,8 +45,7 @@
 
 **期待される結果：**
 - ✅ LM Studioサーバー: 起動中
-- ✅ LLMルーティングAPI: 起動中
-- ✅ 統合APIサーバー: 起動中
+- ✅ Unified API（LLMルーティング含む）: 起動中
 
 ---
 
@@ -56,7 +54,7 @@
 LM Studioサーバーが起動したら：
 
 1. **CursorでローカルLLMを使用**
-   - Cursorの設定で `http://localhost:1234/v1` を設定済み
+   - Cursorの設定で `http://127.0.0.1:1234/v1` を設定済み
    - モデルを選択して使用開始
 
 2. **MCPサーバー経由でLLMルーティングを使用**
@@ -64,8 +62,7 @@ LM Studioサーバーが起動したら：
    - ツール経由でLLMルーティング機能を使用可能
 
 3. **API経由でLLMルーティングを使用**
-   - `http://localhost:9501/api/llm/route` でルーティングAPIを使用
-   - `http://localhost:9500/api/llm/route` で統合API経由でも使用可能
+   - `http://127.0.0.1:9510/api/llm/route` でルーティングAPIを使用
 
 ---
 
@@ -84,7 +81,7 @@ LM Studioサーバーが起動したら：
 
 ### 接続できない場合
 - ファイアウォールでローカル接続がブロックされていないか確認
-- `http://localhost:1234/v1/models` にブラウザでアクセスして確認
+- `http://127.0.0.1:1234/v1/models` にブラウザでアクセスして確認
 
 ---
 

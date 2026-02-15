@@ -72,7 +72,7 @@ class LLMOptimization:
     
     def __init__(
         self,
-        ollama_url: str = "http://localhost:11434",
+        ollama_url: str = "http://127.0.0.1:11434",
         config_path: Optional[Path] = None
     ):
         """
@@ -115,7 +115,7 @@ class LLMOptimization:
                 schema = {
                     "required": [],
                     "fields": {
-                        "ollama_url": {"type": str, "default": "http://localhost:11434"},
+                        "ollama_url": {"type": str, "default": "http://127.0.0.1:11434"},
                         "filter_model": {"type": str, "default": "llama3.2:1b"}
                     }
                 }
@@ -142,7 +142,7 @@ class LLMOptimization:
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
         return {
-            "ollama_url": "http://localhost:11434",
+            "ollama_url": "http://127.0.0.1:11434",
             "filter_model": "llama3.2:1b",
             "role_models": {
                 "conversation": {

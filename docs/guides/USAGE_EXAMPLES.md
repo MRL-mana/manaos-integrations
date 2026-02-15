@@ -113,10 +113,10 @@ if result.get("status") == "success":
 
 ```bash
 # GETリクエスト
-curl "http://localhost:9500/api/brave/search?query=Python&count=10"
+curl "http://127.0.0.1:9510/api/brave/search?query=Python&count=10"
 
 # POSTリクエスト
-curl -X POST http://localhost:9500/api/brave/search \
+curl -X POST http://127.0.0.1:9510/api/brave/search \
   -H "Content-Type: application/json" \
   -d '{
     "query": "stable diffusion prompts",
@@ -152,7 +152,7 @@ if result.get("result") and result["result"].get("response"):
 
 ```bash
 # POSTリクエスト
-curl -X POST http://localhost:9500/api/base-ai/chat \
+curl -X POST http://127.0.0.1:9510/api/base-ai/chat \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "画像生成プロンプトを改善してください: cute girl",
@@ -272,3 +272,4 @@ def search_trending_prompts(topic: str) -> list:
 3. ✅ **ワークフローの改善**: 検索 → 生成 → 改善のパイプライン構築
 
 **どんどん活用していきましょう！** 🚀
+

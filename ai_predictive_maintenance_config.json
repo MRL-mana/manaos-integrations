@@ -1,7 +1,7 @@
 {
-  "llm_url": "http://localhost:11434/api/generate",
+  "llm_url": "http://127.0.0.1:11434/api/generate",
   "llm_model": "llama3.2:3b",
-  "device_health_monitor_url": "http://localhost:5111",
+  "device_health_monitor_url": "http://127.0.0.1:5111",
   "recommendations_file": "maintenance_recommendations.json",
   "predictions_file": "maintenance_predictions.json",
   "prediction_thresholds": {

@@ -22,7 +22,7 @@
 
 ### Step 2: Tool Serverが登録されているか確認
 
-1. **`http://localhost:9503` が登録されているか確認**
+1. **`http://127.0.0.1:9503` が登録されているか確認**
    - 登録されている場合、接続状態を確認（「Connected」になっているか）
    - 登録されていない、または接続されていない場合、Step 3に進む
 
@@ -33,9 +33,9 @@
 
    ```
    Name: manaOS Tool Server
-   URL: http://localhost:9503
+   URL: http://127.0.0.1:9503
    OpenAPI Spec: ON（チェックを入れる）
-   OpenAPI Spec URL: http://localhost:9503/openapi.json
+   OpenAPI Spec URL: http://127.0.0.1:9503/openapi.json
    ```
 
 3. **「Save」をクリック**
@@ -44,8 +44,8 @@
 
 1. **Tool Serverが「Connected」になっているか確認**
 2. **接続されていない場合、以下を確認：**
-   - Tool Serverが起動中か確認（http://localhost:9503/health）
-   - OpenAPI仕様が取得できるか確認（http://localhost:9503/openapi.json）
+   - Tool Serverが起動中か確認（http://127.0.0.1:9503/health）
+   - OpenAPI仕様が取得できるか確認（http://127.0.0.1:9503/openapi.json）
    - CORS設定が正しいか確認
 
 ### Step 5: チャットコントロールセクションを再確認
@@ -77,10 +77,10 @@
 
 ```powershell
 # 健康状態を確認
-Invoke-RestMethod -Uri "http://localhost:9503/health"
+Invoke-RestMethod -Uri "http://127.0.0.1:9503/health"
 
 # OpenAPI仕様を確認
-Invoke-RestMethod -Uri "http://localhost:9503/openapi.json"
+Invoke-RestMethod -Uri "http://127.0.0.1:9503/openapi.json"
 ```
 
 ### OpenWebUIのログを確認
@@ -115,8 +115,8 @@ Invoke-RestMethod -Uri "http://localhost:9503/openapi.json"
 
 - [ ] Tool ServerがOpenWebUIに登録されている
 - [ ] Tool Serverが「Connected」になっている
-- [ ] OpenAPI仕様が正しく取得できる（http://localhost:9503/openapi.json）
-- [ ] Tool Serverが正常に動作している（http://localhost:9503/health）
+- [ ] OpenAPI仕様が正しく取得できる（http://127.0.0.1:9503/openapi.json）
+- [ ] Tool Serverが正常に動作している（http://127.0.0.1:9503/health）
 - [ ] Function Callingが「ネイティブ」モードに設定されている
 - [ ] 「ツールの選択」ドロップダウンを開いている
 - [ ] ブラウザの開発者ツールでエラーがない

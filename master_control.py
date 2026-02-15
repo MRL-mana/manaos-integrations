@@ -395,7 +395,7 @@ if __name__ == '__main__':
     print("=" * 60)
     print("ManaOSマスターコントロールパネル")
     print("=" * 60)
-    print("アクセス: http://localhost:9700")
+    print("アクセス: http://127.0.0.1:9700")
     print("=" * 60)
     
     app.run(host='0.0.0.0', port=9700, debug=True)

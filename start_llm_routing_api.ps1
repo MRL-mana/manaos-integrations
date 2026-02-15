@@ -34,10 +34,10 @@ Write-Host ""
 
 # APIサーバーを起動
 Write-Host "[3] APIサーバーを起動します..." -ForegroundColor Yellow
-Write-Host "    エンドポイント: http://localhost:$env:PORT" -ForegroundColor Cyan
+Write-Host "    エンドポイント: http://127.0.0.1:$env:PORT" -ForegroundColor Cyan
 Write-Host ""
 
-python manaos_llm_routing_api.py
+python -m llm_routing_mcp_server
 
 
 

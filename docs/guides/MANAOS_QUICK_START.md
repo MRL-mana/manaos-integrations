@@ -8,9 +8,9 @@
 
 ### 起動中のサービス
 
-- ✅ **Open WebUI**: `http://localhost:3001`（起動中）
-- ✅ **manaOS統合API**: `http://localhost:9500`（起動中）
-- ✅ **LM Studio**: `http://localhost:1234`（起動中、モデル利用可能）
+- ✅ **Open WebUI**: `http://127.0.0.1:3001`（起動中）
+- ✅ **manaOS統合API**: `http://127.0.0.1:9510`（起動中）
+- ✅ **LM Studio**: `http://127.0.0.1:1234`（起動中、モデル利用可能）
 
 ---
 
@@ -42,7 +42,7 @@ Open WebUIのチャット画面で：
 ```
 Name: generate_image_comfyui
 Description: ComfyUIを使って画像を生成します
-URL: http://host.docker.internal:9500/api/comfyui/generate
+URL: http://host.docker.internal:9510/api/comfyui/generate
 Method: POST
 ```
 
@@ -50,7 +50,7 @@ Method: POST
 ```
 Name: upload_to_google_drive
 Description: ファイルをGoogle Driveにアップロードします
-URL: http://host.docker.internal:9500/api/google_drive/upload
+URL: http://host.docker.internal:9510/api/google_drive/upload
 Method: POST
 ```
 
@@ -58,7 +58,7 @@ Method: POST
 ```
 Name: create_obsidian_note
 Description: Obsidianにノートを作成します
-URL: http://host.docker.internal:9500/api/obsidian/create
+URL: http://host.docker.internal:9510/api/obsidian/create
 Method: POST
 ```
 
@@ -93,12 +93,12 @@ Method: POST
 
 ### LM Studioの確認
 ```powershell
-curl http://localhost:1234/v1/models
+curl http://127.0.0.1:1234/v1/models
 ```
 
 ### manaOS統合APIの確認
 ```powershell
-curl http://localhost:9500/status
+curl http://127.0.0.1:9510/status
 ```
 
 ---

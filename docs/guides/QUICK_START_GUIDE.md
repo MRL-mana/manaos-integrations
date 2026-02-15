@@ -35,7 +35,7 @@
 3. **サーバーを起動**
    - 「Server」タブでモデルを選択
    - 「Start Server」をクリック
-   - エンドポイント確認：`http://localhost:1234/v1`
+   - エンドポイント確認：`http://127.0.0.1:1234/v1`
 
 ---
 
@@ -48,7 +48,7 @@
    - 「Add Custom Model」をクリック
    - 以下を入力：
      - **Provider**: `OpenAI Compatible`
-     - **Base URL**: `http://localhost:1234/v1`
+     - **Base URL**: `http://127.0.0.1:1234/v1`
      - **API Key**: `lm-studio`
      - **Model Name**: `Qwen2.5-Coder-7B-Instruct`
 
@@ -112,7 +112,7 @@ import requests
 
 # 難易度分析
 response = requests.post(
-    "http://localhost:9500/api/llm/analyze",
+    "http://127.0.0.1:9510/api/llm/analyze",
     json={
         "prompt": "この関数のタイポを修正して",
         "context": {
@@ -124,7 +124,7 @@ print(response.json())
 
 # ルーティング実行
 response = requests.post(
-    "http://localhost:9500/api/llm/route-enhanced",
+    "http://127.0.0.1:9510/api/llm/route-enhanced",
     json={
         "prompt": "この関数のタイポを修正して",
         "context": {
@@ -193,6 +193,7 @@ print(response.json())
 ---
 
 **これで接続成功まで到達！次は運用ルールを詰めよう🔥**
+
 
 
 

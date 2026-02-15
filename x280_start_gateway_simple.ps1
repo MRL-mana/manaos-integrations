@@ -41,7 +41,7 @@ Start-Sleep -Seconds 3
 
 # Check if it's running
 try {
-    $response = Invoke-RestMethod -Uri "http://localhost:5120/api/health" -TimeoutSec 5
+    $response = Invoke-RestMethod -Uri "http://127.0.0.1:5120/api/health" -TimeoutSec 5
     Write-Host "SUCCESS: API Gateway is running!" -ForegroundColor Green
     Write-Host "Status: $($response.status)" -ForegroundColor Cyan
 } catch {

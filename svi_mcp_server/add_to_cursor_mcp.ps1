@@ -40,7 +40,7 @@ $sviConfig = @{
     command = "python"
     args = @("-m", "svi_mcp_server.server")
     env = @{
-        COMFYUI_URL = "http://localhost:8188"
+        COMFYUI_URL = "http://127.0.0.1:8188"
     }
     cwd = "C:\Users\mana4\Desktop\manaos_integrations"
 }

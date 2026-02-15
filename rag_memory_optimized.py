@@ -33,7 +33,7 @@ class RAGMemoryOptimized(RAGMemoryEnhancedV2):
     def __init__(
         self,
         db_path: Optional[Path] = None,
-        ollama_url: str = "http://localhost:11434",
+        ollama_url: str = "http://127.0.0.1:11434",
         model: str = "qwen2.5:14b",
         **kwargs
     ):

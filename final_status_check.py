@@ -8,10 +8,10 @@ import io
 from datetime import datetime
 
 if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-COMFYUI_URL = "http://localhost:8188"
-GALLERY_API = "http://localhost:5559/api"
+COMFYUI_URL = "http://127.0.0.1:8188"
+GALLERY_API = "http://127.0.0.1:5559/api"
 
 print("=" * 60)
 print("最終状態確認")

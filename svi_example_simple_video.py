@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
-API_BASE = "http://localhost:9500"
+API_BASE = "http://127.0.0.1:9510"
 
 
 def generate_simple_video(

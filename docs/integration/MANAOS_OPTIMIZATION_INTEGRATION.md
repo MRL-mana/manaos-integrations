@@ -82,15 +82,15 @@ result = bridge.integrate_image_generation_workflow(
 import httpx
 
 # 統合状態を取得
-response = httpx.get("http://localhost:5127/api/status")
+response = httpx.get("http://127.0.0.1:5127/api/status")
 status = response.json()
 
 # パフォーマンス分析を取得
-response = httpx.get("http://localhost:5127/api/performance")
+response = httpx.get("http://127.0.0.1:5127/api/performance")
 performance = response.json()
 
 # 最適化を実行
-response = httpx.post("http://localhost:5127/api/optimize")
+response = httpx.post("http://127.0.0.1:5127/api/optimize")
 optimization = response.json()
 ```
 
@@ -214,17 +214,17 @@ optimization = response.json()
 
 1. 統合状態を確認:
    ```bash
-   curl http://localhost:5127/api/status
+   curl http://127.0.0.1:5127/api/status
    ```
 
 2. パフォーマンスを確認:
    ```bash
-   curl http://localhost:5127/api/performance
+   curl http://127.0.0.1:5127/api/performance
    ```
 
 3. 最適化を実行:
    ```bash
-   curl -X POST http://localhost:5127/api/optimize
+   curl -X POST http://127.0.0.1:5127/api/optimize
    ```
 
 ### キャッシュの問題

@@ -168,7 +168,7 @@ Write-Host "または手動で:" -ForegroundColor Cyan
 Write-Host "  cd $InstallPath" -ForegroundColor Yellow
 Write-Host "  python main.py --port 8188" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "ブラウザで http://localhost:8188 にアクセスしてください" -ForegroundColor Cyan
+Write-Host "ブラウザで http://127.0.0.1:8188 にアクセスしてください" -ForegroundColor Cyan
 Write-Host ""
 
 

@@ -114,7 +114,7 @@ Daily/2026-01-06.md
 
 ```powershell
 [Environment]::SetEnvironmentVariable('OBSIDIAN_VAULT_PATH', 'C:\Users\mana4\Documents\Obsidian Vault', 'User')
-[Environment]::SetEnvironmentVariable('ORCHESTRATOR_URL', 'http://localhost:5106', 'User')
+[Environment]::SetEnvironmentVariable('ORCHESTRATOR_URL', 'http://127.0.0.1:5106', 'User')
 [Environment]::SetEnvironmentVariable('SLACK_WEBHOOK_URL', 'https://hooks.slack.com/services/...', 'User')
 ```
 
@@ -162,7 +162,7 @@ python setup_obsidian_templates.py
 
 ### n8nワークフローが動かない
 
-1. n8nが起動しているか確認: `http://localhost:5678`
+1. n8nが起動しているか確認: `http://127.0.0.1:5678`
 2. ワークフローが有効化されているか確認
 3. 認証情報が設定されているか確認
 

@@ -31,8 +31,8 @@ app = Flask(__name__)
 CORS(app)
 
 # 設定
-ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://localhost:5106")
-FILE_SECRETARY_URL = os.getenv("FILE_SECRETARY_URL", "http://localhost:5120")
+ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://127.0.0.1:5106")
+FILE_SECRETARY_URL = os.getenv("FILE_SECRETARY_URL", "http://127.0.0.1:5120")
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN", "")
 SLACK_VERIFICATION_TOKEN = os.getenv("SLACK_VERIFICATION_TOKEN", "")
@@ -44,8 +44,8 @@ try:
     # n8n_webhook_urlをNoneに設定すると、直接Ollama呼び出しにフォールバック
     LLM_CLIENT = AlwaysReadyLLMClient(
         n8n_webhook_url=None,  # n8n Webhook未設定の場合は直接LLM呼び出し
-        ollama_url="http://localhost:11434",
-        lm_studio_url="http://localhost:1234/v1",  # LM Studioを優先使用
+        ollama_url="http://127.0.0.1:11434",
+        lm_studio_url="http://127.0.0.1:1234/v1",  # LM Studioを優先使用
         use_cache=False,  # キャッシュAPIが未設定の可能性があるため無効化
         prefer_lm_studio=True  # LM Studioを優先（14Bモデルを使用）
     )

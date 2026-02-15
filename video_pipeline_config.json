@@ -1,5 +1,5 @@
 {
-  "ollama_url": "http://localhost:11434",
+  "ollama_url": "http://127.0.0.1:11434",
   "models": {
     "quality": "dolphin-llama3:8b",
     "speed": "dolphin-mistral:7b",

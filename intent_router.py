@@ -65,7 +65,7 @@ class IntentRouter:
 
     def __init__(
         self,
-        ollama_url: str = "http://localhost:11434",
+        ollama_url: str = "http://127.0.0.1:11434",
         model: str = "lfm2.5:1.2b",  # LFM 2.5: 超軽量・超高速・日本語特化
         config_path: Optional[Path] = None
     ):
@@ -104,7 +104,7 @@ class IntentRouter:
                 schema = {
                     "required": ["model"],
                     "fields": {
-                        "ollama_url": {"type": str, "default": "http://localhost:11434"},
+                        "ollama_url": {"type": str, "default": "http://127.0.0.1:11434"},
                         "model": {"type": str},
                         "confidence_threshold": {"type": (int, float), "default": 0.6},
                         "use_keyword_fallback": {"type": bool, "default": True}
@@ -133,7 +133,7 @@ class IntentRouter:
     def _get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
         return {
-            "ollama_url": "http://localhost:11434",
+            "ollama_url": "http://127.0.0.1:11434",
             "model": "lfm2.5:1.2b",
             "keyword_mapping": self._get_default_keyword_mapping(),
             "intent_prompt_template": self._get_default_prompt_template(),

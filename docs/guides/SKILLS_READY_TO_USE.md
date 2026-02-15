@@ -93,7 +93,7 @@ $env:NOTION_API_KEY = "your-notion-api-key"
 
 **必要な設定:**
 ```powershell
-$env:N8N_BASE_URL = "http://localhost:5678"
+$env:N8N_BASE_URL = "http://127.0.0.1:5678"
 $env:N8N_API_KEY = "your-api-key"
 ```
 

@@ -234,7 +234,7 @@ docker restart redis-cache
 
 ### n8nワークフローが動かない
 
-1. n8n UI (`http://localhost:5678`) にアクセス
+1. n8n UI (`http://127.0.0.1:5678`) にアクセス
 2. ワークフローを有効化
 3. Webhook URLを確認
 

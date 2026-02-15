@@ -61,10 +61,10 @@ OBSIDIAN_VAULT_PATH=C:/Users/mana4/Documents/Obsidian Vault
 # OPENAI_API_KEY=your_openai_api_key_here
 
 # ComfyUI統合（デフォルト）
-COMFYUI_URL=http://localhost:8188
+COMFYUI_URL=http://127.0.0.1:8188
 
 # Ollama統合（設定済み）
-OLLAMA_URL=http://localhost:11434
+OLLAMA_URL=http://127.0.0.1:11434
 OLLAMA_MODEL=qwen3:30b
 
 # Google Drive統合
@@ -80,17 +80,17 @@ MANAOS_INTEGRATION_HOST=0.0.0.0
 
 ### ヘルスチェック
 ```bash
-GET http://localhost:9500/health
+GET http://127.0.0.1:9510/health
 ```
 
 ### 統合システム状態
 ```bash
-GET http://localhost:9500/api/integrations/status
+GET http://127.0.0.1:9510/api/integrations/status
 ```
 
 ### LangChainチャット
 ```bash
-POST http://localhost:9500/api/langchain/chat
+POST http://127.0.0.1:9510/api/langchain/chat
 Content-Type: application/json
 
 {
@@ -101,7 +101,7 @@ Content-Type: application/json
 
 ### Obsidianノート作成
 ```bash
-POST http://localhost:9500/api/obsidian/create
+POST http://127.0.0.1:9510/api/obsidian/create
 Content-Type: application/json
 
 {
@@ -131,7 +131,7 @@ python check_integrations.py
 
 ### LangChain統合が利用不可の場合
 - Ollamaが起動しているか確認: `Get-Process ollama`
-- OllamaのURLが正しいか確認: `http://localhost:11434`
+- OllamaのURLが正しいか確認: `http://127.0.0.1:11434`
 
 ### Obsidian統合が利用不可の場合
 - Vaultパスが存在するか確認
@@ -140,6 +140,7 @@ python check_integrations.py
 ### サーバーが起動しない場合
 - ポート9500が使用されていないか確認
 - 依存関係がインストールされているか確認: `pip install -r requirements.txt`
+
 
 
 

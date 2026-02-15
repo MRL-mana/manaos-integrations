@@ -73,9 +73,9 @@ class IntrinsicMotivation:
 
     def __init__(
         self,
-        orchestrator_url: str = "http://localhost:5106",
-        learning_system_url: str = "http://localhost:5126",
-        metrics_collector_url: str = "http://localhost:5127",
+        orchestrator_url: str = "http://127.0.0.1:5106",
+        learning_system_url: str = "http://127.0.0.1:5126",
+        metrics_collector_url: str = "http://127.0.0.1:5127",
         config_path: Optional[Path] = None,
     ):
         """

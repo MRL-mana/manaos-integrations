@@ -15,7 +15,7 @@ $apiProcess = Get-Process -Name python -ErrorAction SilentlyContinue | Where-Obj
 
 if ($apiProcess) {
     Write-Host "   統合APIサーバーが実行中です" -ForegroundColor Green
-    Write-Host "   ポート9500で動作中" -ForegroundColor Cyan
+    Write-Host "   ポート9510で動作中" -ForegroundColor Cyan
 } else {
     Write-Host "   統合APIサーバーが実行されていません" -ForegroundColor Yellow
     Write-Host "   起動してください: python unified_api_server.py" -ForegroundColor Cyan
@@ -23,20 +23,9 @@ if ($apiProcess) {
 
 Write-Host ""
 
-# 拡張LLMルーティングAPIの起動確認
-Write-Host "[2] 拡張LLMルーティングAPIを確認中..." -ForegroundColor Yellow
-
-$routingProcess = Get-Process -Name python -ErrorAction SilentlyContinue | Where-Object {
-    $_.CommandLine -like "*manaos_llm_routing_api*"
-}
-
-if ($routingProcess) {
-    Write-Host "   拡張LLMルーティングAPIが実行中です" -ForegroundColor Green
-    Write-Host "   ポート9501で動作中" -ForegroundColor Cyan
-} else {
-    Write-Host "   拡張LLMルーティングAPIが実行されていません" -ForegroundColor Yellow
-    Write-Host "   起動してください: .\start_llm_routing_api.ps1" -ForegroundColor Cyan
-}
+# LLM Routing MCP の起動確認（ヘルスは 5111）
+Write-Host "[2] LLM Routing MCP を確認中..." -ForegroundColor Yellow
+Write-Host "   ヘルス: http://127.0.0.1:5111/health" -ForegroundColor Cyan
 
 Write-Host ""
 
@@ -56,9 +45,10 @@ Write-Host "統合完了"
 Write-Host "=" * 60
 Write-Host ""
 Write-Host "利用可能なエンドポイント:" -ForegroundColor Cyan
-Write-Host "  - POST http://localhost:9500/api/llm/route-enhanced" -ForegroundColor Green
-Write-Host "  - POST http://localhost:9500/api/llm/analyze" -ForegroundColor Green
-Write-Host "  - GET  http://localhost:9500/api/llm/models-enhanced" -ForegroundColor Green
+Write-Host "  - POST http://127.0.0.1:9510/api/llm/route-enhanced" -ForegroundColor Green
+Write-Host "  - POST http://127.0.0.1:9510/api/llm/analyze" -ForegroundColor Green
+Write-Host "  - GET  http://127.0.0.1:9510/api/llm/models-enhanced" -ForegroundColor Green
+Write-Host "  - GET  http://127.0.0.1:9510/api/llm/health" -ForegroundColor Green
 Write-Host ""
 
 

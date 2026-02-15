@@ -61,7 +61,7 @@ if token and token != SLACK_VERIFICATION_TOKEN:
    ```
 
 3. **ngrok Web UIで確認:**
-   - http://localhost:4040 にアクセス
+   - http://127.0.0.1:4040 にアクセス
    - リクエスト履歴で200ステータスを確認
 
 ---

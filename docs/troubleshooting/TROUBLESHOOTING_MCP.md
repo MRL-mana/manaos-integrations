@@ -43,7 +43,7 @@
 1. **n8nサーバーの起動確認**
    ```powershell
    # ローカルサーバー
-   Invoke-WebRequest -Uri "http://localhost:5678" -TimeoutSec 2
+   Invoke-WebRequest -Uri "http://127.0.0.1:5678" -TimeoutSec 2
    
    # リモートサーバー
    Invoke-WebRequest -Uri "http://100.93.120.33:5678" -TimeoutSec 2
@@ -124,8 +124,8 @@
       "command": "python",
       "args": ["-m", "llm_routing_mcp_server.server"],
       "env": {
-        "MANAOS_INTEGRATION_API_URL": "http://localhost:9500",
-        "LLM_ROUTING_API_URL": "http://localhost:9501"
+            "MANAOS_INTEGRATION_API_URL": "http://127.0.0.1:9510",
+            "LLM_ROUTING_API_URL": "http://127.0.0.1:5111"
       },
       "cwd": "C:\\Users\\mana4\\Desktop\\manaos_integrations"
     },

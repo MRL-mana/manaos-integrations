@@ -49,11 +49,11 @@ python castle_ex/castle_ex_evaluator_fixed.py \
   --output evaluation_v1_0.json \
   --model-type ollama \
   --model qwen2.5:14b \
-  --ollama-url http://localhost:11434/api/generate
+  --ollama-url http://127.0.0.1:11434/api/generate
 ```
 
 **前提条件**:
-- Ollamaが起動している（`http://localhost:11434`）
+- Ollamaが起動している（`http://127.0.0.1:11434`）
 - 指定したモデルがダウンロード済み
 
 ---
@@ -159,7 +159,7 @@ python castle_ex/castle_ex_evaluator_fixed.py \
 **原因**: モデル呼び出しが失敗している
 
 **対処**:
-1. Ollamaが起動しているか確認: `curl http://localhost:11434/api/tags`
+1. Ollamaが起動しているか確認: `curl http://127.0.0.1:11434/api/tags`
 2. モデル名が正しいか確認: `ollama list`
 3. ネットワークエラーがないか確認（タイムアウト設定を確認）
 

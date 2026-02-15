@@ -50,7 +50,7 @@ ERR_NGROK_4018: authentication failed
 
 **ブラウザで開く**:
 ```
-http://localhost:4040
+http://127.0.0.1:4040
 ```
 
 **表示内容**:
@@ -62,7 +62,7 @@ http://localhost:4040
 
 **PowerShellで実行**:
 ```powershell
-$response = Invoke-RestMethod -Uri "http://localhost:4040/api/tunnels" -Method Get
+$response = Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels" -Method Get
 $response.tunnels[0].public_url
 ```
 
@@ -102,7 +102,7 @@ cd C:\Users\mana4\OneDrive\Desktop\manaos_integrations
 
 **例**:
 ```
-http://localhost:5678/webhook/browse-ai-webhook
+http://127.0.0.1:5678/webhook/browse-ai-webhook
 ```
 
 #### Step 3: ngrokのURLと組み合わせる
@@ -169,7 +169,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd C:\Users\mana4
 ### 問題5: ngrokのWeb UIにアクセスできない
 
 **症状**:
-- `http://localhost:4040` にアクセスできない
+- `http://127.0.0.1:4040` にアクセスできない
 - エラーメッセージが表示される
 
 **解決方法**:
@@ -206,14 +206,14 @@ netstat -ano | findstr :4040
 Get-Process ngrok -ErrorAction SilentlyContinue
 
 # ngrokのWeb UI確認
-Start-Process "http://localhost:4040"
+Start-Process "http://127.0.0.1:4040"
 ```
 
 ### Step 2: URL取得
 
 ```powershell
 # APIでURLを取得
-$response = Invoke-RestMethod -Uri "http://localhost:4040/api/tunnels" -Method Get
+$response = Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels" -Method Get
 $publicUrl = $response.tunnels[0].public_url
 Write-Host "Public URL: $publicUrl" -ForegroundColor Green
 ```

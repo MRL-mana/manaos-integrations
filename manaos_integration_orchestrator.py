@@ -330,7 +330,7 @@ MANAOS_SERVICES = {
 
 # 統合システム定義
 INTEGRATION_SERVICES = {
-    "unified_api": {"port": 9502, "name": "Unified API Server"},
+    "unified_api": {"port": 9510, "name": "Unified API Server"},
     "command_hub": {"port": 9404, "name": "Command Hub"},
     "enhanced_api": {"port": 9406, "name": "Enhanced API"},
     "monitoring": {"port": 9407, "name": "Monitoring"},
@@ -968,7 +968,7 @@ class ManaOSIntegrationOrchestrator:
                 """個別のサービスチェック関数"""
                 port = service_info["port"]
                 name = service_info["name"]
-                url = f"http://localhost:{port}"
+                url = f"http://127.0.0.1:{port}"
                 
                 try:
                     import requests
@@ -1098,7 +1098,7 @@ class ManaOSIntegrationOrchestrator:
             """個別のサービスチェック関数（非同期）"""
             port = service_info["port"]
             name = service_info["name"]
-            url = f"http://localhost:{port}"
+            url = f"http://127.0.0.1:{port}"
             
             try:
                 async with self.async_client as client:

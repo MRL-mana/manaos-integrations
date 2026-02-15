@@ -14,7 +14,7 @@ try {
     $OutputEncoding = [System.Text.UTF8Encoding]::new()
 } catch {}
 Set-Location $PSScriptRoot
-$api = "http://127.0.0.1:9500/api/llm/chat"
+$api = "http://127.0.0.1:9510/api/llm/chat"
 $timeout = 300
 
 Write-Host "=== Phase1 ON $Rounds-round test ===" -ForegroundColor Cyan

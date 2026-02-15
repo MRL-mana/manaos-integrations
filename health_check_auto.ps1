@@ -10,17 +10,17 @@ $checkInterval = 60  # 60秒ごとにチェック
 $services = @(
     @{
         Name = "LM Studioサーバー"
-        Url = "http://localhost:1234/v1/models"
+        Url = "http://127.0.0.1:1234/v1/models"
         Critical = $false
     },
     @{
-        Name = "LLMルーティングAPI"
-        Url = "http://localhost:9501/api/llm/health"
+        Name = "LLMルーティングAPI（Unified API）"
+        Url = "http://127.0.0.1:9510/api/llm/health"
         Critical = $true
     },
     @{
-        Name = "統合APIサーバー"
-        Url = "http://localhost:9500/health"
+        Name = "Unified APIサーバー"
+        Url = "http://127.0.0.1:9510/health"
         Critical = $true
     }
 )
@@ -33,7 +33,7 @@ function Check-Service {
     )
     
     try {
-        $response = Invoke-WebRequest -Uri $Url -Method GET -TimeoutSec 3 -ErrorAction Stop
+        $null = Invoke-RestMethod -Uri $Url -Method GET -TimeoutSec 3 -ErrorAction Stop
         return @{
             Status = "healthy"
             Message = "正常"

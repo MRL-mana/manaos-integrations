@@ -131,7 +131,7 @@ def check_secretary_system():
         # API確認
         import httpx
         try:
-            response = httpx.get("http://localhost:5120/health", timeout=2.0)
+            response = httpx.get("http://127.0.0.1:5120/health", timeout=2.0)
             if response.status_code == 200:
                 print("✅ File Secretary API: 実行中")
             else:

@@ -3,14 +3,14 @@ LLMルーティングシステム デモスクリプト
 実際の使用例をデモンストレーション
 """
 
+import os
 import requests
 import json
 import time
 from typing import Dict, Any, Optional
 
 # APIエンドポイント
-UNIFIED_API_URL = "http://localhost:9500"
-ROUTING_API_URL = "http://localhost:9501"
+UNIFIED_API_URL = os.getenv("MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510").rstrip("/")
 
 
 def print_section(title: str):
@@ -216,16 +216,16 @@ def check_api_health():
         print("❌ 統合APIサーバー: 接続不可")
         print(f"   URL: {UNIFIED_API_URL}")
     
-    # 拡張LLMルーティングAPI
+    # LLMルーティング（Unified API内）
     try:
-        response = requests.get(f"{ROUTING_API_URL}/api/llm/health", timeout=2)
+        response = requests.get(f"{UNIFIED_API_URL}/api/llm/health", timeout=2)
         if response.status_code == 200:
-            print("✅ 拡張LLMルーティングAPI: 起動中")
+            print("✅ LLMルーティングAPI: 起動中")
         else:
-            print(f"⚠️  拡張LLMルーティングAPI: HTTP {response.status_code}")
+            print(f"⚠️  LLMルーティングAPI: HTTP {response.status_code}")
     except Exception:
-        print("❌ 拡張LLMルーティングAPI: 接続不可（オプション）")
-        print(f"   URL: {ROUTING_API_URL}")
+        print("❌ LLMルーティングAPI: 接続不可")
+        print(f"   URL: {UNIFIED_API_URL}/api/llm/health")
 
 
 def main():

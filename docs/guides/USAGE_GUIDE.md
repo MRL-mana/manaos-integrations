@@ -62,7 +62,7 @@ BACKUP_SCHEDULE_TIME=02:00
 BACKUP_RETENTION_DAYS=30
 
 # LLM設定
-OLLAMA_URL=http://localhost:11434
+OLLAMA_URL=http://127.0.0.1:11434
 
 # ログレベル
 LOG_LEVEL=INFO
@@ -104,7 +104,7 @@ headers = {
 }
 
 # ヘルスチェック
-response = requests.get("http://localhost:5000/health", headers=headers)
+response = requests.get("http://127.0.0.1:5000/health", headers=headers)
 print(response.json())
 
 # LLMチャット
@@ -113,7 +113,7 @@ data = {
     "mode": "auto"
 }
 response = requests.post(
-    "http://localhost:5000/api/llm/chat",
+    "http://127.0.0.1:5000/api/llm/chat",
     json=data,
     headers=headers
 )
@@ -134,7 +134,7 @@ headers = {
     "Authorization": f"Bearer {token}",
     "Content-Type": "application/json"
 }
-response = requests.get("http://localhost:5000/api/services/status", headers=headers)
+response = requests.get("http://127.0.0.1:5000/api/services/status", headers=headers)
 ```
 
 ---

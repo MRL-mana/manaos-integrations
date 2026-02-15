@@ -7,7 +7,7 @@ import requests
 
 if sys.platform == 'win32':
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
 
 print("=" * 60)
 print("Qwen2.5-Coder-32B-Instruct 量子化バージョン推奨")
@@ -67,7 +67,7 @@ print("  5. 「Download」をクリック")
 
 # 現在のモデルを確認
 try:
-    r = requests.get('http://localhost:1234/v1/models', timeout=5)
+    r = requests.get('http://127.0.0.1:1234/v1/models', timeout=5)
     if r.status_code == 200:
         models_data = r.json().get('data', [])
         available_models = [model.get('id', '') for model in models_data]

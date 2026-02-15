@@ -14,8 +14,8 @@ from pathlib import Path
 # Windows環境でのエンコーディング設定
 if sys.platform == "win32":
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 services = [
     {"name": "Personality System", "port": 5123, "script": "personality_system.py"},
@@ -30,7 +30,7 @@ def is_port_in_use(port: int) -> bool:
     """ポートが使用中かチェック"""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try:
-            s.bind(('localhost', port))
+            s.bind(('127.0.0.1', port))
             return False
         except OSError:
             return True

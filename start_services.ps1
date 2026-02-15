@@ -13,7 +13,7 @@ $services = @(
     @{
         Name = "統合APIサーバー"
         Script = "unified_api_server.py"
-        Port = 9500
+        Port = 9510
     }
 )
 
@@ -23,7 +23,7 @@ foreach ($service in $services) {
     if ($portCheck) {
         $portNum = $service.Port
         Write-Host "[スキップ] $($service.Name) は既に起動しています (ポート $portNum)" -ForegroundColor Yellow
-        Write-Host "         URL: http://localhost:$portNum" -ForegroundColor Gray
+        Write-Host "         URL: http://127.0.0.1:$portNum" -ForegroundColor Gray
     } else {
         Write-Host "[起動中] $($service.Name)..." -ForegroundColor Green
         
@@ -31,7 +31,7 @@ foreach ($service in $services) {
         Start-Process -FilePath "python" -ArgumentList "`"$scriptFullPath`"" -WindowStyle Normal
         
         Write-Host "[起動] $($service.Name) を新しいウィンドウで起動しました" -ForegroundColor Green
-        Write-Host "        URL: http://localhost:$($service.Port)" -ForegroundColor Cyan
+        Write-Host "        URL: http://127.0.0.1:$($service.Port)" -ForegroundColor Cyan
         Write-Host ""
         
         Start-Sleep -Seconds 3
@@ -46,11 +46,11 @@ Write-Host "起動中のサービス:" -ForegroundColor Cyan
 foreach ($service in $services) {
     $portCheck = Get-NetTCPConnection -LocalPort $service.Port -ErrorAction SilentlyContinue
     if ($portCheck) {
-        Write-Host "  ✓ $($service.Name): http://localhost:$($service.Port)" -ForegroundColor Green
+        Write-Host "  ✓ $($service.Name): http://127.0.0.1:$($service.Port)" -ForegroundColor Green
     }
 }
 Write-Host ""
 Write-Host "ブラウザで以下のURLにアクセスしてください:" -ForegroundColor Yellow
-Write-Host "  http://localhost:9500/health" -ForegroundColor Cyan
+Write-Host "  http://127.0.0.1:9510/health" -ForegroundColor Cyan
 Write-Host ""
 

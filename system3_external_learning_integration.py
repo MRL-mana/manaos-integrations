@@ -9,8 +9,8 @@ import sys
 import io
 
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 import os
 from pathlib import Path
@@ -24,8 +24,8 @@ from system3_http_retry import http_post_json_retry
 # 設定（環境変数から取得、デフォルト値あり）
 VAULT_PATH = Path(os.getenv("OBSIDIAN_VAULT_PATH", r"C:\Users\mana4\Documents\Obsidian Vault"))
 EXTERNAL_LEARNING_DIR = VAULT_PATH / "ManaOS" / "System" / "ExternalLearning"
-LEARNING_SYSTEM_URL = "http://localhost:5126"
-RAG_MEMORY_URL = "http://localhost:5103"  # RAG Memory API
+LEARNING_SYSTEM_URL = "http://127.0.0.1:5126"
+RAG_MEMORY_URL = "http://127.0.0.1:5103"  # RAG Memory API
 
 
 def parse_external_learning_report(md_file: Path) -> List[Dict[str, Any]]:

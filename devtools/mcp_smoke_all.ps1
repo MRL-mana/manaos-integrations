@@ -3,7 +3,7 @@ param(
   [string]$Py = "py -3.10",
   [int]$VideoHealthPort = 5112,
   [int]$PicoHealthPort = 5136,
-  [string]$UnifiedApiUrl = "http://localhost:9502"
+  [string]$UnifiedApiUrl = "http://127.0.0.1:9510"
 )
 
 $ErrorActionPreference = "Stop"

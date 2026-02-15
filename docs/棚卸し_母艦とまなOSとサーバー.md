@@ -39,8 +39,8 @@
 
 | ポート | サービス | スクリプト | 備考 |
 |--------|----------|------------|------|
-| **9500** | ManaOS 統合API | `unified_api_server.py` | メインエントリ。外部サービス連携の窓口 |
-| **9501** | LLM Routing API | `manaos_llm_routing_api.py` | LM Studio / Ollama のルーティング |
+| **9510** | ManaOS 統合API | `unified_api_server.py` | メインエントリ。外部サービス連携の窓口 |
+| **5111** | LLM Routing MCP | `llm_routing_mcp_server` | LM Studio / Ollama のルーティング（healthのみ） |
 
 ### 2.2 コア・オーケストレーション（51xx系）
 
@@ -108,10 +108,10 @@
 
 | サービス | デフォルトURL | 用途 |
 |----------|---------------|------|
-| ComfyUI | http://localhost:8188 | 画像生成 |
-| Ollama | http://localhost:11434 | LLM 実行 |
-| LM Studio | http://localhost:1234/v1 | LLM 実行 |
-| n8n | http://localhost:5678 or 5679 | ワークフロー自動化 |
+| ComfyUI | http://127.0.0.1:8188 | 画像生成 |
+| Ollama | http://127.0.0.1:11434 | LLM 実行 |
+| LM Studio | http://127.0.0.1:1234/v1 | LLM 実行 |
+| n8n | http://127.0.0.1:5678 or 5679 | ワークフロー自動化 |
 
 ---
 

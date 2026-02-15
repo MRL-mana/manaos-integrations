@@ -40,21 +40,21 @@ class UnifiedAPIClient:
         """初期化"""
         # サービス定義
         self.services = {
-            "intent_router": {"url": "http://localhost:5100", "port": 5100},
-            "task_planner": {"url": "http://localhost:5101", "port": 5101},
-            "task_critic": {"url": "http://localhost:5102", "port": 5102},
-            "rag_memory": {"url": "http://localhost:5103", "port": 5103},
-            "task_queue": {"url": "http://localhost:5104", "port": 5104},
-            "ui_operations": {"url": "http://localhost:5105", "port": 5105},
-            "unified_orchestrator": {"url": "http://localhost:5106", "port": 5106},
-            "executor_enhanced": {"url": "http://localhost:5107", "port": 5107},
-            "portal_integration": {"url": "http://localhost:5108", "port": 5108},
-            "content_generation": {"url": "http://localhost:5109", "port": 5109},
-            "llm_optimization": {"url": "http://localhost:5110", "port": 5110},
-            "service_monitor": {"url": "http://localhost:5111", "port": 5111},
-            "slack_integration": {"url": "http://localhost:5114", "port": 5114},
-            "file_secretary": {"url": "http://localhost:5120", "port": 5120},
-            "learning_system": {"url": "http://localhost:5126", "port": 5126},
+            "intent_router": {"url": "http://127.0.0.1:5100", "port": 5100},
+            "task_planner": {"url": "http://127.0.0.1:5101", "port": 5101},
+            "task_critic": {"url": "http://127.0.0.1:5102", "port": 5102},
+            "rag_memory": {"url": "http://127.0.0.1:5103", "port": 5103},
+            "task_queue": {"url": "http://127.0.0.1:5104", "port": 5104},
+            "ui_operations": {"url": "http://127.0.0.1:5105", "port": 5105},
+            "unified_orchestrator": {"url": "http://127.0.0.1:5106", "port": 5106},
+            "executor_enhanced": {"url": "http://127.0.0.1:5107", "port": 5107},
+            "portal_integration": {"url": "http://127.0.0.1:5108", "port": 5108},
+            "content_generation": {"url": "http://127.0.0.1:5109", "port": 5109},
+            "llm_routing": {"url": "http://127.0.0.1:5111", "port": 5111},
+            "service_monitor": {"url": "http://127.0.0.1:5111", "port": 5111},
+            "slack_integration": {"url": "http://127.0.0.1:5114", "port": 5114},
+            "file_secretary": {"url": "http://127.0.0.1:5120", "port": 5120},
+            "learning_system": {"url": "http://127.0.0.1:5126", "port": 5126},
         }
         
         # HTTPクライアント（接続プール使用）

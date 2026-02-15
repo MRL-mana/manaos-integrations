@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 class FileSecretaryMonitor:
     """File Secretary監視システム"""
     
-    def __init__(self, api_url: str = "http://localhost:5120"):
+    def __init__(self, api_url: str = "http://127.0.0.1:5120"):
         """
         初期化
         
@@ -234,7 +234,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description='File Secretary 監視システム')
-    parser.add_argument('--api-url', default='http://localhost:5120',
+    parser.add_argument('--api-url', default='http://127.0.0.1:5120',
                        help='File Secretary API URL')
     parser.add_argument('--interval', type=int, default=60,
                        help='監視間隔（秒）')

@@ -22,13 +22,14 @@ ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=unified_api_server.py
 ENV FLASK_ENV=production
 ENV BRAVE_API_KEY=demo_brave_key_12345
+ENV PORT=9510
 
 # ポートの公開
-EXPOSE 5000
+EXPOSE 9510
 
 # ヘルスチェック
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:5000/health', timeout=5)"
+    CMD curl -f http://localhost:9510/health || exit 1
 
 # アプリケーションの起動
 CMD ["python", "unified_api_server.py"]

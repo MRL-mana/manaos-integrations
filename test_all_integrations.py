@@ -128,7 +128,7 @@ print("[6] ComfyUI統合")
 print("-" * 70)
 try:
     from comfyui_integration import ComfyUIIntegration
-    comfyui_url = os.getenv("COMFYUI_URL", "http://localhost:8188")
+    comfyui_url = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
     comfyui = ComfyUIIntegration(base_url=comfyui_url)
     if comfyui.is_available():
         print(f"  [OK] ComfyUI統合: 利用可能 ({comfyui_url})")

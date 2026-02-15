@@ -9,7 +9,7 @@ services:
     container_name: unified-api-server
     restart: unless-stopped
     ports:
-      - "9500:9500"
+      - "9510:9510"
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
@@ -39,7 +39,7 @@ services:
           cpus: '0.5'
           memory: 512M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9500/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9510/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -81,7 +81,7 @@ services:
           cpus: '0.25'
           memory: 256M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5121/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5121/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -126,7 +126,7 @@ services:
           cpus: '0.25'
           memory: 256M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5559/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5559/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -166,7 +166,7 @@ services:
           cpus: '0.25'
           memory: 128M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5112/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5112/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -206,7 +206,7 @@ services:
           cpus: '0.25'
           memory: 128M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5120/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5120/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -245,7 +245,7 @@ services:
           cpus: '0.25'
           memory: 128M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5111/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5111/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -284,7 +284,7 @@ services:
           cpus: '0.25'
           memory: 128M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5115/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5115/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -325,7 +325,7 @@ services:
           cpus: '0.25'
           memory: 128M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5108/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5108/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -368,7 +368,7 @@ services:
           cpus: '0.25'
           memory: 128M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5114/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5114/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -409,7 +409,7 @@ services:
           cpus: '0.25'
           memory: 128M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5116/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5116/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -422,15 +422,15 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  # LLM Routing API
-  llm-routing-api:
+  # LLM Routing MCP Server
+  llm-routing-mcp:
     build:
       context: .
       dockerfile: manaos_llm_routing_api/Dockerfile
-    container_name: llm-routing-api
+    container_name: llm-routing-mcp
     restart: unless-stopped
     ports:
-      - "9501:9501"
+      - "5111:5111"
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
@@ -451,7 +451,7 @@ services:
           cpus: '0.25'
           memory: 256M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9501/api/llm/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9510/api/llm/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -479,7 +479,7 @@ services:
       - MCP_API_PORT=9502
       - MCP_API_HOST=0.0.0.0
       - COMFYUI_URL=${COMFYUI_URL:-http://host.docker.internal:8188}
-      - MANAOS_API_URL=${MANAOS_API_URL:-http://host.docker.internal:9500}
+      - MANAOS_API_URL=${MANAOS_API_URL:-http://host.docker.internal:9510}
       - OBSIDIAN_VAULT_PATH=${OBSIDIAN_VAULT_PATH:-/app/obsidian_vault}
       - SEARXNG_BASE_URL=${SEARXNG_BASE_URL:-http://host.docker.internal:8080}
       - OPENWEBUI_URL=${OPENWEBUI_URL:-http://host.docker.internal:3001}
@@ -512,7 +512,7 @@ services:
           cpus: '0.25'
           memory: 256M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9502/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9502/health"]
       interval: 30s
       timeout: 10s
       retries: 3

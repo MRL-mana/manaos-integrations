@@ -135,7 +135,7 @@ ManaOS（Gallery API / MCP）や一括生成スクリプトを噛ませている
 | `[ERROR] ComfyUI: ...` | ComfyUI が 200 で返したが JSON 内に `error` がある | メッセージ内容を確認。**チェックポイント／LoRA が見つからない**、**ノードの入力不正**、**キューあふれ**など |
 | `[ERROR] プロンプトIDが取得できませんでした` | 200 だが `prompt_id` も `error` も無い異常応答 | 稀。ComfyUI のバージョンやワークフロー互換を確認 |
 | `[ERROR] HTTP 500` など | ComfyUI がエラー status を返した | ComfyUI のコンソール／ログでクラッシュや OOM を確認 |
-| `[ERROR] ... Connection refused` など | リクエスト時の例外（接続失敗・タイムアウト） | ComfyUI が起動しているか、`COMFYUI_URL`（既定は `http://localhost:8188`）が正しいか確認。POST は既定 90 秒タイムアウト（`COMFYUI_POST_TIMEOUT`）。接続・タイムアウト・5xx は自動リトライ（既定 2 回）あり |
+| `[ERROR] ... Connection refused` など | リクエスト時の例外（接続失敗・タイムアウト） | ComfyUI が起動しているか、`COMFYUI_URL`（既定は `http://127.0.0.1:8188`）が正しいか確認。POST は既定 90 秒タイムアウト（`COMFYUI_POST_TIMEOUT`）。接続・タイムアウト・5xx は自動リトライ（既定 2 回）あり |
 
 **確認のコツ**
 

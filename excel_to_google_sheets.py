@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 # Windowsでのエンコーディング修正（cp932で落ちるのを防ぐ）
 if sys.platform == "win32":
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
 
 try:
     from google.oauth2.credentials import Credentials

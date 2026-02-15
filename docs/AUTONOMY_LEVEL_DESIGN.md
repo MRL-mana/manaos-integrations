@@ -75,7 +75,7 @@
 | **降格ルール・失敗カウンタ** | [docs/AUTONOMY_DEGRADE_SPEC.md](./AUTONOMY_DEGRADE_SPEC.md) |
 | **Runbook テンプレ仕様** | [docs/AUTONOMY_RUNBOOK_SPEC.md](./AUTONOMY_RUNBOOK_SPEC.md) |
 | Runbook テンプレ配置 | `config/runbooks/*.json` |
-| **Portal 自律UI** | Portal 起動後 `GET http://localhost:5108/autonomy-dashboard` でレベル・予算・承認ボタン・**レベル変更**を表示。 |
+| **Portal 自律UI** | Portal 起動後 `GET http://127.0.0.1:5108/autonomy-dashboard` でレベル・予算・承認ボタン・**レベル変更**を表示。 |
 | **クイックスタート** | `scripts/start_autonomy_portal_dashboard.ps1` で Autonomy + Portal を起動し、ダッシュボードをブラウザで開く。 |
 | **HMAC トークン生成** | `AUTONOMY_HMAC_SECRET` を設定して `python scripts/autonomy_hmac_token.py` で現在窓のトークンを表示。 |
 | Runbook スケジュール | `croniter` 利用時は cron 厳密解釈。未導入時は簡易判定にフォールバック。 |

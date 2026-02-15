@@ -7,7 +7,7 @@ import json
 from typing import List, Dict
 
 # APIサーバーのURL
-API_URL = "http://localhost:9405"
+API_URL = "http://127.0.0.1:9405"
 
 def test_ollama_chat_with_memory():
     """Ollamaチャットと記憶システムの統合テスト"""

@@ -111,7 +111,7 @@ repair_result = self_healing.auto_repair(
 repair_result = self_healing.auto_repair(
     error=ConnectionError("Network unreachable"),
     context={
-        "url": "http://localhost:5678",
+        "url": "http://127.0.0.1:5678",
         "host": "localhost",
         "port": 5678
     }
@@ -310,7 +310,7 @@ self_healing = ComprehensiveSelfCapabilitiesSystem()
 
 try:
     # サービスを呼び出す
-    response = requests.get("http://localhost:5100/health")
+    response = requests.get("http://127.0.0.1:5100/health")
 except requests.exceptions.ConnectionError as e:
     # 自動修復を実行
     repair_result = self_healing.auto_repair(
@@ -323,7 +323,7 @@ except requests.exceptions.ConnectionError as e:
     
     if repair_result.get("success"):
         # 修復成功、再試行
-        response = requests.get("http://localhost:5100/health")
+        response = requests.get("http://127.0.0.1:5100/health")
 ```
 
 ### 例2: データベース接続エラー時の自動修復

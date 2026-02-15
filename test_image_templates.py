@@ -22,7 +22,7 @@ def main():
     if not templates.comfyui_integration or not templates.comfyui_integration.is_available():
         print("⚠️ ComfyUI統合が利用できません")
         print("   設定が必要:")
-        print("   - ComfyUIの起動（デフォルト: http://localhost:8188）")
+        print("   - ComfyUIの起動（デフォルト: http://127.0.0.1:8188）")
         print("   - COMFYUI_URL環境変数（オプション）")
         return
     

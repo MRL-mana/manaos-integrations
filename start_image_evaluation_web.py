@@ -236,7 +236,7 @@ if not evaluation_web_file.exists():
         print("=" * 60)
         print("画像評価Webサーバー起動")
         print("=" * 60)
-        print(f"ローカルアクセス: http://localhost:9600")
+        print(f"ローカルアクセス: http://127.0.0.1:9600")
         print(f"外部アクセス（同一Wi-Fi）: http://{local_ip}:9600")
         print(f"📱 Pixel 7からアクセス: http://{local_ip}:9600")
         print("=" * 60)

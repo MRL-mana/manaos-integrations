@@ -32,7 +32,7 @@ Botをメンション:
 import requests
 
 response = requests.post(
-    "http://localhost:5115/api/slack/llm/chat",
+    "http://127.0.0.1:5115/api/slack/llm/chat",
     json={
         "text": "こんにちは！",
         "channel": "#general",

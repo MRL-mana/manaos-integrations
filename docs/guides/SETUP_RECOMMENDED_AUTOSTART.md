@@ -57,13 +57,13 @@ Get-ScheduledTask -TaskName "manaOS-API-Server"
    cd C:\Users\mana4\OneDrive\Desktop\manaos_integrations
    python check_server_status.py
    ```
-   またはブラウザで: http://127.0.0.1:9500/health
+   またはブラウザで: http://127.0.0.1:9510/health
 
 3. **n8nの確認**
    ```powershell
    Get-Service n8n
    ```
-   またはブラウザで: http://localhost:5679
+   またはブラウザで: http://127.0.0.1:5679
 
 ---
 
@@ -126,6 +126,7 @@ Stop-ScheduledTask -TaskName "manaOS-API-Server"
 ---
 
 **設定完了**: 標準構成（推奨）の自動起動設定が完了しました
+
 
 
 

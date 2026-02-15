@@ -35,7 +35,7 @@ $serverStarted = $false
 
 while ($retryCount -lt $maxRetries -and -not $serverStarted) {
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:1234/v1/models" -Method GET -TimeoutSec 2 -ErrorAction Stop
+        $response = Invoke-WebRequest -Uri "http://127.0.0.1:1234/v1/models" -Method GET -TimeoutSec 2 -ErrorAction Stop
         $serverStarted = $true
         Write-Host "   [✅] LM Studioサーバーが起動しています！" -ForegroundColor Green
         
@@ -69,7 +69,7 @@ if (-not $serverStarted) {
     Write-Host ""
     Write-Host "方法2: ブラウザで確認" -ForegroundColor White
     Write-Host "  LM Studioが起動している場合、以下にアクセス:" -ForegroundColor Gray
-    Write-Host "  http://localhost:1234/v1/models" -ForegroundColor Gray
+    Write-Host "  http://127.0.0.1:1234/v1/models" -ForegroundColor Gray
     Write-Host ""
     Write-Host "確認コマンド:" -ForegroundColor Cyan
     Write-Host "  .\check_running_status.ps1" -ForegroundColor Gray

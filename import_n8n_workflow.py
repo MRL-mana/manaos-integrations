@@ -14,7 +14,7 @@ from pathlib import Path
 
 def import_workflow(
     workflow_path,
-    n8n_url="http://localhost:5678",
+    n8n_url="http://127.0.0.1:5678",
     api_key=None,
 ):
     """
@@ -22,7 +22,7 @@ def import_workflow(
 
     Args:
         workflow_path: ワークフローJSONファイルのパス
-        n8n_url: n8nのURL（デフォルト: http://localhost:5678）
+        n8n_url: n8nのURL（デフォルト: http://127.0.0.1:5678）
         api_key: n8n APIキー（オプション）
     """
     # ワークフローファイルを読み込む
@@ -98,7 +98,7 @@ def main():
 
     # 標準出力のエンコーディングを設定
     if sys.stdout.encoding != "utf-8":
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+        sys.stdout.reconfigure(encoding='utf-8')
 
     print("n8n workflow import started")
     print()
@@ -116,20 +116,20 @@ def main():
         print("OK: Import completed!")
         print()
         print("Next steps:")
-        print("1. Check workflow in n8n: http://localhost:5678")
+        print("1. Check workflow in n8n: http://127.0.0.1:5678")
         print("2. Activate workflow")
-        print("3. Check webhook URL: http://localhost:5678/webhook/browse-ai-webhook")
+        print("3. Check webhook URL: http://127.0.0.1:5678/webhook/browse-ai-webhook")
     else:
         print("WARNING: Auto import failed")
         print()
         print("Manual import method:")
-        print("1. Open browser: http://localhost:5678")
+        print("1. Open browser: http://127.0.0.1:5678")
         print("2. Login if needed")
         print("3. Workflows -> Import from File")
         print(f"4. Select file: {workflow_path}")
         print()
         print("Or via Portal UI:")
-        print("1. Open browser: http://localhost:5000")
+        print("1. Open browser: http://127.0.0.1:5000")
         print("2. Open n8n automation section")
         print("3. Click Import Workflow")
         print(f"4. Select file: {workflow_path}")

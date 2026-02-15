@@ -30,7 +30,7 @@ class Verifier:
             config: Verifier設定
         """
         self.config = config
-        self.ollama_url = config.get("ollama_url", "http://localhost:11434")
+        self.ollama_url = config.get("ollama_url", "http://127.0.0.1:11434")
         self.model = config.get("model", "llama3.2:3b")
         self.contradiction_threshold = config.get("contradiction_threshold", 0.7)
         

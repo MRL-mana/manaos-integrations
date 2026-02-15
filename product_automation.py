@@ -31,8 +31,8 @@ app = Flask(__name__)
 CORS(app)
 
 # 設定
-CONTENT_GENERATION_URL = os.getenv("CONTENT_GENERATION_URL", "http://localhost:5109")
-REVENUE_TRACKER_URL = os.getenv("REVENUE_TRACKER_URL", "http://localhost:5117")
+CONTENT_GENERATION_URL = os.getenv("CONTENT_GENERATION_URL", "http://127.0.0.1:5109")
+REVENUE_TRACKER_URL = os.getenv("REVENUE_TRACKER_URL", "http://127.0.0.1:5117")
 
 def get_generated_contents(content_type: Optional[str] = None, status: str = "draft", limit: int = 10) -> List[Dict[str, Any]]:
     """生成コンテンツを取得"""

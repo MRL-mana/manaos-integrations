@@ -8,7 +8,7 @@
 
 ## 📋 前提条件
 
-- ✅ n8nが起動している（http://localhost:5678）
+- ✅ n8nが起動している（http://127.0.0.1:5678）
 - ✅ Slackアカウントがある
 - ✅ Browse AIアカウント作成準備（https://www.browse.ai/）
 
@@ -56,7 +56,7 @@ $env:SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/<YOUR>/<WEBHOOK>/<URL
 
 **方法A: Portal UI経由（推奨）**
 
-1. Portal UIにアクセス: http://localhost:5000
+1. Portal UIにアクセス: http://127.0.0.1:5000
 2. 「⚙️ 自動化ワークフロー（n8n）」セクションを開く
 3. 「ワークフローをインポート」をクリック
 4. `n8n_workflows/browse_ai_manaos_integration.json` を選択
@@ -68,7 +68,7 @@ $env:SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/<YOUR>/<WEBHOOK>/<URL
 $workflowPath = "manaos_integrations\n8n_workflows\browse_ai_manaos_integration.json"
 $workflowJson = Get-Content $workflowPath -Raw | ConvertFrom-Json | ConvertTo-Json -Depth 10
 
-Invoke-RestMethod -Uri "http://localhost:5678/rest/workflows" `
+Invoke-RestMethod -Uri "http://127.0.0.1:5678/rest/workflows" `
   -Method Post `
   -ContentType "application/json" `
   -Body $workflowJson
@@ -81,7 +81,7 @@ Invoke-RestMethod -Uri "http://localhost:5678/rest/workflows" `
 ワークフローインポート後、Webhook URLを確認:
 
 ```
-http://localhost:5678/webhook/browse-ai-webhook
+http://127.0.0.1:5678/webhook/browse-ai-webhook
 ```
 
 **外部公開する場合（推奨）**:
@@ -123,7 +123,7 @@ ngrok http 5678
 6. **Webhook設定**:
    - 「Integrations」→「Webhooks」
    - 「Add Webhook」をクリック
-   - **URL**: `http://localhost:5678/webhook/browse-ai-webhook`
+   - **URL**: `http://127.0.0.1:5678/webhook/browse-ai-webhook`
      - または: ngrok URL（外部公開した場合）
    - 「Save」をクリック
 
@@ -136,7 +136,7 @@ ngrok http 5678
    - 「Run Now」をクリック
 
 2. **n8nワークフロー確認**:
-   - Portal UI: http://localhost:5000
+   - Portal UI: http://127.0.0.1:5000
    - n8nセクション → ワークフロー実行履歴を確認
 
 3. **Slack通知確認**:
@@ -176,7 +176,7 @@ ngrok http 5678
 
 ```powershell
 # n8n確認
-curl http://localhost:5678/rest/workflows
+curl http://127.0.0.1:5678/rest/workflows
 
 # n8n起動（必要に応じて）
 # Dockerの場合
@@ -204,7 +204,7 @@ $env:SLACK_WEBHOOK_URL
 ### Browse AI Webhookが届かない
 
 1. **Webhook URL確認**:
-   - ローカル: `http://localhost:5678/webhook/browse-ai-webhook`
+   - ローカル: `http://127.0.0.1:5678/webhook/browse-ai-webhook`
    - 外部: ngrok URL
 
 2. **n8nワークフロー確認**:

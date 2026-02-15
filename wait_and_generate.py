@@ -10,10 +10,10 @@ import random
 import hashlib
 
 if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-COMFYUI_URL = "http://localhost:8188"
-GALLERY_API = "http://localhost:5559/api/generate"
+COMFYUI_URL = "http://127.0.0.1:8188"
+GALLERY_API = "http://127.0.0.1:5559/api/generate"
 
 print("=" * 60)
 print("ComfyUI起動待機と画像生成")

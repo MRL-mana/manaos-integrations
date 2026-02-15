@@ -32,7 +32,7 @@ orchestrator = init_orchestrator()
 if __name__ == '__main__':
     print(f"🚀 {SERVICE_NAME} 起動中...")
     print(f"   ポート: {PORT}")
-    print(f"   URL: http://localhost:{PORT}")
+    print(f"   URL: http://127.0.0.1:{PORT}")
     app.run(host='0.0.0.0', port=PORT, debug=False)
 
 

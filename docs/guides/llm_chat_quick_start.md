@@ -14,10 +14,10 @@
 
 ```powershell
 # AI Model Hubを開く
-Start-Process "http://localhost:5080"
+Start-Process "http://127.0.0.1:5080"
 
 # RAG API Serverの状態確認
-Start-Process "http://localhost:5057"
+Start-Process "http://127.0.0.1:5057"
 ```
 
 ### 方法3: 手動起動
@@ -47,12 +47,12 @@ Test-NetConnection -ComputerName localhost -Port 5057
 
 ## 🎯 使い方
 
-1. **AI Model Hub** (`http://localhost:5080`)
+1. **AI Model Hub** (`http://127.0.0.1:5080`)
    - Web UIで直接会話
    - モデル選択可能
    - テンプレート機能あり
 
-2. **RAG API Server** (`http://localhost:5057`)
+2. **RAG API Server** (`http://127.0.0.1:5057`)
    - API経由でRAG機能付き会話
    - ドキュメント検索＋回答
 

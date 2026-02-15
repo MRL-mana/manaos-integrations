@@ -8,7 +8,7 @@ Set-Location $root
 
 $autonomyPort = 5124
 $portalPort = 5108
-$dashboardUrl = "http://localhost:$portalPort/autonomy-dashboard"
+$dashboardUrl = "http://127.0.0.1:$portalPort/autonomy-dashboard"
 
 # 既にポート使用中でないか簡易チェック
 $check = Get-NetTCPConnection -LocalPort $autonomyPort -ErrorAction SilentlyContinue

@@ -33,14 +33,14 @@ docker-compose -f docker-compose.manaos-services.yml up -d mcp-api
 python test_mcp_api_integration.py
 
 # または、手動で確認
-curl http://localhost:9502/health
-curl http://localhost:9502/api/mcp/tools
-curl http://localhost:9502/openapi.json
+curl http://127.0.0.1:9502/health
+curl http://127.0.0.1:9502/api/mcp/tools
+curl http://127.0.0.1:9502/openapi.json
 ```
 
 ### ステップ3: Open WebUIで設定
 
-1. Open WebUIにアクセス: `http://localhost:3001`
+1. Open WebUIにアクセス: `http://127.0.0.1:3001`
 2. 設定画面（右上の⚙️）を開く
 3. 「**External Tools**」タブを選択
 4. 「**Add Tool**」をクリック

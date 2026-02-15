@@ -1,8 +1,8 @@
 # Autonomy System: /api/execute を1回だけ呼ぶ（Runbook due + 自律タスク）
 # 使い方: .\autonomy_execute_once.ps1
-# 環境変数 AUTONOMY_URL で先を変更可能（既定: http://localhost:5124）
+# 環境変数 AUTONOMY_URL で先を変更可能（既定: http://127.0.0.1:5124）
 
-$baseUrl = if ($env:AUTONOMY_URL) { $env:AUTONOMY_URL.TrimEnd("/") } else { "http://localhost:5124" }
+$baseUrl = if ($env:AUTONOMY_URL) { $env:AUTONOMY_URL.TrimEnd("/") } else { "http://127.0.0.1:5124" }
 $uri = "$baseUrl/api/execute"
 
 try {

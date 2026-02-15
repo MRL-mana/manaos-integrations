@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 error_handler = ManaOSErrorHandler("Pixel7Executor")
 
 # ピクセル7 Node ManagerのURL
-PIXEL7_NODE_MANAGER_URL = os.getenv("PIXEL7_NODE_MANAGER_URL", os.getenv("X280_NODE_MANAGER_URL", "http://localhost:5121"))
+PIXEL7_NODE_MANAGER_URL = os.getenv("PIXEL7_NODE_MANAGER_URL", os.getenv("X280_NODE_MANAGER_URL", "http://127.0.0.1:5121"))
 
 
 @dataclass

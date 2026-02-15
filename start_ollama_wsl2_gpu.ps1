@@ -46,7 +46,7 @@ Write-Host "  [OK] Ollamaを起動しました" -ForegroundColor Green
 
 # 5. 起動確認
 Write-Host "`n[5] 起動確認中..." -ForegroundColor Yellow
-$apiCheck = wsl -d Ubuntu-22.04 -- bash -c "curl -s http://localhost:11434/api/tags" 2>&1
+$apiCheck = wsl -d Ubuntu-22.04 -- bash -c "curl -s http://127.0.0.1:11434/api/tags" 2>&1
 if ($LASTEXITCODE -eq 0 -and $apiCheck -match "models") {
     Write-Host "  [OK] Ollamaが正常に起動しています" -ForegroundColor Green
 } else {

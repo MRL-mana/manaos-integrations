@@ -16,7 +16,7 @@ from mcp.types import Tool, TextContent
 if __package__ in (None, ""):
     sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
-N8N_BASE = os.getenv("N8N_BASE", "http://localhost:5678")
+N8N_BASE = os.getenv("N8N_BASE", "http://127.0.0.1:5678")
 N8N_USER = os.getenv("N8N_USER", "mana")
 N8N_PASSWORD = os.getenv("N8N_PASSWORD", "trinity2025")
 N8N_API_KEY = os.getenv("N8N_API_KEY", "")

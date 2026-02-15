@@ -165,14 +165,14 @@ execution_ids = automation.batch_process_folder(
 {
   "notifications": {
     "enabled": true,
-    "webhook_url": "http://localhost:5678/webhook/svi-notification"
+    "webhook_url": "http://127.0.0.1:5678/webhook/svi-notification"
   }
 }
 ```
 
 2. または、環境変数で設定:
 ```bash
-export SVI_NOTIFICATION_WEBHOOK_URL="http://localhost:5678/webhook/svi-notification"
+export SVI_NOTIFICATION_WEBHOOK_URL="http://127.0.0.1:5678/webhook/svi-notification"
 ```
 
 ## 使用例

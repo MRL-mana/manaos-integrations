@@ -106,7 +106,7 @@ Ctrl+Shift+P → "Tasks: Run Task" → "ManaOS: MRLメモリを起動"
 同様に以下も確認:
 - [ ] "ManaOS: 学習システムを起動" (ポート5104)
 - [ ] "ManaOS: LLMルーティングを起動" (ポート5111)
-- [ ] "ManaOS: 統合APIを起動" (ポート9500)
+- [ ] "ManaOS: 統合APIを起動" (ポート9510)
 
 ---
 
@@ -135,7 +135,7 @@ Ctrl+Shift+P → "Tasks: Run Task" → "🚨 ManaOS: 緊急停止"
 
 #### ✅ 期待結果:
 - [ ] デバッグが開始される
-- [ ] ポート9500でサービスが起動する
+- [ ] ポート9510でサービスが起動する
 - [ ] ブレークポイントで停止する（該当行が実行された場合）
 - [ ] 変数ウォッチが機能する
 - [ ] ステップ実行（F10, F11）が機能する
@@ -258,7 +258,7 @@ TEST_PORT [Tab]
 # F5 → "Python: Current File"
 
 # 5. 別ターミナルで確認
-# curl http://localhost:5999/health
+# curl http://127.0.0.1:5999/health
 ```
 
 #### ✅ 期待結果:
@@ -329,10 +329,10 @@ if (Test-Path ".venv\Scripts\python.exe") {
 
 # 4. サービスの起動確認（ポートリスニング）
 Write-Host "`n[4] サービス起動確認" -ForegroundColor Yellow
-$ports = @(9500, 5111, 5104, 5103)
+$ports = @(9510, 5111, 5104, 5103)
 foreach ($port in $ports) {
     try {
-        $response = Invoke-RestMethod -Uri "http://localhost:$port/health" -TimeoutSec 2
+        $response = Invoke-RestMethod -Uri "http://127.0.0.1:$port/health" -TimeoutSec 2
         Write-Host "  ✅ Port $port : $($response.status)" -ForegroundColor Green
     } catch {
         Write-Host "  ⚠️  Port $port : 応答なし（サービス未起動またはエラー）" -ForegroundColor Yellow

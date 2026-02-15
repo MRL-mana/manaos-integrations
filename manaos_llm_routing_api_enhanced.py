@@ -154,8 +154,8 @@ def get_log_statistics():
 
 if __name__ == "__main__":
     # 開発用サーバー起動
-    port = int(os.getenv("PORT", 9501))
-    logger.info(f"ManaOS LLMルーティングAPI（拡張版）を起動: http://localhost:{port}")
+    port = int(os.getenv("PORT", 5111))
+    logger.info(f"ManaOS LLMルーティングAPI（拡張版）を起動: http://127.0.0.1:{port}")
     app.run(host="0.0.0.0", port=port, debug=True)
 
 

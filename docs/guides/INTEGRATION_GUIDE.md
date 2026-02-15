@@ -148,7 +148,7 @@ export OPENAI_API_KEY="your_openai_api_key"
 
 ### ワークフローインポート
 
-1. n8n UI (`http://localhost:5678`) にアクセス
+1. n8n UI (`http://127.0.0.1:5678`) にアクセス
 2. ワークフロー → インポート
 3. `n8n_workflows/llm_integrated_workflow.json` を選択
 4. ワークフローを有効化
@@ -159,7 +159,7 @@ export OPENAI_API_KEY="your_openai_api_key"
 import requests
 
 response = requests.post(
-    "http://localhost:5678/webhook/llm-chat-integrated",
+    "http://127.0.0.1:5678/webhook/llm-chat-integrated",
     json={
         "message": "こんにちは！",
         "model": "llama3.2:3b",

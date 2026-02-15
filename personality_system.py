@@ -362,14 +362,11 @@ if __name__ == '__main__':
     import sys
     # WindowsのコンソールエンコーディングをUTF-8に設定
     if sys.platform == 'win32':
-        import io
-        # 既にラップされている場合はスキップ
-        if not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding != 'utf-8':
-            try:
-                sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-                sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-            except (AttributeError, ValueError):
-                pass  # 既にラップされている場合はスキップ
+        try:
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+        except (AttributeError, ValueError):
+            pass
     
     port = int(os.getenv("PORT", 5123))
     print(f"Personality System起動中... (ポート: {port})")

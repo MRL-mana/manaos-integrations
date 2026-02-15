@@ -8,7 +8,7 @@
 
 ### ステップ1: Open WebUIの設定を開く
 
-1. `http://localhost:3001` にアクセス
+1. `http://127.0.0.1:3001` にアクセス
 2. 右上の⚙️（設定）アイコンをクリック
 3. 「**一般**」タブが選択されていることを確認
 
@@ -18,22 +18,22 @@
 
 ```
 画像生成が必要な場合は、以下のAPIを呼び出してください：
-POST http://host.docker.internal:9500/api/comfyui/generate
+POST http://host.docker.internal:9510/api/comfyui/generate
 Content-Type: application/json
 Body: {"prompt": "画像生成のプロンプト", "width": 512, "height": 512, "steps": 20}
 
 ファイルをGoogle Driveにアップロードする必要がある場合は：
-POST http://host.docker.internal:9500/api/google_drive/upload
+POST http://host.docker.internal:9510/api/google_drive/upload
 Content-Type: application/json
 Body: {"file_path": "ファイルパス"}
 
 Obsidianにノートを作成する必要がある場合は：
-POST http://host.docker.internal:9500/api/obsidian/create
+POST http://host.docker.internal:9510/api/obsidian/create
 Content-Type: application/json
 Body: {"title": "ノートタイトル", "content": "ノート内容", "tags": ["タグ1", "タグ2"]}
 
 CivitAIでモデルを検索する必要がある場合は：
-GET http://host.docker.internal:9500/api/civitai/search?query=検索クエリ&limit=10
+GET http://host.docker.internal:9510/api/civitai/search?query=検索クエリ&limit=10
 ```
 
 ### ステップ3: 保存

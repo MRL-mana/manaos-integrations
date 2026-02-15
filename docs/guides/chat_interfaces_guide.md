@@ -5,7 +5,7 @@
 ### 1. 🧠 AI Model Hub（推奨・最簡単）
 
 **アクセスURL:**
-- ローカル: `http://localhost:5080`
+- ローカル: `http://127.0.0.1:5080`
 - Tailscale: `http://100.93.120.33:5080`
 
 **特徴:**
@@ -22,7 +22,7 @@ python ai_model_hub.py
 ```
 
 **使い方:**
-1. ブラウザで `http://localhost:5080` を開く
+1. ブラウザで `http://127.0.0.1:5080` を開く
 2. モデルを選択（Qwen 3:4b推奨）
 3. チャットエリアにメッセージを入力
 4. EnterキーまたはSendボタンで送信
@@ -32,7 +32,7 @@ python ai_model_hub.py
 ### 2. 💬 AI Assistant Chatbot
 
 **アクセスURL:**
-- ローカル: `http://localhost:5074`
+- ローカル: `http://127.0.0.1:5074`
 - Tailscale: `http://100.93.120.33:5074`
 
 **特徴:**
@@ -48,7 +48,7 @@ python ai_assistant_chatbot.py
 ```
 
 **使い方:**
-1. ブラウザで `http://localhost:5074` を開く
+1. ブラウザで `http://127.0.0.1:5074` を開く
 2. チャットボックスにメッセージを入力
 3. Enterキーで送信
 
@@ -57,7 +57,7 @@ python ai_assistant_chatbot.py
 ### 3. 🌐 Unified Portal（統合ポータル）
 
 **アクセスURL:**
-- ローカル: `http://localhost:5000`
+- ローカル: `http://127.0.0.1:5000`
 - Tailscale: `http://100.93.120.33:5000`
 
 **特徴:**
@@ -72,7 +72,7 @@ python unified_portal.py
 ```
 
 **使い方:**
-1. ブラウザで `http://localhost:5000` を開く
+1. ブラウザで `http://127.0.0.1:5000` を開く
 2. 「🤖 ローカルLLM」セクションを探す
 3. チャット機能を使用
 
@@ -81,7 +81,7 @@ python unified_portal.py
 ### 4. 🌐 Portal v2（最新版）
 
 **アクセスURL:**
-- ローカル: `http://localhost:5072`
+- ローカル: `http://127.0.0.1:5072`
 - Tailscale: `http://100.93.120.33:5072`
 
 **特徴:**
@@ -100,7 +100,7 @@ python unified_portal_v2.py
 ### 5. 🔍 RAG API Server（質問応答システム）
 
 **アクセスURL:**
-- ローカル: `http://localhost:5057`
+- ローカル: `http://127.0.0.1:5057`
 - Tailscale: `http://100.93.120.33:5057`
 
 **特徴:**
@@ -116,7 +116,7 @@ python rag_api_server.py
 
 **使い方（API経由）:**
 ```bash
-curl -X POST http://localhost:5057/api/query \
+curl -X POST http://127.0.0.1:5057/api/query \
   -H "Content-Type: application/json" \
   -d '{"query": "アルバイトと正社員の違いは？"}'
 ```
@@ -138,19 +138,19 @@ curl -X POST http://localhost:5057/api/query \
 
 ## 🎯 推奨順位
 
-### 1位: AI Model Hub（`http://localhost:5080`）
+### 1位: AI Model Hub（`http://127.0.0.1:5080`）
 **理由:**
 - Web UIが充実
 - モデル選択が簡単
 - テンプレート機能あり
 - 使いやすい
 
-### 2位: Unified Portal（`http://localhost:5000`）
+### 2位: Unified Portal（`http://127.0.0.1:5000`）
 **理由:**
 - 全機能が統合されている
 - 他の機能も一緒に使える
 
-### 3位: RAG API Server（`http://localhost:5057`）
+### 3位: RAG API Server（`http://127.0.0.1:5057`）
 **理由:**
 - RAG機能付きで高精度
 - プロンプト最適化・キャッシュ統合済み
@@ -167,7 +167,7 @@ cd Systems\konoha_migration\manaos_unified_system\services
 python ai_model_hub.py
 
 # 2. ブラウザで開く
-Start-Process "http://localhost:5080"
+Start-Process "http://127.0.0.1:5080"
 ```
 
 ### 方法2: Unified Portalを使う
@@ -178,7 +178,7 @@ cd Systems\konoha_migration\manaos_unified_system\services
 python unified_portal.py
 
 # 2. ブラウザで開く
-Start-Process "http://localhost:5000"
+Start-Process "http://127.0.0.1:5000"
 ```
 
 ### 方法3: Pythonから直接使う
@@ -195,7 +195,7 @@ print(result['answer'])
 
 ```bash
 # Ollama統合API経由
-curl -X POST http://localhost:5000/api/ollama/chat \
+curl -X POST http://127.0.0.1:5000/api/ollama/chat \
   -H "Content-Type: application/json" \
   -d '{
     "model": "qwen3:4b",
@@ -254,10 +254,10 @@ Test-NetConnection -ComputerName localhost -Port 5057
 
 ```powershell
 # AI Model Hubを開く
-Start-Process "http://localhost:5080"
+Start-Process "http://127.0.0.1:5080"
 
 # Unified Portalを開く
-Start-Process "http://localhost:5000"
+Start-Process "http://127.0.0.1:5000"
 ```
 
 ---
@@ -266,7 +266,7 @@ Start-Process "http://localhost:5000"
 
 **最も簡単に会話を始める方法:**
 1. AI Model Hubを起動: `python ai_model_hub.py`
-2. ブラウザで `http://localhost:5080` を開く
+2. ブラウザで `http://127.0.0.1:5080` を開く
 3. モデルを選択（Qwen 3:4b推奨）
 4. チャット開始！
 

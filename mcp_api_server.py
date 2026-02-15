@@ -18,8 +18,8 @@ import logging
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent))
@@ -134,11 +134,11 @@ async def _call_mcp_tool_async(tool_name: str, arguments: dict):
             try:
                 if name == "svi":
                     from svi_wan22_video_integration import SVIWan22VideoIntegration
-                    comfyui_url = os.getenv("COMFYUI_URL", "http://localhost:8188")
+                    comfyui_url = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
                     _integrations[name] = SVIWan22VideoIntegration(base_url=comfyui_url)
                 elif name == "comfyui":
                     from comfyui_integration import ComfyUIIntegration
-                    comfyui_url = os.getenv("COMFYUI_URL", "http://localhost:8188")
+                    comfyui_url = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
                     _integrations[name] = ComfyUIIntegration(base_url=comfyui_url)
                 elif name == "google_drive":
                     from google_drive_integration import GoogleDriveIntegration
@@ -207,7 +207,7 @@ async def _call_mcp_tool_async(tool_name: str, arguments: dict):
         else:
             # その他のツールは統合API経由で呼び出す
             import requests
-            manaos_api_url = os.getenv("MANAOS_API_URL", "http://localhost:9500")
+            manaos_api_url = os.getenv("MANAOS_API_URL", "http://127.0.0.1:9510")
 
             # ツール名をAPIエンドポイントにマッピング
             api_mapping = {

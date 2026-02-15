@@ -28,6 +28,10 @@ if str(_REPO_ROOT) not in sys.path:
 
 class ManaOSServiceManager:
     """ManaOSサービスマネージャー"""
+
+    _DEFAULT_UNIFIED_API_PORT = int(
+        os.getenv("MANAOS_UNIFIED_API_PORT", "9510")
+    )
     
     SERVICES = [
         {
@@ -51,7 +55,7 @@ class ManaOSServiceManager:
         {
             "name": "Unified API",
             "module": "unified_api_server",
-            "port": 9502,
+            "port": _DEFAULT_UNIFIED_API_PORT,
             "description": "統合API"
         },
         {

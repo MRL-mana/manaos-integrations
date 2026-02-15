@@ -10,7 +10,7 @@
   "command": "python",
   "args": ["-m", "n8n_mcp_server.server"],
   "env": {
-    "N8N_BASE_URL": "http://localhost:5679",
+    "N8N_BASE_URL": "http://127.0.0.1:5679",
     "N8N_API_KEY": "your_n8n_api_key_here"
   },
   "cwd": "C:\\Users\\mana4\\OneDrive\\Desktop\\manaos_integrations"
@@ -66,7 +66,7 @@ n8nのワークフロー一覧を取得してください
 - ✅ n8n MCPサーバーの実装
 - ✅ MCP設定ファイルへの追加
 - ✅ APIキーの設定
-- ✅ Base URLの設定（`http://localhost:5679`）
+- ✅ Base URLの設定（`http://127.0.0.1:5679`）
 - ✅ MCPサーバーモジュールの動作確認
 - ⏳ **Cursorの再起動** ← これが必要です
 - ⏳ MCPツールの動作確認
@@ -111,7 +111,7 @@ MCPサーバーが自動的に適切なツールを呼び出します。
 
 ```powershell
 cd C:\Users\mana4\OneDrive\Desktop\manaos_integrations
-.\n8n_mcp_server\set_api_key_manual.ps1 -ApiKey "新しいAPIキー" -BaseUrl "http://localhost:5679"
+.\n8n_mcp_server\set_api_key_manual.ps1 -ApiKey "新しいAPIキー" -BaseUrl "http://127.0.0.1:5679"
 ```
 
 その後、Cursorを再起動してください。

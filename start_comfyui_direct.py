@@ -12,9 +12,9 @@ import io
 if sys.platform == "win32":
     try:
         if hasattr(sys.stdout, "buffer"):
-            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
         if hasattr(sys.stderr, "buffer"):
-            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+            sys.stderr.reconfigure(encoding='utf-8', errors='replace')
     except Exception:
         pass
 
@@ -39,12 +39,12 @@ def start_comfyui():
         import socket
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = sock.connect_ex(("localhost", port))
+        result = sock.connect_ex(("127.0.0.1", port))
         sock.close()
         if result == 0:
             print(f"[情報] ポート {port} は既に使用中です")
             print(f"ComfyUIは既に起動している可能性があります")
-            print(f"ブラウザで http://localhost:{port} にアクセスしてください")
+            print(f"ブラウザで http://127.0.0.1:{port} にアクセスしてください")
             return True
     except Exception as e:
         print(f"[警告] ポート確認中にエラー: {e}")
@@ -53,7 +53,7 @@ def start_comfyui():
     print(f"  パス: {comfyui_path}")
     print(f"  ポート: {port}")
     print(f"")
-    print(f"ブラウザで http://localhost:{port} にアクセスしてください")
+    print(f"ブラウザで http://127.0.0.1:{port} にアクセスしてください")
     print(f"")
 
     try:

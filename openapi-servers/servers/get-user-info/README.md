@@ -44,11 +44,11 @@ uvicorn main:app --host 0.0.0.0 --reload
 
 | Name                | Description                          | Default              |
 |---------------------|--------------------------------------|----------------------|
-| OPEN_WEBUI_BASE_URL | Base URL of the internal auth server | http://localhost:3000 |
+| OPEN_WEBUI_BASE_URL | Base URL of the internal auth server | http://127.0.0.1:3000 |
 
 ## 🍿 Example
 
-curl -H "Authorization: Bearer <your_token>" http://localhost:8000/get_user_info
+curl -H "Authorization: Bearer <your_token>" http://127.0.0.1:8000/get_user_info
 
 ## 🧪 Tech Stack
 

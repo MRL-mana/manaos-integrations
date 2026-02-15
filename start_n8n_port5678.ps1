@@ -32,7 +32,7 @@ Write-Host ""
 Write-Host "Starting n8n on port 5678..." -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Open in browser:" -ForegroundColor Yellow
-Write-Host "  http://localhost:5678" -ForegroundColor Cyan
+Write-Host "  http://127.0.0.1:5678" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Press Ctrl+C to stop" -ForegroundColor Gray
 Write-Host ""

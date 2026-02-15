@@ -19,7 +19,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Ollama設定
-OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
 DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "qwen2.5:3b")
 
 # プロンプトテンプレート
@@ -745,7 +745,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5080))
     logger.info(f"🧠 AI Model Hub起動中...")
-    logger.info(f"   URL: http://localhost:{port}")
+    logger.info(f"   URL: http://127.0.0.1:{port}")
     logger.info(f"   Ollama URL: {OLLAMA_BASE_URL}")
     logger.info(f"   デフォルトモデル: {DEFAULT_MODEL}")
     

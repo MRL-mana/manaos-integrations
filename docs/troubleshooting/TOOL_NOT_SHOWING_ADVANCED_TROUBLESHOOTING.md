@@ -22,7 +22,7 @@
    - ブラウザを再起動
 
 3. **OpenWebUIにアクセス**
-   - `http://localhost:3001` にアクセス
+   - `http://127.0.0.1:3001` にアクセス
    - 「ツールの選択」ドロップダウンを確認
 
 ### 2. OpenWebUIの再起動
@@ -38,7 +38,7 @@ docker-compose -f docker-compose.always-ready-llm.yml restart openwebui
 Start-Sleep -Seconds 5
 
 # アクセス確認
-Invoke-WebRequest -Uri "http://localhost:3001" -UseBasicParsing -TimeoutSec 5
+Invoke-WebRequest -Uri "http://127.0.0.1:3001" -UseBasicParsing -TimeoutSec 5
 ```
 
 ### 3. 拡張機能の影響確認
@@ -80,7 +80,7 @@ Invoke-WebRequest -Uri "http://localhost:3001" -UseBasicParsing -TimeoutSec 5
 
 **確認方法**:
 1. OpenWebUIの設定画面を開く（⚙️ → External Tools）
-2. Tool Server（`http://localhost:9503`）の接続状態を確認
+2. Tool Server（`http://127.0.0.1:9503`）の接続状態を確認
 3. 「Connected」になっているか確認
 4. 接続されていない場合、再度登録
 
@@ -92,7 +92,7 @@ Invoke-WebRequest -Uri "http://localhost:3001" -UseBasicParsing -TimeoutSec 5
 3. **「ツールの選択」ドロップダウンを開く**
 4. **以下のリクエストを確認**:
    - `/api/v1/tools/` へのリクエスト
-   - `http://localhost:9503/openapi.json` へのリクエスト
+   - `http://127.0.0.1:9503/openapi.json` へのリクエスト
 5. **エラーメッセージがないか確認**:
    - Consoleタブでエラーメッセージを確認
    - Networkタブで失敗したリクエストを確認
@@ -122,7 +122,7 @@ Invoke-WebRequest -Uri "http://localhost:3001" -UseBasicParsing -TimeoutSec 5
 - [ ] Function Callingが「ネイティブ」モードに設定されている
 - [ ] Tool ServerがOpenWebUIに登録されている
 - [ ] Tool Serverの接続状態が「Connected」
-- [ ] OpenAPI仕様が正常に取得できる（http://localhost:9503/openapi.json）
+- [ ] OpenAPI仕様が正常に取得できる（http://127.0.0.1:9503/openapi.json）
 - [ ] ブラウザの開発者ツールでエラーがない
 - [ ] 拡張機能を無効化して確認
 

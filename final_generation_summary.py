@@ -8,9 +8,9 @@ import io
 from pathlib import Path
 
 if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-COMFYUI_URL = "http://localhost:8188"
+COMFYUI_URL = "http://127.0.0.1:8188"
 COMFYUI_OUTPUT_DIR = Path("C:/ComfyUI/output")
 
 print("=" * 60)

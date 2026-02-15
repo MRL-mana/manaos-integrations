@@ -61,7 +61,7 @@ class SVIAutomation:
     def __init__(
         self,
         svi_integration: Optional[SVIWan22VideoIntegration] = None,
-        api_base_url: str = "http://localhost:9500"
+        api_base_url: str = "http://127.0.0.1:9510"
     ):
         """
         初期化

@@ -131,7 +131,7 @@ if ($portCheck) {
 # HTTP接続テスト
 Write-Host "  Testing HTTP connection..." -ForegroundColor Gray
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:3001" -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "http://127.0.0.1:3001" -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
     Write-Host "[OK] HTTP connection works (Status: $($response.StatusCode))" -ForegroundColor Green
 } catch {
     Write-Host "[WARN] HTTP connection failed: $_" -ForegroundColor Yellow

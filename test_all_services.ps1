@@ -27,7 +27,7 @@ Write-Host "[テスト開始]" -ForegroundColor Yellow
 Write-Host ""
 
 foreach ($service in $services) {
-    $url = "http://localhost:$($service.Port)$($service.Path)"
+    $url = "http://127.0.0.1:$($service.Port)$($service.Path)"
     Write-Host "テスト中: $($service.Name) ($url)" -ForegroundColor Gray -NoNewline
     
     try {

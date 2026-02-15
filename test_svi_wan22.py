@@ -9,8 +9,8 @@ from pathlib import Path
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent))
@@ -31,13 +31,13 @@ def test_comfyui_connection():
     print()
     
     print("[1] ComfyUIへの接続確認...")
-    svi = SVIWan22VideoIntegration(base_url="http://localhost:8188")
+    svi = SVIWan22VideoIntegration(base_url="http://127.0.0.1:8188")
     
     if not svi.is_available():
         print("   ❌ ComfyUIに接続できません")
         print("   確認事項:")
         print("   1. ComfyUIサーバーが起動しているか")
-        print("   2. URLが正しいか（デフォルト: http://localhost:8188）")
+        print("   2. URLが正しいか（デフォルト: http://127.0.0.1:8188）")
         print("   3. ネットワーク接続が正常か")
         print()
         print("ComfyUIを起動するには:")
@@ -113,7 +113,7 @@ def test_api_endpoint():
         print("   pip install requests")
         return False
     
-    api_url = os.getenv("MANAOS_INTEGRATION_API_URL", "http://localhost:9500")
+    api_url = os.getenv("MANAOS_INTEGRATION_API_URL", "http://127.0.0.1:9510")
     
     print(f"[1] 統合APIサーバーへの接続確認 ({api_url})...")
     try:

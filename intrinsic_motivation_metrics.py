@@ -35,8 +35,8 @@ class IntrinsicMotivationMetrics:
 
     def __init__(
         self,
-        intrinsic_motivation_url: str = "http://localhost:5130",
-        learning_system_url: str = "http://localhost:5126",
+        intrinsic_motivation_url: str = "http://127.0.0.1:5130",
+        learning_system_url: str = "http://127.0.0.1:5126",
         storage_path: Optional[Path] = None
     ):
         """

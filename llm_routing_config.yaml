@@ -1,7 +1,7 @@
 # LLMルーティング設定
 # ロール別モデル + fallback設定
 
-ollama_url: "http://localhost:11434"
+ollama_url: "http://127.0.0.1:11434"
 
 routing:
   conversation:

@@ -193,7 +193,7 @@ class CrashSnapshotManager:
         try:
             # Task Queueから実行中タスクを取得
             response = httpx.get(
-                f"http://localhost:5104/api/status",
+                f"http://127.0.0.1:5104/api/status",
                 timeout=2
             )
             if response.status_code == 200:

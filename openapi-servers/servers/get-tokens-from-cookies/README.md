@@ -33,7 +33,7 @@ uvicorn main:app --host 0.0.0.0 --reload
 ## 🍿 Example
 
 ```bash
-curl --cookie "oauth_id_token=xxx; oauth_access_token=yyy" http://localhost:8000/tokens
+curl --cookie "oauth_id_token=xxx; oauth_access_token=yyy" http://127.0.0.1:8000/tokens
 ```
 
 ## 🧪 Tech Stack

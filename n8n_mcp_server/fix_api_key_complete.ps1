@@ -7,7 +7,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # 設定
-$N8N_URL = "http://localhost:5679"
+$N8N_URL = "http://127.0.0.1:5679"
 $MCP_CONFIG_PATH = "$env:APPDATA\Cursor\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json"
 
 # Step 1: N8Nの状態確認

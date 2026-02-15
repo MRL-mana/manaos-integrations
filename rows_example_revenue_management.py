@@ -8,7 +8,7 @@ import json
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
 
-API_BASE = "http://localhost:9500"
+API_BASE = "http://127.0.0.1:9510"
 
 
 def create_revenue_spreadsheet():
