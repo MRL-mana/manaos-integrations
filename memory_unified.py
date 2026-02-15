@@ -5,15 +5,13 @@ Obsidianを母艦として、入力・出力を統一フォーマットで管理
 
 import os
 import json
-import logging
+from manaos_logger import get_logger
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import uuid
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+logger = get_logger(__name__)
 # Obsidian統合をインポート
 try:
     from obsidian_integration import ObsidianIntegration

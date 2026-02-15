@@ -2,7 +2,12 @@
 # -*- coding: utf-8 -*-
 """
 ManaOS テスト共通設定
+
+manaos_logger がモジュールレベルで sys.stdout/stderr を reconfigure するため、
+pytest の TerminalWriter が参照するファイルハンドルが閉じられてしまう問題を防止。
+各フェーズ (configure / sessionfinish / unconfigure) で復元を行う。
 """
+import os
 import sys
 import io
 from pathlib import Path
@@ -12,20 +17,71 @@ REPO_ROOT = str(Path(__file__).resolve().parents[1])
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-# manaos_logger がモジュールレベルで sys.stdout/stderr を TextIOWrapper に
-# 差し替えるが、pytest の capture 機構と衝突する。
-# テスト実行時は差し替えを無効化する。
-_original_stdout = sys.stdout
-_original_stderr = sys.stderr
+# ── 安全な stdout/stderr の保存 ──────────────────────────────
+# os.dup で FD を複製し、独立した TextIOWrapper を作る。
+# これにより manaos_logger が元の FD を閉じても影響を受けない。
+try:
+    _safe_stdout = io.TextIOWrapper(
+        io.BufferedWriter(io.FileIO(os.dup(sys.stdout.fileno()), closefd=True)),
+        encoding="utf-8",
+        errors="replace",
+        line_buffering=True,
+    )
+except (AttributeError, io.UnsupportedOperation, OSError):
+    _safe_stdout = sys.stdout
+
+try:
+    _safe_stderr = io.TextIOWrapper(
+        io.BufferedWriter(io.FileIO(os.dup(sys.stderr.fileno()), closefd=True)),
+        encoding="utf-8",
+        errors="replace",
+        line_buffering=True,
+    )
+except (AttributeError, io.UnsupportedOperation, OSError):
+    _safe_stderr = sys.stderr
+
+
+def _restore_stdio():
+    """sys.stdout/stderr が閉じていたら安全なコピーに差し替える"""
+    try:
+        if sys.stdout is None or sys.stdout.closed:
+            sys.stdout = _safe_stdout
+    except (AttributeError, ValueError):
+        sys.stdout = _safe_stdout
+
+    try:
+        if sys.stderr is None or sys.stderr.closed:
+            sys.stderr = _safe_stderr
+    except (AttributeError, ValueError):
+        sys.stderr = _safe_stderr
+
+
+def _patch_terminal_writer(config):
+    """pytest の TerminalWriter._file が閉じていたら安全なものに差し替える"""
+    try:
+        tw = config._tw  # type: ignore[attr-defined]
+        if tw._file is None or tw._file.closed:
+            tw._file = _safe_stdout
+    except (AttributeError, ValueError):
+        pass
 
 
 def pytest_configure(config):
     """pytest 起動時に manaos_logger をインポートしてから stdout/stderr を復元"""
-    # manaos_logger のインポート自体で sys.stdout/stderr が書き換わるので、
-    # ここで先にインポートして即座に戻す。
     try:
         import manaos_logger  # noqa: F401
     except Exception:
         pass
-    sys.stdout = _original_stdout
-    sys.stderr = _original_stderr
+    _restore_stdio()
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """セッション終了時にターミナルライターを修復"""
+    _restore_stdio()
+    _patch_terminal_writer(session.config)
+
+
+def pytest_unconfigure(config):
+    """pytest 終了時の最終復元"""
+    _restore_stdio()
+    _patch_terminal_writer(config)

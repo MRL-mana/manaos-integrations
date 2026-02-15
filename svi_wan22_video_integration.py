@@ -8,11 +8,10 @@ import json
 import time
 from typing import Optional, Dict, List, Any, Union
 from pathlib import Path
-import logging
+from manaos_logger import get_logger
 from datetime import datetime
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SVIWan22VideoIntegration:

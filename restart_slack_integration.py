@@ -10,6 +10,8 @@ import time
 import httpx
 from pathlib import Path
 
+from manaos_process_manager import get_process_manager
+
 def load_slack_config():
     """Slack設定を読み込む"""
     # Secretsは環境変数/.env（ローカル）から供給する（ファイル走査・直書きは禁止）
@@ -22,38 +24,12 @@ def load_slack_config():
 def stop_slack_integration():
     """Slack統合サーバーを停止"""
     print("既存のSlack統合サーバーを停止中...")
-    
+    pm = get_process_manager()
     try:
-        result = subprocess.run(
-            ["netstat", "-ano"],
-            capture_output=True,
-            text=True
-        )
-        
-        processes_to_kill = []
-        for line in result.stdout.split('\n'):
-            if ':5114' in line and 'LISTENING' in line:
-                parts = line.split()
-                if len(parts) >= 5:
-                    pid = parts[-1]
-                    processes_to_kill.append(pid)
-        
-        if processes_to_kill:
-            for pid in set(processes_to_kill):
-                try:
-                    proc = subprocess.run(
-                        ["powershell", "-Command", f"Get-WmiObject Win32_Process -Filter 'ProcessId = {pid}' | Select-Object -ExpandProperty CommandLine"],
-                        capture_output=True,
-                        text=True
-                    )
-                    if "slack_integration" in proc.stdout.lower():
-                        print(f"  プロセス {pid} を停止中...")
-                        subprocess.run(["taskkill", "/F", "/PID", pid], capture_output=True)
-                except Exception:
-                    pass
-            
+        killed = pm.kill_processes_by_port(5114)
+        if killed:
             time.sleep(2)
-            print("  [OK] 停止完了")
+            print(f"  [OK] {killed} プロセスを停止しました")
         else:
             print("  [INFO] 実行中のプロセスは見つかりませんでした")
     except Exception as e:

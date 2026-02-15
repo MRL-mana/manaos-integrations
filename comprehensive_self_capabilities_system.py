@@ -18,6 +18,7 @@ from collections import defaultdict, deque
 
 # 統一モジュールのインポート
 from manaos_logger import get_logger
+from manaos_process_manager import get_process_manager
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 from manaos_timeout_config import get_timeout_config
 from manaos_config_validator import ConfigValidator
@@ -450,23 +451,17 @@ class ComprehensiveSelfCapabilitiesSystem:
         """プロセス終了修復"""
         process_name = context.get("process_name")
         pid = context.get("pid")
-        
+        pm = get_process_manager()
+
         try:
             if pid:
-                process = psutil.Process(pid)
-                process.terminate()
-                time.sleep(1)
-                if process.is_running():
-                    process.kill()
-                return {"success": True, "message": f"プロセスを終了しました: PID {pid}"}
+                success = pm.kill_by_pid(pid)
+                if success:
+                    return {"success": True, "message": f"プロセスを終了しました: PID {pid}"}
+                return {"error": f"PID {pid} の終了に失敗"}
             elif process_name:
-                for proc in psutil.process_iter(['pid', 'name']):
-                    if process_name.lower() in proc.info['name'].lower():
-                        proc.terminate()
-                        time.sleep(1)
-                        if proc.is_running():
-                            proc.kill()
-                return {"success": True, "message": f"プロセスを終了しました: {process_name}"}
+                killed = pm.kill_processes_by_keywords([process_name])
+                return {"success": True, "message": f"プロセスを終了しました: {process_name} ({killed}件)"}
             return {"error": "process_nameまたはpidが必要です"}
         except Exception as e:
             return {"error": str(e)}
@@ -730,19 +725,13 @@ class ComprehensiveSelfCapabilitiesSystem:
                     
                     # メモリ使用率が高いプロセスを終了（オプション）
                     if memory_percent > 95:
-                        # メモリ使用率が高いプロセスを検索
-                        for proc in psutil.process_iter(['pid', 'name', 'memory_percent']):
-                            try:
-                                if proc.info['memory_percent'] > 10:  # 10%以上使用
-                                    proc_name = proc.info['name']
-                                    # システムプロセスは除外
-                                    if proc_name not in ['python.exe', 'pythonw.exe']:
-                                        continue
-                                    proc.terminate()
-                                    actions_taken.append(f"プロセス終了: {proc_name}")
-                                    break
-                            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                                continue
+                        pm = get_process_manager()
+                        top = pm.list_top_processes(sort_by="memory", limit=5)
+                        for p in top:
+                            if p.get("memory_mb", 0) > 500 and p.get("name") in ("python.exe", "pythonw.exe"):
+                                pm.kill_by_pid(p["pid"])
+                                actions_taken.append(f"プロセス終了: {p['name']}")
+                                break
                     
                     return {
                         "success": True,

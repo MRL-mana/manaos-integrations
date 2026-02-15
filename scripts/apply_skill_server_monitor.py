@@ -16,6 +16,13 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional
 
+# ProcessManager をインポート (親ディレクトリを sys.path に追加)
+_PARENT = str(Path(__file__).resolve().parents[1])
+if _PARENT not in sys.path:
+    sys.path.insert(0, _PARENT)
+
+from manaos_process_manager import get_process_manager
+
 # 設定
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 
@@ -149,19 +156,12 @@ def restart_service(service_name: str, script: str) -> Dict[str, Any]:
 
 
 def _stop_service_process(script: str):
-    """サービスプロセスを停止（簡易実装）"""
+    """サービスプロセスを停止（ProcessManager 経由）"""
     try:
-        import platform
-        if platform.system() == "Windows":
-            # Windows: taskkillでPythonプロセスを停止（簡易実装）
-            # 実際の運用では、より精密なプロセス管理が必要
-            subprocess.run(
-                ["taskkill", "/F", "/IM", "python.exe", "/FI", f"WINDOWTITLE eq {script}"],
-                capture_output=True,
-                timeout=5
-            )
+        pm = get_process_manager()
+        pm.kill_processes_by_script(script)
     except Exception:
-        pass  # エラーを無視（プロセスが見つからない場合は問題ない）
+        pass  # プロセスが見つからない場合は問題ない
 
 
 def send_slack_notification(action: str, result: Dict[str, Any], service_name: str = "") -> bool:

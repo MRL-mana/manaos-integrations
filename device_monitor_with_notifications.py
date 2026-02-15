@@ -4,18 +4,13 @@
 Device Health MonitorとNotification Hub Enhancedを統合
 """
 
-import logging
+from manaos_logger import get_logger
 import signal
 import sys
 from pathlib import Path
 
 # ログ設定
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
+logger = get_logger(__name__)
 # モジュールをインポート
 try:
     from device_health_monitor import DeviceHealthMonitor

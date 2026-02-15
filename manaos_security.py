@@ -333,6 +333,43 @@ input_validator = InputValidator()
 security_config = SecurityConfig()
 
 
+# ── 安全な DB ヘルパー ──────────────────────────────
+import sqlite3
+from contextlib import contextmanager
+
+
+@contextmanager
+def safe_db(db_path: str, *, readonly: bool = False):
+    """SQLite 接続のコンテキストマネージャ.
+
+    必ず ``cursor.execute(sql, params)`` のパラメータ化クエリを使用すること。
+    f-string でクエリを組み立てると SQL インジェクションの原因になる。
+
+    Usage::
+
+        from manaos_security import safe_db
+
+        with safe_db("data.db") as (conn, cur):
+            cur.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+            row = cur.fetchone()
+    """
+    uri = None
+    if readonly:
+        uri = f"file:{db_path}?mode=ro"
+    conn = sqlite3.connect(uri or db_path, uri=bool(uri))
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    cur = conn.cursor()
+    try:
+        yield conn, cur
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 
 
 

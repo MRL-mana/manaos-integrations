@@ -6,14 +6,12 @@ AI Assistant Chatbot - シンプルなチャットUI
 from flask import Flask, render_template_string, request, jsonify
 from flask_cors import CORS
 import os
-import logging
+from manaos_logger import get_logger
 import httpx
 import time
 from typing import Dict, Any, Optional, List
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+logger = get_logger(__name__)
 app = Flask(__name__)
 CORS(app)
 

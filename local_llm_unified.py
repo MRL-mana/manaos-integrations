@@ -4,12 +4,11 @@
 """
 
 import os
-import logging
+from manaos_logger import get_logger
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class LocalLLMUnified:

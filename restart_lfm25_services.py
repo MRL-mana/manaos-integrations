@@ -11,6 +11,7 @@ import sys
 import os
 from pathlib import Path
 import requests
+from manaos_process_manager import get_process_manager
 
 # Windowsコンソールのエンコーディング設定
 if sys.platform == "win32":
@@ -18,52 +19,20 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
+pm = get_process_manager("LFM25Restart")
+
 def check_port(port):
     """ポートが使用されているか確認"""
-    try:
-        result = subprocess.run(
-            ["netstat", "-ano"],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
-        return f":{port} " in result.stdout
-    except Exception:
-        return False
+    return pm.check_port_in_use(port)
 
 def get_process_by_port(port):
     """ポートを使用しているプロセスIDを取得"""
-    try:
-        result = subprocess.run(
-            ["netstat", "-ano"],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
-        for line in result.stdout.split('\n'):
-            if f":{port} " in line:
-                parts = line.split()
-                if len(parts) > 0:
-                    try:
-                        return int(parts[-1])
-                    except Exception:
-                        pass
-    except Exception:
-        pass
-    return None
+    procs = pm.get_processes_by_port(port)
+    return procs[0]["pid"] if procs else None
 
 def kill_process(pid):
-    """プロセスを終了"""
-    try:
-        if sys.platform == "win32":
-            subprocess.run(["taskkill", "/F", "/PID", str(pid)], 
-                         capture_output=True, timeout=5)
-        else:
-            subprocess.run(["kill", "-9", str(pid)], 
-                         capture_output=True, timeout=5)
-        return True
-    except Exception:
-        return False
+    """プロセスを終了 (ProcessManager経由)"""
+    return pm.kill_by_pid(pid)
 
 def start_service(script_name):
     """サービスを起動"""

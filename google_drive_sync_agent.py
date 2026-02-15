@@ -13,8 +13,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-import logging
-
+from manaos_logger import get_logger
 # Google Drive統合をインポート
 try:
     from google_drive_integration import GoogleDriveIntegration
@@ -23,11 +22,7 @@ except ImportError:
     GoogleDriveIntegration = None
 
 # ログ設定
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class FileChangeHandler(FileSystemEventHandler):

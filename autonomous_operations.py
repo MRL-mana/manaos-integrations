@@ -6,19 +6,14 @@
 """
 
 import time
-import logging
+from manaos_logger import get_logger
 import threading
 import os
 from typing import Any, Dict, Optional
 from datetime import datetime
 
 # 標準ライブラリのみ使用（依存関係を最小化）
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)8s] [%(name)s] %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class AutonomousOperations:

@@ -8,7 +8,7 @@ import json
 import yaml
 import uuid
 import time
-import logging
+from manaos_logger import get_logger
 import requests
 import subprocess
 import platform
@@ -24,11 +24,10 @@ try:
     USE_SESSION_POOL = True
 except ImportError:
     USE_SESSION_POOL = False
-    logger = logging.getLogger(__name__)
-    logger.warning("http_session_poolまたはmanaos_timeout_configが見つかりません。デフォルト設定を使用します。")
+logger = get_logger(__name__)
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+if not USE_SESSION_POOL:
+    logger.warning("http_session_poolまたはmanaos_timeout_configが見つかりません。デフォルト設定を使用します。")
 
 
 @dataclass

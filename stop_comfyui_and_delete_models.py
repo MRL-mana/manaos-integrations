@@ -67,71 +67,24 @@ def format_size(size_bytes: int) -> str:
 
 
 def stop_comfyui_processes():
-    """ComfyUIプロセスを停止"""
+    """プロセスを停止 (ProcessManager経由)"""
+    from manaos_process_manager import get_process_manager
+    pm = get_process_manager("ComfyUIClean")
+
     print("[1] ComfyUIプロセスを確認中...")
-    
-    try:
-        # ComfyUIプロセスを検索
-        result = subprocess.run(
-            ["tasklist", "/FI", "IMAGENAME eq python.exe", "/FO", "CSV"],
-            capture_output=True,
-            text=True,
-            encoding='utf-8',
-            errors='replace'
-        )
-        
-        processes = []
-        lines = result.stdout.split('\n')
-        for line in lines[1:]:  # ヘッダーをスキップ
-            if 'ComfyUI' in line or 'comfyui' in line.lower():
-                parts = line.split('","')
-                if len(parts) >= 2:
-                    pid = parts[1].strip('"')
-                    processes.append(pid)
-        
-        # ComfyUIのポート8188を使用しているプロセスを確認
-        result = subprocess.run(
-            ["netstat", "-ano"],
-            capture_output=True,
-            text=True,
-            encoding='utf-8',
-            errors='replace'
-        )
-        
-        pids_on_port = []
-        for line in result.stdout.split('\n'):
-            if ':8188' in line and 'LISTENING' in line:
-                parts = line.split()
-                if len(parts) >= 5:
-                    pid = parts[-1]
-                    pids_on_port.append(pid)
-        
-        all_pids = set(processes + pids_on_port)
-        
-        if not all_pids:
-            print("  ✓ ComfyUIプロセスは見つかりませんでした")
-            return True
-        
-        print(f"  ⚠️ ComfyUIプロセスを検出: {len(all_pids)}個")
-        
-        # プロセスを終了
-        for pid in all_pids:
-            try:
-                print(f"  🛑 プロセス {pid} を終了中...")
-                subprocess.run(["taskkill", "/F", "/PID", pid], capture_output=True)
-                print(f"    ✓ プロセス {pid} を終了しました")
-            except Exception as e:
-                print(f"    ⚠️ プロセス {pid} の終了エラー: {e}")
-        
-        # 少し待つ
+
+    # ポート経由で終了
+    killed_port = pm.kill_processes_by_port(8188)
+    # キーワード経由で終了
+    killed_kw = pm.kill_processes_by_keywords(["comfyui", "ComfyUI"])
+    total = killed_port + killed_kw
+
+    if total:
+        print(f"  🛑 {total}個のComfyUIプロセスを終了しました")
         time.sleep(2)
-        print("  ✓ プロセス終了完了")
-        return True
-        
-    except Exception as e:
-        print(f"  ⚠️ プロセス確認エラー: {e}")
-        print("  💡 ComfyUIを手動で終了してください")
-        return False
+    else:
+        print("  ✓ ComfyUIプロセスは見つかりませんでした")
+    return True
 
 
 def delete_comfyui_models(dry_run: bool = False, force: bool = False):

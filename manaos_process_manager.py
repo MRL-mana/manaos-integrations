@@ -1,21 +1,41 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-🔧 ManaOS プロセス管理モジュール
-Windows環境でのプロセス管理を提供
+🔧 ManaOS プロセス管理モジュール (SSOT)
+Windows環境でのプロセス管理を提供する **唯一の** モジュール。
+
+各サービスやスクリプトはこのモジュールの ProcessManager クラスまたは
+ショートカット関数を使用してプロセスの起動・停止・監視を行う。
+
+パターン対応:
+  - psutil.Process(pid) による Graceful terminate → wait → kill
+  - psutil.process_iter によるキーワード / スクリプト名マッチ終了
+  - ポート指定 (psutil.net_connections) によるプロセス特定・終了
+  - PID 指定による直接終了
 """
 
 import os
 import json
-import logging
-import psutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
 
-logger = logging.getLogger(__name__)
+import psutil
+
+try:
+    from manaos_logger import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+try:
+    from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
+except ImportError:
+    ManaOSErrorHandler = None  # type: ignore[misc,assignment]
 
 # プロセス情報ファイル
 PROCESS_INFO_FILE = Path(__file__).parent / "process_info.json"
@@ -32,7 +52,7 @@ class ProcessManager:
             service_name: サービス名
         """
         self.service_name = service_name
-        self.error_handler = ManaOSErrorHandler(service_name)
+        self.error_handler = ManaOSErrorHandler(service_name) if ManaOSErrorHandler else None
         self.process_info_file = PROCESS_INFO_FILE
     
     def get_process_info(self, script_name: str) -> Optional[Dict[str, Any]]:
@@ -332,6 +352,122 @@ class ProcessManager:
         except Exception as e:
             logger.error(f"スクリプトプロセス終了エラー: {e}")
             return 0
+
+    # ── 追加メソッド: 全パターン対応 ──────────────────
+
+    def kill_by_pid(self, pid: int, graceful_timeout: int = 5) -> bool:
+        """PID指定でプロセスを終了 (terminate → wait → kill).
+
+        Args:
+            pid: プロセスID
+            graceful_timeout: terminate 後の待機秒数
+
+        Returns:
+            終了に成功したか
+        """
+        try:
+            proc = psutil.Process(pid)
+            name = proc.name()
+            proc.terminate()
+            proc.wait(timeout=graceful_timeout)
+            logger.info(f"プロセスを終了: {name} (PID: {pid})")
+            return True
+        except psutil.NoSuchProcess:
+            logger.debug(f"プロセスは既に終了しています: PID {pid}")
+            return True
+        except psutil.TimeoutExpired:
+            try:
+                psutil.Process(pid).kill()
+                logger.warning(f"プロセスを強制終了: PID {pid}")
+                return True
+            except psutil.NoSuchProcess:
+                return True
+        except psutil.AccessDenied:
+            logger.warning(f"アクセス拒否: PID {pid} — taskkill にフォールバック")
+            return self._taskkill_pid(pid)
+        except Exception as e:
+            logger.error(f"PID {pid} 終了エラー: {e}")
+            return False
+
+    def kill_processes_by_keywords(
+        self,
+        keywords: List[str],
+        exclude_pids: Optional[List[int]] = None,
+    ) -> int:
+        """コマンドラインにキーワードを含むプロセスを終了.
+
+        Args:
+            keywords: どれか一つを含めば対象とする文字列リスト
+            exclude_pids: 終了対象から除外する PID
+
+        Returns:
+            終了したプロセス数
+        """
+        exclude = set(exclude_pids or [])
+        exclude.add(os.getpid())  # 自分自身は除外
+        killed = 0
+        seen: set[int] = set()
+
+        for proc in psutil.process_iter(["pid", "cmdline"]):
+            try:
+                pid = proc.info["pid"]
+                if pid in exclude or pid in seen:
+                    continue
+                cmdline = " ".join(proc.info.get("cmdline") or []).lower()
+                if not cmdline:
+                    continue
+                for kw in keywords:
+                    if kw.lower() in cmdline:
+                        if self.kill_by_pid(pid):
+                            killed += 1
+                        seen.add(pid)
+                        break
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        return killed
+
+    def list_top_processes(
+        self,
+        sort_by: str = "cpu",
+        limit: int = 10,
+    ) -> List[Dict[str, Any]]:
+        """CPU / メモリ上位プロセスを返す.
+
+        Args:
+            sort_by: ``"cpu"`` or ``"memory"``
+            limit: 返す件数
+        """
+        procs: list[dict] = []
+        for p in psutil.process_iter(["pid", "name", "cpu_percent", "memory_info"]):
+            try:
+                info = p.info
+                procs.append({
+                    "pid": info["pid"],
+                    "name": info["name"],
+                    "cpu_percent": info["cpu_percent"] or 0.0,
+                    "memory_mb": round((info["memory_info"].rss if info["memory_info"] else 0) / (1024 ** 2), 2),
+                })
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        key = "cpu_percent" if sort_by == "cpu" else "memory_mb"
+        procs.sort(key=lambda x: x[key], reverse=True)
+        return procs[:limit]
+
+    # ── 低レベルフォールバック ────────────────────────
+
+    @staticmethod
+    def _taskkill_pid(pid: int) -> bool:
+        """taskkill /F /PID で強制終了 (psutil AccessDenied のフォールバック)."""
+        try:
+            subprocess.run(
+                ["taskkill", "/F", "/PID", str(pid)],
+                capture_output=True,
+                timeout=10,
+            )
+            return True
+        except Exception as e:
+            logger.error(f"taskkill 失敗 (PID {pid}): {e}")
+            return False
 
 
 # グローバルインスタンス

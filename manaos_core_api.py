@@ -3,7 +3,7 @@ manaOS 標準API（単一I/O - 共通API化のコア）
 全機能はこの4つのAPIを通じてアクセス
 """
 
-import logging
+from manaos_logger import get_logger
 import os
 import re
 from typing import Dict, Any, Optional, List, Tuple
@@ -21,8 +21,7 @@ try:
 except ImportError:
     pass
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ManaOSCoreAPI:

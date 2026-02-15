@@ -7,7 +7,7 @@ WSL2内のOllama Vision LLMを使用
 
 import os
 import sys
-import logging
+from manaos_logger import get_logger
 import pandas as pd
 import base64
 import subprocess
@@ -23,11 +23,7 @@ if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8')
     sys.stderr.reconfigure(encoding='utf-8')
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - [%(levelname)s] %(message)s'
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class WSL2VisionLLM:

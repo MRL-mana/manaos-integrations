@@ -15,22 +15,27 @@ import os
 import sys
 import json
 import asyncio
-import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from pathlib import Path
 
-try:
+# 親ディレクトリをパスに追加
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from mcp_common import check_mcp_available, start_health_thread, get_mcp_logger
+
+MCP_AVAILABLE = check_mcp_available()
+if MCP_AVAILABLE:
     from mcp.server import Server
     from mcp.server.stdio import stdio_server
     from mcp.types import Tool, TextContent
-    MCP_AVAILABLE = True
-except ImportError:
-    MCP_AVAILABLE = False
-    print("WARNING: mcp package not found. Install with: pip install mcp", file=sys.stderr)
 
 try:
     import requests
 except ImportError:
     requests = None
+
+logger = get_mcp_logger(__name__)
+if not MCP_AVAILABLE:
+    logger.warning("MCP SDKがインストールされていません。pip install mcp を実行してください。")
 
 # ── 設定 ─────────────────────────────────────────
 API_BASE = os.getenv("MRL_MEMORY_API_URL", "http://127.0.0.1:5105")
@@ -66,27 +71,7 @@ def _get(path: str) -> dict:
         return {"error": str(e)}
 
 
-# ── ヘルスチェック HTTP ─────────────────────────────
-class _HealthHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == "/health":
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps({"status": "healthy", "service": "mrl-memory-mcp"}).encode())
-        else:
-            self.send_error(404)
-
-    def log_message(self, format, *args):
-        pass
-
-
-def _start_health_server():
-    try:
-        srv = HTTPServer(("127.0.0.1", HEALTH_PORT), _HealthHandler)
-        srv.serve_forever()
-    except Exception:
-        pass
+# ── ヘルスチェック HTTP (mcp_common 使用) ───────────
 
 
 # ── MCP サーバー ────────────────────────────────────
@@ -174,7 +159,7 @@ async def main():
         sys.exit(1)
 
     # ヘルスチェック
-    threading.Thread(target=_start_health_server, daemon=True).start()
+    start_health_thread("mrl-memory-mcp", HEALTH_PORT)
 
     async with stdio_server() as (read_stream, write_stream):
         await server.run(read_stream, write_stream, server.create_initialization_options())

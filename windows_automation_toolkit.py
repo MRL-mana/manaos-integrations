@@ -8,7 +8,8 @@ import os
 import subprocess
 import json
 import time
-import logging
+from manaos_logger import get_logger
+from manaos_process_manager import get_process_manager
 import ctypes
 import platform
 from pathlib import Path
@@ -27,13 +28,7 @@ try:
 except ImportError:
     mss = None
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-
+logger = get_logger(__name__)
 # ─── データクラス ───────────────────────────────────────
 
 @dataclass
@@ -403,26 +398,8 @@ class WindowsAutomationToolkit:
             return [{"error": "psutil が必要です"}]
 
         try:
-            processes = []
-            for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_info', 'status', 'create_time']):
-                try:
-                    info = proc.info
-                    mem_mb = info['memory_info'].rss / (1024**2) if info.get('memory_info') else 0
-                    ct = datetime.fromtimestamp(info['create_time']).isoformat() if info.get('create_time') else ""
-                    processes.append(ProcessInfo(
-                        pid=info['pid'],
-                        name=info['name'] or "Unknown",
-                        cpu_percent=info.get('cpu_percent', 0) or 0,
-                        memory_mb=round(mem_mb, 1),
-                        status=info.get('status', 'unknown'),
-                        create_time=ct,
-                    ))
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
-
-            key = 'cpu_percent' if sort_by == 'cpu' else 'memory_mb'
-            processes.sort(key=lambda p: getattr(p, key), reverse=True)
-            return [asdict(p) for p in processes[:limit]]
+            pm = get_process_manager()
+            return pm.list_top_processes(sort_by=sort_by, limit=limit)
         except Exception as e:
             logger.error(f"プロセス取得エラー: {e}")
             return [{"error": str(e)}]
@@ -441,16 +418,21 @@ class WindowsAutomationToolkit:
             return {"success": False, "error": "psutil が必要です"}
 
         try:
+            # 存在確認 (NoSuchProcess / AccessDenied を先にキャッチ)
             proc = psutil.Process(pid)
             name = proc.name()
-            proc.terminate()
-            proc.wait(timeout=5)
-            logger.info(f"プロセス終了: {name} (PID {pid})")
-            return {"success": True, "name": name, "pid": pid}
         except psutil.NoSuchProcess:
             return {"success": False, "error": f"PID {pid} が見つかりません"}
         except psutil.AccessDenied:
             return {"success": False, "error": f"PID {pid} のアクセスが拒否されました（管理者権限が必要）"}
+
+        try:
+            pm = get_process_manager()
+            success = pm.kill_by_pid(pid)
+            if success:
+                logger.info(f"プロセス終了: {name} (PID {pid})")
+                return {"success": True, "name": name, "pid": pid}
+            return {"success": False, "error": f"PID {pid} の終了に失敗"}
         except Exception as e:
             return {"success": False, "error": str(e)}
 

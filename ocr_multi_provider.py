@@ -4,7 +4,7 @@ OCR マルチプロバイダー統合
 """
 
 import os
-import logging
+from manaos_logger import get_logger
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 import statistics
@@ -12,8 +12,7 @@ import re
 import numpy as np
 from bisect import bisect_right
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class MultiProviderOCR:

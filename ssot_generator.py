@@ -7,7 +7,7 @@
 
 import os
 import json
-import logging
+from manaos_logger import get_logger
 import httpx
 import psutil
 from datetime import datetime, timedelta
@@ -16,9 +16,7 @@ from pathlib import Path
 from threading import Lock
 import time
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+logger = get_logger(__name__)
 # SSOTファイルパス
 SSOT_FILE = Path(__file__).parent / "manaos_status.json"
 SSOT_LOCK = Lock()

@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 """マナ好みのクイック画像生成"""
 
-import logging
+from manaos_logger import get_logger
 from pathlib import Path
 from datetime import datetime
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+
 
 def generate_mana_favorite_image():
     """マナ好みの画像を生成"""

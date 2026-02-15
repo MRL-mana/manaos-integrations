@@ -13,14 +13,9 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 from dataclasses import dataclass, asdict
-import logging
-
+from manaos_logger import get_logger
 # ログ設定
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass

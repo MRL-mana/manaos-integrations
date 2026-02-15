@@ -53,12 +53,31 @@ except ImportError:
     import logging
     logger = logging.getLogger(__name__)
 
-# チェック対象のサービス
-_DEFAULT_UNIFIED_API_PORT = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9510"))
-_DEFAULT_MRL_MEMORY_PORT = int(os.getenv("MANAOS_MRL_MEMORY_PORT", "5105"))
-_DEFAULT_LEARNING_SYSTEM_PORT = int(
-    os.getenv("MANAOS_LEARNING_SYSTEM_PORT", "5126")
-)
+# ポート定数は _paths.py を SSOT とする
+try:
+    from _paths import (
+        UNIFIED_API_PORT as _DEFAULT_UNIFIED_API_PORT,
+        MRL_MEMORY_PORT as _DEFAULT_MRL_MEMORY_PORT,
+        LEARNING_SYSTEM_PORT as _DEFAULT_LEARNING_SYSTEM_PORT,
+        LLM_ROUTING_PORT,
+        VIDEO_PIPELINE_PORT,
+        PICO_HID_PORT,
+        COMFYUI_PORT,
+        OLLAMA_PORT,
+        GALLERY_PORT,
+        MOLTBOT_GATEWAY_PORT,
+    )
+except ImportError:
+    _DEFAULT_UNIFIED_API_PORT = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9510"))
+    _DEFAULT_MRL_MEMORY_PORT = int(os.getenv("MANAOS_MRL_MEMORY_PORT", "5105"))
+    _DEFAULT_LEARNING_SYSTEM_PORT = int(os.getenv("MANAOS_LEARNING_SYSTEM_PORT", "5126"))
+    LLM_ROUTING_PORT = 5111
+    VIDEO_PIPELINE_PORT = 5112
+    PICO_HID_PORT = 5136
+    COMFYUI_PORT = 8188
+    OLLAMA_PORT = 11434
+    GALLERY_PORT = 5559
+    MOLTBOT_GATEWAY_PORT = 8088
 
 SERVICES: List[Dict[str, object]] = [
     # === コアサービス ===
@@ -78,7 +97,7 @@ SERVICES: List[Dict[str, object]] = [
     },
     {
         "name": "LLM Routing",
-        "port": 5111,
+        "port": LLM_ROUTING_PORT,
         "path": "/health",
         "timeout": 5,
         "group": "core",
@@ -93,14 +112,14 @@ SERVICES: List[Dict[str, object]] = [
     # === インフラストラクチャ ===
     {
         "name": "Ollama",
-        "port": 11434,
+        "port": OLLAMA_PORT,
         "path": "/api/tags",
         "timeout": 5,
         "group": "infra",
     },
     {
         "name": "Gallery API",
-        "port": 5559,
+        "port": GALLERY_PORT,
         "path": "/health",
         "timeout": 5,
         "group": "infra",
@@ -108,7 +127,7 @@ SERVICES: List[Dict[str, object]] = [
     # === コンテンツ生成 ===
     {
         "name": "Video Pipeline",
-        "port": 5112,
+        "port": VIDEO_PIPELINE_PORT,
         "path": "/health",
         "timeout": 5,
         "group": "core",
@@ -123,21 +142,21 @@ SERVICES: List[Dict[str, object]] = [
     },
     {
         "name": "Pico HID MCP",
-        "port": 5136,
+        "port": PICO_HID_PORT,
         "path": "/health",
         "timeout": 5,
         "group": "optional",
     },
     {
         "name": "ComfyUI",
-        "port": 8188,
+        "port": COMFYUI_PORT,
         "path": "/system_stats",
         "timeout": 5,
         "group": "optional",
     },
     {
         "name": "Moltbot Gateway",
-        "port": 8088,
+        "port": MOLTBOT_GATEWAY_PORT,
         "path": "/moltbot/health",
         "timeout": 5,
         "group": "optional",
