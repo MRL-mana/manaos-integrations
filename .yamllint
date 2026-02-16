@@ -1,0 +1,37 @@
+---
+extends: default
+
+rules:
+  # Allow long lines for URLs
+  line-length:
+    max: 120
+    level: warning
+  
+  # Allow blank lines
+  blank-lines:
+    max: 2
+  
+  # Allow comments without space after hash (for special markers like ###)
+  comments:
+    min-spaces-from-content: 1
+  
+  # Allow indentation for readability
+  indentation:
+    spaces: 2
+    indent-sequences: true
+  
+  # Docker labels can have long values
+  docker: {}
+  
+  # Kubernetes manifests are okay
+  key-duplicates: {}
+  
+  # Allow newlines
+  new-line-at-end-of-file:
+    type: unix
+
+ignore: |
+  /node_modules/
+  /.venv/
+  /venv/
+  /tmp/

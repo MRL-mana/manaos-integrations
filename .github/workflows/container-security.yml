@@ -1,0 +1,83 @@
+name: Container Security Scan
+
+on:
+  push:
+    branches: [ master, main, develop ]
+    paths:
+      - 'docker/**'
+      - 'Dockerfile*'
+      - '.github/workflows/docker-scan.yml'
+  pull_request:
+    branches: [ master, main, develop ]
+    paths:
+      - 'docker/**'
+      - 'Dockerfile*'
+  schedule:
+    # Weekly security scan
+    - cron: '0 2 * * 0'
+
+jobs:
+  scan_dockerfiles:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Scan Dockerfile with Trivy
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: 'docker'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+      continue-on-error: true
+    
+    - name: Upload Trivy results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+      if: always()
+    
+    - name: Check Dockerfile best practices with hadolint
+      uses: hadolint/hadolint-action@v3.0.0
+      with:
+        dockerfile: Dockerfile
+        failure-threshold: warning
+      continue-on-error: true
+
+  scan_kubernetes:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Check Kubernetes manifests
+      run: |
+        # Install kubesec
+        curl -s https://static.kubesec.io/v2/linux_amd64/kubesec > /tmp/kubesec
+        chmod +x /tmp/kubesec
+        
+        # Scan all YAML files in kubernetes directory
+        find kubernetes/ -name "*.yaml" -o -name "*.yml" | while read file; do
+          echo "=== Scanning: $file ==="
+          /tmp/kubesec scan "$file" || true
+        done
+      continue-on-error: true
+    
+    - name: Validate Kubernetes manifests
+      run: |
+        pip install pyyaml
+        python -c "
+import os
+import yaml
+
+for root, dirs, files in os.walk('kubernetes'):
+    for file in files:
+        if file.endswith(('.yaml', '.yml')):
+            filepath = os.path.join(root, file)
+            try:
+                with open(filepath) as f:
+                    yaml.safe_load(f)
+                print(f'✓ {filepath}')
+            except Exception as e:
+                print(f'✗ {filepath}: {e}')
+        "
+      continue-on-error: true
