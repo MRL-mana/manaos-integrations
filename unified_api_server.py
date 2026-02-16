@@ -45,6 +45,11 @@ except ImportError:
             return func
     get_auth_manager = lambda: DummyAuthManager()
 
+try:
+    from openapi_generator import OpenAPISpecBuilder
+except ImportError:
+    OpenAPISpecBuilder = None
+
 # ロガーの初期化
 logger = get_service_logger("unified")
 
@@ -1098,6 +1103,94 @@ def _get_cors_origins() -> List[str]:
 _enable_cors = _strtobool(os.getenv("MANAOS_ENABLE_CORS", "true"), default=True)
 if _enable_cors:
     CORS(app, resources={r"/*": {"origins": _get_cors_origins()}}, supports_credentials=True)
+
+
+# =========================================================
+# OpenAPI / Swagger Documentation Setup
+# =========================================================
+_openapi_spec_cache: Dict[str, Any] = {}
+_openapi_cache_ttl = 3600  # Cache for 1 hour
+
+
+def _build_openapi_spec() -> Dict[str, Any]:
+    """OpenAPI 仕様を構築（キャッシュ機能付き）"""
+    global _openapi_spec_cache
+    
+    if OpenAPISpecBuilder is None:
+        logger.warning("⚠️ OpenAPI Generator not available")
+        return {}
+    
+    # キャッシュをチェック
+    cache_key = "openapi_spec"
+    if cache_key in _openapi_spec_cache:
+        cached_time = _openapi_spec_cache.get(f"{cache_key}_time", 0)
+        if time.time() - cached_time < _openapi_cache_ttl:
+            return _openapi_spec_cache[cache_key]
+    
+    # 新規に生成
+    try:
+        builder = OpenAPISpecBuilder(
+            title="ManaOS Unified API",
+            description="ManaOS - 統合システムAPI",
+            version="1.0.0",
+            base_url=os.getenv("OPENAPI_BASE_URL", "http://localhost:9502")
+        )
+        
+        # 主要エンドポイントを追加
+        builder.add_endpoint(
+            "/health", "GET",
+            summary="ヘルスチェック",
+            tags=["System"],
+            requires_auth=False
+        )
+        
+        builder.add_endpoint(
+            "/ready", "GET",
+            summary="レディネスチェック",
+            tags=["System"],
+            requires_auth=False
+        )
+        
+        builder.add_endpoint(
+            "/api/integrations/status", "GET",
+            summary="統合モジュルの状態確認",
+            tags=["Integration"],
+            requires_auth=True
+        )
+        
+        builder.add_endpoint(
+            "/api/llm/analyze", "POST",
+            summary="LLM分析を実行",
+            tags=["LLM"],
+            requires_auth=True
+        )
+        
+        builder.add_endpoint(
+            "/api/memory/store", "POST",
+            summary="メモリに情報を保存",
+            tags=["Memory"],
+            requires_auth=True
+        )
+        
+        builder.add_endpoint(
+            "/api/memory/recall", "POST",
+            summary="メモリから情報を取得",
+            tags=["Memory"],
+            requires_auth=True
+        )
+        
+        spec = builder.build()
+        
+        # キャッシュに保存
+        _openapi_spec_cache[cache_key] = spec
+        _openapi_spec_cache[f"{cache_key}_time"] = time.time()
+        
+        logger.info(f"✅ OpenAPI 仕様を生成・キャッシュしました（{len(spec.get('paths', {}))} エンドポイント）")
+        return spec
+        
+    except Exception as e:
+        logger.error(f"❌ OpenAPI 仕様生成エラー: {e}")
+        return {}
 
 
 def _audit_log_enabled() -> bool:
@@ -2365,6 +2458,48 @@ def health():
     """ヘルスチェック（軽量：プロセス生存のみ）"""
     # 即座に返す（重い処理は一切しない）
     return jsonify({"status": "alive", "timestamp": datetime.now().isoformat()}), 200
+
+
+@app.route("/api/openapi.json", methods=["GET"])
+def get_openapi_spec():
+    """OpenAPI 仕様を取得（Swagger UIなどで利用）"""
+    spec = _build_openapi_spec()
+    if not spec:
+        return jsonify({"error": "OpenAPI specification not available"}), 503
+    return jsonify(spec), 200
+
+
+@app.route("/api/swagger", methods=["GET"])
+def swagger_ui():
+    """Swagger UI（OpenAPI ドキュメント）"""
+    swagger_html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>ManaOS API Documentation</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.js"></script>
+    </head>
+    <body>
+        <div id="swagger-ui"></div>
+        <script>
+            SwaggerUIBundle({
+                url: "/api/openapi.json",
+                dom_id: '#swagger-ui',
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIBundle.SwaggerUIStandalonePreset
+                ],
+                layout: "BaseLayout",
+                defaultModelsExpandDepth: 1
+            })
+        </script>
+    </body>
+    </html>
+    """
+    return swagger_html, 200, {"Content-Type": "text/html; charset=utf-8"}
 
 
 @app.route("/companion", methods=["GET"])
