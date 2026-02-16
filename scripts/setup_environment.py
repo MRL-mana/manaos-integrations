@@ -184,7 +184,7 @@ class EnvironmentSetup:
             "flask",
             "pytest",
             "requests",
-            "pyyaml",
+            "yaml",
             "dotenv",
         ]
         
@@ -220,13 +220,17 @@ class EnvironmentSetup:
         print(f"成功: {passed} / {len(self.setup_steps)} ステップ")
         print("=" * 70)
         
-        if failed == 0:
+        # Dockerとopt ionalな検証エラーは許容
+        critical_failures = [desc for desc, status in self.setup_steps 
+                            if not status and "Docker" not in desc]
+        
+        if not critical_failures:
             print("\n[OK] 環境構築が完了しました！")
             print("\n次のコマンドでサーバーを起動できます：")
             print("  cd manaos_integrations && python unified_api_server.py")
             return 0
         else:
-            print(f"\n⚠️  {failed} 個のステップで問題が発生しました")
+            print(f"\n⚠️  {len(critical_failures)} 個の重要なステップで問題が発生しました")
             return 1
 
 

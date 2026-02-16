@@ -270,15 +270,15 @@ class AutomatedDeployment:
         if self.deployment_steps:
             report += "詳細:\n"
             for step, status, step_time in self.deployment_steps:
-                status_str = "✅" if status else "❌"
+                status_str = "[OK]" if status else "[NG]"
                 report += f"  {status_str} {step} ({step_time:.2f}秒)\n"
         
         report += "\n" + "=" * 70 + "\n"
         
         if failed == 0:
-            report += "✅ デプロイメントが正常に完了しました！\n"
+            report += "[OK] デプロイメントが正常に完了しました！\n"
         else:
-            report += f"⚠️  {failed} 個のステップで問題が発生しました\n"
+            report += f"[!] {failed} 個のステップで問題が発生しました\n"
         
         report += "=" * 70 + "\n"
         
