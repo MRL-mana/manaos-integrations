@@ -28,11 +28,7 @@ try:
     from api_auth import get_auth_manager
 except ImportError:
     try:
-    from unified_logging import get_service_logger
-    logger = get_service_logger("gallery")
-except ImportError:
-    try:
-        from unified_logging import get_service_logger
+        from manaos_logger import get_service_logger
         logger = get_service_logger("gallery")
     except ImportError:
         import logging

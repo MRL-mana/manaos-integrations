@@ -293,7 +293,7 @@ class GCPIntegration:
             if not os.getenv("GOOGLE_APPLICATION_CREDENTIALS") and not os.getenv("GOOGLE_CLOUD_PROJECT"):
                 # ローカル環境では警告のみ（エラーにしない）
                 from unified_logging import get_service_logger
-logger = get_service_logger("cloud-integration")
+                logger = get_service_logger("cloud-integration")
                 logger.debug("GCP認証情報が設定されていません。ローカル環境では問題ありません。")
                 return
             

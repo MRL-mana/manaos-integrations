@@ -90,7 +90,7 @@ def one_minute_check():
         # 引用不足のケース
         test_report = "# テストレポート\n\n結論: Pythonは良い"
         test_citations = []  # 引用なし
-        test_critique = CritiqueResult(score=15, pass=True, fail_flags=[], fix_requests=[])
+        test_critique = CritiqueResult(score=15, is_passed=True, fail_flags=[], fix_requests=[])
         
         is_pass, fail_reasons = guard.validate_pass_conditions(
             report=test_report,
