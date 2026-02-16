@@ -50,6 +50,11 @@ try:
 except ImportError:
     OpenAPISpecBuilder = None
 
+try:
+    from health_check_optimizer import get_health_check_optimizer
+except ImportError:
+    get_health_check_optimizer = None
+
 # ロガーの初期化
 logger = get_service_logger("unified")
 
@@ -1193,6 +1198,19 @@ def _build_openapi_spec() -> Dict[str, Any]:
         return {}
 
 
+# =========================================================
+# Health Check Optimization Setup
+# =========================================================
+_health_check_optimizer = None
+
+if get_health_check_optimizer:
+    try:
+        _health_check_optimizer = get_health_check_optimizer()
+        logger.info("✅ Health Check Optimizer を初期化しました")
+    except Exception as e:
+        logger.warning(f"⚠️ Health Check Optimizer 初期化エラー: {e}")
+
+
 def _audit_log_enabled() -> bool:
     return _strtobool(os.getenv("MANAOS_AUDIT_LOG", "true"), default=True)
 
@@ -2306,6 +2324,30 @@ def initialize_integrations():
     )
 
 
+_readiness_cache: Dict[str, Any] = {}
+_readiness_cache_time: Optional[float] = None
+_readiness_cache_ttl = 5  # キャッシュ TTL: 5秒
+
+
+def _get_cached_readiness_checks(integrations: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """キャッシュ付きレディネスチェック"""
+    global _readiness_cache, _readiness_cache_time
+    
+    # キャッシュをチェック
+    if _readiness_cache_time is not None:
+        elapsed = time.time() - _readiness_cache_time
+        if elapsed < _readiness_cache_ttl and _readiness_cache:
+            logger.debug(f"Using cached readiness checks (age: {elapsed:.1f}s)")
+            return _readiness_cache.copy()
+    
+    # 新規生成
+    checks = _perform_readiness_checks(integrations)
+    _readiness_cache = checks.copy()
+    _readiness_cache_time = time.time()
+    
+    return checks
+
+
 def _perform_readiness_checks(integrations: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     """
     初期化完了チェック（運用のゲート）
@@ -2552,7 +2594,7 @@ def ready():
     if status == "starting":
         with initialization_lock:
             try:
-                refreshed_checks = _perform_readiness_checks(integrations)
+                refreshed_checks = _get_cached_readiness_checks(integrations)
                 initialization_status["checks"] = refreshed_checks
 
                 required_checks = [
