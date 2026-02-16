@@ -1,0 +1,44 @@
+[run]
+# カバレッジ測定対象
+source = 
+    .
+    manaos_integrations
+
+omit =
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */.venv/*
+    */venv/*
+    */.pytest_cache/*
+    */site-packages/*
+    setup.py
+
+[report]
+# レポート設定
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstract
+    @abstractmethod
+    if sys.version_info
+    except ImportError
+    if importlib
+    # pragma: no cover
+    # noqa
+
+precision = 2
+skip_covered = False
+sort = Cover
+
+[html]
+# HTML レポート設定
+directory = htmlcov
+
+[xml]
+# XML レポート設定（CI/CD用）
+output = coverage.xml
