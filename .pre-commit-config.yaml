@@ -1,27 +1,70 @@
 repos:
+  # Basic file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-yaml
+      - id: check-json
+      - id: check-toml
       - id: check-added-large-files
         args: ["--maxkb=2048"]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
 
+  # Code formatting with Black
   - repo: https://github.com/psf/black
     rev: 26.1.0
     hooks:
       - id: black
+        language_version: python3
 
+  # Import sorting with isort
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+
+  # Flake8 linting
   - repo: https://github.com/PyCQA/flake8
     rev: 7.3.0
     hooks:
       - id: flake8
-        additional_dependencies: []
+        additional_dependencies: ["flake8-docstrings", "flake8-bugbear"]
+        args: ["--max-line-length=120", "--extend-ignore=E203,W503,D100,D104"]
 
+  # Type checking with mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        additional_dependencies: ["types-all"]
+        args: ["--ignore-missing-imports", "--no-error-summary"]
+        exclude: ^tests/
+
+  # Security checks with Bandit
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: ["-c", ".bandit"]
+        exclude: ^tests/
+
+  # Secret detection
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        args: ["--no-baseline"]
+        args: ["--no-baseline", "--baseline", ".secrets.baseline"]
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.37.0
+    hooks:
+      - id: markdownlint
+        args: ["--fix"]
+        exclude: ^CHANGELOG.md
 

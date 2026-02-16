@@ -1,0 +1,41 @@
+assert_used:
+  skips: []
+
+# B:
+B: {}
+
+# Security plugins
+B201: {}  # flask_debug_true
+B301: {}  # pickle_usage
+B302: {}  # marshal_usage
+B303: {}  # md5_usage
+B304: {}  # des_usage
+B305: {}  # cipher_usage
+B306: {}  # mktemp_usage
+B307: {}  # eval_usage
+B308: {}  # mark_safe_usage
+B309: {}  # httpsconnection_usage
+B310: {}  # urllib_urlopen_usage
+B311: {}  # random_usage
+B312: {}  # telnetlib_usage
+B313: {}  # xml_bad_etree_usage
+B314: {}  # xml_bad_expat_usage
+B315: {}  # xml_bad_pulldom_usage
+B316: {}  # xml_bad_sax_usage
+B317: {}  # xml_bad_etree_iterparse_usage
+B318: {}  # xml_bad_etree_iterparse_usage
+B319: {}  # xml_bad_etree_parse_usage
+B320: {}  # xml_etree_ElementTree_usage
+B321: {}  # ftplib_usage
+B322: {}  # input_usage
+B323: {}  # unverified_context_usage
+B324: {}  # hashlib_usage
+B325: {}  # tempnam_usage
+
+# Test files can use assert
+exclude_dirs:
+  - tests
+  - test
+  - .venv
+  - venv
+  - env
