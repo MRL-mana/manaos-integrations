@@ -9,9 +9,14 @@
 import subprocess
 import sys
 import os
+import io
 from pathlib import Path
 from typing import List, Dict, Tuple
 import shutil
+
+# Windows環境でのエンコーディング対応
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
 
 class EnvironmentSetup:
@@ -34,21 +39,21 @@ class EnvironmentSetup:
             )
             
             if result.returncode == 0:
-                print("✅ 成功")
+                print("[OK] 成功")
                 self.setup_steps.append((description, True))
                 return True
             else:
-                print(f"❌ 失敗")
+                print(f"[NG] 失敗")
                 self.setup_steps.append((description, False))
                 return False
         except Exception as e:
-            print(f"❌ エラー: {str(e)}")
+            print(f"[NG] エラー: {str(e)}")
             self.setup_steps.append((description, False))
             return False
     
     def setup_python_env(self) -> bool:
         """Python環境セットアップ"""
-        print("\n📦 Python環境セットアップ")
+        print("\n[PKG] Python環境セットアップ")
         
         # 依存関係インストール
         self.run_command(
@@ -72,7 +77,7 @@ class EnvironmentSetup:
     
     def setup_environment_files(self) -> bool:
         """環境ファイルセットアップ"""
-        print("\n📄 環境ファイルセットアップ")
+        print("\n[FILE] 環境ファイルセットアップ")
         
         # .env ファイルの作成
         env_file = self.base_dir / ".env"
@@ -87,10 +92,10 @@ class EnvironmentSetup:
                 with open(env_file, "w", encoding="utf-8") as dst:
                     dst.write(env_content)
                 
-                print("✅ 成功")
+                print("[OK] 成功")
                 self.setup_steps.append((".env ファイルの作成", True))
             except Exception as e:
-                print(f"❌ エラー: {str(e)}")
+                print(f"[NG] エラー: {str(e)}")
                 self.setup_steps.append((".env ファイルの作成", False))
         
         return True
@@ -140,10 +145,10 @@ class EnvironmentSetup:
         
         # ログディレクトリが作成できたか確認
         if logs_dir.exists():
-            print(f"  ✅ ログディレクトリ: {logs_dir}")
+            print(f"  [OK] ログディレクトリ: {logs_dir}")
             self.setup_steps.append(("ログディレクトリの作成", True))
         else:
-            print(f"  ❌ ログディレクトリの作成に失敗")
+            print(f"  [NG] ログディレクトリの作成に失敗")
             self.setup_steps.append(("ログディレクトリの作成", False))
         
         return True
@@ -157,7 +162,7 @@ class EnvironmentSetup:
             cache_path.mkdir(exist_ok=True)
         
         self.setup_steps.append(("キャッシュディレクトリの準備", True))
-        print("  ✅ キャッシュディレクトリの準備")
+        print("  [OK] キャッシュディレクトリの準備")
         
         return True
     
@@ -187,10 +192,10 @@ class EnvironmentSetup:
         for module in modules_to_check:
             try:
                 __import__(module)
-                print(f"  ✅ {module}")
+                print(f"  [OK] {module}")
                 self.setup_steps.append((f"{module} のインポート確認", True))
             except ImportError:
-                print(f"  ❌ {module}")
+                print(f"  [NG] {module}")
                 self.setup_steps.append((f"{module} のインポート確認", False))
                 all_ok = False
         
@@ -207,16 +212,16 @@ class EnvironmentSetup:
         
         for description, status in self.setup_steps:
             if status:
-                print(f"  ✅ {description}")
+                print(f"  [OK] {description}")
             else:
-                print(f"  ❌ {description}")
+                print(f"  [NG] {description}")
         
         print("\n" + "=" * 70)
         print(f"成功: {passed} / {len(self.setup_steps)} ステップ")
         print("=" * 70)
         
         if failed == 0:
-            print("\n✅ 環境構築が完了しました！")
+            print("\n[OK] 環境構築が完了しました！")
             print("\n次のコマンドでサーバーを起動できます：")
             print("  cd manaos_integrations && python unified_api_server.py")
             return 0
