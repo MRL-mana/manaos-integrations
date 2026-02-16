@@ -20,7 +20,7 @@ class AutomatedDeployment:
     
     def __init__(self, environment: str = "production"):
         self.environment = environment
-        self.base_dir = Path(__file__).parent  # manaos_integrations
+        self.base_dir = Path(__file__).parent.parent  # manaos_integrations
         self.deployment_steps: List[Tuple[str, bool, float]] = []
         self.start_time = time.time()
     
@@ -50,8 +50,8 @@ class AutomatedDeployment:
                 self.deployment_steps.append((description, True, elapsed))
                 return True
             else:
-                error_msg = result.stderr.decode() if result.stderr else "Unknown error"
-                self.log(f"ステップ失敗: {description}\n{error_msg}", level="ERROR")
+                self.log(f"ステップ失敗: {description} (return code: {result.returncode})", level="ERROR")
+                self.deployment_steps.append((description, False, elapsed))
                 self.deployment_steps.append((description, False, elapsed))
                 
                 if critical:
