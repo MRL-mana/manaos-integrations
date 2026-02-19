@@ -52,6 +52,7 @@ python check_services_health.py
 ✅ MRL Memory           (port 5103): OK
 ✅ Learning System      (port 5104): OK
 ✅ LLM Routing          (port 5111): OK
+✅ OpenAI Router        (port 5211): OK
 ✅ Unified API          (port 9502): OK
 ============================================================
 ✅ すべてのサービスが正常稼働中
