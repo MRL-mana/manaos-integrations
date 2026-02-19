@@ -7,12 +7,14 @@ Write-Host "=" * 60
 Write-Host ""
 
 # 環境変数の設定
-$env:LLM_SERVER = "lm_studio"  # または "ollama"
-$env:PORT = "9501"
+$env:LLM_SERVER = "ollama"
+$env:PORT = "5211"
+$env:MANAOS_AUTO_MODEL_DEFAULT = "llama3-uncensored:latest"
 
 Write-Host "[1] 環境変数を設定しました" -ForegroundColor Green
 Write-Host "    LLM_SERVER: $env:LLM_SERVER"
 Write-Host "    PORT: $env:PORT"
+Write-Host "    MANAOS_AUTO_MODEL_DEFAULT: $env:MANAOS_AUTO_MODEL_DEFAULT"
 Write-Host ""
 
 # 依存関係の確認
@@ -38,7 +40,7 @@ Write-Host "[3] APIサーバーを起動します..." -ForegroundColor Yellow
 Write-Host "    エンドポイント: http://127.0.0.1:$env:PORT" -ForegroundColor Cyan
 Write-Host ""
 
-python -m llm_routing_mcp_server
+python manaos_llm_routing_api.py
 
 
 
