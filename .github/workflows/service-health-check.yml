@@ -4,10 +4,23 @@ on:
   push:
     branches: [ master, main ]
     paths:
-      - '**/*.py'
-      - 'requirements*.txt'
+      - 'start_vscode_cursor_services.py'
+      - 'autonomous_operations.py'
+      - 'check_services_health.py'
+      - 'emergency_stop.py'
+      - 'vscode_cursor_integration.py'
+      - 'requirements-core.txt'
+      - '.github/workflows/service-health-check.yml'
   pull_request:
     branches: [ master, main ]
+    paths:
+      - 'start_vscode_cursor_services.py'
+      - 'autonomous_operations.py'
+      - 'check_services_health.py'
+      - 'emergency_stop.py'
+      - 'vscode_cursor_integration.py'
+      - 'requirements-core.txt'
+      - '.github/workflows/service-health-check.yml'
   schedule:
     # 毎日午前3時（JST 12:00）に実行
     - cron: '0 3 * * *'
