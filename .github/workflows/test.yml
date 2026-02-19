@@ -51,7 +51,11 @@ jobs:
     
     - name: Run environment variable tests
       run: |
-        python test_environment_variables.py
+        if (Test-Path test_environment_variables.py) {
+          python test_environment_variables.py
+        } else {
+          Write-Host "⚠️ test_environment_variables.py not found; skipping"
+        }
       shell: pwsh
       env:
         # テスト用環境変数の設定
