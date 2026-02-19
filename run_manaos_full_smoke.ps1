@@ -54,7 +54,13 @@ Invoke-Step -Name "OpenAI Router Models" -Action {
 }
 
 Invoke-Step -Name "auto-local Chat" -Action {
-    powershell -NoProfile -ExecutionPolicy Bypass -File .\test_auto_local_chat.ps1 | Out-Host
+    $chatLines = powershell -NoProfile -ExecutionPolicy Bypass -File .\test_auto_local_chat.ps1 2>&1
+    $chatLines | Out-Host
+
+    $chatText = ($chatLines | Out-String)
+    if ($chatText -notmatch "(?m)^status=OK\s*$") {
+        throw "auto-local chat did not report status=OK"
+    }
 }
 
 Invoke-Step -Name "Tool Server Integration" -Action {
