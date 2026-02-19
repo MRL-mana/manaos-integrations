@@ -112,6 +112,7 @@ gallery_images/
 generated_images/
 organized_images/
 out/
+output/
 outputs/
 temp_downloaded_*.pdf
 temp_page_*.png
