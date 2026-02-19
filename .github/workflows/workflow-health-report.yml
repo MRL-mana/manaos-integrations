@@ -1,0 +1,73 @@
+name: Workflow Health Report
+
+on:
+  schedule:
+    - cron: '0 1 * * 1'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate workflow health summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const workflows = await github.paginate(github.rest.actions.listRepoWorkflows, {
+              owner,
+              repo,
+              per_page: 100,
+            });
+
+            const rows = [];
+            let ok = 0;
+            let warn = 0;
+            let fail = 0;
+            for (const wf of workflows) {
+              if (wf.state !== 'active') continue;
+              const runs = await github.rest.actions.listWorkflowRuns({
+                owner,
+                repo,
+                workflow_id: wf.id,
+                per_page: 1,
+              });
+              const run = runs.data.workflow_runs[0];
+              const status = run ? `${run.status}/${run.conclusion || 'n/a'}` : 'no-runs';
+              const branch = run?.head_branch || '-';
+              const updated = run?.updated_at || '-';
+              let icon = '⚪';
+              if (status.includes('completed/success')) {
+                icon = '✅';
+                ok += 1;
+              } else if (status.includes('completed/failure') || status.includes('completed/cancelled')) {
+                icon = '❌';
+                fail += 1;
+              } else {
+                icon = '🟡';
+                warn += 1;
+              }
+              rows.push(`| ${icon} ${wf.name} | ${status} | ${branch} | ${updated} | ${wf.path} |`);
+            }
+
+            const summary = [
+              '## Workflow Health Report',
+              '',
+              `Generated at: ${new Date().toISOString()}`,
+              '',
+              `- ✅ Success: ${ok}`,
+              `- 🟡 Running/Queued/No-runs: ${warn}`,
+              `- ❌ Failed/Cancelled: ${fail}`,
+              '',
+              '| Workflow | Latest Status | Branch | Updated | File |',
+              '|---|---|---|---|---|',
+              ...rows.sort(),
+            ].join('\n');
+
+            core.summary.addRaw(summary).write();

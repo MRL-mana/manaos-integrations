@@ -11,6 +11,14 @@
 - Dependabot updates (`dependabot.yml`)
 - Draft release notes (`release-drafter.yml`)
 - Workflow lint (`actionlint.yml`)
+- OpenSSF Scorecard supply-chain check (`scorecard.yml`)
+- Dependency Review for PRs (`dependency-review.yml`)
+- Weekly workflow status snapshot (`workflow-health-report.yml`)
+
+## Operations
+
+- Manual execution order and incident flow: `WORKFLOW_RUNBOOK.md`
+- Incident issue template: `ISSUE_TEMPLATE/incident_report.yml`
 
 ## First-time setup
 

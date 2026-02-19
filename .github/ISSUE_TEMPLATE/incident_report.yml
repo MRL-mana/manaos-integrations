@@ -1,0 +1,48 @@
+name: Incident report
+description: 運用障害・インシデント報告
+title: "[Incident] "
+labels:
+  - bug
+  - needs-info
+body:
+  - type: input
+    id: occurred_at
+    attributes:
+      label: 発生時刻
+      description: 例) 2026-02-20 10:15 JST
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: 影響範囲
+      description: どの機能・ユーザー・処理に影響したか
+    validations:
+      required: true
+
+  - type: textarea
+    id: detection
+    attributes:
+      label: 検知方法
+      description: どの監視・アラート・操作で検知したか
+    validations:
+      required: true
+
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: 一次対応
+      description: 実施した暫定対応（再起動、切り戻し等）
+
+  - type: textarea
+    id: root_cause
+    attributes:
+      label: 原因（暫定可）
+      description: 分かっている範囲で記載
+
+  - type: textarea
+    id: preventive_action
+    attributes:
+      label: 恒久対策
+      description: 再発防止策、必要なタスク、担当
