@@ -113,6 +113,7 @@ function Send-WebhookNotification {
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $bootstrapScript = Join-Path $scriptDir "bootstrap_openwebui_tools.py"
 $acceptanceScript = Join-Path $scriptDir "run_blueprint_acceptance.ps1"
+$composeFile = Join-Path $scriptDir "docker-compose.blueprint.yml"
 $envPath = Join-Path $scriptDir ".env"
 
 if (-not (Test-Path $bootstrapScript)) {
@@ -165,6 +166,34 @@ $pipelineStatus = "FAIL"
 $failureReason = ""
 
 try {
+    if ($StartIfNeeded) {
+        Step "Start blueprint stack"
+        $prevEap = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        docker compose -f $composeFile --env-file $envPath up -d 2>$null | Tee-Object -FilePath $logPath -Append | Out-Host
+        $ErrorActionPreference = $prevEap
+        if ($LASTEXITCODE -ne 0) {
+            throw "docker compose up failed (exit=$LASTEXITCODE)"
+        }
+
+        Step "Wait for API health"
+        $ready = $false
+        for ($i = 0; $i -lt 30; $i++) {
+            try {
+                Invoke-RestMethod -Method GET -Uri "http://localhost/health" -Headers @{ Host = "api.$BaseDomain" } -TimeoutSec 5 | Out-Null
+                $ready = $true
+                break
+            }
+            catch {
+            }
+            Start-Sleep -Seconds 2
+        }
+
+        if (-not $ready) {
+            throw "api health is not ready"
+        }
+    }
+
     Step "Bootstrap Open WebUI tool"
     python @bootstrapArgs 2>&1 | Tee-Object -FilePath $logPath -Append | Out-Host
     if ($LASTEXITCODE -ne 0) {
