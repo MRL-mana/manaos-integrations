@@ -144,6 +144,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\register_blueprint_accepta
 
 Webhook URL が設定されている場合、失敗通知は常時送信されます。成功通知は `-NotifyOnSuccess` または `MANAOS_NOTIFY_ON_SUCCESS=true` で有効化できます。
 
+### 失敗時のみ通知プリセット（ワンコマンド）
+
+日次タスク登録 + 失敗通知設定を一括で行います（成功通知は無効化）。
+
+```powershell
+cd deploy/manaos-blueprint
+powershell -NoProfile -ExecutionPolicy Bypass -File .\enable_blueprint_failure_notify.ps1 -WebhookUrl "https://example-webhook" -WebhookFormat "discord" -StartTime "07:30"
+```
+
 ## 実運用前チェック
 
 - `api.<BASE_DOMAIN>` の `/ops/exec` と `/dev/deploy` は Bearer + 承認必須
