@@ -10,8 +10,10 @@ NOTE:
 """
 import io
 import os
+import shutil
 import sys
 import time
+import unicodedata
 from typing import Dict, List, Optional, Tuple
 
 import requests  # pyright: ignore[reportMissingTypeStubs]
@@ -257,6 +259,30 @@ def _summary_row(
     return f"要検査（{detail}）"
 
 
+def _fit_text(text: object, width: int) -> str:
+    def _char_width(ch: str) -> int:
+        return 2 if unicodedata.east_asian_width(ch) in ("W", "F", "A") else 1
+
+    value = str(text)
+    if width <= 1:
+        return value[:width]
+
+    display_width = sum(_char_width(ch) for ch in value)
+    if display_width <= width:
+        return value
+
+    limit = max(1, width - 1)
+    out_chars: List[str] = []
+    used = 0
+    for ch in value:
+        ch_w = _char_width(ch)
+        if used + ch_w > limit:
+            break
+        out_chars.append(ch)
+        used += ch_w
+    return "".join(out_chars) + "…"
+
+
 def check_all_services(retry_count: int = 3, retry_delay: int = 2) -> bool:
     """
     全サービスの実際のレスポンス検査（リトライ付き）。結果を簡潔な表で表示。
@@ -319,16 +345,32 @@ def check_all_services(retry_count: int = 3, retry_delay: int = 2) -> bool:
             all_healthy = True
             break
 
-    # 簡潔な情報整理テーブル
-    print("\n" + "-" * 78)
+    # 簡潔な情報整理テーブル（端末幅に合わせて表示崩れを抑制）
+    terminal_width = shutil.get_terminal_size(fallback=(120, 30)).columns
+    table_width = max(72, min(terminal_width - 1, 140))
+    service_width = 16
+    port_width = 5
+    group_width = 5
+    result_width = 24
+    fixed_width = service_width + port_width + group_width + result_width + 12
+    desc_width = max(8, table_width - fixed_width)
+
+    print("\n" + "-" * table_width)
     print("[完成状況] 簡潔")
-    print("-" * 78)
-    print(f"{'サービス':<20} {'ポート':<8} {'種別':<10} {'結果':<28} {'説明'}")
-    print("-" * 78)
+    print("-" * table_width)
+    header = (
+        f"{_fit_text('サービス', service_width)} | "
+        f"{_fit_text('ポート', port_width)} | "
+        f"{_fit_text('種別', group_width)} | "
+        f"{_fit_text('結果', result_width)} | "
+        f"{_fit_text('説明', desc_width)}"
+    )
+    print(header)
+    print("-" * table_width)
     for service, success, detail, elapsed_ms in last_results:
         ep = service["path"]
         group = str(service.get("group", "other"))
-        group_map = {"core": "コア", "infra": "インフラ", "optional": "任意"}
+        group_map = {"core": "core", "infra": "infra", "optional": "opt"}
         group_label = group_map.get(group, group)
         if success:
             http_col = f"OK {ep} 200"
@@ -342,12 +384,15 @@ def check_all_services(retry_count: int = 3, retry_delay: int = 2) -> bool:
         desc = _summary_row(service, success, detail, elapsed_ms)
         service_name = service["name"]
         service_port = service["port"]
+        service_cell = _fit_text(service_name, service_width)
+        result_cell = _fit_text(http_col, result_width)
+        desc_cell = _fit_text(desc, desc_width)
         line = (
-            f"{service_name:<20} {service_port:<8} {group_label:<10} "
-            f"{http_col:<28} {desc}"
+            f"{service_cell} | {service_port} | "
+            f"{group_label} | {result_cell} | {desc_cell}"
         )
         print(line)
-    print("-" * 78)
+    print("-" * table_width)
 
     # サマリー
     core_ok = sum(
