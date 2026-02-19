@@ -18,3 +18,4 @@ $response = Invoke-RestMethod -Uri "$BaseUrl/chat/completions" -Method Post -Con
 
 Write-Host "selected_model=$($response.model)"
 Write-Host "reply=$($response.choices[0].message.content)"
+Write-Host "status=OK"
