@@ -44,6 +44,17 @@ docker compose -f docker-compose.blueprint.yml --env-file .env up -d --build
 docker compose -f docker-compose.blueprint.yml ps
 ```
 
+### ローカル検証モード（DNS未設定環境）
+
+このblueprintはローカル起動時にCaddyをHTTPモードで動かします。
+
+```powershell
+$base = "mrl-mana.com"  # .env の BASE_DOMAIN
+curl -H "Host: api.$base" http://localhost/health
+curl -H "Host: chat.$base" http://localhost/
+curl -H "Host: code.$base" http://localhost/
+```
+
 ## Open WebUI 連携（Tool化）
 
 Open WebUI の Tool から `api.<BASE_DOMAIN>` 配下を呼びます。

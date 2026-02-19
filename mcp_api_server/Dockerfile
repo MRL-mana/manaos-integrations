@@ -9,12 +9,14 @@ RUN apt-get update && apt-get install -y \
     procps \
     && rm -rf /var/lib/apt/lists/*
 
-# 依存関係のコピーとインストール
-COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Flask-CORSを追加（requirements.txtにない場合）
-RUN pip install --no-cache-dir flask-cors requests
+# MCP APIサーバー向け最小依存をインストール
+RUN pip install --no-cache-dir \
+    flask \
+    flask-cors \
+    requests \
+    python-dotenv \
+    mcp \
+    waitress
 
 # アプリケーションコードのコピー
 COPY mcp_api_server.py /app/
