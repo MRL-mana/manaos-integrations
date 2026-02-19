@@ -141,7 +141,12 @@ async def _call_mcp_tool_async(tool_name: str, arguments: dict):
                     _integrations[name] = ComfyUIIntegration(base_url=comfyui_url)
                 elif name == "google_drive":
                     from google_drive_integration import GoogleDriveIntegration
-                    _integrations[name] = GoogleDriveIntegration()
+                    credentials_path = os.getenv("GOOGLE_DRIVE_CREDENTIALS", "credentials.json")
+                    token_path = os.getenv("GOOGLE_DRIVE_TOKEN", "token.json")
+                    _integrations[name] = GoogleDriveIntegration(
+                        credentials_path=credentials_path,
+                        token_path=token_path,
+                    )
                 elif name == "obsidian":
                     vault_path = os.getenv("OBSIDIAN_VAULT_PATH", str(Path.home() / "Documents" / "Obsidian Vault"))
                     from obsidian_integration import ObsidianIntegration
