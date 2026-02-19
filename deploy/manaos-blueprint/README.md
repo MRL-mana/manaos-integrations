@@ -67,6 +67,27 @@ Open WebUI の Tool から `api.<BASE_DOMAIN>` 配下を呼びます。
 - `POST /dev/test`
 - `POST /dev/deploy`
 
+### Open WebUI Tool 自動登録
+
+`manaos_blueprint_gateway` ツールをOpen WebUIへ自動登録/更新できます。
+
+```powershell
+cd deploy/manaos-blueprint
+
+# 1) 初回だけ signup を一時有効化
+$env:ENABLE_SIGNUP = "true"
+docker compose -f docker-compose.blueprint.yml --env-file .env up -d --force-recreate open-webui
+
+# 2) ツール登録（既存なら更新）
+python bootstrap_openwebui_tools.py --base-domain mrl-mana.com --signup
+
+# 3) signup を元に戻す
+Remove-Item Env:ENABLE_SIGNUP -ErrorAction SilentlyContinue
+docker compose -f docker-compose.blueprint.yml --env-file .env up -d --force-recreate open-webui
+```
+
+登録後は Open WebUI の Workspace > Tools で `ManaOS Blueprint Gateway` を確認できます。
+
 ## 実運用前チェック
 
 - `api.<BASE_DOMAIN>` の `/ops/exec` と `/dev/deploy` は Bearer + 承認必須

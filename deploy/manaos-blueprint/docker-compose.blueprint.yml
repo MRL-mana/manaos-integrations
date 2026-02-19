@@ -31,12 +31,15 @@ services:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       - OPENAI_API_BASE_URL=https://api.${BASE_DOMAIN}/v1
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MANAOS_BLUEPRINT_API_URL=${MANAOS_BLUEPRINT_API_URL:-http://manaos-bp-api:9502}
+      - OPS_EXEC_BEARER_TOKEN=${OPS_EXEC_BEARER_TOKEN}
     volumes:
       - openwebui_data:/app/backend/data
     extra_hosts:
       - host.docker.internal:host-gateway
     networks:
       - dmz
+      - internal
 
   code-server:
     image: codercom/code-server:4.95.3
