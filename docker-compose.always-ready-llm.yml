@@ -148,7 +148,7 @@ services:
     - FLASK_ENV=production
     - MCP_API_PORT=9502
     - MCP_API_HOST=0.0.0.0
-    - COMFYUI_URL=${COMFYUI_URL:-http://host.docker.internal:8188}
+    - COMFYUI_URL=${MANAOS_COMFYUI_URL:-http://host.docker.internal:8188}
     - MANAOS_API_URL=${MANAOS_API_URL:-http://host.docker.internal:9502}
     - OBSIDIAN_VAULT_PATH=${OBSIDIAN_VAULT_PATH:-C:/Users/mana4/Documents/Obsidian Vault}
     - SEARXNG_BASE_URL=${SEARXNG_BASE_URL:-http://host.docker.internal:8080}
@@ -166,7 +166,13 @@ services:
     - ./searxng_integration.py:/app/searxng_integration.py:ro
     - ./brave_search_integration.py:/app/brave_search_integration.py:ro
     - ./base_ai_integration.py:/app/base_ai_integration.py:ro
+    - ./base_integration.py:/app/base_integration.py:ro
     - ./manaos_logger.py:/app/manaos_logger.py:ro
+    - ./manaos_error_handler.py:/app/manaos_error_handler.py:ro
+    - ./manaos_timeout_config.py:/app/manaos_timeout_config.py:ro
+    - ./manaos_config_validator.py:/app/manaos_config_validator.py:ro
+    - ./config_validator_enhanced.py:/app/config_validator_enhanced.py:ro
+    - ./unified_logging.py:/app/unified_logging.py:ro
     - ./_paths.py:/app/_paths.py:ro
     - ./autonomy_gates.py:/app/autonomy_gates.py:ro
     extra_hosts:
@@ -196,7 +202,7 @@ services:
     - PYTHONUNBUFFERED=1
     - TZ=Asia/Tokyo
     - TOOL_SERVER_PORT=9503
-    - COMFYUI_URL=${COMFYUI_URL:-http://host.docker.internal:8188}
+    - COMFYUI_URL=${MANAOS_COMFYUI_URL:-http://host.docker.internal:8188}
     - MANAOS_API_URL=${MANAOS_API_URL:-http://host.docker.internal:9502}
     volumes:
     - ./logs:/app/logs
