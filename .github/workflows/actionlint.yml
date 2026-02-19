@@ -1,0 +1,31 @@
+name: Actionlint
+
+on:
+  push:
+    branches: [master, main, develop]
+    paths:
+      - '.github/workflows/**'
+      - '.github/labeler.yml'
+      - '.github/labels.yml'
+  pull_request:
+    branches: [master, main, develop]
+    paths:
+      - '.github/workflows/**'
+      - '.github/labeler.yml'
+      - '.github/labels.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run actionlint
+        uses: reviewdog/action-actionlint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fail_level: error

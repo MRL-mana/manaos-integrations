@@ -1,0 +1,7 @@
+addReviewers: true
+addAssignees: false
+
+reviewers:
+  - MRL-mana
+
+numberOfReviewers: 1

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Operations / Runbook question
+    url: https://github.com/MRL-mana/manaos-integrations/discussions
+    about: 運用手順や使い方の質問はこちら

@@ -1,0 +1,34 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+no-changes-template: '- 変更なし'
+
+categories:
+  - title: '🚀 Features'
+    labels:
+      - enhancement
+  - title: '🐞 Fixes'
+    labels:
+      - bug
+  - title: '🧪 Tests'
+    labels:
+      - tests
+  - title: '🧰 CI / Ops'
+    labels:
+      - ci
+      - dependencies
+      - powershell
+  - title: '📝 Docs'
+    labels:
+      - docs
+
+change-title-escapes: '\<*_&'
+
+template: |
+  ## Summary
+
+  $CHANGES
+
+  ## Contributors
+
+  $CONTRIBUTORS
