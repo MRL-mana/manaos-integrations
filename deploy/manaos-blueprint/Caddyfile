@@ -1,0 +1,14 @@
+chat.{$BASE_DOMAIN} {
+  encode gzip
+  reverse_proxy open-webui:8080
+}
+
+code.{$BASE_DOMAIN} {
+  encode gzip
+  reverse_proxy code-server:8080
+}
+
+api.{$BASE_DOMAIN} {
+  encode gzip
+  reverse_proxy manaos-api:9502
+}
