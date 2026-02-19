@@ -88,6 +88,21 @@ docker compose -f docker-compose.blueprint.yml --env-file .env up -d --force-rec
 
 登録後は Open WebUI の Workspace > Tools で `ManaOS Blueprint Gateway` を確認できます。
 
+### 自動受け入れテスト
+
+blueprint全体（ingress / API / Open WebUIツール登録）を一括検証します。
+
+```powershell
+cd deploy/manaos-blueprint
+powershell -NoProfile -ExecutionPolicy Bypass -File .\run_blueprint_acceptance.ps1
+```
+
+起動を同時に行う場合:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\run_blueprint_acceptance.ps1 -StartIfNeeded
+```
+
 ## 実運用前チェック
 
 - `api.<BASE_DOMAIN>` の `/ops/exec` と `/dev/deploy` は Bearer + 承認必須
