@@ -171,6 +171,19 @@ workflow は [\.github/workflows/blueprint-acceptance.yml](../../.github/workflo
 - `MANAOS_BLUEPRINT_WEBHOOK_MENTION`
 - `MANAOS_BLUEPRINT_NOTIFY_ON_SUCCESS`
 
+Secrets を一括登録する場合（`gh auth login` 済み前提）:
+
+```powershell
+cd deploy/manaos-blueprint
+powershell -NoProfile -ExecutionPolicy Bypass -File .\set_blueprint_ci_secrets.ps1 -GenerateMissing -WebhookUrl "https://example-webhook" -WebhookFormat "discord"
+```
+
+Webhook連携を使わない場合:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\set_blueprint_ci_secrets.ps1 -GenerateMissing -SkipWebhookSecrets
+```
+
 ## 実運用前チェック
 
 - `api.<BASE_DOMAIN>` の `/ops/exec` と `/dev/deploy` は Bearer + 承認必須
