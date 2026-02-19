@@ -14,6 +14,40 @@ function Write-Ok($msg) { Write-Host "[OK] $msg" -ForegroundColor Green }
 function Write-Warn($msg) { Write-Host "[WARN] $msg" -ForegroundColor Yellow }
 function Write-Err($msg) { Write-Host "[ERR] $msg" -ForegroundColor Red }
 
+function Test-EndpointStatus {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Url,
+        [int]$TimeoutSec = 5
+    )
+
+    try {
+        $resp = Invoke-WebRequest -UseBasicParsing -Uri $Url -Method Get -TimeoutSec $TimeoutSec
+        return [ordered]@{
+            ok = ($resp.StatusCode -eq 200)
+            status = [int]$resp.StatusCode
+            error = $null
+        }
+    }
+    catch {
+        $statusCode = $null
+        if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
+            try {
+                $statusCode = [int]$_.Exception.Response.StatusCode
+            }
+            catch {
+                $statusCode = $null
+            }
+        }
+
+        return [ordered]@{
+            ok = $false
+            status = $statusCode
+            error = $_.Exception.Message
+        }
+    }
+}
+
 function Send-WebhookNotification {
     param(
         [Parameter(Mandatory = $true)]
@@ -128,15 +162,56 @@ else {
     $ageOk = $false
 }
 
-$localOk = ($status.checks.local_http_status -eq 200)
-$ipOk = ($status.checks.tailscale_ip_http_status -eq 200)
-$httpsOk = ($status.checks.tailscale_https_status -eq 200)
+$localProbe = $null
+$ipProbe = $null
+$httpsProbe = $null
+
+$localUrl = [string]$status.local_url
+$ipUrl = [string]$status.tailscale_ip_url
+$httpsUrl = [string]$status.tailscale_https_url
+
+if (-not [string]::IsNullOrWhiteSpace($localUrl)) {
+    $localProbe = Test-EndpointStatus -Url $localUrl -TimeoutSec 5
+}
+if (-not [string]::IsNullOrWhiteSpace($ipUrl)) {
+    $ipProbe = Test-EndpointStatus -Url $ipUrl -TimeoutSec 5
+}
+if (-not [string]::IsNullOrWhiteSpace($httpsUrl)) {
+    $httpsProbe = Test-EndpointStatus -Url $httpsUrl -TimeoutSec 8
+}
+
+$localOk = if ($localProbe) { [bool]$localProbe.ok } else { ($status.checks.local_http_status -eq 200) }
+$ipOk = if ($ipProbe) { [bool]$ipProbe.ok } else { ($status.checks.tailscale_ip_http_status -eq 200) }
+$httpsOk = if ($httpsProbe) { [bool]$httpsProbe.ok } else { ($status.checks.tailscale_https_status -eq 200) }
 $serveEnabled = [bool]$status.serve_enabled
 
-if ($localOk) { Write-Ok "Local health 200" } else { Write-Warn "Local health is not 200" }
-if ($ipOk) { Write-Ok "Tailscale IP health 200" } else { Write-Warn "Tailscale IP health is not 200" }
+if ($localOk) {
+    $localCode = if ($localProbe) { $localProbe.status } else { $status.checks.local_http_status }
+    Write-Ok "Local health $localCode"
+}
+else {
+    $localErr = if ($localProbe -and $localProbe.error) { " ($($localProbe.error))" } else { "" }
+    Write-Warn "Local health is not 200$localErr"
+}
+
+if ($ipOk) {
+    $ipCode = if ($ipProbe) { $ipProbe.status } else { $status.checks.tailscale_ip_http_status }
+    Write-Ok "Tailscale IP health $ipCode"
+}
+else {
+    $ipErr = if ($ipProbe -and $ipProbe.error) { " ($($ipProbe.error))" } else { "" }
+    Write-Warn "Tailscale IP health is not 200$ipErr"
+}
+
 if ($serveEnabled) {
-    if ($httpsOk) { Write-Ok "Tailscale HTTPS health 200" } else { Write-Warn "Tailscale HTTPS health is not 200" }
+    if ($httpsOk) {
+        $httpsCode = if ($httpsProbe) { $httpsProbe.status } else { $status.checks.tailscale_https_status }
+        Write-Ok "Tailscale HTTPS health $httpsCode"
+    }
+    else {
+        $httpsErr = if ($httpsProbe -and $httpsProbe.error) { " ($($httpsProbe.error))" } else { "" }
+        Write-Warn "Tailscale HTTPS health is not 200$httpsErr"
+    }
 }
 else {
     Write-Warn "Serve is disabled"
