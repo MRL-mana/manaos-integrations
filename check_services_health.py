@@ -129,6 +129,8 @@ SERVICES: List[Dict[str, object]] = [
         "name": "LLM Routing",
         "port": LLM_ROUTING_PORT,
         "path": "/health",
+        "fallback_port": OPENAI_ROUTER_PORT,
+        "fallback_path": "/api/llm/health",
         "timeout": 5,
         "group": "core",
     },
@@ -233,11 +235,41 @@ def check_service(
             body = response.text
         return True, body, elapsed_ms
     except requests.exceptions.Timeout:
-        return False, f"Timeout (>{timeout}s)", None
+        pass
     except requests.exceptions.ConnectionError:
-        return False, "Connection refused", None
+        pass
     except requests.RequestException as e:
         return False, str(e), None
+
+    fallback_port = service.get("fallback_port")
+    fallback_path = service.get("fallback_path")
+    if fallback_port and fallback_path:
+        fallback_url = f"http://127.0.0.1:{fallback_port}{fallback_path}"
+        try:
+            t0 = time.perf_counter()
+            fallback_response = requests.get(fallback_url, timeout=timeout)
+            elapsed_ms = (time.perf_counter() - t0) * 1000
+            if fallback_response.status_code != 200:
+                return False, f"HTTP {fallback_response.status_code}", elapsed_ms
+
+            content_type = fallback_response.headers.get("content-type", "")
+            if content_type.startswith("application/json"):
+                try:
+                    body = fallback_response.json()
+                except ValueError:
+                    body = fallback_response.text
+            else:
+                body = fallback_response.text
+
+            return True, body, elapsed_ms
+        except requests.exceptions.Timeout:
+            return False, f"Timeout (>{timeout}s)", None
+        except requests.exceptions.ConnectionError:
+            return False, "Connection refused", None
+        except requests.RequestException as e:
+            return False, str(e), None
+
+    return False, "Connection refused", None
 
 
 def _summary_row(
