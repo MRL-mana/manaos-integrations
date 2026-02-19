@@ -1,0 +1,114 @@
+name: Blueprint Acceptance Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_domain:
+        description: "BASE_DOMAIN override"
+        required: false
+        default: "mrl-mana.com"
+      bootstrap_signup:
+        description: "Enable bootstrap with signup"
+        required: false
+        type: boolean
+        default: true
+  schedule:
+    # 毎日 07:30 JST
+    - cron: '30 22 * * *'
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'deploy/manaos-blueprint/**'
+      - '.github/workflows/blueprint-acceptance.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blueprint-acceptance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  blueprint-acceptance:
+    name: Blueprint Full Pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install bootstrap dependency
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Prepare blueprint .env
+        shell: bash
+        env:
+          WEBUI_SECRET_KEY: ${{ secrets.BLUEPRINT_WEBUI_SECRET_KEY }}
+          CODE_SERVER_PASSWORD: ${{ secrets.BLUEPRINT_CODE_SERVER_PASSWORD }}
+          POSTGRES_PASSWORD: ${{ secrets.BLUEPRINT_POSTGRES_PASSWORD }}
+          OPS_EXEC_BEARER_TOKEN: ${{ secrets.BLUEPRINT_OPS_EXEC_BEARER_TOKEN }}
+          BASE_DOMAIN_INPUT: ${{ github.event.inputs.base_domain }}
+          ENABLE_SIGNUP_INPUT: ${{ github.event.inputs.bootstrap_signup }}
+        run: |
+          set -euo pipefail
+          cp deploy/manaos-blueprint/.env.example deploy/manaos-blueprint/.env
+          BASE_DOMAIN_VALUE="${BASE_DOMAIN_INPUT:-mrl-mana.com}"
+
+          if [ -z "${WEBUI_SECRET_KEY:-}" ]; then WEBUI_SECRET_KEY="gh-blueprint-webui-secret-key-2026"; fi
+          if [ -z "${CODE_SERVER_PASSWORD:-}" ]; then CODE_SERVER_PASSWORD="gh-blueprint-code-password-2026"; fi
+          if [ -z "${POSTGRES_PASSWORD:-}" ]; then POSTGRES_PASSWORD="gh-blueprint-postgres-password-2026"; fi
+          if [ -z "${OPS_EXEC_BEARER_TOKEN:-}" ]; then OPS_EXEC_BEARER_TOKEN="gh-blueprint-ops-token-2026"; fi
+
+          ENABLE_SIGNUP_VALUE="true"
+          if [ "${ENABLE_SIGNUP_INPUT:-}" = "false" ]; then
+            ENABLE_SIGNUP_VALUE="false"
+          fi
+
+          sed -i "s|^BASE_DOMAIN=.*|BASE_DOMAIN=${BASE_DOMAIN_VALUE}|" deploy/manaos-blueprint/.env
+          sed -i "s|^WEBUI_SECRET_KEY=.*|WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}|" deploy/manaos-blueprint/.env
+          sed -i "s|^CODE_SERVER_PASSWORD=.*|CODE_SERVER_PASSWORD=${CODE_SERVER_PASSWORD}|" deploy/manaos-blueprint/.env
+          sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=${POSTGRES_PASSWORD}|" deploy/manaos-blueprint/.env
+          sed -i "s|^OPS_EXEC_BEARER_TOKEN=.*|OPS_EXEC_BEARER_TOKEN=${OPS_EXEC_BEARER_TOKEN}|" deploy/manaos-blueprint/.env
+          sed -i "s|^ENABLE_SIGNUP=.*|ENABLE_SIGNUP=${ENABLE_SIGNUP_VALUE}|" deploy/manaos-blueprint/.env
+
+      - name: Run blueprint full pipeline
+        shell: pwsh
+        env:
+          MANAOS_WEBHOOK_URL: ${{ secrets.MANAOS_BLUEPRINT_WEBHOOK_URL }}
+          MANAOS_WEBHOOK_FORMAT: ${{ secrets.MANAOS_BLUEPRINT_WEBHOOK_FORMAT }}
+          MANAOS_WEBHOOK_MENTION: ${{ secrets.MANAOS_BLUEPRINT_WEBHOOK_MENTION }}
+          MANAOS_NOTIFY_ON_SUCCESS: ${{ secrets.MANAOS_BLUEPRINT_NOTIFY_ON_SUCCESS }}
+        run: |
+          Set-Location deploy/manaos-blueprint
+          $baseDomain = if ("${{ github.event.inputs.base_domain }}") { "${{ github.event.inputs.base_domain }}" } else { "mrl-mana.com" }
+          $bootstrap = if ("${{ github.event.inputs.bootstrap_signup }}") { "${{ github.event.inputs.bootstrap_signup }}" } else { "true" }
+
+          if ($bootstrap -eq "false") {
+            .\run_blueprint_full_pipeline.ps1 -StartIfNeeded -BaseDomain $baseDomain
+          }
+          else {
+            .\run_blueprint_full_pipeline.ps1 -StartIfNeeded -BootstrapSignup -BaseDomain $baseDomain
+          }
+
+      - name: Upload blueprint logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blueprint-pipeline-logs-${{ github.run_id }}
+          path: |
+            logs/blueprint_pipeline_*.log
+          retention-days: 14
+
+      - name: Cleanup containers
+        if: always()
+        shell: bash
+        run: |
+          docker compose -f deploy/manaos-blueprint/docker-compose.blueprint.yml --env-file deploy/manaos-blueprint/.env down -v || true
