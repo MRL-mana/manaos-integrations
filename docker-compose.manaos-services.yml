@@ -498,6 +498,7 @@ services:
       - ./base_ai_integration.py:/app/base_ai_integration.py:ro
       - ./manaos_logger.py:/app/manaos_logger.py:ro
       - ./_paths.py:/app/_paths.py:ro
+      - ./autonomy_gates.py:/app/autonomy_gates.py:ro
     networks:
       - manaos-network
     depends_on:
