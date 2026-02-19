@@ -3,6 +3,9 @@ param(
     [switch]$SkipServe,
     [int]$ServeTimeoutSec = 15,
     [string]$WebhookUrl = "",
+    [ValidateSet("generic", "slack", "discord")]
+    [string]$WebhookFormat = "generic",
+    [string]$WebhookMention = "",
     [switch]$EnsureStartupTask,
     [string]$StartupTaskName = "ManaOS_OpenWebUI_Tailscale_AutoStart",
     [string]$InvocationSource = "manual"
@@ -450,12 +453,59 @@ if ([string]::IsNullOrWhiteSpace($effectiveWebhook)) {
     $effectiveWebhook = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_URL", "User")
 }
 
+$effectiveWebhookFormat = $WebhookFormat
+if (-not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_FORMAT)) {
+    $envFormat = $env:MANAOS_WEBHOOK_FORMAT.Trim().ToLowerInvariant()
+    if ($envFormat -in @("generic", "slack", "discord")) {
+        $effectiveWebhookFormat = $envFormat
+    }
+}
+elseif (-not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_FORMAT", "User"))) {
+    $userFormat = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_FORMAT", "User").Trim().ToLowerInvariant()
+    if ($userFormat -in @("generic", "slack", "discord")) {
+        $effectiveWebhookFormat = $userFormat
+    }
+}
+
+$effectiveMention = $WebhookMention
+if ([string]::IsNullOrWhiteSpace($effectiveMention) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_MENTION)) {
+    $effectiveMention = $env:MANAOS_WEBHOOK_MENTION
+}
+if ([string]::IsNullOrWhiteSpace($effectiveMention)) {
+    $effectiveMention = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_MENTION", "User")
+}
+
 if ([string]::IsNullOrWhiteSpace($effectiveWebhook)) {
     Write-Host "[INFO] Webhook not set. Skip notification." -ForegroundColor Gray
 }
 else {
+    $summary = "OpenWebUI startup complete | source=$InvocationSource | local=200 tailscale_ip=200"
+    $mentionPrefix = if ([string]::IsNullOrWhiteSpace($effectiveMention)) { "" } else { "$effectiveMention " }
+
+    if ($effectiveWebhookFormat -eq "slack") {
+        $payload = [ordered]@{
+            text = "$mentionPrefix$summary"
+        }
+    }
+    elseif ($effectiveWebhookFormat -eq "discord") {
+        $payload = [ordered]@{
+            content = "$mentionPrefix$summary"
+            embeds = @(
+                [ordered]@{
+                    title = "OpenWebUI Startup"
+                    description = $summary
+                    color = 5763719
+                    timestamp = (Get-Date).ToString("o")
+                }
+            )
+        }
+    }
+    else {
+        $payload = $statusObj
+    }
+
     try {
-        Invoke-RestMethod -Uri $effectiveWebhook -Method Post -ContentType "application/json" -Body ($statusObj | ConvertTo-Json -Depth 8) | Out-Null
+        Invoke-RestMethod -Uri $effectiveWebhook -Method Post -ContentType "application/json" -Body ($payload | ConvertTo-Json -Depth 8) | Out-Null
         Write-Host "[OK] Webhook notification sent." -ForegroundColor Green
     }
     catch {
