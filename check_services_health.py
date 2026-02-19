@@ -250,13 +250,13 @@ def _summary_row(
     if ok:
         ms = f"{elapsed_ms:.0f}ms" if elapsed_ms is not None else ""
         if service.get("path") == "/ready":
-            return f"正常稼働（/ready {ms}）" if ms else "正常稼働（初期化完了）"
-        return f"正常稼働（{ms}）" if ms else "正常稼働"
+            return f"healthy (/ready {ms})" if ms else "healthy (ready)"
+        return f"healthy ({ms})" if ms else "healthy"
     if "Timeout" in str(detail):
-        return "要検査（タイムアウト）"
+        return "check timeout"
     if "Connection" in str(detail):
-        return "未起動"
-    return f"要検査（{detail}）"
+        return "not running"
+    return f"check ({detail})"
 
 
 def _fit_text(text: object, width: int) -> str:
@@ -288,7 +288,7 @@ def check_all_services(retry_count: int = 3, retry_delay: int = 2) -> bool:
     全サービスの実際のレスポンス検査（リトライ付き）。結果を簡潔な表で表示。
     """
     print("\n" + "=" * 70)
-    print("[*] ManaOS 本体検査（実レスポンス確認）")
+    print("[*] ManaOS Health Check (live responses)")
     print("=" * 70)
 
     all_healthy = False
@@ -298,9 +298,7 @@ def check_all_services(retry_count: int = 3, retry_delay: int = 2) -> bool:
 
     for attempt in range(retry_count):
         if attempt > 0:
-            print(
-                f"\n[retry] {attempt}/{retry_count - 1}... ({retry_delay}秒待機)"
-            )
+            print(f"\n[retry] {attempt}/{retry_count - 1}... (wait {retry_delay}s)")
             time.sleep(retry_delay)
 
         last_results = []
@@ -311,9 +309,9 @@ def check_all_services(retry_count: int = 3, retry_delay: int = 2) -> bool:
             if group != current_group:
                 current_group = group
                 group_labels = {
-                    "core": "コアサービス",
-                    "infra": "インフラ",
-                    "optional": "オプショナル",
+                    "core": "Core",
+                    "infra": "Infra",
+                    "optional": "Optional",
                 }
                 group_label = group_labels.get(group, group)
                 print(f"\n  --- {group_label} ---")
@@ -356,14 +354,14 @@ def check_all_services(retry_count: int = 3, retry_delay: int = 2) -> bool:
     desc_width = max(8, table_width - fixed_width)
 
     print("\n" + "-" * table_width)
-    print("[完成状況] 簡潔")
+    print("[Summary] Compact")
     print("-" * table_width)
     header = (
-        f"{_fit_text('サービス', service_width)} | "
-        f"{_fit_text('ポート', port_width)} | "
-        f"{_fit_text('種別', group_width)} | "
-        f"{_fit_text('結果', result_width)} | "
-        f"{_fit_text('説明', desc_width)}"
+        f"{_fit_text('Service', service_width)} | "
+        f"{_fit_text('Port', port_width)} | "
+        f"{_fit_text('Kind', group_width)} | "
+        f"{_fit_text('Result', result_width)} | "
+        f"{_fit_text('Notes', desc_width)}"
     )
     print(header)
     print("-" * table_width)
@@ -407,12 +405,12 @@ def check_all_services(retry_count: int = 3, retry_delay: int = 2) -> bool:
     )
 
     print(
-        f"[コア] {core_ok}/{core_total} 稼働  "
-        f"[インフラ/任意] {optional_ok}/{optional_total} 稼働"
+        f"[core] {core_ok}/{core_total} up  "
+        f"[infra/opt] {optional_ok}/{optional_total} up"
     )
 
     if all_healthy:
-        print("[OK] すべてのコアサービスが正常稼働中")
+        print("[OK] all core services healthy")
         logger.info(
             "ヘルスチェック完了: コア %d/%d 稼働, インフラ/任意 %d/%d 稼働",
             core_ok,
@@ -426,8 +424,8 @@ def check_all_services(retry_count: int = 3, retry_delay: int = 2) -> bool:
             for r in last_results
             if str(r[0].get("group")) == "core" and not r[1]
         ]
-        print("[!!] 一部のコアサービスが応答しません")
-        print("   対処: タスク \"ManaOS: すべてのサービスを起動\" を再実行してください")
+        print("[!!] some core services are not responding")
+        print("   Action: rerun task \"ManaOS: すべてのサービスを起動\"")
         logger.warning(
             "ヘルスチェック失敗: コア %d/%d, 障害サービス: %s",
             core_ok,
