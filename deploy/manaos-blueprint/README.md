@@ -103,6 +103,30 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\run_blueprint_acceptance.p
 powershell -NoProfile -ExecutionPolicy Bypass -File .\run_blueprint_acceptance.ps1 -StartIfNeeded
 ```
 
+### ワンコマンド・フルパイプライン
+
+Toolブートストラップ + 受け入れ検証を連続実行します。
+
+```powershell
+cd deploy/manaos-blueprint
+powershell -NoProfile -ExecutionPolicy Bypass -File .\run_blueprint_full_pipeline.ps1 -StartIfNeeded
+```
+
+初回ユーザー未作成の環境では `-BootstrapSignup` を付けます。
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\run_blueprint_full_pipeline.ps1 -StartIfNeeded -BootstrapSignup
+```
+
+### 日次自動実行タスク登録
+
+Windowsタスクスケジューラに日次実行を登録します。
+
+```powershell
+cd deploy/manaos-blueprint
+powershell -NoProfile -ExecutionPolicy Bypass -File .\register_blueprint_acceptance_daily_task.ps1 -StartTime "07:30"
+```
+
 ## 実運用前チェック
 
 - `api.<BASE_DOMAIN>` の `/ops/exec` と `/dev/deploy` は Bearer + 承認必須
