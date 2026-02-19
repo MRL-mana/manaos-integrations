@@ -50,6 +50,10 @@ Invoke-Step -Name "OpenAI Router Models" -Action {
     if (-not $models.data) {
         throw "No models returned"
     }
+    $modelIds = @($models.data | ForEach-Object { $_.id })
+    if (-not ($modelIds -contains "auto-local")) {
+        throw "Required model 'auto-local' is not available"
+    }
     $models.data | Select-Object -First 5 id | Format-Table -AutoSize | Out-Host
 }
 
