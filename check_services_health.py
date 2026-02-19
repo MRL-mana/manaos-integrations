@@ -412,7 +412,7 @@ def check_all_services(retry_count: int = 3, retry_delay: int = 2) -> bool:
     if all_healthy:
         print("[OK] all core services healthy")
         logger.info(
-            "ヘルスチェック完了: コア %d/%d 稼働, インフラ/任意 %d/%d 稼働",
+            "Health check completed: core %d/%d up, infra/optional %d/%d up",
             core_ok,
             core_total,
             optional_ok,
@@ -425,9 +425,9 @@ def check_all_services(retry_count: int = 3, retry_delay: int = 2) -> bool:
             if str(r[0].get("group")) == "core" and not r[1]
         ]
         print("[!!] some core services are not responding")
-        print("   Action: rerun task \"ManaOS: すべてのサービスを起動\"")
+        print("   Action: rerun the startup task and check service logs")
         logger.warning(
-            "ヘルスチェック失敗: コア %d/%d, 障害サービス: %s",
+            "Health check failed: core %d/%d, failed services: %s",
             core_ok,
             core_total,
             ", ".join(failed),
