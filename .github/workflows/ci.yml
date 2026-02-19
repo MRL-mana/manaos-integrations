@@ -132,10 +132,15 @@ jobs:
               with:
                   python-version: ${{ env.PYTHON_VERSION }}
 
+            - name: Install YAML parser
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install pyyaml
+
             - name: Validate configuration files
               run: |
                   python -c "import json; json.load(open('manaos_integration_config.json'))"
-                  python -c "import json; json.load(open('services_dependency.yaml'))" 2>/dev/null || python -c "import yaml; yaml.safe_load(open('services_dependency.yaml'))"
+                  python -c "import yaml; yaml.safe_load(open('services_dependency.yaml'))"
                   echo "✅ Configuration files are valid"
 
             - name: Check port conflicts
