@@ -79,6 +79,33 @@ except ImportError:
     GALLERY_PORT = 5559
     MOLTBOT_GATEWAY_PORT = 8088
 
+
+def _resolve_openai_router_port(default_port: int = 5211) -> int:
+    status_file = os.path.join(
+        os.path.dirname(__file__),
+        "logs",
+        "manaos_llm_router_port.txt",
+    )
+    if not os.path.exists(status_file):
+        return default_port
+
+    try:
+        with open(status_file, "r", encoding="utf-8") as fp:
+            for line in fp:
+                line = line.strip()
+                if not line.startswith("port="):
+                    continue
+                value = line.replace("port=", "", 1).strip()
+                if value.isdigit():
+                    return int(value)
+    except OSError:
+        pass
+
+    return default_port
+
+
+OPENAI_ROUTER_PORT = _resolve_openai_router_port()
+
 SERVICES: List[Dict[str, object]] = [
     # === コアサービス ===
     {
@@ -99,6 +126,13 @@ SERVICES: List[Dict[str, object]] = [
         "name": "LLM Routing",
         "port": LLM_ROUTING_PORT,
         "path": "/health",
+        "timeout": 5,
+        "group": "core",
+    },
+    {
+        "name": "OpenAI Router",
+        "port": OPENAI_ROUTER_PORT,
+        "path": "/api/llm/health",
         "timeout": 5,
         "group": "core",
     },
