@@ -150,7 +150,9 @@ services:
     - MCP_API_HOST=0.0.0.0
     - COMFYUI_URL=${MANAOS_COMFYUI_URL:-http://host.docker.internal:8188}
     - MANAOS_API_URL=${MANAOS_API_URL:-http://host.docker.internal:9502}
-    - OBSIDIAN_VAULT_PATH=${OBSIDIAN_VAULT_PATH:-C:/Users/mana4/Documents/Obsidian Vault}
+    - OBSIDIAN_VAULT_PATH=${OBSIDIAN_VAULT_PATH:-/app/obsidian_vault}
+    - GOOGLE_DRIVE_CREDENTIALS=${GOOGLE_DRIVE_CREDENTIALS:-/app/credentials.json}
+    - GOOGLE_DRIVE_TOKEN=${GOOGLE_DRIVE_TOKEN:-/app/token.json}
     - SEARXNG_BASE_URL=${SEARXNG_BASE_URL:-http://host.docker.internal:8080}
     - OPENWEBUI_URL=${OPENWEBUI_URL:-http://host.docker.internal:3001}
     - OPENWEBUI_API_KEY=${OPENWEBUI_API_KEY:-}
@@ -175,6 +177,9 @@ services:
     - ./unified_logging.py:/app/unified_logging.py:ro
     - ./_paths.py:/app/_paths.py:ro
     - ./autonomy_gates.py:/app/autonomy_gates.py:ro
+    - ../:/app/obsidian_vault
+    - ./credentials.json:/app/credentials.json:ro
+    - ./token.json:/app/token.json
     extra_hosts:
     - host.docker.internal:host-gateway
     healthcheck:
