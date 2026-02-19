@@ -1,0 +1,71 @@
+name: Docs Lint
+
+on:
+  push:
+    branches: [ master, main, develop ]
+    paths:
+      - "**/*.md"
+      - ".markdownlint-cli2.jsonc"
+      - ".github/workflows/docs-lint.yml"
+  pull_request:
+    branches: [ master, main, develop ]
+    paths:
+      - "**/*.md"
+      - ".markdownlint-cli2.jsonc"
+      - ".github/workflows/docs-lint.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  markdownlint:
+    name: Markdown Lint (scoped)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install markdownlint-cli2
+        run: npm install -g markdownlint-cli2
+
+      - name: Run markdownlint-cli2 on changed markdown files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            git fetch origin "${{ github.base_ref }}" --depth=1
+            git diff --name-only -z "origin/${{ github.base_ref }}...HEAD" -- '*.md' > /tmp/md_files
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            BEFORE="${{ github.event.before }}"
+            if [[ -z "$BEFORE" || "$BEFORE" =~ ^0+$ ]]; then
+              if git rev-parse HEAD~1 >/dev/null 2>&1; then
+                git diff --name-only -z "HEAD~1...HEAD" -- '*.md' > /tmp/md_files
+              else
+                : > /tmp/md_files
+              fi
+            else
+              git diff --name-only -z "$BEFORE...HEAD" -- '*.md' > /tmp/md_files
+            fi
+          else
+            echo "workflow_dispatch detected; skipping full legacy docs scan"
+            : > /tmp/md_files
+          fi
+
+          if [[ ! -s /tmp/md_files ]]; then
+            echo "No changed markdown files to lint."
+            exit 0
+          fi
+
+          echo "Lint target files:"
+          tr '\0' '\n' < /tmp/md_files
+          xargs -0 markdownlint-cli2 < /tmp/md_files

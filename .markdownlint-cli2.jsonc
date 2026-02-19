@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DavidAnson/markdownlint-cli2/main/schema/markdownlint-cli2-config-schema.json",
+  "globs": [
+    "README.md",
+    "docs/**/*.md",
+    "deploy/**/*.md",
+    ".github/**/*.md",
+    "manaos_unified_mcp_server/**/*.md"
+  ],
+  "ignores": [
+    "**/backups/**",
+    "**/migrated_from_konoha/**",
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/logs/**",
+    "**/Reports/**",
+    "**/AI_Data/**"
+  ],
+  "config": {
+    "MD013": false,
+    "MD033": false,
+    "MD041": false
+  }
+}
