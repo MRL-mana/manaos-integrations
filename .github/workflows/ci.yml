@@ -3,8 +3,24 @@ name: CI/CD Pipeline
 on:
     push:
         branches: [master, main, develop]
+    paths:
+      - '**/*.py'
+      - 'tests/**'
+      - 'requirements*.txt'
+      - '.flake8'
+      - '.pylintrc'
+      - 'pyproject.toml'
+      - '.github/workflows/ci.yml'
     pull_request:
         branches: [master, main]
+    paths:
+      - '**/*.py'
+      - 'tests/**'
+      - 'requirements*.txt'
+      - '.flake8'
+      - '.pylintrc'
+      - 'pyproject.toml'
+      - '.github/workflows/ci.yml'
     schedule:
         # 毎日午前3時（JST）にセキュリティスキャン実行
         - cron: '0 18 * * *'
