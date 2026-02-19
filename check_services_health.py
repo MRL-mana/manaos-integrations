@@ -16,10 +16,11 @@ from typing import Dict, List, Optional, Tuple
 
 import requests  # pyright: ignore[reportMissingTypeStubs]
 
-_ENCODINGS_TO_NORMALIZE = ("cp932", "cp936", "cp949")
-if sys.platform == "win32" and getattr(sys.stdout, "encoding", "") in (
-    _ENCODINGS_TO_NORMALIZE
-):
+_UTF8_ENCODINGS = ("utf-8", "utf8")
+_stdout_encoding = (getattr(sys.stdout, "encoding", "") or "").lower()
+_force_utf8 = os.getenv("MANAOS_FORCE_UTF8", "0") == "1"
+
+if sys.platform == "win32" and (_force_utf8 or _stdout_encoding in _UTF8_ENCODINGS):
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             try:
