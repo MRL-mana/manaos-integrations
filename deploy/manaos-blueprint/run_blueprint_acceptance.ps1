@@ -6,6 +6,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$PSNativeCommandUseErrorActionPreference = $false
 
 function Step($msg) {
     Write-Host "`n=== $msg ===" -ForegroundColor Cyan
@@ -79,7 +80,14 @@ $opsToken = Get-EnvValue -EnvPath $envPath -Key "OPS_EXEC_BEARER_TOKEN" -Default
 
 if ($StartIfNeeded) {
     Step "Start blueprint stack"
-    docker compose -f $composeFile --env-file $envPath up -d | Out-Host
+    $composeCmd = "docker compose -f `"" + $composeFile + "`" --env-file `"" + $envPath + "`" up -d"
+    $prevEap = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    cmd.exe /c $composeCmd 2>$null | Out-Host
+    $ErrorActionPreference = $prevEap
+    if ($LASTEXITCODE -ne 0) {
+        throw "docker compose up failed (exit=$LASTEXITCODE)"
+    }
 }
 
 $failures = 0
