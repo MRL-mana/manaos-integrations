@@ -127,6 +127,23 @@ cd deploy/manaos-blueprint
 powershell -NoProfile -ExecutionPolicy Bypass -File .\register_blueprint_acceptance_daily_task.ps1 -StartTime "07:30"
 ```
 
+失敗時Webhook通知（成功時は任意）を使う場合:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\register_blueprint_acceptance_daily_task.ps1 -StartTime "07:30" -WebhookUrl "https://example-webhook" -WebhookFormat "discord" -NotifyOnSuccess
+```
+
+この登録スクリプトは、通知オプションをユーザー環境変数（`MANAOS_WEBHOOK_*`）に保存し、タスク本体のコマンド長を短く保ちます。
+
+`run_blueprint_full_pipeline.ps1` は以下の環境変数も参照します（未指定時のフォールバック）。
+
+- `MANAOS_WEBHOOK_URL`
+- `MANAOS_WEBHOOK_FORMAT` (`generic` / `slack` / `discord`)
+- `MANAOS_WEBHOOK_MENTION`
+- `MANAOS_NOTIFY_ON_SUCCESS` (`true/false`)
+
+Webhook URL が設定されている場合、失敗通知は常時送信されます。成功通知は `-NotifyOnSuccess` または `MANAOS_NOTIFY_ON_SUCCESS=true` で有効化できます。
+
 ## 実運用前チェック
 
 - `api.<BASE_DOMAIN>` の `/ops/exec` と `/dev/deploy` は Bearer + 承認必須

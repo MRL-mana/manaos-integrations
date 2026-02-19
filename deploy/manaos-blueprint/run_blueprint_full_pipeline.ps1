@@ -3,7 +3,12 @@ param(
     [string]$AdminEmail = "mana-blueprint-admin@example.local",
     [string]$AdminPassword = "ManaOS!2026",
     [switch]$StartIfNeeded,
-    [switch]$BootstrapSignup
+    [switch]$BootstrapSignup,
+    [ValidateSet("generic", "slack", "discord")]
+    [string]$WebhookFormat = "discord",
+    [string]$WebhookUrl = "",
+    [string]$WebhookMention = "",
+    [switch]$NotifyOnSuccess
 )
 
 $ErrorActionPreference = "Stop"
@@ -11,6 +16,98 @@ $PSNativeCommandUseErrorActionPreference = $false
 
 function Step($msg) {
     Write-Host "`n=== $msg ===" -ForegroundColor Cyan
+}
+
+function Resolve-NotifySettings {
+    param(
+        [string]$InWebhookUrl,
+        [string]$InWebhookFormat,
+        [string]$InWebhookMention,
+        [bool]$InNotifyOnSuccess
+    )
+
+    $resolvedUrl = $InWebhookUrl
+    if ([string]::IsNullOrWhiteSpace($resolvedUrl) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_URL)) {
+        $resolvedUrl = $env:MANAOS_WEBHOOK_URL
+    }
+    if ([string]::IsNullOrWhiteSpace($resolvedUrl)) {
+        $resolvedUrl = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_URL", "User")
+    }
+
+    $resolvedFormat = $InWebhookFormat
+    if (-not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_FORMAT)) {
+        $envFormat = $env:MANAOS_WEBHOOK_FORMAT.Trim().ToLowerInvariant()
+        if ($envFormat -in @("generic", "slack", "discord")) {
+            $resolvedFormat = $envFormat
+        }
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_FORMAT", "User"))) {
+        $userFormat = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_FORMAT", "User").Trim().ToLowerInvariant()
+        if ($userFormat -in @("generic", "slack", "discord")) {
+            $resolvedFormat = $userFormat
+        }
+    }
+
+    $resolvedMention = $InWebhookMention
+    if ([string]::IsNullOrWhiteSpace($resolvedMention) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_MENTION)) {
+        $resolvedMention = $env:MANAOS_WEBHOOK_MENTION
+    }
+    if ([string]::IsNullOrWhiteSpace($resolvedMention)) {
+        $resolvedMention = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_MENTION", "User")
+    }
+
+    $resolvedNotifyOnSuccess = $InNotifyOnSuccess
+    if (-not $resolvedNotifyOnSuccess -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_NOTIFY_ON_SUCCESS)) {
+        $notifyRaw = $env:MANAOS_NOTIFY_ON_SUCCESS.Trim().ToLowerInvariant()
+        $resolvedNotifyOnSuccess = ($notifyRaw -in @("1", "true", "yes", "on"))
+    }
+    if (-not $resolvedNotifyOnSuccess -and -not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("MANAOS_NOTIFY_ON_SUCCESS", "User"))) {
+        $notifyRawUser = [Environment]::GetEnvironmentVariable("MANAOS_NOTIFY_ON_SUCCESS", "User").Trim().ToLowerInvariant()
+        $resolvedNotifyOnSuccess = ($notifyRawUser -in @("1", "true", "yes", "on"))
+    }
+
+    return [ordered]@{
+        webhook_url = $resolvedUrl
+        webhook_format = $resolvedFormat
+        webhook_mention = $resolvedMention
+        notify_on_success = [bool]$resolvedNotifyOnSuccess
+    }
+}
+
+function Send-WebhookNotification {
+    param(
+        [ValidateSet("generic", "slack", "discord")]
+        [string]$Format,
+        [string]$Url,
+        [string]$Mention,
+        [string]$Status,
+        [string]$Base,
+        [string]$Log,
+        [string]$Reason
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Url)) {
+        return
+    }
+
+    $prefix = if ([string]::IsNullOrWhiteSpace($Mention)) { "" } else { "$Mention " }
+    $reasonLine = if ([string]::IsNullOrWhiteSpace($Reason)) { "" } else { "`nreason: $Reason" }
+    $text = "${prefix}Blueprint full pipeline ${Status}`nbase_domain: ${Base}`nlog: ${Log}${reasonLine}".Trim()
+
+    if ($Format -eq "discord") {
+        $body = @{ content = $text }
+    }
+    else {
+        $body = @{ text = $text }
+    }
+
+    try {
+        Invoke-RestMethod -Method Post -Uri $Url -ContentType "application/json" -Body ($body | ConvertTo-Json -Depth 5 -Compress) -TimeoutSec 20 | Out-Null
+        Write-Host "[OK] Webhook notified ($Status)" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "[WARN] Webhook notify failed: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
 }
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -47,6 +144,12 @@ Step "Blueprint full pipeline"
 Write-Host "BaseDomain: $BaseDomain" -ForegroundColor Gray
 Write-Host "Log: $logPath" -ForegroundColor Gray
 
+$notify = Resolve-NotifySettings -InWebhookUrl $WebhookUrl -InWebhookFormat $WebhookFormat -InWebhookMention $WebhookMention -InNotifyOnSuccess ([bool]$NotifyOnSuccess)
+$WebhookUrl = [string]$notify.webhook_url
+$WebhookFormat = [string]$notify.webhook_format
+$WebhookMention = [string]$notify.webhook_mention
+$NotifyOnSuccess = [bool]$notify.notify_on_success
+
 $bootstrapArgs = @(
     $bootstrapScript,
     "--base-domain", $BaseDomain,
@@ -58,28 +161,50 @@ if ($BootstrapSignup) {
     $bootstrapArgs += "--signup"
 }
 
-Step "Bootstrap Open WebUI tool"
-python @bootstrapArgs 2>&1 | Tee-Object -FilePath $logPath -Append | Out-Host
-if ($LASTEXITCODE -ne 0) {
-    throw "bootstrap failed (exit=$LASTEXITCODE)"
+$pipelineStatus = "FAIL"
+$failureReason = ""
+
+try {
+    Step "Bootstrap Open WebUI tool"
+    python @bootstrapArgs 2>&1 | Tee-Object -FilePath $logPath -Append | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        throw "bootstrap failed (exit=$LASTEXITCODE)"
+    }
+
+    Step "Run blueprint acceptance"
+    $acceptanceArgs = @{
+        BaseDomain = $BaseDomain
+        AdminEmail = $AdminEmail
+        AdminPassword = $AdminPassword
+    }
+
+    if ($StartIfNeeded) {
+        $acceptanceArgs["StartIfNeeded"] = $true
+    }
+
+    & $acceptanceScript @acceptanceArgs 2>&1 | Tee-Object -FilePath $logPath -Append | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        throw "acceptance failed (exit=$LASTEXITCODE)"
+    }
+
+    $pipelineStatus = "PASS"
+}
+catch {
+    $failureReason = $_.Exception.Message
+    Write-Host "[NG] Blueprint full pipeline FAILED: $failureReason" -ForegroundColor Red
+}
+finally {
+    $shouldNotify = (($pipelineStatus -eq "FAIL") -or (($pipelineStatus -eq "PASS") -and $NotifyOnSuccess))
+    if ($shouldNotify) {
+        Send-WebhookNotification -Format $WebhookFormat -Url $WebhookUrl -Mention $WebhookMention -Status $pipelineStatus -Base $BaseDomain -Log $logPath -Reason $failureReason
+    }
 }
 
-Step "Run blueprint acceptance"
-$acceptanceArgs = @{
-    BaseDomain = $BaseDomain
-    AdminEmail = $AdminEmail
-    AdminPassword = $AdminPassword
+if ($pipelineStatus -eq "PASS") {
+    Step "Pipeline result"
+    Write-Host "[OK] Blueprint full pipeline PASSED" -ForegroundColor Green
+    Write-Host "Log file: $logPath" -ForegroundColor Green
+    exit 0
 }
 
-if ($StartIfNeeded) {
-    $acceptanceArgs["StartIfNeeded"] = $true
-}
-
-& $acceptanceScript @acceptanceArgs 2>&1 | Tee-Object -FilePath $logPath -Append | Out-Host
-if ($LASTEXITCODE -ne 0) {
-    throw "acceptance failed (exit=$LASTEXITCODE)"
-}
-
-Step "Pipeline result"
-Write-Host "[OK] Blueprint full pipeline PASSED" -ForegroundColor Green
-Write-Host "Log file: $logPath" -ForegroundColor Green
+exit 1
