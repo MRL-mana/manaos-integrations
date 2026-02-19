@@ -68,7 +68,19 @@ Invoke-Step -Name "auto-local Chat" -Action {
 }
 
 Invoke-Step -Name "Tool Server Integration" -Action {
-    python .\tests\integration\test_tool_server_integration.py | Out-Host
+    $toolLines = python .\tests\integration\test_tool_server_integration.py 2>&1
+    $toolLines | Out-Host
+
+    $toolText = ($toolLines | Out-String)
+    if ($LASTEXITCODE -ne 0) {
+        throw "Tool Server integration test exited with code $LASTEXITCODE"
+    }
+    if ($toolText -match "(?m)^\[NG\]\s") {
+        throw "Tool Server integration output contains [NG] markers"
+    }
+    if ($toolText -match "(?m)^\[WARNING\]\s") {
+        throw "Tool Server integration reports failed test cases"
+    }
 }
 
 Write-Host "`n========================================="
