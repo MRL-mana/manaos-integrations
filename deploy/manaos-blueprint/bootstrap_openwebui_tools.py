@@ -3,6 +3,7 @@ import argparse
 import json
 import sys
 import textwrap
+import time
 
 import requests
 
@@ -16,7 +17,10 @@ def request_json(base_url: str, host: str, method: str, path: str, token: str | 
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
-    response = requests.request(method, url, headers=headers, json=payload, timeout=30)
+    try:
+        response = requests.request(method, url, headers=headers, json=payload, timeout=30)
+    except requests.RequestException as error:
+        return 0, {"error": str(error)}
     body = {}
     if response.text:
         try:
@@ -114,17 +118,35 @@ def main() -> int:
     parser.add_argument("--email", default="mana-blueprint-admin@example.local")
     parser.add_argument("--password", default="ManaOS!2026")
     parser.add_argument("--signup", action="store_true", help="Run signup if signin fails")
+    parser.add_argument("--signin-retries", type=int, default=6, help="Retry count for signin on transient errors")
+    parser.add_argument("--signin-retry-seconds", type=int, default=5, help="Delay between signin retries")
     args = parser.parse_args()
 
     host = f"chat.{args.base_domain}"
 
     signin_payload = {"email": args.email, "password": args.password}
-    status, signin_body = request_json(args.openwebui_base, host, "POST", "/api/v1/auths/signin", payload=signin_payload)
+
+    def signin_with_retry():
+        status = 0
+        body = {}
+        for attempt in range(1, args.signin_retries + 1):
+            status, body = request_json(args.openwebui_base, host, "POST", "/api/v1/auths/signin", payload=signin_payload)
+            if status == 200:
+                return status, body
+
+            if status in (0, 502, 503, 504) and attempt < args.signin_retries:
+                time.sleep(args.signin_retry_seconds)
+                continue
+
+            break
+        return status, body
+
+    status, signin_body = signin_with_retry()
 
     if status != 200 and args.signup:
         signup_payload = {"name": "Mana Blueprint Admin", "email": args.email, "password": args.password}
         request_json(args.openwebui_base, host, "POST", "/api/v1/auths/signup", payload=signup_payload)
-        status, signin_body = request_json(args.openwebui_base, host, "POST", "/api/v1/auths/signin", payload=signin_payload)
+        status, signin_body = signin_with_retry()
 
     if status != 200:
         print(json.dumps({"success": False, "step": "signin", "status": status, "body": signin_body}, ensure_ascii=False))
