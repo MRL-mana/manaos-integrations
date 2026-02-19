@@ -10,7 +10,10 @@ import json
 import os
 import sys
 import io
+import subprocess
+import uuid
 from pathlib import Path
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -28,6 +31,93 @@ sys.path.insert(0, str(Path(__file__).parent))
 logger = get_service_logger("mcp")
 app = Flask(__name__)
 CORS(app)
+
+_OPS_PLANS: Dict[str, Dict[str, Any]] = {}
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _memory_log_path() -> Path:
+    configured = os.getenv("MANAOS_MEMORY_LOG_PATH", "logs/blueprint_memory.jsonl")
+    path = Path(configured)
+    if not path.is_absolute():
+        path = Path(__file__).parent / path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _append_memory_entry(entry: Dict[str, Any]) -> None:
+    log_path = _memory_log_path()
+    with log_path.open("a", encoding="utf-8") as fp:
+        fp.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+def _load_memory_entries(limit: int = 2000) -> list[Dict[str, Any]]:
+    log_path = _memory_log_path()
+    if not log_path.exists():
+        return []
+
+    entries: list[Dict[str, Any]] = []
+    try:
+        with log_path.open("r", encoding="utf-8") as fp:
+            for line in fp:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entries.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+    except Exception as e:
+        logger.warning(f"memory log read failed: {e}")
+
+    return entries[-limit:]
+
+
+def _score_memory_entry(query: str, entry: Dict[str, Any]) -> float:
+    normalized = query.strip().lower()
+    if not normalized:
+        return 1.0
+
+    content = str(entry.get("content", "")).lower()
+    metadata = json.dumps(entry.get("metadata", {}), ensure_ascii=False).lower()
+    haystack = f"{content} {metadata}"
+
+    if normalized in haystack:
+        if normalized in content:
+            return 1.0
+        return 0.75
+    return 0.0
+
+
+def _require_ops_token() -> Optional[tuple[Any, int]]:
+    required_token = os.getenv("OPS_EXEC_BEARER_TOKEN", "").strip()
+    if not required_token:
+        return None
+
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return jsonify({"success": False, "error": "missing bearer token"}), 401
+
+    provided = auth_header.replace("Bearer ", "", 1).strip()
+    if provided != required_token:
+        return jsonify({"success": False, "error": "invalid bearer token"}), 403
+    return None
+
+
+def _is_dangerous_command(command: str) -> bool:
+    blocked_markers = [
+        "rm -rf",
+        "del /s /q",
+        "format ",
+        "shutdown",
+        "reboot",
+        "mkfs",
+    ]
+    lowered = command.lower()
+    return any(marker in lowered for marker in blocked_markers)
 
 # MCPサーバーをインポート
 MCP_SERVER_AVAILABLE = False
@@ -52,6 +142,169 @@ def health():
         "service": "MCP API Server",
         "mcp_available": MCP_SERVER_AVAILABLE
     })
+
+
+@app.route("/memory/write", methods=["POST"])
+@app.route("/api/memory/write", methods=["POST"])
+def memory_write():
+    """Blueprint memory write endpoint."""
+    data = request.json or {}
+    content = str(data.get("content", "")).strip()
+    if not content:
+        return jsonify({"success": False, "error": "content is required"}), 400
+
+    metadata = data.get("metadata") or {}
+    if not isinstance(metadata, dict):
+        return jsonify({"success": False, "error": "metadata must be an object"}), 400
+
+    entry = {
+        "id": data.get("id") or str(uuid.uuid4()),
+        "content": content,
+        "metadata": metadata,
+        "source": data.get("source", "api"),
+        "timestamp": _utc_now_iso(),
+    }
+    _append_memory_entry(entry)
+    return jsonify({"success": True, "entry": entry})
+
+
+@app.route("/memory/search", methods=["POST"])
+@app.route("/api/memory/search", methods=["POST"])
+def memory_search():
+    """Blueprint memory search endpoint."""
+    data = request.json or {}
+    query = str(data.get("query", "")).strip()
+    limit = int(data.get("limit", 10) or 10)
+    limit = max(1, min(limit, 100))
+
+    entries = _load_memory_entries()
+    scored = []
+    for entry in entries:
+        score = _score_memory_entry(query, entry)
+        if score > 0:
+            item = dict(entry)
+            item["score"] = score
+            scored.append(item)
+
+    scored.sort(key=lambda x: (x.get("score", 0.0), x.get("timestamp", "")), reverse=True)
+    results = scored[:limit]
+    return jsonify({
+        "success": True,
+        "query": query,
+        "count": len(results),
+        "results": results,
+    })
+
+
+@app.route("/ops/plan", methods=["POST"])
+def ops_plan():
+    """Create lightweight operation plan for approval flow."""
+    data = request.json or {}
+    goal = str(data.get("goal", "")).strip()
+    if not goal:
+        return jsonify({"success": False, "error": "goal is required"}), 400
+
+    input_steps = data.get("steps")
+    steps: list[str]
+    if isinstance(input_steps, list) and input_steps:
+        steps = [str(step).strip() for step in input_steps if str(step).strip()]
+    else:
+        steps = [
+            f"Define scope: {goal}",
+            "Run safe verification command",
+            "Capture result and write memory",
+        ]
+
+    plan_id = str(uuid.uuid4())
+    plan = {
+        "plan_id": plan_id,
+        "goal": goal,
+        "steps": steps,
+        "approval_required": os.getenv("OPS_APPROVAL_MODE", "required").lower() == "required",
+        "created_at": _utc_now_iso(),
+        "status": "planned",
+    }
+    _OPS_PLANS[plan_id] = plan
+    return jsonify({"success": True, "plan": plan})
+
+
+@app.route("/ops/exec", methods=["POST"])
+def ops_exec():
+    """Execute approved operation command (dry-run by default)."""
+    auth_error = _require_ops_token()
+    if auth_error:
+        return auth_error
+
+    data = request.json or {}
+    approval_required = os.getenv("OPS_APPROVAL_MODE", "required").lower() == "required"
+    approved = bool(data.get("approved", False))
+    dry_run = bool(data.get("dry_run", True))
+    plan_id = str(data.get("plan_id", "")).strip()
+
+    if approval_required and not approved:
+        return jsonify({"success": False, "error": "approval required"}), 403
+
+    plan = _OPS_PLANS.get(plan_id) if plan_id else None
+    command = str(data.get("command", "")).strip()
+    if not command and plan:
+        command = "echo plan approved"
+    if not command:
+        return jsonify({"success": False, "error": "command is required"}), 400
+
+    if _is_dangerous_command(command):
+        return jsonify({"success": False, "error": "dangerous command blocked"}), 400
+
+    response_payload = {
+        "success": True,
+        "plan_id": plan_id or None,
+        "command": command,
+        "dry_run": dry_run,
+        "approved": approved,
+        "executed_at": _utc_now_iso(),
+    }
+
+    if dry_run:
+        response_payload["stdout"] = "dry-run: command not executed"
+        response_payload["returncode"] = 0
+        return jsonify(response_payload)
+
+    try:
+        completed = subprocess.run(
+            command,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=str(Path(__file__).parent),
+        )
+        response_payload["stdout"] = (completed.stdout or "").strip()
+        response_payload["stderr"] = (completed.stderr or "").strip()
+        response_payload["returncode"] = completed.returncode
+        response_payload["success"] = completed.returncode == 0
+        return jsonify(response_payload), (200 if completed.returncode == 0 else 500)
+    except subprocess.TimeoutExpired:
+        return jsonify({"success": False, "error": "command timeout"}), 504
+    except Exception as e:
+        logger.error(f"ops exec error: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/dev/patch", methods=["POST"])
+def dev_patch():
+    return jsonify({"success": True, "status": "queued", "action": "patch"})
+
+
+@app.route("/dev/test", methods=["POST"])
+def dev_test():
+    return jsonify({"success": True, "status": "queued", "action": "test"})
+
+
+@app.route("/dev/deploy", methods=["POST"])
+def dev_deploy():
+    auth_error = _require_ops_token()
+    if auth_error:
+        return auth_error
+    return jsonify({"success": True, "status": "queued", "action": "deploy"})
 
 
 @app.route("/api/mcp/tools", methods=["GET"])
@@ -301,6 +554,99 @@ def openapi_spec():
 
         # OpenAPI仕様を構築
         paths = {}
+
+        paths["/memory/write"] = {
+            "post": {
+                "summary": "Write memory",
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "content": {"type": "string"},
+                                    "metadata": {"type": "object"},
+                                    "source": {"type": "string"},
+                                },
+                                "required": ["content"],
+                            }
+                        }
+                    }
+                },
+                "responses": {"200": {"description": "成功"}},
+            }
+        }
+
+        paths["/memory/search"] = {
+            "post": {
+                "summary": "Search memory",
+                "requestBody": {
+                    "required": False,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "query": {"type": "string"},
+                                    "limit": {"type": "integer"},
+                                },
+                            }
+                        }
+                    }
+                },
+                "responses": {"200": {"description": "成功"}},
+            }
+        }
+
+        paths["/ops/plan"] = {
+            "post": {
+                "summary": "Create operation plan",
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "goal": {"type": "string"},
+                                    "steps": {"type": "array", "items": {"type": "string"}},
+                                },
+                                "required": ["goal"],
+                            }
+                        }
+                    }
+                },
+                "responses": {"200": {"description": "成功"}},
+            }
+        }
+
+        paths["/ops/exec"] = {
+            "post": {
+                "summary": "Execute approved operation",
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "plan_id": {"type": "string"},
+                                    "command": {"type": "string"},
+                                    "approved": {"type": "boolean"},
+                                    "dry_run": {"type": "boolean"},
+                                },
+                            }
+                        }
+                    }
+                },
+                "responses": {"200": {"description": "成功"}},
+            }
+        }
+
+        paths["/dev/patch"] = {"post": {"summary": "Queue patch task", "responses": {"200": {"description": "成功"}}}}
+        paths["/dev/test"] = {"post": {"summary": "Queue test task", "responses": {"200": {"description": "成功"}}}}
+        paths["/dev/deploy"] = {"post": {"summary": "Queue deploy task", "responses": {"200": {"description": "成功"}}}}
 
         # MCPサーバーのツールを追加
         for tool in tools:
