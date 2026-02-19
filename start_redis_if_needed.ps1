@@ -1,5 +1,6 @@
 # Redisコンテナを起動するスクリプト（必要に応じて）
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "Redisコンテナの状態を確認します..." -ForegroundColor Cyan
 
 # Docker Desktopの起動確認

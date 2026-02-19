@@ -1,0 +1,79 @@
+# ManaHome Configuration Bridge
+# Defines how manaos_integrations connects to D:\ManaHome (Production)
+
+home_path: "D:\\ManaHome"
+home_available: true
+
+# Deployment targets (synced from repo to home)
+deployment_targets:
+  - source: "system/boot"
+    destination: "system/boot"
+    type: "CODE"
+    description: "Boot orchestration & startup chain"
+    exclude:
+      - "*.pid"
+      - "*.lock"
+      - "*.log"
+
+  - source: "system/services/registry.yaml"
+    destination: "system/services/registry.yaml"
+    type: "CONFIG"
+    description: "Service registry (16 always-on definitions)"
+
+  - source: "skills"
+    destination: "skills"
+    type: "CODE"
+    description: "Capability/skill modules"
+    exclude:
+      - "__pycache__"
+      - "*.pyc"
+
+  - source: "adapters"
+    destination: "adapters"
+    type: "CODE"
+    description: "System adapters (Trinity, orchestrator, etc)"
+    exclude:
+      - "__pycache__"
+      - "*.pyc"
+
+# Protected paths (never deployed, always local to home)
+protected_paths:
+  - "system/runtime"        # PID, lock files, state.json
+  - "memory"                # Memory DB (stateful)
+  - "logs"                  # Accumulated logs
+  - "backups"               # Snapshot backups
+
+# Backup strategy
+backup:
+  enabled: true
+  timestamp_format: "yyyy-MM-dd_HH-mm-ss"
+  retention_count: 5        # Keep last 5 backups
+  backup_dir: "D:\\ManaHome\\system\\backups\\deploy"
+
+# Health check after deployment
+health_check:
+  enabled: true
+  delay_seconds: 2          # Wait before probing
+  timeout_seconds: 5
+  probe_ports:
+    - 9502     # Unified API
+    - 5106     # Orchestrator
+  probe_method: "tcp"       # TCP socket probe (no HTTP dependency)
+
+# Rollback on failure
+rollback:
+  enabled: true
+  on_health_check_fail: true
+  on_script_error: true
+
+# Logging
+logging:
+  enabled: true
+  log_file: "D:\\ManaHome\\system\\runtime\\logs\\deploy_from_integrations.log"
+  log_level: "INFO"         # DEBUG, INFO, WARN, ERROR
+
+# Metadata
+metadata:
+  created: "2026-02-18"
+  purpose: "Bridge development (manaos_integrations) with production (D:\\ManaHome)"
+  strategy: "Hybrid: Home (stable) + Workshop (dev) + Deploy pipeline"

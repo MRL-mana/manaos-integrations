@@ -1,5 +1,6 @@
 # Step-Deep-Research サービス起動スクリプト
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "Step-Deep-Research サービス起動中..." -ForegroundColor Cyan
 
 $service = @{

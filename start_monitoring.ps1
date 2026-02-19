@@ -1,5 +1,6 @@
 # LLMルーティングシステム 監視開始スクリプト
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "=" * 60
 Write-Host "LLMルーティングシステム 監視開始"
 Write-Host "=" * 60

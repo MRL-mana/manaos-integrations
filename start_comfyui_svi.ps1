@@ -4,6 +4,7 @@ param(
     [int]$Port = 8188,
     [switch]$Background
 )
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 
 Write-Host ("=" * 60) -ForegroundColor Cyan
 Write-Host "ComfyUI 起動スクリプト（SVI × Wan 2.2用）" -ForegroundColor Cyan

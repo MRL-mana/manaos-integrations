@@ -1,5 +1,6 @@
 # ComfyUIをエンコーディング修正付きで起動
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 $env:PYTHONIOENCODING = "utf-8"
 $env:PYTHONLEGACYWINDOWSSTDIO = "1"
 $env:PYTHONUTF8 = "1"

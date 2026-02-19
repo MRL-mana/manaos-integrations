@@ -26,6 +26,8 @@ class EnhancedLLMRouter:
         self.lm_studio_url = lm_studio_url or f"http://127.0.0.1:{LM_STUDIO_PORT}/v1"
         self.ollama_url = ollama_url or f"http://127.0.0.1:{OLLAMA_PORT}"
         
+        logger.info(f"LLMRouter initialized: lm_studio={self.lm_studio_url}, ollama={self.ollama_url}")
+        
         # モデル設定（LM Studio用）
         self.models = {
             "light": "Qwen2.5-Coder-7B-Instruct",
@@ -41,7 +43,43 @@ class EnhancedLLMRouter:
         }
         
         # 使用するLLMサーバー（"lm_studio" or "ollama"）
-        self.llm_server = os.getenv("LLM_SERVER", "lm_studio")
+        # 環境変数で上書き可能、デフォルトは "ollama"
+        self.llm_server = os.getenv("LLM_SERVER", "ollama")
+
+    def _get_ollama_installed_models(self) -> List[str]:
+        """Ollamaに導入済みのモデル一覧を取得"""
+        try:
+            response = requests.get(f"{self.ollama_url}/api/tags", timeout=5.0)
+            if response.status_code != 200:
+                logger.warning(f"Ollama API error: HTTP {response.status_code}")
+                return []
+            data = response.json()
+            models = data.get("models", [])
+            names = [model.get("name") for model in models if model.get("name")]
+            logger.info(f"Ollama models loaded: {names}")
+            return names
+        except Exception as e:
+            logger.error(f"Ollama connection error: {e}", exc_info=True)
+            return []
+
+    def _resolve_ollama_model(self, preferred: str, fallback_candidates: List[str]) -> str:
+        """導入済みモデルから最適な候補を解決"""
+        installed = self._get_ollama_installed_models()
+        if not installed:
+            return preferred
+
+        candidates = [preferred, *fallback_candidates]
+        for candidate in candidates:
+            if candidate in installed:
+                return candidate
+
+        for candidate in candidates:
+            base_name = candidate.split(":")[0]
+            for model_name in installed:
+                if model_name == base_name or model_name.startswith(f"{base_name}:"):
+                    return model_name
+
+        return installed[0]
     
     def route(
         self,
@@ -82,8 +120,11 @@ class EnhancedLLMRouter:
         force_model = preferences.get("force_model", None)
         
         # モデル選択
+        model_key = "light"
+
         if force_model:
             # ユーザーが明示的にモデルを指定
+            model_key = "forced"
             model = force_model
             reasoning = f"ユーザー指定のモデルを使用: {model}"
         elif prefer_speed or difficulty_score < 10:
@@ -164,7 +205,14 @@ class EnhancedLLMRouter:
             モデル名
         """
         if self.llm_server == "ollama":
-            return self.ollama_models.get(model_key, self.ollama_models["light"])
+            model_candidates = {
+                "light": ["qwen2.5-coder:7b", "qwen2.5:7b", "llama3.2:3b", "llama3.2:1b"],
+                "medium": ["qwen2.5-coder:14b", "qwen2.5:14b", "llama3.1:8b", "mistral:7b"],
+                "heavy": ["qwen2.5-coder:32b", "qwen2.5:32b", "qwen2.5:14b", "llama3.1:8b"],
+            }
+            preferred = self.ollama_models.get(model_key, self.ollama_models["light"])
+            candidates = model_candidates.get(model_key, model_candidates["light"])
+            return self._resolve_ollama_model(preferred, candidates)
         else:
             return self.models.get(model_key, self.models["light"])
     
@@ -194,6 +242,10 @@ class EnhancedLLMRouter:
         ]
         
         if self.llm_server == "ollama":
+            installed_models = self._get_ollama_installed_models()
+            if installed_models and model not in installed_models:
+                model = self._resolve_ollama_model(model, installed_models)
+
             # Ollama API
             response = requests.post(
                 f"{self.ollama_url}/api/chat",
@@ -237,6 +289,9 @@ class EnhancedLLMRouter:
             モデル名のリスト
         """
         if self.llm_server == "ollama":
+            installed = self._get_ollama_installed_models()
+            if installed:
+                return installed
             return list(self.ollama_models.values())
         else:
             return list(self.models.values())

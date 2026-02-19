@@ -1,5 +1,6 @@
 # LLMルーティングシステム 全サービス起動スクリプト（自動版）
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "=" * 60
 Write-Host "LLMルーティングシステム 全サービス起動（自動）"
 Write-Host "=" * 60

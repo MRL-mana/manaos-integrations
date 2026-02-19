@@ -16,6 +16,7 @@ from typing import List, Dict, Any
 import time
 import platform
 import socket
+from urllib import request, error
 
 
 # When executed as a script
@@ -44,7 +45,7 @@ class ManaOSServiceManager:
         {
             "name": "MRL Memory",
             "module": "mrl_memory_integration",
-            "port": 5110,
+            "port": 5105,
             "description": "記憶管理システム"
         },
         {
@@ -58,6 +59,13 @@ class ManaOSServiceManager:
             "module": "llm_routing_mcp_server.server",
             "port": 5111,
             "description": "LLMルーティング"
+        },
+        {
+            "name": "OpenAI Router",
+            "module": "start_manaos_llm_openai_router.ps1",
+            "port": 5111,
+            "description": "OpenAI互換LLMルーター（Auto Port）",
+            "type": "powershell"
         },
         {
             "name": "Unified API",
@@ -166,16 +174,95 @@ class ManaOSServiceManager:
                 return True
             time.sleep(2)
         return False
+
+    def _is_unified_api_healthy(self, port: int) -> bool:
+        url = f"http://127.0.0.1:{port}/health"
+        try:
+            req = request.Request(url, method="GET")
+            with request.urlopen(req, timeout=2) as resp:
+                return int(getattr(resp, "status", 0)) == 200
+        except (error.URLError, OSError, TimeoutError, ValueError):
+            return False
+
+    def _get_router_port_from_status(self) -> int:
+        status_file = self.manaos_path / "logs" / "manaos_llm_router_port.txt"
+        if not status_file.exists():
+            return 5211
+
+        try:
+            for line in status_file.read_text(encoding="utf-8").splitlines():
+                if line.startswith("port="):
+                    value = line.replace("port=", "", 1).strip()
+                    if value.isdigit():
+                        return int(value)
+        except Exception:
+            pass
+
+        return 5211
+
+    def _is_openai_router_healthy(self, port: int) -> bool:
+        url = f"http://127.0.0.1:{port}/api/llm/health"
+        try:
+            req = request.Request(url, method="GET")
+            with request.urlopen(req, timeout=3) as resp:
+                return int(getattr(resp, "status", 0)) == 200
+        except (error.URLError, OSError, TimeoutError, ValueError):
+            return False
+
+    def wait_for_openai_router_health(
+        self,
+        retries: int = 5,
+        retry_delay: int = 2,
+    ) -> bool:
+        """OpenAI Router のヘルス応答を待機する。"""
+        for _ in range(retries):
+            port = self._get_router_port_from_status()
+            if self._is_openai_router_healthy(port):
+                print(
+                    "[OK] OpenAI Router ヘルスチェック成功 "
+                    f"(http://127.0.0.1:{port}/api/llm/health)"
+                )
+                return True
+            time.sleep(retry_delay)
+
+        final_port = self._get_router_port_from_status()
+        print(
+            "[ERROR] OpenAI Router ヘルスチェック失敗 "
+            f"(http://127.0.0.1:{final_port}/api/llm/health)"
+        )
+        return False
         
     def start_service(self, service: Dict[str, Any], retries: int = 2) -> bool:
         """サービスを起動（リトライ付き）"""
         name = service["name"]
         module = service["module"]
         port = service["port"]
+        service_type = service.get("type", "python")
+
+        def register_external_service(active_port: int) -> None:
+            self.processes[name] = {
+                "process": None,
+                "module": module,
+                "port": active_port,
+                "external": True,
+                "service_type": service_type,
+            }
 
         # If port is already in use, handle Unified API specially
-        if self._is_port_open("127.0.0.1", port, timeout=0.2):
+        if service_type == "python" and self._is_port_open(
+            "127.0.0.1", port, timeout=0.2
+        ):
             if name == "Unified API":
+                if self._is_unified_api_healthy(port):
+                    print(
+                        (
+                            f"[OK] {name} は既に正常稼働中です"
+                            f"（ポート {port} /health=200）。スキップします。"
+                        )
+                    )
+                    register_external_service(port)
+                    return True
+
                 print(f"[WARN] {name} のポート {port} が既に使用中です。解放を試みます...")
                 # If we can see a listener PID, show it for debugging
                 pids = self._get_listen_pids_windows(port)
@@ -193,6 +280,7 @@ class ManaOSServiceManager:
                     return False
             else:
                 print(f"[OK] {name} は既に起動しているようです（ポート {port}）。スキップします。")
+                register_external_service(port)
                 return True
         
         for attempt in range(1, retries + 1):
@@ -232,20 +320,77 @@ class ManaOSServiceManager:
                     encoding="utf-8",
                     errors="replace",
                 )
-            
-                proc = subprocess.Popen(
-                    [self.python_executable, "-m", module],
-                    cwd=str(self.manaos_path),
-                    env=env,
-                    stdout=service_log_file,
-                    stderr=service_log_file,
-                    creationflags=creation_flags
-                )
+
+                if service_type == "powershell":
+                    script_path = self.manaos_path / module
+                    if not script_path.exists():
+                        raise FileNotFoundError(
+                            f"script not found: {script_path}"
+                        )
+
+                    proc = subprocess.Popen(
+                        [
+                            "powershell",
+                            "-NoProfile",
+                            "-ExecutionPolicy",
+                            "Bypass",
+                            "-File",
+                            str(script_path),
+                            "-LlmServer",
+                            "ollama",
+                            "-Port",
+                            str(port),
+                            "-AutoSelectPort",
+                        ],
+                        cwd=str(self.manaos_path),
+                        env=env,
+                        stdout=service_log_file,
+                        stderr=service_log_file,
+                        creationflags=creation_flags,
+                    )
+
+                    time.sleep(4)
+                    actual_port = self._get_router_port_from_status()
+                    if proc.poll() is not None:
+                        if (
+                            proc.returncode == 0
+                            and self._is_openai_router_healthy(actual_port)
+                        ):
+                            register_external_service(actual_port)
+                            print(
+                                "[OK] OpenAI Router は既存プロセスに接続しました "
+                                f"(ポート {actual_port})"
+                            )
+                            return True
+
+                        raise RuntimeError(
+                            "OpenAI Router process exited early "
+                            f"(code={proc.returncode})"
+                        )
+
+                    if not self._is_openai_router_healthy(actual_port):
+                        raise RuntimeError(
+                            "OpenAI Router health check failed "
+                            f"on port {actual_port}"
+                        )
+
+                    port = actual_port
+                else:
+                    proc = subprocess.Popen(
+                        [self.python_executable, "-m", module],
+                        cwd=str(self.manaos_path),
+                        env=env,
+                        stdout=service_log_file,
+                        stderr=service_log_file,
+                        creationflags=creation_flags
+                    )
             
                 self.processes[name] = {
                     "process": proc,
                     "module": module,
                     "port": port,
+                    "external": False,
+                    "service_type": service_type,
                     "log_path": str(service_log_path),
                     "log_file": service_log_file,
                 }
@@ -283,6 +428,10 @@ class ManaOSServiceManager:
         """すべてのサービスを停止"""
         print("\nサービスを停止中...")
         for name, info in self.processes.items():
+            if info.get("external"):
+                print(f"[OK] {name} は外部起動のため停止をスキップします")
+                continue
+
             try:
                 info["process"].terminate()
                 info["process"].wait(timeout=5)
@@ -334,12 +483,21 @@ class ManaOSServiceManager:
                 # 各サービスのステータスを確認
                 active = 0
                 for name, info in self.processes.items():
-                    if info["process"].poll() is None:
-                        print(f"[OK] {name}: アクティブ (ポート: {info['port']})")
-                        active += 1
+                    if info.get("external"):
+                        if self._is_port_open(
+                            "127.0.0.1", info["port"], timeout=0.2
+                        ):
+                            print(f"[OK] {name}: アクティブ (ポート: {info['port']})")
+                            active += 1
+                        else:
+                            print(f"[ERROR] {name}: 停止 (ポート: {info['port']})")
                     else:
-                        pid = info["process"].pid
-                        print(f"[ERROR] {name}: 停止 (PID: {pid})")
+                        if info["process"].poll() is None:
+                            print(f"[OK] {name}: アクティブ (ポート: {info['port']})")
+                            active += 1
+                        else:
+                            pid = info["process"].pid
+                            print(f"[ERROR] {name}: 停止 (PID: {pid})")
                 
                 print(f"\n稼働中: {active}/{len(self.processes)}\n")
                 time.sleep(5)
@@ -400,6 +558,9 @@ def main():
     )
     
     manager = ManaOSServiceManager()
+    strict_startup = os.getenv("MANAOS_STRICT_STARTUP", "1").lower() in {
+        "1", "true", "yes", "on"
+    }
     
     # サービス情報を表示
     manager.print_service_info()
@@ -417,12 +578,27 @@ def main():
             )
 
             health_ok = check_all_services(retry_count=3, retry_delay=2)
+            router_ok = manager.wait_for_openai_router_health(
+                retries=5,
+                retry_delay=2,
+            )
             
             if not health_ok:
                 print("[WARN] ヘルスチェックで一部のサービスが応答しませんでした")
                 print("   サービスは起動していますが、初期化に時間がかかっている可能性があります")
+            if not router_ok:
+                print("[WARN] OpenAI Router のヘルス確認に失敗しました")
+
+            if strict_startup and (not health_ok or not router_ok):
+                print("[ERROR] strict startup mode: 必須サービスのヘルスチェック失敗")
+                manager.stop_all_services()
+                sys.exit(1)
         except Exception as e:
             print(f"[WARN] ヘルスチェック実行エラー: {e}")
+            if strict_startup:
+                print("[ERROR] strict startup mode: ヘルスチェック実行エラー")
+                manager.stop_all_services()
+                sys.exit(1)
         
         # Auto-startup 環境の場合はここで終了（バックグラウンドで実行続行）
         if is_autostart_local:

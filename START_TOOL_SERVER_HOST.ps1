@@ -1,23 +1,23 @@
-# Tool Server ホスト実行スクリプト（レミ先輩仕様：確実に動く）
-# Windows環境では、コンテナではなくホストから実行する方が確実
+# Tool Server host start script (Windows)
 
-Write-Host "Tool Server ホスト実行スクリプト（レミ先輩仕様）" -ForegroundColor Cyan
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
+Write-Host "Tool Server host start" -ForegroundColor Cyan
 Write-Host ""
 
-# 作業ディレクトリに移動
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+if ($env:PYTHONPATH) {
+	$env:PYTHONPATH = "$scriptDir;$env:PYTHONPATH"
+} else {
+	$env:PYTHONPATH = $scriptDir
+}
 Set-Location $scriptDir
+Set-Location "tool_server"
 
-# tool_serverディレクトリに移動
-Set-Location tool_server
-
-# 依存関係のインストール
-Write-Host "依存関係をインストール中..." -ForegroundColor Yellow
+Write-Host "Installing dependencies..." -ForegroundColor Yellow
 pip install -r requirements.txt
 
-# Tool Serverを起動
 Write-Host ""
-Write-Host "Tool Serverを起動します..." -ForegroundColor Green
+Write-Host "Starting Tool Server..." -ForegroundColor Green
 Write-Host "  URL: http://127.0.0.1:9503" -ForegroundColor Gray
 Write-Host "  OpenAPI Spec: http://127.0.0.1:9503/openapi.json" -ForegroundColor Gray
 Write-Host ""

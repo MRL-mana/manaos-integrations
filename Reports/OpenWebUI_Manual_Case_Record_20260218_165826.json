@@ -1,0 +1,12 @@
+﻿{
+    "recorded_at":  "2026-02-18 16:58:26",
+    "report_path":  "C:\\Users\\mana4\\Desktop\\manaos_integrations\\Reports\\OpenWebUI_Tool_Acceptance_Report_20260218_163530.md",
+    "verdict":  "PENDING",
+    "cases":  {
+                  "case1":  "skip",
+                  "case2":  "skip",
+                  "case3":  "skip",
+                  "case4":  "skip"
+              },
+    "notes":  "manual chat not executed yet; recorder pipeline verification"
+}

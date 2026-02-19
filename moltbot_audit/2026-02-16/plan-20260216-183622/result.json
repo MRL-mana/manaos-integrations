@@ -1,0 +1,37 @@
+{
+  "plan_id": "plan-20260216-183622",
+  "success": true,
+  "status": "completed",
+  "summary": "moltbot execution (real backend placeholder)",
+  "finished_at": "2026-02-16T09:36:22.000Z",
+  "steps_done": 3,
+  "steps_total": 3,
+  "duration_seconds": 0.0,
+  "execute_events": [
+    {
+      "ts": 1771234582.3053803,
+      "step_id": "scan_downloads",
+      "event": "list_files",
+      "tool": "exec",
+      "status": "ok"
+    },
+    {
+      "ts": 1771234582.3053815,
+      "step_id": "classify",
+      "event": "classify_files",
+      "tool": "skills.classify",
+      "status": "ok"
+    },
+    {
+      "ts": 1771234582.3053823,
+      "step_id": "apply_moves",
+      "event": "move_files",
+      "tool": "skills.fs.move",
+      "status": "ok"
+    }
+  ],
+  "outputs": {
+    "listed": [],
+    "read": []
+  }
+}

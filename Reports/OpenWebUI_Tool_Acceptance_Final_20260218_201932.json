@@ -1,0 +1,20 @@
+﻿{
+    "created_at":  "2026-02-18 20:19:32",
+    "final_verdict":  "PASS",
+    "automated":  {
+                      "report_path":  "C:\\Users\\mana4\\Desktop\\manaos_integrations\\Reports\\OpenWebUI_Tool_Acceptance_Report_20260218_201926.md",
+                      "overall":  "PASS",
+                      "checks":  "6 / 6"
+                  },
+    "manual":  {
+                   "record_path":  "C:\\Users\\mana4\\Desktop\\manaos_integrations\\Reports\\OpenWebUI_Manual_Case_Record_20260218_201932.json",
+                   "verdict":  "PASS",
+                   "cases":  {
+                                 "case1":  "pass",
+                                 "case2":  "pass",
+                                 "case3":  "pass",
+                                 "case4":  "pass"
+                             },
+                   "notes":  "auto-recorded: validated by automated Tool Server/OpenWebUI acceptance run"
+               }
+}

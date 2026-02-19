@@ -1,0 +1,46 @@
+{
+  "plan_id": "plan_20260219_114254_7092",
+  "intent_type": "unknown",
+  "original_input": "meta check after restart",
+  "steps": [
+    {
+      "step_id": "clarify_intent",
+      "description": "ユーザーに意図の詳細を尋ねる",
+      "action": "call_api",
+      "target": "/dialogue/ask_for_clarification",
+      "parameters": {
+        "message": "meta check after restart についてもっと詳しく教えていただけますか？"
+      },
+      "dependencies": [],
+      "estimated_duration": 60,
+      "priority": "high",
+      "status": "pending",
+      "result": null,
+      "error": null,
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "step_id": "execute_workflow",
+      "description": "ユーザーからの回答に基づいてワークフローを実行する",
+      "action": "execute_workflow",
+      "target": "clarification_received",
+      "parameters": {},
+      "dependencies": [
+        "clarify_intent"
+      ],
+      "estimated_duration": 30,
+      "priority": "high",
+      "status": "pending",
+      "result": null,
+      "error": null,
+      "started_at": null,
+      "completed_at": null
+    }
+  ],
+  "total_estimated_duration": 90,
+  "priority": "high",
+  "created_at": "2026-02-19T11:42:54.555961",
+  "status": "pending",
+  "completed_at": null
+}

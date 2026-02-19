@@ -1,5 +1,6 @@
 # n8nをバックグラウンドで起動するスクリプト
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "n8nをバックグラウンドで起動中..." -ForegroundColor Cyan
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path

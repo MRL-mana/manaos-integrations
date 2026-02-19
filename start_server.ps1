@@ -1,4 +1,5 @@
 # ManaOS統合APIサーバー起動スクリプト
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 $ErrorActionPreference = "Stop"
 
 # エンコーディングをUTF-8に設定

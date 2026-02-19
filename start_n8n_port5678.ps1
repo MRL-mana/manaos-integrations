@@ -1,5 +1,6 @@
 # n8n起動スクリプト（ポート5678）
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "n8n起動中..." -ForegroundColor Cyan
 Write-Host ""
 

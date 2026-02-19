@@ -8,7 +8,7 @@ PEFTを使用したLoRA学習による部分的パラメータ更新
 import sys
 import os
 import argparse
-from manaos_logger import get_logger
+import logging
 import datetime
 from pathlib import Path
 
@@ -47,7 +47,16 @@ except ImportError as e:
     sys.exit(1)
 
 # ログ設定
-logger = get_logger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("training_lora.log", encoding="utf-8"),
+        logging.StreamHandler(sys.stdout),
+    ],
+    force=True,
+)
+logger = logging.getLogger(__name__)
 
 
 def parse_args():
@@ -140,14 +149,14 @@ def parse_args():
     parser.add_argument(
         "--save-steps",
         type=int,
-        default=500,
-        help="チェックポイント保存間隔（デフォルト: 500）",
+        default=100,
+        help="チェックポイント保存間隔（デフォルト: 100）",
     )
     parser.add_argument(
         "--eval-steps",
         type=int,
-        default=500,
-        help="評価実行間隔（デフォルト: 500）",
+        default=100,
+        help="評価実行間隔（デフォルト: 100）",
     )
     parser.add_argument(
         "--fp16",

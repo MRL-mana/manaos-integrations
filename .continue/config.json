@@ -1,0 +1,18 @@
+{
+  "models": [
+    {
+      "title": "ManaOS Auto Local",
+      "provider": "openai",
+      "model": "auto-local",
+      "apiBase": "http://127.0.0.1:5211/v1",
+      "apiKey": "local"
+    }
+  ],
+  "tabAutocompleteModel": {
+    "title": "ManaOS Auto Local",
+    "provider": "openai",
+    "model": "auto-local",
+    "apiBase": "http://127.0.0.1:5211/v1",
+    "apiKey": "local"
+  }
+}

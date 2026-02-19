@@ -1,5 +1,6 @@
 # ManaOS 新規サービス起動スクリプト
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "ManaOS 新規サービス起動中..." -ForegroundColor Cyan
 
 $services = @(

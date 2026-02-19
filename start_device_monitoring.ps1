@@ -2,6 +2,7 @@
 # 通知機能付きデバイス監視システムを起動
 
 # Auto-admin check (optional - will continue if admin elevation fails)
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 . "$PSScriptRoot\common_admin_check.ps1"
 
 Write-Host "=== Device Health Monitor起動 ===" -ForegroundColor Cyan

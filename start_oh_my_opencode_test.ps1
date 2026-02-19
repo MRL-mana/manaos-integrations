@@ -1,5 +1,6 @@
 # OH MY OPENCODE統合テスト起動スクリプト
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "OH MY OPENCODE統合テスト" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan

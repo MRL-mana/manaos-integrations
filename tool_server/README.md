@@ -1,6 +1,6 @@
 # 🔥 Tool Server (FastAPI) - レミ先輩仕様
 
-**確実に動く手動ツール3つ + OpenAPI仕様対応**
+## 確実に動く手動ツール5つ + OpenAPI仕様対応
 
 ---
 
@@ -52,6 +52,49 @@ POST /api/tools/generate_image
 
 ---
 
+### 4. **VS Codeでファイル/フォルダを開くツール**
+
+```bash
+POST /vscode_open_file
+{
+  "file_path": "C:/Users/mana4/Desktop/manaos_integrations/README.md",
+  "line": 10
+}
+
+POST /vscode_open_folder
+{
+  "folder_path": "C:/Users/mana4/Desktop/manaos_integrations"
+}
+```
+
+---
+
+### 5. **ローカルOSでPowerShellコマンドを実行するツール（安全制限付き）**
+
+```bash
+POST /execute_command
+{
+  "command": "Get-Process python",
+  "cwd": "C:/Users/mana4/Desktop",
+  "timeout": 30
+}
+```
+
+安全制限:
+
+- 禁止パターン（`rm -rf`、`shutdown` など）はブロック
+- 許可プレフィックス方式（`Get-Process`、`git`、`docker`、`python` など）
+- 許可ディレクトリ配下のみ実行
+- 監査ログを `logs/tool_server_security.log` にJSONL保存
+
+環境変数で上書き可能:
+
+- `TOOL_SERVER_ALLOWED_ROOTS`（`;`区切り）
+- `TOOL_SERVER_ALLOWED_PREFIXES`（`;`区切り）
+- `TOOL_SERVER_FORBIDDEN_PATTERNS`（`;`区切り・正規表現）
+
+---
+
 ## 🚀 起動方法
 
 ### Docker Composeで起動
@@ -77,14 +120,14 @@ python main.py
 3. 「Add Tool」をクリック
 4. 以下の情報を入力：
 
-   ```
+  ```text
    Name: manaOS Tool Server
    URL: http://host.docker.internal:9503
    OpenAPI Spec: ON
    OpenAPI Spec URL: http://host.docker.internal:9503/openapi.json
    ```
 
-5. 「Save」をクリック
+1. 「Save」をクリック
 
 ---
 
@@ -95,26 +138,31 @@ python main.py
 curl http://127.0.0.1:9503/health
 
 # サービス状態確認
-curl -X POST http://127.0.0.1:9503/api/tools/service_status \
+curl -X POST http://127.0.0.1:9503/service_status \
   -H "Content-Type: application/json" \
   -d '{"service_type": "docker"}'
 
 # エラー検知
-curl -X POST http://127.0.0.1:9503/api/tools/check_errors \
+curl -X POST http://127.0.0.1:9503/check_errors \
   -H "Content-Type: application/json" \
   -d '{"log_type": "docker", "service_name": "open-webui", "lines": 50}'
 
 # 画像生成（ComfyUIが起動している場合）
-curl -X POST http://127.0.0.1:9503/api/tools/generate_image \
+curl -X POST http://127.0.0.1:9503/generate_image \
   -H "Content-Type: application/json" \
   -d '{"prompt": "美しい風景", "width": 512, "height": 512}'
+
+# OSコマンド実行（許可済みのみ）
+curl -X POST http://127.0.0.1:9503/execute_command \
+  -H "Content-Type: application/json" \
+  -d '{"command": "Get-Process python", "cwd": "C:/Users/mana4/Desktop", "timeout": 30}'
 ```
 
 ---
 
 ## 🔥 レミ先輩の正解アーキテクチャ
 
-```
+```text
 ┌─────────────────┐
 │   OpenWebUI     │ ← 入口（チャットUI）
 │  (ポート3001)   │

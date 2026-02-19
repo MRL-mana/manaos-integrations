@@ -1,5 +1,6 @@
 # WSL2環境でOllamaをGPUモードで起動するスクリプト
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "=== WSL2環境でOllamaをGPUモードで起動 ===" -ForegroundColor Cyan
 
 # 1. WSL2の状態確認

@@ -19,7 +19,7 @@
         },
         {
             "name": "memory_store",
-            "description": "記憶に情報を保存します",
+            "description": "記憶に情報を保存します（レスポンスに _meta.trim_policy が含まれます）",
             "url": "http://127.0.0.1:9502/api/memory/store",
             "method": "POST",
             "headers": {
@@ -39,8 +39,41 @@
             }
         },
         {
+            "name": "mana_memory_write",
+            "description": "Blueprint互換: 記憶へ書き込み（type/text/tags/source/time）。レスポンスに _meta.trim_policy が含まれます。",
+            "url": "http://127.0.0.1:9502/memory/write",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "parameters": {
+                "type": {
+                    "type": "string",
+                    "description": "記憶タイプ（note/decision/task/log など）",
+                    "default": "memo"
+                },
+                "text": {
+                    "type": "string",
+                    "description": "保存する本文",
+                    "required": true
+                },
+                "tags": {
+                    "type": "array",
+                    "description": "タグ配列"
+                },
+                "source": {
+                    "type": "string",
+                    "description": "情報源"
+                },
+                "time": {
+                    "type": "string",
+                    "description": "時刻（ISO8601推奨）"
+                }
+            }
+        },
+        {
             "name": "memory_recall",
-            "description": "記憶から情報を検索します",
+            "description": "記憶から情報を検索します（レスポンスに _meta.trim_policy が含まれます）",
             "url": "http://127.0.0.1:9502/api/memory/recall",
             "method": "GET",
             "parameters": {
@@ -58,6 +91,254 @@
                     "type": "integer",
                     "description": "取得件数",
                     "default": 10
+                }
+            }
+        },
+        {
+            "name": "mana_memory_search",
+            "description": "Blueprint互換: 記憶検索（query/user_id/k/filters）。レスポンスに _meta.trim_policy が含まれます。",
+            "url": "http://127.0.0.1:9502/memory/search",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "parameters": {
+                "query": {
+                    "type": "string",
+                    "description": "検索クエリ",
+                    "required": true
+                },
+                "user_id": {
+                    "type": "string",
+                    "description": "ユーザーID"
+                },
+                "k": {
+                    "type": "integer",
+                    "description": "取得件数",
+                    "default": 10
+                },
+                "filters": {
+                    "type": "object",
+                    "description": "フィルタ（scopeなど）"
+                }
+            }
+        },
+        {
+            "name": "mana_ops_plan",
+            "description": "Blueprint互換: 実行計画を作成（plan-only）。goal または text を渡す。レスポンスに _meta.trim_policy が含まれます。",
+            "url": "http://127.0.0.1:9502/ops/plan",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "parameters": {
+                "goal": {
+                    "type": "string",
+                    "description": "実行したい目標（text でも可）"
+                },
+                "text": {
+                    "type": "string",
+                    "description": "実行したい目標（goal でも可）"
+                }
+            }
+        },
+        {
+            "name": "mana_ops_exec",
+            "description": "Blueprint互換: 承認済みプランを実行。approved=true が必須。レスポンスに _meta.trim_policy が含まれます。",
+            "url": "http://127.0.0.1:9502/ops/exec",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "parameters": {
+                "plan_id": {
+                    "type": "string",
+                    "description": "実行する計画ID"
+                },
+                "plan": {
+                    "type": "object",
+                    "description": "計画オブジェクト（plan_id指定時は任意）"
+                },
+                "approved": {
+                    "type": "boolean",
+                    "description": "承認フラグ（true必須）",
+                    "required": true
+                }
+            }
+        },
+        {
+            "name": "mana_ops_job",
+            "description": "Blueprint互換: 実行ジョブ状態を確認。job_id を指定。レスポンスに _meta.trim_policy が含まれます。",
+            "url": "http://127.0.0.1:9502/ops/job/{job_id}",
+            "method": "GET",
+            "parameters": {
+                "job_id": {
+                    "type": "string",
+                    "description": "ジョブID",
+                    "required": true
+                }
+            }
+        },
+        {
+            "name": "mana_dev_patch",
+            "description": "Blueprint互換: コード修正ジョブを受理。instruction または patch を渡す。execute=true かつ command 指定で実行。レスポンスに _meta.trim_policy が含まれます。",
+            "url": "http://127.0.0.1:9502/dev/patch",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "parameters": {
+                "instruction": {
+                    "type": "string",
+                    "description": "修正指示"
+                },
+                "patch": {
+                    "type": "string",
+                    "description": "適用パッチ本文"
+                },
+                "target": {
+                    "type": "string",
+                    "description": "対象ファイル・機能"
+                },
+                "execute": {
+                    "type": "boolean",
+                    "description": "command を実行するか",
+                    "default": false
+                },
+                "command": {
+                    "type": "string",
+                    "description": "実行コマンド"
+                },
+                "repo_path": {
+                    "type": "string",
+                    "description": "作業ディレクトリ"
+                },
+                "timeout_sec": {
+                    "type": "integer",
+                    "description": "コマンドタイムアウト秒",
+                    "default": 600
+                }
+            }
+        },
+        {
+            "name": "mana_dev_test",
+            "description": "Blueprint互換: テストジョブを受理。execute=true かつ command 指定で実行。レスポンスに _meta.trim_policy が含まれます。",
+            "url": "http://127.0.0.1:9502/dev/test",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "parameters": {
+                "execute": {
+                    "type": "boolean",
+                    "description": "command を実行するか",
+                    "default": false
+                },
+                "command": {
+                    "type": "string",
+                    "description": "テストコマンド（例: pytest -q）"
+                },
+                "repo_path": {
+                    "type": "string",
+                    "description": "作業ディレクトリ"
+                },
+                "timeout_sec": {
+                    "type": "integer",
+                    "description": "コマンドタイムアウト秒",
+                    "default": 600
+                }
+            }
+        },
+        {
+            "name": "mana_dev_deploy",
+            "description": "Blueprint互換: デプロイジョブを受理。execute=true かつ command 指定で実行。レスポンスに _meta.trim_policy が含まれます。",
+            "url": "http://127.0.0.1:9502/dev/deploy",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "parameters": {
+                "execute": {
+                    "type": "boolean",
+                    "description": "command を実行するか",
+                    "default": false
+                },
+                "command": {
+                    "type": "string",
+                    "description": "デプロイコマンド"
+                },
+                "repo_path": {
+                    "type": "string",
+                    "description": "作業ディレクトリ"
+                },
+                "timeout_sec": {
+                    "type": "integer",
+                    "description": "コマンドタイムアウト秒",
+                    "default": 600
+                }
+            }
+        },
+        {
+            "name": "mana_dev_job",
+            "description": "Blueprint互換: 開発ジョブ状態を確認。job_id を指定。レスポンスに _meta.trim_policy が含まれます。",
+            "url": "http://127.0.0.1:9502/dev/job/{job_id}",
+            "method": "GET",
+            "parameters": {
+                "job_id": {
+                    "type": "string",
+                    "description": "開発ジョブID",
+                    "required": true
+                }
+            }
+        },
+        {
+            "name": "mana_notify_send",
+            "description": "Blueprint互換: 通知送信（message/text, priority）。レスポンスに _meta.trim_policy が含まれます。",
+            "url": "http://127.0.0.1:9502/notify/send",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "parameters": {
+                "message": {
+                    "type": "string",
+                    "description": "通知本文（text でも可）"
+                },
+                "text": {
+                    "type": "string",
+                    "description": "通知本文（message でも可）"
+                },
+                "priority": {
+                    "type": "string",
+                    "description": "優先度（critical/important/normal/low）",
+                    "default": "normal"
+                },
+                "async": {
+                    "type": "boolean",
+                    "description": "true で非同期ジョブ実行（既定true）",
+                    "default": true
+                },
+                "job_id": {
+                    "type": "string",
+                    "description": "通知ジョブID（任意）"
+                },
+                "timeout_sec": {
+                    "type": "integer",
+                    "description": "通知処理タイムアウト秒（既定20）",
+                    "default": 20
+                }
+            }
+        },
+        {
+            "name": "mana_notify_job",
+            "description": "Blueprint互換: 通知ジョブ状態を確認。job_id を指定。レスポンスに _meta.trim_policy が含まれます。",
+            "url": "http://127.0.0.1:9502/notify/job/{job_id}",
+            "method": "GET",
+            "parameters": {
+                "job_id": {
+                    "type": "string",
+                    "description": "通知ジョブID",
+                    "required": true
                 }
             }
         },
@@ -263,7 +544,7 @@
         {
             "name": "vscode_open_file",
             "description": "VS Codeでファイルを開きます",
-            "url": "http://127.0.0.1:9502/api/vscode/open",
+            "url": "http://127.0.0.1:9503/vscode_open_file",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
@@ -283,7 +564,7 @@
         {
             "name": "vscode_open_folder",
             "description": "VS Codeでフォルダを開きます",
-            "url": "http://127.0.0.1:9502/api/vscode/open-folder",
+            "url": "http://127.0.0.1:9503/vscode_open_folder",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
@@ -293,6 +574,31 @@
                     "type": "string",
                     "description": "フォルダパス",
                     "required": true
+                }
+            }
+        },
+        {
+            "name": "os_execute_command",
+            "description": "ローカルOSで許可済みPowerShellコマンドを実行します",
+            "url": "http://127.0.0.1:9503/execute_command",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "parameters": {
+                "command": {
+                    "type": "string",
+                    "description": "実行するPowerShellコマンド（許可リスト内のみ）",
+                    "required": true
+                },
+                "cwd": {
+                    "type": "string",
+                    "description": "作業ディレクトリ（省略可）"
+                },
+                "timeout": {
+                    "type": "integer",
+                    "description": "タイムアウト秒（1-120）",
+                    "default": 30
                 }
             }
         }

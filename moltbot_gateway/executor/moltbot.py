@@ -16,8 +16,8 @@ try:
 except ImportError:
     REQUESTS_AVAILABLE = False
 
-# 最初は read-only だけ許可（Phase1 でもいったん list_files で通してから move を解放）
-ALLOWED_ACTIONS_MOLTBOT = frozenset({"list_files", "file_read"})
+# 本格運用：read-only + ファイル移動を許可
+ALLOWED_ACTIONS_MOLTBOT = frozenset({"list_files", "file_read", "move_files", "classify_files"})
 
 # PlanStep.action → OpenClaw ツール名（skills.* は標準でないため list_files は exec で代用）
 ACTION_TO_SKILL: Dict[str, str] = {

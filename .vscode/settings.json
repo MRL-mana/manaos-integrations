@@ -121,5 +121,16 @@
   "javascript.preferences.excludePackageJsonAutoImports": "on",
 "javascript.suggest.autoImports": true,
 "cursorpyright.analysis.autoImportCompletions": true,
-"cursorpyright.analysis.typeCheckingMode": "basic"
+"cursorpyright.analysis.typeCheckingMode": "basic",
+
+  // Cursor Local LLM Auto Router
+  "cursor.llm.customModels": [
+    {
+      "name": "auto-local",
+      "provider": "openai-compatible",
+      "baseUrl": "http://127.0.0.1:5211/v1",
+      "apiKey": "local"
+    }
+  ],
+  "cursor.llm.defaultModel": "auto-local"
 }

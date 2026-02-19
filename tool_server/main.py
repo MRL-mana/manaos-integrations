@@ -10,6 +10,8 @@ import sys
 import io
 import subprocess
 import json
+import re
+import shutil
 from manaos_logger import get_logger, get_service_logger
 from pathlib import Path
 from typing import Dict, Any, Optional, List
@@ -88,6 +90,155 @@ class GenerateImageResponse(BaseModel):
     prompt_id: Optional[str] = None
     image_path: Optional[str] = None
     message: str
+
+
+class ExecuteCommandRequest(BaseModel):
+    command: str = Field(description="実行するPowerShellコマンド")
+    cwd: Optional[str] = Field(None, description="作業ディレクトリ（許可パス配下のみ）")
+    timeout: int = Field(30, description="タイムアウト秒（1-120）")
+
+
+class ExecuteCommandResponse(BaseModel):
+    status: str
+    exit_code: int
+    stdout: str
+    stderr: str
+    command: str
+    message: str
+
+
+class VSCodeOpenFileRequest(BaseModel):
+    file_path: str = Field(description="開くファイルパス")
+    line: Optional[int] = Field(None, description="行番号（1始まり）")
+
+
+class VSCodeOpenFolderRequest(BaseModel):
+    folder_path: str = Field(description="開くフォルダパス")
+
+
+class VSCodeOpenResponse(BaseModel):
+    status: str
+    target: str
+    message: str
+
+
+FORBIDDEN_PATTERNS = [
+    r"rm\s+-rf",
+    r"Remove-Item\s+.+-Recurse\s+-Force",
+    r"format\s+[a-zA-Z]:",
+    r"shutdown",
+    r"Restart-Computer",
+    r"Stop-Computer",
+    r"Set-ExecutionPolicy",
+    r"reg\s+delete",
+]
+
+ALLOWED_COMMAND_PREFIXES = [
+    "Get-Process",
+    "Get-Service",
+    "Get-ChildItem",
+    "Get-Content",
+    "Test-Path",
+    "python ",
+    "py ",
+    "git ",
+    "docker ",
+    "ollama ",
+    "curl ",
+]
+
+
+def _get_patterns_from_env() -> List[str]:
+    raw = os.getenv("TOOL_SERVER_FORBIDDEN_PATTERNS", "").strip()
+    if not raw:
+        return FORBIDDEN_PATTERNS
+    return [item.strip() for item in raw.split(";") if item.strip()]
+
+
+def _get_allowed_prefixes_from_env() -> List[str]:
+    raw = os.getenv("TOOL_SERVER_ALLOWED_PREFIXES", "").strip()
+    if not raw:
+        return ALLOWED_COMMAND_PREFIXES
+    return [item.strip() for item in raw.split(";") if item.strip()]
+
+
+def _write_security_audit(event: Dict[str, Any]) -> None:
+    try:
+        log_dir = Path(__file__).resolve().parent.parent / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        audit_file = log_dir / "tool_server_security.log"
+
+        payload = {
+            "timestamp": datetime.now().isoformat(),
+            **event,
+        }
+
+        with open(audit_file, "a", encoding="utf-8") as fp:
+            fp.write(json.dumps(payload, ensure_ascii=False) + "\n")
+    except Exception as e:
+        logger.warning(f"security audit write failed: {e}")
+
+
+def _get_allowed_roots() -> List[Path]:
+    env_roots = os.getenv("TOOL_SERVER_ALLOWED_ROOTS", "").strip()
+    if env_roots:
+        roots = [Path(x.strip()).resolve() for x in env_roots.split(";") if x.strip()]
+    else:
+        desktop = Path.home() / "Desktop"
+        roots = [desktop.resolve(), (desktop / "manaos_integrations").resolve()]
+    return roots
+
+
+def _is_path_allowed(target: Path) -> bool:
+    resolved = target.resolve()
+    for root in _get_allowed_roots():
+        try:
+            resolved.relative_to(root)
+            return True
+        except ValueError:
+            continue
+    return False
+
+
+def _validate_command(command: str) -> Optional[str]:
+    normalized = command.strip()
+    if not normalized:
+        return "コマンドが空です"
+
+    forbidden_patterns = _get_patterns_from_env()
+    for pattern in forbidden_patterns:
+        if re.search(pattern, normalized, re.IGNORECASE):
+            return f"禁止パターンを含むため実行できません: {pattern}"
+
+    lower_cmd = normalized.lower()
+    allowed_prefixes = _get_allowed_prefixes_from_env()
+    if any(lower_cmd.startswith(prefix.lower()) for prefix in allowed_prefixes):
+        return None
+
+    return "許可リスト外のコマンドです"
+
+
+def _resolve_vscode_executable() -> Optional[str]:
+    env_path = os.getenv("VSCODE_EXECUTABLE", "").strip()
+    if env_path and Path(env_path).exists():
+        return env_path
+
+    cli = shutil.which("code")
+    if cli:
+        return cli
+
+    candidates = [
+        Path(os.getenv("LOCALAPPDATA", "")) / "Programs" / "Microsoft VS Code" / "Code.exe",
+        Path(os.getenv("LOCALAPPDATA", "")) / "Programs" / "Cursor" / "Cursor.exe",
+        Path("C:/Program Files/Microsoft VS Code/Code.exe"),
+        Path("C:/Program Files/Cursor/Cursor.exe"),
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return str(candidate)
+
+    return None
 
 # ========================================
 # Tool 1: docker/systemdの死活確認ツール
@@ -607,6 +758,160 @@ async def generate_image(request: GenerateImageRequest):
 # ========================================
 
 
+@app.post("/execute_command", response_model=ExecuteCommandResponse)
+async def execute_command(request: ExecuteCommandRequest):
+    """ローカルOSで安全制限付きPowerShellコマンドを実行"""
+    logger.info(f"execute_command called: {request.command[:120]}")
+
+    validation_error = _validate_command(request.command)
+    if validation_error:
+        _write_security_audit(
+            {
+                "event": "command_blocked",
+                "command": request.command,
+                "cwd": request.cwd,
+                "reason": validation_error,
+            }
+        )
+        return ExecuteCommandResponse(
+            status="blocked",
+            exit_code=1,
+            stdout="",
+            stderr=validation_error,
+            command=request.command,
+            message=validation_error,
+        )
+
+    timeout = max(1, min(request.timeout, 120))
+    cwd = Path(request.cwd).resolve() if request.cwd else Path.cwd().resolve()
+
+    if not _is_path_allowed(cwd):
+        _write_security_audit(
+            {
+                "event": "command_blocked",
+                "command": request.command,
+                "cwd": str(cwd),
+                "reason": "cwd_not_allowed",
+            }
+        )
+        return ExecuteCommandResponse(
+            status="blocked",
+            exit_code=1,
+            stdout="",
+            stderr="許可された作業ディレクトリ外です",
+            command=request.command,
+            message="許可された作業ディレクトリ外です",
+        )
+
+    try:
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-Command", request.command],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=str(cwd),
+            shell=False,
+        )
+        status = "success" if result.returncode == 0 else "error"
+        _write_security_audit(
+            {
+                "event": "command_executed",
+                "command": request.command,
+                "cwd": str(cwd),
+                "exit_code": result.returncode,
+                "status": status,
+            }
+        )
+        return ExecuteCommandResponse(
+            status=status,
+            exit_code=result.returncode,
+            stdout=result.stdout[-8000:],
+            stderr=result.stderr[-8000:],
+            command=request.command,
+            message="コマンド実行完了" if result.returncode == 0 else "コマンド実行でエラーが発生",
+        )
+    except subprocess.TimeoutExpired:
+        _write_security_audit(
+            {
+                "event": "command_timeout",
+                "command": request.command,
+                "cwd": str(cwd),
+                "timeout_sec": timeout,
+            }
+        )
+        return ExecuteCommandResponse(
+            status="error",
+            exit_code=124,
+            stdout="",
+            stderr=f"タイムアウト（{timeout}秒）",
+            command=request.command,
+            message="タイムアウト",
+        )
+    except Exception as e:
+        logger.error(f"execute_command error: {e}", exc_info=True)
+        _write_security_audit(
+            {
+                "event": "command_error",
+                "command": request.command,
+                "cwd": str(cwd),
+                "error": str(e),
+            }
+        )
+        return ExecuteCommandResponse(
+            status="error",
+            exit_code=1,
+            stdout="",
+            stderr=str(e),
+            command=request.command,
+            message="実行失敗",
+        )
+
+
+@app.post("/vscode_open_file", response_model=VSCodeOpenResponse)
+async def vscode_open_file(request: VSCodeOpenFileRequest):
+    """VS Codeでファイルを開く"""
+    target = Path(request.file_path).expanduser().resolve()
+    if not target.exists() or not target.is_file():
+        raise HTTPException(status_code=404, detail="ファイルが見つかりません")
+    if not _is_path_allowed(target):
+        raise HTTPException(status_code=403, detail="許可されたパス外です")
+
+    editor_exe = _resolve_vscode_executable()
+    if not editor_exe:
+        raise HTTPException(status_code=500, detail="VS Code/Cursor 実行ファイルが見つかりません")
+
+    try:
+        if request.line and request.line > 0:
+            subprocess.Popen([editor_exe, "-g", f"{target}:{request.line}"], shell=False)
+        else:
+            subprocess.Popen([editor_exe, str(target)], shell=False)
+        return VSCodeOpenResponse(status="success", target=str(target), message="VS Codeでファイルを開きました")
+    except Exception as e:
+        logger.error(f"vscode_open_file error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"VS Code起動エラー: {str(e)}")
+
+
+@app.post("/vscode_open_folder", response_model=VSCodeOpenResponse)
+async def vscode_open_folder(request: VSCodeOpenFolderRequest):
+    """VS Codeでフォルダを開く"""
+    target = Path(request.folder_path).expanduser().resolve()
+    if not target.exists() or not target.is_dir():
+        raise HTTPException(status_code=404, detail="フォルダが見つかりません")
+    if not _is_path_allowed(target):
+        raise HTTPException(status_code=403, detail="許可されたパス外です")
+
+    editor_exe = _resolve_vscode_executable()
+    if not editor_exe:
+        raise HTTPException(status_code=500, detail="VS Code/Cursor 実行ファイルが見つかりません")
+
+    try:
+        subprocess.Popen([editor_exe, str(target)], shell=False)
+        return VSCodeOpenResponse(status="success", target=str(target), message="VS Codeでフォルダを開きました")
+    except Exception as e:
+        logger.error(f"vscode_open_folder error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"VS Code起動エラー: {str(e)}")
+
+
 @app.get("/health")
 async def health():
     """ヘルスチェック"""
@@ -638,6 +943,10 @@ async def openapi_spec():
 
     # OpenWebUI用のサーバーURLを追加
     openapi_schema["servers"] = [
+        {
+            "url": "http://127.0.0.1:9503",
+            "description": "ローカルホスト"
+        },
         {
             "url": "http://host.docker.internal:9503",
             "description": "ローカルサーバー"

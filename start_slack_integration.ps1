@@ -1,5 +1,6 @@
 # Slack Integration起動スクリプト
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "=== Slack Integration起動 ===" -ForegroundColor Cyan
 
 $slackPort = if ($env:SLACK_INTEGRATION_PORT) { $env:SLACK_INTEGRATION_PORT } else { "5114" }

@@ -1,5 +1,6 @@
 # Slack統合サーバー起動スクリプト（環境変数込み）
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Slack統合サーバー起動" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan

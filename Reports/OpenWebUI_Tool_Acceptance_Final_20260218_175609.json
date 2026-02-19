@@ -1,0 +1,20 @@
+﻿{
+    "created_at":  "2026-02-18 17:56:09",
+    "final_verdict":  "PENDING",
+    "automated":  {
+                      "report_path":  "C:\\Users\\mana4\\Desktop\\manaos_integrations\\Reports\\OpenWebUI_Tool_Acceptance_Report_20260218_163530.md",
+                      "overall":  "PASS",
+                      "checks":  "6 / 6"
+                  },
+    "manual":  {
+                   "record_path":  "C:\\Users\\mana4\\Desktop\\manaos_integrations\\Reports\\OpenWebUI_Manual_Case_Record_20260218_175609.json",
+                   "verdict":  "PENDING",
+                   "cases":  {
+                                 "case1":  "skip",
+                                 "case2":  "skip",
+                                 "case3":  "skip",
+                                 "case4":  "skip"
+                             },
+                   "notes":  "pipeline dry run"
+               }
+}
