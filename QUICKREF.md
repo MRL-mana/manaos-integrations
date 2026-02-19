@@ -40,6 +40,9 @@ Invoke-RestMethod http://127.0.0.1:5104/health
 
 # LLM Routing
 Invoke-RestMethod http://127.0.0.1:5111/health
+
+# OpenAI Router
+Invoke-RestMethod http://127.0.0.1:5211/v1/models
 ```
 
 ## ⚡ サービス一覧
@@ -50,6 +53,7 @@ Invoke-RestMethod http://127.0.0.1:5111/health
 | MRL Memory | 5103 | http://127.0.0.1:5103 |
 | Learning System | 5104 | http://127.0.0.1:5104 |
 | LLM Routing | 5111 | http://127.0.0.1:5111 |
+| OpenAI Router | 5211 | http://127.0.0.1:5211/v1 |
 
 ## 🛠️ トラブルシューティング
 
@@ -66,6 +70,7 @@ netstat -ano | findstr ":9502"
 netstat -ano | findstr ":5103"
 netstat -ano | findstr ":5104"
 netstat -ano | findstr ":5111"
+netstat -ano | findstr ":5211"
 ```
 
 ### 強制停止して再起動
