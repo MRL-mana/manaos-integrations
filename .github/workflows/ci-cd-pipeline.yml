@@ -327,7 +327,7 @@ jobs:
           version: 'v1.28.0'
       
       - name: Setup Helm
-        uses: azure/setup-helm@v3
+        uses: azure/setup-helm@v4
         with:
           version: 'v3.13.0'
       
@@ -369,7 +369,7 @@ jobs:
           version: 'v1.28.0'
       
       - name: Setup Helm
-        uses: azure/setup-helm@v3
+        uses: azure/setup-helm@v4
         with:
           version: 'v3.13.0'
       
