@@ -1,0 +1,162 @@
+services:
+  reverse-proxy:
+    image: caddy:2.9
+    container_name: manaos-reverse-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - BASE_DOMAIN=${BASE_DOMAIN}
+      - ACME_EMAIL=${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - open-webui
+      - code-server
+      - manaos-api
+    networks:
+      - dmz
+      - internal
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: manaos-open-webui
+    restart: unless-stopped
+    environment:
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
+      - ENABLE_SIGNUP=${ENABLE_SIGNUP:-false}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OPENAI_API_BASE_URL=https://api.${BASE_DOMAIN}/v1
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - openwebui_data:/app/backend/data
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - dmz
+
+  code-server:
+    image: codercom/code-server:4.95.3
+    container_name: manaos-code-server
+    restart: unless-stopped
+    command: --bind-addr 0.0.0.0:8080 --auth password /workspace
+    environment:
+      - PASSWORD=${CODE_SERVER_PASSWORD}
+      - TZ=${TZ:-Asia/Tokyo}
+    volumes:
+      - ../../:/workspace
+      - code_server_data:/home/coder/.local/share/code-server
+    networks:
+      - dmz
+
+  manaos-api:
+    build:
+      context: ../..
+      dockerfile: mcp_api_server/Dockerfile
+    container_name: manaos-api
+    restart: unless-stopped
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=${TZ:-Asia/Tokyo}
+      - MCP_API_PORT=9502
+      - MCP_API_HOST=0.0.0.0
+      - OBSIDIAN_VAULT_PATH=/app/obsidian_vault
+      - GOOGLE_DRIVE_CREDENTIALS=/app/credentials.json
+      - GOOGLE_DRIVE_TOKEN=/app/token.json
+      - MANAOS_MEMORY_BACKEND=${MANAOS_MEMORY_BACKEND:-qdrant}
+      - MANAOS_MEMORY_URL=http://qdrant:6333
+      - MANAOS_MEMORY_META_DSN=postgresql://manaos:${POSTGRES_PASSWORD}@postgres:5432/manaos_memory
+      - OPS_APPROVAL_MODE=${OPS_APPROVAL_MODE:-required}
+      - OPS_EXEC_BEARER_TOKEN=${OPS_EXEC_BEARER_TOKEN}
+    volumes:
+      - ../../logs:/app/logs
+      - ../../mcp_api_server.py:/app/mcp_api_server.py:ro
+      - ../../manaos_unified_mcp_server:/app/manaos_unified_mcp_server:ro
+      - ../../comfyui_integration.py:/app/comfyui_integration.py:ro
+      - ../../google_drive_integration.py:/app/google_drive_integration.py:ro
+      - ../../obsidian_integration.py:/app/obsidian_integration.py:ro
+      - ../../searxng_integration.py:/app/searxng_integration.py:ro
+      - ../../base_ai_integration.py:/app/base_ai_integration.py:ro
+      - ../../base_integration.py:/app/base_integration.py:ro
+      - ../../manaos_logger.py:/app/manaos_logger.py:ro
+      - ../../manaos_error_handler.py:/app/manaos_error_handler.py:ro
+      - ../../manaos_timeout_config.py:/app/manaos_timeout_config.py:ro
+      - ../../manaos_config_validator.py:/app/manaos_config_validator.py:ro
+      - ../../config_validator_enhanced.py:/app/config_validator_enhanced.py:ro
+      - ../../unified_logging.py:/app/unified_logging.py:ro
+      - ../../_paths.py:/app/_paths.py:ro
+      - ../../../:/app/obsidian_vault
+      - ../../credentials.json:/app/credentials.json:ro
+      - ../../token.json:/app/token.json
+    depends_on:
+      - qdrant
+      - postgres
+      - redis
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - internal
+
+  qdrant:
+    image: qdrant/qdrant:v1.13.4
+    container_name: manaos-qdrant
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - internal
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: manaos-memory-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=manaos_memory
+      - POSTGRES_USER=manaos
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  redis:
+    image: redis:7-alpine
+    container_name: manaos-ops-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+
+  runner:
+    image: python:3.11-slim
+    container_name: manaos-runner
+    restart: unless-stopped
+    command: sleep infinity
+    environment:
+      - TZ=${TZ:-Asia/Tokyo}
+    volumes:
+      - ../../:/workspace
+    networks:
+      - internal
+
+networks:
+  dmz:
+    driver: bridge
+  internal:
+    driver: bridge
+    internal: true
+
+volumes:
+  caddy_data:
+  caddy_config:
+  openwebui_data:
+  code_server_data:
+  qdrant_data:
+  postgres_data:
+  redis_data:
