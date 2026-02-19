@@ -63,6 +63,34 @@ function Invoke-JsonRequest {
     return Invoke-RestMethod @params
 }
 
+function Get-HttpStatusCode {
+    param(
+        [string]$Url,
+        [string]$HostHeader
+    )
+
+    $request = [System.Net.HttpWebRequest]::Create($Url)
+    $request.Method = "GET"
+    $request.AllowAutoRedirect = $false
+    $request.Timeout = 10000
+    $request.Host = $HostHeader
+
+    try {
+        $response = $request.GetResponse()
+        $statusCode = [int]$response.StatusCode
+        $response.Close()
+        return $statusCode
+    }
+    catch [System.Net.WebException] {
+        if ($_.Exception.Response) {
+            $statusCode = [int]$_.Exception.Response.StatusCode
+            $_.Exception.Response.Close()
+            return $statusCode
+        }
+        throw
+    }
+}
+
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $composeFile = Join-Path $scriptDir "docker-compose.blueprint.yml"
 $envPath = Join-Path $scriptDir ".env"
@@ -80,10 +108,9 @@ $opsToken = Get-EnvValue -EnvPath $envPath -Key "OPS_EXEC_BEARER_TOKEN" -Default
 
 if ($StartIfNeeded) {
     Step "Start blueprint stack"
-    $composeCmd = "docker compose -f `"" + $composeFile + "`" --env-file `"" + $envPath + "`" up -d"
     $prevEap = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
-    cmd.exe /c $composeCmd 2>$null | Out-Host
+    docker compose -f $composeFile --env-file $envPath up -d 2>$null | Out-Host
     $ErrorActionPreference = $prevEap
     if ($LASTEXITCODE -ne 0) {
         throw "docker compose up failed (exit=$LASTEXITCODE)"
@@ -94,14 +121,14 @@ $failures = 0
 
 Step "Ingress health checks"
 try {
-    $apiCode = curl.exe -s -o NUL -w "%{http_code}" -H "Host: api.$resolvedBaseDomain" http://localhost/health
-    if ($apiCode -eq "200") { Ok "api.$resolvedBaseDomain /health => 200" } else { Ng "api health status=$apiCode"; $failures++ }
+    $apiCode = Get-HttpStatusCode -Url "http://localhost/health" -HostHeader "api.$resolvedBaseDomain"
+    if ($apiCode -eq 200) { Ok "api.$resolvedBaseDomain /health => 200" } else { Ng "api health status=$apiCode"; $failures++ }
 
-    $chatCode = curl.exe -s -o NUL -w "%{http_code}" -H "Host: chat.$resolvedBaseDomain" http://localhost/
-    if ($chatCode -eq "200") { Ok "chat.$resolvedBaseDomain / => 200" } else { Ng "chat status=$chatCode"; $failures++ }
+    $chatCode = Get-HttpStatusCode -Url "http://localhost/" -HostHeader "chat.$resolvedBaseDomain"
+    if ($chatCode -eq 200) { Ok "chat.$resolvedBaseDomain / => 200" } else { Ng "chat status=$chatCode"; $failures++ }
 
-    $codeCode = curl.exe -s -o NUL -w "%{http_code}" -H "Host: code.$resolvedBaseDomain" http://localhost/
-    if ($codeCode -in @("200", "302")) { Ok "code.$resolvedBaseDomain / => $codeCode" } else { Ng "code status=$codeCode"; $failures++ }
+    $codeCode = Get-HttpStatusCode -Url "http://localhost/" -HostHeader "code.$resolvedBaseDomain"
+    if ($codeCode -in @(200, 302)) { Ok "code.$resolvedBaseDomain / => $codeCode" } else { Ng "code status=$codeCode"; $failures++ }
 }
 catch {
     Ng "Ingress checks failed: $($_.Exception.Message)"
