@@ -62,6 +62,12 @@ Open WebUI の Tool から `api.<BASE_DOMAIN>` 配下を呼びます。
 - Reverse proxy 以外のポートは外部公開しない
 - Memoryの正史は ManaOS API 側へ一本化
 
+### `/ops/exec` の挙動
+
+- デフォルトは `dry_run=true`（実コマンドは実行しない）
+- `OPS_APPROVAL_MODE=required` の場合、`approved=true` が必須
+- `OPS_EXEC_BEARER_TOKEN` を設定している場合、`Authorization: Bearer <token>` が必須
+
 ## 既存構成との関係
 
 - 既存 `docker-compose.always-ready-llm.yml` はそのまま併用可能
