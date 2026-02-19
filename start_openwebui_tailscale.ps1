@@ -460,6 +460,10 @@ else {
     }
     catch {
         Write-Host "[WARN] Webhook notification failed: $($_.Exception.Message)" -ForegroundColor Yellow
+        if ($_.ErrorDetails -and $null -ne $_.ErrorDetails.Message -and $_.ErrorDetails.Message -match '"code"\s*:\s*10015|Unknown Webhook') {
+            Write-Host "[WARN] The configured Discord webhook URL is invalid or deleted (code 10015)." -ForegroundColor Yellow
+            Write-Host "[INFO] Update it with set_openwebui_notify_env.ps1 -WebhookUrl <new_url>" -ForegroundColor Gray
+        }
     }
 }
 
