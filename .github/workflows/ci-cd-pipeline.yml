@@ -3,8 +3,32 @@ name: Complete CI/CD Pipeline
 on:
   push:
     branches: [main, develop]
+    paths:
+      - 'manaos_integrations/**/*.py'
+      - 'requirements*.txt'
+      - 'pyproject.toml'
+      - 'setup.py'
+      - 'setup.cfg'
+      - 'Dockerfile*'
+      - 'docker-compose*.yml'
+      - 'kubernetes/**'
+      - 'helm/**'
+      - 'manaos_integrations/helm/**'
+      - '.github/workflows/ci-cd-pipeline.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'manaos_integrations/**/*.py'
+      - 'requirements*.txt'
+      - 'pyproject.toml'
+      - 'setup.py'
+      - 'setup.cfg'
+      - 'Dockerfile*'
+      - 'docker-compose*.yml'
+      - 'kubernetes/**'
+      - 'helm/**'
+      - 'manaos_integrations/helm/**'
+      - '.github/workflows/ci-cd-pipeline.yml'
   workflow_dispatch:
 
 env:

@@ -5,11 +5,14 @@ on:
     branches: [ master, main, develop ]
     paths:
       - '.vscode/**'
-      - '**.py'
-      - '**.md'
       - 'validation_script.ps1'
+      - '.github/workflows/vscode-validation.yml'
   pull_request:
     branches: [ master, main ]
+    paths:
+      - '.vscode/**'
+      - 'validation_script.ps1'
+      - '.github/workflows/vscode-validation.yml'
   workflow_dispatch:
 
 jobs:
