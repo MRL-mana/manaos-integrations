@@ -5,6 +5,24 @@ Set-Location $workspace
 
 $results = [ordered]@{}
 
+function Get-CompactLabel {
+    param(
+        [string]$Text,
+        [int]$MaxLength = 24
+    )
+
+    if ([string]::IsNullOrEmpty($Text)) {
+        return ""
+    }
+    if ($Text.Length -le $MaxLength) {
+        return $Text
+    }
+    if ($MaxLength -le 1) {
+        return $Text.Substring(0, 1)
+    }
+    return $Text.Substring(0, $MaxLength - 1) + "…"
+}
+
 function Invoke-Step {
     param(
         [string]$Name,
@@ -46,20 +64,25 @@ Invoke-Step -Name "Tool Server Integration" -Action {
 Write-Host "`n========================================="
 Write-Host "ManaOS Full Smoke Summary"
 Write-Host "========================================="
+Write-Host "Status | Check"
+Write-Host "-----------------------------------------"
 
 $passed = 0
 $total = $results.Count
 foreach ($key in $results.Keys) {
+    $label = Get-CompactLabel -Text $key -MaxLength 24
     if ($results[$key]) {
         $passed++
-        Write-Host "[OK] $key" -ForegroundColor Green
+        Write-Host ("OK     | {0}" -f $label) -ForegroundColor Green
     }
     else {
-        Write-Host "[NG] $key" -ForegroundColor Red
+        Write-Host ("NG     | {0}" -f $label) -ForegroundColor Red
     }
 }
 
-Write-Host "Result: $passed / $total"
+$rate = if ($total -gt 0) { [math]::Round(($passed / $total) * 100, 1) } else { 0 }
+Write-Host "-----------------------------------------"
+Write-Host ("Result | {0}/{1} ({2}%)" -f $passed, $total, $rate)
 
 if ($passed -ne $total) {
     exit 1
