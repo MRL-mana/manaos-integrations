@@ -496,6 +496,8 @@ services:
       - ./searxng_integration.py:/app/searxng_integration.py:ro
       - ./brave_search_integration.py:/app/brave_search_integration.py:ro
       - ./base_ai_integration.py:/app/base_ai_integration.py:ro
+      - ./manaos_logger.py:/app/manaos_logger.py:ro
+      - ./_paths.py:/app/_paths.py:ro
     networks:
       - manaos-network
     depends_on:
