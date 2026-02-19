@@ -94,7 +94,7 @@ jobs:
         # スクリプトが存在するか確認
         if (Test-Path "check_services_health.py") {
           # 構文チェックのみ（実行はしない）
-          python -c "import ast; ast.parse(open('check_services_health.py').read())"
+          python -c "import ast; ast.parse(open('check_services_health.py', encoding='utf-8').read())"
           if ($LASTEXITCODE -eq 0) {
             Write-Host "✅ check_services_health.py is valid" -ForegroundColor Green
           } else {
@@ -107,7 +107,7 @@ jobs:
     - name: 自律監視スクリプト検証
       run: |
         if (Test-Path "autonomous_operations.py") {
-          python -c "import ast; ast.parse(open('autonomous_operations.py').read())"
+          python -c "import ast; ast.parse(open('autonomous_operations.py', encoding='utf-8').read())"
           if ($LASTEXITCODE -eq 0) {
             Write-Host "✅ autonomous_operations.py is valid" -ForegroundColor Green
           } else {
@@ -120,7 +120,7 @@ jobs:
     - name: 緊急停止スクリプト検証
       run: |
         if (Test-Path "emergency_stop.py") {
-          python -c "import ast; ast.parse(open('emergency_stop.py').read())"
+          python -c "import ast; ast.parse(open('emergency_stop.py', encoding='utf-8').read())"
           if ($LASTEXITCODE -eq 0) {
             Write-Host "✅ emergency_stop.py is valid" -ForegroundColor Green
           } else {
