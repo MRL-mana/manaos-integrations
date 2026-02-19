@@ -1,0 +1,29 @@
+{
+  "plan_id": "plan_20260219_114147_4864",
+  "intent_type": "unknown",
+  "original_input": "meta exec",
+  "steps": [
+    {
+      "step_id": "step_1",
+      "description": "ユーザーから明確な意図またはタスクの詳細を求める。",
+      "action": "execute_command",
+      "target": "ask_user_for_clarification",
+      "parameters": {
+        "message": "あなたの要求が不明です。具体的に何を行いたいですか？"
+      },
+      "dependencies": [],
+      "estimated_duration": 60,
+      "priority": "high",
+      "status": "pending",
+      "result": null,
+      "error": null,
+      "started_at": null,
+      "completed_at": null
+    }
+  ],
+  "total_estimated_duration": 60,
+  "priority": "high",
+  "created_at": "2026-02-19T11:41:47.878333",
+  "status": "pending",
+  "completed_at": null
+}

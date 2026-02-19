@@ -1,6 +1,7 @@
 # Pixel 7 ADB ブリッジを Tailscale 経由（無線）で使う
 # 初回: scripts\setup_pixel7_wireless_debugging.ps1（再起動後も再接続可能）
 # または: scripts\setup_pixel7_tailscale_adb.ps1（USB で1回だけ tcpip 有効化）
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptDir
 

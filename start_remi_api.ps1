@@ -2,6 +2,7 @@
 # Registered in Task Scheduler to start on logon
 # Waits for network, then launches local_remi_api.py
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 $ErrorActionPreference = "SilentlyContinue"
 $LOG = "$PSScriptRoot\logs\remi_api_autostart.log"
 $API_SCRIPT = "$PSScriptRoot\local_remi_api.py"

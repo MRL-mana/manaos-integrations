@@ -2,6 +2,7 @@
 # Device Orchestrator、Cross-Platform File Sync、ADB Automation Toolkit、AI予測メンテナンスシステムを起動
 
 # Auto-admin check (optional - will continue if admin elevation fails)
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 . "$PSScriptRoot\common_admin_check.ps1"
 
 Write-Host "=== オプションシステム起動 ===" -ForegroundColor Cyan

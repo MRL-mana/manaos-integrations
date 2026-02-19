@@ -1,5 +1,6 @@
 # LM Studioサーバー起動スクリプト
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "=" * 60
 Write-Host "LM Studioサーバー起動"
 Write-Host "=" * 60

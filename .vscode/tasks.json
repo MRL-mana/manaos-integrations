@@ -283,6 +283,98 @@
       "group": "none",
       "presentation": { "reveal": "always", "panel": "new" },
       "problemMatcher": []
+    },
+    {
+      "label": "OpenWebUI: Acceptance pipeline (full)",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/run_openwebui_acceptance_pipeline.ps1 -Case1 ${input:owCase1} -Case2 ${input:owCase2} -Case3 ${input:owCase3} -Case4 ${input:owCase4} -Notes \"${input:owNotes}\"",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "OpenWebUI: Acceptance pipeline (manual only)",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/run_openwebui_acceptance_pipeline.ps1 -SkipAutomated -Case1 ${input:owCase1} -Case2 ${input:owCase2} -Case3 ${input:owCase3} -Case4 ${input:owCase4} -Notes \"${input:owNotes}\"",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "OpenWebUI: Acceptance pipeline (full auto)",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/run_openwebui_acceptance_pipeline_full_auto.ps1",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "OpenWebUI: Check latest acceptance verdict",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/check_latest_openwebui_acceptance.ps1",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "OpenWebUI: Notify latest acceptance status",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/notify_openwebui_acceptance_pass.ps1 -WriteStatusFile",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "ManaOS: ローカルLLM自動ルーター起動",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/start_manaos_llm_openai_router.ps1 -LlmServer ollama -Port 5211",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "ManaOS: Cline MCPへローカルLLM反映",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/setup_cline_local_llm_router.ps1",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "ManaOS: Continue設定を確認",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -Command \"Get-Content -Path '${workspaceFolder}/.continue/config.json' -Raw | ConvertFrom-Json | Select-Object -ExpandProperty models | ConvertTo-Json -Depth 5\"",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "ManaOS: auto-local 応答テスト",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/test_auto_local_chat.ps1",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "ManaOS: フル統合スモークテスト",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/run_manaos_full_smoke.ps1",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "ManaOS: ローカルLLMルーター疎通確認",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -Command \"Invoke-RestMethod -Uri 'http://127.0.0.1:5211/v1/models' -Method Get | ConvertTo-Json -Depth 4\"",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
+      "problemMatcher": []
     }
   ],
   "inputs": [
@@ -291,6 +383,36 @@
       "type": "promptString",
       "description": "パス（例: ~/Downloads または C:\\Users\\mana4\\Documents）",
       "default": "~/Downloads"
+    },
+    {
+      "id": "owCase1",
+      "type": "promptString",
+      "description": "Case1 result (pass/fail/skip)",
+      "default": "skip"
+    },
+    {
+      "id": "owCase2",
+      "type": "promptString",
+      "description": "Case2 result (pass/fail/skip)",
+      "default": "skip"
+    },
+    {
+      "id": "owCase3",
+      "type": "promptString",
+      "description": "Case3 result (pass/fail/skip)",
+      "default": "skip"
+    },
+    {
+      "id": "owCase4",
+      "type": "promptString",
+      "description": "Case4 result (pass/fail/skip)",
+      "default": "skip"
+    },
+    {
+      "id": "owNotes",
+      "type": "promptString",
+      "description": "Operator notes for manual validation",
+      "default": "manual chat completed"
     }
   ]
 }

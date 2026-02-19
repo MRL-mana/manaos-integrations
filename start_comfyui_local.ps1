@@ -1,4 +1,4 @@
-﻿# ComfyUI local launcher (Windows host)
+# ComfyUI local launcher (Windows host)
 
 param(
     [int]$Port = 8188,
@@ -8,6 +8,7 @@ param(
     [switch]$Background,
     [string]$LogDir = ""
 )
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 
 $ErrorActionPreference = "Stop"
 

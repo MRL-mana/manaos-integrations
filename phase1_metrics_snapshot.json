@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-02-15T13:46:03.743672",
+  "timestamp": "2026-02-19T09:46:15.776991",
   "phase": "full",
   "security": {
-    "auth": "enabled",
+    "auth": "disabled",
     "rate_limit": "enabled",
     "max_input": 200000,
     "pii_mask": "enabled"

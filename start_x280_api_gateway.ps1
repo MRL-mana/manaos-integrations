@@ -1,6 +1,7 @@
 # X280 API Gateway起動スクリプト
 # X280側で実行して、ManaOSからのコマンドを受け付けるAPIサーバーを起動
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "=== X280 API Gateway 起動 ===" -ForegroundColor Cyan
 
 $x280Port = if ($env:X280_API_PORT) { [int]$env:X280_API_PORT } else { 5120 }

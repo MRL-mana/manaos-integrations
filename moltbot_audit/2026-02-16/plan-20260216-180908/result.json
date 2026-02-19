@@ -1,0 +1,46 @@
+{
+  "plan_id": "plan-20260216-180908",
+  "success": true,
+  "status": "completed",
+  "dry_run": false,
+  "summary": "mock execution completed",
+  "finished_at": "2026-02-16T09:09:08.000Z",
+  "steps_done": 1,
+  "steps_total": 1,
+  "duration_seconds": 0.1,
+  "execute_events": [
+    {
+      "ts": 1771232948.1700683,
+      "step_id": "scan_downloads",
+      "event": "list_files",
+      "status": "ok"
+    },
+    {
+      "ts": 1771232948.1700687,
+      "step_id": "classify",
+      "event": "classify_files",
+      "status": "ok",
+      "dry_run": false
+    },
+    {
+      "ts": 1771232948.170069,
+      "step_id": "apply_moves",
+      "event": "move_files",
+      "status": "ok"
+    }
+  ],
+  "outputs": {
+    "moved": [
+      {
+        "from": "~/Downloads/a.pdf",
+        "to": "~/Documents/PDF/a.pdf"
+      }
+    ],
+    "classified": [
+      {
+        "file": "a.pdf",
+        "bucket": "PDF"
+      }
+    ]
+  }
+}

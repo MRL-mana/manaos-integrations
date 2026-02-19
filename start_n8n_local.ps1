@@ -1,5 +1,6 @@
 # 母艦でn8nを起動するスクリプト（ポート5679）
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "n8n ローカル起動" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan

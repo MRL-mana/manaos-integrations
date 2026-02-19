@@ -1,0 +1,12 @@
+﻿{
+    "recorded_at":  "2026-02-18 20:19:32",
+    "report_path":  "C:\\Users\\mana4\\Desktop\\manaos_integrations\\Reports\\OpenWebUI_Tool_Acceptance_Report_20260218_201926.md",
+    "verdict":  "PASS",
+    "cases":  {
+                  "case1":  "pass",
+                  "case2":  "pass",
+                  "case3":  "pass",
+                  "case4":  "pass"
+              },
+    "notes":  "auto-recorded: validated by automated Tool Server/OpenWebUI acceptance run"
+}

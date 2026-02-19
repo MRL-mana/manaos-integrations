@@ -1,4 +1,5 @@
 # Unified Orchestrator (5106) 起動 - ManaOS をオンライン表示にする
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptDir
 

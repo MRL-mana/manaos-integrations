@@ -1,0 +1,23 @@
+{
+  "plan_id": "plan-20260216-181318",
+  "success": true,
+  "status": "completed",
+  "summary": "moltbot execution (real backend placeholder)",
+  "finished_at": "2026-02-16T09:13:18.000Z",
+  "steps_done": 1,
+  "steps_total": 1,
+  "duration_seconds": 0.0,
+  "execute_events": [
+    {
+      "ts": 1771233198.760771,
+      "step_id": "scan",
+      "event": "list_files",
+      "tool": "exec",
+      "status": "ok"
+    }
+  ],
+  "outputs": {
+    "listed": [],
+    "read": []
+  }
+}

@@ -1,6 +1,7 @@
 # System 3 API Services Startup Script
 # 必要なAPIサービスを起動
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "System 3 API Services Startup" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan

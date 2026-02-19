@@ -12,6 +12,7 @@ param(
     [Parameter()]
     [switch]$DryRun
 )
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path

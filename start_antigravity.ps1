@@ -1,6 +1,7 @@
 # Antigravity 起動スクリプト
 # 必要なときだけ起動する「知識加工工場」
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "=== Antigravity 起動 ===" -ForegroundColor Cyan
 Write-Host ""
 

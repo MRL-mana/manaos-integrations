@@ -1,6 +1,7 @@
 #!/usr/bin/env pwsh
 # ngrok起動スクリプト（ポート5114）
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "ngrokを起動します（ポート5114）..." -ForegroundColor Yellow
 
 $ngrokBaseUrl = if ($env:NGROK_URL) { $env:NGROK_URL.TrimEnd('/') } else { "http://127.0.0.1:4040" }

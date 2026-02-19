@@ -1,0 +1,48 @@
+{
+  "plan_id": "plan_20260219_112826_9084",
+  "intent_type": "unknown",
+  "original_input": "persist smoke ops",
+  "steps": [
+    {
+      "step_id": "step_1",
+      "description": "n8nワークフローを実行",
+      "action": "execute_workflow",
+      "target": "n8nワークフローのID",
+      "parameters": {
+        "workflow_id": "12345"
+      },
+      "dependencies": [],
+      "estimated_duration": 60,
+      "priority": "medium",
+      "status": "pending",
+      "result": null,
+      "error": null,
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "step_id": "step_2",
+      "description": "SmokeOPsを持続させる",
+      "action": "run_script",
+      "target": " SmokeOPs を保持するスクリプト",
+      "parameters": {
+        "script_name": "keep_smoke_ops.sh"
+      },
+      "dependencies": [
+        "step_1"
+      ],
+      "estimated_duration": 60,
+      "priority": "medium",
+      "status": "pending",
+      "result": null,
+      "error": null,
+      "started_at": null,
+      "completed_at": null
+    }
+  ],
+  "total_estimated_duration": 120,
+  "priority": "high",
+  "created_at": "2026-02-19T11:28:26.740570",
+  "status": "pending",
+  "completed_at": null
+}

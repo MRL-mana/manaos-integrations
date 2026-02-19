@@ -1,6 +1,7 @@
 # ManaOS統合サービス自動起動スクリプト
 # Unified APIサーバーとLLM Routing APIサーバーを起動
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
 Write-Host "║                                                                    ║" -ForegroundColor Cyan
 Write-Host "║     ManaOS統合サービス自動起動スクリプト                          ║" -ForegroundColor Cyan

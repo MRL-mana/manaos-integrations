@@ -1,5 +1,6 @@
 # ManaOS LLMルーティングAPI起動スクリプト
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "=" * 60
 Write-Host "ManaOS LLMルーティングAPI 起動"
 Write-Host "=" * 60

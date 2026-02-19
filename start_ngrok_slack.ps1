@@ -1,5 +1,6 @@
 # ngrok起動スクリプト（Slack Integration用・ポート5114）
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "=== ngrok トンネル起動（Slack Integration） ===" -ForegroundColor Cyan
 Write-Host ""
 

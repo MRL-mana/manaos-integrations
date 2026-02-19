@@ -1,6 +1,7 @@
 # ManaOS統合システム起動スクリプト（改善版）
 # 各サービスを個別のウィンドウで起動
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "ManaOS統合システム起動" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan

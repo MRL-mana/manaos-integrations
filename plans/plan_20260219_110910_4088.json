@@ -1,0 +1,51 @@
+{
+  "plan_id": "plan_20260219_110910_4088",
+  "intent_type": "unknown",
+  "original_input": "health check",
+  "steps": [
+    {
+      "step_id": "check_system_health",
+      "description": "システムのヘルスチェックを実行します。",
+      "action": "call_api",
+      "target": "/api/system/health",
+      "parameters": {
+        "method": "GET"
+      },
+      "dependencies": [],
+      "estimated_duration": 30,
+      "priority": "high",
+      "status": "pending",
+      "result": null,
+      "error": null,
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "step_id": "analyze_health_report",
+      "description": "ヘルスチェック結果を分析し、必要なアクションを提案します。",
+      "action": "run_script",
+      "target": "health_analysis.py",
+      "parameters": {
+        "script_args": [
+          "--report",
+          "/tmp/health_check_result.json"
+        ]
+      },
+      "dependencies": [
+        "check_system_health"
+      ],
+      "estimated_duration": 45,
+      "priority": "high",
+      "status": "pending",
+      "result": null,
+      "error": null,
+      "started_at": null,
+      "completed_at": null
+    }
+  ],
+  "total_estimated_duration": 75,
+  "priority": "high",
+  "created_at": "2026-02-19T11:09:10.349338",
+  "status": "pending",
+  "completed_at": null
+}

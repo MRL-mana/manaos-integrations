@@ -1,5 +1,6 @@
 # ngrok簡単起動スクリプト
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "=== ngrok トンネル起動 ===" -ForegroundColor Cyan
 Write-Host ""
 

@@ -1,4 +1,5 @@
 # Pixel 7 ADB ブリッジ起動（母艦で 5122 を立て、USB 接続の Pixel 7 に ADB で転送）
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptDir
 

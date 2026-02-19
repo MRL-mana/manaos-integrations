@@ -1,5 +1,6 @@
 # ManaOS統合システム起動スクリプト（PowerShell版）
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "ManaOS統合システム起動" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan

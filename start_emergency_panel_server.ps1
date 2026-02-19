@@ -1,6 +1,7 @@
 # 緊急操作パネル用統合APIサーバー起動スクリプト
 # 新PC（母艦）で実行
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 $ErrorActionPreference = "Continue"
 
 Write-Host "========================================" -ForegroundColor Cyan

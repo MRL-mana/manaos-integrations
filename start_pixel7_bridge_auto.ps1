@@ -1,5 +1,6 @@
 # Pixel 7 ブリッジを自動で Tailscale / USB のどちらかで起動
 # Tailscale (100.84.2.125:5555) が使えれば無線、なければ USB
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptDir
 

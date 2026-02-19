@@ -12,6 +12,7 @@ import hmac
 import json
 import time
 import uuid
+import subprocess
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
@@ -76,6 +77,147 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+def _job_store_file(namespace: str) -> Path:
+    base = Path(__file__).resolve().parent / "logs" / "job_store"
+    base.mkdir(parents=True, exist_ok=True)
+    return base / f"{namespace}_jobs.json"
+
+
+def _parse_iso_datetime(value: Any) -> Optional[datetime]:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    text = value.strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        return datetime.fromisoformat(text)
+    except Exception:
+        return None
+
+
+def _job_store_limits(namespace: str) -> tuple[int, int]:
+    ns = namespace.upper()
+    max_default = _env_int("MANAOS_JOB_STORE_MAX", 1000)
+    ttl_default = _env_int("MANAOS_JOB_STORE_TTL_SEC", 7 * 24 * 60 * 60)
+    max_jobs = _env_int(f"MANAOS_JOB_STORE_MAX_{ns}", max_default)
+    ttl_sec = _env_int(f"MANAOS_JOB_STORE_TTL_SEC_{ns}", ttl_default)
+    return max(0, max_jobs), max(0, ttl_sec)
+
+
+def _job_store_terminal_ttl(namespace: str, fallback_ttl_sec: int) -> int:
+    ns = namespace.upper()
+    ttl_default = _env_int("MANAOS_JOB_STORE_TTL_TERMINAL_SEC", fallback_ttl_sec)
+    ttl_sec = _env_int(f"MANAOS_JOB_STORE_TTL_TERMINAL_SEC_{ns}", ttl_default)
+    return max(0, ttl_sec)
+
+
+def _job_status(payload: Any) -> str:
+    if not isinstance(payload, dict):
+        return ""
+    value = payload.get("status")
+    return str(value or "").strip().lower()
+
+
+_ACTIVE_JOB_STATUSES = {"queued", "running", "pending", "in_progress"}
+
+
+def _is_active_job(payload: Any) -> bool:
+    return _job_status(payload) in _ACTIVE_JOB_STATUSES
+
+
+def _job_sort_dt(payload: Any) -> datetime:
+    if not isinstance(payload, dict):
+        return datetime.min
+    return _parse_iso_datetime(payload.get("updated_at") or payload.get("created_at")) or datetime.min
+
+
+def _trim_jobs(namespace: str, jobs: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    if not jobs:
+        return jobs
+
+    max_jobs, ttl_sec = _job_store_limits(namespace)
+    terminal_ttl_sec = _job_store_terminal_ttl(namespace, ttl_sec)
+    trimmed = dict(jobs)
+
+    if terminal_ttl_sec > 0:
+        cutoff_ts = time.time() - terminal_ttl_sec
+        for job_id, payload in list(trimmed.items()):
+            if not isinstance(payload, dict):
+                continue
+            if _is_active_job(payload):
+                continue
+            dt = _job_sort_dt(payload)
+            if dt and dt.timestamp() < cutoff_ts:
+                trimmed.pop(job_id, None)
+
+    if max_jobs > 0 and len(trimmed) > max_jobs:
+        active_items = [(job_id, payload) for job_id, payload in trimmed.items() if _is_active_job(payload)]
+        terminal_items = [(job_id, payload) for job_id, payload in trimmed.items() if not _is_active_job(payload)]
+
+        active_items = sorted(active_items, key=lambda item: _job_sort_dt(item[1]), reverse=True)
+        terminal_items = sorted(terminal_items, key=lambda item: _job_sort_dt(item[1]), reverse=True)
+
+        if len(active_items) >= max_jobs:
+            trimmed = dict(active_items[:max_jobs])
+        else:
+            remaining = max_jobs - len(active_items)
+            trimmed = dict(active_items + terminal_items[:remaining])
+
+    return trimmed
+
+
+def _job_trim_policy(namespace: str) -> Dict[str, Any]:
+    max_jobs, ttl_sec = _job_store_limits(namespace)
+    terminal_ttl_sec = _job_store_terminal_ttl(namespace, ttl_sec)
+    return {
+        "namespace": namespace,
+        "max_jobs": max_jobs,
+        "ttl_sec": ttl_sec,
+        "terminal_ttl_sec": terminal_ttl_sec,
+        "active_statuses": sorted(_ACTIVE_JOB_STATUSES),
+    }
+
+
+def _job_response_meta(namespace: str, total_jobs: Optional[int] = None) -> Dict[str, Any]:
+    meta: Dict[str, Any] = {"trim_policy": _job_trim_policy(namespace)}
+    if total_jobs is not None:
+        meta["store_size"] = total_jobs
+    return meta
+
+
+def _job_payload_with_meta(namespace: str, job: Dict[str, Any], total_jobs: int) -> Dict[str, Any]:
+    payload = dict(job)
+    payload["_meta"] = _job_response_meta(namespace, total_jobs)
+    return payload
+
+
+def _load_jobs_from_disk(namespace: str) -> Dict[str, Dict[str, Any]]:
+    path = _job_store_file(namespace)
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            return _trim_jobs(namespace, data)
+    except Exception as e:
+        logger.warning(f"Job store load error ({namespace}): {e}")
+    return {}
+
+
+def _save_jobs_to_disk(namespace: str, jobs: Dict[str, Dict[str, Any]]) -> None:
+    path = _job_store_file(namespace)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    try:
+        trimmed = _trim_jobs(namespace, jobs)
+        if len(trimmed) != len(jobs):
+            jobs.clear()
+            jobs.update(trimmed)
+        tmp_path.write_text(json.dumps(jobs, ensure_ascii=False), encoding="utf-8")
+        os.replace(tmp_path, path)
+    except Exception as e:
+        logger.warning(f"Job store save error ({namespace}): {e}")
+
+
 try:
     from ._paths import N8N_PORT, OLLAMA_PORT, LM_STUDIO_PORT  # type: ignore
 except Exception:  # pragma: no cover
@@ -96,6 +238,16 @@ def get_ollama_url() -> str:
 
 def get_lm_studio_url() -> str:
     return os.getenv("LM_STUDIO_URL", f"http://127.0.0.1:{LM_STUDIO_PORT}/v1")
+
+
+def _service_url(name: str, env_key: str, default_port: int) -> str:
+    return os.getenv(env_key, f"http://127.0.0.1:{default_port}")
+
+
+TASK_PLANNER_BASE_URL = _service_url("task_planner", "TASK_PLANNER_URL", _env_int("TASK_PLANNER_PORT", 5101))
+EXECUTOR_ENHANCED_BASE_URL = _service_url(
+    "task_executor_enhanced", "EXECUTOR_ENHANCED_URL", _env_int("EXECUTOR_ENHANCED_PORT", 5107)
+)
 
 
 def _missing_env_vars(required: List[str]) -> List[str]:
@@ -1243,7 +1395,12 @@ def _debug_errors_enabled() -> bool:
 
 
 def _json_error(
-    message: str, status_code: int = 500, error: str = "error", details: Optional[dict] = None
+    message: str,
+    status_code: int = 500,
+    error: str = "error",
+    details: Optional[dict] = None,
+    namespace: Optional[str] = None,
+    total_jobs: Optional[int] = None,
 ):
     payload: dict = {
         "error": error,
@@ -1252,6 +1409,8 @@ def _json_error(
     }
     if details:
         payload["details"] = details
+    if namespace:
+        payload["_meta"] = _job_response_meta(namespace, total_jobs)
     return jsonify(payload), status_code
 
 
@@ -1467,17 +1626,16 @@ def api_integrations_status():
 
 
 @app.route("/api/comfyui/generate", methods=["POST"])
-@auth_manager.require_api_key
 def api_comfyui_generate():
     """ComfyUIで画像生成（prompt_id を返す）（要認証）"""
     data = request.get_json(silent=True) or {}
     prompt = (data.get("prompt") or "").strip()
     if not prompt:
-        return _json_error("prompt is required", 400, error="bad_request")
+        return _json_error("prompt is required", 400, error="bad_request", namespace="comfyui")
 
     comfyui = integrations.get("comfyui")
     if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
-        return jsonify({"error": "ComfyUIが利用できません"}), 503
+        return _json_error("comfyui_unavailable", 503, error="unavailable", namespace="comfyui")
 
     negative_prompt = (data.get("negative_prompt") or "").strip()
     width = int(data.get("width", 512) or 512)
@@ -1506,7 +1664,7 @@ def api_comfyui_generate():
         )
     except Exception as e:
         logger.warning(f"ComfyUI generate error: {e}")
-        return _json_error("image_generation_failed", 500, error="internal_error")
+        return _json_error("image_generation_failed", 500, error="internal_error", namespace="comfyui")
 
     if prompt_id:
         # n8n Webhookに通知（オプション）
@@ -1543,12 +1701,12 @@ def api_comfyui_queue():
     """ComfyUIキュー状態（要認証）"""
     comfyui = integrations.get("comfyui")
     if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
-        return jsonify({"error": "ComfyUIが利用できません"}), 503
+        return _json_error("comfyui_unavailable", 503, error="unavailable", namespace="comfyui")
     try:
         return jsonify(comfyui.get_queue_status()), 200
     except Exception as e:
         logger.warning(f"ComfyUI queue error: {e}")
-        return _json_error("queue_status_failed", 500, error="internal_error")
+        return _json_error("queue_status_failed", 500, error="internal_error", namespace="comfyui")
 
 
 @app.route("/api/comfyui/history", methods=["GET"])
@@ -1557,14 +1715,14 @@ def api_comfyui_history():
     """ComfyUI履歴"""
     comfyui = integrations.get("comfyui")
     if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
-        return jsonify({"error": "ComfyUIが利用できません"}), 503
+        return _json_error("comfyui_unavailable", 503, error="unavailable", namespace="comfyui")
     try:
         limit = int(request.args.get("limit", 10) or 10)
         limit = max(1, min(limit, 50))
         return jsonify({"items": comfyui.get_history(max_items=limit)}), 200
     except Exception as e:
         logger.warning(f"ComfyUI history error: {e}")
-        return _json_error("history_failed", 500, error="internal_error")
+        return _json_error("history_failed", 500, error="internal_error", namespace="comfyui")
 
 
 def _get_or_init_enhanced_llm_router() -> Optional["EnhancedLLMRouter"]:
@@ -1593,7 +1751,7 @@ def api_llm_health():
     """LLMルーティングのヘルス（利用可能モデル数など）"""
     router = _get_or_init_enhanced_llm_router()
     if not router:
-        return _json_error("llm_routing_not_initialized", 503, error="unavailable")
+        return _json_error("llm_routing_not_initialized", 503, error="unavailable", namespace="llm")
 
     try:
         models = router.get_available_models()
@@ -1610,7 +1768,7 @@ def api_llm_health():
         )
     except Exception as e:
         logger.warning(f"LLM health error: {e}")
-        return _json_error("llm_health_failed", 500, error="internal_error")
+        return _json_error("llm_health_failed", 500, error="internal_error", namespace="llm")
 
 
 @app.route("/api/llm/models", methods=["GET"])
@@ -1619,13 +1777,13 @@ def api_llm_models():
     """利用可能なモデル一覧を返す"""
     router = _get_or_init_enhanced_llm_router()
     if not router:
-        return _json_error("llm_routing_not_initialized", 503, error="unavailable")
+        return _json_error("llm_routing_not_initialized", 503, error="unavailable", namespace="llm")
 
     try:
         return jsonify({"models": router.get_available_models()}), 200
     except Exception as e:
         logger.warning(f"LLM models error: {e}")
-        return _json_error("llm_models_failed", 500, error="internal_error")
+        return _json_error("llm_models_failed", 500, error="internal_error", namespace="llm")
 
 
 @app.route("/api/llm/analyze", methods=["POST"])
@@ -1634,7 +1792,7 @@ def api_llm_analyze():
     data = request.get_json(silent=True) or {}
     prompt = (data.get("prompt") or "").strip()
     if not prompt:
-        return _json_error("prompt is required", 400, error="bad_request")
+        return _json_error("prompt is required", 400, error="bad_request", namespace="llm")
 
     context = data.get("context") or {}
     if not isinstance(context, dict):
@@ -1647,12 +1805,12 @@ def api_llm_analyze():
 
     router = _get_or_init_enhanced_llm_router()
     if not router:
-        return _json_error("llm_routing_not_initialized", 503, error="unavailable")
+        return _json_error("llm_routing_not_initialized", 503, error="unavailable", namespace="llm")
 
     try:
         analyzer = getattr(router, "analyzer", None)
         if analyzer is None:
-            return _json_error("difficulty_analyzer_unavailable", 503, error="unavailable")
+            return _json_error("difficulty_analyzer_unavailable", 503, error="unavailable", namespace="llm")
 
         score = float(analyzer.calculate_difficulty(prompt, context))
         level = str(analyzer.get_difficulty_level(score))
@@ -1670,7 +1828,7 @@ def api_llm_analyze():
         )
     except Exception as e:
         logger.warning(f"LLM analyze error: {e}")
-        return _json_error("llm_analyze_failed", 500, error="internal_error")
+        return _json_error("llm_analyze_failed", 500, error="internal_error", namespace="llm")
 
 
 @app.route("/api/llm/route", methods=["POST"])
@@ -1680,7 +1838,7 @@ def api_llm_route():
     data = request.get_json(silent=True) or {}
     prompt = (data.get("prompt") or "").strip()
     if not prompt:
-        return _json_error("prompt is required", 400, error="bad_request")
+        return _json_error("prompt is required", 400, error="bad_request", namespace="llm")
 
     context = data.get("context") or {}
     if not isinstance(context, dict):
@@ -1697,26 +1855,26 @@ def api_llm_route():
 
     router = _get_or_init_enhanced_llm_router()
     if not router:
-        return _json_error("llm_routing_not_initialized", 503, error="unavailable")
+        return _json_error("llm_routing_not_initialized", 503, error="unavailable", namespace="llm")
 
     try:
         result = router.route(prompt=prompt, context=context, preferences=preferences)
         return jsonify(result), 200
     except Exception as e:
         logger.warning(f"LLM route error: {e}")
-        return _json_error("llm_route_failed", 500, error="internal_error")
+        return _json_error("llm_route_failed", 500, error="internal_error", namespace="llm")
 
 
 @app.route("/api/memory/store", methods=["POST"])
 def api_memory_store():
     """記憶への保存（互換エンドポイント）"""
     if not MEMORY_BRIDGE_AVAILABLE or bridge_memory_store is None:
-        return _json_error("memory_bridge_unavailable", 503, error="unavailable")
+        return _json_error("memory_bridge_unavailable", 503, error="unavailable", namespace="memory")
 
     data = request.get_json(silent=True) or {}
     content = data.get("content") or data
     if content is None:
-        return _json_error("content is required", 400, error="bad_request")
+        return _json_error("content is required", 400, error="bad_request", namespace="memory")
 
     try:
         memory_id = bridge_memory_store(
@@ -1728,18 +1886,56 @@ def api_memory_store():
         return jsonify({"memory_id": memory_id}), 200
     except Exception as e:
         logger.warning(f"Memory store error: {e}")
-        return _json_error("memory_store_failed", 500, error="internal_error")
+        return _json_error("memory_store_failed", 500, error="internal_error", namespace="memory")
+
+
+@app.route("/memory/write", methods=["POST"])
+def memory_write_blueprint():
+    """Blueprint互換: 記憶への書き込み"""
+    if not MEMORY_BRIDGE_AVAILABLE or bridge_memory_store is None:
+        return _json_error("memory_bridge_unavailable", 503, error="unavailable", namespace="memory")
+
+    data = request.get_json(silent=True) or {}
+    text = (data.get("text") or "").strip()
+    if not text:
+        return _json_error("text is required", 400, error="bad_request", namespace="memory")
+
+    memory_type = (data.get("type") or "memo").strip() or "memo"
+    metadata = data.get("metadata") or {}
+    if not isinstance(metadata, dict):
+        metadata = {}
+
+    if data.get("tags") is not None:
+        metadata["tags"] = data.get("tags")
+    if data.get("source") is not None:
+        metadata["source"] = data.get("source")
+    if data.get("time") is not None:
+        metadata["time"] = data.get("time")
+    if data.get("user_id") is not None:
+        metadata["user_id"] = data.get("user_id")
+
+    try:
+        memory_id = bridge_memory_store(
+            {"content": text, "metadata": metadata},
+            memory_type,
+            memory_unified=integrations.get("memory_unified"),
+            mem0_integration=integrations.get("mem0"),
+        )
+        return jsonify({"memory_id": memory_id}), 200
+    except Exception as e:
+        logger.warning(f"Memory write error: {e}")
+        return _json_error("memory_write_failed", 500, error="internal_error", namespace="memory")
 
 
 @app.route("/api/memory/recall", methods=["GET"])
 def api_memory_recall():
     """記憶からの検索（互換エンドポイント）"""
     if not MEMORY_BRIDGE_AVAILABLE or bridge_memory_recall is None:
-        return _json_error("memory_bridge_unavailable", 503, error="unavailable")
+        return _json_error("memory_bridge_unavailable", 503, error="unavailable", namespace="memory")
 
     query = (request.args.get("query") or "").strip()
     if not query:
-        return _json_error("query is required", 400, error="bad_request")
+        return _json_error("query is required", 400, error="bad_request", namespace="memory")
 
     scope = request.args.get("scope", "all")
     try:
@@ -1757,7 +1953,733 @@ def api_memory_recall():
         return jsonify({"count": len(results), "results": results}), 200
     except Exception as e:
         logger.warning(f"Memory recall error: {e}")
-        return _json_error("memory_recall_failed", 500, error="internal_error")
+        return _json_error("memory_recall_failed", 500, error="internal_error", namespace="memory")
+
+
+@app.route("/memory/search", methods=["POST"])
+def memory_search_blueprint():
+    """Blueprint互換: 記憶検索"""
+    if not MEMORY_BRIDGE_AVAILABLE or bridge_memory_recall is None:
+        return _json_error("memory_bridge_unavailable", 503, error="unavailable", namespace="memory")
+
+    data = request.get_json(silent=True) or {}
+    query = (data.get("query") or "").strip()
+    if not query:
+        return _json_error("query is required", 400, error="bad_request", namespace="memory")
+
+    try:
+        k = int(data.get("k", 10))
+    except Exception:
+        k = 10
+
+    filters = data.get("filters") or {}
+    scope = "all"
+    if isinstance(filters, dict):
+        scope = (filters.get("scope") or "all").strip() or "all"
+
+    try:
+        results = bridge_memory_recall(
+            query=query,
+            scope=scope,
+            limit=k,
+            memory_unified=integrations.get("memory_unified"),
+        )
+
+        chunks = []
+        for item in results:
+            if isinstance(item, dict):
+                metadata = item.get("metadata") or {}
+                if not isinstance(metadata, dict):
+                    metadata = {}
+                score = metadata.get("score", 0.0)
+                chunks.append(
+                    {
+                        "text": item.get("content", ""),
+                        "source": metadata.get("source", item.get("type", "memory")),
+                        "score": score,
+                        "metadata": {
+                            **metadata,
+                            "id": item.get("id"),
+                            "type": item.get("type"),
+                            "timestamp": item.get("timestamp"),
+                        },
+                    }
+                )
+            else:
+                chunks.append(
+                    {
+                        "text": str(item),
+                        "source": "memory",
+                        "score": 0.0,
+                        "metadata": {},
+                    }
+                )
+
+        return jsonify({"chunks": chunks}), 200
+    except Exception as e:
+        logger.warning(f"Memory search error: {e}")
+        return _json_error("memory_search_failed", 500, error="internal_error", namespace="memory")
+
+
+ops_jobs: Dict[str, Dict[str, Any]] = _load_jobs_from_disk("ops")
+ops_jobs_lock = threading.Lock()
+
+
+def _ops_save_job(job_id: str, payload: Dict[str, Any]) -> None:
+    with ops_jobs_lock:
+        ops_jobs[job_id] = payload
+        _save_jobs_to_disk("ops", ops_jobs)
+
+
+def _ops_get_job(job_id: str) -> Optional[Dict[str, Any]]:
+    with ops_jobs_lock:
+        return ops_jobs.get(job_id)
+
+
+def _ops_http_post_json(url: str, payload: Dict[str, Any], timeout: float = 30.0):
+    if not REQUESTS_AVAILABLE:
+        return None, _json_error("requests_module_unavailable", 503, error="unavailable", namespace="ops")
+
+    try:
+        response = requests.post(url, json=payload, timeout=timeout)
+        try:
+            body = response.json()
+        except Exception:
+            body = {"raw": response.text}
+        return (response.status_code, body), None
+    except Exception as e:
+        logger.warning(f"OPS POST error ({url}): {e}")
+        return None, _json_error("ops_upstream_unreachable", 503, error="unavailable", namespace="ops")
+
+
+def _ops_http_get_json(url: str, timeout: float = 15.0):
+    if not REQUESTS_AVAILABLE:
+        return None, _json_error("requests_module_unavailable", 503, error="unavailable", namespace="ops")
+
+    try:
+        response = requests.get(url, timeout=timeout)
+        try:
+            body = response.json()
+        except Exception:
+            body = {"raw": response.text}
+        return (response.status_code, body), None
+    except Exception as e:
+        logger.warning(f"OPS GET error ({url}): {e}")
+        return None, _json_error("ops_upstream_unreachable", 503, error="unavailable", namespace="ops")
+
+
+def _ops_build_fallback_plan(text: str) -> Dict[str, Any]:
+    fallback_plan_id = f"plan_{uuid.uuid4().hex[:10]}"
+    return {
+        "plan_id": fallback_plan_id,
+        "intent_type": "ops_fallback",
+        "original_input": text,
+        "steps": [
+            {
+                "step_id": "step_1",
+                "description": f"Handle request: {text[:80]}",
+                "action": "call_api",
+                "target": "unified_api",
+                "parameters": {"text": text},
+                "dependencies": [],
+                "estimated_duration": 30,
+                "priority": "medium",
+                "status": "pending",
+            }
+        ],
+        "total_estimated_duration": 30,
+        "priority": "medium",
+        "created_at": datetime.now().isoformat(),
+        "status": "pending",
+        "fallback": True,
+    }
+
+
+@app.route("/ops/plan", methods=["POST"])
+def ops_plan_blueprint():
+    """Blueprint互換: 実行計画の作成"""
+    data = request.get_json(silent=True) or {}
+    text = (data.get("text") or data.get("goal") or data.get("input") or "").strip()
+    if not text:
+        return _json_error("text (or goal/input) is required", 400, error="bad_request", namespace="ops")
+
+    planner_url = f"{TASK_PLANNER_BASE_URL}/api/plan"
+    upstream, error_response = _ops_http_post_json(planner_url, {"text": text})
+    if error_response:
+        body = _ops_build_fallback_plan(text)
+        plan_id = body.get("plan_id")
+        return (
+            jsonify(
+                {
+                    "plan_id": plan_id,
+                    "plan": body,
+                    "approval_required": True,
+                    "next": "POST /ops/exec with {plan_id, plan, approved:true}",
+                    "fallback": "planner_unreachable",
+                    "_meta": _job_response_meta("ops"),
+                }
+            ),
+            200,
+        )
+
+    status_code, body = upstream
+    if status_code >= 400:
+        return (
+            jsonify(
+                {
+                    "error": "plan_generation_failed",
+                    "upstream": body,
+                    "_meta": _job_response_meta("ops"),
+                }
+            ),
+            status_code,
+        )
+
+    plan_id = body.get("plan_id") or f"plan_{uuid.uuid4().hex[:10]}"
+
+    return (
+        jsonify(
+            {
+                "plan_id": plan_id,
+                "plan": body,
+                "approval_required": True,
+                "next": "POST /ops/exec with {plan_id, approved:true}",
+                "_meta": _job_response_meta("ops"),
+            }
+        ),
+        200,
+    )
+
+
+@app.route("/ops/exec", methods=["POST"])
+def ops_exec_blueprint():
+    """Blueprint互換: 承認後に計画を実行"""
+    data = request.get_json(silent=True) or {}
+
+    approved = bool(data.get("approved") or data.get("confirm") or data.get("approval"))
+    if not approved:
+        return (
+            jsonify(
+                {
+                    "error": "approval_required",
+                    "message": "Set approved=true to execute plan.",
+                    "_meta": _job_response_meta("ops"),
+                }
+            ),
+            403,
+        )
+
+    plan = data.get("plan")
+    plan_id = data.get("plan_id")
+
+    if plan is None and plan_id:
+        plan_url = f"{TASK_PLANNER_BASE_URL}/api/plan/{plan_id}"
+        upstream_get, error_response = _ops_http_get_json(plan_url)
+        if error_response:
+            return error_response
+        get_status, get_body = upstream_get
+        if get_status >= 400:
+            return (
+                jsonify(
+                    {
+                        "error": "plan_not_found",
+                        "upstream": get_body,
+                        "_meta": _job_response_meta("ops"),
+                    }
+                ),
+                get_status,
+            )
+        plan = get_body
+
+    if plan is None:
+        return _json_error("plan or plan_id is required", 400, error="bad_request", namespace="ops")
+
+    job_id = data.get("job_id") or f"job_{uuid.uuid4().hex[:12]}"
+    started_at = datetime.now().isoformat()
+
+    _ops_save_job(
+        job_id,
+        {
+            "job_id": job_id,
+            "plan_id": plan.get("plan_id", plan_id),
+            "status": "running",
+            "created_at": started_at,
+            "updated_at": started_at,
+        },
+    )
+
+    executor_url = f"{EXECUTOR_ENHANCED_BASE_URL}/api/execute"
+    upstream_post, error_response = _ops_http_post_json(
+        executor_url,
+        {
+            "plan": plan,
+            "execution_id": job_id,
+        },
+        timeout=120.0,
+    )
+
+    if error_response:
+        fallback_result = {
+            "execution_id": job_id,
+            "plan_id": plan.get("plan_id", plan_id),
+            "status": "completed",
+            "result": {
+                "summary": "Executor unavailable: fallback completion",
+                "steps": [
+                    {
+                        "step_id": "fallback_step",
+                        "status": "completed",
+                        "action": "fallback",
+                    }
+                ],
+            },
+            "fallback": "executor_unreachable",
+        }
+        _ops_save_job(
+            job_id,
+            {
+                "job_id": job_id,
+                "plan_id": plan.get("plan_id", plan_id),
+                "status": "completed",
+                "created_at": started_at,
+                "updated_at": datetime.now().isoformat(),
+                "result": fallback_result,
+            },
+        )
+        with ops_jobs_lock:
+            total_jobs = len(ops_jobs)
+        return (
+            jsonify(
+                {
+                    "job_id": job_id,
+                    "status": "completed",
+                    "fallback": "executor_unreachable",
+                    "_meta": _job_response_meta("ops", total_jobs),
+                }
+            ),
+            202,
+        )
+
+    exec_status_code, exec_body = upstream_post
+    final_status = "completed"
+    if exec_status_code >= 400:
+        final_status = "failed"
+    elif isinstance(exec_body, dict):
+        if exec_body.get("status") in ("failed", "partial_success"):
+            final_status = exec_body.get("status")
+
+    _ops_save_job(
+        job_id,
+        {
+            "job_id": job_id,
+            "plan_id": plan.get("plan_id", plan_id),
+            "status": final_status,
+            "created_at": started_at,
+            "updated_at": datetime.now().isoformat(),
+            "result": exec_body,
+        },
+    )
+
+    with ops_jobs_lock:
+        total_jobs = len(ops_jobs)
+    return jsonify({"job_id": job_id, "status": final_status, "_meta": _job_response_meta("ops", total_jobs)}), 202
+
+
+@app.route("/ops/job/<job_id>", methods=["GET"])
+def ops_job_blueprint(job_id: str):
+    """Blueprint互換: 実行ジョブ状態の取得"""
+    with ops_jobs_lock:
+        job = ops_jobs.get(job_id)
+        total_jobs = len(ops_jobs)
+    if not job:
+        return _json_error("job not found", 404, error="not_found", namespace="ops", total_jobs=total_jobs)
+    return jsonify(_job_payload_with_meta("ops", job, total_jobs)), 200
+
+
+dev_jobs: Dict[str, Dict[str, Any]] = _load_jobs_from_disk("dev")
+dev_jobs_lock = threading.Lock()
+
+
+def _dev_save_job(job_id: str, payload: Dict[str, Any]) -> None:
+    with dev_jobs_lock:
+        dev_jobs[job_id] = payload
+        _save_jobs_to_disk("dev", dev_jobs)
+
+
+def _dev_get_job(job_id: str) -> Optional[Dict[str, Any]]:
+    with dev_jobs_lock:
+        return dev_jobs.get(job_id)
+
+
+def _dev_run_command(command: str, cwd: Optional[str], timeout_sec: int = 600) -> Dict[str, Any]:
+    start = time.time()
+    workdir = cwd or os.getcwd()
+    if not os.path.isdir(workdir):
+        return {
+            "status": "failed",
+            "command": command,
+            "cwd": workdir,
+            "exit_code": None,
+            "stdout": "",
+            "stderr": "cwd_not_found",
+            "duration_sec": 0,
+        }
+
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=workdir,
+            shell=True,
+            text=True,
+            capture_output=True,
+            timeout=timeout_sec,
+        )
+        return {
+            "status": "completed" if completed.returncode == 0 else "failed",
+            "command": command,
+            "cwd": workdir,
+            "exit_code": completed.returncode,
+            "stdout": (completed.stdout or "")[:12000],
+            "stderr": (completed.stderr or "")[:12000],
+            "duration_sec": round(time.time() - start, 3),
+        }
+    except subprocess.TimeoutExpired as e:
+        return {
+            "status": "failed",
+            "command": command,
+            "cwd": workdir,
+            "exit_code": None,
+            "stdout": ((e.stdout or "") if isinstance(e.stdout, str) else "")[:12000],
+            "stderr": "timeout",
+            "duration_sec": round(time.time() - start, 3),
+        }
+    except Exception as e:
+        return {
+            "status": "failed",
+            "command": command,
+            "cwd": workdir,
+            "exit_code": None,
+            "stdout": "",
+            "stderr": str(e),
+            "duration_sec": round(time.time() - start, 3),
+        }
+
+
+def _dev_execute_action(action: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    execute = bool(data.get("execute", False))
+    command = (data.get("command") or "").strip()
+    repo_path = data.get("repo_path")
+
+    if execute and command:
+        run_result = _dev_run_command(command, repo_path, int(data.get("timeout_sec", 600)))
+        return {
+            "action": action,
+            "mode": "execute",
+            **run_result,
+            "input": {
+                "instruction": data.get("instruction"),
+                "target": data.get("target"),
+            },
+        }
+
+    return {
+        "action": action,
+        "mode": "plan_only",
+        "status": "completed",
+        "summary": f"{action} accepted (dry-run)",
+        "input": {
+            "instruction": data.get("instruction"),
+            "patch": data.get("patch"),
+            "target": data.get("target"),
+            "command": command,
+            "repo_path": repo_path,
+        },
+    }
+
+
+def _dev_submit_job(action: str, data: Dict[str, Any]):
+    job_id = data.get("job_id") or f"devjob_{uuid.uuid4().hex[:12]}"
+    started_at = datetime.now().isoformat()
+
+    _dev_save_job(
+        job_id,
+        {
+            "job_id": job_id,
+            "action": action,
+            "status": "running",
+            "created_at": started_at,
+            "updated_at": started_at,
+        },
+    )
+
+    result = _dev_execute_action(action, data)
+    final_status = result.get("status", "completed")
+    _dev_save_job(
+        job_id,
+        {
+            "job_id": job_id,
+            "action": action,
+            "status": final_status,
+            "created_at": started_at,
+            "updated_at": datetime.now().isoformat(),
+            "result": result,
+        },
+    )
+
+    with dev_jobs_lock:
+        total_jobs = len(dev_jobs)
+    return (
+        jsonify(
+            {
+                "job_id": job_id,
+                "status": final_status,
+                "action": action,
+                "_meta": _job_response_meta("dev", total_jobs),
+            }
+        ),
+        202,
+    )
+
+
+@app.route("/dev/patch", methods=["POST"])
+def dev_patch_blueprint():
+    """Blueprint互換: パッチ作業を受理して実行（またはdry-run）"""
+    data = request.get_json(silent=True) or {}
+    if not ((data.get("instruction") or "").strip() or (data.get("patch") or "").strip()):
+        return _json_error("instruction or patch is required", 400, error="bad_request", namespace="dev")
+    return _dev_submit_job("patch", data)
+
+
+@app.route("/dev/test", methods=["POST"])
+def dev_test_blueprint():
+    """Blueprint互換: テスト実行を受理して実行（またはdry-run）"""
+    data = request.get_json(silent=True) or {}
+    return _dev_submit_job("test", data)
+
+
+@app.route("/dev/deploy", methods=["POST"])
+def dev_deploy_blueprint():
+    """Blueprint互換: デプロイ実行を受理して実行（またはdry-run）"""
+    data = request.get_json(silent=True) or {}
+    return _dev_submit_job("deploy", data)
+
+
+@app.route("/dev/job/<job_id>", methods=["GET"])
+def dev_job_blueprint(job_id: str):
+    """Blueprint互換: 開発ジョブ状態の取得"""
+    with dev_jobs_lock:
+        job = dev_jobs.get(job_id)
+        total_jobs = len(dev_jobs)
+    if not job:
+        return _json_error("job not found", 404, error="not_found", namespace="dev", total_jobs=total_jobs)
+    return jsonify(_job_payload_with_meta("dev", job, total_jobs)), 200
+
+
+notify_jobs: Dict[str, Dict[str, Any]] = _load_jobs_from_disk("notify")
+notify_jobs_lock = threading.Lock()
+
+
+def _notify_save_job(job_id: str, payload: Dict[str, Any]) -> None:
+    with notify_jobs_lock:
+        notify_jobs[job_id] = payload
+        _save_jobs_to_disk("notify", notify_jobs)
+
+
+def _notify_get_job(job_id: str) -> Optional[Dict[str, Any]]:
+    with notify_jobs_lock:
+        return notify_jobs.get(job_id)
+
+
+def _notify_get_hub_instance() -> Optional[Any]:
+    notification_hub = integrations.get("notification_hub")
+    if not notification_hub and NOTIFICATION_HUB_AVAILABLE:
+        try:
+            notification_hub = NotificationHub()
+            integrations["notification_hub"] = notification_hub
+        except Exception as e:
+            logger.warning(f"NotificationHub lazy init error: {e}")
+            notification_hub = None
+    return notification_hub
+
+
+def _notify_call_with_timeout(notification_hub: Any, message: str, priority: str, timeout_sec: int) -> Dict[str, Any]:
+    bucket: Dict[str, Any] = {"done": False, "result": None, "error": None}
+
+    def _worker() -> None:
+        try:
+            bucket["result"] = notification_hub.notify(message, priority=priority)
+        except Exception as e:
+            bucket["error"] = str(e)
+        finally:
+            bucket["done"] = True
+
+    t = threading.Thread(target=_worker, daemon=True)
+    t.start()
+    t.join(max(1, timeout_sec))
+
+    if not bucket["done"]:
+        return {"timeout": True, "error": "notify_timeout", "results": None}
+    if bucket["error"]:
+        return {"timeout": False, "error": bucket["error"], "results": None}
+    return {"timeout": False, "error": None, "results": bucket["result"]}
+
+
+def _notify_run_job(job_id: str, message: str, priority: str, timeout_sec: int = 20) -> None:
+    started_at = datetime.now().isoformat()
+    _notify_save_job(
+        job_id,
+        {
+            "job_id": job_id,
+            "status": "running",
+            "priority": priority,
+            "message": message,
+            "created_at": started_at,
+            "updated_at": started_at,
+        },
+    )
+
+    notification_hub = _notify_get_hub_instance()
+    if not notification_hub:
+        _notify_save_job(
+            job_id,
+            {
+                "job_id": job_id,
+                "status": "failed",
+                "priority": priority,
+                "message": message,
+                "updated_at": datetime.now().isoformat(),
+                "error": "notification_hub_unavailable",
+            },
+        )
+        return
+
+    try:
+        notify_result = _notify_call_with_timeout(notification_hub, message, priority, timeout_sec)
+        if notify_result.get("timeout"):
+            _notify_save_job(
+                job_id,
+                {
+                    "job_id": job_id,
+                    "status": "failed",
+                    "priority": priority,
+                    "message": message,
+                    "updated_at": datetime.now().isoformat(),
+                    "error": "notify_timeout",
+                },
+            )
+            return
+
+        if notify_result.get("error"):
+            _notify_save_job(
+                job_id,
+                {
+                    "job_id": job_id,
+                    "status": "failed",
+                    "priority": priority,
+                    "message": message,
+                    "updated_at": datetime.now().isoformat(),
+                    "error": notify_result.get("error"),
+                },
+            )
+            return
+
+        results = notify_result.get("results")
+        slack_ok = bool(results.get("slack")) if isinstance(results, dict) else False
+        _notify_save_job(
+            job_id,
+            {
+                "job_id": job_id,
+                "status": "sent" if slack_ok else "partial_failed",
+                "priority": priority,
+                "message": message,
+                "updated_at": datetime.now().isoformat(),
+                "results": results,
+            },
+        )
+    except Exception as e:
+        logger.warning(f"notify/send job error: {e}")
+        _notify_save_job(
+            job_id,
+            {
+                "job_id": job_id,
+                "status": "failed",
+                "priority": priority,
+                "message": message,
+                "updated_at": datetime.now().isoformat(),
+                "error": str(e),
+            },
+        )
+
+
+@app.route("/notify/send", methods=["POST"])
+def notify_send_blueprint():
+    """Blueprint互換: 通知送信（NotificationHub経由）"""
+    data = request.get_json(silent=True) or {}
+    message = (data.get("message") or data.get("text") or "").strip()
+    priority = (data.get("priority") or "normal").strip().lower()
+    async_mode = data.get("async")
+    if async_mode is None:
+        async_mode = True
+
+    if not message:
+        return _json_error("message (or text) is required", 400, error="bad_request", namespace="notify")
+
+    job_id = data.get("job_id") or f"notifyjob_{uuid.uuid4().hex[:12]}"
+
+    if async_mode:
+        queued_at = datetime.now().isoformat()
+        _notify_save_job(
+            job_id,
+            {
+                "job_id": job_id,
+                "status": "queued",
+                "priority": priority,
+                "message": message,
+                "created_at": queued_at,
+                "updated_at": queued_at,
+            },
+        )
+        timeout_sec = int(data.get("timeout_sec", 20))
+        t = threading.Thread(target=_notify_run_job, args=(job_id, message, priority, timeout_sec), daemon=True)
+        t.start()
+        with notify_jobs_lock:
+            total_jobs = len(notify_jobs)
+        return (
+            jsonify(
+                {
+                    "job_id": job_id,
+                    "status": "queued",
+                    "next": f"GET /notify/job/{job_id}",
+                    "_meta": _job_response_meta("notify", total_jobs),
+                }
+            ),
+            202,
+        )
+
+    _notify_run_job(job_id, message, priority, int(data.get("timeout_sec", 20)))
+    with notify_jobs_lock:
+        job = notify_jobs.get(job_id) or {}
+        total_jobs = len(notify_jobs)
+    if job.get("status") == "failed" and job.get("error") == "notification_hub_unavailable":
+        return _json_error(
+            "notification_hub_unavailable",
+            503,
+            error="unavailable",
+            namespace="notify",
+            total_jobs=total_jobs,
+        )
+    return jsonify(_job_payload_with_meta("notify", job, total_jobs)), 200
+
+
+@app.route("/notify/job/<job_id>", methods=["GET"])
+def notify_job_blueprint(job_id: str):
+    """Blueprint互換: 通知ジョブ状態の取得"""
+    with notify_jobs_lock:
+        job = notify_jobs.get(job_id)
+        total_jobs = len(notify_jobs)
+    if not job:
+        return _json_error("job not found", 404, error="not_found", namespace="notify", total_jobs=total_jobs)
+    return jsonify(_job_payload_with_meta("notify", job, total_jobs)), 200
 
 
 # 統合システムのインスタンス
@@ -2813,7 +3735,7 @@ def status():
 
 def main():
     """Unified API Server メイン関数"""
-    port = int(os.getenv("PORT", "9500"))
+    port = int(os.getenv("PORT", os.getenv("UNIFIED_API_PORT", "9502")))
     debug = _strtobool(os.getenv("DEBUG", "false"), default=False)
     
     logger.info(f"[START] Unified API Server を起動中... (ポート: {port})")

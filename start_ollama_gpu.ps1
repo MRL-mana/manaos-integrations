@@ -1,5 +1,6 @@
 # Ollama GPU Mode Startup Script (WSL2)
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "=== Ollama GPU Mode Startup (WSL2) ===" -ForegroundColor Cyan
 
 # 1. Check WSL2 status

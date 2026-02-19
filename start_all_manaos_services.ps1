@@ -1,6 +1,7 @@
 # ManaOS 全サービス起動スクリプト
 # すべてのサービスを一括起動
 
+Write-Host "※ pwsh推奨 / ps1直実行OK" -ForegroundColor DarkGray
 Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
 Write-Host "║                                                                    ║" -ForegroundColor Cyan
 Write-Host "║     ManaOS 全サービス一括起動                                    ║" -ForegroundColor Cyan
