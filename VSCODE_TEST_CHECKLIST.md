@@ -106,6 +106,7 @@ Ctrl+Shift+P → "Tasks: Run Task" → "ManaOS: MRLメモリを起動"
 同様に以下も確認:
 - [ ] "ManaOS: 学習システムを起動" (ポート5104)
 - [ ] "ManaOS: LLMルーティングを起動" (ポート5111)
+- [ ] "ManaOS: LLM Router起動（Auto Port）" (標準ポート5211)
 - [ ] "ManaOS: 統合APIを起動" (ポート9502)
 
 ---
