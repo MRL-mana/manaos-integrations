@@ -26,6 +26,9 @@ function Resolve-NotifySettings {
     if ([string]::IsNullOrWhiteSpace($resolvedUrl) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_URL)) {
         $resolvedUrl = $env:MANAOS_WEBHOOK_URL
     }
+    if ([string]::IsNullOrWhiteSpace($resolvedUrl)) {
+        $resolvedUrl = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_URL", "User")
+    }
 
     $resolvedFormat = $InWebhookFormat
     if (-not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_FORMAT)) {
@@ -34,16 +37,29 @@ function Resolve-NotifySettings {
             $resolvedFormat = $envFormat
         }
     }
+    elseif (-not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_FORMAT", "User"))) {
+        $userFormat = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_FORMAT", "User").Trim().ToLowerInvariant()
+        if ($userFormat -in @("generic", "slack", "discord")) {
+            $resolvedFormat = $userFormat
+        }
+    }
 
     $resolvedMention = $InWebhookMention
     if ([string]::IsNullOrWhiteSpace($resolvedMention) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_MENTION)) {
         $resolvedMention = $env:MANAOS_WEBHOOK_MENTION
+    }
+    if ([string]::IsNullOrWhiteSpace($resolvedMention)) {
+        $resolvedMention = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_MENTION", "User")
     }
 
     $resolvedNotifyOnSuccess = $InNotifyOnSuccess
     if (-not $resolvedNotifyOnSuccess -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_NOTIFY_ON_SUCCESS)) {
         $notifyRaw = $env:MANAOS_NOTIFY_ON_SUCCESS.Trim().ToLowerInvariant()
         $resolvedNotifyOnSuccess = ($notifyRaw -in @("1", "true", "yes", "on"))
+    }
+    if (-not $resolvedNotifyOnSuccess -and -not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("MANAOS_NOTIFY_ON_SUCCESS", "User"))) {
+        $notifyRawUser = [Environment]::GetEnvironmentVariable("MANAOS_NOTIFY_ON_SUCCESS", "User").Trim().ToLowerInvariant()
+        $resolvedNotifyOnSuccess = ($notifyRawUser -in @("1", "true", "yes", "on"))
     }
 
     return [ordered]@{
