@@ -3,8 +3,24 @@ name: Tests
 on:
   push:
     branches: [ master, main, develop ]
+    paths:
+      - "**/*.py"
+      - "tests/**"
+      - "requirements*.txt"
+      - ".flake8"
+      - ".pylintrc"
+      - "pyproject.toml"
+      - ".github/workflows/tests.yml"
   pull_request:
     branches: [ master, main, develop ]
+    paths:
+      - "**/*.py"
+      - "tests/**"
+      - "requirements*.txt"
+      - ".flake8"
+      - ".pylintrc"
+      - "pyproject.toml"
+      - ".github/workflows/tests.yml"
 
 jobs:
   test:

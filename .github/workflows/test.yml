@@ -3,8 +3,18 @@ name: ManaOS Integration Tests
 on:
   push:
     branches: [ master, main, develop ]
+    paths:
+      - "**/*.py"
+      - "tests/**"
+      - "requirements*.txt"
+      - ".github/workflows/test.yml"
   pull_request:
     branches: [ master, main, develop ]
+    paths:
+      - "**/*.py"
+      - "tests/**"
+      - "requirements*.txt"
+      - ".github/workflows/test.yml"
   workflow_dispatch:  # 手動実行を許可
 
 jobs:
