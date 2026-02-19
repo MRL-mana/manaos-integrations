@@ -23,6 +23,7 @@ router = EnhancedLLMRouter()
 
 
 AUTO_MODEL_ALIASES = {"auto", "auto-local", "manaos-auto"}
+AUTO_MODEL_DEFAULT = os.getenv("MANAOS_AUTO_MODEL_DEFAULT", "llama3-uncensored:latest").strip()
 
 
 _SAFE_MODEL_ID_PATTERN = re.compile(r"^[A-Za-z0-9._:-]+$")
@@ -324,7 +325,9 @@ def openai_chat_completions():
 
         context = data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
         preferences: Dict[str, Any] = {}
-        if requested_model not in AUTO_MODEL_ALIASES:
+        if requested_model in AUTO_MODEL_ALIASES and AUTO_MODEL_DEFAULT:
+            preferences["force_model"] = AUTO_MODEL_DEFAULT
+        elif requested_model not in AUTO_MODEL_ALIASES:
             preferences["force_model"] = requested_model
 
         if "temperature" in data:

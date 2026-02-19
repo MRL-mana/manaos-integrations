@@ -106,6 +106,7 @@ Set-Content -Path $portStatusPath -Value $portStatus -Encoding UTF8
 
 $env:PORT = [string]$Port
 $env:LLM_SERVER = $LlmServer
+$env:MANAOS_AUTO_MODEL_DEFAULT = "llama3-uncensored:latest"
 $env:PYTHONUTF8 = "1"
 
 Write-Host '========================================'
@@ -113,6 +114,7 @@ Write-Host 'ManaOS OpenAI-Compatible LLM Auto Router'
 Write-Host '========================================'
 Write-Host ('PORT: {0}' -f $env:PORT)
 Write-Host ('LLM_SERVER: {0}' -f $env:LLM_SERVER)
+Write-Host ('AUTO_MODEL_DEFAULT: {0}' -f $env:MANAOS_AUTO_MODEL_DEFAULT)
 Write-Host ('Endpoint: http://127.0.0.1:{0}/v1/chat/completions' -f $env:PORT)
 Write-Host ('Models:   http://127.0.0.1:{0}/v1/models' -f $env:PORT)
 Write-Host ('Status:   {0}' -f $portStatusPath)
