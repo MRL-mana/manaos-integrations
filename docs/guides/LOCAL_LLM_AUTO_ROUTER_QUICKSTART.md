@@ -88,4 +88,5 @@ cd C:\Users\mana4\Desktop\manaos_integrations
 
 - 既定は `LLM_SERVER=ollama`。LM Studioを使う場合だけ `-LlmServer lm_studio` を指定。
 - 既存API (`/api/llm/*`) はそのまま利用できます。
-- `start_manaos_llm_openai_router.ps1` で `-Port 5111` を指定してポート使用中の場合、既存の 5211 ルーターが起動済みなら自動で再利用されます。
+- 標準ポートは `5211`（推奨固定）です。
+- `start_manaos_llm_openai_router.ps1` で互換的に `-Port 5111` を指定した場合でも、5111使用中なら既存の 5211 ルーターを自動再利用します。

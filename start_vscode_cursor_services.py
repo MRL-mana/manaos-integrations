@@ -63,7 +63,7 @@ class ManaOSServiceManager:
         {
             "name": "OpenAI Router",
             "module": "start_manaos_llm_openai_router.ps1",
-            "port": 5111,
+            "port": 5211,
             "description": "OpenAI互換LLMルーター（Auto Port）",
             "type": "powershell"
         },
