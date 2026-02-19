@@ -1,0 +1,5 @@
+# Repository ownership
+* @MRL-mana
+
+# CI and workflow changes require owner review
+.github/workflows/* @MRL-mana

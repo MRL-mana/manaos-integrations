@@ -1,0 +1,28 @@
+name: Mark stale issues and PRs
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-message: 'このIssueは一定期間更新がないため stale 扱いになりました。必要ならコメントで再開してください。'
+          stale-pr-message: 'このPRは一定期間更新がないため stale 扱いになりました。必要なら更新やコメントをお願いします。'
+          close-issue-message: '活動がないためクローズします。必要に応じて再オープンしてください。'
+          close-pr-message: '活動がないためクローズします。必要に応じて再オープンしてください。'
+          stale-issue-label: stale
+          stale-pr-label: stale
+          days-before-stale: 30
+          days-before-close: 7
+          exempt-issue-labels: pinned,security
+          exempt-pr-labels: pinned,security

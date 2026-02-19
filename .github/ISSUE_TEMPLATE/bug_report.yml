@@ -1,0 +1,51 @@
+name: Bug report
+description: 不具合の報告
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      description: 何が起きているかを簡潔に書いてください
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      description: 1,2,3 の形式で再現手順を記載してください
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待される結果
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の結果
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: 実行環境
+      description: 例) Windows 11 / Python 3.11 / branch master
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 関連ログ・スクリーンショット
+      description: エラー出力やスクショがあれば添付
