@@ -440,6 +440,15 @@ $effectiveWebhook = $WebhookUrl
 if ([string]::IsNullOrWhiteSpace($effectiveWebhook)) {
     $effectiveWebhook = $env:OPENWEBUI_TAILSCALE_WEBHOOK_URL
 }
+if ([string]::IsNullOrWhiteSpace($effectiveWebhook)) {
+    $effectiveWebhook = $env:MANAOS_WEBHOOK_URL
+}
+if ([string]::IsNullOrWhiteSpace($effectiveWebhook)) {
+    $effectiveWebhook = [Environment]::GetEnvironmentVariable("OPENWEBUI_TAILSCALE_WEBHOOK_URL", "User")
+}
+if ([string]::IsNullOrWhiteSpace($effectiveWebhook)) {
+    $effectiveWebhook = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_URL", "User")
+}
 
 if ([string]::IsNullOrWhiteSpace($effectiveWebhook)) {
     Write-Host "[INFO] Webhook not set. Skip notification." -ForegroundColor Gray
