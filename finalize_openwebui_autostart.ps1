@@ -108,6 +108,7 @@ Invoke-PowerShellFile -ScriptPath $startScript -Params @{
     EnsureStartupTask = $true
     StartupTaskName = $StartupTaskName
     SkipServe = $true
+    WebhookUrl = $WebhookUrl
 }
 
 Write-Step "Register Verify Autorun"
@@ -124,6 +125,7 @@ Invoke-PowerShellFile -ScriptPath $registerScript -Params @{
 Write-Step "Startup-Path Simulation"
 Invoke-PowerShellFile -ScriptPath $startScript -Params @{
     InvocationSource = "startup_run_key"
+    WebhookUrl = $WebhookUrl
 }
 
 Write-Step "Strict Verification"
