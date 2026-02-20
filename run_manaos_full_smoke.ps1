@@ -42,6 +42,11 @@ function Invoke-Step {
 }
 
 Invoke-Step -Name "ManaOS Core Health" -Action {
+    powershell -NoProfile -ExecutionPolicy Bypass -File .\ensure_optional_services.ps1 | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        throw "Optional services recovery failed (exit=$LASTEXITCODE)"
+    }
+
     python .\check_services_health.py | Out-Host
 }
 

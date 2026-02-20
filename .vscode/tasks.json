@@ -328,6 +328,30 @@
       "problemMatcher": []
     },
     {
+      "label": "OpenWebUI: Light acceptance status check",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/check_openwebui_acceptance_status_light.ps1",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "OpenWebUI: Light acceptance status check (strict)",
+      "type": "shell",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/check_openwebui_acceptance_status_light.ps1 -RequireStatusLine",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "OpenWebUI: Refresh + light check (strict)",
+      "dependsOn": [
+        "OpenWebUI: Notify latest acceptance status",
+        "OpenWebUI: Light acceptance status check (strict)"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
       "label": "ManaOS: ローカルLLM自動ルーター起動",
       "type": "shell",
       "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ${workspaceFolder}/start_manaos_llm_openai_router.ps1 -LlmServer ollama -Port 5211",

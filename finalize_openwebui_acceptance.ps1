@@ -64,6 +64,21 @@ elseif ($automatedOverall -eq "FAIL" -or $manualVerdict -eq "FAIL") {
 
 $summaryMdPath = Join-Path $reportDir ("OpenWebUI_Tool_Acceptance_Final_{0}.md" -f $timestamp)
 $summaryJsonPath = Join-Path $reportDir ("OpenWebUI_Tool_Acceptance_Final_{0}.json" -f $timestamp)
+$optionalDiagPath = Join-Path $scriptDir "logs\optional_services_diag_latest.json"
+
+$optionalDiagExists = Test-Path $optionalDiagPath
+$optionalDiagError = ""
+if ($optionalDiagExists) {
+    try {
+        $diagObj = Get-Content -Path $optionalDiagPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ($diagObj -and $diagObj.error) {
+            $optionalDiagError = [string]$diagObj.error
+        }
+    }
+    catch {
+        $optionalDiagError = ""
+    }
+}
 
 $summaryMd = @"
 # OpenWebUI Tool Acceptance Final Summary
@@ -75,6 +90,7 @@ $summaryMd = @"
 
 - Automated report: $resolvedReportPath
 - Manual record: $resolvedManualPath
+- Optional services diagnostic: $(if ($optionalDiagExists) { $optionalDiagPath } else { "(not found)" })
 
 ## Automated Check Summary
 
@@ -99,6 +115,11 @@ $(if ($finalVerdict -eq "PASS") {
 } else {
 "- Execute remaining manual chat cases, then re-run finalization."
 })
+
+## Optional Services Diagnostic
+
+- Diagnostic file: $(if ($optionalDiagExists) { $optionalDiagPath } else { "(not found)" })
+- Diagnostic error: $(if ([string]::IsNullOrWhiteSpace($optionalDiagError)) { "(none)" } else { $optionalDiagError })
 "@
 
 Set-Content -Path $summaryMdPath -Value $summaryMd -Encoding UTF8
@@ -116,6 +137,11 @@ $summaryObj = [PSCustomObject]@{
         verdict = $manualVerdict
         cases = $manualCases
         notes = $manual.notes
+    }
+    optional_services_diagnostic = [ordered]@{
+        path = if ($optionalDiagExists) { $optionalDiagPath } else { $null }
+        exists = [bool]$optionalDiagExists
+        error = $optionalDiagError
     }
 }
 

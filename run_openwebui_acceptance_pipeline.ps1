@@ -22,6 +22,7 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $autoScript = Join-Path $scriptDir "run_openwebui_tool_acceptance_and_report.ps1"
 $recordScript = Join-Path $scriptDir "record_openwebui_manual_cases.ps1"
 $finalizeScript = Join-Path $scriptDir "finalize_openwebui_acceptance.ps1"
+$optionalEnsureScript = Join-Path $scriptDir "ensure_optional_services.ps1"
 
 Write-Host "=== OpenWebUI Acceptance Pipeline ===" -ForegroundColor Cyan
 
@@ -30,6 +31,15 @@ if (-not (Test-Path $recordScript)) {
 }
 if (-not (Test-Path $finalizeScript)) {
     throw "finalize_openwebui_acceptance.ps1 not found"
+}
+if (-not (Test-Path $optionalEnsureScript)) {
+    throw "ensure_optional_services.ps1 not found"
+}
+
+Write-Host "`n[0/3] Ensure optional services" -ForegroundColor Cyan
+powershell -NoProfile -ExecutionPolicy Bypass -File $optionalEnsureScript
+if ($LASTEXITCODE -ne 0) {
+    throw "Optional services ensure failed (exit=$LASTEXITCODE)"
 }
 
 if (-not $SkipAutomated) {

@@ -6,6 +6,7 @@ Set-Location $scriptDir
 $autoScript = Join-Path $scriptDir "run_openwebui_tool_acceptance_and_report.ps1"
 $recordScript = Join-Path $scriptDir "record_openwebui_manual_cases.ps1"
 $finalizeScript = Join-Path $scriptDir "finalize_openwebui_acceptance.ps1"
+$optionalEnsureScript = Join-Path $scriptDir "ensure_optional_services.ps1"
 $reportDir = Join-Path $scriptDir "Reports"
 
 Write-Host "=== OpenWebUI Acceptance Pipeline (Full Auto) ===" -ForegroundColor Cyan
@@ -13,6 +14,13 @@ Write-Host "=== OpenWebUI Acceptance Pipeline (Full Auto) ===" -ForegroundColor 
 if (-not (Test-Path $autoScript)) { throw "run_openwebui_tool_acceptance_and_report.ps1 not found" }
 if (-not (Test-Path $recordScript)) { throw "record_openwebui_manual_cases.ps1 not found" }
 if (-not (Test-Path $finalizeScript)) { throw "finalize_openwebui_acceptance.ps1 not found" }
+if (-not (Test-Path $optionalEnsureScript)) { throw "ensure_optional_services.ps1 not found" }
+
+Write-Host "`n[0/3] Ensure optional services" -ForegroundColor Cyan
+powershell -NoProfile -ExecutionPolicy Bypass -File $optionalEnsureScript
+if ($LASTEXITCODE -ne 0) {
+    throw "Optional services ensure failed (exit=$LASTEXITCODE)"
+}
 
 Write-Host "`n[1/3] Automated acceptance + report" -ForegroundColor Cyan
 powershell -NoProfile -ExecutionPolicy Bypass -File $autoScript

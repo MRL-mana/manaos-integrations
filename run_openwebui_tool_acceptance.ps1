@@ -24,6 +24,18 @@ function Test-Http {
     }
 }
 
+$optionalEnsureScript = Join-Path $scriptDir "ensure_optional_services.ps1"
+if (Test-Path $optionalEnsureScript) {
+    Write-Host "`n[0/4] Ensure optional services" -ForegroundColor Cyan
+    powershell -NoProfile -ExecutionPolicy Bypass -File $optionalEnsureScript | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        Write-Ng ("optional services ensure failed (exit={0})" -f $LASTEXITCODE)
+    }
+}
+else {
+    Write-WarnMsg "ensure_optional_services.ps1 not found, skipping"
+}
+
 Write-Host "`n[1/4] Run full startup" -ForegroundColor Cyan
 $fullStart = Join-Path $scriptDir "start_openwebui_manaos_full.ps1"
 if (Test-Path $fullStart) {
