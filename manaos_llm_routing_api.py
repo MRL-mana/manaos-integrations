@@ -324,6 +324,14 @@ def openai_chat_completions():
             return jsonify({"error": {"message": "messages からテキストを抽出できません", "type": "invalid_request_error"}}), 400
 
         context = data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
+        generation: Dict[str, Any] = {}
+        for key in ["temperature", "max_tokens", "top_p", "stop", "timeout_sec"]:
+            if key in data:
+                generation[key] = data.get(key)
+        if generation:
+            context = dict(context)
+            context["_generation"] = generation
+
         preferences: Dict[str, Any] = {}
         if requested_model in AUTO_MODEL_ALIASES and AUTO_MODEL_DEFAULT:
             preferences["force_model"] = AUTO_MODEL_DEFAULT
@@ -344,6 +352,15 @@ def openai_chat_completions():
             return jsonify({"error": {"message": error_message, "type": "server_error"}}), 500
 
         content = result.get("response") or ""
+        if "max_tokens" in data:
+            try:
+                requested_max_tokens = max(1, min(4096, int(data.get("max_tokens"))))
+                max_chars = requested_max_tokens * 6
+                if len(content) > max_chars:
+                    content = content[:max_chars].rstrip()
+            except (TypeError, ValueError):
+                pass
+
         resolved_model = str(result.get("model") or requested_model)
         completion_id = f"chatcmpl-{uuid.uuid4().hex[:24]}"
 
