@@ -25,6 +25,10 @@ on:
         # 毎日午前3時（JST）にセキュリティスキャン実行
         - cron: '0 18 * * *'
 
+  concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
 env:
     PYTHON_VERSION: "3.11"
 
