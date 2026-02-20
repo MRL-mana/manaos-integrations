@@ -27,6 +27,24 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ".\check_openwebui_productio
   -RequireStartupSource -AutoRecoverOnFailure
 ```
 
+## OpenWebUI Acceptance Monitoring
+
+### One-time Registration (Daily + Light Monitor)
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\register_openwebui_acceptance_daily_task.ps1" `
+  -AlsoRegisterLightMonitor -LightIntervalMinutes 5
+```
+
+### Manual Run (Non-stop)
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& '.\run_openwebui_acceptance_pipeline_full_auto.ps1'; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & '.\check_latest_openwebui_acceptance.ps1' -RequirePass; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & '.\notify_openwebui_acceptance_pass.ps1' -WriteStatusFile"
+```
+
+### Light Monitor Job (on-demand)
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\run_openwebui_acceptance_status_monitor_job.ps1"
+```
+
 ## Environment Variables (Advanced)
 
 Set these once to enable notifications globally:
