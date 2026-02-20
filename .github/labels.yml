@@ -1,63 +1,63 @@
 - name: bug
-  color: d73a4a
+  color: "d73a4a"
   description: Something isn't working
 
 - name: enhancement
-  color: a2eeef
+  color: "a2eeef"
   description: New feature or request
 
 - name: dependencies
-  color: 0366d6
+  color: "0366d6"
   description: Dependency updates
 
 - name: ci
-  color: 1d76db
+  color: "1d76db"
   description: CI or workflow related changes
 
 - name: docs
-  color: 0075ca
+  color: "0075ca"
   description: Documentation changes
 
 - name: python
-  color: 3572A5
+  color: "3572A5"
   description: Python related changes
 
 - name: powershell
-  color: 012456
+  color: "012456"
   description: PowerShell related changes
 
 - name: tests
-  color: 5319e7
+  color: "5319e7"
   description: Test related changes
 
 - name: stale
-  color: ededed
+  color: "ededed"
   description: No recent activity
 
 - name: size/XS
-  color: c2e0c6
+  color: "c2e0c6"
   description: Small PR (<= 50 changed lines)
 
 - name: size/S
-  color: 7cc576
+  color: "7cc576"
   description: PR size 51-200 changed lines
 
 - name: size/M
-  color: fbca04
+  color: "fbca04"
   description: PR size 201-500 changed lines
 
 - name: size/L
-  color: f9d0c4
+  color: "f9d0c4"
   description: PR size 501-1000 changed lines
 
 - name: size/XL
-  color: e11d21
+  color: "e11d21"
   description: Large PR (> 1000 changed lines)
 
 - name: needs-splitting
-  color: b60205
+  color: "b60205"
   description: PR is too large and should be split
 
 - name: needs-info
-  color: d876e3
+  color: "d876e3"
   description: More details are required before review
