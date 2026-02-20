@@ -27,7 +27,6 @@ def check_environment_variables() -> Dict[str, Any]:
         "CIVITAI_API_KEY": "CivitAI統合",
         
         # Mem0統合
-        "OPENAI_API_KEY": "Mem0統合（OpenAI API）",
         
         # Google Drive統合
         "GOOGLE_DRIVE_CREDENTIALS": "Google Drive統合（credentials.json）",
@@ -56,6 +55,7 @@ def check_environment_variables() -> Dict[str, Any]:
         "COMFYUI_URL": "ComfyUI統合（URL）",
         "MANAOS_INTEGRATION_PORT": "ManaOS統合APIサーバー（ポート）",
         "MANAOS_INTEGRATION_HOST": "ManaOS統合APIサーバー（ホスト）",
+        "OPENAI_API_KEY": "Mem0統合（OpenAI API・任意）",
     }
     
     results = {

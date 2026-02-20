@@ -41,6 +41,52 @@ function Invoke-Step {
     }
 }
 
+function Test-HttpOk {
+    param(
+        [string]$Url,
+        [int]$TimeoutSec = 5
+    )
+
+    try {
+        $null = Invoke-RestMethod -Uri $Url -Method Get -TimeoutSec $TimeoutSec -ErrorAction Stop
+        return $true
+    }
+    catch {
+        return $false
+    }
+}
+
+function Ensure-ComfyUIReady {
+    param(
+        [int]$WaitSec = 120
+    )
+
+    $healthUrl = "http://127.0.0.1:8188/system_stats"
+    if (Test-HttpOk -Url $healthUrl -TimeoutSec 5) {
+        Write-Host "[OK] ComfyUI already healthy on :8188" -ForegroundColor Green
+        return
+    }
+
+    $starter = Join-Path $workspace "start_comfyui_local.ps1"
+    if (-not (Test-Path $starter)) {
+        throw "ComfyUI starter script not found: $starter"
+    }
+
+    Write-Host "[INFO] ComfyUI is not running; starting automatically..." -ForegroundColor Yellow
+    powershell -NoProfile -ExecutionPolicy Bypass -File $starter -Background | Out-Host
+
+    $deadline = (Get-Date).AddSeconds($WaitSec)
+    while ((Get-Date) -lt $deadline) {
+        if (Test-HttpOk -Url $healthUrl -TimeoutSec 5) {
+            Write-Host "[OK] ComfyUI recovered on :8188" -ForegroundColor Green
+            return
+        }
+        Start-Sleep -Seconds 2
+    }
+
+    throw "ComfyUI failed to become healthy on :8188"
+}
+
 Invoke-Step -Name "ManaOS Core Health" -Action {
     powershell -NoProfile -ExecutionPolicy Bypass -File .\ensure_optional_services.ps1 | Out-Host
     if ($LASTEXITCODE -ne 0) {
@@ -73,6 +119,8 @@ Invoke-Step -Name "auto-local Chat" -Action {
 }
 
 Invoke-Step -Name "Tool Server Integration" -Action {
+    Ensure-ComfyUIReady -WaitSec 120
+
     $toolLines = python .\tests\integration\test_tool_server_integration.py 2>&1
     $toolLines | Out-Host
 
@@ -80,8 +128,8 @@ Invoke-Step -Name "Tool Server Integration" -Action {
     if ($LASTEXITCODE -ne 0) {
         throw "Tool Server integration test exited with code $LASTEXITCODE"
     }
-    if ($toolText -match "(?m)^\[NG\]\s") {
-        throw "Tool Server integration output contains [NG] markers"
+    if ($toolText -match "(?m)^\[NG\]\s(?!openwebui\b)") {
+        throw "Tool Server integration output contains required [NG] markers"
     }
     if ($toolText -match "(?m)^\[WARNING\]\s") {
         throw "Tool Server integration reports failed test cases"

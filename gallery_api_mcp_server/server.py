@@ -6,6 +6,7 @@ Gallery API Server MCPサーバー
 import os
 import sys
 import json
+import logging
 from manaos_logger import get_logger, get_service_logger
 import requests
 from typing import Any, Dict, List, Optional
@@ -120,7 +121,17 @@ if MCP_AVAILABLE:
                         },
                         "mufufu_mode": {
                             "type": "boolean",
-                            "description": "ムフフモード（デフォルト: false）",
+                            "description": "ムフフモード（セクシー寄り・身体崩れ対策、デフォルト: false）",
+                            "default": False
+                        },
+                        "lab_mode": {
+                            "type": "boolean",
+                            "description": "闇の実験室モード（ネガ最小限・表現はモデルに委ねる、デフォルト: false）",
+                            "default": False
+                        },
+                        "use_intent_routing": {
+                            "type": "boolean",
+                            "description": "プロンプトからムフフ/実験室を自動推定（デフォルト: false）",
                             "default": False
                         },
                         "negative_prompt": {

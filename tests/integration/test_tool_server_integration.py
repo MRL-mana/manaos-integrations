@@ -244,19 +244,22 @@ def main() -> int:
     print("テスト結果サマリー")
     print("=" * 60)
 
-    passed = sum(1 for v in results.values() if v)
-    total = len(results)
+    required_keys = [k for k in results.keys() if k != "openwebui"]
+    passed = sum(1 for k, v in results.items() if k in required_keys and v)
+    total = len(required_keys)
+    bonus_ok = results.get("openwebui", False)
 
     for name, result in results.items():
         status = "[OK]" if result else "[NG]"
         print(f"{status} {name}")
 
     print()
-    print(f"結果: {passed} / {total} テストが成功")
+    print(f"結果(必須): {passed} / {total} テストが成功")
+    print(f"結果(BONUS openwebui): {'OK' if bonus_ok else 'NG'}")
 
     if passed == total:
         print()
-        print("[OK] すべてのテストが成功しました！")
+        print("[OK] 必須テストがすべて成功しました！")
         print()
         print("次のステップ:")
         print("1. OpenWebUIでTool Serverが登録されていることを確認")

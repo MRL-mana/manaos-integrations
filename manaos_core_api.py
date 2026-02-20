@@ -781,11 +781,12 @@ class ManaOSCoreAPI:
 
                 # sd-prompt.ps1 と同様の正規化（先頭の定型句除去）
                 normalized = re.sub(
-                    r"^(?i)\s*(create|generate|make)\s+(an?\s+)?(image|picture|photo(graph)?|illustration|artwork)\s+of\s*[:,-]?\s*",
+                    r"^(create|generate|make)\s+(an?\s+)?(image|picture|photo(graph)?|illustration|artwork)\s+of\s*[:,-]?\s*",
                     "",
                     raw_prompt,
+                    flags=re.IGNORECASE
                 )
-                normalized = re.sub(r"^(?i)\s*(prompt|positive prompt)\s*[:,-]\s*", "", normalized)
+                normalized = re.sub(r"^(prompt|positive prompt)\s*[:,-]\s*", "", normalized, flags=re.IGNORECASE)
                 generated_prompt = normalized.strip() or raw_prompt
 
                 default_negative = "lowres, worst quality, low quality, blurry, jpeg artifacts, watermark, text, logo, bad anatomy, bad hands, extra fingers"

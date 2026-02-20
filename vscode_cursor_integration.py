@@ -6,7 +6,6 @@ MRLメモリ、学習システム、記憶機能をVSCode/Cursorに接続
 """
 
 import json
-import io
 import os
 import sys
 from pathlib import Path
@@ -14,6 +13,7 @@ from typing import Any, Dict
 
 try:
     from manaos_integrations._paths import (
+        GALLERY_PORT,
         LEARNING_SYSTEM_PORT,
         LLM_ROUTING_PORT,
         MRL_MEMORY_PORT,
@@ -22,16 +22,18 @@ try:
 except Exception:  # pragma: no cover
     try:
         from _paths import (  # type: ignore
+            GALLERY_PORT,
             LEARNING_SYSTEM_PORT,
             LLM_ROUTING_PORT,
             MRL_MEMORY_PORT,
             UNIFIED_API_PORT,
         )
     except Exception:  # pragma: no cover
+        GALLERY_PORT = int(os.getenv("GALLERY_PORT", "5559"))
         MRL_MEMORY_PORT = int(os.getenv("MRL_MEMORY_PORT", "5105"))
         LEARNING_SYSTEM_PORT = int(os.getenv("LEARNING_SYSTEM_PORT", "5126"))
         LLM_ROUTING_PORT = int(os.getenv("LLM_ROUTING_PORT", "5111"))
-        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9510"))
+        UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9502"))
 
 
 _ENCODINGS_TO_NORMALIZE = ("cp932", "cp936", "cp949")
@@ -153,10 +155,12 @@ class VSCodeManaOSIntegration:
     
     def create_vscode_mcp_servers(self) -> Dict[str, Any]:
         """VSCode用に最低限のManaOS MCPサーバー設定を作成"""
-        unified_api_port = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9510"))
+        unified_api_port = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9502"))
         unified_api_url = os.getenv("MANAOS_INTEGRATION_API_URL") or f"http://127.0.0.1:{unified_api_port}"
+        gallery_port = int(os.getenv("GALLERY_PORT", str(GALLERY_PORT)))
+        gallery_url = os.getenv("GALLERY_API_URL") or f"http://127.0.0.1:{gallery_port}"
         return {
-            # VS Codeから ComfyUI生成などを呼ぶために必須
+            # VS Codeから ComfyUI生成・ムフフ/裏モード画像生成を呼ぶために必須
             "manaos-unified-api": {
                 "command": "python",
                 "args": ["-m", "unified_api_mcp_server.server"],
@@ -189,6 +193,17 @@ class VSCodeManaOSIntegration:
                 },
                 "cwd": str(self.manaos_path),
             },
+            # 画像生成（ムフフ・裏モード対応）gallery_generate_image
+            "manaos-gallery-api": {
+                "command": "python",
+                "args": ["-m", "gallery_api_mcp_server.server"],
+                "env": {
+                    "PYTHONPATH": str(self.manaos_path),
+                    "GALLERY_API_URL": gallery_url,
+                    "MANAOS_LOG_TO_STDERR": "1",
+                },
+                "cwd": str(self.manaos_path),
+            },
         }
 
     def create_cline_mcp_servers(self) -> Dict[str, Any]:
@@ -196,8 +211,10 @@ class VSCodeManaOSIntegration:
         py_cmd = "py" if sys.platform == "win32" else "python"
         py_args_prefix = ["-3.10"] if sys.platform == "win32" else []
 
-        unified_api_port = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9510"))
+        unified_api_port = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9502"))
         unified_api_url = os.getenv("MANAOS_INTEGRATION_API_URL") or f"http://127.0.0.1:{unified_api_port}"
+        gallery_port = int(os.getenv("GALLERY_PORT", str(GALLERY_PORT)))
+        gallery_url = os.getenv("GALLERY_API_URL") or f"http://127.0.0.1:{gallery_port}"
 
         return {
             "manaos-unified-api": {
@@ -234,6 +251,16 @@ class VSCodeManaOSIntegration:
                 "env": {
                     "PYTHONPATH": str(self.manaos_path),
                     "PICO_HID_MCP_HEALTH_PORT": "5136",
+                    "MANAOS_LOG_TO_STDERR": "1",
+                },
+                "cwd": str(self.manaos_path),
+            },
+            "manaos-gallery-api": {
+                "command": py_cmd,
+                "args": [*py_args_prefix, "-m", "gallery_api_mcp_server.server"],
+                "env": {
+                    "PYTHONPATH": str(self.manaos_path),
+                    "GALLERY_API_URL": gallery_url,
                     "MANAOS_LOG_TO_STDERR": "1",
                 },
                 "cwd": str(self.manaos_path),
@@ -334,13 +361,35 @@ class VSCodeManaOSIntegration:
         return True
     
     def setup_cursor(self) -> bool:
-        """Cursorの統合設定（既に実行済みなので確認）"""
+        """Cursorの統合設定を確認し、既知のURL不整合を自動補正"""
         print("📌 Cursor設定を確認中...")
         
         mcp_path = self.get_cursor_mcp_config_path()
         if mcp_path.exists():
             with open(mcp_path, 'r', encoding='utf-8') as f:
                 mcp_config = json.load(f)
+
+            updated = 0
+            mcp_servers = mcp_config.get("mcpServers", {})
+            if isinstance(mcp_servers, dict):
+                for _name, server in mcp_servers.items():
+                    if not isinstance(server, dict):
+                        continue
+                    env = server.get("env")
+                    if not isinstance(env, dict):
+                        continue
+                    api_url = env.get("MANAOS_INTEGRATION_API_URL")
+                    if isinstance(api_url, str) and api_url.startswith("http://localhost:"):
+                        env["MANAOS_INTEGRATION_API_URL"] = api_url.replace(
+                            "http://localhost:", "http://127.0.0.1:", 1
+                        )
+                        updated += 1
+
+            if updated > 0:
+                with open(mcp_path, 'w', encoding='utf-8') as f:
+                    json.dump(mcp_config, f, indent=2, ensure_ascii=False)
+                print(f"✅ Cursor MCP設定を補正: {mcp_path}")
+                print(f"   localhost→127.0.0.1 変換: {updated} サーバー")
             
             print(f"✅ Cursor MCP設定を確認: {mcp_path}")
             print(f"   登録済みサーバー数: {len(mcp_config.get('mcpServers', {}))}")
@@ -370,6 +419,10 @@ class VSCodeManaOSIntegration:
         print("     python -m mrl_memory_system")
         print("     python -m learning_system_api")
         print("     python -m unified_api_mcp_server")
+        print("  4. 画像生成（VS Code / Cursor）:")
+        print("     - VS Code: Tasks: Run Task → ManaOS: Generate Image / (Mufufu) / (Lab) / (JP→EN)")
+        print("     - Cursor/Cline: 'ComfyUIで〇〇の画像を生成して' または gallery_generate_image（ムフフ・裏モード）")
+        print("     - ガイド: docs/IMAGE_GENERATION_GUIDE.md")
         
         print("\n🔌 接続確認:")
         print("  VSCode/Cursorの出力パネルでManaOSサービスの起動を確認")

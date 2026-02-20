@@ -149,7 +149,7 @@ if MCP_AVAILABLE:
             [
                 Tool(
                     name="comfyui_generate_image",
-                    description="ComfyUIで画像を生成します",
+                    description="ComfyUIで画像を生成します。ムフフ・裏モード対応。",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -174,10 +174,57 @@ if MCP_AVAILABLE:
                                 "default": 20,
                             },
                             "seed": {"type": "integer", "description": "シード値（オプション）"},
+                            "mufufu_mode": {
+                                "type": "boolean",
+                                "description": "ムフフモード（セクシー寄り・身体崩れ対策、デフォルト: false）",
+                                "default": False,
+                            },
+                            "lab_mode": {
+                                "type": "boolean",
+                                "description": "闇の実験室モード（ネガ最小限・表現はモデルに委ねる、デフォルト: false）",
+                                "default": False,
+                            },
+                            "profile": {
+                                "type": "string",
+                                "description": "プロファイル（lab で裏モード、safe で通常）",
+                            },
                         },
                         "required": ["prompt"],
                     },
-                )
+                ),
+                Tool(
+                    name="generate_sd_prompt",
+                    description="日本語の説明からStable Diffusion用の英語プロンプトを生成します（Ollama llama3-uncensored使用）。画像生成前に日本語→英語変換に使う。",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "description": {
+                                "type": "string",
+                                "description": "画像の日本語説明（必須）",
+                            },
+                            "prompt": {
+                                "type": "string",
+                                "description": "descriptionの別名",
+                            },
+                            "model": {
+                                "type": "string",
+                                "description": "Ollamaモデル名（デフォルト: llama3-uncensored）",
+                                "default": "llama3-uncensored",
+                            },
+                            "temperature": {
+                                "type": "number",
+                                "description": "温度 0.0-1.0（デフォルト: 0.9）",
+                                "default": 0.9,
+                            },
+                            "with_negative": {
+                                "type": "boolean",
+                                "description": "デフォルトのネガティブプロンプトも返す",
+                                "default": False,
+                            },
+                        },
+                        "required": [],
+                    },
+                ),
             ]
         )
 
@@ -560,6 +607,16 @@ if MCP_AVAILABLE:
             # ComfyUI
             elif name == "comfyui_generate_image":
                 result = call_api("/api/comfyui/generate", "POST", args)
+
+            # SDプロンプト生成（日本語→英語）
+            elif name == "generate_sd_prompt":
+                api_args = {
+                    "description": args.get("description", args.get("prompt", "")),
+                    "model": args.get("model", "llama3-uncensored"),
+                    "temperature": args.get("temperature", 0.9),
+                    "with_negative": args.get("with_negative", False),
+                }
+                result = call_api("/api/sd-prompt/generate", "POST", api_args)
 
             # SVI
             elif name == "svi_generate_video":

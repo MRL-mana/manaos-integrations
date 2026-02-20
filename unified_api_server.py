@@ -1625,6 +1625,38 @@ def api_integrations_status():
     return jsonify(out), 200
 
 
+@app.route("/api/sd-prompt/generate", methods=["POST"])
+def api_sd_prompt_generate():
+    """日本語の説明からStable Diffusion用の英語プロンプトを生成（Ollama）"""
+    data = request.get_json(silent=True) or {}
+    description = (data.get("description") or data.get("prompt") or "").strip()
+    if not description:
+        return _json_error("description or prompt is required", 400, error="bad_request", namespace="sd_prompt")
+
+    try:
+        from manaos_core_api import ManaOSCoreAPI
+
+        api = ManaOSCoreAPI()
+        result = api.act(
+            "generate_sd_prompt",
+            {
+                "description": description,
+                "prompt": description,
+                "model": data.get("model", "llama3-uncensored"),
+                "temperature": float(data.get("temperature", 0.9)),
+                "with_negative": bool(data.get("with_negative", False)),
+            },
+        )
+    except Exception as e:
+        logger.warning(f"SD prompt generate error: {e}")
+        return _json_error("sd_prompt_failed", 500, error="internal_error", namespace="sd_prompt")
+
+    if isinstance(result, dict) and result.get("success"):
+        return jsonify(result), 200
+    err = result.get("error", "プロンプトの生成に失敗しました") if isinstance(result, dict) else str(result)
+    return jsonify({"success": False, "error": err}), 500
+
+
 @app.route("/api/comfyui/generate", methods=["POST"])
 def api_comfyui_generate():
     """ComfyUIで画像生成（prompt_id を返す）（要認証）"""
@@ -1647,6 +1679,48 @@ def api_comfyui_generate():
     seed = int(data.get("seed", -1) if data.get("seed", -1) is not None else -1)
     model = (data.get("model") or data.get("ckpt_name") or "").strip()
     loras = data.get("loras")
+    mufufu_mode = bool(data.get("mufufu_mode", False))
+    lab_mode = bool(data.get("lab_mode", False)) or (data.get("profile") == "lab")
+    if not lab_mode and (os.getenv("MANAOS_IMAGE_DEFAULT_PROFILE") or "").strip().lower() == "lab":
+        lab_mode = True
+        logger.info("MANAOS_IMAGE_DEFAULT_PROFILE=lab: 闇の実験室をデフォルトにしました")
+
+    # 闇の実験室（lab_mode）: ネガは崩壊防止のみ
+    if lab_mode:
+        try:
+            from mufufu_config_lab import LAB_NEGATIVE_PROMPT
+            from mufufu_config import ANATOMY_POSITIVE_TAGS, OPTIMIZED_PARAMS
+            negative_prompt = f"{negative_prompt}, {LAB_NEGATIVE_PROMPT}".strip(", ") if negative_prompt else LAB_NEGATIVE_PROMPT
+            if ANATOMY_POSITIVE_TAGS:
+                prompt = f"{ANATOMY_POSITIVE_TAGS}, {prompt}"
+            if OPTIMIZED_PARAMS and (not steps or steps < 30):
+                steps = OPTIMIZED_PARAMS.get("steps", 50)
+            if OPTIMIZED_PARAMS and not cfg_scale:
+                cfg_scale = OPTIMIZED_PARAMS.get("guidance_scale", 7.5)
+            if OPTIMIZED_PARAMS:
+                sampler = OPTIMIZED_PARAMS.get("sampler", sampler)
+                scheduler = OPTIMIZED_PARAMS.get("scheduler", scheduler)
+            logger.info("✅ 闇の実験室（lab_mode）: ネガ最小限・表現はモデルに委ねます")
+        except ImportError as e:
+            logger.warning(f"mufufu_config_lab が見つかりません: {e}")
+
+    # ムフフモード: 身体崩れ対策強化（lab_mode でないとき）
+    elif mufufu_mode:
+        try:
+            from mufufu_config import MUFUFU_NEGATIVE_PROMPT, ANATOMY_POSITIVE_TAGS, OPTIMIZED_PARAMS
+            negative_prompt = f"{negative_prompt}, {MUFUFU_NEGATIVE_PROMPT}".strip(", ") if negative_prompt else MUFUFU_NEGATIVE_PROMPT
+            if ANATOMY_POSITIVE_TAGS:
+                prompt = f"{ANATOMY_POSITIVE_TAGS}, {prompt}"
+            if OPTIMIZED_PARAMS and (not steps or steps < 30):
+                steps = OPTIMIZED_PARAMS.get("steps", 50)
+            if OPTIMIZED_PARAMS and not cfg_scale:
+                cfg_scale = OPTIMIZED_PARAMS.get("guidance_scale", 7.5)
+            if OPTIMIZED_PARAMS:
+                sampler = OPTIMIZED_PARAMS.get("sampler", sampler)
+                scheduler = OPTIMIZED_PARAMS.get("scheduler", scheduler)
+            logger.info("✅ ムフフモード: 身体崩れ対策タグを適用しました")
+        except ImportError as e:
+            logger.warning(f"mufufu_config が見つかりません: {e}")
 
     try:
         prompt_id = comfyui.generate_image(
