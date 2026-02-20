@@ -35,3 +35,4 @@ foreach ($proc in $targets | Sort-Object ProcessId -Unique) {
 }
 
 Write-Host ("[OK] Stopped router-related processes: {0}" -f $stopped) -ForegroundColor Green
+exit 0

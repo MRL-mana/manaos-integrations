@@ -130,12 +130,17 @@ if ($script:RouterAlreadyRunning) {
 }
 
 if ($pythonCmd.Count -eq 2) {
-    & $pythonCmd[0] $pythonCmd[1] $apiPath
+    $proc = Start-Process -FilePath $pythonCmd[0] -ArgumentList @($pythonCmd[1], $apiPath) -PassThru
 }
 else {
-    & $pythonCmd[0] $apiPath
+    $proc = Start-Process -FilePath $pythonCmd[0] -ArgumentList @($apiPath) -PassThru
 }
 
-if ($LASTEXITCODE -ne 0) {
-    throw "Router API process exited with code $LASTEXITCODE"
+Start-Sleep -Seconds 2
+
+if (Test-RouterHealth -TargetPort $Port) {
+    Write-Host ("[OK] Router started (PID: {0}) on port {1}" -f $proc.Id, $Port) -ForegroundColor Green
+    exit 0
 }
+
+throw "Router did not become healthy on port $Port"
