@@ -33,6 +33,7 @@ $checks = @(
     @{ Name = "Tool Server OpenAPI"; Pattern = "[OK]  Tool Server OpenAPI (200)" },
     @{ Name = "Unified API Health"; Pattern = "[OK]  Unified API Health (200)" },
     @{ Name = "Open WebUI"; Pattern = "[OK]  Open WebUI (200)" },
+    @{ Name = "auto-local sanity"; Pattern = "[OK]  auto-local sanity test passed" },
     @{ Name = "Integration test"; Pattern = "[OK]  Integration test passed" },
     @{ Name = "Automated checks summary"; Pattern = "[OK]  All automated checks passed" }
 )

@@ -53,6 +53,26 @@ foreach ($item in $checks) {
     }
 }
 
+Write-Host "`n[2.5/4] Run auto-local sanity test" -ForegroundColor Cyan
+$autoLocalTest = Join-Path $scriptDir "test_auto_local_chat.ps1"
+if (Test-Path $autoLocalTest) {
+    $autoLocalLines = powershell -NoProfile -ExecutionPolicy Bypass -File $autoLocalTest -RequestTimeoutSec 360 -MaxRetries 4 -WarmupTimeoutSec 60 2>&1
+    $autoLocalLines | Out-Host
+
+    $autoLocalText = ($autoLocalLines | Out-String)
+    if ($LASTEXITCODE -eq 0 -and $autoLocalText -match "(?m)^status=OK\s*$") {
+        Write-Ok "auto-local sanity test passed"
+    }
+    else {
+        $failed++
+        Write-Ng ("auto-local sanity test failed (exit={0})" -f $LASTEXITCODE)
+    }
+}
+else {
+    $failed++
+    Write-Ng "auto-local test file not found"
+}
+
 Write-Host "`n[3/4] Run Tool Server integration test" -ForegroundColor Cyan
 $integrationTest = Join-Path $scriptDir "tests\integration\test_tool_server_integration.py"
 if (Test-Path $integrationTest) {

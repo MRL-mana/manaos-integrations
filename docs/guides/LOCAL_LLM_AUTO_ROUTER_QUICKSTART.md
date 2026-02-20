@@ -62,7 +62,7 @@ Invoke-RestMethod -Uri "http://127.0.0.1:5211/v1/chat/completions" -Method Post 
 
 ```powershell
 cd C:\Users\mana4\Desktop\manaos_integrations
-.\test_auto_local_chat.ps1
+.\test_auto_local_chat.ps1 -RequestTimeoutSec 360 -MaxRetries 4 -WarmupTimeoutSec 60
 ```
 
 ## 4.5) ManaOS フル統合スモークテスト
