@@ -120,6 +120,10 @@ temp_page_*.png
 # Generated reports/docs (keep explicit and scoped)
 docs/temp_reports/
 docs/**/temp_reports/
+Reports/OpenWebUI_Tool_Acceptance_*.md
+Reports/OpenWebUI_Tool_Acceptance_*.json
+Reports/OpenWebUI_Tool_Acceptance_*.log
+Reports/OpenWebUI_Manual_Case_Record_*.json
 
 # Generated completion reports (keep only curated index files)
 docs/completion_reports/**
