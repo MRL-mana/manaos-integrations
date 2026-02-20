@@ -83,6 +83,8 @@ class GenerateImageRequest(BaseModel):
     height: int = Field(512, description="画像の高さ")
     steps: int = Field(20, description="生成ステップ数")
     negative_prompt: Optional[str] = Field(None, description="ネガティブプロンプト")
+    mufufu_mode: bool = Field(False, description="ムフフモード（セクシー寄り・身体崩れ対策）")
+    lab_mode: bool = Field(False, description="闇の実験室モード（ネガ最小限）")
 
 
 class GenerateImageResponse(BaseModel):
@@ -717,7 +719,9 @@ async def generate_image(request: GenerateImageRequest):
             "prompt": request.prompt,
             "width": request.width,
             "height": request.height,
-            "steps": request.steps
+            "steps": request.steps,
+            "mufufu_mode": request.mufufu_mode,
+            "lab_mode": request.lab_mode,
         }
 
         if request.negative_prompt:

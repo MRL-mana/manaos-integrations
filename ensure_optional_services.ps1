@@ -66,12 +66,12 @@ function Test-EndpointOk {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Url,
-        [int]$TimeoutSec = 4
+        [int]$TimeoutSec = 12
     )
 
     try {
-        $resp = Invoke-WebRequest -UseBasicParsing -Uri $Url -Method Get -TimeoutSec $TimeoutSec
-        return ($resp.StatusCode -eq 200)
+        $null = Invoke-RestMethod -Uri $Url -Method Get -TimeoutSec $TimeoutSec -ErrorAction Stop
+        return $true
     }
     catch {
         return $false
@@ -87,7 +87,7 @@ function Wait-Endpoint {
 
     $deadline = (Get-Date).AddSeconds($WaitSec)
     while ((Get-Date) -lt $deadline) {
-        if (Test-EndpointOk -Url $Url -TimeoutSec 4) {
+        if (Test-EndpointOk -Url $Url -TimeoutSec 12) {
             return $true
         }
         Start-Sleep -Seconds 2

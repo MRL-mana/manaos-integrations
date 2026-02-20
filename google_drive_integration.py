@@ -42,8 +42,19 @@ class GoogleDriveIntegration(BaseIntegration):
             token_path: トークンファイルのパス
         """
         super().__init__("GoogleDrive")
-        self.credentials_path = Path(credentials_path)
-        self.token_path = Path(token_path)
+        module_dir = Path(__file__).parent
+        credentials_candidate = Path(credentials_path)
+        token_candidate = Path(token_path)
+        self.credentials_path = (
+            credentials_candidate
+            if credentials_candidate.is_absolute()
+            else module_dir / credentials_candidate
+        )
+        self.token_path = (
+            token_candidate
+            if token_candidate.is_absolute()
+            else module_dir / token_candidate
+        )
         self.service = None
         self.creds = None
     
