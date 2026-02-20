@@ -99,6 +99,14 @@ if (-not $response) {
 }
 
 Write-Host "selected_model=$($response.model)"
-Write-Host "reply=$($response.choices[0].message.content)"
+$replyText = [string]$response.choices[0].message.content
+if ($replyText.Length -gt 240) {
+    $replyPreview = $replyText.Substring(0, 240) + "..."
+}
+else {
+    $replyPreview = $replyText
+}
+Write-Host "reply_preview=$replyPreview"
+Write-Host "reply_length=$($replyText.Length)"
 Write-Host "status=OK"
 exit 0

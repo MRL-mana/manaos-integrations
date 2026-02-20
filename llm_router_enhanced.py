@@ -241,21 +241,57 @@ class EnhancedLLMRouter:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
         ]
+
+        generation = context.get("_generation") if isinstance(context.get("_generation"), dict) else {}
+        req_temperature = generation.get("temperature", 0.2)
+        req_max_tokens = generation.get("max_tokens", 256)
+        req_top_p = generation.get("top_p", 1.0)
+        req_stop = generation.get("stop")
+        req_timeout = generation.get("timeout_sec", 300.0)
+
+        try:
+            temperature = max(0.0, min(2.0, float(req_temperature)))
+        except (TypeError, ValueError):
+            temperature = 0.2
+
+        try:
+            max_tokens = max(1, min(4096, int(req_max_tokens)))
+        except (TypeError, ValueError):
+            max_tokens = 256
+
+        try:
+            top_p = max(0.0, min(1.0, float(req_top_p)))
+        except (TypeError, ValueError):
+            top_p = 1.0
+
+        try:
+            timeout_sec = max(30.0, min(600.0, float(req_timeout)))
+        except (TypeError, ValueError):
+            timeout_sec = 300.0
         
         if self.llm_server == "ollama":
             installed_models = self._get_ollama_installed_models()
             if installed_models and model not in installed_models:
                 model = self._resolve_ollama_model(model, installed_models)
 
+            payload = {
+                "model": model,
+                "messages": messages,
+                "stream": False,
+                "options": {
+                    "temperature": temperature,
+                    "num_predict": max_tokens,
+                    "top_p": top_p,
+                }
+            }
+            if isinstance(req_stop, list) and req_stop:
+                payload["options"]["stop"] = req_stop
+
             # Ollama API
             response = requests.post(
                 f"{self.ollama_url}/api/chat",
-                json={
-                    "model": model,
-                    "messages": messages,
-                    "stream": False
-                },
-                timeout=300.0
+                json=payload,
+                timeout=timeout_sec
             )
             
             if response.status_code != 200:
@@ -270,10 +306,12 @@ class EnhancedLLMRouter:
                 json={
                     "model": model,
                     "messages": messages,
-                    "temperature": 0.7,
-                    "max_tokens": 2048
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                    "top_p": top_p,
+                    "stop": req_stop if isinstance(req_stop, list) else None
                 },
-                timeout=300.0
+                timeout=timeout_sec
             )
             
             if response.status_code != 200:

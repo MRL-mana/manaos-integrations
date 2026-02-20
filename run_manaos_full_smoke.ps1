@@ -58,7 +58,7 @@ Invoke-Step -Name "OpenAI Router Models" -Action {
 }
 
 Invoke-Step -Name "auto-local Chat" -Action {
-    $chatLines = powershell -NoProfile -ExecutionPolicy Bypass -File .\test_auto_local_chat.ps1 2>&1
+    $chatLines = powershell -NoProfile -ExecutionPolicy Bypass -File .\test_auto_local_chat.ps1 -RequestTimeoutSec 360 -MaxRetries 4 -WarmupTimeoutSec 60 2>&1
     $chatLines | Out-Host
 
     $chatText = ($chatLines | Out-String)
