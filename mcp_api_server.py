@@ -33,6 +33,7 @@ app = Flask(__name__)
 CORS(app)
 
 _OPS_PLANS: Dict[str, Dict[str, Any]] = {}
+_OPS_JOBS: Dict[str, Dict[str, Any]] = {}
 
 
 def _utc_now_iso() -> str:
@@ -119,6 +120,34 @@ def _is_dangerous_command(command: str) -> bool:
     lowered = command.lower()
     return any(marker in lowered for marker in blocked_markers)
 
+
+def _create_job(job_type: str, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    job_id = str(uuid.uuid4())
+    job = {
+        "job_id": job_id,
+        "type": job_type,
+        "status": "queued",
+        "created_at": _utc_now_iso(),
+        "updated_at": _utc_now_iso(),
+        "payload": payload or {},
+        "result": None,
+        "error": None,
+    }
+    _OPS_JOBS[job_id] = job
+    return job
+
+
+def _update_job(job_id: str, *, status: str, result: Optional[Dict[str, Any]] = None, error: Optional[str] = None) -> None:
+    job = _OPS_JOBS.get(job_id)
+    if not job:
+        return
+    job["status"] = status
+    job["updated_at"] = _utc_now_iso()
+    if result is not None:
+        job["result"] = result
+    if error is not None:
+        job["error"] = error
+
 # MCPサーバーをインポート
 MCP_SERVER_AVAILABLE = False
 server = None
@@ -197,6 +226,7 @@ def memory_search():
 
 
 @app.route("/ops/plan", methods=["POST"])
+@app.route("/api/ops/plan", methods=["POST"])
 def ops_plan():
     """Create lightweight operation plan for approval flow."""
     data = request.json or {}
@@ -229,6 +259,7 @@ def ops_plan():
 
 
 @app.route("/ops/exec", methods=["POST"])
+@app.route("/api/ops/exec", methods=["POST"])
 def ops_exec():
     """Execute approved operation command (dry-run by default)."""
     auth_error = _require_ops_token()
@@ -254,8 +285,19 @@ def ops_exec():
     if _is_dangerous_command(command):
         return jsonify({"success": False, "error": "dangerous command blocked"}), 400
 
+    job = _create_job(
+        "ops_exec",
+        {
+            "plan_id": plan_id or None,
+            "command": command,
+            "dry_run": dry_run,
+            "approved": approved,
+        },
+    )
+
     response_payload = {
         "success": True,
+        "job_id": job["job_id"],
         "plan_id": plan_id or None,
         "command": command,
         "dry_run": dry_run,
@@ -266,6 +308,7 @@ def ops_exec():
     if dry_run:
         response_payload["stdout"] = "dry-run: command not executed"
         response_payload["returncode"] = 0
+        _update_job(job["job_id"], status="completed", result=response_payload)
         return jsonify(response_payload)
 
     try:
@@ -281,30 +324,79 @@ def ops_exec():
         response_payload["stderr"] = (completed.stderr or "").strip()
         response_payload["returncode"] = completed.returncode
         response_payload["success"] = completed.returncode == 0
+        _update_job(
+            job["job_id"],
+            status=("completed" if completed.returncode == 0 else "failed"),
+            result=response_payload,
+            error=(response_payload.get("stderr") or None),
+        )
         return jsonify(response_payload), (200 if completed.returncode == 0 else 500)
     except subprocess.TimeoutExpired:
+        _update_job(job["job_id"], status="failed", error="command timeout")
         return jsonify({"success": False, "error": "command timeout"}), 504
     except Exception as e:
         logger.error(f"ops exec error: {e}", exc_info=True)
+        _update_job(job["job_id"], status="failed", error=str(e))
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route("/ops/job/<job_id>", methods=["GET"])
+@app.route("/api/ops/job/<job_id>", methods=["GET"])
+def ops_get_job(job_id: str):
+    job = _OPS_JOBS.get(job_id)
+    if not job:
+        return jsonify({"success": False, "error": "job not found", "job_id": job_id}), 404
+    return jsonify({"success": True, "job": job})
+
+
+@app.route("/ops/notify", methods=["POST"])
+@app.route("/api/ops/notify", methods=["POST"])
+def ops_notify():
+    data = request.json or {}
+    channel = str(data.get("channel", "")).strip()
+    level = str(data.get("level", "info")).strip().lower()
+    message = str(data.get("message", "")).strip()
+    metadata = data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
+
+    if not message:
+        return jsonify({"success": False, "error": "message is required"}), 400
+
+    logger.info(f"ops notify channel={channel or '-'} level={level}: {message}")
+    payload = {
+        "channel": channel or None,
+        "level": level,
+        "message": message,
+        "metadata": metadata,
+        "sent_at": _utc_now_iso(),
+    }
+    return jsonify({"success": True, "notification": payload})
+
+
 @app.route("/dev/patch", methods=["POST"])
+@app.route("/api/dev/patch", methods=["POST"])
 def dev_patch():
-    return jsonify({"success": True, "status": "queued", "action": "patch"})
+    data = request.json or {}
+    job = _create_job("dev_patch", data)
+    return jsonify({"success": True, "status": "queued", "action": "patch", "job_id": job["job_id"]})
 
 
 @app.route("/dev/test", methods=["POST"])
+@app.route("/api/dev/test", methods=["POST"])
 def dev_test():
-    return jsonify({"success": True, "status": "queued", "action": "test"})
+    data = request.json or {}
+    job = _create_job("dev_test", data)
+    return jsonify({"success": True, "status": "queued", "action": "test", "job_id": job["job_id"]})
 
 
 @app.route("/dev/deploy", methods=["POST"])
+@app.route("/api/dev/deploy", methods=["POST"])
 def dev_deploy():
     auth_error = _require_ops_token()
     if auth_error:
         return auth_error
-    return jsonify({"success": True, "status": "queued", "action": "deploy"})
+    data = request.json or {}
+    job = _create_job("dev_deploy", data)
+    return jsonify({"success": True, "status": "queued", "action": "deploy", "job_id": job["job_id"]})
 
 
 @app.route("/api/mcp/tools", methods=["GET"])
@@ -644,9 +736,62 @@ def openapi_spec():
             }
         }
 
+        paths["/ops/job/{job_id}"] = {
+            "get": {
+                "summary": "Get operation/dev job status",
+                "parameters": [
+                    {
+                        "name": "job_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                    }
+                ],
+                "responses": {"200": {"description": "成功"}, "404": {"description": "見つからない"}},
+            }
+        }
+
+        paths["/ops/notify"] = {
+            "post": {
+                "summary": "Send operation notification",
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "channel": {"type": "string"},
+                                    "level": {"type": "string"},
+                                    "message": {"type": "string"},
+                                    "metadata": {"type": "object"},
+                                },
+                                "required": ["message"],
+                            }
+                        }
+                    }
+                },
+                "responses": {"200": {"description": "成功"}},
+            }
+        }
+
         paths["/dev/patch"] = {"post": {"summary": "Queue patch task", "responses": {"200": {"description": "成功"}}}}
         paths["/dev/test"] = {"post": {"summary": "Queue test task", "responses": {"200": {"description": "成功"}}}}
         paths["/dev/deploy"] = {"post": {"summary": "Queue deploy task", "responses": {"200": {"description": "成功"}}}}
+
+        alias_targets = [
+            "/memory/write",
+            "/memory/search",
+            "/ops/plan",
+            "/ops/exec",
+            "/ops/job/{job_id}",
+            "/ops/notify",
+            "/dev/patch",
+            "/dev/test",
+            "/dev/deploy",
+        ]
+        for base_path in alias_targets:
+            paths[f"/api{base_path}"] = paths[base_path]
 
         # MCPサーバーのツールを追加
         for tool in tools:
