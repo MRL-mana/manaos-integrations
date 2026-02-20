@@ -87,6 +87,140 @@ function Ensure-ComfyUIReady {
     throw "ComfyUI failed to become healthy on :8188"
 }
 
+function Ensure-DockerBestEffort {
+    param(
+        [int]$WaitSec = 45
+    )
+
+    try {
+        docker version *> $null
+        return $true
+    }
+    catch {
+    }
+
+    $dockerDesktop = "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+    if (Test-Path $dockerDesktop) {
+        Write-Host "[INFO] Docker is not ready; starting Docker Desktop..." -ForegroundColor Yellow
+        Start-Process -FilePath $dockerDesktop | Out-Null
+    }
+    else {
+        Write-Host "[WARN] Docker Desktop not found; skip OpenWebUI auto-start" -ForegroundColor Yellow
+        return $false
+    }
+
+    $deadline = (Get-Date).AddSeconds($WaitSec)
+    while ((Get-Date) -lt $deadline) {
+        try {
+            docker version *> $null
+            Write-Host "[OK] Docker became ready" -ForegroundColor Green
+            return $true
+        }
+        catch {
+            Start-Sleep -Seconds 2
+        }
+    }
+
+    Write-Host "[WARN] Docker did not become ready within ${WaitSec}s; skip OpenWebUI auto-start" -ForegroundColor Yellow
+    return $false
+}
+
+function Start-OpenWebUIDeferredBootstrap {
+    param(
+        [int]$MaxWaitSec = 600
+    )
+
+    $composeFile = Join-Path $workspace "docker-compose.always-ready-llm.yml"
+    if (-not (Test-Path $composeFile)) {
+        Write-Host "[WARN] Deferred OpenWebUI bootstrap skipped (compose not found)" -ForegroundColor Yellow
+        return
+    }
+
+    $logsDir = Join-Path $workspace "logs"
+    New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
+    $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $logPath = Join-Path $logsDir ("openwebui_deferred_bootstrap_{0}.log" -f $stamp)
+
+    $bootstrapCmd = @"
+
+
+$ErrorActionPreference = 'Continue'
+$deadline = (Get-Date).AddSeconds($MaxWaitSec)
+while ((Get-Date) -lt $deadline) {
+    try {
+        docker version *> `$null
+        docker compose -f '$composeFile' up -d openwebui *> `$null
+        try {
+            Invoke-RestMethod -Uri 'http://127.0.0.1:3001/' -Method Get -TimeoutSec 5 -ErrorAction Stop | Out-Null
+            Write-Output "[OK] OpenWebUI deferred bootstrap completed"
+            exit 0
+        }
+        catch {
+        }
+    }
+    catch {
+    }
+    Start-Sleep -Seconds 5
+}
+Write-Output "[WARN] OpenWebUI deferred bootstrap timeout"
+exit 1
+"@
+
+    Start-Process -FilePath "powershell" -ArgumentList @(
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-Command", $bootstrapCmd
+    ) -RedirectStandardOutput $logPath -RedirectStandardError $logPath -WindowStyle Minimized | Out-Null
+
+    Write-Host "[INFO] Deferred OpenWebUI bootstrap started: $logPath" -ForegroundColor Gray
+}
+
+function Ensure-OpenWebUIBestEffort {
+    param(
+        [int]$WaitSec = 90
+    )
+
+    $healthUrl = "http://127.0.0.1:3001/"
+    if (Test-HttpOk -Url $healthUrl -TimeoutSec 5) {
+        Write-Host "[OK] OpenWebUI already reachable on :3001" -ForegroundColor Green
+        return
+    }
+
+    if (-not (Ensure-DockerBestEffort -WaitSec 45)) {
+        Start-OpenWebUIDeferredBootstrap -MaxWaitSec 600
+        return
+    }
+
+    $composeFile = Join-Path $workspace "docker-compose.always-ready-llm.yml"
+    if (-not (Test-Path $composeFile)) {
+        Write-Host "[WARN] OpenWebUI compose file not found: $composeFile" -ForegroundColor Yellow
+        return
+    }
+
+    Write-Host "[INFO] OpenWebUI is not running; attempting docker compose up..." -ForegroundColor Yellow
+    try {
+        $composeOut = docker compose -f $composeFile up -d openwebui 2>&1
+        if ($composeOut) {
+            $composeOut | Out-Host
+        }
+    }
+    catch {
+        Write-Host "[WARN] OpenWebUI auto-start failed: $($_.Exception.Message)" -ForegroundColor Yellow
+        return
+    }
+
+    $deadline = (Get-Date).AddSeconds($WaitSec)
+    while ((Get-Date) -lt $deadline) {
+        if (Test-HttpOk -Url $healthUrl -TimeoutSec 5) {
+            Write-Host "[OK] OpenWebUI recovered on :3001" -ForegroundColor Green
+            return
+        }
+        Start-Sleep -Seconds 2
+    }
+
+    Write-Host "[WARN] OpenWebUI did not become reachable on :3001 (continuing)" -ForegroundColor Yellow
+}
+
 Invoke-Step -Name "ManaOS Core Health" -Action {
     powershell -NoProfile -ExecutionPolicy Bypass -File .\ensure_optional_services.ps1 | Out-Host
     if ($LASTEXITCODE -ne 0) {
@@ -120,6 +254,7 @@ Invoke-Step -Name "auto-local Chat" -Action {
 
 Invoke-Step -Name "Tool Server Integration" -Action {
     Ensure-ComfyUIReady -WaitSec 120
+    Ensure-OpenWebUIBestEffort -WaitSec 90
 
     $toolLines = python .\tests\integration\test_tool_server_integration.py 2>&1
     $toolLines | Out-Host
