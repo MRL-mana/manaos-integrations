@@ -3,6 +3,19 @@ name: Dependency Review
 on:
   pull_request:
     branches: [master, main, develop]
+    paths:
+      - '**/requirements*.txt'
+      - '**/pyproject.toml'
+      - '**/setup.py'
+      - '**/setup.cfg'
+      - '**/Pipfile'
+      - '**/Pipfile.lock'
+      - '**/poetry.lock'
+      - '**/package.json'
+      - '**/package-lock.json'
+      - '**/pnpm-lock.yaml'
+      - '**/yarn.lock'
+      - '.github/workflows/dependency-review.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
