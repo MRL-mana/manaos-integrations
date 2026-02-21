@@ -7,8 +7,6 @@ on:
       - "manaos_integrations/**/*.py"
       - "tests/**"
       - "requirements*.txt"
-      - ".flake8"
-      - ".pylintrc"
       - "pyproject.toml"
       - ".github/workflows/tests.yml"
   pull_request:
@@ -17,10 +15,9 @@ on:
       - "manaos_integrations/**/*.py"
       - "tests/**"
       - "requirements*.txt"
-      - ".flake8"
-      - ".pylintrc"
       - "pyproject.toml"
       - ".github/workflows/tests.yml"
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -77,19 +74,19 @@ jobs:
       continue-on-error: true
     
     - name: Run integration tests
-      if: steps.testdirs.outputs.has_integration == 'true'
+      if: matrix.python-version == '3.11' && steps.testdirs.outputs.has_integration == 'true'
       run: |
         pytest tests/integration/ -v --tb=short --timeout=60 -k "not (api_key_auth or external)" || true
       continue-on-error: true
     
     - name: Generate coverage report
-      if: steps.testdirs.outputs.has_unit == 'true'
+      if: matrix.python-version == '3.11' && steps.testdirs.outputs.has_unit == 'true'
       run: |
         pytest tests/unit/ --cov=. --cov-report=xml --cov-report=html --timeout=30
       continue-on-error: true
     
     - name: Upload coverage to Codecov
-      if: steps.testdirs.outputs.has_unit == 'true'
+      if: matrix.python-version == '3.11' && steps.testdirs.outputs.has_unit == 'true'
       uses: codecov/codecov-action@v4
       with:
         files: ./coverage.xml

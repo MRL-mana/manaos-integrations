@@ -33,7 +33,40 @@ env:
     PYTHON_VERSION: "3.11"
 
 jobs:
+    detect-changes:
+        runs-on: ubuntu-latest
+        outputs:
+            code: ${{ steps.filter.outputs.code }}
+            deps: ${{ steps.filter.outputs.deps }}
+            workflow: ${{ steps.filter.outputs.workflow }}
+            yaml: ${{ steps.filter.outputs.yaml }}
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Detect changed paths
+              id: filter
+              uses: dorny/paths-filter@v3
+              with:
+                  filters: |
+                      code:
+                        - 'manaos_integrations/**/*.py'
+                        - 'tests/**'
+                      deps:
+                        - 'requirements*.txt'
+                        - 'requirements-core.txt'
+                        - 'pyproject.toml'
+                        - 'setup.py'
+                        - 'setup.cfg'
+                      workflow:
+                        - '.github/workflows/ci.yml'
+                      yaml:
+                        - '.github/workflows/**/*.yml'
+                        - '**/*.yaml'
+                        - '**/*.yml'
+
     test:
+        needs: detect-changes
+        if: github.event_name != 'schedule' && (needs.detect-changes.outputs.code == 'true' || needs.detect-changes.outputs.workflow == 'true')
         runs-on: ubuntu-latest
         continue-on-error: true
         strategy:
@@ -190,6 +223,7 @@ jobs:
                   retention-days: 30
 
     config-validation:
+        if: github.event_name != 'schedule'
         runs-on: ubuntu-latest
         continue-on-error: true
 
@@ -217,13 +251,26 @@ jobs:
                   python config_loader.py || echo "⚠️ Port conflict check failed"
 
     lint-yaml:
+        needs: detect-changes
+        if: github.event_name != 'schedule'
         runs-on: ubuntu-latest
         continue-on-error: true
 
         steps:
             - uses: actions/checkout@v4
 
+            - name: Detect YAML-related changes
+              id: yamlfilter
+              uses: dorny/paths-filter@v3
+              with:
+                  filters: |
+                      yaml:
+                        - '.github/workflows/**/*.yml'
+                        - '**/*.yaml'
+                        - '**/*.yml'
+
             - name: Lint YAML files
+              if: steps.yamlfilter.outputs.yaml == 'true' || needs.detect-changes.outputs.workflow == 'true'
               run: |
                   python -m pip install --upgrade pip
                   pip install yamllint

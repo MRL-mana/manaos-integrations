@@ -30,19 +30,26 @@ jobs:
               per_page: 100,
             });
 
+            const allRuns = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
+              owner,
+              repo,
+              per_page: 100,
+            });
+
+            const latestRunByWorkflow = new Map();
+            for (const run of allRuns) {
+              if (!latestRunByWorkflow.has(run.workflow_id)) {
+                latestRunByWorkflow.set(run.workflow_id, run);
+              }
+            }
+
             const rows = [];
             let ok = 0;
             let warn = 0;
             let fail = 0;
             for (const wf of workflows) {
               if (wf.state !== 'active') continue;
-              const runs = await github.rest.actions.listWorkflowRuns({
-                owner,
-                repo,
-                workflow_id: wf.id,
-                per_page: 1,
-              });
-              const run = runs.data.workflow_runs[0];
+              const run = latestRunByWorkflow.get(wf.id);
               const status = run ? `${run.status}/${run.conclusion || 'n/a'}` : 'no-runs';
               const branch = run?.head_branch || '-';
               const updated = run?.updated_at || '-';
