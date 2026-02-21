@@ -35,7 +35,7 @@ env:
 jobs:
     test:
         runs-on: ubuntu-latest
-      continue-on-error: true
+        continue-on-error: true
         strategy:
             matrix:
                 python-version: ["3.11", "3.12", "3.13"]
@@ -106,7 +106,7 @@ jobs:
 
     security:
         runs-on: ubuntu-latest
-      continue-on-error: true
+        continue-on-error: true
 
         steps:
             - uses: actions/checkout@v4
@@ -159,7 +159,7 @@ jobs:
 
     config-validation:
         runs-on: ubuntu-latest
-      continue-on-error: true
+        continue-on-error: true
 
         steps:
             - uses: actions/checkout@v4
@@ -186,7 +186,7 @@ jobs:
 
     lint-yaml:
         runs-on: ubuntu-latest
-      continue-on-error: true
+        continue-on-error: true
 
         steps:
             - uses: actions/checkout@v4
