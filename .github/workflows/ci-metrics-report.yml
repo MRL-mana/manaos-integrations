@@ -1,0 +1,77 @@
+name: CI Metrics Report
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate workflow metrics summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const targets = [
+              'CI/CD Pipeline',
+              'Complete CI/CD Pipeline',
+              'Docker Build and Push',
+              'Container Security Scan',
+              'VSCode設定検証'
+            ];
+
+            const allRuns = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
+              owner,
+              repo,
+              per_page: 100
+            });
+
+            const rows = [];
+            for (const name of targets) {
+              const runs = allRuns
+                .filter(r => r.name === name)
+                .slice(0, 20);
+
+              if (runs.length === 0) {
+                rows.push(`| ${name} | 0 | - | - |`);
+                continue;
+              }
+
+              const completed = runs.filter(r => r.status === 'completed' && r.run_started_at && r.updated_at);
+              const success = completed.filter(r => r.conclusion === 'success').length;
+              const successRate = completed.length ? ((success / completed.length) * 100).toFixed(1) + '%' : '-';
+
+              const durations = completed.map(r => {
+                const start = new Date(r.run_started_at).getTime();
+                const end = new Date(r.updated_at).getTime();
+                return Math.max(0, Math.round((end - start) / 60000));
+              });
+
+              const avgMinutes = durations.length
+                ? (durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(1)
+                : '-';
+
+              rows.push(`| ${name} | ${runs.length} | ${successRate} | ${avgMinutes} |`);
+            }
+
+            const lines = [
+              '## CI Metrics (Latest 20 Runs)',
+              '',
+              '| Workflow | Samples | Success Rate | Avg Duration (min) |',
+              '|---|---:|---:|---:|',
+              ...rows
+            ];
+
+            core.summary.addRaw(lines.join('\n')).write();
