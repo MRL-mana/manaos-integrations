@@ -4,14 +4,14 @@ on:
   push:
     branches: [ master, main, develop ]
     paths:
-      - "**/*.py"
+      - "manaos_integrations/**/*.py"
       - "tests/**"
       - "requirements*.txt"
       - ".github/workflows/test.yml"
   pull_request:
     branches: [ master, main, develop ]
     paths:
-      - "**/*.py"
+      - "manaos_integrations/**/*.py"
       - "tests/**"
       - "requirements*.txt"
       - ".github/workflows/test.yml"
