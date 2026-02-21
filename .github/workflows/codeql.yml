@@ -4,12 +4,14 @@ on:
   push:
     branches: [master, main, develop]
     paths:
-      - '**/*.py'
+      - 'manaos_integrations/**/*.py'
+      - 'tests/**/*.py'
       - '.github/workflows/codeql.yml'
   pull_request:
     branches: [master, main, develop]
     paths:
-      - '**/*.py'
+      - 'manaos_integrations/**/*.py'
+      - 'tests/**/*.py'
       - '.github/workflows/codeql.yml'
   schedule:
     - cron: '0 4 * * 1'
