@@ -28,9 +28,31 @@ permissions:
   security-events: write
 
 jobs:
+  detect-changes:
+    name: Detect container-related changes
+    runs-on: ubuntu-latest
+    outputs:
+      docker: ${{ steps.filter.outputs.docker }}
+      kubernetes: ${{ steps.filter.outputs.kubernetes }}
+    steps:
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            docker:
+              - 'Docker/**'
+              - 'Dockerfile*'
+              - '.github/workflows/container-security.yml'
+            kubernetes:
+              - 'kubernetes/**'
+              - '.github/workflows/container-security.yml'
+
   scan_docker:
     name: Scan Docker context
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.docker == 'true'
     continue-on-error: true
     steps:
       - name: Checkout
@@ -53,6 +75,8 @@ jobs:
   scan_kubernetes:
     name: Validate Kubernetes manifests
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.kubernetes == 'true'
     continue-on-error: true
     steps:
       - name: Checkout
