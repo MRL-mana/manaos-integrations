@@ -26,6 +26,10 @@ on:
     - cron: '0 3 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   health-check-mock:
     name: サービススクリプト動作確認
