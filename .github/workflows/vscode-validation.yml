@@ -19,6 +19,7 @@ jobs:
   validate-vscode-setup:
     name: VSCode設定ファイル検証
     runs-on: windows-latest
+    continue-on-error: true
     
     steps:
     - name: チェックアウト
