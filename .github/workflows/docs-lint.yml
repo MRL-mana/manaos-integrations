@@ -53,17 +53,17 @@ jobs:
 
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             git fetch origin "${{ github.base_ref }}" --depth=1
-            git diff --name-only -z "origin/${{ github.base_ref }}...HEAD" -- '*.md' > /tmp/md_files
+            git diff --name-only -z "origin/${{ github.base_ref }}...HEAD" -- 'docs/**/*.md' '.github/**/*.md' 'README*.md' > /tmp/md_files
           elif [[ "${{ github.event_name }}" == "push" ]]; then
             BEFORE="${{ github.event.before }}"
             if [[ -z "$BEFORE" || "$BEFORE" =~ ^0+$ ]]; then
               if git rev-parse HEAD~1 >/dev/null 2>&1; then
-                git diff --name-only -z "HEAD~1...HEAD" -- '*.md' > /tmp/md_files
+                git diff --name-only -z "HEAD~1...HEAD" -- 'docs/**/*.md' '.github/**/*.md' 'README*.md' > /tmp/md_files
               else
                 : > /tmp/md_files
               fi
             else
-              git diff --name-only -z "$BEFORE...HEAD" -- '*.md' > /tmp/md_files
+              git diff --name-only -z "$BEFORE...HEAD" -- 'docs/**/*.md' '.github/**/*.md' 'README*.md' > /tmp/md_files
             fi
           else
             echo "workflow_dispatch detected; skipping full legacy docs scan"
