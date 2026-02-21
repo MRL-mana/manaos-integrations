@@ -3,6 +3,10 @@ name: Auto Commit
 on:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   auto-commit:
     runs-on: ubuntu-latest
