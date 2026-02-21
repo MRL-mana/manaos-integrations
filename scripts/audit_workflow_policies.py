@@ -1,8 +1,10 @@
 from pathlib import Path
 import sys
 import importlib
+from typing import Any, cast
 
 yaml = importlib.import_module('yaml')
+YAMLError = cast(type[BaseException], getattr(yaml, 'YAMLError', ValueError))
 
 
 WORKFLOW_DIR = Path('.github/workflows')
@@ -10,8 +12,24 @@ REPORT_PATH = Path('artifacts/workflow-policy-audit.md')
 
 
 def load_workflow(path: Path):
-    with path.open('r', encoding='utf-8') as f:
-        return yaml.safe_load(f) or {}
+    for encoding in ('utf-8', 'utf-8-sig'):
+        try:
+            with path.open('r', encoding=encoding) as f:
+                try:
+                    return yaml.safe_load(f) or {}
+                except (YAMLError, ValueError, TypeError) as exc:
+                    return {"__parse_error__": str(exc)}
+        except (OSError, UnicodeError):
+            continue
+
+    try:
+        raw = path.read_text(encoding='utf-8', errors='replace')
+        try:
+            return yaml.safe_load(raw) or {}
+        except (YAMLError, ValueError, TypeError) as exc:
+            return {"__parse_error__": str(exc)}
+    except (OSError, UnicodeError) as exc:
+        return {"__parse_error__": str(exc)}
 
 
 def has_paths(trigger_value):
@@ -22,11 +40,18 @@ def audit_file(path: Path):
     doc = load_workflow(path)
     issues = []
 
+    if isinstance(doc, dict) and doc.get("__parse_error__"):
+        issues.append(f"YAML parse failed: {doc['__parse_error__']}")
+        return issues
+
     concurrency = doc.get('concurrency')
     if not concurrency:
         issues.append('`concurrency` が未定義です')
 
-    triggers = doc.get('on', doc.get(True))
+    doc_any = cast(Any, doc)
+    triggers = doc_any.get('on')
+    if not triggers and True in doc_any:
+        triggers = doc_any.get(True)
     if not triggers:
         issues.append('`on` トリガーが未定義です')
         return issues
