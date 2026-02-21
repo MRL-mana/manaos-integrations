@@ -34,10 +34,41 @@ env:
   NODE_VERSION: '18'
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+      container: ${{ steps.filter.outputs.container }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            app:
+              - 'manaos_integrations/**/*.py'
+              - 'requirements*.txt'
+              - 'pyproject.toml'
+              - 'setup.py'
+              - 'setup.cfg'
+              - '.github/workflows/ci-cd-pipeline.yml'
+            container:
+              - 'Dockerfile*'
+              - 'manaos_integrations/Dockerfile*'
+              - 'docker-compose*.yml'
+              - 'manaos_integrations/docker-compose*.yml'
+              - 'kubernetes/**'
+              - 'helm/**'
+              - 'manaos_integrations/helm/**'
+              - '.github/workflows/ci-cd-pipeline.yml'
+
   # ===========================
   # 1. コード品質チェック
   # ===========================
   code-quality:
+    needs: [detect-changes]
+    if: github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -94,6 +125,8 @@ jobs:
   # 2. ユニットテスト
   # ===========================
   unit-tests:
+    needs: [detect-changes]
+    if: github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.app == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -140,8 +173,9 @@ jobs:
   # 3. 統合テスト
   # ===========================
   integration-tests:
+    if: github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.app == 'true'
     runs-on: ubuntu-latest
-    needs: [code-quality, unit-tests]
+    needs: [detect-changes, code-quality, unit-tests]
     
     services:
       postgres:
@@ -188,9 +222,9 @@ jobs:
   # 4. Dockerイメージビルド
   # ===========================
   docker-build:
+    if: always() && github.event_name != 'pull_request' && needs.detect-changes.outputs.container == 'true' && (needs.detect-changes.outputs.app != 'true' || needs.integration-tests.result == 'success')
     runs-on: ubuntu-latest
-    needs: [integration-tests]
-    if: github.event_name != 'pull_request'
+    needs: [detect-changes, integration-tests]
     
     strategy:
       matrix:
