@@ -11,6 +11,7 @@ permissions:
 jobs:
   label:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Auto label PR by changed files
         uses: actions/labeler@v5
