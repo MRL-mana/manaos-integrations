@@ -54,6 +54,20 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest pytest-cov pytest-timeout
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Detect test directories
+      id: testdirs
+      run: |
+        if [ -d tests/unit ]; then
+          echo "has_unit=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_unit=false" >> $GITHUB_OUTPUT
+        fi
+        if [ -d tests/integration ]; then
+          echo "has_integration=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_integration=false" >> $GITHUB_OUTPUT
+        fi
     
     - name: Lint with flake8
       run: |
@@ -70,26 +84,31 @@ jobs:
       continue-on-error: true
     
     - name: Run unit tests with pytest
+      if: steps.testdirs.outputs.has_unit == 'true'
       run: |
         pytest tests/unit/ -v --tb=short --timeout=30
       continue-on-error: true
     
     - name: Run integration tests
+      if: steps.testdirs.outputs.has_integration == 'true'
       run: |
         pytest tests/integration/ -v --tb=short --timeout=60 -k "not (api_key_auth or external)" || true
       continue-on-error: true
     
     - name: Generate coverage report
+      if: steps.testdirs.outputs.has_unit == 'true'
       run: |
         pytest tests/unit/ --cov=. --cov-report=xml --cov-report=html --timeout=30
       continue-on-error: true
     
     - name: Upload coverage to Codecov
+      if: steps.testdirs.outputs.has_unit == 'true'
       uses: codecov/codecov-action@v4
       with:
         files: ./coverage.xml
         fail_ci_if_error: false
         verbose: true
+      continue-on-error: true
 
   security:
     runs-on: ubuntu-latest
