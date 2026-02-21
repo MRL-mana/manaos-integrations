@@ -44,6 +44,8 @@ jobs:
             yaml: ${{ steps.filter.outputs.yaml }}
         steps:
             - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
             - name: Detect changed paths
               id: filter

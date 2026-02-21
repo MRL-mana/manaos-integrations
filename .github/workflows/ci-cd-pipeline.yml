@@ -42,6 +42,8 @@ jobs:
       performance: ${{ steps.filter.outputs.performance }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Detect changed paths
         id: filter
         uses: dorny/paths-filter@v3

@@ -28,6 +28,8 @@ jobs:
     steps:
     - name: チェックアウト
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: 変更種別の判定
       id: changed
