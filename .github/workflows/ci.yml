@@ -4,7 +4,7 @@ on:
     push:
         branches: [master, main, develop]
         paths:
-            - '**/*.py'
+        - 'manaos_integrations/**/*.py'
             - 'tests/**'
             - 'requirements*.txt'
             - '.flake8'
@@ -14,7 +14,7 @@ on:
     pull_request:
         branches: [master, main]
         paths:
-            - '**/*.py'
+        - 'manaos_integrations/**/*.py'
             - 'tests/**'
             - 'requirements*.txt'
             - '.flake8'

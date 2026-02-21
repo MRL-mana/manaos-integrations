@@ -258,6 +258,18 @@ config_cache.py
 node_modules/
 
 # ByteRover (context/memory – versioned remotely)
+
+# Local operations artifacts (keep out of CI-facing commits)
+Reports/PostReboot_SelfCheck_Latest_Status.json
+Reports/PostReboot_SelfCheck_Latest_Status.txt
+Reports/OpenWebUI_Acceptance_Latest_Status.txt
+PERSONAL_MINIMAL_RUNBOOK.md
+mother_to_x280_openwebui_pixel7.ps1
+pixel7_sync_openwebui_shortcut.ps1
+x280_pixel7_openwebui_quick.ps1
+install_post_reboot_self_check_autostart.ps1
+uninstall_post_reboot_self_check_autostart.ps1
+run_post_reboot_self_check.py
 .brv/
 .brv.bak.*/
 
