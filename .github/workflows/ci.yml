@@ -25,7 +25,7 @@ on:
         # 毎日午前3時（JST）にセキュリティスキャン実行
         - cron: '0 18 * * *'
 
-  concurrency:
+concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
 
