@@ -4,16 +4,10 @@ on:
   push:
     branches: [ master, main, develop ]
     paths:
-      - "manaos_integrations/**/*.py"
-      - "tests/**"
-      - "requirements*.txt"
       - ".github/workflows/test.yml"
   pull_request:
     branches: [ master, main, develop ]
     paths:
-      - "manaos_integrations/**/*.py"
-      - "tests/**"
-      - "requirements*.txt"
       - ".github/workflows/test.yml"
   workflow_dispatch:  # 手動実行を許可
 
