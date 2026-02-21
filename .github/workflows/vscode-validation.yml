@@ -28,14 +28,28 @@ jobs:
     steps:
     - name: チェックアウト
       uses: actions/checkout@v4
+
+    - name: 変更種別の判定
+      id: changed
+      uses: dorny/paths-filter@v3
+      with:
+        filters: |
+          vscode:
+            - '.vscode/**'
+          validator:
+            - 'validation_script.ps1'
+          workflow:
+            - '.github/workflows/vscode-validation.yml'
       
     - name: Python環境セットアップ
+      if: steps.changed.outputs.workflow == 'true' || steps.changed.outputs.validator == 'true'
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
         cache: 'pip'
         
     - name: 依存関係インストール
+      if: steps.changed.outputs.workflow == 'true' || steps.changed.outputs.validator == 'true'
       run: |
         python -m pip install --upgrade pip
         if (Test-Path requirements-core.txt) {
@@ -44,6 +58,7 @@ jobs:
       shell: pwsh
       
     - name: 必須ファイル存在確認
+      if: steps.changed.outputs.workflow == 'true' || steps.changed.outputs.validator == 'true'
       run: |
         $files = @(
           ".vscode/extensions.json",
@@ -72,6 +87,7 @@ jobs:
       shell: pwsh
       
     - name: JSON構文検証
+      if: steps.changed.outputs.vscode == 'true' || steps.changed.outputs.workflow == 'true'
       run: |
         $jsonFiles = @(
           ".vscode/extensions.json",
@@ -97,6 +113,7 @@ jobs:
       shell: pwsh
       
     - name: Pythonコード構文確認
+      if: steps.changed.outputs.workflow == 'true' || steps.changed.outputs.validator == 'true'
       run: |
         $pyFiles = @(
           "start_vscode_cursor_services.py",
@@ -125,6 +142,7 @@ jobs:
       shell: pwsh
       
     - name: ドキュメントリンク検証
+      if: steps.changed.outputs.workflow == 'true'
       run: |
         $docs = @(
           "VSCODE_SETUP_GUIDE.md",
@@ -155,6 +173,7 @@ jobs:
       shell: pwsh
       
     - name: スニペット検証
+      if: steps.changed.outputs.vscode == 'true' || steps.changed.outputs.workflow == 'true'
       run: |
         if (Test-Path ".vscode/python.code-snippets") {
           try {
