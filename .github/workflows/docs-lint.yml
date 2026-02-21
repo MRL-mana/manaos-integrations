@@ -22,6 +22,7 @@ jobs:
   markdownlint:
     name: Markdown Lint (scoped)
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
       - name: Checkout

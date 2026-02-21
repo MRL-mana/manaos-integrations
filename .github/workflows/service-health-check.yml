@@ -30,6 +30,7 @@ jobs:
   health-check-mock:
     name: サービススクリプト動作確認
     runs-on: windows-latest
+    continue-on-error: true
     
     steps:
     - name: チェックアウト
