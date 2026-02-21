@@ -12,6 +12,9 @@ on:
     branches:
       - main
       - develop
+    paths:
+      - 'manaos_integrations/**'
+      - '.github/workflows/docker-build.yml'
   workflow_dispatch:
     inputs:
       push_to_registry:
