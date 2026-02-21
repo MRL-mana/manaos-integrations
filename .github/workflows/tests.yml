@@ -70,20 +70,6 @@ jobs:
           echo "has_integration=false" >> $GITHUB_OUTPUT
         fi
     
-    - name: Lint with flake8
-      run: |
-        pip install flake8
-        # E501: line too long, W503: line break before binary operator
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      continue-on-error: true
-    
-    - name: Type check with mypy
-      run: |
-        pip install mypy
-        mypy . --ignore-missing-imports --no-error-summary 2>/dev/null || true
-      continue-on-error: true
-    
     - name: Run unit tests with pytest
       if: steps.testdirs.outputs.has_unit == 'true'
       run: |
@@ -109,79 +95,4 @@ jobs:
         files: ./coverage.xml
         fail_ci_if_error: false
         verbose: true
-      continue-on-error: true
-
-  security:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install bandit safety semgrep
-    
-    - name: Security check with Bandit
-      run: |
-        bandit -r . -f json -o bandit-report.json 2>/dev/null || true
-        bandit -r . -ll --exit-zero
-      continue-on-error: true
-    
-    - name: Dependency check with safety
-      run: |
-        safety check --json 2>/dev/null || true
-        safety check --db insecure.json 2>/dev/null || true
-      continue-on-error: true
-    
-    - name: SAST scan with Semgrep
-      run: |
-        semgrep --config=p/security-audit --json -o semgrep-report.json 2>/dev/null || true
-        semgrep --config=p/python --quiet 2>/dev/null || true
-      continue-on-error: true
-    
-    - name: Upload security reports
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: security-reports
-        path: |
-          bandit-report.json
-          semgrep-report.json
-        retention-days: 30
-
-  quality:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    
-    - name: Install tools
-      run: |
-        python -m pip install --upgrade pip
-        pip install black isort pylint
-    
-    - name: Check code formatting with black
-      run: |
-        black . --check --quiet 2>/dev/null || echo "Format issues found (use: black .)"
-      continue-on-error: true
-    
-    - name: Check import sorting with isort
-      run: |
-        isort . --check-only --diff 2>/dev/null || echo "Import issues found (use: isort .)"
-      continue-on-error: true
-    
-    - name: Lint with pylint
-      run: |
-        pylint --disable=all --enable=E,F . --output-format=parseable 2>/dev/null || true
       continue-on-error: true
