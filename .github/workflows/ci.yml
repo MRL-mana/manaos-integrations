@@ -113,12 +113,37 @@ jobs:
               with:
                   fetch-depth: 0
 
+            - name: Detect security-relevant changes
+              id: secfilter
+              uses: dorny/paths-filter@v3
+              with:
+                  filters: |
+                      code:
+                        - 'manaos_integrations/**/*.py'
+                        - 'tests/**'
+                        - 'security_auditor.py'
+                        - '.github/workflows/ci.yml'
+                      deps:
+                        - 'requirements*.txt'
+                        - 'requirements-core.txt'
+                        - 'pyproject.toml'
+                        - 'setup.py'
+                        - 'setup.cfg'
+                        - '.github/workflows/ci.yml'
+                      secrets:
+                        - '**/*.py'
+                        - '**/*.sh'
+                        - '**/*.ps1'
+                        - '.github/workflows/ci.yml'
+
             - name: Set up Python
+              if: github.event_name == 'schedule' || steps.secfilter.outputs.code == 'true' || steps.secfilter.outputs.deps == 'true'
               uses: actions/setup-python@v5
               with:
                   python-version: ${{ env.PYTHON_VERSION }}
 
             - name: Cache pip dependencies
+              if: github.event_name == 'schedule' || steps.secfilter.outputs.code == 'true' || steps.secfilter.outputs.deps == 'true'
               uses: actions/cache@v4
               with:
                   path: ~/.cache/pip
@@ -127,28 +152,34 @@ jobs:
                       ${{ runner.os }}-pip-security-
 
             - name: Install security tools
+              if: github.event_name == 'schedule' || steps.secfilter.outputs.code == 'true' || steps.secfilter.outputs.deps == 'true'
               run: |
                   pip install bandit safety
 
             - name: Gitleaks secret scan
+              if: github.event_name == 'schedule' || steps.secfilter.outputs.secrets == 'true'
               run: |
                   docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect --source /repo --no-banner || true
               continue-on-error: true
 
             - name: Run ManaOS Security Auditor
+              if: github.event_name == 'schedule' || steps.secfilter.outputs.code == 'true'
               run: |
                   python security_auditor.py --dir . || true
               continue-on-error: true
 
             - name: Run Bandit security scan
+              if: github.event_name == 'schedule' || steps.secfilter.outputs.code == 'true'
               run: |
                   bandit -r . -f json -o bandit-report.json --exclude .venv,venv,tests || true
 
             - name: Run Safety dependency check
+              if: github.event_name == 'schedule' || steps.secfilter.outputs.deps == 'true'
               run: |
                   safety check --json --output safety-report.json || true
 
             - name: Upload security reports
+              if: always() && (github.event_name == 'schedule' || steps.secfilter.outputs.code == 'true' || steps.secfilter.outputs.deps == 'true')
               uses: actions/upload-artifact@v4
               with:
                   name: security-reports
