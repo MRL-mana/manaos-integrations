@@ -16,6 +16,7 @@ permissions:
 jobs:
   stale:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/stale@v9
         with:
