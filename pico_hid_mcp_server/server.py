@@ -581,6 +581,7 @@ if MCP_AVAILABLE:
                         "executed_steps": r.executed_steps,
                         "failed_step_index": r.failed_step_index,
                         "error": r.error,
+                        "artifacts": getattr(r, "artifacts", {}) or {},
                         "available_macros": (
                             _list_macros() if MACROS_AVAILABLE else []
                         ),

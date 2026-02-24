@@ -100,7 +100,11 @@ python -m pico_hid.pc.pico_hid_macros start_services
 python -m pico_hid.pc.pico_hid_macros restart_unified_api
 python -m pico_hid.pc.pico_hid_macros emergency_stop
 python -m pico_hid.pc.pico_hid_macros open_nanokvm --args "{\"nanokvm_url\":\"http://192.168.0.10\"}"
+python -m pico_hid.pc.pico_hid_macros click_then_type --args "{\"x\":123,\"y\":456,\"text\":\"hello\"}"
+python -m pico_hid.pc.pico_hid_macros guided_click_then_type_auto --args "{\"x\":123,\"y\":456,\"text\":\"hello\"}"  # スクショ→クリック→IME切替込み入力→スクショ（Enterは押さない）
 ```
+
+マクロは `key_combo/key_press/type_text` に加え、`mouse_move/mouse_click/mouse_click_at/scroll` もステップとして扱えます。
 
 また、`manaos-pico-hid` MCP サーバー側には `hid_run_macro` ツールを追加しています（サーバーを再起動すると利用可能）。
 

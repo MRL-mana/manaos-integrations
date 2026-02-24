@@ -13,11 +13,17 @@ from __future__ import annotations
 
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
-from .pico_hid_client import get_client
+from .pico_hid_client import (
+    get_client,
+    take_screenshot,
+    type_text_auto,
+    clear_input_then_type_auto,
+    click_then_type_auto,
+)
 
 
 @dataclass(frozen=True)
@@ -27,6 +33,7 @@ class MacroResult:
     executed_steps: int
     failed_step_index: int | None = None
     error: str | None = None
+    artifacts: dict[str, Any] = field(default_factory=dict)
 
 
 def _repo_root() -> Path:
@@ -45,6 +52,25 @@ def _format(text: str, args: dict[str, Any]) -> str:
         return text.format(**(args or {}))
     except Exception:
         return text
+
+
+def _parse_int(value: Any, args: dict[str, Any], *, field: str) -> Optional[int]:
+    """Parse an int from value (supports format placeholders)."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if value is None:
+        return None
+    s = _format(str(value), args).strip()
+    if not s:
+        return None
+    try:
+        return int(float(s))
+    except Exception:
+        return None
 
 
 def list_macros() -> list[str]:
@@ -80,6 +106,7 @@ def run_macro(
             return MacroResult(name=name, success=False, executed_steps=0, error="confirm_token required")
 
     executed = 0
+    artifacts: dict[str, Any] = {"screenshots": []}
     client = None
     try:
         if not dry_run:
@@ -92,31 +119,117 @@ def run_macro(
                 _sleep(float(step.get("seconds", 0.0)), speed)
                 continue
 
+            if op == "screenshot":
+                if dry_run:
+                    continue
+                path = step.get("path")
+                saved = take_screenshot(
+                    _format(str(path), args or {}) if path else None
+                )
+                if not saved:
+                    return MacroResult(
+                        name=name,
+                        success=False,
+                        executed_steps=executed,
+                        failed_step_index=idx,
+                        error="screenshot failed",
+                        artifacts=artifacts,
+                    )
+                artifacts.setdefault("screenshots", []).append(saved)
+                continue
+
             if dry_run:
                 continue
 
             if client is None:
-                return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="no client")
+                return MacroResult(
+                    name=name,
+                    success=False,
+                    executed_steps=executed,
+                    failed_step_index=idx,
+                    error="no client",
+                    artifacts=artifacts,
+                )
 
             if op == "key_combo":
                 ok = client.key_combo(step.get("keys") or [])
                 if not ok:
-                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="key_combo failed")
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="key_combo failed", artifacts=artifacts)
             elif op == "key_press":
                 ok = client.key_press(str(step.get("key") or ""))
                 if not ok:
-                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="key_press failed")
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="key_press failed", artifacts=artifacts)
             elif op == "type_text":
                 text = _format(str(step.get("text") or ""), args or {})
                 ok = client.type_text(text)
                 if not ok:
-                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="type_text failed")
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="type_text failed", artifacts=artifacts)
+            elif op == "mouse_move":
+                dx = _parse_int(step.get("dx"), args or {}, field="dx")
+                dy = _parse_int(step.get("dy"), args or {}, field="dy")
+                if dx is None or dy is None:
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="mouse_move invalid dx/dy", artifacts=artifacts)
+                ok = client.mouse_move(dx, dy)
+                if not ok:
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="mouse_move failed", artifacts=artifacts)
+            elif op in ("mouse_move_abs", "mouse_move_absolute"):
+                x = _parse_int(step.get("x"), args or {}, field="x")
+                y = _parse_int(step.get("y"), args or {}, field="y")
+                if x is None or y is None:
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="mouse_move_abs invalid x/y", artifacts=artifacts)
+                ok = client.mouse_move_absolute(x, y)
+                if not ok:
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="mouse_move_abs failed", artifacts=artifacts)
+            elif op == "mouse_click":
+                ok = client.mouse_click(str(step.get("button") or "left"))
+                if not ok:
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="mouse_click failed", artifacts=artifacts)
+            elif op == "mouse_click_at":
+                x = _parse_int(step.get("x"), args or {}, field="x")
+                y = _parse_int(step.get("y"), args or {}, field="y")
+                if x is None or y is None:
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="mouse_click_at invalid x/y", artifacts=artifacts)
+                ok = client.mouse_click_at(x, y, str(step.get("button") or "left"))
+                if not ok:
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="mouse_click_at failed", artifacts=artifacts)
+            elif op in ("scroll", "mouse_scroll", "mouse_wheel"):
+                delta = _parse_int(step.get("delta", step.get("amount")), args or {}, field="delta")
+                if delta is None:
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="scroll invalid delta", artifacts=artifacts)
+                ok = client.scroll(delta)
+                if not ok:
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="scroll failed", artifacts=artifacts)
+            elif op == "type_text_auto":
+                text = _format(str(step.get("text") or ""), args or {})
+                ok, path = type_text_auto(text)
+                if path:
+                    artifacts.setdefault("screenshots", []).append(path)
+                if not ok:
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="type_text_auto failed", artifacts=artifacts)
+            elif op in ("clear_and_retype_auto", "clear_input_then_type_auto"):
+                text = _format(str(step.get("text") or ""), args or {})
+                ok, path = clear_input_then_type_auto(text)
+                if path:
+                    artifacts.setdefault("screenshots", []).append(path)
+                if not ok:
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="clear_and_retype_auto failed", artifacts=artifacts)
+            elif op == "click_then_type_auto":
+                x = _parse_int(step.get("x"), args or {}, field="x")
+                y = _parse_int(step.get("y"), args or {}, field="y")
+                text = _format(str(step.get("text") or ""), args or {})
+                if x is None or y is None:
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="click_then_type_auto invalid x/y", artifacts=artifacts)
+                ok, path = click_then_type_auto(x, y, text)
+                if path:
+                    artifacts.setdefault("screenshots", []).append(path)
+                if not ok:
+                    return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error="click_then_type_auto failed", artifacts=artifacts)
             else:
-                return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error=f"unknown op: {op}")
+                return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=idx, error=f"unknown op: {op}", artifacts=artifacts)
 
-        return MacroResult(name=name, success=True, executed_steps=executed)
+        return MacroResult(name=name, success=True, executed_steps=executed, artifacts=artifacts)
     except Exception as e:
-        return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=executed or None, error=str(e))
+        return MacroResult(name=name, success=False, executed_steps=executed, failed_step_index=executed or None, error=str(e), artifacts=artifacts)
     finally:
         if client is not None:
             try:
@@ -174,12 +287,48 @@ def _macro_open_nanokvm(*, args: dict[str, Any]):
     return _run_dialog(cmd, args)
 
 
+def _macro_click_then_type(*, args: dict[str, Any]):
+        """Click at (x,y) then type text.
+
+        Args expected in args:
+            - x: int
+            - y: int
+            - text: str
+        """
+        return [
+                {"op": "mouse_click_at", "x": "{x}", "y": "{y}", "button": "left"},
+                {"op": "sleep", "seconds": 0.25},
+                {"op": "type_text", "text": "{text}"},
+        ]
+
+
+def _macro_guided_click_then_type_auto(*, args: dict[str, Any]):
+        """Screenshot -> click+IME-switch+type -> screenshot.
+
+        Notes:
+            - click part works on PC backend only; Pico backend will skip click in helper.
+            - does NOT press Enter; verify screenshots first.
+
+        Args expected in args:
+            - x: int
+            - y: int
+            - text: str
+        """
+        return [
+                {"op": "screenshot"},
+                {"op": "sleep", "seconds": 0.15},
+                {"op": "click_then_type_auto", "x": "{x}", "y": "{y}", "text": "{text}"},
+        ]
+
+
 _MACROS: dict[str, Callable[..., list[dict[str, Any]]]] = {
     "start_services": _macro_start_services,
     "health_check": _macro_health_check,
     "restart_unified_api": _macro_restart_unified_api,
     "emergency_stop": _macro_emergency_stop,
     "open_nanokvm": _macro_open_nanokvm,
+    "click_then_type": _macro_click_then_type,
+    "guided_click_then_type_auto": _macro_guided_click_then_type_auto,
 }
 
 
