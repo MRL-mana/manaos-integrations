@@ -49,14 +49,11 @@ screenshots/
 .DS_Store
 .cursor/
 
-# Environment variables
+# Environment variables (NEVER commit secrets)
 .env
-.env.local
-.env.*.local
-.env.*.env
-.env.konoha
-.env.backup.*
-.env.*.backup
+.env.*
+!.env.example
+!.env.template
 
 # Database
 *.db
@@ -198,6 +195,9 @@ comfyui/
 
 # Test/check scripts (temporary utilities at root, NOT tests/ directory)
 test_*.py
+
+# manaos-rpg runtime caches (generated)
+manaos-rpg/backend/storage/unified_doctor_cache.json
 !tests/test_*.py
 !tests/conftest.py
 check_*.py

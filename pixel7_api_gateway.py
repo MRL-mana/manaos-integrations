@@ -13,6 +13,7 @@ import os
 import json
 import asyncio
 import secrets
+import shlex
 from datetime import datetime
 from typing import Dict, Any, Optional, List, Union
 
@@ -33,9 +34,15 @@ except ImportError:
 app = FastAPI(title="Pixel7 API Gateway", version="1.0.0")
 
 # CORS設定（ManaOSからのアクセスを許可）
+_CORS_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("MANAOS_CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 本番環境では適切に制限
+    allow_origins=_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,6 +73,9 @@ def _is_tailscale_client(ip: str) -> bool:
     # Tailscale IPv4 range is 100.64.0.0/10; we keep it simple here.
     if not ip:
         return False
+    # Allow local access (adb forward / on-device localhost)
+    if ip == "127.0.0.1" or ip == "::1":
+        return True
     if ip.startswith("100."):
         return True
     # IPv6 on tailnet is typically in fd7a:115c:a1e0::/48
@@ -114,7 +124,11 @@ async def execute_android_command(
         if isinstance(command, str):
             argv = ["/system/bin/sh", "-lc", command]
         else:
-            argv = command
+            argv = list(command)
+            if argv:
+                # Prefer Android system binaries over Termux PATH to avoid name collisions.
+                if argv[0] in {"am", "monkey", "getprop", "dumpsys"}:
+                    argv[0] = f"/system/bin/{argv[0]}"
 
         process = await asyncio.create_subprocess_exec(
             *argv,
@@ -373,8 +387,10 @@ async def open_app(request: OpenAppRequest, _: None = Depends(require_auth)):
         component = f"{pkg}/{request.activity}"
         r = await execute_android_command(["am", "start", "-n", component], timeout=10)
     else:
+        # On some Android/Termux environments, exec-ing monkey directly can fail;
+        # prefer running it via /system/bin/sh.
         r = await execute_android_command(
-            ["monkey", "-p", pkg, "-c", "android.intent.category.LAUNCHER", "1"],
+            f"monkey -p {shlex.quote(pkg)} -c android.intent.category.LAUNCHER 1",
             timeout=15,
         )
 
