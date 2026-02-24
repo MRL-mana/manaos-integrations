@@ -10,7 +10,7 @@ $workDir = Get-Location
 
 # URL（環境変数で上書き可能）
 $defaultUnifiedPort = if ($env:UNIFIED_API_PORT) { $env:UNIFIED_API_PORT } elseif ($env:PORT) { $env:PORT } else { "9502" }
-$llmRoutingPort = if ($env:LLM_ROUTING_PORT) { $env:LLM_ROUTING_PORT } else { "5111" }
+$llmRoutingPort = if ($env:LLM_ROUTING_PORT) { $env:LLM_ROUTING_PORT } else { "5117" }
 $unifiedApiBaseUrl = if ($env:MANAOS_INTEGRATION_API_URL) { $env:MANAOS_INTEGRATION_API_URL.TrimEnd('/') } else { "http://127.0.0.1:$defaultUnifiedPort" }
 $llmRoutingBaseUrl = if ($env:LLM_ROUTING_URL) { $env:LLM_ROUTING_URL.TrimEnd('/') } else { "http://127.0.0.1:$llmRoutingPort" }
 
@@ -26,7 +26,7 @@ function Get-UriSafe {
 $unifiedApiUri = Get-UriSafe -Url $unifiedApiBaseUrl
 $unifiedApiPort = if ($unifiedApiUri) { $unifiedApiUri.Port } else { $defaultUnifiedPort }
 
-# 1. LLM Routing MCP を起動（ヘルス: 5111）
+# 1. LLM Routing MCP を起動（ヘルス: 5117）
 Write-Host "[1] LLM Routing MCP を起動中..." -ForegroundColor Yellow
 
 # 既存のプロセスを確認

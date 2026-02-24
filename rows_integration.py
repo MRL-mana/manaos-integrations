@@ -56,6 +56,7 @@ class RowsIntegration:
         self.base_url = base_url.rstrip("/")
         self.webhook_url = webhook_url or os.getenv("ROWS_WEBHOOK_URL")
         self.session = None
+        self.last_error: Optional[Dict[str, Any]] = None
         
         if REQUESTS_AVAILABLE and self.api_key:
             self.session = requests.Session()
@@ -98,6 +99,10 @@ class RowsIntegration:
         """
         if not self.is_available():
             logger.error("Rows APIが利用できません")
+            self.last_error = {
+                "type": "unavailable",
+                "message": "Rows APIが利用できません（APIキー未設定またはrequests/session未初期化）",
+            }
             return None
         
         import time
@@ -128,9 +133,14 @@ class RowsIntegration:
                         return None
                 
                 response.raise_for_status()
+                self.last_error = None
                 return response.json()
                 
             except requests.exceptions.Timeout as e:
+                self.last_error = {
+                    "type": "timeout",
+                    "message": str(e),
+                }
                 if attempt < max_retries - 1:
                     logger.warning(f"タイムアウトエラー（試行 {attempt + 1}/{max_retries}）: {e}")
                     time.sleep(retry_delay * (attempt + 1))
@@ -140,6 +150,10 @@ class RowsIntegration:
                     return None
                     
             except requests.exceptions.ConnectionError as e:
+                self.last_error = {
+                    "type": "connection_error",
+                    "message": str(e),
+                }
                 if attempt < max_retries - 1:
                     logger.warning(f"接続エラー（試行 {attempt + 1}/{max_retries}）: {e}")
                     time.sleep(retry_delay * (attempt + 1))
@@ -149,13 +163,33 @@ class RowsIntegration:
                     return None
                     
             except requests.exceptions.HTTPError as e:
+                status_code = getattr(response, "status_code", None)
+                try:
+                    error_json = response.json()
+                except Exception:
+                    error_json = None
+
+                self.last_error = {
+                    "type": "http_error",
+                    "status_code": status_code,
+                    "url": getattr(response, "url", None),
+                    "message": (error_json.get("message") if isinstance(error_json, dict) else None)
+                    or str(e),
+                    "code": (error_json.get("code") if isinstance(error_json, dict) else None),
+                    "body_head": (response.text or "")[:400] if getattr(response, "text", None) else None,
+                }
+
                 # 4xxエラーはリトライしない
                 if 400 <= response.status_code < 500:
                     logger.error(f"HTTPエラー {response.status_code}: {e}")
                     if response.status_code == 401:
                         logger.error("認証エラー: APIキーを確認してください")
+                        if isinstance(error_json, dict) and error_json.get("message"):
+                            logger.error(f"Rows API message: {error_json.get('message')}")
                     elif response.status_code == 404:
                         logger.error("リソースが見つかりません")
+                        if isinstance(error_json, dict) and error_json.get("message"):
+                            logger.error(f"Rows API message: {error_json.get('message')}")
                     return None
                 # 5xxエラーのみリトライ
                 elif attempt < max_retries - 1:
@@ -167,6 +201,10 @@ class RowsIntegration:
                     return None
                     
             except requests.exceptions.RequestException as e:
+                self.last_error = {
+                    "type": "request_exception",
+                    "message": str(e),
+                }
                 if attempt < max_retries - 1:
                     logger.warning(f"リクエストエラー（試行 {attempt + 1}/{max_retries}）: {e}")
                     time.sleep(retry_delay * (attempt + 1))
@@ -224,10 +262,37 @@ class RowsIntegration:
         Returns:
             スプレッドシート一覧
         """
-        result = self._make_request("GET", "/spreadsheets", params={"limit": limit})
-        if result and "spreadsheets" in result:
+        # Rows API Docs: GET /v1/spreadsheets?offset=0&limit=100
+        result = self._make_request(
+            "GET",
+            "/spreadsheets",
+            params={"offset": 0, "limit": limit},
+        )
+
+        if result is None:
+            return None
+
+        # 旧形式: {"spreadsheets": [...]}
+        if isinstance(result, dict) and isinstance(result.get("spreadsheets"), list):
             return result["spreadsheets"]
-        return result
+
+        # 現行形式(例): [{"items": [...], "next_page_results": "..."}]
+        if isinstance(result, list) and result:
+            first = result[0]
+            if isinstance(first, dict) and isinstance(first.get("items"), list):
+                return first["items"]
+
+        # 念のため dict 直下に items があるケースも対応
+        if isinstance(result, dict) and isinstance(result.get("items"), list):
+            return result["items"]
+
+        # ここまで来たら未知形式。呼び出し側で観察できるよう None を返す
+        self.last_error = {
+            "type": "unexpected_response",
+            "message": "Rows API のレスポンス形式が想定外です",
+            "response_type": type(result).__name__,
+        }
+        return None
     
     def update_cell(
         self,

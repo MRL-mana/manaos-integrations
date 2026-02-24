@@ -1,6 +1,6 @@
 # ピクセル7ワイヤレスADB接続スクリプト（簡易版・Windows版）
 
-$PIXEL7_IP = if ($env:PIXEL7_IP) { $env:PIXEL7_IP } else { "100.127.121.20" }
+$PIXEL7_IP = if ($env:PIXEL7_TAILSCALE_IP) { $env:PIXEL7_TAILSCALE_IP } elseif ($env:PIXEL7_IP) { $env:PIXEL7_IP } else { "100.84.2.125" }
 $PIXEL7_ADB_PORT = if ($env:PIXEL7_ADB_PORT) { $env:PIXEL7_ADB_PORT } else { "5555" }
 
 Write-Host "📱 ピクセル7に接続中..." -ForegroundColor Cyan

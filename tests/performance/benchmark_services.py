@@ -204,7 +204,7 @@ def main():
     services = [
         ("MRL Memory", "http://localhost:5105/health"),
         ("Learning System", "http://localhost:5126/health"),
-        ("LLM Routing", "http://localhost:5111/health"),
+        ("LLM Routing", "http://localhost:5117/health"),
         ("Unified API", "http://localhost:9502/health"),
         ("Video Pipeline", "http://localhost:5112/health"),
         ("Gallery API", "http://localhost:5559/health"),

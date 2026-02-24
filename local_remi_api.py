@@ -40,6 +40,7 @@ import base64
 import binascii
 import tempfile
 import re
+import uuid
 from datetime import datetime
 from typing import Optional, List
 from pathlib import Path
@@ -61,6 +62,14 @@ from _paths import (
     VOICEVOX_PORT,
     INTENT_ROUTER_PORT,
 )
+
+
+def _unified_api_base() -> str:
+    return (
+        os.getenv("MANAOS_INTEGRATION_API_URL")
+        or os.getenv("MANAOS_API_URL")
+        or f"http://127.0.0.1:{UNIFIED_API_PORT}"
+    ).rstrip("/")
 
 
 # ============================================================
@@ -146,11 +155,32 @@ def _is_patch_path_allowed(path: str) -> bool:
 # ============================================================
 # Security
 # ============================================================
-API_TOKEN = os.getenv("REMI_API_TOKEN", "")
+_REMI_TOKEN_FILE = os.path.join(os.path.dirname(__file__), "logs", "remi_api_token.txt")
+
+API_TOKEN = (os.getenv("REMI_API_TOKEN") or "").strip()
 if not API_TOKEN:
-    API_TOKEN = secrets.token_hex(32)
-    # トークン値をログに出力しない（セキュリティ）
-    print("[Remi] API token auto-generated. Set REMI_API_TOKEN env var to persist.")
+    try:
+        if os.path.exists(_REMI_TOKEN_FILE):
+            with open(_REMI_TOKEN_FILE, "r", encoding="utf-8") as f:
+                API_TOKEN = (f.read() or "").strip()
+    except Exception:
+        API_TOKEN = ""
+
+if not API_TOKEN:
+    # Pixel7導線互換のため、初回既定トークンを採用（必要なら環境変数で上書き）
+    API_TOKEN = "remi-pixel7-2026"
+
+    try:
+        os.makedirs(os.path.dirname(_REMI_TOKEN_FILE), exist_ok=True)
+        with open(_REMI_TOKEN_FILE, "w", encoding="utf-8") as f:
+            f.write(API_TOKEN)
+    except Exception:
+        # 最後の手段: ランダム生成（ただし再起動で変わる可能性あり）
+        API_TOKEN = secrets.token_hex(32)
+
+# トークン値をログに出力しない（セキュリティ）
+if not (os.getenv("REMI_API_TOKEN") or "").strip():
+    print("[Remi] API token loaded (persistent). Set REMI_API_TOKEN env var to override.")
 
 security = HTTPBearer(auto_error=False)
 
@@ -210,6 +240,28 @@ _last_notif_messages: dict = {}  # category -> (message, timestamp) for dedup
 suggestion_log: List[dict] = []
 MAX_SUGGESTIONS = 10
 _last_suggestion_keys: dict = {}  # key -> timestamp for dedup (15 min)
+
+# ============================================================
+# Background jobs (model downloads)
+# ============================================================
+_download_jobs: dict = {}  # job_id -> {status_file, pid, started_at}
+
+
+def _write_json_file(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    os.replace(str(tmp), str(path))
+
+
+def _read_text_tail(path: Path, max_chars: int = 4000) -> str:
+    try:
+        if not path.exists():
+            return ""
+        text = path.read_text(encoding="utf-8", errors="replace")
+        return text[-max_chars:]
+    except Exception:
+        return ""
 
 # ============================================================
 # System Status
@@ -680,7 +732,823 @@ ACTIONS = {
         "background": False,
         "timeout": 90,
     },
+        "manaos_full_smoke": {
+                "name": "ManaOS Full Smoke Test",
+                "cmd": [
+                        _powershell_exe(),
+                        "-NoProfile",
+                        "-ExecutionPolicy",
+                        "Bypass",
+                        "-File",
+                        str(_WORKSPACE_ROOT / "manaos_integrations" / "run_manaos_full_smoke.ps1"),
+                ],
+                "background": False,
+                "timeout": 180,
+        },
+        "evaluation_ui_start": {
+            "name": "Start Evaluation UI (9601)",
+            "cmd": [
+                _workspace_python(),
+                str(_WORKSPACE_ROOT / "manaos_integrations" / "auto_start_evaluation_ui_9601.py"),
+            ],
+            "background": True,
+            "timeout": 10,
+        },
 }
+
+
+def _html_shell(title: str, body: str) -> str:
+    token_bootstrap = """<script>
+(function(){
+    try{
+    const params=new URLSearchParams(window.location.search);
+    const t=params.get('token')||localStorage.getItem('remi_token')||'';
+    if(t){window.REMI_TOKEN=t;localStorage.setItem('remi_token',t);}else{window.REMI_TOKEN='';}
+    }catch(e){window.REMI_TOKEN='';}
+})();
+</script>
+"""
+    return f"""<!DOCTYPE html><html lang=\"ja\"><head>
+<meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
+<title>{title}</title>
+<style>
+    body{{font-family:system-ui;background:#0a0a0f;color:#eaeaea;margin:0;padding:16px}}
+    .card{{background:#151522;border:1px solid #2a2a3a;border-radius:14px;padding:14px;margin:12px 0}}
+    label{{display:block;font-size:12px;color:#bdbdbd;margin:10px 0 4px}}
+    input,select,textarea{{width:100%;padding:12px;border-radius:12px;border:1px solid #303045;background:#0f0f18;color:#fff}}
+    button{{width:100%;padding:12px;border-radius:12px;border:0;background:#667eea;color:#fff;font-weight:700;margin-top:12px}}
+    .row{{display:flex;gap:10px}}
+    .row>*{{flex:1}}
+    pre{{white-space:pre-wrap;word-break:break-word;background:#0f0f18;border:1px solid #303045;border-radius:12px;padding:12px}}
+    a{{color:#8fa7ff}}
+</style></head><body>
+{token_bootstrap}
+<h2 style=\"margin:0 0 8px 0\">{title}</h2>
+{body}
+</body></html>"""
+
+
+async def _run_action_compat(action_name: str, arg: Optional[str] = None) -> JSONResponse:
+    """Run ACTIONS without requiring Authorization header (used by quick pages).
+
+    Security is still enforced by verify_token_or_query at the route level.
+    """
+    audit_logger.info(f"QuickAction: {action_name} (arg={arg})")
+
+    if action_name not in ACTIONS:
+        return JSONResponse(
+            status_code=404,
+            content={"error": f"Unknown action: {action_name}", "available": list(ACTIONS.keys())},
+        )
+
+    action = ACTIONS[action_name]
+
+    if "special" in action and action["special"] == "clear_vram":
+        pm = _get_pm()
+        killed = pm.kill_processes_by_keywords(["comfy", "kohya", "stable-diffusion", "train"])
+        cleared = [f"process_{i}" for i in range(killed)]
+        try:
+            subprocess.run(
+                ["python", "-c", "import torch; torch.cuda.empty_cache(); print('CUDA cache cleared')"],
+                capture_output=True,
+                timeout=10,
+            )
+        except Exception:
+            pass
+        add_notification("action", f"VRAM cleared: {len(cleared)} processes stopped")
+        return JSONResponse(content={"action": action_name, "cleared_processes": cleared})
+
+    if "kill" in action:
+        pm = _get_pm()
+        killed_count = pm.kill_processes_by_keywords([action["kill"]])
+        killed = [f"process_{i}" for i in range(killed_count)]
+        add_notification("action", f"{action['name']}: killed {killed_count} processes")
+        return JSONResponse(content={"action": action_name, "killed": killed})
+
+    cmd = list(action["cmd"])
+    if action.get("needs_arg"):
+        if not arg:
+            return JSONResponse(status_code=400, content={"error": "This action requires 'arg' parameter"})
+        cmd.append(arg)
+
+    timeout_sec = int(action.get("timeout", 30))
+    try:
+        if action.get("background"):
+            subprocess.Popen(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+            )
+            add_notification("action", f"{action['name']} started")
+            return JSONResponse(content={"action": action_name, "status": "started"})
+
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_sec)
+        add_notification("action", f"{action['name']} completed (exit={result.returncode})")
+        return JSONResponse(
+            content={
+                "action": action_name,
+                "status": "completed",
+                "exit_code": result.returncode,
+                "output": result.stdout[:2000] if result.stdout else "",
+                "error": result.stderr[:2000] if result.stderr else "",
+            }
+        )
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.get("/quick/image", response_class=HTMLResponse, dependencies=[Depends(verify_token_or_query)])
+async def quick_image_page():
+        body = """
+<div class="card">
+    <label>プロンプト</label>
+    <textarea id="prompt" rows="3" placeholder="例: 猫がベッドで寝ている（日本語OK）"></textarea>
+    <div class="row">
+        <div>
+            <label>quality</label>
+            <select id="quality">
+                <option value="fast">fast</option>
+                <option value="balanced" selected>balanced</option>
+                <option value="quality">quality</option>
+            </select>
+        </div>
+        <div>
+            <label>mode</label>
+            <select id="mode">
+                <option value="normal" selected>normal</option>
+                <option value="mufufu">mufufu</option>
+                <option value="lab">lab</option>
+            </select>
+        </div>
+    </div>
+    <button onclick="run()">画像生成スタート</button>
+</div>
+<div class="card">
+    <pre id="out">ready</pre>
+    <div style="font-size:12px;color:#aaa;margin-top:8px">画像は ComfyUI の出力フォルダに出ます。必要なら OpenWebUI で履歴/ツールも併用。</div>
+</div>
+<script>
+async function run(){
+    const prompt=document.getElementById('prompt').value.trim();
+    if(!prompt){document.getElementById('out').textContent='prompt required';return;}
+    const q=document.getElementById('quality').value;
+    const mode=document.getElementById('mode').value;
+    const payload={prompt:prompt};
+    if(mode==='mufufu') payload.mufufu_mode=true;
+    if(mode==='lab') payload.lab_mode=true;
+    try{
+        document.getElementById('out').textContent='running...';
+        const resp=await fetch('/api/quick/image/generate?token='+encodeURIComponent(window.REMI_TOKEN||''),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,quality:q})});
+        const data=await resp.json();
+        document.getElementById('out').textContent=JSON.stringify(data,null,2);
+    }catch(e){document.getElementById('out').textContent=String(e)}
+}
+</script>
+"""
+        return _html_shell("🖼️ 画像生成（クイック）", body)
+
+
+@app.post("/api/quick/image/generate", dependencies=[Depends(verify_token_or_query)])
+async def quick_image_generate(request: Request):
+        data = await request.json()
+        prompt = (data.get("prompt") or "").strip()
+        if not prompt:
+                return JSONResponse(status_code=400, content={"ok": False, "error": "prompt_required"})
+        quality = (data.get("quality") or "balanced").strip().lower()
+        # Simple mapping
+        if quality == "fast":
+                width = int(data.get("width", 512) or 512)
+                height = int(data.get("height", 512) or 512)
+                steps = int(data.get("steps", 16) or 16)
+        elif quality in {"quality", "high", "accurate"}:
+                width = int(data.get("width", 768) or 768)
+                height = int(data.get("height", 1024) or 1024)
+                steps = int(data.get("steps", 30) or 30)
+        else:
+                width = int(data.get("width", 512) or 512)
+                height = int(data.get("height", 512) or 512)
+                steps = int(data.get("steps", 20) or 20)
+
+        payload = {
+                "prompt": prompt,
+                "width": width,
+                "height": height,
+                "steps": steps,
+                "negative_prompt": (data.get("negative_prompt") or "").strip(),
+                "seed": int(data.get("seed", -1) if data.get("seed", -1) is not None else -1),
+                "mufufu_mode": bool(data.get("mufufu_mode", False)),
+                "lab_mode": bool(data.get("lab_mode", False)),
+        }
+
+        try:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                        r = await client.post(f"{_unified_api_base()}/api/comfyui/generate", json=payload)
+                        return JSONResponse(status_code=r.status_code, content=r.json())
+        except Exception as e:
+                return JSONResponse(status_code=502, content={"ok": False, "error": "unified_api_failed", "detail": str(e)})
+
+
+@app.get("/quick/video", response_class=HTMLResponse, dependencies=[Depends(verify_token_or_query)])
+async def quick_video_page():
+        body = """
+<div class="card">
+    <div style="font-size:12px;color:#aaa">開始画像は「最新生成画像」を自動で使います。</div>
+    <label>プロンプト</label>
+    <textarea id="prompt" rows="3" placeholder="例: cinematic, smooth motion, beautiful landscape"></textarea>
+    <div class="row">
+        <div>
+            <label>quality</label>
+            <select id="quality">
+                <option value="fast">fast</option>
+                <option value="balanced" selected>balanced</option>
+                <option value="quality">quality</option>
+            </select>
+        </div>
+        <div>
+            <label>秒数</label>
+            <select id="secs">
+                <option value="5" selected>5</option>
+                <option value="8">8</option>
+                <option value="10">10</option>
+            </select>
+        </div>
+    </div>
+    <div class="row">
+        <button onclick="run()">動画生成スタート</button>
+        <button onclick="diag()">ノード診断</button>
+    </div>
+    <div class="row">
+        <button onclick="models()">モデル不足チェック</button>
+        <button onclick="models_run()">モデルDL実行（重い）</button>
+    </div>
+</div>
+<div class="card">
+    <pre id="out">ready</pre>
+</div>
+<script>
+async function run(){
+    const prompt=document.getElementById('prompt').value.trim();
+    if(!prompt){document.getElementById('out').textContent='prompt required';return;}
+    const quality=document.getElementById('quality').value;
+    const secs=parseInt(document.getElementById('secs').value,10);
+    try{
+        document.getElementById('out').textContent='running...';
+        const resp=await fetch('/api/quick/video/generate?token='+encodeURIComponent(window.REMI_TOKEN||''),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,quality,video_length_seconds:secs})});
+        const data=await resp.json();
+        document.getElementById('out').textContent=JSON.stringify(data,null,2);
+    }catch(e){document.getElementById('out').textContent=String(e)}
+}
+
+async function diag(){
+    try{
+        document.getElementById('out').textContent='checking...';
+        const resp=await fetch('/api/quick/video/diag?token='+encodeURIComponent(window.REMI_TOKEN||''));
+        const data=await resp.json();
+        document.getElementById('out').textContent=JSON.stringify(data,null,2);
+    }catch(e){document.getElementById('out').textContent=String(e)}
+}
+
+async function models(){
+    try{
+        document.getElementById('out').textContent='checking models...';
+        const resp=await fetch('/api/quick/video/models?token='+encodeURIComponent(window.REMI_TOKEN||''));
+        const data=await resp.json();
+        document.getElementById('out').textContent=JSON.stringify(data,null,2);
+    }catch(e){document.getElementById('out').textContent=String(e)}
+}
+
+async function models_run(){
+    if(!confirm('巨大ファイルのダウンロードが始まります。続行しますか？')) return;
+    try{
+        document.getElementById('out').textContent='starting download...';
+        const resp=await fetch('/api/quick/video/models/download?token='+encodeURIComponent(window.REMI_TOKEN||''),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({execute:true})});
+        const data=await resp.json();
+        document.getElementById('out').textContent=JSON.stringify(data,null,2);
+        if(data && data.job_id){
+            const jobId=data.job_id;
+            const poll = async()=>{
+                try{
+                    const r=await fetch('/api/quick/video/models/download/status?token='+encodeURIComponent(window.REMI_TOKEN||'')+'&job_id='+encodeURIComponent(jobId));
+                    const st=await r.json();
+                    document.getElementById('out').textContent=JSON.stringify(st,null,2);
+                    if(st && (st.state==='finished' || st.state==='failed' || st.state==='ok' || st.state==='dry_run')) return;
+                }catch(e){document.getElementById('out').textContent=String(e);return;}
+                setTimeout(poll,2000);
+            };
+            setTimeout(poll,1200);
+        }
+    }catch(e){document.getElementById('out').textContent=String(e)}
+}
+</script>
+"""
+        return _html_shell("🎬 動画生成（最新画像から）", body)
+
+
+@app.post("/api/quick/video/generate", dependencies=[Depends(verify_token_or_query)])
+async def quick_video_generate(request: Request):
+        data = await request.json()
+        prompt = (data.get("prompt") or "").strip()
+        if not prompt:
+                return JSONResponse(status_code=400, content={"ok": False, "error": "prompt_required"})
+        quality = (data.get("quality") or "balanced").strip().lower()
+        secs = int(data.get("video_length_seconds", 5) or 5)
+
+        base = _unified_api_base()
+        try:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                        r = await client.get(f"{base}/api/images/recent", params={"limit": 1})
+                        r.raise_for_status()
+                        j = r.json()
+                        images = (j.get("images") or []) if isinstance(j, dict) else []
+                        if not images:
+                                return JSONResponse(status_code=404, content={"ok": False, "error": "no_recent_images"})
+                        start_image_path = images[0].get("path")
+                        if not start_image_path:
+                                return JSONResponse(status_code=500, content={"ok": False, "error": "bad_recent_image"})
+
+                        payload = {
+                                "start_image_path": start_image_path,
+                                "prompt": prompt,
+                                "video_length_seconds": secs,
+                                "quality": quality,
+                        }
+                        r2 = await client.post(f"{base}/api/svi/generate", json=payload)
+                        return JSONResponse(status_code=r2.status_code, content=r2.json())
+        except Exception as e:
+            return JSONResponse(status_code=502, content={"ok": False, "error": "unified_api_failed", "detail": str(e)})
+
+
+@app.get("/api/quick/video/diag", dependencies=[Depends(verify_token_or_query)])
+async def quick_video_diag():
+    base = _unified_api_base()
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            r = await client.get(f"{base}/api/svi/capabilities")
+            return JSONResponse(status_code=r.status_code, content=r.json())
+    except Exception as e:
+        return JSONResponse(status_code=502, content={"ok": False, "error": "unified_api_failed", "detail": str(e)})
+
+
+@app.get("/api/quick/video/models", dependencies=[Depends(verify_token_or_query)])
+async def quick_video_models():
+    base = _unified_api_base()
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            r = await client.get(f"{base}/api/svi/capabilities")
+            j = r.json() if r.headers.get('content-type','').startswith('application/json') else {}
+            model_assets = (j.get('model_assets') or {}) if isinstance(j, dict) else {}
+            missing = model_assets.get('missing') or []
+            cmds = []
+            if isinstance(missing, list):
+                for m in missing:
+                    if isinstance(m, dict) and m.get('download_ps'):
+                        cmds.append(m.get('download_ps'))
+            return JSONResponse(status_code=200, content={
+                "ok": bool(model_assets.get('ok')),
+                "missing_count": len(missing) if isinstance(missing, list) else 0,
+                "missing": missing,
+                "download_ps_commands": cmds,
+            })
+    except Exception as e:
+        return JSONResponse(status_code=502, content={"ok": False, "error": "unified_api_failed", "detail": str(e)})
+
+
+@app.post("/api/quick/video/models/download", dependencies=[Depends(verify_token_or_query)])
+async def quick_video_models_download(request: Request):
+    data = await request.json()
+    execute = bool((data or {}).get('execute'))
+    script = (Path(__file__).resolve().parent / 'download_svi_wan_model_assets.ps1')
+    if not script.exists():
+        return JSONResponse(status_code=500, content={"ok": False, "error": "script_missing"})
+
+    job_id = str(uuid.uuid4())
+    status_file = (Path(__file__).resolve().parent / 'logs' / f'svi_model_download_{job_id}.json')
+    log_file = (Path(__file__).resolve().parent / 'logs' / f'svi_model_download_{job_id}.log')
+    status_file.parent.mkdir(parents=True, exist_ok=True)
+
+    _write_json_file(
+        status_file,
+        {
+            "updated_at": datetime.now().isoformat(),
+            "state": "spawned",
+            "execute": execute,
+        },
+    )
+
+    cmd = [
+        _powershell_exe(),
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        str(script),
+        "-StatusFile",
+        str(status_file),
+    ]
+    cmd.append("-Execute" if execute else "-DryRun")
+
+    # fire-and-forget
+    try:
+        log_fh = open(log_file, "a", encoding="utf-8", errors="replace")
+        proc = subprocess.Popen(
+            cmd,
+            cwd=str(_WORKSPACE_ROOT),
+            stdout=log_fh,
+            stderr=log_fh,
+            creationflags=(subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0),
+        )
+        _download_jobs[job_id] = {
+            "status_file": str(status_file),
+            "log_file": str(log_file),
+            "pid": proc.pid,
+            "started_at": datetime.now().isoformat(),
+            "execute": execute,
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"ok": False, "error": "spawn_failed", "detail": str(e)})
+
+    return JSONResponse(status_code=200, content={
+        "ok": True,
+        "job_id": job_id,
+        "status_file": str(status_file),
+        "log_file": str(log_file),
+        "pid": _download_jobs[job_id].get('pid'),
+        "execute": execute,
+    })
+
+
+@app.get("/api/quick/video/models/download/status", dependencies=[Depends(verify_token_or_query)])
+async def quick_video_models_download_status(job_id: str = Query("")):
+    job_id = (job_id or "").strip()
+    if not job_id:
+        return JSONResponse(status_code=400, content={"ok": False, "error": "job_id_required"})
+
+    job = _download_jobs.get(job_id)
+    if not job:
+        # best-effort: allow reading from logs even after restart
+        status_file = (Path(__file__).resolve().parent / 'logs' / f'svi_model_download_{job_id}.json')
+        if not status_file.exists():
+            return JSONResponse(status_code=404, content={"ok": False, "error": "job_not_found"})
+        job = {"status_file": str(status_file), "pid": None, "started_at": None}
+
+    path = job.get('status_file')
+    log_path = job.get('log_file')
+    try:
+        if path and os.path.exists(path):
+            with open(path, 'r', encoding='utf-8-sig') as f:
+                payload = json.load(f)
+        else:
+            payload = {"state": "pending"}
+    except Exception as e:
+        payload = {"state": "unknown", "error": str(e)}
+
+    log_tail = ""
+    try:
+        if log_path:
+            log_tail = _read_text_tail(Path(log_path))
+    except Exception:
+        log_tail = ""
+
+    safe_payload = payload if isinstance(payload, dict) else None
+    if isinstance(safe_payload, dict) and 'job_id' in safe_payload:
+        # Avoid overwriting Remi's own job_id in the response.
+        safe_payload = dict(safe_payload)
+        safe_payload['bits_job_id'] = safe_payload.pop('job_id')
+
+    return JSONResponse(status_code=200, content={
+        "ok": True,
+        "job_id": job_id,
+        "pid": job.get('pid'),
+        "started_at": job.get('started_at'),
+        "log_tail": log_tail,
+        **(safe_payload if isinstance(safe_payload, dict) else {"payload": payload}),
+    })
+
+
+@app.post("/api/quick/video/models/download/cancel", dependencies=[Depends(verify_token_or_query)])
+async def quick_video_models_download_cancel(request: Request):
+    data = await request.json()
+    job_id = ((data or {}).get('job_id') or '').strip()
+    if not job_id:
+        return JSONResponse(status_code=400, content={"ok": False, "error": "job_id_required"})
+    job = _download_jobs.get(job_id)
+    if not job:
+        return JSONResponse(status_code=404, content={"ok": False, "error": "job_not_found"})
+    pid = job.get('pid')
+    try:
+        if pid:
+            subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True, text=True, timeout=20)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"ok": False, "error": "cancel_failed", "detail": str(e)})
+    return JSONResponse(status_code=200, content={"ok": True, "job_id": job_id, "cancelled": True})
+
+
+@app.get("/quick/pdf", response_class=HTMLResponse, dependencies=[Depends(verify_token_or_query)])
+async def quick_pdf_page():
+        body = """
+<div class="card">
+    <label>Google Drive共有URL</label>
+    <textarea id="url" rows="3" placeholder="https://drive.google.com/file/d/... または共有リンク"></textarea>
+    <label>quality</label>
+    <select id="quality">
+        <option value="fast">fast</option>
+        <option value="balanced" selected>balanced</option>
+        <option value="quality">quality</option>
+    </select>
+    <button onclick="run()">PDF→Excel 実行</button>
+</div>
+<div class="card">
+    <pre id="out">ready</pre>
+</div>
+<script>
+async function run(){
+    const drive_url=document.getElementById('url').value.trim();
+    if(!drive_url){document.getElementById('out').textContent='drive_url required';return;}
+    const quality=document.getElementById('quality').value;
+    try{
+        document.getElementById('out').textContent='running...';
+        const resp=await fetch('/api/quick/pdf/convert?token='+encodeURIComponent(window.REMI_TOKEN||''),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({drive_url,quality})});
+        const data=await resp.json();
+        document.getElementById('out').textContent=JSON.stringify(data,null,2);
+    }catch(e){document.getElementById('out').textContent=String(e)}
+}
+</script>
+"""
+        return _html_shell("📄 PDF→Excel（クイック）", body)
+
+
+@app.post("/api/quick/pdf/convert", dependencies=[Depends(verify_token_or_query)])
+async def quick_pdf_convert(request: Request):
+        data = await request.json()
+        drive_url = (data.get("drive_url") or data.get("url") or "").strip()
+        if not drive_url:
+                return JSONResponse(status_code=400, content={"ok": False, "error": "drive_url_required"})
+        quality = (data.get("quality") or "balanced").strip().lower()
+        payload = {"drive_url": drive_url, "quality": quality}
+        try:
+                async with httpx.AsyncClient(timeout=300.0) as client:
+                        r = await client.post(f"{_unified_api_base()}/api/pdf/to-excel", json=payload)
+                        return JSONResponse(status_code=r.status_code, content=r.json())
+        except Exception as e:
+                return JSONResponse(status_code=502, content={"ok": False, "error": "unified_api_failed", "detail": str(e)})
+
+
+@app.get("/quick/dev", response_class=HTMLResponse, dependencies=[Depends(verify_token_or_query)])
+async def quick_dev_page():
+        body = """
+<div class="card">
+    <div style="font-size:12px;color:#aaa">運用・開発（Pixel7からワンタップ）</div>
+    <button onclick="act('manaos_health_check')">✅ サービスヘルスチェック</button>
+    <button onclick="act('manaos_full_smoke')">🧪 フル統合スモークテスト</button>
+    <button onclick="act('manaos_release_9502')">♻️ Unified API(9502) 再起動/解放</button>
+    <button onclick="act('clear_vram')">🧹 VRAMクリア</button>
+    <button onclick="openUrl('/dashboard')">🏠 Remiダッシュボードを開く</button>
+    <button onclick="openUrl('/actions')">📋 アクション一覧</button>
+</div>
+<div class="card"><pre id="out">ready</pre></div>
+<script>
+async function act(name){
+    try{
+        document.getElementById('out').textContent='running...';
+        const resp=await fetch('/api/quick/action/'+encodeURIComponent(name)+'?token='+encodeURIComponent(window.REMI_TOKEN||''),{method:'POST'});
+        const data=await resp.json();
+        document.getElementById('out').textContent=JSON.stringify(data,null,2);
+    }catch(e){document.getElementById('out').textContent=String(e)}
+}
+function openUrl(path){
+    const u=path+(path.includes('?')?'&':'?')+'token='+encodeURIComponent(window.REMI_TOKEN||'');
+    location.href=u;
+}
+</script>
+"""
+        return _html_shell("🛠️ 開発・運用（クイック）", body)
+
+
+@app.post("/api/quick/action/{action_name}", dependencies=[Depends(verify_token_or_query)])
+async def quick_action(action_name: str, arg: Optional[str] = Query(None)):
+        return await _run_action_compat(action_name, arg)
+
+
+@app.get("/quick/vision", response_class=HTMLResponse, dependencies=[Depends(verify_token_or_query)])
+async def quick_vision_page():
+        # URL hints (optional)
+        hints = [s.strip() for s in (os.getenv("REMI_CAMERA_SNAPSHOT_URLS") or "").split(",") if s.strip()]
+        hint_html = ""
+        if hints:
+                opts = "".join([f"<option value=\"{h}\">{h}</option>" for h in hints[:10]])
+                hint_html = f"""
+<label>URL候補（任意）</label>
+<select id=\"url_hint\" onchange=\"if(this.value)document.getElementById('url').value=this.value\">{opts}</select>
+"""
+
+        base_url = _unified_api_base()
+        body = """
+<div class="card">
+    <div style="font-size:12px;color:#aaa">Pixel 7カメラを母艦の目にする（おすすめ: IP Webcam 等で shot.jpg を用意）</div>
+    <label>画像URL（例: http://100.x.x.x:8080/shot.jpg）</label>
+    <input id="url" placeholder="http://.../shot.jpg" />
+    __HINT_HTML__
+    <label>指示（日本語）</label>
+    <textarea id="prompt" rows="3">この画像の内容を日本語で詳しく説明してください。</textarea>
+    <div class="row">
+        <div>
+            <label>モデル</label>
+            <input id="model" value="llava:latest" />
+        </div>
+        <div>
+            <label>max_tokens</label>
+            <input id="max_tokens" value="512" />
+        </div>
+    </div>
+    <div class="row">
+        <button style="background:#444" onclick="preview()">👁️ 画像をプレビュー</button>
+        <button style="background:#444" onclick="toggleAuto()"><span id="auto">自動更新: OFF</span></button>
+    </div>
+    <button onclick="run()">📷 いま見えてるものを説明</button>
+</div>
+<div class="card"><pre id="out">ready</pre></div>
+<script>
+// persist last URL
+const key='remi_vision_url_v1';
+const saved=localStorage.getItem(key);
+if(saved){document.getElementById('url').value=saved;}
+
+let timer=null;
+function preview(){
+    const image_url=document.getElementById('url').value.trim();
+    if(!image_url){document.getElementById('out').textContent='画像URLが必要です';return;}
+    window.open(image_url,'_blank');
+}
+
+function toggleAuto(){
+    const el=document.getElementById('auto');
+    if(timer){
+        clearInterval(timer); timer=null;
+        el.textContent='自動更新: OFF';
+        return;
+    }
+    el.textContent='自動更新: ON';
+    timer=setInterval(()=>run(true), 5000);
+}
+
+async function run(silent){
+    const image_url=document.getElementById('url').value.trim();
+    const prompt=document.getElementById('prompt').value.trim();
+    const model=document.getElementById('model').value.trim()||'llava:latest';
+    const max_tokens=parseInt(document.getElementById('max_tokens').value||'512',10);
+    if(!image_url){ if(!silent) document.getElementById('out').textContent='画像URLが必要です'; return; }
+    localStorage.setItem(key,image_url);
+    try{
+        document.getElementById('out').textContent='実行中...';
+        const base='__BASE_URL__';
+        const resp=await fetch(base+'/api/vision/describe_url',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({image_url,prompt,model,max_tokens})
+        });
+        const data=await resp.json();
+        document.getElementById('out').textContent=JSON.stringify(data,null,2);
+    }catch(e){document.getElementById('out').textContent=String(e)}
+}
+</script>
+"""
+        body = body.replace("__HINT_HTML__", hint_html)
+        body = body.replace("__BASE_URL__", base_url)
+        return _html_shell("👁️ カメラの目（画像URL→説明）", body)
+
+
+@app.get("/quick", response_class=HTMLResponse, dependencies=[Depends(verify_token_or_query)])
+async def quick_menu_page():
+        body = """
+<div class="card">
+    <div style="font-size:12px;color:#aaa">Pixel 7用：全部ここから（最短入口）</div>
+    <button onclick="go('/quick/image')">🖼️ 画像生成（クイック）</button>
+    <button onclick="go('/quick/video')">🎬 動画生成（最新画像から）</button>
+    <button onclick="go('/quick/pdf')">📄 PDF→Excel（クイック）</button>
+    <button onclick="go('/quick/vision')">👁️ カメラの目（URL→説明）</button>
+    <button onclick="go('/quick/eval')">⭐ 画像評価（URL→スコア）</button>
+    <button onclick="go('/quick/eval-ui')">🧪 既存の画像評価UI</button>
+    <button onclick="go('/quick/dev')">🛠️ 開発・運用（クイック）</button>
+    <button onclick="go('/dashboard')">🏠 Remiダッシュボード</button>
+</div>
+<script>
+function go(path){
+    const u=path+(path.includes('?')?'&':'?')+'token='+encodeURIComponent(window.REMI_TOKEN||'');
+    location.href=u;
+}
+</script>
+"""
+        return _html_shell("⚡ クイックメニュー", body)
+
+
+@app.get("/quick/eval", response_class=HTMLResponse, dependencies=[Depends(verify_token_or_query)])
+async def quick_eval_page():
+        hints = [s.strip() for s in (os.getenv("REMI_CAMERA_SNAPSHOT_URLS") or "").split(",") if s.strip()]
+        hint_html = ""
+        if hints:
+                opts = "".join([f"<option value=\"{h}\">{h}</option>" for h in hints[:10]])
+                hint_html = f"""
+<label>URL候補（任意）</label>
+<select id=\"url_hint\" onchange=\"if(this.value)document.getElementById('url').value=this.value\">{opts}</select>
+"""
+
+        base_url = _unified_api_base()
+        body = """
+<div class="card">
+    <div style="font-size:12px;color:#aaa">画像URLを評価してスコア化（構図/明瞭さ/美観 など）</div>
+    <label>画像URL（例: http://100.x.x.x:8080/shot.jpg）</label>
+    <input id="url" placeholder="http://.../shot.jpg" />
+    __HINT_HTML__
+    <label>評価の観点（任意）</label>
+    <textarea id="criteria" rows="2" placeholder="例: 構図, 明瞭さ, ノイズ, 色バランス"></textarea>
+    <div class="row">
+        <div>
+            <label>モデル</label>
+            <input id="model" value="llava:latest" />
+        </div>
+        <div>
+            <label>max_tokens</label>
+            <input id="max_tokens" value="256" />
+        </div>
+    </div>
+    <div class="row">
+        <button style="background:#444" onclick="preview()">👁️ 画像をプレビュー</button>
+    </div>
+    <button onclick="run()">⭐ 画像を評価</button>
+</div>
+<div class="card"><pre id="out">ready</pre></div>
+<script>
+const key='remi_eval_url_v1';
+const saved=localStorage.getItem(key);
+if(saved){document.getElementById('url').value=saved;}
+
+function preview(){
+    const image_url=document.getElementById('url').value.trim();
+    if(!image_url){document.getElementById('out').textContent='画像URLが必要です';return;}
+    window.open(image_url,'_blank');
+}
+
+async function run(){
+    const image_url=document.getElementById('url').value.trim();
+    const criteria=document.getElementById('criteria').value.trim();
+    const model=document.getElementById('model').value.trim()||'llava:latest';
+    const max_tokens=parseInt(document.getElementById('max_tokens').value||'256',10);
+    if(!image_url){document.getElementById('out').textContent='画像URLが必要です'; return; }
+    localStorage.setItem(key,image_url);
+    try{
+        document.getElementById('out').textContent='実行中...';
+        const base='__BASE_URL__';
+        const resp=await fetch(base+'/api/vision/evaluate_url',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({image_url,criteria,model,max_tokens})
+        });
+        const data=await resp.json();
+        document.getElementById('out').textContent=JSON.stringify(data,null,2);
+    }catch(e){document.getElementById('out').textContent=String(e)}
+}
+</script>
+"""
+        body = body.replace("__HINT_HTML__", hint_html)
+        body = body.replace("__BASE_URL__", base_url)
+        return _html_shell("⭐ 画像評価（URL→スコア）", body)
+
+
+@app.get("/quick/eval-ui", response_class=HTMLResponse, dependencies=[Depends(verify_token_or_query)])
+async def quick_eval_ui_page():
+        body = """
+<div class="card">
+    <div style="font-size:12px;color:#aaa">既存の画像評価UI（ポート9601）を開きます</div>
+    <button style="background:#444" onclick="startUi()">▶ 評価UIを起動</button>
+    <button onclick="openUi()">🌐 評価UIを開く</button>
+    <div id="eval_url" style="font-size:12px;color:#aaa;margin-top:8px">URL: http://127.0.0.1:9601/</div>
+</div>
+<div class="card"><pre id="out">ready</pre></div>
+<script>
+function getHost(){
+    return window.location.hostname || '127.0.0.1';
+}
+function openUi(){
+    const host=getHost();
+    window.open('http://'+host+':9601/','_blank');
+}
+async function startUi(){
+    try{
+        document.getElementById('out').textContent='starting...';
+        const resp=await fetch('/api/quick/action/evaluation_ui_start?token='+encodeURIComponent(window.REMI_TOKEN||''),{method:'POST'});
+        const data=await resp.json();
+        document.getElementById('out').textContent=JSON.stringify(data,null,2);
+    }catch(e){document.getElementById('out').textContent=String(e)}
+}
+(function(){
+    const host=getHost();
+    const el=document.getElementById('eval_url');
+    if(el){el.textContent='URL: http://'+host+':9601/';}
+})();
+</script>
+"""
+        return _html_shell("🧪 既存の画像評価UI", body)
 
 
 @app.post("/action/{action_name}", dependencies=[Depends(verify_token)])

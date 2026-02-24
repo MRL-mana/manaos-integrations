@@ -230,6 +230,114 @@
     // ============================================================
     let toggleBtn = null;
     let engineBtn = null;
+    let micBtn = null;
+
+    // ============================================================
+    // STT (Web Speech API)
+    // ============================================================
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+    let recognition = null;
+    let isListening = false;
+
+    function findChatInput() {
+        const selectors = [
+            'form textarea',
+            'textarea[placeholder]',
+            'textarea',
+            'input[type="text"]'
+        ];
+        for (const sel of selectors) {
+            const el = document.querySelector(sel);
+            if (el) return el;
+        }
+        return null;
+    }
+
+    function findSendButton() {
+        const selectors = [
+            'form button[type="submit"]',
+            'button[aria-label*="Send"]',
+            'button[aria-label*="送信"]',
+            'button[title*="Send"]'
+        ];
+        for (const sel of selectors) {
+            const el = document.querySelector(sel);
+            if (el) return el;
+        }
+        return null;
+    }
+
+    function setInputValue(el, text) {
+        if (!el) return false;
+        el.focus();
+        el.value = text;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        return true;
+    }
+
+    function sendMessage(text) {
+        const input = findChatInput();
+        if (!setInputValue(input, text)) return false;
+        const btn = findSendButton();
+        if (btn) {
+            btn.click();
+            return true;
+        }
+        try {
+            input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true }));
+        } catch (_) {}
+        return true;
+    }
+
+    function updateMicState() {
+        if (!micBtn) return;
+        micBtn.textContent = isListening ? '🎙️' : '🎤';
+        micBtn.style.background = isListening ? '#FF5722' : '#2196F3';
+        micBtn.title = isListening ? '音声入力：停止' : '音声入力：開始';
+    }
+
+    function toggleListening() {
+        if (!SpeechRecognition) {
+            alert('このブラウザは音声入力（Web Speech API）に対応していません');
+            return;
+        }
+
+        if (!recognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'ja-JP';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+            recognition.onstart = () => {
+                isListening = true;
+                updateMicState();
+            };
+            recognition.onend = () => {
+                isListening = false;
+                updateMicState();
+            };
+            recognition.onerror = (e) => {
+                console.warn('[Remi Voice] STT error:', e);
+            };
+            recognition.onresult = (event) => {
+                const t = event?.results?.[0]?.[0]?.transcript || '';
+                const msg = (t || '').trim();
+                if (msg.length > 0) {
+                    console.log('[Remi Voice] STT recognized:', msg);
+                    sendMessage(msg);
+                }
+            };
+        }
+
+        try {
+            if (isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        } catch (e) {
+            console.warn('[Remi Voice] STT toggle failed:', e);
+        }
+    }
 
     function updateButtonState() {
         if (!toggleBtn) return;
@@ -311,6 +419,16 @@
             console.log('[Remi Voice] Engine:', CONFIG.engine);
         };
 
+        // Mic button (STT)
+        micBtn = document.createElement('button');
+        micBtn.style.cssText = btnStyle;
+        micBtn.style.width = '36px';
+        micBtn.style.height = '36px';
+        micBtn.style.fontSize = '14px';
+        micBtn.onclick = () => toggleListening();
+        updateMicState();
+
+        container.appendChild(micBtn);
         container.appendChild(toggleBtn);
         container.appendChild(stopBtn);
         container.appendChild(engineBtn);

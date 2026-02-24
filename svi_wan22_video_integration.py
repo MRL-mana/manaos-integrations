@@ -30,8 +30,151 @@ class SVIWan22VideoIntegration:
             base_url = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
         self.base_url = base_url.rstrip('/')
         self.session = requests.Session()
+        self.last_error: Optional[dict] = None
         self.client_id = str(time.time())
         self.workflow_template_path = Path(__file__).parent / "svi_wan22_workflow_template.json"
+        self._object_info_cache: Optional[dict] = None
+        self._object_info_cache_ts: float = 0.0
+
+    def _get_object_info(self, max_age_sec: int = 30) -> Optional[dict]:
+        """ComfyUI の /object_info を取得（短時間キャッシュ付き）"""
+        now = time.time()
+        if (
+            self._object_info_cache
+            and self._object_info_cache_ts
+            and (now - self._object_info_cache_ts) <= max_age_sec
+        ):
+            return self._object_info_cache
+        try:
+            r = self.session.get(f"{self.base_url}/object_info", timeout=10)
+            if r.status_code != 200:
+                return None
+            obj = r.json()
+            if not isinstance(obj, dict):
+                return None
+            self._object_info_cache = obj
+            self._object_info_cache_ts = now
+            return obj
+        except Exception:
+            return None
+
+    def _available_class_types(self) -> set[str]:
+        obj = self._get_object_info()
+        if not isinstance(obj, dict):
+            return set()
+        # object_info is typically a dict keyed by class_type
+        return {str(k) for k in obj.keys()}
+
+    def _models_base(self) -> Path:
+        comfyui_path = Path(os.getenv("COMFYUI_PATH", "C:/ComfyUI"))
+        return comfyui_path / "models"
+
+    def _required_local_wan_assets(self) -> List[Dict[str, str]]:
+        # Based on ComfyUI local workflow template: image_to_video_wan.json
+        return [
+            {
+                "role": "unet",
+                "save_path": "diffusion_models",
+                "filename": "wan2.1_i2v_480p_14B_fp16.safetensors",
+                "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/diffusion_models/wan2.1_i2v_480p_14B_fp16.safetensors",
+            },
+            {
+                "role": "text_encoder",
+                "save_path": "text_encoders",
+                "filename": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+                "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            },
+            {
+                "role": "vae",
+                "save_path": "vae",
+                "filename": "wan_2.1_vae.safetensors",
+                "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors",
+            },
+            {
+                "role": "clip_vision",
+                "save_path": "clip_vision",
+                "filename": "clip_vision_h.safetensors",
+                "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors",
+            },
+        ]
+
+    def check_local_wan_assets(self) -> Dict[str, Any]:
+        base = self._models_base()
+        required = self._required_local_wan_assets()
+        status = []
+        missing = []
+        for item in required:
+            save_path = (item.get("save_path") or "").strip().replace("\\", "/")
+            filename = (item.get("filename") or "").strip()
+            target = (base / save_path / filename).resolve()
+            entry = {
+                "role": item.get("role"),
+                "save_path": save_path,
+                "filename": filename,
+                "target_path": str(target),
+                "exists": target.exists(),
+                "url": item.get("url"),
+            }
+            status.append(entry)
+            if not entry["exists"]:
+                missing.append(entry)
+        return {"ok": len(missing) == 0, "models_base": str(base), "required": status, "missing": missing}
+
+    def _supports_svi_custom_node(self) -> bool:
+        available = self._available_class_types()
+        return "SVIWan22VideoGenerate" in available
+
+    def _supports_local_wan_workflow(self) -> bool:
+        available = self._available_class_types()
+        needed = {
+            "UNETLoader",
+            "ModelSamplingSD3",
+            "CLIPLoader",
+            "VAELoader",
+            "CLIPTextEncode",
+            "CLIPVisionLoader",
+            "CLIPVisionEncode",
+            "WanImageToVideo",
+            "KSampler",
+            "VAEDecode",
+            "CreateVideo",
+            "SaveVideo",
+            "LoadImage",
+        }
+        return needed.issubset(available)
+
+    def _select_available_unet_name(self) -> str:
+        # Ask ComfyUI what UNETLoader supports (it enumerates filenames).
+        try:
+            r = self.session.get(f"{self.base_url}/object_info/UNETLoader", timeout=10)
+            if r.status_code != 200:
+                return ""
+            j = r.json().get("UNETLoader", {})
+            req = (j.get("input") or {}).get("required") or {}
+            unet_choices = req.get("unet_name")
+            if isinstance(unet_choices, list) and unet_choices and isinstance(unet_choices[0], list):
+                choices = [str(x) for x in unet_choices[0] if str(x).strip()]
+            else:
+                choices = []
+
+            # Prefer Wan models if present.
+            for c in choices:
+                if c.lower().startswith("wan") and c.lower().endswith(".safetensors"):
+                    return c
+            # Fallback to the generic diffusion model if available.
+            if "diffusion_pytorch_model.safetensors" in choices:
+                return "diffusion_pytorch_model.safetensors"
+            return choices[0] if choices else ""
+        except Exception:
+            return ""
+
+    def check_required_nodes(self, required: List[str]) -> Dict[str, Any]:
+        """必要ノードの存在チェック（SVIカスタムノード未導入を早期検知）"""
+        available = self._available_class_types()
+        if not available:
+            return {"ok": False, "missing": list(required), "available": []}
+        missing = [ct for ct in required if ct not in available]
+        return {"ok": not missing, "missing": missing, "available": sorted(available)}
     
     def is_available(self) -> bool:
         """
@@ -183,6 +326,73 @@ class SVIWan22VideoIntegration:
         # フレーム数を計算（8fpsを想定）
         num_frames = video_length_seconds * 8
         
+        # If the dedicated SVI custom node is not available, build a local Wan workflow.
+        if not self._supports_svi_custom_node() and self._supports_local_wan_workflow():
+            # NOTE: this requires local model assets to be installed under COMFYUI_PATH/models
+            unet_name = self._select_available_unet_name()
+            if not unet_name:
+                # Let caller surface a clearer error.
+                return {}
+
+            width = 512
+            height = 512
+            length = (video_length_seconds * 8) + 1  # template uses 33 for ~4s; node expects length step=4.
+            # force to step of 4 and minimum 1
+            length = max(1, int(length))
+            length = ((length - 1) // 4) * 4 + 1
+
+            negative_prompt = ""
+
+            return {
+                "11": {"class_type": "LoadImage", "inputs": {"image": start_image_path}},
+                "49": {"class_type": "CLIPVisionLoader", "inputs": {"clip_name": "clip_vision_h.safetensors"}},
+                "51": {
+                    "class_type": "CLIPVisionEncode",
+                    "inputs": {"clip_vision": ["49", 0], "image": ["11", 0], "crop": "none"},
+                },
+                "39": {"class_type": "VAELoader", "inputs": {"vae_name": "wan_2.1_vae.safetensors"}},
+                "37": {"class_type": "UNETLoader", "inputs": {"unet_name": unet_name, "weight_dtype": "default"}},
+                "54": {"class_type": "ModelSamplingSD3", "inputs": {"model": ["37", 0], "shift": 8}},
+                "38": {"class_type": "CLIPLoader", "inputs": {"clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors", "type": "wan"}},
+                "6": {"class_type": "CLIPTextEncode", "inputs": {"text": english_prompt, "clip": ["38", 0]}},
+                "7": {"class_type": "CLIPTextEncode", "inputs": {"text": negative_prompt, "clip": ["38", 0]}},
+                "50": {
+                    "class_type": "WanImageToVideo",
+                    "inputs": {
+                        "positive": ["6", 0],
+                        "negative": ["7", 0],
+                        "vae": ["39", 0],
+                        "width": width,
+                        "height": height,
+                        "length": length,
+                        "batch_size": 1,
+                        "clip_vision_output": ["51", 0],
+                        "start_image": ["11", 0],
+                    },
+                },
+                "3": {
+                    "class_type": "KSampler",
+                    "inputs": {
+                        "model": ["54", 0],
+                        "seed": 987948718394761,
+                        "steps": steps,
+                        "cfg": 6,
+                        "sampler_name": "uni_pc",
+                        "scheduler": "simple",
+                        "positive": ["50", 0],
+                        "negative": ["50", 1],
+                        "latent_image": ["50", 2],
+                        "denoise": 1,
+                    },
+                },
+                "8": {"class_type": "VAEDecode", "inputs": {"samples": ["3", 0], "vae": ["39", 0]}},
+                "55": {"class_type": "CreateVideo", "inputs": {"images": ["8", 0], "fps": 16}},
+                "56": {
+                    "class_type": "SaveVideo",
+                    "inputs": {"video": ["55", 0], "filename_prefix": "video/SVI_Wan22", "format": "mp4", "codec": "h264"},
+                },
+            }
+
         # ワークフローテンプレートを読み込み（存在する場合）
         workflow = {}
         if self.workflow_template_path.exists():
@@ -273,7 +483,56 @@ class SVIWan22VideoIntegration:
             実行ID（成功時）、None（失敗時）
         """
         try:
-            # まず画像をアップロード
+            self.last_error = None
+
+            # Prefer dedicated custom node if present; else fallback to local Wan workflow.
+            if self._supports_svi_custom_node():
+                required = ["SVIWan22VideoGenerate", "SaveVideo"]
+                check = self.check_required_nodes(required)
+                if not check.get("ok"):
+                    self.last_error = {
+                        "status_code": 503,
+                        "detail": {
+                            "error": {
+                                "type": "missing_node_type",
+                                "message": "missing_node_type",
+                                "missing": check.get("missing") or required,
+                                "required": required,
+                            }
+                        },
+                    }
+                    logger.error(f"必要ノード未導入: {self.last_error['detail']}")
+                    return None
+            else:
+                if not self._supports_local_wan_workflow():
+                    self.last_error = {
+                        "status_code": 503,
+                        "detail": {
+                            "error": {
+                                "type": "missing_node_type",
+                                "message": "missing_node_type",
+                                "missing": ["WanImageToVideo"],
+                                "required": ["WanImageToVideo"],
+                            }
+                        },
+                    }
+                    return None
+
+                assets = self.check_local_wan_assets()
+                if not assets.get("ok"):
+                    self.last_error = {
+                        "status_code": 503,
+                        "detail": {
+                            "error": {
+                                "type": "missing_model_asset",
+                                "message": "missing_model_asset",
+                                "missing": assets.get("missing") or [],
+                                "models_base": assets.get("models_base"),
+                            }
+                        },
+                    }
+                    return None
+
             image_data = None
             try:
                 with open(start_image_path, 'rb') as f:
@@ -307,6 +566,18 @@ class SVIWan22VideoIntegration:
                 extend_enabled=extend_enabled,
                 timestamped_prompts=timestamped_prompts
             )
+
+            if not workflow:
+                self.last_error = {
+                    "status_code": 503,
+                    "detail": {
+                        "error": {
+                            "type": "workflow_unavailable",
+                            "message": "workflow_unavailable",
+                        }
+                    },
+                }
+                return None
             
             payload = {
                 "prompt": workflow,
@@ -320,7 +591,16 @@ class SVIWan22VideoIntegration:
             )
             
             if response.status_code != 200:
-                error_detail = response.text
+                try:
+                    err_json = response.json()
+                except Exception:
+                    err_json = None
+
+                error_detail = err_json if isinstance(err_json, dict) else (response.text or "")
+                self.last_error = {
+                    "status_code": response.status_code,
+                    "detail": error_detail,
+                }
                 logger.error(f"動画生成エラー (Status {response.status_code}): {error_detail}")
                 return None
                 
@@ -331,6 +611,7 @@ class SVIWan22VideoIntegration:
             logger.error(f"動画生成エラー: {e}")
             import traceback
             logger.error(traceback.format_exc())
+            self.last_error = {"error": str(e)}
             return None
     
     def extend_video(
@@ -355,6 +636,25 @@ class SVIWan22VideoIntegration:
             実行ID（成功時）、None（失敗時）
         """
         try:
+            self.last_error = None
+
+            required = ["SVIWan22VideoExtend", "LoadVideo", "SaveVideo"]
+            check = self.check_required_nodes(required)
+            if not check.get("ok"):
+                self.last_error = {
+                    "status_code": 503,
+                    "detail": {
+                        "error": {
+                            "type": "missing_node_type",
+                            "message": "missing_node_type",
+                            "missing": check.get("missing") or required,
+                            "required": required,
+                        }
+                    },
+                }
+                logger.error(f"必要ノード未導入: {self.last_error['detail']}")
+                return None
+
             workflow = {
                 "1": {
                     "inputs": {
@@ -412,6 +712,21 @@ class SVIWan22VideoIntegration:
                 json=payload,
                 timeout=60
             )
+
+            if response.status_code != 200:
+                try:
+                    err_json = response.json()
+                except Exception:
+                    err_json = None
+
+                error_detail = err_json if isinstance(err_json, dict) else (response.text or "")
+                self.last_error = {
+                    "status_code": response.status_code,
+                    "detail": error_detail,
+                }
+                logger.error(f"動画延長エラー (Status {response.status_code}): {error_detail}")
+                return None
+
             response.raise_for_status()
             result = response.json()
             return result.get("prompt_id")

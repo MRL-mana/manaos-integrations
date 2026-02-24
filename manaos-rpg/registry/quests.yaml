@@ -1,0 +1,13 @@
+version: 1
+quests:
+  - id: snapshot
+    label: 状態スナップショット更新
+    kind: api
+    endpoint: /api/snapshot
+    tags: [ops]
+
+  - id: health
+    label: Backend Health確認
+    kind: api
+    endpoint: /health
+    tags: [ops]

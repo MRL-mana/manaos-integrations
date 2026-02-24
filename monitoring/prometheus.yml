@@ -56,10 +56,10 @@ scrape_configs:
     metrics_path: '/metrics'
     scrape_interval: 10s
 
-  # LLM Routing (正しいポート: 5111)
+  # LLM Routing (正しいポート: 5117)
   - job_name: 'llm-routing'
     static_configs:
-      - targets: ['localhost:5111']
+      - targets: ['localhost:5117']
         labels:
           service: 'llm-routing'
           tier: 'core'

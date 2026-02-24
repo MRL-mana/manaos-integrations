@@ -10,7 +10,7 @@
     {"name": "Executor Enhanced", "port": 5107, "script": "task_executor_enhanced.py"},
     {"name": "Portal Integration", "port": 5108, "script": "portal_integration_api.py"},
     {"name": "Content Generation", "port": 5109, "script": "content_generation_loop.py"},
-    {"name": "LLM Routing MCP", "port": 5111, "script": "llm_routing_mcp_server"},
+    {"name": "LLM Routing MCP", "port": 5117, "script": "llm_routing_mcp_server"},
     {"name": "Video Pipeline", "port": 5112, "script": "video_pipeline_mcp_server"},
     {"name": "Crash Snapshot", "port": 5113, "script": "crash_snapshot.py"},
     {"name": "Slack Integration", "port": 5114, "script": "slack_integration.py"},

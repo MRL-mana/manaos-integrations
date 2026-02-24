@@ -3,6 +3,7 @@
 Slack/Discord/メール通知の統合
 """
 
+import os
 import json
 import smtplib
 from email.mime.text import MIMEText
@@ -25,6 +26,12 @@ class NotificationSystem:
         self.notification_history = []
         self.storage_path = Path("notification_system_state.json")
         self._load_state()
+
+        # state が無い場合でも、環境変数（.env からロード済みの可能性あり）をフォールバックとして利用
+        if not self.slack_webhook_url:
+            self.slack_webhook_url = os.getenv("SLACK_WEBHOOK_URL") or None
+        if not self.discord_webhook_url:
+            self.discord_webhook_url = os.getenv("DISCORD_WEBHOOK_URL") or None
     
     def _load_state(self):
         """状態を読み込み"""

@@ -74,7 +74,7 @@ except ImportError:
     _DEFAULT_UNIFIED_API_PORT = int(os.getenv("MANAOS_UNIFIED_API_PORT", "9502"))
     _DEFAULT_MRL_MEMORY_PORT = int(os.getenv("MANAOS_MRL_MEMORY_PORT", "5105"))
     _DEFAULT_LEARNING_SYSTEM_PORT = int(os.getenv("MANAOS_LEARNING_SYSTEM_PORT", "5126"))
-    LLM_ROUTING_PORT = 5111
+    LLM_ROUTING_PORT = 5117
     VIDEO_PIPELINE_PORT = 5112
     PICO_HID_PORT = 5136
     COMFYUI_PORT = 8188
@@ -443,6 +443,8 @@ def check_all_services(retry_count: int = 3, retry_delay: int = 2) -> bool:
 
     if all_healthy:
         print("[OK] all core services healthy")
+        # Backward-compatible marker for VS Code task background problemMatcher
+        print("[OK] すべてのコアサービスが正常稼働中")
         logger.info(
             "Health check completed: core %d/%d up, infra/optional %d/%d up",
             core_ok,

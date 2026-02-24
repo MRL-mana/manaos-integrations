@@ -40,14 +40,14 @@ if (-not (Test-IsAdmin)) {
     exit 0
 }
 
-foreach ($pid in $pids) {
+foreach ($procId in $pids) {
     try {
-        $proc = Get-Process -Id $pid -ErrorAction SilentlyContinue
+        $proc = Get-Process -Id $procId -ErrorAction SilentlyContinue
         $name = if ($proc) { $proc.ProcessName } else { 'unknown' }
-        Write-Host ("[KILL] Stopping PID {0} ({1})" -f $pid, $name) -ForegroundColor Yellow
-        Stop-Process -Id $pid -Force -ErrorAction Stop
+        Write-Host ("[KILL] Stopping PID {0} ({1})" -f $procId, $name) -ForegroundColor Yellow
+        Stop-Process -Id $procId -Force -ErrorAction Stop
     } catch {
-        Write-Host ("[FAIL] Failed to stop PID {0}: {1}" -f $pid, $_.Exception.Message) -ForegroundColor Red
+        Write-Host ("[FAIL] Failed to stop PID {0}: {1}" -f $procId, $_.Exception.Message) -ForegroundColor Red
         throw
     }
 }

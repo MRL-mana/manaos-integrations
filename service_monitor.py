@@ -85,7 +85,7 @@ class ServiceMonitor:
                 {"name": "Executor拡張", "port": 5107, "script": "task_executor_enhanced.py"},
                 {"name": "Portal統合", "port": 5108, "script": "portal_integration_api.py"},
                 {"name": "成果物自動生成", "port": 5109, "script": "content_generation_loop.py"},
-                {"name": "LLM Routing MCP", "port": 5111, "script": "llm_routing_mcp_server"},
+                {"name": "LLM Routing MCP", "port": 5117, "script": "llm_routing_mcp_server"},
                 {"name": "Video Pipeline", "port": 5112, "script": "video_pipeline_mcp_server"},
                 {"name": "Learning System", "port": 5126, "script": "learning_system_api"},
                 {"name": "Unified API", "port": 9502, "script": "unified_api_server.py"}
@@ -280,6 +280,7 @@ def get_status():
     return jsonify(report)
 
 if __name__ == '__main__':
+    # Service Monitor 自体の待受ポート（LLM Routing とは別）
     port = int(os.getenv("PORT", 5111))
     logger.info(f"🔍 サービス監視システム起動中... (ポート: {port})")
     init_monitor()

@@ -36,6 +36,7 @@ try:
         AutoModelForCausalLM,
         TrainingArguments,
         Trainer,
+        TrainerCallback,
         DataCollatorForLanguageModeling,
     )
     from peft import LoraConfig, get_peft_model, PeftModel
@@ -57,6 +58,79 @@ logging.basicConfig(
     force=True,
 )
 logger = logging.getLogger(__name__)
+
+
+class ProgressLoggingCallback(TrainerCallback):
+    def __init__(self, progress_logger: logging.Logger, progress_log_path: Path | None = None):
+        super().__init__()
+        self._logger = progress_logger
+        self._progress_log_path = progress_log_path
+
+    def _append_progress_file(self, line: str) -> None:
+        if self._progress_log_path is None:
+            return
+        try:
+            self._progress_log_path.parent.mkdir(parents=True, exist_ok=True)
+            with self._progress_log_path.open("a", encoding="utf-8") as f:
+                f.write(line + "\n")
+        except Exception:
+            # ファイル書き込み失敗は学習を止めない
+            return
+
+    def on_log(self, args, state, control, logs=None, **kwargs):  # type: ignore[override]
+        if not logs:
+            return
+
+        step = getattr(state, "global_step", None)
+        selected_keys = ["loss", "eval_loss", "learning_rate", "grad_norm"]
+        parts = []
+        if step is not None:
+            parts.append(f"step={step}")
+        for key in selected_keys:
+            if key in logs:
+                parts.append(f"{key}={logs[key]}")
+        if parts:
+            msg = "progress: " + ", ".join(parts)
+            self._logger.info(msg)
+            self._append_progress_file(f"{datetime.datetime.now().isoformat()} {msg}")
+            for handler in self._logger.handlers:
+                if hasattr(handler, "flush"):
+                    handler.flush()
+
+
+class StopFileCallback(TrainerCallback):
+    def __init__(self, stop_file: Path, stop_logger: logging.Logger):
+        super().__init__()
+        self._stop_file = stop_file
+        self._logger = stop_logger
+
+    def on_train_begin(self, args, state, control, **kwargs):  # type: ignore[override]
+        if self._stop_file.exists():
+            self._logger.warning(f"STOPファイルが既に存在します: {self._stop_file}")
+            self._logger.warning("次のstep終端で保存して停止します（必要ならSTOPファイルを削除してください）")
+
+    def on_step_end(self, args, state, control, **kwargs):  # type: ignore[override]
+        if not self._stop_file.exists():
+            return control
+
+        step = getattr(state, "global_step", "?")
+        self._logger.warning(f"STOPファイル検知: step={step} -> 保存して停止します")
+
+        # このstepで強制的に保存してから止める
+        control.should_save = True
+        control.should_training_stop = True
+
+        # 再開時に即停止しないよう、STOPファイルは削除する
+        try:
+            self._stop_file.unlink(missing_ok=True)
+            self._logger.info(f"STOPファイルを削除しました: {self._stop_file}")
+        except Exception as e:
+            self._logger.warning(f"STOPファイル削除に失敗: {type(e).__name__}: {e}")
+
+        for handler in self._logger.handlers:
+            if hasattr(handler, "flush"):
+                handler.flush()
+        return control
 
 
 def parse_args():
@@ -362,6 +436,10 @@ def main():
         except Exception:
             pass
     training_args = TrainingArguments(**training_kwargs)
+
+    output_dir_path = Path(args.output_dir)
+    stop_file = output_dir_path / "STOP_TRAINING"
+    progress_file = output_dir_path / "progress.log"
     
     # 7. Trainer初期化
     logger.info("Trainerを初期化中...")
@@ -372,6 +450,7 @@ def main():
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         data_collator=data_collator,
+        callbacks=[ProgressLoggingCallback(logger, progress_file), StopFileCallback(stop_file, logger)],
     )
     
     # 8. 学習実行
@@ -382,11 +461,11 @@ def main():
     logger.info(f"総ステップ数: {args.max_steps}")
     logger.info(f"チェックポイント保存間隔: {args.save_steps}ステップ")
     logger.info("最初のステップが遅い場合があります（初期化処理）")
+    logger.info(f"途中停止したい場合は STOPファイルを作成: {stop_file}")
     
     # チェックポイントから再開の処理
     resume_from_checkpoint = None
     if args.resume_from_checkpoint:
-        from pathlib import Path
         if args.resume_from_checkpoint.lower() == "auto":
             # 最新のcheckpointを自動検出
             output_path = Path(args.output_dir)

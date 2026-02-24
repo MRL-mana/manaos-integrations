@@ -46,3 +46,26 @@
 
 ※ 端末がロック画面の場合は、スクリプト実行中に端末をロック解除（指紋/PIN）してください。
 ※ 充電しながら運用するなら、画面がスリープしない設定（Developer optionsの“充電中はスリープしない”相当）もスクリプトが試行します。
+
+---
+
+## E) 日常運用は「最小4ボタン」がおすすめ
+
+入口を増やしすぎると迷いやすいので、Pixel 7のホーム（HTTP Shortcutsウィジェット）は次の4つだけ固定がおすすめです。
+
+- 📊 Remi Status
+- 🧹 Clear VRAM
+- 🚨 Emergency Stop
+- OpenWebUI (HTTPS)
+
+### ワンコマンドで最小構成を反映（PC→Pixel）
+
+OpenWebUI（Tailscale URL生成）→ OpenWebUIショートカットURL同期 → 端末へpush → Import画面起動まで一気に実行します。
+
+- 初回（Importまで開く）
+   - `powershell -NoProfile -ExecutionPolicy Bypass -File .\pixel7_minimal_quick.ps1`
+
+- 日常（URL同期だけ。Importは開かない）
+   - `powershell -NoProfile -ExecutionPolicy Bypass -File .\pixel7_minimal_quick.ps1 -SkipOpenWebUIStart -SkipImport`
+
+※ 初回はImport画面が出たら、Pixel側で必要に応じて「Import / OK」を確認してください。

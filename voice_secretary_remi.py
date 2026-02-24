@@ -21,7 +21,7 @@ except Exception:  # pragma: no cover
     except Exception:  # pragma: no cover
         UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9510"))
         INTENT_ROUTER_PORT = int(os.getenv("INTENT_ROUTER_PORT", "5100"))
-        LLM_ROUTING_PORT = int(os.getenv("LLM_ROUTING_PORT", "5111"))
+        LLM_ROUTING_PORT = int(os.getenv("LLM_ROUTING_PORT", "5117"))
 
 # プロジェクトルートをパスに追加
 sys.path.insert(0, str(Path(__file__).parent))

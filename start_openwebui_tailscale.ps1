@@ -20,8 +20,8 @@ function Write-Step($text) {
 
 function Test-DockerReady {
     try {
-        docker version | Out-Null
-        return $true
+        docker info 2>$null | Out-Null
+        return ($LASTEXITCODE -eq 0)
     }
     catch {
         return $false

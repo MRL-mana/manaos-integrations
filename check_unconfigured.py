@@ -186,10 +186,27 @@ def check_integration_status() -> Dict[str, Any]:
     try:
         from rows_integration import RowsIntegration
         rows = RowsIntegration()
-        integrations["Rows"] = {
-            "available": rows.is_available(),
-            "module": "rows_integration"
-        }
+        available = rows.is_available()
+        if available:
+            # 形式チェックだけだと「キーはあるが権限/キー不正で404」のケースを見逃すため、軽く疎通
+            probe = rows.list_spreadsheets(limit=1)
+            if probe is None:
+                integrations["Rows"] = {
+                    "available": False,
+                    "module": "rows_integration",
+                    "error": "Rows API call failed (check ROWS_API_KEY / permissions)",
+                    "details": getattr(rows, "last_error", None),
+                }
+            else:
+                integrations["Rows"] = {
+                    "available": True,
+                    "module": "rows_integration",
+                }
+        else:
+            integrations["Rows"] = {
+                "available": False,
+                "module": "rows_integration",
+            }
     except Exception as e:
         integrations["Rows"] = {
             "available": False,

@@ -45,7 +45,7 @@ SERVICES = [
     {"name": "Portal Integration", "port": 5108, "script": "portal_integration_api.py"},
     {"name": "Content Generation", "port": 5109, "script": "content_generation_loop.py"},
     {"name": "LLM Optimization", "port": 5110, "script": "llm_optimization.py"},
-    {"name": "Service Monitor", "port": 5111, "script": "service_monitor.py"},
+    {"name": "Service Monitor", "port": 5117, "script": "service_monitor.py"},
     {"name": "System Status API", "port": 5112, "script": "system_status_api.py"},
     {"name": "SSOT API", "port": 5120, "script": "ssot_api.py"},
     {"name": "Step Deep Research", "port": 5121, "script": "step_deep_research_service.py"},

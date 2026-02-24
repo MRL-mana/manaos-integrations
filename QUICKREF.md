@@ -102,17 +102,27 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File .\auto_start_lm_studio_server.ps1
 
 ### ワークフロー（記事取り込み済み）
 
-| Variant | 用途 | ファイル | 特徴 |
-|---------|------|---------|------|
-| **A: i2i高品質** | Anima ロ → LM Studio (2x) → Qwen i2i | `05_wQween-2512-Real-Random2.json` | 高精度 LM Studio 2-pass 精密化 |
-| **B: アニメ→リアル** | フォルダ一括バッチ → LM Studio → Qwen | `07_Qwen-2512-real-random.json` | Load Image Batch 自動ループ |
-| **C: リアル→アニメ** | リアル美女フォルダ → LM Studio (2x) → Anima | `05_wAnima_preview-Random.json` | 逆方向バッチ変換、Anima-preview 出力 |
-| **D: Flux→Qwen** | Flux ランダム → LM Studio → Qwen 最終 | `FLUX1_real2.json` + `Qwen-image_2512.json` | 3-stage パイプ (Flux→SD1.5→Qwen) |
+**Qwen-Image-2512 中心「実写高品質」系** (5 workflows)
 
-#### 推奨組み合わせ
-- **高品質実写女性**: Variant A or D (Qwen i2i/最終出力)
-- **アニメ大量変換**: Variant B or C (バッチ処理対応)
-- **フルカスタマイズ**: Variant D (Flux ランダム → トリミング → 最終化)
+| ID | 用途 | ファイル | 特徴 |
+|----|------|---------|------|
+| A1 | Anima → LM Studio (2x) → Qwen i2i | `05_wQween-2512-Real-Random2.json` | 高精度 2-pass 精密化 |
+| A2 | アニメフォルダ一括 → LM Studio → Qwen リアル | `07_Qwen-2512-real-random.json` | Load Image Batch 全自動 |
+| A3 | リアル美女フォルダ → LM Studio (2x) → Anima | `05_wAnima_preview-Random.json` | 逆方向バッチ、高精度アニメ化 |
+| A4 | Flux ランダム → LM Studio → Qwen | `FLUX1_real2.json` + `Qwen-image_2512.json` | Flux→SD1.5→Qwen 3段階 |
+
+**アニメ・イラスト生成系** (3 workflows)
+
+| ID | 用途 | ファイル | 特徴 |
+|----|------|---------|------|
+| B1 | Flux → NoobAI アニメ塗り | `02_FLUX1_anime2.json` + `05_NoobAI_Illust.json` | 王道アニメ塗り専用 |
+| B2 | Flux → z-image-turbo 水彩風 | `02_FLUX1_anime2.json` + `08_z-image-illust.json` | 繊細ペンスケッチ世界観 |
+
+**推奨組み合わせ**
+- **実写美女**: A1 or A4 (Qwen i2i/最終造形)
+- **アニメ大量変換**: A2 or A3 (Load Image Batch ループ)
+- **高品質イラスト**: B1 (NoobAI 王道) / B2 (z-image 水彩)
+- **ループガチャ**: A1 → A3 → A1... (無限品質向上)
 
 ## 🛠️ トラブルシューティング
 

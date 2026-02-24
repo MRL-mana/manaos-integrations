@@ -18,7 +18,7 @@ except Exception:  # pragma: no cover
     try:
         from _paths import LLM_ROUTING_PORT  # type: ignore
     except Exception:  # pragma: no cover
-        LLM_ROUTING_PORT = int(os.getenv("LLM_ROUTING_PORT", "5111"))
+        LLM_ROUTING_PORT = int(os.getenv("LLM_ROUTING_PORT", "5117"))
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
@@ -41,7 +41,12 @@ except ImportError:
 logger = get_service_logger("server")
 
 # APIエンドポイント
-SERVICE_MONITOR_URL = os.getenv("SERVICE_MONITOR_URL", f"http://127.0.0.1:{LLM_ROUTING_PORT}")
+# Service Monitor 自体の待受は 5111 がデフォルト。監視対象の LLM Routing とは別ポート。
+SERVICE_MONITOR_DEFAULT_PORT = int(os.getenv("SERVICE_MONITOR_PORT", "5111"))
+SERVICE_MONITOR_URL = os.getenv(
+    "SERVICE_MONITOR_URL",
+    f"http://127.0.0.1:{SERVICE_MONITOR_DEFAULT_PORT}",
+)
 
 # MCPサーバーの初期化
 if MCP_AVAILABLE:

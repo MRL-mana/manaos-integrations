@@ -1,0 +1,522 @@
+{
+  "summary": {
+    "total": 36,
+    "correct": 15,
+    "acc": 0.4166666666666667,
+    "invalid": 0,
+    "by_layer": {
+      "2": {
+        "total": 36,
+        "correct": 15,
+        "acc": 0.4166666666666667,
+        "invalid": 0
+      }
+    }
+  },
+  "details": [
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "f06196738c25",
+      "gold": "はい。給油ノズルはシステムに含まれます。",
+      "pred": "給油ノズル は システム の一部？ いいえ。給油ノズルはシステムに含まれません。 違う。 同じ。 絶対に正しい。 ����"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "ac083fe0f7a7",
+      "gold": "はい。レジは文脈に含まれます。",
+      "pred": "レジ は 文脈 の一部？ はい。レジは文脈に含まれます。 はい。レジは文脈に含まれます。 はい。レジは文脈に含まれます。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "f309789d722a",
+      "gold": "はい。洗車機は文脈に含まれます。",
+      "pred": "洗車機 は 文脈 の一部？ はい。洗車機は文脈に含まれます。 はい。洗車機は文脈に含まれます。 はい。洗車機は文脈"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "ed2c4650a8dd",
+      "gold": "はい。給油ノズルは車に含まれます。",
+      "pred": "給油ノズル は 車 の一部？ いいえ。給油ノズルは車に含まれません。 違う。 同じ。 絶対に正しい。 絶対に"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "8b0ced8bf857",
+      "gold": "はい。給油ノズルは文脈に含まれます。",
+      "pred": "給油ノズル は 文脈 の一部？ はい。給油ノズルは文脈に含まれます。 はい。給油ノズルは文脈に含まれます。 はい。��"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "0954fb424bda",
+      "gold": "はい。ブレーキは文脈に含まれます。",
+      "pred": "ブレーキ は 文脈 の一部？ はい。ブレーキは文脈に含まれます。 はい。ブレーキは文脈に含まれます。 はい。ブレーキは文脈に��"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "9555eb83af09",
+      "gold": "はい。ブレーキは空間に含まれます。",
+      "pred": "ブレーキ は 空間 の一部？ はい。ブレーキは空間に含まれます。 いいえ。ブレーキは空間に含まれます。 違う。 同じ。 違う"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "c52701d9c2eb",
+      "gold": "いいえ。給油ノズルは車に含まれません。",
+      "pred": "給油ノズル は 車 の一部？ いいえ。給油ノズルは車に含まれません。 違う。 同じ。 絶対に正しい。 絶対に"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "5c89ce3e3ff1",
+      "gold": "いいえ。洗車機は作業に含まれません。",
+      "pred": "洗車機 は 作業 の一部？ いいえ。洗車機は作業に含まれません。 違う。洗車機は作業ではありません。 洗車機は作業に含まれ"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "2c79f5448e22",
+      "gold": "いいえ。洗車機は感情に含まれません。",
+      "pred": "洗車機 は 感情 の一部？ はい。洗車機は感情に含まれます。 はい。佽ち込みは感情に含まれます。 はい。満足は��"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "be4298652d3f",
+      "gold": "いいえ。ブレーキは感情に含まれません。",
+      "pred": "ブレーキ は 感情 の一部？ はい。ブレーキは感情に含まれます。 はい。ブレーキは感情に含まれます。 はい。ブレーキは感情に��"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "cf2c48e7f0c5",
+      "gold": "いいえ。タイヤはシステムに含まれません。",
+      "pred": "タイヤ は システム の一部？ いいえ。タイヤはシステムに含まれません。 違う。 同じ。 絶対に正しい。 絶対にfalse。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "6bdebc1cf032",
+      "gold": "車の危険度は低いです。",
+      "pred": "車 の 危険度 は？ 車の危険度は簡単です。 違う。 車の危険度は低いです。 同じ。 絶対に"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "d218d52d71e3",
+      "gold": "給油の優先度は大きいです。",
+      "pred": "給油 の 優先度 は？ 給油の優先度は低いです。 違う。 給油の方が難しいです。 絶対に正しい。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "b8e656ae1dd9",
+      "gold": "オイルの危険度は簡単です。",
+      "pred": "オイル の 危険度 は？ オイルの危険度は簡単です。 違う。 オイル交換の方が簡単です。 違う。 オ"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "1f2895db4573",
+      "gold": "夜勤の大きさは赤です。",
+      "pred": "夜勤 の 大きさ は？ 夜勤の大きさは赤です。  夜勤の大きさは青です。  夜勤の大きさは黒です。  夜勤の大きさは"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "9c91795d410b",
+      "gold": "猫の重要度は簡単です。",
+      "pred": "猫 の 重要度 は？ 猫の重要度は無視できるです。 絶対に正しいです。 絶対に絶ちます。 違う。 �"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "bef0e3ba0c39",
+      "gold": "エンジンの大きさは赤です。",
+      "pred": "エンジン の 大きさ は？ エンジンの大きさは赤です。  エンジンの大きさは青です。  エンジンの大きさは簡単です。   エン"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "83234627980d",
+      "gold": "ブレーキの重要度は難しいです。",
+      "pred": "ブレーキ の 重要度 は？ ブレーキの重要度は無視できるです。 はい。 ブレーキの大きさは無視できるです。 はい。 ブレーキの��"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "7f70951fcfae",
+      "gold": "😢の危険度は難しいです。",
+      "pred": "😢 の 危険度 は？ 😢の危険度は低いです。 😢の危険度は低いです。 😢の危険度は低い"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "afb3323ac28d",
+      "gold": "車の優先度は低いです。",
+      "pred": "車 の 優先度 は？ 車の優先度は小さいです。  車の優先度は低いです。  車の優先度は中です。  車の優先度"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "279a3ad9ac00",
+      "gold": "洗車の役割は簡単です。",
+      "pred": "洗車 の 役割 は？ 洗車の役割は簡単です。 違う。 給油ノズルはシステムに含まれます。 はい。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "0d843a22ad2c",
+      "gold": "夜勤の大きさは大きいです。",
+      "pred": "夜勤 の 大きさ は？ 夜勤の大きさは赤です。  夜勤の大きさは青です。  夜勤の大きさは黒です。  夜勤の大きさは"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "cdc9b6a17fb1",
+      "gold": "ブレーキの優先度は重要です。",
+      "pred": "ブレーキ の 優先度 は？ ブレーキの優先度は低いです。 はい。ブレーキの優先度は低いです。 はい。 はい。 はい。"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "15f43ee0d0a5",
+      "gold": "オイル交換と洗車では{l2_a}の方が早いです。",
+      "pred": "オイル交換 と 洗車、どっちが早い？ オイル交換と洗車では洗車の方が早いです。 違う。 駐車場で清掃中、困惑 それは"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "379cd3248a6b",
+      "gold": "洗車とタイヤ空気圧では{l2_a}の方が重要です。",
+      "pred": "洗車 と タイヤ空気圧、どっちが重要？ 洗車とタイヤ空気圧ではタイヤ空気圧の方が重要です。 洗車とタイヤ空気圧ではタイヤ空気圧の方が重要で"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "0e2cfb550b58",
+      "gold": "洗車と給油では{l2_a}の方が早いです。",
+      "pred": "洗車 と 給油、どっちが早い？ 洗車と給油では洗車の方が早いです。 洗車機前で洗車の方が早いです。 給油ノズル"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "1420073879ec",
+      "gold": "タイヤ空気圧とクレーム対応では{l2_a}の方が早いです。",
+      "pred": "タイヤ空気圧 と クレーム対応、どっちが早い？ タイヤ空気圧とクレーム対応ではタイヤ空気圧の方が早いです。 タイヤ空気圧とクレーム対応では"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "1420073879ec",
+      "gold": "タイヤ空気圧とクレーム対応では{l2_a}の方が早いです。",
+      "pred": "タイヤ空気圧 と クレーム対応、どっちが早い？ タイヤ空気圧とクレーム対応ではタイヤ空気圧の方が早いです。 タイヤ空気圧とクレーム対応では"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "3fdc59b4aac8",
+      "gold": "タイヤ空気圧と洗車では{l2_a}の方が効率的です。",
+      "pred": "タイヤ空気圧 と 洗車、どっちが効率的？ タイヤ空気圧と洗車ではタイヤ空気圧の方が効率的です。 タイヤ空気圧と洗車ではタイヤ空気圧の"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "a6f5700d713e",
+      "gold": "洗車とタイヤ空気圧では{l2_a}の方が効率的です。",
+      "pred": "洗車 と タイヤ空気圧、どっちが効率的？ 洗車とタイヤ空気圧では洗車の方が効率的です。  洗車機前で清掃中、困惑 それは素"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "1b5859ec849b",
+      "gold": "給油とオイル交換では{l2_a}の方が重要です。",
+      "pred": "給油 と オイル交換、どっちが重要？ 給油とオイル交換ではオイル交換の方が重要です。 違う。 駐車場で清掃中、困惑"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "c517801dd4a0",
+      "gold": "タイヤ空気圧と給油では{l2_b}の方が危険です。",
+      "pred": "タイヤ空気圧 と 給油、どっちが危険？ タイヤ空気圧と給油では給油の方が危険です。 給油の方が危険です。 タイヤ空"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "f996aefe9c17",
+      "gold": "オイル交換とクレーム対応では{l2_b}の方が危険です。",
+      "pred": "オイル交換 と クレーム対応、どっちが危険？ オイル交換とクレーム対応ではクレーム対応の方が危険です。 違う。 駐車場でオイル交"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "f996aefe9c17",
+      "gold": "オイル交換とクレーム対応では{l2_b}の方が危険です。",
+      "pred": "オイル交換 と クレーム対応、どっちが危険？ オイル交換とクレーム対応ではクレーム対応の方が危険です。 違う。 駐車場でオイル交"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "logic_error",
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "f77e5ead7247",
+      "gold": "タイヤ空気圧とタイヤ空気圧では{l2_b}の方が危険です。",
+      "pred": "タイヤ空気圧 と タイヤ空気圧、どっちが危険？ タイヤ空気圧とタイヤ空気圧ではタイヤ空気圧の方が危険です。 タイヤ空気圧の方が危険です。"
+    }
+  ]
+}

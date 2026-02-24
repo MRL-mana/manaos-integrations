@@ -173,6 +173,34 @@ def health():
     })
 
 
+@app.route("/ready", methods=["GET"])
+def ready():
+    """レディネスチェック（依存のMCPサーバー読み込み有無）"""
+    if MCP_SERVER_AVAILABLE:
+        return (
+            jsonify(
+                {
+                    "status": "ready",
+                    "service": "MCP API Server",
+                    "mcp_available": True,
+                    "timestamp": _utc_now_iso(),
+                }
+            ),
+            200,
+        )
+    return (
+        jsonify(
+            {
+                "status": "starting",
+                "service": "MCP API Server",
+                "mcp_available": False,
+                "timestamp": _utc_now_iso(),
+            }
+        ),
+        503,
+    )
+
+
 @app.route("/memory/write", methods=["POST"])
 @app.route("/api/memory/write", methods=["POST"])
 def memory_write():
