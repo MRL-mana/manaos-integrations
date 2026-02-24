@@ -1,9 +1,12 @@
 param(
     [string]$DeviceSerial = "",
-    [string]$DestDir = "/sdcard/Download/manaos_pixel7_http"
+    [int]$EnterCount = 1
 )
 
 $ErrorActionPreference = 'Stop'
+
+if ($EnterCount -lt 1) { $EnterCount = 1 }
+if ($EnterCount -gt 3) { $EnterCount = 3 }
 
 $scrcpyDir = Join-Path $env:USERPROFILE 'Desktop\scrcpy\scrcpy-win64-v3.3.4'
 $adbExe = Join-Path $scrcpyDir 'adb.exe'
@@ -51,36 +54,25 @@ if ([string]::IsNullOrWhiteSpace($DeviceSerial)) {
     exit 2
 }
 
-$srcGateway = Join-Path $PSScriptRoot 'pixel7_api_gateway.py'
-$srcStart = Join-Path $PSScriptRoot 'termux\start_pixel7_api_gateway.sh'
-$srcBoot = Join-Path $PSScriptRoot 'termux\boot_start_pixel7_api_gateway.sh'
-$tokenFile = Join-Path $PSScriptRoot '.pixel7_api_token.txt'
-
-foreach ($p in @($srcGateway,$srcStart,$srcBoot)) {
-    if (-not (Test-Path $p)) { throw "not found: $p" }
-}
-
-Write-Host '=== Pixel7 Deploy HTTP Gateway (adb push) ===' -ForegroundColor Cyan
+Write-Host '=== Pixel7 Termux Stop HTTP Gateway (ADB assisted) ===' -ForegroundColor Cyan
 Write-Host ("Target: {0}" -f $DeviceSerial) -ForegroundColor Gray
-Write-Host ("Dest  : {0}" -f $DestDir) -ForegroundColor Gray
 
-& $adbExe -s $DeviceSerial shell "mkdir -p $DestDir" | Out-Null
+# Bring Termux to front
+$pkg = 'com.termux'
+& $adbExe -s $DeviceSerial shell "monkey -p $pkg -c android.intent.category.LAUNCHER 1" | Out-Null
+Start-Sleep -Milliseconds 600
 
-& $adbExe -s $DeviceSerial push "$srcGateway" "$DestDir/pixel7_api_gateway.py" | Out-Host
-& $adbExe -s $DeviceSerial push "$srcStart" "$DestDir/start_pixel7_api_gateway.sh" | Out-Host
-& $adbExe -s $DeviceSerial push "$srcBoot" "$DestDir/boot_start_pixel7_api_gateway.sh" | Out-Host
-
-if (Test-Path $tokenFile) {
-    Write-Host ("Pushing token file: {0}" -f $tokenFile) -ForegroundColor DarkGray
-    & $adbExe -s $DeviceSerial push "$tokenFile" "$DestDir/api_token.txt" | Out-Host
+# Best-effort stop (Termux shell)
+function Send-TermuxLine([string]$line) {
+    $encoded = ($line -replace ' ', '%s')
+    $encoded = ($encoded -replace '"', '\"')
+    Write-Host ("Typing: {0}" -f $line) -ForegroundColor DarkGray
+    & $adbExe -s $DeviceSerial shell "input text \"$encoded\"" | Out-Null
+    Start-Sleep -Milliseconds 120
+    & $adbExe -s $DeviceSerial shell 'input keyevent KEYCODE_ENTER' | Out-Null
+    Start-Sleep -Milliseconds 200
 }
 
-Write-Host ''
-Write-Host 'Next (on Pixel / Termux):' -ForegroundColor Yellow
-Write-Host ("  cd $DestDir") -ForegroundColor White
-Write-Host '  chmod +x start_pixel7_api_gateway.sh' -ForegroundColor White
-Write-Host '  ./start_pixel7_api_gateway.sh' -ForegroundColor White
-Write-Host ''
-Write-Host 'Tip: use task "ManaOS: Pixel7 Termuxを開く（ADB / HTTP復旧用）" to bring Termux front.' -ForegroundColor DarkGray
+Send-TermuxLine "pkill -f python.*pixel7_api_gateway\\.py || true"
 
-Write-Host 'OK' -ForegroundColor Green
+Write-Host 'OK (check Pixel Termux screen/log)' -ForegroundColor Green

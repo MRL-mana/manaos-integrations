@@ -4,6 +4,11 @@ set -euo pipefail
 : "${PIXEL7_API_PORT:=5122}"
 : "${PIXEL7_API_TAILSCALE_ONLY:=1}"
 
+if [[ -z "${PIXEL7_API_TOKEN:-}" ]] && [[ -f "./api_token.txt" ]]; then
+  PIXEL7_API_TOKEN="$(cat ./api_token.txt | tr -d '\r\n')"
+  export PIXEL7_API_TOKEN
+fi
+
 if [[ -z "${PIXEL7_API_TOKEN:-}" ]]; then
   echo "ERROR: PIXEL7_API_TOKEN is not set" >&2
   exit 2

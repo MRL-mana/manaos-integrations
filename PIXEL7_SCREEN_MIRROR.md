@@ -20,6 +20,8 @@
 
 - 「ManaOS: Pixel7 一括停止（watch/keepalive/scrcpy/rebootwatch）」
 
+※HTTP監視（Pixel7 HTTP watch）も運用している場合、このタスクで一緒に停止します。
+
 ※外出モードのバックグラウンド監視は、端末の発熱を抑えるため **端末画面OFF**（scrcpy `--turn-screen-off`）を有効化しています。
 
 ## 監視ログ/状態
@@ -43,6 +45,11 @@
   - 「ManaOS: Pixel7 HTTP Shortcutsを開く（HTTP→ADB 自動フォールバック）」
 
 セットアップ手順は `manaos_integrations/PIXEL7_HTTP_CONTROL.md` を参照。
+
+補助（任意 / ADBでTermux操作）:
+
+- 起動: `pwsh -File .\manaos_integrations\pixel7_termux_start_http_gateway.ps1`
+- 停止: `pwsh -File .\manaos_integrations\pixel7_termux_stop_http_gateway.ps1`
 
 ## 再起動ログ回収（原因調査）
 
