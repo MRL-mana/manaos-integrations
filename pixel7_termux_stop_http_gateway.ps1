@@ -73,6 +73,6 @@ function Send-TermuxLine([string]$line) {
     Start-Sleep -Milliseconds 200
 }
 
-Send-TermuxLine "pkill -f python.*pixel7_api_gateway\\.py || true"
+Send-TermuxLine "pkill -f pixel7_api_gateway.py || true"
 
 Write-Host 'OK (check Pixel Termux screen/log)' -ForegroundColor Green
