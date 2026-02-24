@@ -1,0 +1,20 @@
+version: 1
+actions:
+  # NOTE: セキュリティのため、backend側で明示的に許可したアクションだけ実行できます。
+  # 実行はデフォルト無効（環境変数 MANAOS_RPG_ENABLE_ACTIONS=1 で有効化）。
+
+  - id: quick_verify_local
+    label: ローカル簡易検証（quick_verify_local）
+    kind: pwsh_file
+    path: tools/quick_verify_local.ps1
+    cwd: .
+    timeout_sec: 120
+    tags: [ops]
+
+  - id: pixel7_doctor
+    label: Pixel7 ADB診断（Doctor）
+    kind: pwsh_file
+    path: pixel7_adb_doctor.ps1
+    cwd: .
+    timeout_sec: 90
+    tags: [device]

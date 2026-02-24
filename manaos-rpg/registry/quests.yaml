@@ -11,3 +11,15 @@ quests:
     kind: api
     endpoint: /health
     tags: [ops]
+
+  - id: run_quick_verify
+    label: ローカル簡易検証を実行
+    kind: action
+    action_id: quick_verify_local
+    tags: [ops]
+
+  - id: run_pixel7_doctor
+    label: Pixel7 ADB診断を実行
+    kind: action
+    action_id: pixel7_doctor
+    tags: [device]

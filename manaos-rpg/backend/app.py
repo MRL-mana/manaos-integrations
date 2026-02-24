@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
 import time
 from pathlib import Path
 from typing import Any
@@ -26,6 +28,8 @@ STORE.mkdir(parents=True, exist_ok=True)
 STATE_FILE = STORE / "state.json"
 EVENTS_FILE = STORE / "events.log"
 
+ACTION_LAST_FILE = STORE / "last_action.json"
+
 app = FastAPI(title="ManaOS RPG API", version="0.1")
 
 app.add_middleware(
@@ -41,6 +45,76 @@ def load_yaml(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+
+def _actions_enabled() -> bool:
+    v = str(os.environ.get("MANAOS_RPG_ENABLE_ACTIONS", "0")).strip().lower()
+    return v in {"1", "true", "yes", "on"}
+
+
+def _load_actions() -> list[dict[str, Any]]:
+    actions_yaml = load_yaml(REG / "actions.yaml")
+    raw = actions_yaml.get("actions") or []
+    if not isinstance(raw, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for a in raw:
+        if isinstance(a, dict) and a.get("id"):
+            out.append(a)
+    return out
+
+
+def _run_action(action: dict[str, Any]) -> dict[str, Any]:
+    kind = str(action.get("kind") or "").strip()
+    if kind != "pwsh_file":
+        return {"ok": False, "error": f"unsupported kind: {kind}"}
+
+    rel = str(action.get("path") or "").strip()
+    if not rel:
+        return {"ok": False, "error": "missing path"}
+
+    # path は repo root 配下のみ許可
+    script = safe_resolve_under_root(REPO_ROOT, rel)
+    if script is None or (not script.exists()) or (not script.is_file()):
+        return {"ok": False, "error": "script not found/forbidden"}
+
+    timeout_sec = int(action.get("timeout_sec") or 60)
+    timeout_sec = max(1, min(timeout_sec, 600))
+
+    cwd_raw = str(action.get("cwd") or ".").strip() or "."
+    cwd_path = safe_resolve_under_root(REPO_ROOT, cwd_raw) or REPO_ROOT
+
+    cmd = [
+        "pwsh",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        str(script),
+    ]
+
+    try:
+        completed = subprocess.run(
+            cmd,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=float(timeout_sec),
+            cwd=str(cwd_path),
+        )
+
+        stdout = (completed.stdout or "").strip()[-20000:]
+        stderr = (completed.stderr or "").strip()[-20000:]
+        return {
+            "ok": completed.returncode == 0,
+            "exit_code": int(completed.returncode),
+            "stdout": stdout,
+            "stderr": stderr,
+        }
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "error": "timeout"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
 
 def compute_danger(host: dict, services: list[dict]) -> int:
@@ -109,6 +183,7 @@ def snapshot() -> dict[str, Any]:
     quests_yaml = load_yaml(REG / "quests.yaml")
     skills_yaml = load_yaml(REG / "skills.yaml")
     items_yaml = load_yaml(REG / "items.yaml")
+    actions = _load_actions()
 
     services = list(services_yaml.get("services") or [])
     models = list(models_yaml.get("models") or [])
@@ -301,6 +376,7 @@ def snapshot() -> dict[str, Any]:
             "roots": [{"id": r.id, "label": r.label} for r in item_roots],
             "recent": items_recent,
         },
+        "actions": [{"id": a.get("id"), "label": a.get("label"), "tags": a.get("tags") or []} for a in actions],
         "danger": danger,
         "next_actions": next_actions,
         "always_on_down": down_now,
@@ -342,7 +418,59 @@ def api_registry() -> dict[str, Any]:
         "quests": load_yaml(REG / "quests.yaml").get("quests") or [],
         "skills": load_yaml(REG / "skills.yaml").get("skills") or [],
         "items": load_yaml(REG / "items.yaml").get("items") or [],
+        "actions": load_yaml(REG / "actions.yaml").get("actions") or [],
     }
+
+
+@app.get("/api/actions")
+def api_actions() -> dict[str, Any]:
+    actions = _load_actions()
+    return {
+        "enabled": _actions_enabled(),
+        "actions": [
+            {"id": a.get("id"), "label": a.get("label"), "kind": a.get("kind"), "tags": a.get("tags") or []}
+            for a in actions
+        ],
+    }
+
+
+@app.post("/api/actions/{action_id}/run")
+def api_run_action(action_id: str) -> dict[str, Any]:
+    if not _actions_enabled():
+        raise HTTPException(status_code=403, detail="actions disabled. set MANAOS_RPG_ENABLE_ACTIONS=1")
+
+    actions = _load_actions()
+    action = next((a for a in actions if str(a.get("id")) == action_id), None)
+    if action is None:
+        raise HTTPException(status_code=404, detail="unknown action")
+
+    started = int(time.time())
+    result = _run_action(action)
+    ended = int(time.time())
+
+    payload = {
+        "ts": ended,
+        "action_id": action_id,
+        "label": action.get("label"),
+        "result": result,
+        "duration_sec": max(0, ended - started),
+    }
+    ACTION_LAST_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    append_event(
+        EVENTS_FILE,
+        "action_run",
+        f"action {action_id} {'OK' if result.get('ok') else 'NG'}",
+        {"action_id": action_id, "ok": bool(result.get('ok')), "exit_code": result.get('exit_code')},
+    )
+    return payload
+
+
+@app.get("/api/actions/last")
+def api_last_action() -> dict[str, Any]:
+    if ACTION_LAST_FILE.exists():
+        return json.loads(ACTION_LAST_FILE.read_text(encoding="utf-8"))
+    return {"error": "no action run yet"}
 
 
 @app.get("/api/items")
