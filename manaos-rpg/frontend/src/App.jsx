@@ -1095,7 +1095,13 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
                 </div>
               ) : null}
 
-              <textarea className="input" rows={3} value={proxyQuery} onChange={(e) => setProxyQuery(e.target.value)} placeholder="query（任意・JSON） 例: {\"limit\":30} / path params は {\"job_id\":\"...\"} で渡す" />
+              <textarea
+                className="input"
+                rows={3}
+                value={proxyQuery}
+                onChange={(e) => setProxyQuery(e.target.value)}
+                placeholder={'query（任意・JSON） 例: {"limit":30} / path params は {"job_id":"..."} で渡す'}
+              />
               {proxyRule && String(proxyRule.method || '').toUpperCase() === 'POST' ? (
                 <textarea className="input" rows={4} value={proxyBody} onChange={(e) => setProxyBody(e.target.value)} placeholder="body（任意・JSON）" />
               ) : null}
