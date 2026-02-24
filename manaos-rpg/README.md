@@ -65,3 +65,20 @@ UI表示:
 - `pm2_status`（online/stopped/errored）
 - `restart_count`（PM2のrestart_time）
 
+## GPU可視化（母艦の“犯人リスト”）
+
+backendは `nvidia-smi` から以下を取得します。
+
+- GPU: utilization / VRAM used/total / temperature / power.draw
+- プロセス: pid / process_name / used_gpu_memory（取れる場合）
+
+注意: `nvidia-smi --query-*-apps` は状況によって `used_gpu_memory` が `N/A` になり、プロセス一覧が空になります（その場合はUIに「取得なし」と出ます）。
+
+手動確認（参考）:
+
+```powershell
+nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw --format=csv,noheader,nounits
+nvidia-smi --query-compute-apps=pid,process_name,used_gpu_memory --format=csv,noheader,nounits
+nvidia-smi --query-apps=pid,process_name,used_gpu_memory --format=csv,noheader,nounits
+```
+

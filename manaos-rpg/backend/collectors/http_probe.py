@@ -22,7 +22,7 @@ def http_probe(url: str, timeout_s: float = 0.8) -> dict:
                 except Exception:
                     data = None
             return {
-                "ok": 200 <= int(resp.status) < 300,
+                "ok": 200 <= int(resp.status) < 400,
                 "status": int(resp.status),
                 "content_type": ct,
                 "json": data,
