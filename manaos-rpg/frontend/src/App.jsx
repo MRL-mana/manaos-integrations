@@ -29,6 +29,7 @@ export default function App() {
   const [events, setEvents] = useState([])
   const [active, setActive] = useState('status')
   const [err, setErr] = useState('')
+  const [actionResult, setActionResult] = useState(null)
   const apiBase = useMemo(() => getApiBase(), [])
 
   async function refreshSnapshot() {
@@ -50,6 +51,25 @@ export default function App() {
     try {
       const st = await fetchJson('/api/state')
       setState(st)
+    } catch (e) {
+      setErr(String(e?.message || e))
+    }
+  }
+
+  async function runAction(actionId) {
+    setErr('')
+    setActionResult(null)
+    try {
+      const base = getApiBase()
+      const res = await fetch(`${base}/api/actions/${encodeURIComponent(actionId)}/run`, {
+        method: 'POST'
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(data?.detail || `HTTP ${res.status}`)
+      }
+      setActionResult(data)
+      await refreshSnapshot()
     } catch (e) {
       setErr(String(e?.message || e))
     }
@@ -117,7 +137,7 @@ export default function App() {
           {active === 'party' ? <PartyView services={state?.services} /> : null}
           {active === 'bestiary' ? <BestiaryView models={state?.models} /> : null}
           {active === 'skills' ? <SkillsView skills={state?.skills} /> : null}
-          {active === 'quests' ? <QuestsView quests={state?.quests} apiBase={apiBase} /> : null}
+          {active === 'quests' ? <QuestsView quests={state?.quests} apiBase={apiBase} onRunAction={runAction} actionResult={actionResult} /> : null}
           {active === 'logs' ? <LogsView events={events} /> : null}
           {active === 'map' ? <MapView devices={state?.devices} /> : null}
           {active === 'items' ? <ItemsView items={state?.items} apiBase={apiBase} /> : null}
@@ -316,12 +336,27 @@ function SkillsView({ skills }) {
   )
 }
 
-function QuestsView({ quests, apiBase }) {
+function QuestsView({ quests, apiBase, onRunAction, actionResult }) {
   const list = Array.isArray(quests) ? quests : []
   return (
     <div>
       <div className="panelTitle">クエスト（タスク）</div>
-      <div className="small">kind=api はクリックで叩けます（GET）</div>
+      <div className="small">kind=api はクリック（GET）/ kind=action は実行（POST, backendで許可されたもののみ）</div>
+      {actionResult ? (
+        <div className="box" style={{ marginBottom: 12 }}>
+          <div className="boxTitle">直近アクション結果</div>
+          <div className="boxBody">
+            <div className="kv"><span>ID</span><span className="mono">{actionResult.action_id}</span></div>
+            <div className="kv"><span>結果</span><span className={actionResult.result?.ok ? 'ok' : 'danger'}>{actionResult.result?.ok ? 'OK' : 'NG'}</span></div>
+            {typeof actionResult.result?.exit_code === 'number' ? (
+              <div className="kv"><span>CODE</span><span className="mono">{actionResult.result.exit_code}</span></div>
+            ) : null}
+            {actionResult.result?.error ? (
+              <div className="small danger">{actionResult.result.error}</div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       <div className="table">
         <div className="tr th">
           <div>ID</div><div>LABEL</div><div>KIND</div><div>ENDPOINT</div><div>ACTION</div>
@@ -331,10 +366,12 @@ function QuestsView({ quests, apiBase }) {
             <div className="mono">{q.id}</div>
             <div>{q.label}</div>
             <div className="mono">{q.kind}</div>
-            <div className="mono">{q.endpoint ?? '—'}</div>
+            <div className="mono">{q.endpoint ?? q.action_id ?? '—'}</div>
             <div>
               {q.kind === 'api' && q.endpoint ? (
                 <a className="link" href={`${apiBase}${q.endpoint}`} target="_blank" rel="noreferrer">実行</a>
+              ) : q.kind === 'action' && q.action_id ? (
+                <button className="link" onClick={() => onRunAction?.(q.action_id)}>実行</button>
               ) : (
                 <span className="small">—</span>
               )}

@@ -303,6 +303,8 @@ button, a {
   text-decoration: none;
   border: 1px solid var(--line);
   padding: 4px 8px;
+  background: transparent;
+  cursor: pointer;
 }
 
 .link:hover { border-color: var(--dim); }

@@ -217,6 +217,7 @@ crash_snapshots/
 
 # manaos-rpg runtime storage (machine-specific)
 manaos-rpg/backend/storage/state.json
+manaos-rpg/backend/storage/last_action.json
 manaos-rpg/backend/storage/*.log
 
 # Data files

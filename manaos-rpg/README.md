@@ -10,6 +10,18 @@ registry（台帳）を読むだけで、RPGメニューUIに「ステータス/
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_backend.ps1
 ```
 
+#### 操作（アクション実行）を有効化する場合
+
+セキュリティのため、アクション実行はデフォルト無効です。
+
+```powershell
+$env:MANAOS_RPG_ENABLE_ACTIONS='1'
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_backend.ps1
+```
+
+- 許可アクション定義: `registry/actions.yaml`
+- クエスト一覧: `registry/quests.yaml`（`kind: action` で `action_id` を指定）
+
 確認:
 
 - http://localhost:9510/health
