@@ -2,7 +2,8 @@ param(
 	[string]$BindHost = '127.0.0.1',
 	[int]$Port = 9510,
 	[switch]$ForceKill,
-	[switch]$EnableActions
+	[switch]$EnableActions,
+	[switch]$Lan
 )
 
 $ErrorActionPreference = 'Stop'
@@ -66,6 +67,28 @@ Set-Location $backend
 
 Write-Host "[manaos-rpg] Installing backend deps..." -ForegroundColor Cyan
 py -3.10 -m pip install -r .\requirements.txt
+
+if ($Lan.IsPresent) {
+	$BindHost = '0.0.0.0'
+	# CORS: Vite(5173) からAPI(9510)にアクセスするための最小セット
+	# LANアクセス時はIP/ホスト名が変わるので、検出できる範囲を足す（必要なら上書き可能）
+	if (-not $env:MANAOS_CORS_ORIGINS) {
+		$origins = New-Object System.Collections.Generic.List[string]
+		$origins.Add('http://localhost:5173')
+		$origins.Add('http://127.0.0.1:5173')
+		$origins.Add("http://$env:COMPUTERNAME:5173")
+		try {
+			$ips = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+				Where-Object { $_.IPAddress -and $_.IPAddress -notlike '169.254*' -and $_.IPAddress -ne '127.0.0.1' } |
+				Select-Object -ExpandProperty IPAddress
+			foreach ($ip in ($ips | Select-Object -Unique)) {
+				$origins.Add("http://$ip:5173")
+			}
+		} catch {}
+		$env:MANAOS_CORS_ORIGINS = ($origins | Select-Object -Unique) -join ','
+		Write-Host "[manaos-rpg] MANAOS_CORS_ORIGINS auto-set for LAN" -ForegroundColor Yellow
+	}
+}
 
 if ($EnableActions.IsPresent) {
 	$env:MANAOS_RPG_ENABLE_ACTIONS = '1'

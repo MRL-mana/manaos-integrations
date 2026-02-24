@@ -63,6 +63,50 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_frontend.ps1
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_snapshot_loop.ps1 -IntervalSec 15
 ```
 
+## 常時アクセス（常駐 + LAN）
+
+### 常駐で起動（バックグラウンド）
+
+backend(9510) + frontend(5173) をまとめて起動します。
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_always_on.ps1
+```
+
+LANからもアクセスしたい場合:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_always_on.ps1 -Lan
+```
+
+操作（アクション実行）も使う場合:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_always_on.ps1 -EnableActions
+```
+
+### ログオン時に自動起動（常時アクセス）
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_autostart.ps1 -Lan
+```
+
+削除:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\uninstall_autostart.ps1
+```
+
+### LANアクセスの注意（Windows Firewall）
+
+別端末から `http://<このPCのIP>:5173/` で開くには、Windows Firewallでポート開放が必要な場合があります。
+
+管理者PowerShellで:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\open_firewall_ports.ps1
+```
+
 ## 台帳の編集
 
 - registry/services.yaml
