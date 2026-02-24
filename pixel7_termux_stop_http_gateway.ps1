@@ -1,12 +1,17 @@
 param(
     [string]$DeviceSerial = "",
-    [int]$EnterCount = 1
+    [int]$EnterCount = 1,
+    [int]$WaitStopSec = 20,
+    [int]$ApiPort = 5122
 )
 
 $ErrorActionPreference = 'Stop'
 
 if ($EnterCount -lt 1) { $EnterCount = 1 }
 if ($EnterCount -gt 3) { $EnterCount = 3 }
+if ($WaitStopSec -lt 0) { $WaitStopSec = 0 }
+if ($WaitStopSec -gt 600) { $WaitStopSec = 600 }
+if ($ApiPort -lt 1 -or $ApiPort -gt 65535) { throw "ApiPort must be 1..65535 (got: $ApiPort)" }
 
 $scrcpyDir = Join-Path $env:USERPROFILE 'Desktop\scrcpy\scrcpy-win64-v3.3.4'
 $adbExe = Join-Path $scrcpyDir 'adb.exe'
@@ -18,6 +23,23 @@ if (-not (Test-Path $adbExe)) {
 
 function Get-DevicesText {
     return (& $adbExe devices | Out-String)
+}
+
+function Invoke-AdbShellBestEffort([string]$cmd) {
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $adbExe
+    $psi.Arguments = ("-s {0} shell {1}" -f $DeviceSerial, $cmd)
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $p = [System.Diagnostics.Process]::Start($psi)
+    if ($p) {
+        try {
+            $null = $p.StandardOutput.ReadToEnd()
+            $null = $p.StandardError.ReadToEnd()
+            $p.WaitForExit()
+        } catch {}
+    }
 }
 
 function Get-DefaultSerial {
@@ -56,23 +78,48 @@ if ([string]::IsNullOrWhiteSpace($DeviceSerial)) {
 
 Write-Host '=== Pixel7 Termux Stop HTTP Gateway (ADB assisted) ===' -ForegroundColor Cyan
 Write-Host ("Target: {0}" -f $DeviceSerial) -ForegroundColor Gray
+Write-Host ("Port  : {0}" -f $ApiPort) -ForegroundColor Gray
 
 # Bring Termux to front
 $pkg = 'com.termux'
-& $adbExe -s $DeviceSerial shell "monkey -p $pkg -c android.intent.category.LAUNCHER 1" | Out-Null
+Invoke-AdbShellBestEffort "monkey -p $pkg -c android.intent.category.LAUNCHER 1"
 Start-Sleep -Milliseconds 600
 
 # Best-effort stop (Termux shell)
 function Send-TermuxLine([string]$line) {
     $encoded = ($line -replace ' ', '%s')
-    $encoded = ($encoded -replace '"', '\"')
+    if ($encoded -match "'") {
+        throw "Send-TermuxLine: single-quote is not supported in payload: $line"
+    }
     Write-Host ("Typing: {0}" -f $line) -ForegroundColor DarkGray
-    & $adbExe -s $DeviceSerial shell "input text \"$encoded\"" | Out-Null
+    & $adbExe -s $DeviceSerial shell "input text '$encoded'" | Out-Null
     Start-Sleep -Milliseconds 120
     & $adbExe -s $DeviceSerial shell 'input keyevent KEYCODE_ENTER' | Out-Null
     Start-Sleep -Milliseconds 200
 }
 
+function Test-Listening {
+    $cmd = "(ss -ltn 2>/dev/null || netstat -ltn 2>/dev/null) | grep ':{0} ' || true" -f $ApiPort
+    $out = (& $adbExe -s $DeviceSerial shell $cmd 2>$null | Out-String)
+    return ($out -match (":{0}\s" -f [regex]::Escape([string]$ApiPort)))
+}
+
+function Wait-ForStop {
+    if ($WaitStopSec -le 0) { return (-not (Test-Listening)) }
+    $deadline = (Get-Date).AddSeconds($WaitStopSec)
+    while ((Get-Date) -lt $deadline) {
+        if (-not (Test-Listening)) { return $true }
+        Start-Sleep -Milliseconds 500
+    }
+    return (-not (Test-Listening))
+}
+
 Send-TermuxLine "pkill -f pixel7_api_gateway.py || true"
 
-Write-Host 'OK (check Pixel Termux screen/log)' -ForegroundColor Green
+if (Wait-ForStop) {
+    Write-Host 'OK (port is stopped)' -ForegroundColor Green
+    exit 0
+}
+
+Write-Host 'NG: gateway still appears to be listening' -ForegroundColor Yellow
+exit 2

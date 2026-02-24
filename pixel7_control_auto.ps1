@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Parameter(Mandatory = $true)]
     [ValidateSet(
         'OpenUrl',
@@ -29,40 +29,102 @@ $ErrorActionPreference = 'Stop'
 $http = Join-Path $PSScriptRoot 'pixel7_http_control.ps1'
 $adb = Join-Path $PSScriptRoot 'pixel7_remote_control.ps1'
 
+$useLocalHttp = $false
+try {
+    $scrcpyDir = Join-Path $env:USERPROFILE 'Desktop\scrcpy\scrcpy-win64-v3.3.4'
+    $adbExe = Join-Path $scrcpyDir 'adb.exe'
+    if (Test-Path $adbExe) {
+        function Get-DevicesText {
+            return (& $adbExe devices | Out-String)
+        }
+
+        function Get-DefaultSerial {
+            $txt = Get-DevicesText
+
+            if ($env:PIXEL7_ADB_SERIAL -and ($txt -match ([regex]::Escape($env:PIXEL7_ADB_SERIAL) + '\s+device'))) {
+                return $env:PIXEL7_ADB_SERIAL
+            }
+
+            $wirelessLine = ($txt -split "`n" | ForEach-Object { $_.Trim() } | Where-Object {
+                    $_ -match '^[0-9.]+:5555\s+device$'
+                } | Select-Object -First 1)
+            if ($wirelessLine) {
+                return ($wirelessLine -replace '\s+device$','')
+            }
+
+            $usbLine = ($txt -split "`n" | ForEach-Object { $_.Trim() } | Where-Object {
+                    $_ -match '\s+device$' -and $_ -notmatch ':' -and $_ -notmatch '^List of devices' -and $_ -notmatch '^emulator-'
+                } | Select-Object -First 1)
+            if ($usbLine) {
+                return ($usbLine -replace '\s+device$','')
+            }
+
+            return ""
+        }
+
+        $serial = if (-not [string]::IsNullOrWhiteSpace($DeviceSerial)) { $DeviceSerial } else { Get-DefaultSerial }
+        if ($serial) {
+            & $adbExe -s $serial forward --remove tcp:5122 2>$null | Out-Null
+            & $adbExe -s $serial forward tcp:5122 tcp:5122 2>$null | Out-Null
+        } else {
+            & $adbExe forward --remove tcp:5122 2>$null | Out-Null
+            & $adbExe forward tcp:5122 tcp:5122 2>$null | Out-Null
+        }
+        $r = Invoke-RestMethod -UseBasicParsing -TimeoutSec 2 'http://127.0.0.1:5122/health'
+        if ($r -and ($r.status -eq 'healthy')) { $useLocalHttp = $true }
+    }
+} catch {
+    $useLocalHttp = $false
+}
+
 function Invoke-Http([string]$httpAction, [hashtable]$extraArgs = @{}) {
     if (-not (Test-Path $http)) { throw "pixel7_http_control.ps1 not found: $http" }
 
-    $pwshArgList = @(
-        '-NoProfile','-ExecutionPolicy','Bypass','-File', $http,
-        '-Action', $httpAction,
-        '-TimeoutSec', [string]$TimeoutSec
-    )
-
-    foreach ($k in $extraArgs.Keys) {
-        $pwshArgList += @("-$k", [string]$extraArgs[$k])
+    $callArgs = @{
+        Action = $httpAction
+        TimeoutSec = $TimeoutSec
+    }
+    if ($useLocalHttp) {
+        $callArgs.PixelHost = '127.0.0.1'
+        $callArgs.Port = 5122
     }
 
-    $out = & powershell @pwshArgList 2>&1 | Out-String
+    foreach ($k in $extraArgs.Keys) {
+        $callArgs[$k] = $extraArgs[$k]
+    }
+
+    $out = & $http @callArgs 2>&1 | Out-String
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -ne 0) {
+        throw ("HTTP action failed (exit={0})" -f $exitCode)
+    }
     return $out
 }
 
 function Invoke-Adb([string]$adbAction, [hashtable]$extraArgs = @{}) {
     if (-not (Test-Path $adb)) { throw "pixel7_remote_control.ps1 not found: $adb" }
 
-    $pwshArgList = @(
-        '-NoProfile','-ExecutionPolicy','Bypass','-File', $adb,
-        '-Action', $adbAction
-    )
-
+    $callArgs = @{
+        Action = $adbAction
+    }
     if (-not [string]::IsNullOrWhiteSpace($DeviceSerial)) {
-        $pwshArgList += @('-DeviceSerial', $DeviceSerial)
+        $callArgs.DeviceSerial = $DeviceSerial
     }
-
     foreach ($k in $extraArgs.Keys) {
-        $pwshArgList += @("-$k", [string]$extraArgs[$k])
+        $callArgs[$k] = $extraArgs[$k]
     }
 
-    $out = & powershell @pwshArgList 2>&1 | Out-String
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $out = & $adb @callArgs 2>&1 | Out-String
+        $exitCode = $LASTEXITCODE
+        if ($exitCode -ne 0) {
+            throw ("ADB action failed (exit={0})" -f $exitCode)
+        }
+    } finally {
+        $ErrorActionPreference = $prev
+    }
     return $out
 }
 
@@ -78,6 +140,9 @@ function Invoke-StepAttempt([scriptblock]$fn) {
 }
 
 Write-Host ("=== Pixel7 Control (HTTP→ADB): {0} mode={1} ===" -f $Action, $Mode) -ForegroundColor Cyan
+if ($useLocalHttp) {
+    Write-Host 'HTTP: using localhost (adb forward) http://127.0.0.1:5122' -ForegroundColor DarkGray
+}
 
 $adbFirst = $Mode -in @('ADBFirst','ADBOnly')
 $httpAllowed = $Mode -notin @('ADBOnly')

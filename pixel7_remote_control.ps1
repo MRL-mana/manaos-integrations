@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Parameter(Mandatory = $true)]
     [ValidateSet(
         'Home',
@@ -108,6 +108,23 @@ function Invoke-AdbShell([string]$cmd) {
     & $adbExe -s $DeviceSerial shell $cmd | Out-Null
 }
 
+function Invoke-AdbShellBestEffort([string]$cmd) {
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $adbExe
+    $psi.Arguments = ("-s {0} shell {1}" -f $DeviceSerial, $cmd)
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $p = [System.Diagnostics.Process]::Start($psi)
+    if ($p) {
+        try {
+            $null = $p.StandardOutput.ReadToEnd()
+            $null = $p.StandardError.ReadToEnd()
+            $p.WaitForExit()
+        } catch {}
+    }
+}
+
 function Get-OpenWebUiUrl {
     if ($env:OPENWEBUI_URL) {
         return $env:OPENWEBUI_URL.TrimEnd('/')
@@ -135,17 +152,23 @@ function Start-ViewUrl([string]$url, [string]$package) {
     if ([string]::IsNullOrWhiteSpace($url)) { return }
 
     if (-not [string]::IsNullOrWhiteSpace($package)) {
-        $out = (& $adbExe -s $DeviceSerial shell "am start -a android.intent.action.VIEW -d $url $package" 2>&1 | Out-String).Trim()
+        $prev = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try {
+            $out = (& $adbExe -s $DeviceSerial shell "am start --user 0 -a android.intent.action.VIEW -d $url -p $package" 2>&1 | Out-String).Trim()
+        } finally {
+            $ErrorActionPreference = $prev
+        }
         if ($out -match 'Error: Activity not started') {
             # fallback
-            (& $adbExe -s $DeviceSerial shell "am start -a android.intent.action.VIEW -d $url" 2>&1 | Out-String).TrimEnd() | Out-Host
+            (& $adbExe -s $DeviceSerial shell "am start --user 0 -a android.intent.action.VIEW -d $url" 2>&1 | Out-String).TrimEnd() | Out-Host
             return
         }
         if ($out) { $out | Out-Host }
         return
     }
 
-    (& $adbExe -s $DeviceSerial shell "am start -a android.intent.action.VIEW -d $url" 2>&1 | Out-String).TrimEnd() | Out-Host
+    (& $adbExe -s $DeviceSerial shell "am start --user 0 -a android.intent.action.VIEW -d $url" 2>&1 | Out-String).TrimEnd() | Out-Host
 }
 
 if ([string]::IsNullOrWhiteSpace($DeviceSerial)) {
@@ -231,7 +254,7 @@ for ($i = 0; $i -lt $Repeat; $i++) {
         }
         'OpenTailscale' {
             $pkg = 'com.tailscale.ipn'
-            & $adbExe -s $DeviceSerial shell "monkey -p $pkg -c android.intent.category.LAUNCHER 1" | Out-Null
+            Invoke-AdbShellBestEffort "monkey -p $pkg -c android.intent.category.LAUNCHER 1"
         }
         'OpenAppInfoTailscale' {
             & $adbExe -s $DeviceSerial shell "am start -a android.settings.APPLICATION_DETAILS_SETTINGS -d package:com.tailscale.ipn" | Out-Null
@@ -270,11 +293,11 @@ for ($i = 0; $i -lt $Repeat; $i++) {
         }
         'OpenHttpShortcuts' {
             $pkg = 'ch.rmy.android.http_shortcuts'
-            & $adbExe -s $DeviceSerial shell "monkey -p $pkg -c android.intent.category.LAUNCHER 1" | Out-Null
+            Invoke-AdbShellBestEffort "monkey -p $pkg -c android.intent.category.LAUNCHER 1"
         }
         'OpenTermux' {
             $pkg = 'com.termux'
-            & $adbExe -s $DeviceSerial shell "monkey -p $pkg -c android.intent.category.LAUNCHER 1" | Out-Null
+            Invoke-AdbShellBestEffort "monkey -p $pkg -c android.intent.category.LAUNCHER 1"
         }
         'OpenChrome' {
             if ([string]::IsNullOrWhiteSpace($Url)) {

@@ -1,3 +1,8 @@
+param(
+  [string]$Serial = "",
+  [string]$PreferredTcp = "100.84.2.125:5555"
+)
+
 <#
 Pixel 7a: open HTTP Shortcuts import for Remi
 - Shares remi_android_shortcuts.json to HTTP Shortcuts ShareActivity
@@ -7,17 +12,58 @@ Pixel 7a: open HTTP Shortcuts import for Remi
 
 $ErrorActionPreference = 'SilentlyContinue'
 
-$PREFERRED_TCP = '100.84.2.125:5555'
+$PREFERRED_TCP = if ([string]::IsNullOrWhiteSpace($PreferredTcp)) { '100.84.2.125:5555' } else { $PreferredTcp }
 $SHARE_ACT = 'ch.rmy.android.http_shortcuts/.activities.misc.share.ShareActivity'
 
+function Resolve-AdbExecutable {
+  $candidates = @()
+
+  $cmd = Get-Command adb -ErrorAction SilentlyContinue
+  if ($cmd -and $cmd.Source) {
+    $candidates += $cmd.Source
+  }
+
+  # Prefer scrcpy-bundled adb if present (common in this repo's environment)
+  try {
+    $scrcpyDir = Join-Path $env:USERPROFILE 'Desktop\scrcpy\scrcpy-win64-v3.3.4'
+    $candidates += (Join-Path $scrcpyDir 'adb.exe')
+  } catch {
+  }
+
+  if ($env:LOCALAPPDATA) {
+    $candidates += (Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links\adb.exe')
+    $candidates += (Join-Path $env:LOCALAPPDATA 'Android\Sdk\platform-tools\adb.exe')
+  }
+
+  $candidates += 'C:\Android\platform-tools\adb.exe'
+  $candidates += 'C:\platform-tools\adb.exe'
+  $candidates += 'C:\adb\adb.exe'
+
+  foreach ($p in ($candidates | Select-Object -Unique)) {
+    if ([string]::IsNullOrWhiteSpace($p)) { continue }
+    if (Test-Path $p) { return $p }
+  }
+
+  return $null
+}
+
+function Invoke-Adb {
+  param(
+    [Parameter(Mandatory = $true)][string[]]$Args
+  )
+  if ($null -eq $script:AdbExe) { throw 'adb executable not resolved' }
+  return (& $script:AdbExe @Args)
+}
+
 function Get-ActiveDevice {
-  $lines = adb devices | Select-Object -Skip 1
+  $lines = Invoke-Adb @('devices') | Select-Object -Skip 1
   $devices = @()
   foreach ($l in $lines) {
     if (-not $l) { continue }
     if ($l -match '^([^\s]+)\s+device\s*$') { $devices += $Matches[1] }
   }
   if ($devices.Count -eq 0) { return $null }
+  if (-not [string]::IsNullOrWhiteSpace($Serial) -and ($devices -contains $Serial)) { return $Serial }
   if ($devices -contains $PREFERRED_TCP) { return $PREFERRED_TCP }
   $tcp = $devices | Where-Object { $_ -like '*:*' } | Select-Object -First 1
   if ($tcp) { return $tcp }
@@ -25,8 +71,8 @@ function Get-ActiveDevice {
 }
 
 function Wait-ForDevice {
-  adb start-server | Out-Null
-  $state = (adb -s $DEVICE get-state 2>$null)
+  Invoke-Adb @('start-server') | Out-Null
+  $state = (Invoke-Adb @('-s', $DEVICE, 'get-state') 2>$null)
   if ($LASTEXITCODE -ne 0 -or -not $state) {
     $maybe = Get-ActiveDevice
     if ($maybe) {
@@ -34,15 +80,15 @@ function Wait-ForDevice {
       Write-Host "Re-selected adb device: $DEVICE" -ForegroundColor Gray
     }
   }
-  adb -s $DEVICE wait-for-device | Out-Null
+  Invoke-Adb @('-s', $DEVICE, 'wait-for-device') | Out-Null
 }
 
 function Dump-UiXml([string]$name) {
   $remote = "/data/local/tmp/${name}.xml"
   $local = Join-Path $PSScriptRoot "_tmp_${name}.xml"
   Wait-ForDevice
-  adb -s $DEVICE shell uiautomator dump $remote | Out-Null
-  adb -s $DEVICE pull $remote $local | Out-Null
+  Invoke-Adb @('-s', $DEVICE, 'shell', 'uiautomator', 'dump', $remote) | Out-Null
+  Invoke-Adb @('-s', $DEVICE, 'pull', $remote, $local) | Out-Null
   try { return (Get-Content $local -Raw -ErrorAction SilentlyContinue) } catch { return '' }
 }
 
@@ -82,7 +128,7 @@ function Device-LooksLocked([string]$xml) {
 function Ensure-Unlocked {
   # Wake screen
   Wait-ForDevice
-  adb -s $DEVICE shell input keyevent 224 | Out-Null
+  Invoke-Adb @('-s', $DEVICE, 'shell', 'input', 'keyevent', '224') | Out-Null
   Start-Sleep -Milliseconds 400
 
   $waited = 0
@@ -101,9 +147,9 @@ function Ensure-Unlocked {
 function Close-SystemOverlays {
   # Try to close notification shade / overlays
   Wait-ForDevice
-  adb -s $DEVICE shell input keyevent 4 | Out-Null
+  Invoke-Adb @('-s', $DEVICE, 'shell', 'input', 'keyevent', '4') | Out-Null
   Start-Sleep -Milliseconds 250
-  adb -s $DEVICE shell input keyevent 4 | Out-Null
+  Invoke-Adb @('-s', $DEVICE, 'shell', 'input', 'keyevent', '4') | Out-Null
   Start-Sleep -Milliseconds 250
 }
 
@@ -128,7 +174,7 @@ function Try-AutoConfirmImport {
       $pt = Get-CenterFromBounds $bounds
       if ($pt) {
         Write-Host "Auto-tap: $bounds" -ForegroundColor Gray
-        adb -s $DEVICE shell input tap $pt[0] $pt[1] | Out-Null
+        Invoke-Adb @('-s', $DEVICE, 'shell', 'input', 'tap', [string]$pt[0], [string]$pt[1]) | Out-Null
         Start-Sleep -Milliseconds 700
         continue
       }
@@ -137,7 +183,13 @@ function Try-AutoConfirmImport {
   }
 }
 
-adb start-server | Out-Null
+$script:AdbExe = Resolve-AdbExecutable
+if ($null -eq $script:AdbExe) {
+  Write-Host 'adb was not found. Install Android platform-tools or place adb on PATH (or install scrcpy bundle used by this repo).' -ForegroundColor Red
+  exit 10
+}
+
+Invoke-Adb @('start-server') | Out-Null
 $DEVICE = Get-ActiveDevice
 if (-not $DEVICE) {
   Write-Host 'No adb device found. Connect Pixel (USB) or enable Wi-Fi ADB.' -ForegroundColor Red
@@ -145,7 +197,7 @@ if (-not $DEVICE) {
 }
 
 Write-Host "Using adb device: $DEVICE" -ForegroundColor Gray
-adb -s $DEVICE wait-for-device | Out-Null
+Invoke-Adb @('-s', $DEVICE, 'wait-for-device') | Out-Null
 
 if (-not (Ensure-Unlocked)) {
   Write-Host 'Still locked. Unlock the phone and re-run.' -ForegroundColor Yellow
@@ -154,19 +206,28 @@ if (-not (Ensure-Unlocked)) {
 
 Close-SystemOverlays
 
-# Ensure file exists
-$path = "/sdcard/Download/remi_android_shortcuts.json"
-$check = adb -s $DEVICE shell "ls -l $path 2>/dev/null || echo NOT_FOUND"
-if ($check -match 'NOT_FOUND') {
-  Write-Host "Not found on device: $path" -ForegroundColor Yellow
-  Write-Host 'If needed, re-push it from PC and re-run.' -ForegroundColor Yellow
+# Ensure file exists (paths may vary; also fails before first unlock after reboot)
+$paths = @(
+  '/sdcard/Download/remi_android_shortcuts.json',
+  '/storage/self/primary/Download/remi_android_shortcuts.json',
+  '/storage/emulated/0/Download/remi_android_shortcuts.json'
+)
+$found = $false
+foreach ($p in $paths) {
+  $check = Invoke-Adb @('-s', $DEVICE, 'shell', "ls -l $p 2>/dev/null || echo NOT_FOUND")
+  if ($check -and ($check -notmatch 'NOT_FOUND')) { $found = $true; break }
+}
+if (-not $found) {
+  Write-Host "Not found on device under Download/: remi_android_shortcuts.json" -ForegroundColor Yellow
+  Write-Host 'If the phone was just rebooted: unlock once (PIN), then re-run sync+import.' -ForegroundColor Yellow
+  Write-Host 'Otherwise: re-push the JSON from PC and re-run.' -ForegroundColor Yellow
   exit 2
 }
 
 # Prefer SAF content URI (with permission grant)
 $uri = "content://com.android.externalstorage.documents/document/primary:Download/remi_android_shortcuts.json"
 Write-Host 'Opening HTTP Shortcuts import (share JSON)...' -ForegroundColor Cyan
-adb -s $DEVICE shell "am start -a android.intent.action.SEND -t application/json --grant-read-uri-permission --eu android.intent.extra.STREAM '$uri' -n $SHARE_ACT" | Out-Null
+Invoke-Adb @('-s', $DEVICE, 'shell', "am start -a android.intent.action.SEND -t application/json --grant-read-uri-permission --eu android.intent.extra.STREAM '$uri' -n $SHARE_ACT") | Out-Null
 
 Start-Sleep -Milliseconds 800
 Close-SystemOverlays

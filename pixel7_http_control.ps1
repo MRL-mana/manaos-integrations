@@ -146,11 +146,13 @@ switch ($Action) {
     'OpenUrl' {
         if ([string]::IsNullOrWhiteSpace($Url)) { throw "-Url is required" }
         $r = Invoke-Pixel7Api 'POST' '/api/open/url' @{ url = $Url }
+        if ($null -ne $r.ok -and -not $r.ok) { throw ("OpenUrl failed: {0}" -f ($r.stderr)) }
         $r | ConvertTo-Json -Depth 8
     }
     'OpenOpenWebUI' {
         $u = Get-OpenWebUiUrl
         $r = Invoke-Pixel7Api 'POST' '/api/open/url' @{ url = $u }
+        if ($null -ne $r.ok -and -not $r.ok) { throw ("OpenOpenWebUI failed: {0}" -f ($r.stderr)) }
         $r | ConvertTo-Json -Depth 8
     }
     'OpenApp' {
@@ -158,6 +160,7 @@ switch ($Action) {
         $payload = @{ package = $Package }
         if (-not [string]::IsNullOrWhiteSpace($Activity)) { $payload.activity = $Activity }
         $r = Invoke-Pixel7Api 'POST' '/api/open/app' $payload
+        if ($null -ne $r.ok -and -not $r.ok) { throw ("OpenApp failed: {0}" -f ($r.stderr)) }
         $r | ConvertTo-Json -Depth 8
     }
     'BroadcastMacro' {
@@ -172,6 +175,7 @@ switch ($Action) {
             }
         }
         $r = Invoke-Pixel7Api 'POST' '/api/macro/broadcast' $payload
+        if ($null -ne $r.ok -and -not $r.ok) { throw ("BroadcastMacro failed: {0}" -f ($r.stderr)) }
         $r | ConvertTo-Json -Depth 8
     }
     'MacroCommands' {

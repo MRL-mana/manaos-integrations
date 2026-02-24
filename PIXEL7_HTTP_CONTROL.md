@@ -77,12 +77,17 @@
 Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助です（HTTPゲートウェイの起動/停止）。
 
 - 起動（DestDirへ移動→chmod→起動）: `pwsh -File .\manaos_integrations\pixel7_termux_start_http_gateway.ps1`
+- ログ付きでバックグラウンド起動（推奨パス）: `pwsh -File .\manaos_integrations\pixel7_termux_start_http_gateway.ps1 -LogPath /storage/emulated/0/Download/pixel7_api_gateway_termux.log`
 - 停止（pkillでbest-effort）: `pwsh -File .\manaos_integrations\pixel7_termux_stop_http_gateway.ps1`
 
 ### VS Codeタスク（おすすめ）
 
 - 「ManaOS: Pixel7 HTTP トークン生成（表示）」
-- 「ManaOS: Pixel7 HTTP Gateway 配置（adb push）」
+- 「ManaOS: Pixel7 HTTP Gateway 配置（Termux bootstrap）」
+  - 推奨: Termuxの `$HOME` に配置されます（/sdcard権限やnoexec問題を回避）
+
+- （任意/旧）「ManaOS: Pixel7 HTTP Gateway 配置（adb push）」
+  - `/sdcard/Download/...` へ配置します。端末設定次第でTermuxから読めない/実行できない場合があります。
 
 - 「ManaOS: Pixel7 TermuxでHTTP Gateway起動（ADB補助）」
 - 「ManaOS: Pixel7 TermuxでHTTP Gateway停止（ADB補助）」
@@ -92,6 +97,9 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
 ※母艦側でトークンファイルがある場合、配置タスクは `api_token.txt` としてPixel側にも同梱します。
 
 - 「ManaOS: Pixel7 Termuxを開く（ADB / HTTP復旧用）」
+- 「ManaOS: Pixel7 Termux ストレージ権限セットアップ（termux-setup-storage）」
+- 「ManaOS: Pixel7 Termux バックグラウンド許可（ADB）」
+- 「ManaOS: Pixel7 Termux+HTTP Shortcuts バックグラウンド許可（ADB）」
 - 「ManaOS: Pixel7 HTTP スモークテスト（health/status/fallback）」
 - 「ManaOS: Pixel7 HTTP 監視開始（バックグラウンド）」
 - 「ManaOS: Pixel7 外出モード HTTP 監視開始（Tailscaleのみ/バックグラウンド）」
