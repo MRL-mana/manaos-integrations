@@ -209,8 +209,15 @@ setup_*.ps1
 setup_*.sh
 setup_*.bat
 
+# Workspace-local helper scripts (not portable)
+tools/update_tasks_pixel7_http.py
+
 # Crash snapshots
 crash_snapshots/
+
+# manaos-rpg runtime storage (machine-specific)
+manaos-rpg/backend/storage/state.json
+manaos-rpg/backend/storage/*.log
 
 # Data files
 data/
