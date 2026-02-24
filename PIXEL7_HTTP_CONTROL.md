@@ -87,7 +87,7 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
 - 「ManaOS: Pixel7 TermuxでHTTP Gateway起動（ADB補助）」
 - 「ManaOS: Pixel7 TermuxでHTTP Gateway停止（ADB補助）」
 
-- 「ManaOS: Pixel7 TermuxでHTTP Gateway起動（ADB補助）」
+- 「ManaOS: Pixel7 HTTP 起動（セットアップ→起動→監視）」
 
 ※母艦側でトークンファイルがある場合、配置タスクは `api_token.txt` としてPixel側にも同梱します。
 
