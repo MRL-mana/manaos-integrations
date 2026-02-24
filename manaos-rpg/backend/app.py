@@ -292,12 +292,28 @@ def get_unified_integrations_status() -> dict[str, Any]:
         spec = o.get("data") or {}
         paths = spec.get("paths") if isinstance(spec.get("paths"), dict) else {}
         path_names = list(paths.keys()) if isinstance(paths, dict) else []
+
+        # method summary（全量specをsnapshotに持たないため、カウントだけ計算）
+        get_paths = []
+        post_paths = []
+        for p, ops in (paths or {}).items():
+            if not isinstance(ops, dict):
+                continue
+            if isinstance(ops.get("get"), dict):
+                get_paths.append(str(p))
+            if isinstance(ops.get("post"), dict):
+                post_paths.append(str(p))
+
+        get_no_params = [p for p in get_paths if ("{" not in p and "}" not in p)]
         openapi_summary.update(
             {
                 "title": spec.get("info", {}).get("title") if isinstance(spec.get("info"), dict) else None,
                 "version": spec.get("info", {}).get("version") if isinstance(spec.get("info"), dict) else None,
                 "paths_count": len(path_names),
                 "paths_sample": sorted([str(p) for p in path_names])[:20],
+                "get_paths_count": len(get_paths),
+                "get_paths_no_params_count": len(get_no_params),
+                "post_paths_count": len(post_paths),
             }
         )
 
@@ -1007,11 +1023,23 @@ def snapshot() -> dict[str, Any]:
                         "Unified allowlist が POST中心のため安全probeができない：OpenAPI/実行結果ベースで運用（必要ならinclude_disabledで一覧確認）",
                     )
                     if can_act_on_unified and (not has_enabled_get_rule):
-                        _append_next_action_hint(
-                            next_action_hints,
-                            label="実行：Unified allowlist コアread有効化（安全なGETのみ）",
-                            action_id="unified_proxy_enable_core_read",
-                        )
+                        # OpenAPI上に「GET（パスパラメータ無し）」が1つも無い場合、このアクションは効かないので提案しない
+                        get_no_params_cnt = None
+                        if isinstance(unified_integrations, dict):
+                            od2 = unified_integrations.get("data") if isinstance(unified_integrations.get("data"), dict) else {}
+                            oo2 = od2.get("openapi") if isinstance(od2.get("openapi"), dict) else {}
+                            get_no_params_cnt = oo2.get("get_paths_no_params_count")
+                        try:
+                            get_no_params_cnt_i = int(get_no_params_cnt) if get_no_params_cnt is not None else 0
+                        except Exception:
+                            get_no_params_cnt_i = 0
+
+                        if get_no_params_cnt_i >= 1:
+                            _append_next_action_hint(
+                                next_action_hints,
+                                label="実行：Unified allowlist コアread有効化（安全なGETのみ）",
+                                action_id="unified_proxy_enable_core_read",
+                            )
                 else:
                     _append_next_action(
                         next_actions,

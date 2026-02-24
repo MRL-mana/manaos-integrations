@@ -8,10 +8,46 @@ skills:
         label: Open WebUI
         tags: [ui, chat]
         notes: "UIから会話/管理"
+        url: http://127.0.0.1:3000/
       - id: unified_api_chat
         label: Unified API Server 経由
         tags: [api]
         notes: "ツール/統合APIの基盤"
+        url: http://127.0.0.1:9502/docs
+      - id: ollama_api
+        label: Ollama（API）
+        tags: [api, llm]
+        notes: "モデル一覧/生成（/api/tags, /api/generate）"
+        url: http://127.0.0.1:11434/
+        integration_key: local_llm
+      - id: lmstudio_api
+        label: LM Studio（OpenAI互換）
+        tags: [api, llm]
+        notes: "OpenAI互換エンドポイント"
+        url: http://127.0.0.1:1234/v1/models
+
+  - id: llm_ops
+    label: LLM運用（ルーティング/モデル一覧）
+    tags: [ai, llm, ops]
+    items:
+      - id: llm_health
+        label: LLM health（統合API）
+        tags: [api, health]
+        notes: "ルータ/LLM基盤の健全性"
+        url: http://127.0.0.1:9502/api/llm/health
+        integration_key: llm_routing
+      - id: llm_models
+        label: LLM models-enhanced（統合API）
+        tags: [api, models]
+        notes: "利用可能モデル/推奨/補足情報"
+        url: http://127.0.0.1:9502/api/llm/models-enhanced
+        integration_key: llm_routing
+      - id: llm_route_docs
+        label: LLM route（統合API / POST）
+        tags: [api]
+        notes: "ルーティング実行（POST）"
+        url: http://127.0.0.1:9502/api/llm/route-enhanced
+        integration_key: llm_routing
 
   - id: image_gen
     label: 画像生成
@@ -20,15 +56,74 @@ skills:
       - id: comfyui
         label: ComfyUI
         tags: [comfyui, workflow]
-        notes: "ワークフロー駆動（FLUX/SD/Qwen Image等）"
+        notes: "ベース生成の本丸（ワークフロー駆動）"
+        url: http://127.0.0.1:8188/
+        integration_key: comfyui
+      - id: comfyui_queue
+        label: ComfyUI キュー（統合API）
+        tags: [api, queue]
+        notes: "実行中/待機中を確認"
+        url: http://127.0.0.1:9502/api/comfyui/queue
+        integration_key: comfyui
+      - id: comfyui_history
+        label: ComfyUI 履歴（統合API）
+        tags: [api, history]
+        notes: "完了履歴を確認"
+        url: http://127.0.0.1:9502/api/comfyui/history
+        integration_key: comfyui
+      - id: comfyui_start
+        label: ComfyUI 起動
+        tags: [ai, image]
+        notes: "起動（actions有効時）"
+        action_id: comfyui_start
+      - id: comfyui_restart
+        label: ComfyUI 再起動
+        tags: [ai, image]
+        notes: "再起動（actions有効時）"
+        action_id: comfyui_restart
       - id: qwen_image
         label: Qwen-Image（編集/リファイン）
         tags: [qwen, image]
-        notes: "i2i / 仕上げ工程"
+        notes: "編集/i2i/仕上げ工程（入口はComfyUI側）"
       - id: flux
         label: FLUX（ベース生成）
         tags: [flux, image]
-        notes: "高速ベース生成"
+        notes: "ベース生成（ComfyUIワークフロー内で使用）"
+
+  - id: video_gen_wan
+    label: 動画生成（Wan 2.2 / SVI）
+    tags: [ai, video]
+    items:
+      - id: svi_caps
+        label: SVI capabilities（事前診断）
+        tags: [api, svi]
+        notes: "必要ノード/モデル資産の不足をチェック"
+        url: http://127.0.0.1:9502/api/svi/capabilities
+        integration_key: svi_wan22
+      - id: svi_generate
+        label: SVI generate（統合API）
+        tags: [api, svi]
+        notes: "動画生成を開始（prompt_id）"
+        url: http://127.0.0.1:9502/api/svi/generate
+        integration_key: svi_wan22
+      - id: svi_extend
+        label: SVI extend（統合API）
+        tags: [api, svi]
+        notes: "既存動画の延長"
+        url: http://127.0.0.1:9502/api/svi/extend
+        integration_key: svi_wan22
+      - id: svi_queue
+        label: SVI キュー（統合API）
+        tags: [api, queue]
+        notes: "実行中/待機中を確認"
+        url: http://127.0.0.1:9502/api/svi/queue
+        integration_key: svi_wan22
+      - id: svi_history
+        label: SVI 履歴（統合API）
+        tags: [api, history]
+        notes: "完了履歴を確認"
+        url: http://127.0.0.1:9502/api/svi/history
+        integration_key: svi_wan22
 
   - id: video_gen
     label: 動画生成
@@ -37,7 +132,27 @@ skills:
       - id: ltx2
         label: LTX2 Infinity
         tags: [ltx2, video]
-        notes: "テンプレ/ストレージ/API連携"
+        notes: "テンプレ/ストレージ/API連携（Infinity）"
+        url: http://127.0.0.1:9502/api/ltx2-infinity/templates
+        integration_key: ltx2_infinity
+      - id: ltx2_generate
+        label: LTX2 generate（統合API）
+        tags: [api, ltx2]
+        notes: "LTX-2 動画生成を開始"
+        url: http://127.0.0.1:9502/api/ltx2/generate
+        integration_key: ltx2
+      - id: ltx2_queue
+        label: LTX2 キュー（統合API）
+        tags: [api, queue]
+        notes: "実行中/待機中を確認"
+        url: http://127.0.0.1:9502/api/ltx2/queue
+        integration_key: ltx2
+      - id: ltx2_history
+        label: LTX2 履歴（統合API）
+        tags: [api, history]
+        notes: "完了履歴を確認"
+        url: http://127.0.0.1:9502/api/ltx2/history
+        integration_key: ltx2
 
   - id: voice
     label: 音声
@@ -47,6 +162,45 @@ skills:
         label: VOICEVOX
         tags: [tts]
         notes: "TTS/読み上げ"
+      - id: voice_api
+        label: Voice（統合API）
+        tags: [api, voice]
+        notes: "音声統合（/api/voice 配下）"
+        url: http://127.0.0.1:9502/api/voice
+
+  - id: assets
+    label: 素材（画像ストック）
+    tags: [assets, image]
+    items:
+      - id: images_recent
+        label: 最近の画像（統合API）
+        tags: [api, gallery]
+        notes: "gallery_images をスキャン（生成物の見つけやすさ優先）"
+        url: http://127.0.0.1:9502/api/images/recent
+        integration_key: image_stock
+
+  - id: secretary
+    label: 秘書（リマインダ/日報）
+    tags: [secretary]
+    items:
+      - id: secretary_health
+        label: Secretary System health
+        tags: [api]
+        notes: "秘書システムの生存確認"
+        url: http://127.0.0.1:5125/health
+        integration_key: secretary
+      - id: reminders
+        label: Reminders（一覧）
+        tags: [api]
+        notes: "リマインダ一覧"
+        url: http://127.0.0.1:5125/api/reminders
+        integration_key: secretary
+      - id: reports
+        label: Reports（一覧）
+        tags: [api]
+        notes: "日報/レポート一覧"
+        url: http://127.0.0.1:5125/api/reports
+        integration_key: secretary
 
   - id: automation
     label: 自動化
@@ -56,10 +210,16 @@ skills:
         label: n8n
         tags: [workflow]
         notes: "ワークフロー自動化"
+        url: http://127.0.0.1:5678/
       - id: pixel7
         label: Pixel7 リモコン/ADB/HTTP
         tags: [device, adb]
         notes: "外出モード/復旧/ショートカット同期"
+      - id: pixel7_doctor
+        label: Pixel7 ADB診断（Doctor）
+        tags: [device]
+        notes: "診断を実行（actions有効時）"
+        action_id: pixel7_doctor
 
   - id: memory
     label: 記憶/検索
@@ -69,3 +229,4 @@ skills:
         label: MRL Memory
         tags: [memory, rag]
         notes: "蓄積・検索・関連付け"
+        integration_key: memory_unified

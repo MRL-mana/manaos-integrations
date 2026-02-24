@@ -23,3 +23,39 @@ quests:
     kind: action
     action_id: pixel7_doctor
     tags: [device]
+
+  - id: run_comfyui_start
+    label: ComfyUI 起動
+    kind: action
+    action_id: comfyui_start
+    tags: [ai, image]
+
+  - id: run_comfyui_restart
+    label: ComfyUI 再起動
+    kind: action
+    action_id: comfyui_restart
+    tags: [ai, image]
+
+  - id: run_unified_proxy_sync
+    label: Unified allowlist 同期（OpenAPI→台帳）
+    kind: action
+    action_id: unified_proxy_sync
+    tags: [ops]
+
+  - id: run_unified_proxy_disable_404
+    label: Unified allowlist 404自動無効化（台帳掃除）
+    kind: action
+    action_id: unified_proxy_disable_404
+    tags: [ops]
+
+  - id: run_unified_proxy_enable_core_read
+    label: Unified allowlist コアread有効化（安全なGETのみ）
+    kind: action
+    action_id: unified_proxy_enable_core_read
+    tags: [ops]
+
+  - id: run_unified_proxy_enable_read_exists
+    label: Unified allowlist 実在read自動有効化（GET probe）
+    kind: action
+    action_id: unified_proxy_enable_read_exists
+    tags: [ops]

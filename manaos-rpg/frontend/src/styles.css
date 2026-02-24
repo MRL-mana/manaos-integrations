@@ -22,6 +22,10 @@ button, a {
   font-family: inherit;
 }
 
+select, textarea {
+  font-family: inherit;
+}
+
 .screen {
   min-height: 100vh;
   display: grid;
@@ -151,6 +155,24 @@ button, a {
   padding: 10px;
 }
 
+.input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--fg);
+  border: 2px solid var(--line);
+}
+
+.output {
+  margin-top: 10px;
+  padding: 10px;
+  border: 2px solid var(--line);
+  background: #000;
+  color: var(--fg);
+  white-space: pre-wrap;
+}
+
 .kv {
   display: grid;
   grid-template-columns: 90px 1fr;
@@ -200,6 +222,28 @@ button, a {
   gap: 10px;
   padding: 6px 0;
   border-bottom: 1px dotted var(--line);
+}
+
+.skillActions {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sectionBlock {
+  border: 2px solid var(--line);
+  margin-bottom: 12px;
+}
+
+.sectionHead {
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-weight: 800;
 }
 
 .itemsGrid {

@@ -56,3 +56,19 @@ services:
     health_url: http://127.0.0.1:9502/health
     tags: [ai, video]
     depends_on: [unified_api_server]
+
+  - id: file_secretary
+    name: File Secretary
+    kind: http
+    port: 5120
+    health_url: http://127.0.0.1:5120/health
+    tags: [secretary]
+    depends_on: []
+
+  - id: secretary_system
+    name: Secretary System
+    kind: http
+    port: 5125
+    health_url: http://127.0.0.1:5125/health
+    tags: [secretary]
+    depends_on: []

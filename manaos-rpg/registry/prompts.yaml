@@ -1,0 +1,73 @@
+version: 1
+# プロンプトテンプレ（ダッシュボードの QUICK で選択して適用）
+# - ここを増やすだけでUIが育つ
+prompts:
+  ollama:
+    - id: quick_summary
+      label: 要約（3行）
+      template: |
+        次のテキストを日本語で3行に要約してください。
+        - 重要点を箇条書き
+        - 決定事項があれば明示
+        - 次のアクション案を1つだけ
+
+        ---
+        {{text}}
+    - id: extract_todo
+      label: TODO抽出
+      template: |
+        次の内容から、実行可能なTODOを箇条書きで抽出してください。
+        各TODOは「動詞で開始」し、優先度(高/中/低)も付けてください。
+
+        ---
+        {{text}}
+
+  image:
+    - id: cozy_room_safe
+      label: Cozy Room（安全・汎用）
+      prompt: "a cozy room, cinematic light, ultra detailed, masterpiece"
+      negative_prompt: "lowres, blurry, worst quality, text, watermark"
+    - id: product_shot
+      label: Product Shot（背景シンプル）
+      prompt: "product photo, clean background, soft light, high detail"
+      negative_prompt: "lowres, blurry, text, watermark"
+
+  video:
+    - id: svi_generate_min
+      label: SVI generate（最小）
+      endpoint: /api/unified/svi/generate
+      body:
+        start_image_path: "C:/path/to/start.png"
+        prompt: "a cinematic scene, smooth camera"
+        quality: "balanced"
+        video_length_seconds: 5
+        steps: 6
+        motion_strength: 1.3
+        sage_attention: true
+        extend_enabled: false
+
+    - id: svi_extend_min
+      label: SVI extend（最小）
+      endpoint: /api/unified/svi/extend
+      body:
+        previous_video_path: "C:/path/to/prev.mp4"
+        prompt: "continue the scene"
+        quality: "balanced"
+        steps: 8
+        motion_strength: 1.3
+        sage_attention: true
+
+    - id: ltx2_generate_min
+      label: LTX2 generate（最小）
+      endpoint: /api/unified/ltx2/generate
+      body:
+        prompt: "a short cinematic video"
+        timeout: 600
+
+    - id: ltx2_infinity_min
+      label: LTX2 Infinity generate（最小）
+      endpoint: /api/unified/ltx2-infinity/generate
+      body:
+        prompt: "a short cinematic video"
+        segments: 1
+        timeout_per_segment: 600

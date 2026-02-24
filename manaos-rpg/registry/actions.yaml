@@ -18,3 +18,57 @@ actions:
     cwd: .
     timeout_sec: 90
     tags: [device]
+
+  - id: comfyui_start
+    label: ComfyUI 起動（8188 / background）
+    kind: pwsh_file
+    path: start_comfyui_local.ps1
+    args: ["-Port", "8188", "-Background"]
+    cwd: .\
+    timeout_sec: 60
+    tags: [ai, image]
+
+  - id: comfyui_restart
+    label: ComfyUI 再起動（8188 / kill+start）
+    kind: pwsh_file
+    path: manaos-rpg/scripts/actions/restart_comfyui_8188.ps1
+    args: ["-Port", "8188"]
+    cwd: .\
+    timeout_sec: 90
+    tags: [ai, image]
+
+  - id: unified_proxy_sync
+    label: Unified allowlist 同期（OpenAPI→unified_proxy.yaml）
+    kind: pwsh_file
+    path: manaos-rpg/scripts/actions/sync_unified_proxy_allowlist.ps1
+    args: ["-Mode", "merge"]
+    cwd: .\
+    timeout_sec: 90
+    tags: [ops]
+
+  - id: unified_proxy_disable_404
+    label: Unified allowlist 404自動無効化（台帳掃除）
+    kind: pwsh_file
+    path: manaos-rpg/scripts/actions/disable_unified_proxy_404.ps1
+    args: ["-Limit", "800", "-TimeoutSec", "6"]
+    cwd: .\
+    timeout_sec: 120
+    tags: [ops]
+
+  - id: unified_proxy_enable_core_read
+    label: Unified allowlist コアread有効化（安全なGETのみ）
+    kind: pwsh_file
+    path: manaos-rpg/scripts/actions/enable_unified_proxy_core_read.ps1
+    args: ["-DryRun", "0"]
+    cwd: .\
+    timeout_sec: 60
+    tags: [ops]
+
+  - id: unified_proxy_enable_read_exists
+    label: Unified allowlist 実在read自動有効化（GET probe）
+    kind: pwsh_file
+    path: manaos-rpg/scripts/actions/enable_unified_proxy_read_exists.ps1
+    args: ["-Limit", "600", "-TimeoutSec", "2.0", "-MaxEnable", "80"]
+    cwd: .\
+    timeout_sec: 120
+    tags: [ops]

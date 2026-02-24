@@ -45,6 +45,24 @@ models:
     path: /models/image/sdxl-refiner
     tags: [image, refine]
 
+  - id: lora_castle_ex_layer2
+    name: "LoRA: castle_ex layer2"
+    type: lora
+    version: "v1"
+    quant: fp16
+    vram_gb: 0
+    path: /models/lora/castle_ex_layer2.safetensors
+    tags: [lora, fine_tune]
+
+  - id: lora_style_anime
+    name: "LoRA: anime style"
+    type: lora
+    version: "v1"
+    quant: fp16
+    vram_gb: 0
+    path: /models/lora/anime_style.safetensors
+    tags: [lora, style]
+
   - id: ltx2_infinity
     name: LTX2 Infinity
     type: video

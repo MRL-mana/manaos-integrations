@@ -10,6 +10,26 @@ registry（台帳）を読むだけで、RPGメニューUIに「ステータス/
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_backend.ps1
 ```
 
+#### 9510 ポート競合（起動できない）を自動で回避
+
+`9510` がすでに LISTEN の場合、`run_backend.ps1` はリスナーのコマンドラインを確認し、
+**manaos-rpg の uvicorn っぽいプロセス**なら自動で停止してから起動します。
+
+不明なプロセスだった場合は誤爆防止のため停止せずにエラーで止まります。
+
+強制的に kill して起動したい場合:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_backend.ps1 -ForceKill
+```
+
+または:
+
+```powershell
+$env:MANAOS_RPG_FORCE_KILL_PORT='1'
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_backend.ps1
+```
+
 #### 操作（アクション実行）を有効化する場合
 
 セキュリティのため、アクション実行はデフォルト無効です。
@@ -93,4 +113,12 @@ nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.total,temperature
 nvidia-smi --query-compute-apps=pid,process_name,used_gpu_memory --format=csv,noheader,nounits
 nvidia-smi --query-apps=pid,process_name,used_gpu_memory --format=csv,noheader,nounits
 ```
+
+## 画像生成が503になる場合
+
+ダッシュボードの画像生成は統合API（既定: `http://127.0.0.1:9502/api/comfyui/generate`）に投げます。
+`comfyui_unavailable` 等で 503 の場合、だいたい ComfyUI(8188) 停止です。
+
+- 「魔法（スキル）✨」→ ComfyUI 起動/再起動（actions有効時）
+- または `start_comfyui_local.ps1` を実行
 
