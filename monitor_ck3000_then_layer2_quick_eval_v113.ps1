@@ -28,14 +28,14 @@ while ($true) {
         Log-Message "[TRIGGER_DETECTED] checkpoint-3000 exists"
         Start-Sleep -Seconds 40
         
-        $evalCmd = "py.exe -3.10 -u run_layer2_quick_eval.py --checkpoint-step 3000 --output-dir D:\castle_ex_training\lora_castle_ex_layer2_v1_1_3 --eval-data castle_ex_dataset_layer2_lora_v1_1_3_eval.jsonl"
+        $evalCmd = "py.exe -3.10 -u run_layer2_quick_eval.py --checkpoint-step 3000 --output-dir D:\castle_ex_training\lora_castle_ex_layer2_v1_1_3 --eval-data castle_ex_dataset_layer2_lora_eval_v1_1_3.jsonl"
         Log-Message "running layer2 quick eval: $evalCmd"
         
         $stdoutLog = Join-Path $logDir "layer2_quick_eval_ck3000_v113_$timestamp.stdout.log"
         $stderrLog = Join-Path $logDir "layer2_quick_eval_ck3000_v113_$timestamp.stderr.log"
         
         $proc = Start-Process -FilePath "py.exe" `
-            -ArgumentList "-3.10", "-u", "run_layer2_quick_eval.py", "--checkpoint-step", "3000", "--output-dir", "D:\castle_ex_training\lora_castle_ex_layer2_v1_1_3", "--eval-data", "castle_ex_dataset_layer2_lora_v1_1_3_eval.jsonl" `
+            -ArgumentList "-3.10", "-u", "run_layer2_quick_eval.py", "--checkpoint-step", "3000", "--output-dir", "D:\castle_ex_training\lora_castle_ex_layer2_v1_1_3", "--eval-data", "castle_ex_dataset_layer2_lora_eval_v1_1_3.jsonl" `
             -WorkingDirectory $PSScriptRoot `
             -RedirectStandardOutput $stdoutLog `
             -RedirectStandardError $stderrLog `

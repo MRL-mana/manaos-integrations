@@ -15,8 +15,8 @@ set PYTHONUNBUFFERED=1
 
 python -u castle_ex\train_castle_ex_lora.py ^
   --base-model D:\castle_ex_training\castle_ex_v1_1 ^
-  --train-data castle_ex_dataset_layer2_lora_v1_1_3_train.jsonl ^
-  --eval-data castle_ex_dataset_layer2_lora_v1_1_3_eval.jsonl ^
+  --train-data castle_ex_dataset_layer2_lora_train_v1_1_3.jsonl ^
+  --eval-data castle_ex_dataset_layer2_lora_eval_v1_1_3.jsonl ^
   --output-dir D:\castle_ex_training\lora_castle_ex_layer2_v1_1_3 ^
   --lora-r 16 ^
   --lora-alpha 32 ^
@@ -27,7 +27,7 @@ python -u castle_ex\train_castle_ex_lora.py ^
   --gradient-accumulation-steps 8 ^
   --learning-rate 2e-4 ^
   --max-steps 3000 ^
-  --save-steps 500 ^
+  --save-steps 100 ^
   --eval-steps 500 ^
   --fp16
 
