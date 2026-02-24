@@ -539,6 +539,22 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
 
   const proxyRules = Array.isArray(unifiedProxy?.rules) ? unifiedProxy.rules : []
 
+  const unifiedOk = Boolean(unifiedIntegrations?.ok)
+  const unifiedData = unifiedIntegrations?.data
+  const openapi = unifiedData?.openapi
+  const openapiPaths = Array.isArray(openapi?.paths_sample) ? openapi.paths_sample : []
+  const supportsPath = (p) => {
+    const s = String(p || '')
+    if (!s) return false
+    if (openapiPaths.includes(s)) return true
+    // OpenAPIが /api と非/api の両方を持つことがある
+    if (s.startsWith('/api/') && openapiPaths.includes(s.replace('/api/', '/'))) return true
+    if (s.startsWith('/') && openapiPaths.includes('/api' + s)) return true
+    return false
+  }
+
+  const unifiedWriteEnabled = Boolean(unifiedProxy?.write_enabled)
+
   const [proxyId, setProxyId] = useState('')
   const [proxyQuery, setProxyQuery] = useState('')
   const [proxyBody, setProxyBody] = useState('')
@@ -602,6 +618,10 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
   async function runNotifySend() {
     setNotifyOut('')
     try {
+      if (!unifiedWriteEnabled) {
+        setNotifyOut('ERR: Unified write が無効（backendで MANAOS_RPG_ENABLE_UNIFIED_WRITE=1 を設定）')
+        return
+      }
       const msg = notifyMsg.trim()
       if (!msg) {
         setNotifyOut('ERR: message is required')
@@ -652,6 +672,10 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
   async function runMemoryStore() {
     setMemoryStoreOut('')
     try {
+      if (!unifiedWriteEnabled) {
+        setMemoryStoreOut('ERR: Unified write が無効（backendで MANAOS_RPG_ENABLE_UNIFIED_WRITE=1 を設定）')
+        return
+      }
       const content = memoryStoreContent.trim()
       if (!content) {
         setMemoryStoreOut('ERR: content is required')
@@ -695,6 +719,10 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
   async function runRouteEnhanced() {
     setRouteOut('')
     try {
+      if (!supportsPath('/api/llm/route-enhanced')) {
+        setRouteOut('ERR: このUnified(OpenAPI)では /api/llm/route-enhanced が未対応')
+        return
+      }
       const prompt = routePrompt.trim()
       if (!prompt) {
         setRouteOut('ERR: prompt is required')
@@ -747,6 +775,10 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
   async function runLlmAnalyze() {
     setAnalyzeOut('')
     try {
+      if (!supportsPath('/api/llm/analyze')) {
+        setAnalyzeOut('ERR: このUnified(OpenAPI)では /api/llm/analyze が未対応')
+        return
+      }
       const prompt = analyzePrompt.trim()
       if (!prompt) {
         setAnalyzeOut('ERR: prompt is required')

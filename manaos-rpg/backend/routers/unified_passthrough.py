@@ -81,10 +81,12 @@ def api_unified_memory_recall(
     scope_s = str(scope or "all").strip() or "all"
     limit_i = max(1, min(int(limit), 50))
 
-    qs = urllib.parse.urlencode(
-        {"query": q, "scope": scope_s, "limit": str(limit_i)}
-    )
-    return _unified_get(f"/api/memory/recall?{qs}", timeout_s=12.0)
+    # Unified の実体が MCP API Server の場合、/api/memory/recall は存在しない。
+    # read-only で使える /api/memory/search へ寄せる。
+    payload: dict[str, Any] = {"query": q, "limit": limit_i}
+    if scope_s and scope_s != "all":
+        payload["scope"] = scope_s
+    return _unified_post("/api/memory/search", payload=payload, timeout_s=12.0)
 
 
 @router.get("/api/unified/notify/job/{job_id}")
@@ -92,7 +94,11 @@ def api_unified_notify_job(job_id: str) -> dict[str, Any]:
     jid = str(job_id or "").strip()
     if not jid:
         raise HTTPException(status_code=400, detail="job_id is required")
-    return _unified_get(f"/notify/job/{urllib.parse.quote(jid, safe='')}", timeout_s=8.0)
+    # MCP API Server: /api/ops/job/{job_id}
+    return _unified_get(
+        f"/api/ops/job/{urllib.parse.quote(jid, safe='')}",
+        timeout_s=8.0,
+    )
 
 
 # --- POST passthrough ---
@@ -131,27 +137,24 @@ def api_unified_notify_send(body: dict[str, Any]) -> dict[str, Any]:
     message = str(payload.get("message") or payload.get("text") or "").strip()
     if not message:
         raise HTTPException(status_code=400, detail="message (or text) is required")
-    return _unified_post(
-        "/notify/send",
-        payload=payload,
-        timeout_s=30.0,
-    )
+    # MCP API Server: /api/ops/notify
+    return _unified_post("/api/ops/notify", payload=payload, timeout_s=30.0)
 
 
 @router.post("/api/unified/memory/store")
 def api_unified_memory_store(body: dict[str, Any]) -> dict[str, Any]:
     _require_unified_write()
     payload = _validate_proxy_body(body)
+    # UIは content を送る。互換のため text も許容。
+    if payload.get("content") is None and payload.get("text") is not None:
+        payload["content"] = payload.get("text")
     if payload.get("content") is None:
         raise HTTPException(status_code=400, detail="content is required")
     meta = payload.get("metadata")
     if meta is not None and not isinstance(meta, dict):
         raise HTTPException(status_code=400, detail="metadata must be an object")
-    return _unified_post(
-        "/api/memory/store",
-        payload=payload,
-        timeout_s=20.0,
-    )
+    # MCP API Server: /api/memory/write
+    return _unified_post("/api/memory/write", payload=payload, timeout_s=20.0)
 
 
 @router.post("/api/unified/svi/generate")
