@@ -9,6 +9,9 @@ menu:
   - id: bestiary
     label: 図鑑（モデル）
     icon: "📚"
+  - id: skills
+    label: 魔法（スキル）
+    icon: "✨"
   - id: quests
     label: クエスト（タスク）
     icon: "🗺"
@@ -18,3 +21,6 @@ menu:
   - id: map
     label: マップ（デバイス）
     icon: "🧭"
+  - id: items
+    label: アイテム（生成物）
+    icon: "🎒"

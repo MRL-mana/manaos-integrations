@@ -72,9 +72,11 @@ export default function App() {
     { id: 'status', label: 'ステータス', icon: '🧍' },
     { id: 'party', label: 'パーティ（サービス）', icon: '🧩' },
     { id: 'bestiary', label: '図鑑（モデル）', icon: '📚' },
+    { id: 'skills', label: '魔法（スキル）', icon: '✨' },
     { id: 'quests', label: 'クエスト（タスク）', icon: '🗺' },
     { id: 'logs', label: '戦闘ログ', icon: '📜' },
-    { id: 'map', label: 'マップ（デバイス）', icon: '🧭' }
+    { id: 'map', label: 'マップ（デバイス）', icon: '🧭' },
+    { id: 'items', label: 'アイテム（生成物）', icon: '🎒' }
   ]
 
   const rank = dangerRank(state?.danger)
@@ -114,9 +116,11 @@ export default function App() {
           {active === 'status' ? <StatusView host={state?.host} nextActions={state?.next_actions} /> : null}
           {active === 'party' ? <PartyView services={state?.services} /> : null}
           {active === 'bestiary' ? <BestiaryView models={state?.models} /> : null}
+          {active === 'skills' ? <SkillsView skills={state?.skills} /> : null}
           {active === 'quests' ? <QuestsView quests={state?.quests} apiBase={apiBase} /> : null}
           {active === 'logs' ? <LogsView events={events} /> : null}
           {active === 'map' ? <MapView devices={state?.devices} /> : null}
+          {active === 'items' ? <ItemsView items={state?.items} apiBase={apiBase} /> : null}
         </section>
       </main>
     </div>
@@ -278,6 +282,40 @@ function BestiaryView({ models }) {
   )
 }
 
+function SkillsView({ skills }) {
+  const list = Array.isArray(skills) ? skills : []
+  return (
+    <div>
+      <div className="panelTitle">魔法（スキル）</div>
+      {list.length === 0 ? (
+        <div className="small">registry/skills.yaml を追加するとここに表示されます</div>
+      ) : (
+        <div>
+          {list.map((s) => (
+            <div key={s.id} className="skillBlock">
+              <div className="skillHead">
+                <span className="mono">{s.id}</span>
+                <span>{s.label}</span>
+                <span className="small">{Array.isArray(s.tags) ? s.tags.join(', ') : ''}</span>
+              </div>
+              <div className="skillItems">
+                {(Array.isArray(s.items) ? s.items : []).map((it) => (
+                  <div key={it.id} className="skillItem">
+                    <div className="mono">{it.id}</div>
+                    <div>{it.label}</div>
+                    <div className="small">{it.notes || ''}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="small">台帳駆動：追記するだけでメニューが育つ</div>
+    </div>
+  )
+}
+
 function QuestsView({ quests, apiBase }) {
   const list = Array.isArray(quests) ? quests : []
   return (
@@ -348,6 +386,69 @@ function MapView({ devices }) {
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+function encodeRelPath(relPath) {
+  const p = String(relPath || '').replace(/\\/g, '/')
+  return p.split('/').map(encodeURIComponent).join('/')
+}
+
+function fmtBytes(n) {
+  const v = Number(n || 0)
+  if (!Number.isFinite(v) || v <= 0) return '0B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let x = v
+  let i = 0
+  while (x >= 1024 && i < units.length - 1) {
+    x /= 1024
+    i++
+  }
+  return `${x.toFixed(i === 0 ? 0 : 1)}${units[i]}`
+}
+
+function ItemsView({ items, apiBase }) {
+  const recent = Array.isArray(items?.recent) ? items.recent : []
+  const roots = Array.isArray(items?.roots) ? items.roots : []
+
+  return (
+    <div>
+      <div className="panelTitle">アイテム（生成物）</div>
+      <div className="small">監視フォルダ: {roots.length ? roots.map((r) => r.label).join(' / ') : '未設定（registry/items.yaml）'}</div>
+
+      {recent.length === 0 ? (
+        <div className="small">生成物が見つかりません（registry/items.yaml の path を実フォルダに合わせてね）</div>
+      ) : (
+        <div className="itemsGrid">
+          {recent.slice(0, 60).map((it, idx) => {
+            const url = `${apiBase}/files/${encodeURIComponent(it.root_id)}/${encodeRelPath(it.rel_path)}`
+            return (
+              <div key={`${it.root_id}:${it.rel_path}:${idx}`} className="itemCard">
+                <div className="itemHead">
+                  <div className="mono">{it.root_id}</div>
+                  <div className="small">{fmtTs(it.mtime)} / {fmtBytes(it.size_bytes)}</div>
+                </div>
+                <div className="itemBody">
+                  {it.kind === 'image' ? (
+                    <a href={url} target="_blank" rel="noreferrer" className="itemMedia">
+                      <img src={url} alt={it.name} loading="lazy" />
+                    </a>
+                  ) : it.kind === 'video' ? (
+                    <video className="itemVideo" src={url} controls preload="metadata" />
+                  ) : (
+                    <a className="link" href={url} target="_blank" rel="noreferrer">開く</a>
+                  )}
+                </div>
+                <div className="itemFoot">
+                  <div className="small">{it.name}</div>
+                  <div className="mono">{it.rel_path}</div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

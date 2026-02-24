@@ -86,6 +86,16 @@ def get_nvidia_compute_apps() -> list[dict]:
             timeout_s=2.0,
         )
     if not out:
+        # may require accounting mode; best-effort
+        out = _try_run(
+            [
+                "nvidia-smi",
+                "--query-accounted-apps=pid,process_name,gpu_memory_usage",
+                "--format=csv,noheader,nounits",
+            ],
+            timeout_s=2.0,
+        )
+    if not out:
         return []
 
     apps: list[dict] = []
@@ -96,6 +106,9 @@ def get_nvidia_compute_apps() -> list[dict]:
         pid = _to_int(parts[0])
         name = parts[1]
         used_mb = _to_int(parts[2])
+        # nvidia-smi sometimes emits N/A for memory; skip those for "犯人"用途
+        if used_mb is None:
+            continue
         apps.append({"pid": pid, "process_name": name, "used_gpu_memory_mb": used_mb})
 
     # sort by VRAM used desc

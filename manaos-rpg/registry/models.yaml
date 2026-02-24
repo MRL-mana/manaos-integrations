@@ -18,6 +18,42 @@ models:
     path: /models/image/flux1-schnell
     tags: [image]
 
+  - id: qwen_image_2512
+    name: Qwen-Image-2512
+    type: image
+    version: "2512"
+    quant: fp16
+    vram_gb: 16
+    path: /models/image/qwen-image-2512
+    tags: [image, i2i, refine]
+
+  - id: sdxl_base
+    name: SDXL Base
+    type: image
+    version: "1.0"
+    quant: fp16
+    vram_gb: 8
+    path: /models/image/sdxl-base
+    tags: [image]
+
+  - id: sdxl_refiner
+    name: SDXL Refiner
+    type: image
+    version: "1.0"
+    quant: fp16
+    vram_gb: 8
+    path: /models/image/sdxl-refiner
+    tags: [image, refine]
+
+  - id: ltx2_infinity
+    name: LTX2 Infinity
+    type: video
+    version: "2"
+    quant: none
+    vram_gb: 12
+    path: /ltx2
+    tags: [video]
+
   - id: voicevox
     name: VOICEVOX
     type: voice

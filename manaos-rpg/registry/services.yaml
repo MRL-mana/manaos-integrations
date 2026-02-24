@@ -13,6 +13,7 @@ services:
     kind: docker
     container: open-webui
     port: 3000
+    health_url: http://127.0.0.1:3000/
     tags: [ui, chat]
     depends_on: []
 
@@ -21,5 +22,37 @@ services:
     kind: docker
     container: n8n
     port: 5678
+    health_url: http://127.0.0.1:5678/
     tags: [automation]
     depends_on: []
+
+  - id: ollama
+    name: Ollama
+    kind: http
+    port: 11434
+    health_url: http://127.0.0.1:11434/api/tags
+    tags: [ai, llm, always_on]
+    depends_on: []
+
+  - id: lm_studio
+    name: LM Studio (OpenAI API)
+    kind: http
+    port: 1234
+    health_url: http://127.0.0.1:1234/v1/models
+    tags: [ai, llm]
+    depends_on: []
+
+  - id: comfyui
+    name: ComfyUI
+    kind: port
+    port: 8188
+    tags: [ai, image]
+    depends_on: []
+
+  - id: ltx2_infinity
+    name: LTX2 Infinity
+    kind: http
+    port: 9502
+    health_url: http://127.0.0.1:9502/health
+    tags: [ai, video]
+    depends_on: [unified_api_server]

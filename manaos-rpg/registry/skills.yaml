@@ -1,0 +1,71 @@
+version: 1
+skills:
+  - id: ai_chat
+    label: チャット（LLM）
+    tags: [ai, llm]
+    items:
+      - id: openwebui
+        label: Open WebUI
+        tags: [ui, chat]
+        notes: "UIから会話/管理"
+      - id: unified_api_chat
+        label: Unified API Server 経由
+        tags: [api]
+        notes: "ツール/統合APIの基盤"
+
+  - id: image_gen
+    label: 画像生成
+    tags: [ai, image]
+    items:
+      - id: comfyui
+        label: ComfyUI
+        tags: [comfyui, workflow]
+        notes: "ワークフロー駆動（FLUX/SD/Qwen Image等）"
+      - id: qwen_image
+        label: Qwen-Image（編集/リファイン）
+        tags: [qwen, image]
+        notes: "i2i / 仕上げ工程"
+      - id: flux
+        label: FLUX（ベース生成）
+        tags: [flux, image]
+        notes: "高速ベース生成"
+
+  - id: video_gen
+    label: 動画生成
+    tags: [ai, video]
+    items:
+      - id: ltx2
+        label: LTX2 Infinity
+        tags: [ltx2, video]
+        notes: "テンプレ/ストレージ/API連携"
+
+  - id: voice
+    label: 音声
+    tags: [voice]
+    items:
+      - id: voicevox
+        label: VOICEVOX
+        tags: [tts]
+        notes: "TTS/読み上げ"
+
+  - id: automation
+    label: 自動化
+    tags: [ops, automation]
+    items:
+      - id: n8n
+        label: n8n
+        tags: [workflow]
+        notes: "ワークフロー自動化"
+      - id: pixel7
+        label: Pixel7 リモコン/ADB/HTTP
+        tags: [device, adb]
+        notes: "外出モード/復旧/ショートカット同期"
+
+  - id: memory
+    label: 記憶/検索
+    tags: [memory]
+    items:
+      - id: mrl_memory
+        label: MRL Memory
+        tags: [memory, rag]
+        notes: "蓄積・検索・関連付け"

@@ -1,0 +1,28 @@
+version: 1
+items:
+  # Desktop直下の生成物（多くのスクリプトがここに出す）
+  - id: desktop_gallery
+    label: Desktop Gallery
+    path: "%USERPROFILE%/Desktop/gallery_images"
+    max_files: 200
+
+  - id: desktop_outputs
+    label: Desktop Outputs
+    path: "%USERPROFILE%/Desktop/outputs"
+    max_files: 120
+
+  # manaos_integrations 直下を基準に相対解決します（manaos-rpgからの相対ではありません）
+  - id: gallery
+    label: Gallery Images
+    path: gallery_images
+    max_files: 120
+
+  - id: ltx2
+    label: LTX2 Outputs
+    path: ltx2_outputs
+    max_files: 80
+
+  - id: outputs
+    label: Outputs
+    path: outputs
+    max_files: 80

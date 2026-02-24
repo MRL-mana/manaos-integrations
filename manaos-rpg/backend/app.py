@@ -7,15 +7,19 @@ from typing import Any
 
 import yaml
 from fastapi import FastAPI
+from fastapi import HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from collectors.events import append_event, tail_events
 from collectors.host_stats import get_host_stats
+from collectors.items_collector import resolve_item_roots, safe_resolve_under_root, scan_items
 from collectors.ollama_runtime import get_ollama_ps_models
 from collectors.services_runtime import compute_services_status
 
 BASE = Path(__file__).resolve().parent
 REG = BASE.parent / "registry"
+REPO_ROOT = BASE.parent.parent
 STORE = BASE / "storage"
 STORE.mkdir(parents=True, exist_ok=True)
 
@@ -103,12 +107,18 @@ def snapshot() -> dict[str, Any]:
     menu_yaml = load_yaml(REG / "features.yaml")
     devices_yaml = load_yaml(REG / "devices.yaml")
     quests_yaml = load_yaml(REG / "quests.yaml")
+    skills_yaml = load_yaml(REG / "skills.yaml")
+    items_yaml = load_yaml(REG / "items.yaml")
 
     services = list(services_yaml.get("services") or [])
     models = list(models_yaml.get("models") or [])
     menu = list(menu_yaml.get("menu") or [])
     devices = list(devices_yaml.get("devices") or [])
     quests = list(quests_yaml.get("quests") or [])
+    skills = list(skills_yaml.get("skills") or [])
+
+    item_roots = resolve_item_roots(REPO_ROOT, items_yaml)
+    items_recent = scan_items(item_roots)
 
     host = get_host_stats()
     services_status = compute_services_status(services)
@@ -286,6 +296,11 @@ def snapshot() -> dict[str, Any]:
         "models": models_enriched,
         "devices": devices,
         "quests": quests,
+        "skills": skills,
+        "items": {
+            "roots": [{"id": r.id, "label": r.label} for r in item_roots],
+            "recent": items_recent,
+        },
         "danger": danger,
         "next_actions": next_actions,
         "always_on_down": down_now,
@@ -325,4 +340,33 @@ def api_registry() -> dict[str, Any]:
         "menu": load_yaml(REG / "features.yaml").get("menu") or [],
         "devices": load_yaml(REG / "devices.yaml").get("devices") or [],
         "quests": load_yaml(REG / "quests.yaml").get("quests") or [],
+        "skills": load_yaml(REG / "skills.yaml").get("skills") or [],
+        "items": load_yaml(REG / "items.yaml").get("items") or [],
     }
+
+
+@app.get("/api/items")
+def api_items(limit: int = 120) -> dict[str, Any]:
+    limit = max(1, min(int(limit), 500))
+    items_yaml = load_yaml(REG / "items.yaml")
+    item_roots = resolve_item_roots(REPO_ROOT, items_yaml)
+    items_recent = scan_items(item_roots)
+    return {
+        "roots": [{"id": r.id, "label": r.label} for r in item_roots],
+        "recent": items_recent[:limit],
+    }
+
+
+@app.get("/files/{root_id}/{rel_path:path}")
+def get_item_file(root_id: str, rel_path: str):
+    items_yaml = load_yaml(REG / "items.yaml")
+    item_roots = resolve_item_roots(REPO_ROOT, items_yaml)
+    root = next((r for r in item_roots if r.id == root_id), None)
+    if root is None:
+        raise HTTPException(status_code=404, detail="unknown root_id")
+
+    p = safe_resolve_under_root(root.path, rel_path)
+    if p is None or (not p.exists()) or (not p.is_file()):
+        raise HTTPException(status_code=404, detail="file not found")
+
+    return FileResponse(path=str(p))
