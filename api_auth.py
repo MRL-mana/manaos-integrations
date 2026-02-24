@@ -40,9 +40,15 @@ class APIAuthManager:
         if api_keys_str:
             self.api_keys = set(key.strip() for key in api_keys_str.split(",") if key.strip())
         
-        # 開発環境用のデフォルトキー（本番環境では無効化すべき）
-        if os.getenv("MANAOS_ENV", "development") == "development":
-            self.api_keys.add("dev_default_key_DO_NOT_USE_IN_PRODUCTION")
+        # NOTE: 開発環境でも明示的な MANAOS_API_KEYS 設定を必須とする
+        # デフォルトキーは廃止（セキュリティリスクのため）
+        if not self.api_keys:
+            import warnings
+            warnings.warn(
+                "MANAOS_API_KEYS が未設定です。APIキーを環境変数で設定してください。",
+                UserWarning,
+                stacklevel=2,
+            )
     
     def generate_api_key(self, prefix: str = "manaos") -> str:
         """

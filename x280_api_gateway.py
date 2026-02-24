@@ -21,9 +21,15 @@ import uvicorn
 app = FastAPI(title="X280 API Gateway", version="1.0.0")
 
 # CORS設定（ManaOSからのアクセスを許可）
+_CORS_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("MANAOS_CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 本番環境では適切に制限
+    allow_origins=_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

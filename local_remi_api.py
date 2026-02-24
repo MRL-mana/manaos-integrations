@@ -220,9 +220,15 @@ async def lifespan(app):
 
 app = FastAPI(title="Local Remi API", version="4.3.0", lifespan=lifespan)
 
+_CORS_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("MANAOS_CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
