@@ -117,16 +117,19 @@ def _vscode_tools_enabled() -> bool:
 # Autonomy System 連携ユーティリティ
 
 
-def _autonomy_check_tool(tool_name: str) -> tuple[bool, str]:
+def _autonomy_check_tool(tool_name: str, confirm_token: str | None = None) -> tuple[bool, str]:
     """
     自律ゲートにツール実行可否を問い合わせる。
     Autonomy System が落ちている場合は許可（ログのみ）。
     """
     try:
         timeout = timeout_config.get("api_call", 5.0) if TIMEOUT_CONFIG_AVAILABLE else 5.0
+        payload = {"tool_name": tool_name}
+        if confirm_token:
+            payload["confirm_token"] = confirm_token
         resp = httpx.post(
             f"{AUTONOMY_SYSTEM_URL}/api/check-tool",
-            json={"tool_name": tool_name},
+            json=payload,
             timeout=timeout,
         )
         resp.raise_for_status()
@@ -253,6 +256,10 @@ DOMAIN_TOOLS = {
         "svi_generate_video",
         "svi_extend_video",
         "svi_get_queue_status",
+        "ltx2_generate_video",
+        "ltx2_infinity_generate_video",
+        "ltx2_infinity_list_templates",
+        "ltx2_infinity_storage_stats",
         "comfyui_generate_image",
         "generate_sd_prompt",
         "civitai_get_favorites",
@@ -427,6 +434,55 @@ async def list_tools() -> list[Tool]:
             Tool(
                 name="svi_get_queue_status",
                 description="ComfyUIのキュー状態を取得します",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+        ]
+    )
+
+    # ========================================
+    # LTX-2 / LTX-2 Infinity
+    # ========================================
+    tools.extend(
+        [
+            Tool(
+                name="ltx2_generate_video",
+                description="LTX-2で動画を生成します（Unified API経由）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "prompt": {"type": "string", "description": "プロンプト（必須）"},
+                        "workflow": {"type": "string", "description": "ワークフローJSONパス（任意）"},
+                        "image": {"type": "string", "description": "開始画像（ComfyUI input内のファイル名、任意）"},
+                        "timeout": {"type": "number", "description": "待機タイムアウト秒（任意）", "default": 600},
+                    },
+                    "required": ["prompt"],
+                },
+            ),
+            Tool(
+                name="ltx2_infinity_generate_video",
+                description="LTX-2 Infinity（segments回の反復生成、Unified API経由）",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "prompt": {"type": "string", "description": "プロンプト（必須）"},
+                        "segments": {"type": "integer", "description": "反復回数（デフォルト: 1）", "default": 1},
+                        "workflow": {"type": "string", "description": "ワークフローJSONパス（任意）"},
+                        "image": {"type": "string", "description": "開始画像（任意）"},
+                        "timeout_per_segment": {"type": "number", "default": 600},
+                        "positive_suffix": {"type": "string", "description": "追記ポジティブタグ（任意）"},
+                        "negative_suffix": {"type": "string", "description": "追記ネガティブタグ（任意）"},
+                    },
+                    "required": ["prompt"],
+                },
+            ),
+            Tool(
+                name="ltx2_infinity_list_templates",
+                description="LTX-2 Infinityのテンプレート一覧を取得します（Unified API経由）",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            Tool(
+                name="ltx2_infinity_storage_stats",
+                description="LTX-2 Infinityのストレージ統計を取得します（Unified API経由）",
                 inputSchema={"type": "object", "properties": {}},
             ),
         ]
@@ -647,6 +703,10 @@ async def list_tools() -> list[Tool]:
                             "description": "アップロードするファイルのパス（必須）",
                         },
                         "folder_id": {"type": "string", "description": "フォルダID（オプション）"},
+                        "confirm_token": {
+                            "type": "string",
+                            "description": "自律ゲート用のConfirm Token（C3/C4が必要な場合）",
+                        },
                     },
                     "required": ["file_path"],
                 },
@@ -1769,3 +1829,224 @@ async def list_tools() -> list[Tool]:
     )
 
     return _filter_tools_by_domain(tools)
+
+
+def _tool_json(payload: dict) -> list[TextContent]:
+    return [TextContent(type="text", text=json.dumps(payload, indent=2, ensure_ascii=False))]
+
+
+@server.call_tool()
+async def call_tool(name: str, arguments: dict):
+    args = arguments or {}
+
+    confirm_token = args.get("confirm_token")
+    allowed, reason = _autonomy_check_tool(name, confirm_token=confirm_token)
+    if not allowed:
+        return _tool_json({"error": "autonomy_blocked", "reason": reason})
+
+    try:
+        if name == "ltx2_generate_video":
+            prompt = str(args.get("prompt", "")).strip()
+            if not prompt:
+                return _tool_json({"error": "prompt is required"})
+
+            payload = {
+                "prompt": prompt,
+                "workflow": args.get("workflow"),
+                "image": args.get("image"),
+                "timeout": args.get("timeout", 600),
+            }
+            timeout = timeout_config.get("api_call", 30.0) if TIMEOUT_CONFIG_AVAILABLE else 30.0
+            resp = httpx.post(f"{MANAOS_API_URL.rstrip('/')}/api/ltx2/generate", json=payload, timeout=timeout)
+            resp.raise_for_status()
+            result = resp.json()
+
+        elif name == "ltx2_infinity_generate_video":
+            prompt = str(args.get("prompt", "")).strip()
+            if not prompt:
+                return _tool_json({"error": "prompt is required"})
+
+            payload = {
+                "prompt": prompt,
+                "segments": args.get("segments", 1),
+                "workflow": args.get("workflow"),
+                "image": args.get("image"),
+                "timeout_per_segment": args.get("timeout_per_segment", 600),
+                "positive_suffix": args.get("positive_suffix"),
+                "negative_suffix": args.get("negative_suffix"),
+            }
+            timeout = timeout_config.get("api_call", 30.0) if TIMEOUT_CONFIG_AVAILABLE else 30.0
+            resp = httpx.post(
+                f"{MANAOS_API_URL.rstrip('/')}/api/ltx2-infinity/generate",
+                json=payload,
+                timeout=timeout,
+            )
+            resp.raise_for_status()
+            result = resp.json()
+
+        elif name == "ltx2_infinity_list_templates":
+            timeout = timeout_config.get("api_call", 10.0) if TIMEOUT_CONFIG_AVAILABLE else 10.0
+            resp = httpx.get(f"{MANAOS_API_URL.rstrip('/')}/api/ltx2-infinity/templates", timeout=timeout)
+            resp.raise_for_status()
+            result = resp.json()
+
+        elif name == "ltx2_infinity_storage_stats":
+            timeout = timeout_config.get("api_call", 10.0) if TIMEOUT_CONFIG_AVAILABLE else 10.0
+            resp = httpx.get(f"{MANAOS_API_URL.rstrip('/')}/api/ltx2-infinity/storage", timeout=timeout)
+            resp.raise_for_status()
+            result = resp.json()
+
+        if name == "google_drive_upload":
+            file_path = str(args.get("file_path", "")).strip()
+            if not file_path:
+                return _tool_json({"error": "file_path is required"})
+
+            integration = get_integration("google_drive")
+            if not integration or not integration.is_available():
+                return _tool_json({"error": "google_drive_integration_unavailable"})
+
+            file_id = integration.upload_file(
+                file_path,
+                folder_id=args.get("folder_id"),
+            )
+            if not file_id:
+                return _tool_json({"error": "upload_failed"})
+
+            result = {"success": True, "file_id": file_id}
+
+        elif name == "google_drive_list_files":
+            integration = get_integration("google_drive")
+            if not integration or not integration.is_available():
+                return _tool_json({"error": "google_drive_integration_unavailable"})
+
+            files = integration.list_files(folder_id=args.get("folder_id"))
+            result = {"success": True, "files": files}
+
+        elif name == "rows_query":
+            integration = get_integration("rows")
+            if not integration or not integration.is_available():
+                return _tool_json({"error": "rows_integration_unavailable"})
+
+            spreadsheet_id = str(args.get("spreadsheet_id", "")).strip()
+            query = str(args.get("query", "")).strip()
+            if not spreadsheet_id or not query:
+                return _tool_json({"error": "spreadsheet_id and query are required"})
+
+            context = {}
+            sheet_name = args.get("sheet_name")
+            if sheet_name:
+                context["sheet_name"] = sheet_name
+
+            response = integration.ai_query(spreadsheet_id, query, context=context or None)
+            result = {"success": True, "response": response}
+
+        elif name == "rows_send_data":
+            integration = get_integration("rows")
+            if not integration or not integration.is_available():
+                return _tool_json({"error": "rows_integration_unavailable"})
+
+            spreadsheet_id = str(args.get("spreadsheet_id", "")).strip()
+            data = args.get("data")
+            if not spreadsheet_id or data is None:
+                return _tool_json({"error": "spreadsheet_id and data are required"})
+
+            sheet_name = args.get("sheet_name") or "Sheet1"
+            response = integration.send_to_rows(spreadsheet_id, data, sheet_name=sheet_name, append=True)
+            result = {"success": True, "response": response}
+
+        elif name == "rows_list_spreadsheets":
+            integration = get_integration("rows")
+            if not integration or not integration.is_available():
+                return _tool_json({"error": "rows_integration_unavailable"})
+
+            limit = args.get("limit")
+            try:
+                limit_int = int(limit) if limit is not None else 50
+            except (TypeError, ValueError):
+                limit_int = 50
+
+            sheets = integration.list_spreadsheets(limit=limit_int)
+            if sheets is None:
+                last_error = getattr(integration, "last_error", None)
+                # Rows API は権限不足/キー不正時に 404 を返すケースがあるため、次アクションを明示する
+                hint = {
+                    "success": False,
+                    "error": "rows_api_error",
+                    "details": last_error,
+                    "next_steps": [
+                        "Rows の Workspace Settings で API Key を作成し直し、manaos_integrations/.env の ROWS_API_KEY を更新してください",
+                        "そのAPI Key のユーザーが対象Workspaceの Owner/Admin か、最低でも対象Spreadsheetへ Viewer/Editor 権限があるか確認してください",
+                        "更新後、MCPサーバ（productivity）を再起動して再実行してください",
+                    ],
+                }
+                return _tool_json(hint)
+
+            result = {"success": True, "spreadsheets": sheets}
+
+        elif name == "obsidian_create_note":
+            integration = get_integration("obsidian")
+            if not integration or not integration.is_available():
+                return _tool_json({"error": "obsidian_integration_unavailable"})
+
+            title = str(args.get("title", "")).strip()
+            content = str(args.get("content", "")).strip()
+            if not title or not content:
+                return _tool_json({"error": "title and content are required"})
+
+            folder = args.get("folder")
+            note_path = integration.create_note(title=title, content=content, folder=folder)
+            if not note_path:
+                return _tool_json({"error": "note_create_failed"})
+
+            result = {"success": True, "note_path": str(note_path)}
+
+        elif name == "obsidian_search_notes":
+            integration = get_integration("obsidian")
+            if not integration or not integration.is_available():
+                return _tool_json({"error": "obsidian_integration_unavailable"})
+
+            query = str(args.get("query", "")).strip()
+            if not query:
+                return _tool_json({"error": "query is required"})
+
+            matches = integration.search_notes(query)
+            result = {"success": True, "notes": [str(path) for path in matches]}
+
+        elif name == "notification_send":
+            integration = get_integration("notification")
+            if not integration:
+                return _tool_json({"error": "notification_integration_unavailable"})
+
+            message = str(args.get("message", "")).strip()
+            if not message:
+                return _tool_json({"error": "message is required"})
+
+            priority = str(args.get("priority", "normal")).strip() or "normal"
+            response = integration.notify(message=message, priority=priority)
+            result = {"success": True, "response": response}
+
+        else:
+            return _tool_json({"error": "tool_not_implemented", "tool": name})
+
+        _autonomy_record_cost(name)
+        return _tool_json(result)
+
+    except Exception as e:
+        logger.error(f"Tool call failed ({name}): {e}", exc_info=True)
+        return _tool_json({"error": str(e)})
+
+
+async def main() -> None:
+    """MCP stdioエントリポイント。"""
+    async with stdio_server() as (read_stream, write_stream):
+        await server.run(
+            read_stream,
+            write_stream,
+            server.create_initialization_options(),
+        )
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    asyncio.run(main())

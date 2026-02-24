@@ -11,7 +11,7 @@ $services = @(
     @{Name="Gallery API Server"; Port=5559; Path="/health"},
     @{Name="System Status API"; Port=5112; Path="/health"},
     @{Name="SSOT API"; Port=5120; Path="/health"},
-    @{Name="Service Monitor"; Port=5111; Path="/health"},
+    @{Name="Service Monitor"; Port=5117; Path="/health"},
     @{Name="Web Voice Interface"; Port=5115; Path="/health"},
     @{Name="Portal Integration API"; Port=5108; Path="/health"},
     @{Name="Slack Integration"; Port=5114; Path="/health"},

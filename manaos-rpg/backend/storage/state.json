@@ -1,0 +1,221 @@
+{
+  "ts": 1771906374,
+  "menu": [
+    {
+      "id": "status",
+      "label": "ステータス",
+      "icon": "🧍"
+    },
+    {
+      "id": "party",
+      "label": "パーティ（サービス）",
+      "icon": "🧩"
+    },
+    {
+      "id": "bestiary",
+      "label": "図鑑（モデル）",
+      "icon": "📚"
+    },
+    {
+      "id": "quests",
+      "label": "クエスト（タスク）",
+      "icon": "🗺"
+    },
+    {
+      "id": "logs",
+      "label": "戦闘ログ",
+      "icon": "📜"
+    },
+    {
+      "id": "map",
+      "label": "マップ（デバイス）",
+      "icon": "🧭"
+    }
+  ],
+  "host": {
+    "ts": 1771906373,
+    "host": {
+      "os": "Windows-10-10.0.26200-SP0",
+      "hostname": "mana",
+      "disk_root": "C:\\",
+      "boot_ts": 1771789745,
+      "uptime_sec": 116628
+    },
+    "cpu": {
+      "percent": 60.2
+    },
+    "mem": {
+      "percent": 49.3,
+      "used_gb": 66.47,
+      "total_gb": 134.92
+    },
+    "disk": {
+      "free_gb": 323.58,
+      "total_gb": 1999.32
+    },
+    "net": {
+      "bytes_sent": 6898531847,
+      "bytes_recv": 25704294750
+    },
+    "gpu": {
+      "nvidia": [
+        {
+          "name": "NVIDIA GeForce RTX 5080",
+          "utilization_gpu": 100,
+          "mem_used_mb": 15736,
+          "mem_total_mb": 16303,
+          "temperature_c": 35
+        }
+      ]
+    }
+  },
+  "services": [
+    {
+      "id": "unified_api_server",
+      "name": "Unified API Server",
+      "kind": "port",
+      "port": 9502,
+      "health_url": "http://127.0.0.1:9502/health",
+      "tags": [
+        "core",
+        "always_on"
+      ],
+      "depends_on": [],
+      "alive": true,
+      "alive_by": "http",
+      "http_status": 200,
+      "degraded": false,
+      "restart_count": null,
+      "deps_down": [],
+      "blocked": false
+    },
+    {
+      "id": "open_webui",
+      "name": "Open WebUI",
+      "kind": "docker",
+      "container": "open-webui",
+      "port": 3000,
+      "tags": [
+        "ui",
+        "chat"
+      ],
+      "depends_on": [],
+      "alive": true,
+      "alive_by": "docker_health",
+      "http_status": null,
+      "degraded": false,
+      "restart_count": 0,
+      "docker_status": "running",
+      "docker_health": "healthy",
+      "started_at": "2026-02-24T03:23:27.632345567Z",
+      "finished_at": "2026-02-24T03:23:21.057987947Z",
+      "deps_down": [],
+      "blocked": false
+    },
+    {
+      "id": "n8n",
+      "name": "n8n",
+      "kind": "docker",
+      "container": "n8n",
+      "port": 5678,
+      "tags": [
+        "automation"
+      ],
+      "depends_on": [],
+      "alive": true,
+      "alive_by": "docker_health",
+      "http_status": null,
+      "degraded": false,
+      "restart_count": 0,
+      "docker_status": "running",
+      "docker_health": "healthy",
+      "started_at": "2026-02-24T03:23:28.016673244Z",
+      "finished_at": "2026-02-24T03:23:21.056485075Z",
+      "deps_down": [],
+      "blocked": false
+    }
+  ],
+  "models": [
+    {
+      "id": "qwen_32b_q4",
+      "name": "Qwen 2.5 32B",
+      "type": "llm",
+      "version": "2.5",
+      "quant": "q4",
+      "vram_gb": 16,
+      "path": "/models/llm/qwen2.5-32b-q4.gguf",
+      "tags": [
+        "chat",
+        "code",
+        "summary"
+      ]
+    },
+    {
+      "id": "flux_schnell",
+      "name": "FLUX.1-schnell",
+      "type": "image",
+      "version": "1",
+      "quant": "none",
+      "vram_gb": 8,
+      "path": "/models/image/flux1-schnell",
+      "tags": [
+        "image"
+      ]
+    },
+    {
+      "id": "voicevox",
+      "name": "VOICEVOX",
+      "type": "voice",
+      "version": "latest",
+      "quant": "none",
+      "vram_gb": 0,
+      "path": "/docker/voicevox",
+      "tags": [
+        "tts"
+      ]
+    }
+  ],
+  "devices": [
+    {
+      "id": "host",
+      "name": "母艦",
+      "kind": "windows",
+      "tags": [
+        "core"
+      ]
+    },
+    {
+      "id": "pixel7",
+      "name": "Pixel 7",
+      "kind": "android",
+      "tags": [
+        "device"
+      ]
+    }
+  ],
+  "quests": [
+    {
+      "id": "snapshot",
+      "label": "状態スナップショット更新",
+      "kind": "api",
+      "endpoint": "/api/snapshot",
+      "tags": [
+        "ops"
+      ]
+    },
+    {
+      "id": "health",
+      "label": "Backend Health確認",
+      "kind": "api",
+      "endpoint": "/health",
+      "tags": [
+        "ops"
+      ]
+    }
+  ],
+  "danger": 1,
+  "next_actions": [
+    "GPU使用率ほぼ100%：キュー詰まりなら停止/再起動を検討"
+  ],
+  "always_on_down": []
+}

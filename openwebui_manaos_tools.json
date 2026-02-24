@@ -601,6 +601,256 @@
                     "default": 30
                 }
             }
+        },
+        {
+            "name": "comfyui_generate_image",
+            "description": "ComfyUIで画像生成を開始します（統合API経由）",
+            "url": "http://127.0.0.1:9502/api/comfyui/generate",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "parameters": {
+                "prompt": {
+                    "type": "string",
+                    "description": "画像生成プロンプト",
+                    "required": true
+                },
+                "width": {
+                    "type": "integer",
+                    "description": "幅",
+                    "default": 512
+                },
+                "height": {
+                    "type": "integer",
+                    "description": "高さ",
+                    "default": 512
+                },
+                "steps": {
+                    "type": "integer",
+                    "description": "ステップ数",
+                    "default": 20
+                },
+                "negative_prompt": {
+                    "type": "string",
+                    "description": "ネガティブプロンプト",
+                    "default": ""
+                },
+                "seed": {
+                    "type": "integer",
+                    "description": "シード（-1でランダム）",
+                    "default": -1
+                },
+                "mufufu_mode": {
+                    "type": "boolean",
+                    "description": "ムフフモード（身体崩れ対策）",
+                    "default": false
+                },
+                "lab_mode": {
+                    "type": "boolean",
+                    "description": "闇の実験室モード",
+                    "default": false
+                }
+            }
+        },
+        {
+            "name": "svi_generate_video",
+            "description": "SVI × Wan 2.2 で動画生成を開始します（統合API経由）",
+            "url": "http://127.0.0.1:9502/api/svi/generate",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "parameters": {
+                "start_image_path": {
+                    "type": "string",
+                    "description": "開始画像のパス（母艦側のファイルパス）",
+                    "required": true
+                },
+                "prompt": {
+                    "type": "string",
+                    "description": "動画生成プロンプト",
+                    "required": true
+                },
+                "video_length_seconds": {
+                    "type": "integer",
+                    "description": "動画の長さ（秒）",
+                    "default": 5
+                },
+                "steps": {
+                    "type": "integer",
+                    "description": "ステップ数",
+                    "default": 6
+                },
+                "motion_strength": {
+                    "type": "number",
+                    "description": "モーション強度",
+                    "default": 1.3
+                },
+                "quality": {
+                    "type": "string",
+                    "description": "fast / balanced / quality",
+                    "default": "balanced"
+                },
+                "sage_attention": {
+                    "type": "boolean",
+                    "description": "Sage Attention",
+                    "default": true
+                }
+            }
+        },
+        {
+            "name": "svi_queue",
+            "description": "ComfyUIのキュー状態（実行中/待機中）を取得します",
+            "url": "http://127.0.0.1:9502/api/svi/queue",
+            "method": "GET"
+        },
+        {
+            "name": "svi_history",
+            "description": "prompt_id の履歴（進行状況/出力ファイル）を取得します",
+            "url": "http://127.0.0.1:9502/api/svi/history",
+            "method": "GET",
+            "parameters": {
+                "prompt_id": {
+                    "type": "string",
+                    "description": "ComfyUIのprompt_id",
+                    "required": true
+                }
+            }
+        },
+        {
+            "name": "svi_capabilities",
+            "description": "SVI × Wan 2.2 の事前診断（必要ノードがComfyUIに導入済みか）を取得します",
+            "url": "http://127.0.0.1:9502/api/svi/capabilities",
+            "method": "GET"
+        },
+        {
+            "name": "images_recent",
+            "description": "最近生成された画像一覧を取得します（開始画像選択用）",
+            "url": "http://127.0.0.1:9502/api/images/recent",
+            "method": "GET",
+            "parameters": {
+                "limit": {
+                    "type": "integer",
+                    "description": "取得件数",
+                    "default": 20
+                }
+            }
+        },
+        {
+            "name": "vision_describe_url",
+            "description": "画像URL（Pixel7カメラのshot.jpg等）を取得して内容を日本語で説明します（llava等）",
+            "url": "http://127.0.0.1:9502/api/vision/describe_url",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "parameters": {
+                "image_url": {
+                    "type": "string",
+                    "description": "画像URL",
+                    "required": true
+                },
+                "prompt": {
+                    "type": "string",
+                    "description": "説明の指示（日本語推奨）",
+                    "default": "この画像の内容を日本語で詳しく説明してください。"
+                },
+                "model": {
+                    "type": "string",
+                    "description": "Visionモデル",
+                    "default": "llava:latest"
+                },
+                "max_tokens": {
+                    "type": "integer",
+                    "description": "最大トークン数",
+                    "default": 512
+                },
+                "temperature": {
+                    "type": "number",
+                    "description": "温度",
+                    "default": 0.2
+                }
+            }
+        },
+        {
+            "name": "vision_evaluate_url",
+            "description": "画像URLを評価してスコア化（構図/明瞭さ/美観など）します（llava等）",
+            "url": "http://127.0.0.1:9502/api/vision/evaluate_url",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "parameters": {
+                "image_url": {
+                    "type": "string",
+                    "description": "画像URL",
+                    "required": true
+                },
+                "criteria": {
+                    "type": "string",
+                    "description": "評価観点（任意）",
+                    "default": "構図, 明瞭さ, ノイズ, 色バランス"
+                },
+                "model": {
+                    "type": "string",
+                    "description": "Visionモデル",
+                    "default": "llava:latest"
+                },
+                "max_tokens": {
+                    "type": "integer",
+                    "description": "最大トークン数",
+                    "default": 256
+                },
+                "temperature": {
+                    "type": "number",
+                    "description": "温度",
+                    "default": 0.2
+                }
+            }
+        },
+        {
+            "name": "pdf_to_excel",
+            "description": "PDFをExcel（.xlsx）に変換します（既定: LLM強化OCR）",
+            "url": "http://127.0.0.1:9502/api/pdf/to-excel",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "parameters": {
+                "pdf_path": {
+                    "type": "string",
+                    "description": "PDFパス（リポジトリ配下のみ）"
+                },
+                "drive_url": {
+                    "type": "string",
+                    "description": "Google Drive共有URL"
+                },
+                "output_path": {
+                    "type": "string",
+                    "description": "出力xlsx（省略時自動）"
+                },
+                "mode": {
+                    "type": "string",
+                    "description": "basic / llm_enhanced",
+                    "default": "llm_enhanced"
+                },
+                "quality": {
+                    "type": "string",
+                    "description": "fast / balanced / quality",
+                    "default": "balanced"
+                },
+                "llm_model": {
+                    "type": "string",
+                    "description": "ローカルLLMモデル名",
+                    "default": "qwen2.5:7b"
+                },
+                "use_llm_correction": {
+                    "type": "boolean",
+                    "description": "LLMでOCR結果を修正",
+                    "default": true
+                }
+            }
         }
     ]
 }

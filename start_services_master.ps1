@@ -30,7 +30,7 @@ Write-Host ""
 # ===== サービス定義 =====
 $coreServices = @(
     @{Name="MRL Memory"; Port=5105; Script="mrl_memory_integration"; Module=$true},
-    @{Name="LLM Routing"; Port=5111; Script="llm_routing_mcp_server"; Module=$true},
+    @{Name="LLM Routing"; Port=5117; Script="llm_routing_mcp_server"; Module=$true},
     @{Name="Learning System"; Port=5126; Script="learning_system_api"; Module=$true},
     @{Name="Video Pipeline"; Port=5112; Script="video_pipeline_mcp_server"; Module=$true},
     @{Name="Unified API"; Port=9502; Script="unified_api_server.py"; Module=$false; Py310=$true}

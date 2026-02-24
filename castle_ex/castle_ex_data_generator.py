@@ -802,7 +802,8 @@ class CastleEXDataGenerator:
         # 2) l2_comparison: 300〜500件、A正解:B正解=50:50（正例のみ）
         a_list = ["給油", "洗車", "タイヤ空気圧", "オイル交換", "会計", "クレーム対応", "点検", "清掃"]
         b_list = [x for x in a_list if x != "会計"]  # 重複なしペア用
-        metrics = ["早い", "遅い", "重要", "危険", "安全", "効率的", "簡単", "難しい"]
+        # v1.1.3: metrics固定6語（comparison 0/12崩壊対策）
+        metrics = ["早い", "遅い", "重要", "危険", "簡単", "効率的"]
         tpl_cmp_q = "{l2_a} と {l2_b}、どっちが{l2_metric}？"
         tpl_cmp_a = "{l2_a}と{l2_b}では{l2_winner}の方が{l2_metric}です。"
         for _ in range(n_comparison):

@@ -1,0 +1,60 @@
+{
+    "info":  "Remi - Pixel 7 Android Shortcuts (Minimal)",
+    "version":  1,
+    "setup_guide":  {
+                        "ja":  [
+                                   "1. Google Playから『HTTP Shortcuts』をインストール",
+                                   "   https://play.google.com/store/apps/details?id=ch.rmy.android.http_shortcuts",
+                                   "2. アプリを開く → 右上メニュー → Import/Export → Import",
+                                   "3. このファイル（remi_android_shortcuts.json）をインポート",
+                                   "4. ホーム画面長押し → ウィジェット → HTTP Shortcuts を選択",
+                                   "5. 4つだけ配置（Status / Clear VRAM / Emergency Stop / OpenWebUI）"
+                               ]
+                    },
+    "categories":  [
+                       {
+                           "name":  "Remi Controls",
+                           "shortcuts":  [
+                                             {
+                                                 "name":  "📊 Remi Status",
+                                                 "description":  "GPU/CPU/RAM/Disk status widget",
+                                                 "method":  "GET",
+                                                 "url":  "http://100.73.247.100:5050/widget?token=remi-pixel7-2026",
+                                                 "responseHandling":  "window",
+                                                 "iconName":  "chart_bar"
+                                             },
+                                             {
+                                                 "name":  "🧹 Clear VRAM",
+                                                 "description":  "Free GPU memory",
+                                                 "method":  "POST",
+                                                 "url":  "http://100.73.247.100:5050/action/clear_vram",
+                                                 "headers":  {
+                                                                 "Authorization":  "Bearer remi-pixel7-2026"
+                                                             },
+                                                 "responseHandling":  "toast",
+                                                 "iconName":  "delete"
+                                             },
+                                             {
+                                                 "name":  "🚨 Emergency Stop",
+                                                 "description":  "Kill all GPU processes immediately",
+                                                 "method":  "POST",
+                                                 "url":  "http://100.73.247.100:5050/emergency-stop",
+                                                 "headers":  {
+                                                                 "Authorization":  "Bearer remi-pixel7-2026"
+                                                             },
+                                                 "responseHandling":  "dialog",
+                                                 "requireConfirmation":  true,
+                                                 "iconName":  "warning"
+                                             },
+                                             {
+                                                 "name":  "OpenWebUI (HTTPS)",
+                                                 "description":  "Open ManaOS OpenWebUI via Tailscale",
+                                                 "method":  "GET",
+                                                 "url":  "https://mana.tail370497.ts.net",
+                                                 "responseHandling":  "browser",
+                                                 "iconName":  "smart_toy"
+                                             }
+                                         ]
+                       }
+                   ]
+}

@@ -1,0 +1,9 @@
+{
+  "enabled": false,
+  "mode": "safe",
+  "notes": "This config only controls workflow parameters. It does not bypass any policy.",
+  "workflow": {
+    "negative_prompt_append": "",
+    "positive_prompt_append": ""
+  }
+}

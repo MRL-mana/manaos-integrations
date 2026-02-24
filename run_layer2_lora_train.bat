@@ -7,8 +7,9 @@ set BASE_MODEL=D:\castle_ex_training\castle_ex_v1_1
 set HF_HUB_DISABLE_PROGRESS_BARS=1
 set TQDM_DISABLE=1
 set PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+set PYTHONUNBUFFERED=1
 
-python castle_ex\train_castle_ex_lora.py ^
+python -u castle_ex\train_castle_ex_lora.py ^
   --base-model %BASE_MODEL% ^
   --train-data %TRAIN_DATA% ^
   --eval-data %EVAL_DATA% ^

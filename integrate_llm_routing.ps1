@@ -7,7 +7,7 @@ Write-Host "=" * 60
 Write-Host ""
 
 $unifiedApiPort = if ($env:MANAOS_INTEGRATION_PORT) { [int]$env:MANAOS_INTEGRATION_PORT } else { 9502 }
-$llmRoutingPort = if ($env:LLM_ROUTING_PORT) { [int]$env:LLM_ROUTING_PORT } else { 5111 }
+$llmRoutingPort = if ($env:LLM_ROUTING_PORT) { [int]$env:LLM_ROUTING_PORT } else { 5117 }
 $unifiedApiBaseUrl = if ($env:MANAOS_INTEGRATION_API_URL) { $env:MANAOS_INTEGRATION_API_URL.TrimEnd('/') } else { "http://127.0.0.1:$unifiedApiPort" }
 $llmRoutingBaseUrl = if ($env:LLM_ROUTING_URL) { $env:LLM_ROUTING_URL.TrimEnd('/') } else { "http://127.0.0.1:$llmRoutingPort" }
 
@@ -28,7 +28,7 @@ if ($apiProcess) {
 
 Write-Host ""
 
-# LLM Routing MCP の起動確認（ヘルスは 5111）
+# LLM Routing MCP の起動確認（ヘルスは 5117）
 Write-Host "[2] LLM Routing MCP を確認中..." -ForegroundColor Yellow
 Write-Host "   ヘルス: $llmRoutingBaseUrl/health" -ForegroundColor Cyan
 

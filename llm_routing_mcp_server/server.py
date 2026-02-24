@@ -256,7 +256,7 @@ async def main():
         sys.exit(1)
     
     # ヘルスチェックサーバーをバックグラウンドで起動
-    health_port = int(os.getenv("PORT", "5111"))
+    health_port = int(os.getenv("PORT", "5117"))
     start_health_thread("llm-routing", health_port)
     
     async with stdio_server() as (read_stream, write_stream):

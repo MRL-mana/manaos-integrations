@@ -76,6 +76,7 @@ phase1_low_sat_history.jsonl
 # Credentials and secrets
 credentials.json
 token.json
+notification_system_state.json
 *.pem
 *.key
 *.crt
@@ -116,6 +117,11 @@ output/
 outputs/
 temp_downloaded_*.pdf
 temp_page_*.png
+
+# Pixel7 runtime files (local)
+.pixel7_*.pid
+.pixel7_*.status.json
+.pixel7_api_token.txt
 
 # Generated reports/docs (keep explicit and scoped)
 docs/temp_reports/

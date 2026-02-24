@@ -1,0 +1,11 @@
+version: 1
+devices:
+  - id: host
+    name: 母艦
+    kind: windows
+    tags: [core]
+
+  - id: pixel7
+    name: Pixel 7
+    kind: android
+    tags: [device]

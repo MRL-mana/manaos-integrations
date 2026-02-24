@@ -42,7 +42,7 @@ $llmRoutingConfig = @{
     args = @("-m", "llm_routing_mcp_server.server")
     env = @{
         MANAOS_INTEGRATION_API_URL = "http://127.0.0.1:9502"
-        PORT = "5111"
+        PORT = "5117"
         PYTHONPATH = $workspacePath
     }
     cwd = $workspacePath

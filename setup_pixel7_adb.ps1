@@ -3,7 +3,14 @@
 Write-Host "📱 ピクセル7ワイヤレスADB接続セットアップを開始します..." -ForegroundColor Cyan
 
 # 設定
-$PIXEL7_IP = if ($env:PIXEL7_IP) { $env:PIXEL7_IP } else { "100.127.121.20" }
+# 既定は Pixel 7 の Tailscale IP（母艦から到達できる）
+$PIXEL7_IP = if ($env:PIXEL7_TAILSCALE_IP) {
+    $env:PIXEL7_TAILSCALE_IP
+} elseif ($env:PIXEL7_IP) {
+    $env:PIXEL7_IP
+} else {
+    "100.84.2.125"
+}
 $PIXEL7_ADB_PORT = if ($env:PIXEL7_ADB_PORT) { $env:PIXEL7_ADB_PORT } else { "5555" }
 
 Write-Host ""

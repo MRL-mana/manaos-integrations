@@ -14,7 +14,7 @@ import httpx
 SERVICES = {
     "mrl_memory": "http://localhost:5105/health",
     "learning_system": "http://localhost:5126/health",
-    "llm_routing": "http://localhost:5111/health",
+    "llm_routing": "http://localhost:5117/health",
     "gallery_api": "http://localhost:5559/health",
     "video_pipeline": "http://localhost:5112/health",
     "ollama": "http://localhost:11434/api/tags",

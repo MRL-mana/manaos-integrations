@@ -169,6 +169,297 @@ def build_openapi_spec() -> Dict[str, Any]:
                     },
                 }
             },
+            "/api/svi/generate": {
+                "post": {
+                    "summary": "SVI × Wan 2.2 で動画生成",
+                    "description": "開始画像とプロンプトから動画生成を開始し、prompt_id を返します（ComfyUI経由）",
+                    "operationId": "sviGenerate",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "start_image_path": {"type": "string", "description": "開始画像のパス"},
+                                        "prompt": {"type": "string", "description": "動画生成プロンプト"},
+                                        "video_length_seconds": {"type": "integer", "default": 5},
+                                        "steps": {"type": "integer", "default": 6},
+                                        "motion_strength": {"type": "number", "default": 1.3},
+                                        "quality": {"type": "string", "default": "balanced", "description": "fast / balanced / quality"},
+                                        "sage_attention": {"type": "boolean", "default": True},
+                                        "extend_enabled": {"type": "boolean", "default": False},
+                                    },
+                                    "required": ["start_image_path", "prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}, "503": {"description": "利用不可"}},
+                }
+            },
+            "/api/svi/capabilities": {
+                "get": {
+                    "summary": "SVI 事前診断（必要ノード）",
+                    "description": "ComfyUI の /object_info から、SVI × Wan 2.2 に必要なノードが導入済みかを返します",
+                    "operationId": "sviCapabilities",
+                    "responses": {
+                        "200": {"description": "成功"},
+                        "502": {"description": "ComfyUI疎通失敗"},
+                        "503": {"description": "requests等未導入"},
+                    },
+                }
+            },
+            "/api/svi/extend": {
+                "post": {
+                    "summary": "SVI × Wan 2.2 で動画延長",
+                    "description": "既存動画とプロンプトから延長を開始し、prompt_id を返します",
+                    "operationId": "sviExtend",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "previous_video_path": {"type": "string", "description": "前の動画パス"},
+                                        "prompt": {"type": "string", "description": "延長プロンプト"},
+                                        "extend_seconds": {"type": "integer", "default": 5},
+                                        "steps": {"type": "integer", "default": 6},
+                                        "motion_strength": {"type": "number", "default": 1.3},
+                                        "quality": {"type": "string", "default": "balanced", "description": "fast / balanced / quality"},
+                                    },
+                                    "required": ["previous_video_path", "prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/svi/queue": {
+                "get": {
+                    "summary": "ComfyUI キュー状態",
+                    "description": "実行中/待機中の prompt_id を返します",
+                    "operationId": "sviQueue",
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/svi/history": {
+                "get": {
+                    "summary": "ComfyUI 履歴（prompt_id）",
+                    "description": "prompt_id の履歴を要約して返します",
+                    "operationId": "sviHistory",
+                    "parameters": [
+                        {"name": "prompt_id", "in": "query", "required": True, "schema": {"type": "string"}},
+                    ],
+                    "responses": {"200": {"description": "成功"}, "404": {"description": "未検出"}},
+                }
+            },
+            "/api/ltx2/generate": {
+                "post": {
+                    "summary": "LTX-2 で動画生成",
+                    "description": "ComfyUIにLTX-2ワークフローを送信して動画生成を実行します（環境依存：workflowはExport(API)推奨）",
+                    "operationId": "ltx2Generate",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prompt": {"type": "string", "description": "動画生成プロンプト"},
+                                        "workflow": {"type": "string", "description": "ワークフローJSONパス（任意）"},
+                                        "workflow_path": {"type": "string", "description": "workflowの別名"},
+                                        "image": {"type": "string", "description": "開始画像（ComfyUI input内のファイル名）"},
+                                        "timeout": {"type": "number", "default": 600},
+                                    },
+                                    "required": ["prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "利用不可"}},
+                }
+            },
+            "/api/ltx2/queue": {
+                "get": {
+                    "summary": "LTX-2 キュー状態",
+                    "description": "ComfyUIのqueueを返します（LTX-2用）",
+                    "operationId": "ltx2Queue",
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/ltx2/history": {
+                "get": {
+                    "summary": "LTX-2 履歴（prompt_id）",
+                    "description": "ComfyUIのhistory/{prompt_id}を返します（LTX-2用）",
+                    "operationId": "ltx2History",
+                    "parameters": [
+                        {"name": "prompt_id", "in": "query", "required": True, "schema": {"type": "string"}},
+                    ],
+                    "responses": {"200": {"description": "成功"}, "404": {"description": "未検出"}},
+                }
+            },
+            "/api/ltx2-infinity/generate": {
+                "post": {
+                    "summary": "LTX-2 Infinity（セグメント反復生成）",
+                    "description": "segments回だけLTX-2生成を反復します（最小Infinity実装）",
+                    "operationId": "ltx2InfinityGenerate",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prompt": {"type": "string"},
+                                        "segments": {"type": "integer", "default": 1},
+                                        "workflow": {"type": "string"},
+                                        "workflow_path": {"type": "string"},
+                                        "image": {"type": "string"},
+                                        "timeout_per_segment": {"type": "number", "default": 600},
+                                        "positive_suffix": {"type": "string"},
+                                        "negative_suffix": {"type": "string"},
+                                    },
+                                    "required": ["prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "利用不可"}},
+                }
+            },
+            "/api/ltx2-infinity/templates": {
+                "get": {
+                    "summary": "LTX-2 Infinity テンプレート一覧",
+                    "description": "ltx2_templates 配下のテンプレートJSON一覧を返します",
+                    "operationId": "ltx2InfinityListTemplates",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "利用不可"}},
+                },
+                "post": {
+                    "summary": "LTX-2 Infinity テンプレート保存",
+                    "description": "テンプレートJSONを保存します",
+                    "operationId": "ltx2InfinitySaveTemplate",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {"type": "string"},
+                                        "template": {"type": "object"},
+                                    },
+                                    "required": ["name", "template"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}},
+                },
+            },
+            "/api/ltx2-infinity/storage": {
+                "get": {
+                    "summary": "LTX-2 Infinity ストレージ統計",
+                    "description": "ltx2_storage 配下のサイズ等を返します",
+                    "operationId": "ltx2InfinityStorageStats",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "利用不可"}},
+                }
+            },
+            "/api/pdf/to-excel": {
+                "post": {
+                    "summary": "PDF→Excel",
+                    "description": "PDF（ローカルパスまたはDrive URL）をExcelに変換します（既定: LLM強化OCR）",
+                    "operationId": "pdfToExcel",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "pdf_path": {"type": "string", "description": "PDFパス（リポジトリ配下のみ）"},
+                                        "drive_url": {"type": "string", "description": "Google Drive共有URL"},
+                                        "output_path": {"type": "string", "description": "出力xlsx（省略時自動）"},
+                                        "mode": {"type": "string", "default": "llm_enhanced"},
+                                        "quality": {"type": "string", "default": "balanced", "description": "fast / balanced / quality"},
+                                        "llm_model": {"type": "string", "default": "qwen2.5:7b"},
+                                        "use_llm_correction": {"type": "boolean", "default": True},
+                                        "use_ocr": {"type": "boolean", "default": True},
+                                    },
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}},
+                }
+            },
+            "/api/images/recent": {
+                "get": {
+                    "summary": "最近の画像一覧",
+                    "description": "gallery_images から最近の画像ファイル一覧を返します",
+                    "operationId": "getRecentImages",
+                    "parameters": [
+                        {"name": "limit", "in": "query", "schema": {"type": "integer", "default": 20}},
+                    ],
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/vision/describe_url": {
+                "post": {
+                    "summary": "画像URLを説明（Vision）",
+                    "description": "画像URL（Pixel7カメラのshot.jpg等）を取得して、ローカルVLM（例: llava）で説明文を生成します",
+                    "operationId": "visionDescribeUrl",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "image_url": {"type": "string", "description": "画像URL"},
+                                        "url": {"type": "string", "description": "image_urlの別名"},
+                                        "prompt": {"type": "string", "description": "説明の指示（日本語推奨）"},
+                                        "model": {"type": "string", "default": "llava:latest"},
+                                        "max_tokens": {"type": "integer", "default": 512},
+                                        "temperature": {"type": "number", "default": 0.2},
+                                    },
+                                    "required": [],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}},
+                }
+            },
+            "/api/vision/evaluate_url": {
+                "post": {
+                    "summary": "画像URLを評価（Vision）",
+                    "description": "画像URLを取得して、ローカルVLM（例: llava）でスコア評価（JSON）を生成します",
+                    "operationId": "visionEvaluateUrl",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "image_url": {"type": "string", "description": "画像URL"},
+                                        "url": {"type": "string", "description": "image_urlの別名"},
+                                        "criteria": {"type": "string", "description": "評価観点（任意）"},
+                                        "model": {"type": "string", "default": "llava:latest"},
+                                        "max_tokens": {"type": "integer", "default": 256},
+                                        "temperature": {"type": "number", "default": 0.2},
+                                    },
+                                    "required": [],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}},
+                }
+            },
             "/api/sd-prompt/generate": {
                 "post": {
                     "summary": "SD用プロンプトを生成",

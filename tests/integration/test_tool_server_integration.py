@@ -5,6 +5,8 @@ Tool Server統合テストスクリプト
 OpenWebUI、Tool Server、ComfyUIの統合をテスト
 """
 
+import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -207,6 +209,120 @@ def test_openwebui_connection() -> bool:
         return False
 
 
+def _openwebui_signin(base_url: str, email: str, password: str, host_header: str | None = None) -> str | None:
+    headers = {"Content-Type": "application/json", "Accept": "application/json"}
+    if host_header:
+        headers["Host"] = host_header
+    try:
+        r = requests.post(
+            f"{base_url.rstrip('/')}/api/v1/auths/signin",
+            headers=headers,
+            json={"email": email, "password": password},
+            timeout=15,
+        )
+        if r.status_code != 200:
+            return None
+        token = (r.json() or {}).get("token")
+        return token if isinstance(token, str) and token else None
+    except Exception:
+        return None
+
+
+def _openwebui_get_tool(base_url: str, tool_id: str, token: str, host_header: str | None = None) -> tuple[int, dict]:
+    headers = {"Accept": "application/json", "Authorization": f"Bearer {token}"}
+    if host_header:
+        headers["Host"] = host_header
+    try:
+        r = requests.get(
+            f"{base_url.rstrip('/')}/api/v1/tools/id/{tool_id}",
+            headers=headers,
+            timeout=15,
+        )
+        body = {}
+        if r.text:
+            try:
+                body = r.json()
+            except Exception:
+                body = {"raw": r.text}
+        return r.status_code, body
+    except Exception as e:
+        return 0, {"error": str(e)}
+
+
+def test_openwebui_tool_bootstrap_and_verify() -> bool:
+    """OpenWebUIにmanaOSツールが登録されていることを検査。無ければ自動bootstrap（BONUS）。"""
+    print("[BONUS2] OpenWebUI tool bootstrap/verify...")
+
+    base_url = os.getenv("OPENWEBUI_URL", "http://127.0.0.1:3001").rstrip("/")
+    host_header = (os.getenv("OPENWEBUI_HOST_HEADER") or "").strip() or None
+    email = (os.getenv("OPENWEBUI_ADMIN_EMAIL") or "").strip()
+    password = (os.getenv("OPENWEBUI_ADMIN_PASSWORD") or "").strip()
+    tool_id = (os.getenv("OPENWEBUI_MANAOS_TOOL_ID") or "manaos_local_gateway").strip()
+
+    if not email or not password:
+        print("  [SKIP] OPENWEBUI_ADMIN_EMAIL/OPENWEBUI_ADMIN_PASSWORD が未設定")
+        return True
+
+    token = _openwebui_signin(base_url, email, password, host_header=host_header)
+    if not token:
+        print("  [NG] OpenWebUI signin 失敗（資格情報/Host header を確認）")
+        return False
+
+    status, body = _openwebui_get_tool(base_url, tool_id, token, host_header=host_header)
+    if status == 200:
+        print(f"  [OK] tool exists: {tool_id}")
+        return True
+
+    print(f"  [INFO] tool not found (status={status}). running bootstrap...")
+
+    repo_root = Path(__file__).resolve().parents[2]
+    script = repo_root / "bootstrap_openwebui_manaos_local_gateway.py"
+    if not script.exists():
+        print(f"  [NG] bootstrap script missing: {script}")
+        return False
+
+    env = os.environ.copy()
+    # bootstrap は env を使うので、ここで最低限を揃える
+    env.setdefault("OPENWEBUI_URL", base_url)
+    if host_header:
+        env.setdefault("OPENWEBUI_HOST_HEADER", host_header)
+    env.setdefault("OPENWEBUI_ADMIN_EMAIL", email)
+    env.setdefault("OPENWEBUI_ADMIN_PASSWORD", password)
+    env.setdefault("OPENWEBUI_MANAOS_TOOL_ID", tool_id)
+
+    try:
+        cp = subprocess.run(
+            [sys.executable, str(script)],
+            cwd=str(repo_root),
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except Exception as e:
+        print(f"  [NG] bootstrap failed: {e}")
+        return False
+
+    if cp.returncode != 0:
+        stderr = (cp.stderr or "").strip()
+        stdout = (cp.stdout or "").strip()
+        print(f"  [NG] bootstrap returncode={cp.returncode}")
+        if stdout:
+            print(f"      stdout: {stdout[:400]}")
+        if stderr:
+            print(f"      stderr: {stderr[:400]}")
+        return False
+
+    # 再検査
+    status2, _ = _openwebui_get_tool(base_url, tool_id, token, host_header=host_header)
+    if status2 == 200:
+        print(f"  [OK] bootstrap verified: {tool_id}")
+        return True
+
+    print(f"  [NG] tool still missing after bootstrap (status={status2})")
+    return False
+
+
 def main() -> int:
     """メイン関数"""
     print("=" * 60)
@@ -240,14 +356,18 @@ def main() -> int:
     results["openwebui"] = test_openwebui_connection()
     print()
 
+    results["openwebui_tool"] = test_openwebui_tool_bootstrap_and_verify()
+    print()
+
     print("=" * 60)
     print("テスト結果サマリー")
     print("=" * 60)
 
-    required_keys = [k for k in results.keys() if k != "openwebui"]
+    required_keys = [k for k in results.keys() if k not in ("openwebui", "openwebui_tool")]
     passed = sum(1 for k, v in results.items() if k in required_keys and v)
     total = len(required_keys)
     bonus_ok = results.get("openwebui", False)
+    bonus2_ok = results.get("openwebui_tool", False)
 
     for name, result in results.items():
         status = "[OK]" if result else "[NG]"
@@ -256,6 +376,7 @@ def main() -> int:
     print()
     print(f"結果(必須): {passed} / {total} テストが成功")
     print(f"結果(BONUS openwebui): {'OK' if bonus_ok else 'NG'}")
+    print(f"結果(BONUS openwebui_tool): {'OK' if bonus2_ok else 'NG'}")
 
     if passed == total:
         print()

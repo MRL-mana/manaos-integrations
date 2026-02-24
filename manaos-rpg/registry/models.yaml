@@ -1,0 +1,28 @@
+version: 1
+models:
+  - id: qwen_32b_q4
+    name: Qwen 2.5 32B
+    type: llm
+    version: "2.5"
+    quant: q4
+    vram_gb: 16
+    path: /models/llm/qwen2.5-32b-q4.gguf
+    tags: [chat, code, summary]
+
+  - id: flux_schnell
+    name: FLUX.1-schnell
+    type: image
+    version: "1"
+    quant: none
+    vram_gb: 8
+    path: /models/image/flux1-schnell
+    tags: [image]
+
+  - id: voicevox
+    name: VOICEVOX
+    type: voice
+    version: "latest"
+    quant: none
+    vram_gb: 0
+    path: /docker/voicevox
+    tags: [tts]

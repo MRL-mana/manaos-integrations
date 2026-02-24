@@ -32,7 +32,7 @@ except Exception:  # pragma: no cover
         GALLERY_PORT = int(os.getenv("GALLERY_PORT", "5559"))
         MRL_MEMORY_PORT = int(os.getenv("MRL_MEMORY_PORT", "5105"))
         LEARNING_SYSTEM_PORT = int(os.getenv("LEARNING_SYSTEM_PORT", "5126"))
-        LLM_ROUTING_PORT = int(os.getenv("LLM_ROUTING_PORT", "5111"))
+        LLM_ROUTING_PORT = int(os.getenv("LLM_ROUTING_PORT", "5117"))
         UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9502"))
 
 

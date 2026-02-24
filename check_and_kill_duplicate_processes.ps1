@@ -24,7 +24,7 @@ $services = @(
     @{Name="Product Automation"; Port=5118; Script="product_automation.py"},
     @{Name="Payment Integration"; Port=5119; Script="payment_integration.py"},
     @{Name="SSOT API"; Port=5120; Script="ssot_api.py"},
-    @{Name="LLM Routing MCP"; Port=5111; Script="llm_routing_mcp_server"},
+    @{Name="LLM Routing MCP"; Port=5117; Script="llm_routing_mcp_server"},
     @{Name="Unified API Server"; Port=9502; Script="unified_api_server.py"}
 )
 

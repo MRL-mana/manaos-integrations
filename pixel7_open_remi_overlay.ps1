@@ -150,7 +150,13 @@ if (-not $tapped) {
 }
 
 if (-not $tapped) {
-	Write-Host "Remi home shortcut not found. Put the 'Remi' icon on the first home page and try again." -ForegroundColor Yellow
+	Write-Host "Remi home shortcut not found." -ForegroundColor Yellow
+	Write-Host "Fallback: opening Remi URL in Chrome so you can create the Floating Apps shortcut." -ForegroundColor Yellow
+	Write-Host "1) Floating Appsを開く → URLを開く → デスクトップ指定/ショートカット作成" -ForegroundColor Gray
+	Write-Host "2) ホームに 'Remi'（またはレミ）アイコンを置く → 次回からこのスクリプトで一発復帰" -ForegroundColor Gray
+	adb -s $DEVICE shell "am start -a android.intent.action.VIEW -d '$URL' com.android.chrome" | Out-Null
+	Start-Sleep -Milliseconds 600
+	adb -s $DEVICE shell "am start -a android.intent.action.VIEW -d '$URL'" | Out-Null
 	exit 3
 }
 

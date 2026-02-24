@@ -7,7 +7,7 @@ Write-Host "=" * 60
 Write-Host ""
 
 $unifiedApiPort = if ($env:MANAOS_INTEGRATION_PORT) { [int]$env:MANAOS_INTEGRATION_PORT } else { 9502 }
-$llmRoutingPort = if ($env:LLM_ROUTING_PORT) { [int]$env:LLM_ROUTING_PORT } else { 5111 }
+$llmRoutingPort = if ($env:LLM_ROUTING_PORT) { [int]$env:LLM_ROUTING_PORT } else { 5117 }
 $unifiedApiBaseUrl = if ($env:MANAOS_INTEGRATION_API_URL) { $env:MANAOS_INTEGRATION_API_URL.TrimEnd('/') } else { "http://127.0.0.1:$unifiedApiPort" }
 $llmRoutingBaseUrl = if ($env:LLM_ROUTING_URL) { $env:LLM_ROUTING_URL.TrimEnd('/') } else { "http://127.0.0.1:$llmRoutingPort" }
 

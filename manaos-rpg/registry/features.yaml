@@ -1,0 +1,20 @@
+version: 1
+menu:
+  - id: status
+    label: ステータス
+    icon: "🧍"
+  - id: party
+    label: パーティ（サービス）
+    icon: "🧩"
+  - id: bestiary
+    label: 図鑑（モデル）
+    icon: "📚"
+  - id: quests
+    label: クエスト（タスク）
+    icon: "🗺"
+  - id: logs
+    label: 戦闘ログ
+    icon: "📜"
+  - id: map
+    label: マップ（デバイス）
+    icon: "🧭"

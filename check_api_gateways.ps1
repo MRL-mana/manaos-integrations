@@ -6,10 +6,35 @@
 Write-Host "=== デバイスAPI Gateway起動確認 ===" -ForegroundColor Cyan
 Write-Host ""
 
+function Get-Pixel7ApiEndpoint {
+    $ip = if ($env:PIXEL7_API_HOST) {
+        $env:PIXEL7_API_HOST
+    } elseif ($env:PIXEL7_TAILSCALE_IP) {
+        $env:PIXEL7_TAILSCALE_IP
+    } elseif ($env:PIXEL7_IP) {
+        $env:PIXEL7_IP
+    } else {
+        $cfg = Join-Path $PSScriptRoot 'adb_automation_config.json'
+        if (Test-Path $cfg) {
+            try {
+                $o = Get-Content -Raw -Encoding UTF8 $cfg | ConvertFrom-Json
+                if ($o.device_ip) { [string]$o.device_ip } else { '100.84.2.125' }
+            } catch {
+                '100.84.2.125'
+            }
+        } else {
+            '100.84.2.125'
+        }
+    }
+
+    $port = if ($env:PIXEL7_API_PORT) { $env:PIXEL7_API_PORT } else { '5122' }
+    return "http://${ip}:${port}/health"
+}
+
 $devices = @(
     @{ Name = "X280"; Endpoint = "http://100.127.121.20:5120/health"; Script = "x280_api_gateway.py" }
     @{ Name = "Konoha Server"; Endpoint = "http://100.93.120.33:5106/health"; Script = "N/A" }
-    @{ Name = "Pixel 7"; Endpoint = "http://100.127.121.20:5122/health"; Script = "pixel7_api_gateway.py" }
+    @{ Name = "Pixel 7"; Endpoint = (Get-Pixel7ApiEndpoint); Script = "pixel7_api_gateway.py" }
 )
 
 $results = @()

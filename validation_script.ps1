@@ -120,7 +120,7 @@ Write-Host "━━━━━━━━━━━━━━━━━━━━━━�
 
 $services = @(
     @{Port=9510; Name="Unified API"},
-    @{Port=5111; Name="LLM Routing"},
+    @{Port=5117; Name="LLM Routing"},
     @{Port=5104; Name="Learning System"},
     @{Port=5103; Name="MRL Memory"}
 )
