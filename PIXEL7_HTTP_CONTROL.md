@@ -72,10 +72,25 @@
 - OpenWebUIを開く: `pwsh -File .\manaos_integrations\pixel7_http_control.ps1 -Action OpenOpenWebUI`
 - MacroDroidへ命令: `pwsh -File .\manaos_integrations\pixel7_http_control.ps1 -Action BroadcastMacro -MacroCmd 'MyCommand'`
 
+### Termux操作（ADB補助 / 任意）
+
+Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助です（HTTPゲートウェイの起動/停止）。
+
+- 起動（DestDirへ移動→chmod→起動）: `pwsh -File .\manaos_integrations\pixel7_termux_start_http_gateway.ps1`
+- 停止（pkillでbest-effort）: `pwsh -File .\manaos_integrations\pixel7_termux_stop_http_gateway.ps1`
+
 ### VS Codeタスク（おすすめ）
 
 - 「ManaOS: Pixel7 HTTP トークン生成（表示）」
 - 「ManaOS: Pixel7 HTTP Gateway 配置（adb push）」
+
+- 「ManaOS: Pixel7 TermuxでHTTP Gateway起動（ADB補助）」
+- 「ManaOS: Pixel7 TermuxでHTTP Gateway停止（ADB補助）」
+
+- 「ManaOS: Pixel7 TermuxでHTTP Gateway起動（ADB補助）」
+
+※母艦側でトークンファイルがある場合、配置タスクは `api_token.txt` としてPixel側にも同梱します。
+
 - 「ManaOS: Pixel7 Termuxを開く（ADB / HTTP復旧用）」
 - 「ManaOS: Pixel7 HTTP スモークテスト（health/status/fallback）」
 - 「ManaOS: Pixel7 HTTP 監視開始（バックグラウンド）」
