@@ -65,5 +65,11 @@
     "enabled": false,
     "interval_s": 300,
     "_comment": "true にすると 5分毎に stale タスク自動掃除"
+  },
+
+  "replay_buffer": {
+    "max_size": 500,
+    "persist": true,
+    "_comment": "過去のタスク経験を保持して優先度付きサンプリング"
   }
 }

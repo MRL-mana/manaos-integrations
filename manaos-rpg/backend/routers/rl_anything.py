@@ -197,3 +197,107 @@ def scheduler_stop() -> Dict[str, Any]:
         return _get_rl().stop_scheduler()
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+# ═══════════════════════════════════════════════════════
+# Replay Buffer / Experiments / Prometheus (round 5)
+# ═══════════════════════════════════════════════════════
+
+@router.get("/replay/stats")
+def replay_stats() -> Dict[str, Any]:
+    """Replay Buffer 統計"""
+    try:
+        return {"ok": True, **_get_rl().replay.get_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/replay/sample")
+def replay_sample(n: int = 8, prioritized: bool = False) -> Dict[str, Any]:
+    """Replay Buffer からサンプリング"""
+    try:
+        buf = _get_rl().replay
+        batch = buf.sample_prioritized(n) if prioritized else buf.sample(n)
+        return {"ok": True, "samples": [e.to_dict() for e in batch], "count": len(batch)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/experiments")
+def experiments_list() -> Dict[str, Any]:
+    """全 A/B 実験一覧"""
+    try:
+        tracker = _get_rl().experiments
+        return {"ok": True, "experiments": tracker.list_experiments(), **tracker.get_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+class _ExperimentCreateBody(BaseModel):
+    name: str
+    config_overrides: Dict[str, Any] = {}
+
+@router.post("/experiments/create")
+def experiment_create(body: _ExperimentCreateBody) -> Dict[str, Any]:
+    """新規 A/B 実験を作成"""
+    try:
+        exp_id = _get_rl().experiments.create(body.name, body.config_overrides)
+        return {"ok": True, "exp_id": exp_id}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+class _ExperimentRecordBody(BaseModel):
+    exp_id: str
+    outcome: str
+    score: float
+    metadata: Optional[Dict[str, Any]] = None
+
+@router.post("/experiments/record")
+def experiment_record(body: _ExperimentRecordBody) -> Dict[str, Any]:
+    """A/B 実験に結果を記録"""
+    try:
+        ok = _get_rl().experiments.record_result(body.exp_id, body.outcome, body.score, body.metadata)
+        return {"ok": ok, "exp_id": body.exp_id}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/experiments/compare")
+def experiment_compare(min_samples: int = 3) -> Dict[str, Any]:
+    """全 A/B 実験の横比較レポート"""
+    try:
+        return {"ok": True, **_get_rl().experiments.compare(min_samples=min_samples)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/experiments/best")
+def experiment_best(min_samples: int = 3) -> Dict[str, Any]:
+    """最良バリアントを返す"""
+    try:
+        best = _get_rl().experiments.get_best(min_samples=min_samples)
+        return {"ok": True, "best": best}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/experiments/conclude")
+def experiment_conclude(exp_id: str = Body(..., embed=True)) -> Dict[str, Any]:
+    """A/B 実験を終了"""
+    try:
+        ok = _get_rl().experiments.conclude(exp_id)
+        return {"ok": ok, "exp_id": exp_id}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+from fastapi.responses import PlainTextResponse
+
+@router.get("/metrics", response_class=PlainTextResponse)
+def prometheus_metrics() -> str:
+    """Prometheus /metrics 互換エンドポイント"""
+    try:
+        return _get_rl().prom.render()
+    except Exception as e:
+        return f"# error: {e}\n"

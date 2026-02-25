@@ -24,6 +24,9 @@ from rl_anything.observation_hook import ObservationHook
 from rl_anything.feedback_engine import FeedbackEngine
 from rl_anything.evolution_engine import EvolutionEngine
 from rl_anything.orchestrator import RLAnythingOrchestrator
+from rl_anything.replay_buffer import ReplayBuffer, Experience
+from rl_anything.experiment_tracker import ExperimentTracker
+from rl_anything.metrics_export import PrometheusExporter
 
 
 def test_types():
@@ -493,6 +496,170 @@ def test_scheduler():
         print("  [PASS] scheduler")
 
 
+def test_replay_buffer():
+    """Replay Buffer のサイズ制限・サンプリング・永続化"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = Path(tmpdir) / "replay.jsonl"
+        buf = ReplayBuffer(max_size=10, persist_path=path)
+
+        # Push 15 items → 10 only (ring buffer)
+        for i in range(15):
+            outcome = "success" if i % 3 != 0 else "failure"
+            buf.push(Experience(
+                task_id=f"t-{i}", outcome=outcome, score=0.5 + i * 0.03,
+                difficulty="standard", cycle=i + 1,
+            ))
+        assert buf.size == 10, f"expected size=10, got {buf.size}"
+        assert buf.total_pushed == 15
+        print(f"    buffer size={buf.size}, pushed={buf.total_pushed}")
+
+        # Random sample
+        batch = buf.sample(n=5)
+        assert len(batch) == 5
+        print(f"    random sample: {len(batch)} items")
+
+        # Prioritized sample (failures should be over-represented)
+        prio_batch = buf.sample_prioritized(n=50)
+        assert len(prio_batch) == 50
+        failure_count = sum(1 for e in prio_batch if e.outcome == "failure")
+        print(f"    prioritized sample: {failure_count}/50 failures (expect > uniform)")
+
+        # Persistence round-trip
+        assert path.exists()
+        buf2 = ReplayBuffer(max_size=10, persist_path=path)
+        assert buf2.size == 10
+        print(f"    persistence restored: {buf2.size} items")
+
+        # Stats
+        stats = buf.get_stats()
+        assert "outcome_distribution" in stats
+        assert stats["avg_score"] > 0
+        print(f"    stats: avg_score={stats['avg_score']}, avg_priority={stats['avg_priority']}")
+
+        print("  [PASS] replay_buffer")
+
+
+def test_experiment_tracker():
+    """A/B Experiment Tracker の作成・記録・比較・ベスト選択"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tracker = ExperimentTracker(experiments_dir=Path(tmpdir))
+
+        # Create 2 experiments
+        id_a = tracker.create("variant_A", {"reward_model": {"intermediate_weight": 0.3}})
+        id_b = tracker.create("variant_B", {"reward_model": {"intermediate_weight": 0.6}})
+        assert id_a != id_b
+        print(f"    created: {id_a}, {id_b}")
+
+        # Record results: A = mediocre, B = better
+        for _ in range(5):
+            tracker.record_result(id_a, "success", 0.60)
+            tracker.record_result(id_b, "success", 0.85)
+        for _ in range(2):
+            tracker.record_result(id_a, "failure", 0.30)
+            tracker.record_result(id_b, "failure", 0.50)
+
+        # Compare
+        report = tracker.compare(min_samples=3)
+        assert report["total"] == 2
+        assert all(r["status"] == "ready" for r in report["experiments"])
+        print(f"    compare: {report['total']} experiments ready")
+
+        # Best → should be B
+        best = tracker.get_best(min_samples=3)
+        assert best is not None
+        assert best["exp_id"] == id_b
+        assert best["avg_score"] > 0.6
+        print(f"    best: {best['exp_id']} with avg_score={best['avg_score']}")
+
+        # Conclude
+        tracker.conclude(id_a)
+        exp_a = tracker.get_experiment(id_a)
+        assert not exp_a["active"]
+        print(f"    concluded {id_a}")
+
+        # Persistence: reload from same dir
+        tracker2 = ExperimentTracker(experiments_dir=Path(tmpdir))
+        assert len(tracker2.list_experiments()) == 2
+        print(f"    persistence: {len(tracker2.list_experiments())} experiments restored")
+
+        print("  [PASS] experiment_tracker")
+
+
+def test_prometheus_exporter():
+    """Prometheus Exporter の Counter / Gauge / Histogram / render"""
+    prom = PrometheusExporter()
+    prom.register("rl_cycles_total", "counter", "Total completed RL cycles")
+    prom.register("rl_score", "histogram", "Task score distribution")
+    prom.register("rl_difficulty", "gauge", "Current difficulty level")
+
+    prom.inc("rl_cycles_total", labels={"outcome": "success"})
+    prom.inc("rl_cycles_total", labels={"outcome": "success"})
+    prom.inc("rl_cycles_total", labels={"outcome": "failure"})
+    prom.set("rl_difficulty", 2.0)
+    prom.observe("rl_score", 0.75)
+    prom.observe("rl_score", 0.85)
+    prom.observe("rl_score", 0.40, labels={"outcome": "failure"})
+
+    text = prom.render()
+    assert "# TYPE rl_cycles_total counter" in text
+    assert 'rl_cycles_total{outcome="success"} 2' in text
+    assert 'rl_cycles_total{outcome="failure"} 1' in text
+    assert "rl_difficulty 2.0" in text
+    assert "rl_score_count" in text
+    assert "rl_score_sum" in text
+    assert "rl_score_bucket" in text
+    print(f"    render lines: {len(text.splitlines())}")
+
+    snap = prom.get_snapshot()
+    assert "counters" in snap
+    assert "gauges" in snap
+    assert "histograms" in snap
+    print(f"    snapshot keys: {list(snap.keys())}")
+
+    print("  [PASS] prometheus_exporter")
+
+
+def test_orchestrator_with_replay_and_prom():
+    """Orchestrator が replay buffer と prometheus を正しく更新するか"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cfg = _make_test_config(tmpdir)
+        cfg["replay_buffer"] = {"max_size": 50, "persist": True}
+        cfg_path = Path(tmpdir) / "config.json"
+        cfg_path.write_text(json.dumps(cfg), encoding="utf-8")
+        rl = RLAnythingOrchestrator(config_path=cfg_path)
+
+        # Run 3 tasks
+        for i in range(3):
+            rl.begin_task(f"r5-{i}", f"round5 task {i}")
+            rl.log_tool("read_file", {"p": "a.py"}, result="ok")
+            rl.end_task(f"r5-{i}", outcome="success" if i < 2 else "failure", score=0.8 if i < 2 else 0.3)
+
+        # Replay Buffer
+        assert rl.replay.size == 3, f"expected replay size=3, got {rl.replay.size}"
+        stats = rl.replay.get_stats()
+        assert stats["outcome_distribution"]["success"] == 2
+        assert stats["outcome_distribution"]["failure"] == 1
+        print(f"    replay: size={rl.replay.size}, outcomes={stats['outcome_distribution']}")
+
+        # Prometheus
+        text = rl.prom.render()
+        assert "rl_cycles_total" in text
+        assert "rl_cycle_count" in text
+        assert "rl_score_bucket" in text
+        snap = rl.prom.get_snapshot()
+        # cycle count gauge should be 3
+        cycle_count_val = snap["gauges"].get("rl_cycle_count", 0)
+        assert cycle_count_val == 3.0, f"expected cycle_count=3, got {cycle_count_val}"
+        print(f"    prometheus: cycle_count={cycle_count_val}, render_lines={len(text.splitlines())}")
+
+        # Experiment tracker
+        exp_stats = rl.experiments.get_stats()
+        assert exp_stats["total_experiments"] == 0  # no experiments created yet
+        print(f"    experiments: {exp_stats}")
+
+        print("  [PASS] orchestrator_with_replay_and_prom")
+
+
 def _make_test_config(tmpdir):
     """テスト用共通設定を生成"""
     return {
@@ -524,6 +691,10 @@ def main():
         ("analytics", test_analytics),
         ("webhook_and_events", test_webhook_and_events),
         ("scheduler", test_scheduler),
+        ("replay_buffer", test_replay_buffer),
+        ("experiment_tracker", test_experiment_tracker),
+        ("prometheus_exporter", test_prometheus_exporter),
+        ("orchestrator_with_replay_and_prom", test_orchestrator_with_replay_and_prom),
     ]
 
     passed = 0

@@ -40,6 +40,9 @@ from .types import DifficultyLevel, TaskOutcome, TaskRecord
 from .observation_hook import ObservationHook
 from .feedback_engine import FeedbackEngine
 from .evolution_engine import EvolutionEngine
+from .replay_buffer import ReplayBuffer, Experience
+from .experiment_tracker import ExperimentTracker
+from .metrics_export import PrometheusExporter
 
 _DIR = Path(__file__).parent
 _STATE_DIR = _DIR.parent / "logs" / "rl_anything"
@@ -95,6 +98,40 @@ class RLAnythingOrchestrator:
         auto_sched = cfg.get("auto_scheduler", {})
         if auto_sched.get("enabled"):
             self.start_scheduler(interval_s=auto_sched.get("interval_s", self.SCHEDULER_INTERVAL_S))
+
+        # Replay Buffer
+        replay_cfg = cfg.get("replay_buffer", {})
+        replay_max = replay_cfg.get("max_size", 500)
+        replay_path = state_dir / "replay.jsonl" if replay_cfg.get("persist", True) else None
+        self.replay = ReplayBuffer(max_size=replay_max, persist_path=replay_path)
+
+        # A/B Experiment Tracker
+        exp_dir = state_dir / "experiments"
+        self.experiments = ExperimentTracker(experiments_dir=exp_dir)
+
+        # Prometheus Exporter
+        self.prom = PrometheusExporter()
+        self._init_prom_metrics()
+        # 復元した状態から gauge を設定
+        self.prom.set("rl_cycle_count", float(self._cycle_count))
+        self.prom.set("rl_current_difficulty", float(
+            ["concrete", "guided", "standard", "abstract"].index(
+                self.evolution.current_difficulty.value
+            )
+        ))
+
+    # ═══════════════════════════════════════════════════════
+    # Prometheus メトリクス初期化
+    # ═══════════════════════════════════════════════════════
+    def _init_prom_metrics(self) -> None:
+        """Prometheus メトリクス定義を登録"""
+        self.prom.register("rl_cycles_total", "counter", "Total completed RL cycles")
+        self.prom.register("rl_cycle_count", "gauge", "Current cycle count")
+        self.prom.register("rl_current_difficulty", "gauge", "Current difficulty level (0=concrete..3=abstract)")
+        self.prom.register("rl_score", "histogram", "Task scores distribution")
+        self.prom.register("rl_skills_total", "gauge", "Total learned skills")
+        self.prom.register("rl_replay_buffer_size", "gauge", "Replay buffer current size")
+        self.prom.register("rl_active_experiments", "gauge", "Active A/B experiments")
 
     # ═══════════════════════════════════════════════════════
     # タスクライフサイクル
@@ -173,6 +210,33 @@ class RLAnythingOrchestrator:
         # 永続化: state.json + metrics.jsonl
         self._persist_state()
         self._append_metric(task_id, outcome, score, fb_result, evo_result)
+
+        # Replay Buffer に追加
+        actions = record.actions if hasattr(record, "actions") else []
+        self.replay.push(Experience(
+            task_id=task_id,
+            outcome=outcome,
+            score=score,
+            difficulty=self.evolution.current_difficulty.value,
+            cycle=self._cycle_count,
+            tool_count=len(actions),
+            error_count=sum(1 for a in actions if a.error),
+            skills_used=record.skills_used if hasattr(record, "skills_used") else [],
+        ))
+
+        # Prometheus メトリクス更新
+        self.prom.inc("rl_cycles_total", labels={"outcome": outcome})
+        self.prom.set("rl_cycle_count", float(self._cycle_count))
+        self.prom.observe("rl_score", score, labels={"outcome": outcome})
+        diff_idx = ["concrete", "guided", "standard", "abstract"].index(
+            self.evolution.current_difficulty.value
+        )
+        self.prom.set("rl_current_difficulty", float(diff_idx))
+        self.prom.set("rl_skills_total", float(len(self.evolution.skills)))
+        self.prom.set("rl_replay_buffer_size", float(self.replay.size))
+        self.prom.set("rl_active_experiments", float(
+            self.experiments.get_stats().get("active_experiments", 0)
+        ))
 
         # イベント発火
         self._emit_event("cycle_completed", {

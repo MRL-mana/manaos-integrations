@@ -142,6 +142,10 @@ function RLView({ rl, apiBase }) {
   const [historyErr, setHistoryErr] = useState('')
   const [analyticsData, setAnalyticsData] = useState(null)
   const [analyticsErr, setAnalyticsErr] = useState('')
+  const [replayStats, setReplayStats] = useState(null)
+  const [replaySamples, setReplaySamples] = useState(null)
+  const [experimentsData, setExperimentsData] = useState(null)
+  const [expCompare, setExpCompare] = useState(null)
 
   async function fetchLiveDashboard() {
     if (busyOp) return
@@ -259,6 +263,38 @@ function RLView({ rl, apiBase }) {
     finally { setBusyOp('') }
   }
 
+  async function fetchReplayStats() {
+    if (busyOp) return
+    setBusyOp('replay')
+    try {
+      const r = await fetchJson('/api/rl/replay/stats')
+      if (r?.ok) setReplayStats(r)
+    } catch (e) { /* ignore */ }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchReplaySamples(prioritized = false) {
+    if (busyOp) return
+    setBusyOp('replay-sample')
+    try {
+      const r = await fetchJson(`/api/rl/replay/sample?n=8&prioritized=${prioritized}`)
+      if (r?.ok) setReplaySamples(r.samples || [])
+    } catch (e) { /* ignore */ }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchExperiments() {
+    if (busyOp) return
+    setBusyOp('experiments')
+    try {
+      const r = await fetchJson('/api/rl/experiments')
+      if (r?.ok) setExperimentsData(r)
+      const c = await fetchJson('/api/rl/experiments/compare?min_samples=2')
+      if (c?.ok) setExpCompare(c)
+    } catch (e) { /* ignore */ }
+    finally { setBusyOp('') }
+  }
+
   const display = liveData || rl
 
   return (
@@ -338,10 +374,10 @@ function RLView({ rl, apiBase }) {
         </div>
         <div className="boxBody">
           <div className="kv"><span>TASK ID</span>
-            <span><input className="input" value={taskId} onChange={(e) => setTaskId(e.target.value)} placeholder="task-001 (空なら自動生成)" aria-label="タスクID" style={{ marginTop: 0 }} /></span>
+            <span><input className="input inputFlush" value={taskId} onChange={(e) => setTaskId(e.target.value)} placeholder="task-001 (空なら自動生成)" aria-label="タスクID" /></span>
           </div>
           <div className="kv"><span>DESCRIPTION</span>
-            <span><input className="input" value={taskDesc} onChange={(e) => setTaskDesc(e.target.value)} placeholder="タスクの説明" aria-label="タスクの説明" style={{ marginTop: 0 }} /></span>
+            <span><input className="input inputFlush" value={taskDesc} onChange={(e) => setTaskDesc(e.target.value)} placeholder="タスクの説明" aria-label="タスクの説明" /></span>
           </div>
           <div className="skillActions">
             <button className="link" onClick={runTaskBegin} disabled={!!busyOp}>{busyOp === 'begin' ? '開始中…' : '▶ タスク開始'}</button>
@@ -444,7 +480,7 @@ function RLView({ rl, apiBase }) {
                 </Box>
                 <Box title="サマリ">
                   <div className="kv"><span>総サイクル</span><span className="mono">{analyticsData.total_cycles ?? 0}</span></div>
-                  <div className="kv"><span>スコア中央値</span><span className="mono">{analyticsData.score_series?.length > 0 ? Number(analyticsData.score_series.sort((a,b) => a - b)[Math.floor(analyticsData.score_series.length / 2)]).toFixed(3) : '—'}</span></div>
+                  <div className="kv"><span>スコア中央値</span><span className="mono">{analyticsData.score_series?.length > 0 ? Number(analyticsData.score_series.slice().sort((a,b) => a - b)[Math.floor(analyticsData.score_series.length / 2)]).toFixed(3) : '—'}</span></div>
                 </Box>
               </div>
               {analyticsData.score_series && analyticsData.score_series.length >= 2 ? (
@@ -463,6 +499,104 @@ function RLView({ rl, apiBase }) {
           ) : (
             <div className="small">ボタンを押すとローリング統計・推移チャートを表示</div>
           )}
+        </div>
+      </div>
+
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">REPLAY BUFFER</span>
+          <span>経験リプレイ</span>
+          <span className="small">/api/rl/replay</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" onClick={fetchReplayStats} disabled={!!busyOp}>{busyOp === 'replay' ? '取得中…' : '📦 バッファ統計'}</button>
+            <button className="link" onClick={() => fetchReplaySamples(false)} disabled={!!busyOp}>🎲 ランダムサンプル</button>
+            <button className="link" onClick={() => fetchReplaySamples(true)} disabled={!!busyOp}>⚡ 優先サンプル</button>
+          </div>
+          {replayStats ? (
+            <div className="grid" style={{ marginTop: 8 }}>
+              <Box title="バッファ状態">
+                <div className="kv"><span>サイズ</span><span className="mono">{replayStats.size} / {replayStats.max_size}</span></div>
+                <div className="kv"><span>累計Push</span><span className="mono">{replayStats.total_pushed}</span></div>
+                <div className="kv"><span>平均スコア</span><span className="mono">{Number(replayStats.avg_score || 0).toFixed(3)}</span></div>
+                <div className="kv"><span>平均優先度</span><span className="mono">{Number(replayStats.avg_priority || 0).toFixed(3)}</span></div>
+              </Box>
+              {replayStats.outcome_distribution ? (
+                <Box title="Outcome分布">
+                  {Object.entries(replayStats.outcome_distribution).map(([k, v]) => (
+                    <div key={k} className="kv"><span className={k === 'success' ? 'ok' : k === 'failure' ? 'danger' : 'caution'}>{k}</span><span className="mono">{v}</span></div>
+                  ))}
+                </Box>
+              ) : null}
+            </div>
+          ) : <div className="small">ボタンを押すと Replay Buffer 統計を表示</div>}
+          {replaySamples && replaySamples.length > 0 ? (
+            <div style={{ marginTop: 8, maxHeight: 200, overflowY: 'auto' }}>
+              <table className="simple-table" style={{ fontSize: 11, width: '100%' }}>
+                <thead><tr><th>task</th><th>outcome</th><th>score</th><th>diff</th><th>prio</th></tr></thead>
+                <tbody>
+                  {replaySamples.map((s, i) => (
+                    <tr key={i}>
+                      <td className="mono">{String(s.task_id).slice(0, 16)}</td>
+                      <td className={s.outcome === 'success' ? 'ok' : s.outcome === 'failure' ? 'danger' : 'caution'}>{s.outcome}</td>
+                      <td className="mono">{Number(s.score).toFixed(3)}</td>
+                      <td>{s.difficulty}</td>
+                      <td className="mono">{Number(s.priority).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">A/B EXPERIMENTS</span>
+          <span>実験トラッカー</span>
+          <span className="small">/api/rl/experiments</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" onClick={fetchExperiments} disabled={!!busyOp}>{busyOp === 'experiments' ? '取得中…' : '🧪 実験一覧'}</button>
+          </div>
+          {experimentsData ? (
+            <div style={{ marginTop: 8 }}>
+              <div className="kv"><span>総実験数</span><span className="mono">{experimentsData.total_experiments}</span></div>
+              <div className="kv"><span>アクティブ</span><span className="mono">{experimentsData.active_experiments}</span></div>
+              <div className="kv"><span>総結果数</span><span className="mono">{experimentsData.total_results}</span></div>
+              {experimentsData.experiments && experimentsData.experiments.length > 0 ? (
+                <table className="simple-table" style={{ fontSize: 11, width: '100%', marginTop: 8 }}>
+                  <thead><tr><th>ID</th><th>名前</th><th>N</th><th>成功率</th><th>平均スコア</th><th>状態</th></tr></thead>
+                  <tbody>
+                    {experimentsData.experiments.map((e, i) => (
+                      <tr key={i}>
+                        <td className="mono">{e.exp_id}</td>
+                        <td>{e.name}</td>
+                        <td className="mono">{e.sample_count}</td>
+                        <td className="mono">{(e.success_rate * 100).toFixed(1)}%</td>
+                        <td className="mono">{Number(e.avg_score).toFixed(3)}</td>
+                        <td className={e.active ? 'ok' : 'small'}>{e.active ? 'active' : 'concluded'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : <div className="small">実験なし</div>}
+            </div>
+          ) : <div className="small">ボタンを押すと A/B 実験一覧を表示</div>}
+          {expCompare && expCompare.experiments && expCompare.experiments.length > 0 ? (
+            <div style={{ marginTop: 8 }}>
+              <div className="small" style={{ marginBottom: 4 }}>横比較レポート</div>
+              {expCompare.experiments.map((e, i) => (
+                <div key={i} className="kv" style={{ borderLeft: `3px solid ${e.status === 'ready' ? 'var(--ok)' : 'var(--caution)'}`, paddingLeft: 8, marginBottom: 4 }}>
+                  <span>{e.name} ({e.exp_id})</span>
+                  <span className="mono">{e.status === 'ready' ? `${(e.success_rate * 100).toFixed(1)}% / ${Number(e.avg_score).toFixed(3)} ±${Number(e.score_stddev || 0).toFixed(3)}` : 'データ不足'}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -690,9 +824,9 @@ export default function App() {
         </div>
         {loading ? <div className="loading" role="status" aria-live="polite">更新中…</div> : null}
         {err ? (
-          <div className="err" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div className="err errRow" role="alert">
             <span>{err}</span>
-            <button className="link" onClick={() => setErr('')} style={{ flexShrink: 0 }} aria-label="エラーを閉じる">✕</button>
+            <button className="link" onClick={() => setErr('')} aria-label="エラーを閉じる">✕</button>
           </div>
         ) : null}
       </header>
@@ -782,7 +916,7 @@ function OutputBlock({ text, onClear }) {
     }).catch(() => {})
   }
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="outputWrap">
       <pre className="output">{text}</pre>
       <div className="outputActions">
         <button className="link" onClick={handleCopy} aria-label="出力をクリップボードにコピー">{copied ? 'コピー済' : 'コピー'}</button>
@@ -958,7 +1092,7 @@ function PartyView({ services }) {
           <div>ID</div><div>NAME</div><div>KIND</div><div>PORT</div><div>STATUS</div><div>DETAIL</div>
         </div>
         {list.map((s) => (
-          <div key={s.id} className="tr" style={s.alive ? undefined : { background: 'rgba(255,107,107,0.08)' }}>
+          <div key={s.id} className={s.alive ? 'tr' : 'tr trDanger'}>
             <div className="mono">{s.id}</div>
             <div>{s.name}</div>
             <div className="mono">{s.kind}</div>
@@ -1018,7 +1152,7 @@ function BestiaryView({ models }) {
   return (
     <div>
       <div className="panelTitle">図鑑（モデル） <span className="small">{filtered.length}/{list.length}件 / {types.length}タイプ</span></div>
-      <input className="input" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="フィルター（名前/ID/タグで絞り込み）" aria-label="モデルフィルター" style={{ marginBottom: 12, maxWidth: 400 }} />
+      <input className="input filterInput" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="フィルター（名前/ID/タグで絞り込み）" aria-label="モデルフィルター" />
       {list.length === 0 ? (
         <div className="small">モデルが見つかりません（Ollama / registry を確認）</div>
       ) : null}
@@ -1034,7 +1168,7 @@ function BestiaryView({ models }) {
               <div>ID</div><div>NAME</div><div>TYPE</div><div>VER</div><div>QUANT</div><div>VRAM</div><div>TAGS</div>
             </div>
             {(byType.get(t) || []).map((m) => (
-              <div key={m.id} className="tr" style={{ gridTemplateColumns: '1.2fr 1.5fr 0.7fr 0.5fr 0.6fr 0.7fr 1.8fr', ...(m.loaded ? { background: 'rgba(124,255,107,0.06)' } : {}) }}>
+              <div key={m.id} className={`tr${m.loaded ? ' trLoaded' : ''}`} style={{ gridTemplateColumns: '1.2fr 1.5fr 0.7fr 0.5fr 0.6fr 0.7fr 1.8fr' }}>
                 <div className="mono">{m.id}</div>
                 <div>{m.name}</div>
                 <div className="mono">{m.type}</div>
@@ -1665,7 +1799,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
               <div>CATEGORY</div><div>TOOL</div><div>TYPE</div><div>AVAILABLE</div><div>KEY</div>
             </div>
             {toolRows.map((r, i) => (
-              <div key={i} className="tr" style={{ gridTemplateColumns: '1.5fr 2fr 0.7fr 1.2fr 1.5fr', ...(r.availability === 'NO' || r.availability === 'AUTH' ? { background: 'rgba(255,107,107,0.08)' } : {}) }}>
+              <div key={i} className={`tr${r.availability === 'NO' || r.availability === 'AUTH' ? ' trDanger' : ''}`} style={{ gridTemplateColumns: '1.5fr 2fr 0.7fr 1.2fr 1.5fr' }}>
                 <div>{r.cat}</div>
                 <div>{r.tool}</div>
                 <div className="mono">{r.type}</div>
@@ -1753,7 +1887,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           <span className="small">統合APIをRPG backend経由で参照</span>
         </div>
         <div className="boxBody">
-          <div className="skillActions" style={{ flexWrap: 'wrap' }}>
+          <div className="skillActions">
             <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('comfyui_queue')}>{busyOp === 'monitor' ? '…' : 'ComfyUI queue'}</button>
             <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('comfyui_history')}>ComfyUI history</button>
             <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('svi_queue')}>SVI queue</button>
@@ -1841,7 +1975,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
 
           <div className="kv" style={{ marginTop: 10 }}><span>QUERY</span>
             <span>
-              <input className="input" value={memoryQuery} onChange={(e) => setMemoryQuery(e.target.value)} placeholder="memory recall query（必須）" />
+              <input className="input" value={memoryQuery} onChange={(e) => setMemoryQuery(e.target.value)} placeholder="memory recall query（必須）" aria-label="メモリ検索クエリ" />
             </span>
           </div>
           <div className="kv"><span>SCOPE</span>
@@ -1855,7 +1989,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           </div>
           <div className="kv"><span>LIMIT</span>
             <span>
-              <input className="input" type="number" min={1} max={50} value={memoryLimit} onChange={(e) => setMemoryLimit(Number(e.target.value) || 1)} style={{ width: 120 }} />
+              <input className="input" type="number" min={1} max={50} value={memoryLimit} onChange={(e) => setMemoryLimit(Number(e.target.value) || 1)} aria-label="メモリ検索件数" style={{ width: 120 }} />
             </span>
           </div>
           <div className="skillActions">
@@ -1866,7 +2000,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
 
           <div className="hr" />
 
-          <div className="sectionHead" style={{ marginTop: 0 }}>
+          <div className="sectionHead">
             <span className="mono">MEMORY</span>
             <span>保存（POST）</span>
             <span className="small">/api/unified/memory/store</span>
@@ -1891,7 +2025,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
 
           <div className="hr" />
 
-          <div className="sectionHead" style={{ marginTop: 0 }}>
+          <div className="sectionHead">
             <span className="mono">NOTIFY</span>
             <span>通知送信（POST）</span>
             <span className="small">/api/unified/notify/send</span>
@@ -1923,7 +2057,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
 
           <div className="kv"><span>JOB ID</span>
             <span>
-              <input className="input" value={notifyJobId} onChange={(e) => setNotifyJobId(e.target.value)} placeholder="notifyjob_..." />
+              <input className="input" value={notifyJobId} onChange={(e) => setNotifyJobId(e.target.value)} placeholder="notifyjob_..." aria-label="通知ジョブID" />
             </span>
           </div>
           <div className="skillActions">
@@ -1954,7 +2088,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
 
           <div className="hr" />
 
-          <div className="sectionHead" style={{ marginTop: 0 }}>
+          <div className="sectionHead">
             <span className="mono">ANALYZE</span>
             <span>難易度分析（POST）</span>
             <span className="small">/api/unified/llm/analyze</span>
@@ -2046,10 +2180,10 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
                       <div>
                         {it.label}
                         {it.integration_key && !unifiedOk ? (
-                          <span className="caution" style={{ marginLeft: 10 }}>AUTH?</span>
+                          <span className="caution ml">AUTH?</span>
                         ) : null}
                         {it.integration_key && unifiedData?.[it.integration_key] ? (
-                          <span className={unifiedData[it.integration_key]?.available ? 'ok' : 'danger'} style={{ marginLeft: 10 }}>
+                          <span className={`${unifiedData[it.integration_key]?.available ? 'ok' : 'danger'} ml`}>
                             {unifiedData[it.integration_key]?.available ? 'AVAILABLE' : 'UNAVAILABLE'}
                           </span>
                         ) : null}
@@ -2210,7 +2344,7 @@ function SystemsView({ unified, onRunAction, actionResult, actionsEnabled, runni
               <div>KEY</div><div>NAME</div><div>AVAILABLE</div><div>REASON</div>
             </div>
             {rows.map((x) => (
-              <div key={x.key} className="tr" style={{ gridTemplateColumns: '1.5fr 2fr 0.8fr 2.5fr', ...(x.available ? {} : { background: 'rgba(255,107,107,0.08)' }) }}>
+              <div key={x.key} className={`tr${x.available ? '' : ' trDanger'}`} style={{ gridTemplateColumns: '1.5fr 2fr 0.8fr 2.5fr' }}>
                 <div className="mono">{x.key}</div>
                 <div>{x.name || '—'}</div>
                 <div className={x.available ? 'ok' : 'danger'}>{x.available ? 'YES' : 'NO'}</div>
@@ -2330,9 +2464,9 @@ function LogsView({ events, onRefresh }) {
         <button className="link" onClick={onRefresh}>再読込</button>
         <span className="small">{filtered.length}/{list.length}件</span>
       </div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-        <input className="input" value={logFilter} onChange={(e) => setLogFilter(e.target.value)} placeholder="テキストで絞り込み" aria-label="ログ検索" style={{ marginTop: 0, maxWidth: 280 }} />
-        <select value={logTypeFilter} onChange={(e) => setLogTypeFilter(e.target.value)} aria-label="ログタイプフィルター" style={{ padding: '4px 6px' }}>
+      <div className="filterBar">
+        <input className="input inputFlush filterInput" value={logFilter} onChange={(e) => setLogFilter(e.target.value)} placeholder="テキストで絞り込み" aria-label="ログ検索" />
+        <select value={logTypeFilter} onChange={(e) => setLogTypeFilter(e.target.value)} aria-label="ログタイプフィルター">
           <option value="">全タイプ</option>
           {logTypes.map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
@@ -2368,7 +2502,7 @@ function MapView({ devices }) {
             <div>ID</div><div>NAME</div><div>KIND</div><div>STATUS</div><div>TAGS</div>
           </div>
           {list.map((d) => (
-            <div key={d.id} className="tr" style={{ gridTemplateColumns: '1.2fr 2fr 1fr 0.8fr 2fr', ...(typeof d.alive === 'boolean' && !d.alive ? { background: 'rgba(255,107,107,0.08)' } : {}) }}>
+            <div key={d.id} className={`tr${typeof d.alive === 'boolean' && !d.alive ? ' trDanger' : ''}`} style={{ gridTemplateColumns: '1.2fr 2fr 1fr 0.8fr 2fr' }}>
               <div className="mono">{d.id}</div>
               <div>{d.name}</div>
               <div className="mono">{d.kind}</div>
