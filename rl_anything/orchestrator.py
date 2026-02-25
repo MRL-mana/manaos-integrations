@@ -43,6 +43,9 @@ from .evolution_engine import EvolutionEngine
 from .replay_buffer import ReplayBuffer, Experience
 from .experiment_tracker import ExperimentTracker
 from .metrics_export import PrometheusExporter
+from .auto_curriculum import AutoCurriculum
+from .replay_evaluator import ReplayEvaluator
+from .anomaly_detector import AnomalyDetector
 
 _DIR = Path(__file__).parent
 _STATE_DIR = _DIR.parent / "logs" / "rl_anything"
@@ -120,6 +123,16 @@ class RLAnythingOrchestrator:
             )
         ))
 
+        # Auto-Curriculum Engine
+        self.curriculum = AutoCurriculum(config=cfg)
+
+        # Replay Evaluator
+        scoring_criteria = cfg.get("reward_model", {}).get("scoring_criteria", {})
+        self.replay_evaluator = ReplayEvaluator(scoring_criteria=scoring_criteria)
+
+        # Anomaly Detector
+        self.anomaly_detector = AnomalyDetector(config=cfg)
+
     # ═══════════════════════════════════════════════════════
     # Prometheus メトリクス初期化
     # ═══════════════════════════════════════════════════════
@@ -132,6 +145,8 @@ class RLAnythingOrchestrator:
         self.prom.register("rl_skills_total", "gauge", "Total learned skills")
         self.prom.register("rl_replay_buffer_size", "gauge", "Replay buffer current size")
         self.prom.register("rl_active_experiments", "gauge", "Active A/B experiments")
+        self.prom.register("rl_alerts_total", "counter", "Total anomaly alerts fired")
+        self.prom.register("rl_curriculum_changes", "counter", "Auto-curriculum difficulty changes")
 
     # ═══════════════════════════════════════════════════════
     # タスクライフサイクル
@@ -258,6 +273,32 @@ class RLAnythingOrchestrator:
                 "total": len(self.evolution.skills),
                 "cycle": self._cycle_count,
             })
+
+        # ──── Auto-Curriculum 判定 ────
+        history = self.get_history(limit=100)
+        if len(history) >= 3:
+            rec = self.curriculum.recommend(
+                history, self.evolution.current_difficulty,
+                replay_stats=self.replay.get_stats(),
+            )
+            if rec.changed and rec.confidence >= 0.5:
+                self.evolution.current_difficulty = rec.recommended
+                self._persist_state()
+                self.prom.inc("rl_curriculum_changes")
+                self._emit_event("auto_curriculum", rec.to_dict())
+                result["auto_curriculum"] = rec.to_dict()
+
+        # ──── Anomaly Detection ────
+        alerts = self.anomaly_detector.check(history)
+        if alerts:
+            for a in alerts:
+                self.prom.inc("rl_alerts_total", labels={"type": a.alert_type, "severity": a.severity})
+            self._emit_event("anomaly_alerts", {
+                "count": len(alerts),
+                "alerts": [a.to_dict() for a in alerts],
+                "cycle": self._cycle_count,
+            })
+            result["alerts"] = [a.to_dict() for a in alerts]
 
         return result
 

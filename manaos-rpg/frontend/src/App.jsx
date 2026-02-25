@@ -146,6 +146,9 @@ function RLView({ rl, apiBase }) {
   const [replaySamples, setReplaySamples] = useState(null)
   const [experimentsData, setExperimentsData] = useState(null)
   const [expCompare, setExpCompare] = useState(null)
+  const [curriculumData, setCurriculumData] = useState(null)
+  const [replayEvalData, setReplayEvalData] = useState(null)
+  const [alertsData, setAlertsData] = useState(null)
 
   async function fetchLiveDashboard() {
     if (busyOp) return
@@ -295,6 +298,46 @@ function RLView({ rl, apiBase }) {
     finally { setBusyOp('') }
   }
 
+  async function fetchCurriculum() {
+    if (busyOp) return
+    setBusyOp('curriculum')
+    try {
+      const r = await fetchJson('/api/rl/curriculum/recommend')
+      if (r?.ok !== undefined) setCurriculumData(r)
+    } catch (e) { /* ignore */ }
+    finally { setBusyOp('') }
+  }
+
+  async function applyCurriculum() {
+    if (busyOp) return
+    setBusyOp('curriculum_apply')
+    try {
+      const r = await fetchJson('/api/rl/curriculum/apply', { method: 'POST' })
+      if (r?.ok !== undefined) setCurriculumData(r)
+    } catch (e) { /* ignore */ }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchReplayEval() {
+    if (busyOp) return
+    setBusyOp('replay_eval')
+    try {
+      const r = await fetchJson('/api/rl/replay/evaluate?sample_size=30&prioritized=true')
+      if (r?.ok !== undefined) setReplayEvalData(r)
+    } catch (e) { /* ignore */ }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchAlerts() {
+    if (busyOp) return
+    setBusyOp('alerts')
+    try {
+      const r = await fetchJson('/api/rl/alerts/check', { method: 'POST' })
+      if (r?.ok !== undefined) setAlertsData(r)
+    } catch (e) { /* ignore */ }
+    finally { setBusyOp('') }
+  }
+
   const display = liveData || rl
 
   return (
@@ -351,11 +394,11 @@ function RLView({ rl, apiBase }) {
           <div className="small">まだスキルが抽出されていません（タスクを3回以上完了すると自動抽出）</div>
         ) : (
           <div className="table">
-            <div className="tr th" style={{ gridTemplateColumns: '2fr 3fr 0.8fr 0.8fr' }}>
+            <div className="tr th colsRlSkills">
               <div>NAME</div><div>DESCRIPTION</div><div>SUCCESS</div><div>SAMPLES</div>
             </div>
             {skills.map((s) => (
-              <div key={s.skill_id || s.name} className="tr" style={{ gridTemplateColumns: '2fr 3fr 0.8fr 0.8fr' }}>
+              <div key={s.skill_id || s.name} className="tr colsRlSkills">
                 <div className="mono">{s.name}</div>
                 <div className="small">{s.description}</div>
                 <div className={Number(s.success_rate || 0) >= 0.7 ? 'ok' : 'caution'}>{((s.success_rate ?? 0) * 100).toFixed(0)}%</div>
@@ -420,11 +463,11 @@ function RLView({ rl, apiBase }) {
           {historyData && historyData.length > 0 ? (
             <div>
               <div className="table">
-                <div className="tr th" style={{ gridTemplateColumns: '0.5fr 1.5fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr' }}>
+                <div className="tr th colsRlHistory">
                   <div>#</div><div>TASK</div><div>OUTCOME</div><div>SCORE</div><div>DIFF</div><div>SKILLS</div><div>RATE</div>
                 </div>
                 {historyData.slice().reverse().map((h, i) => (
-                  <div key={i} className="tr" style={{ gridTemplateColumns: '0.5fr 1.5fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr' }}>
+                  <div key={i} className="tr colsRlHistory">
                     <div className="mono">{h.cycle ?? '—'}</div>
                     <div className="small" title={h.task_id}>{(h.task_id || '?').slice(0, 24)}</div>
                     <div className={h.outcome === 'success' ? 'ok' : h.outcome === 'failure' ? 'danger' : 'caution'}>{h.outcome}</div>
@@ -435,7 +478,7 @@ function RLView({ rl, apiBase }) {
                   </div>
                 ))}
               </div>
-              <div className="small" style={{ marginTop: 4 }}>直近 {historyData.length} サイクル（新しい順）</div>
+              <div className="small mt4">直近 {historyData.length} サイクル（新しい順）</div>
             </div>
           ) : historyData ? (
             <div className="small">履歴なし（タスクを完了するとここに蓄積）</div>
@@ -460,7 +503,7 @@ function RLView({ rl, apiBase }) {
           {analyticsErr ? <div className="small danger">{analyticsErr}</div> : null}
           {analyticsData ? (
             <div>
-              <div className="grid" style={{ marginTop: 8 }}>
+              <div className="grid mt8">
                 <Box title="Rolling 成功率">
                   {Object.entries(analyticsData.rolling_success_rate || {}).map(([k, v]) => (
                     <div key={k} className="kv"><span>{k}</span><span className={v >= 0.7 ? 'ok' : v >= 0.4 ? 'caution' : 'danger'}>{(v * 100).toFixed(1)}%</span></div>
@@ -484,14 +527,14 @@ function RLView({ rl, apiBase }) {
                 </Box>
               </div>
               {analyticsData.score_series && analyticsData.score_series.length >= 2 ? (
-                <div style={{ marginTop: 8 }}>
-                  <div className="small" style={{ marginBottom: 4 }}>スコア推移（SVGスパークライン）</div>
+                <div className="mt8">
+                  <div className="small mb4">スコア推移（SVGスパークライン）</div>
                   <Sparkline values={analyticsData.score_series} width={400} height={48} color="var(--ok)" />
                 </div>
               ) : null}
               {analyticsData.skill_growth && analyticsData.skill_growth.length >= 2 ? (
-                <div style={{ marginTop: 8 }}>
-                  <div className="small" style={{ marginBottom: 4 }}>スキル成長</div>
+                <div className="mt8">
+                  <div className="small mb4">スキル成長</div>
                   <Sparkline values={analyticsData.skill_growth.map(g => g.skills_total || 0)} width={400} height={36} color="var(--caution)" />
                 </div>
               ) : null}
@@ -515,7 +558,7 @@ function RLView({ rl, apiBase }) {
             <button className="link" onClick={() => fetchReplaySamples(true)} disabled={!!busyOp}>⚡ 優先サンプル</button>
           </div>
           {replayStats ? (
-            <div className="grid" style={{ marginTop: 8 }}>
+            <div className="grid mt8">
               <Box title="バッファ状態">
                 <div className="kv"><span>サイズ</span><span className="mono">{replayStats.size} / {replayStats.max_size}</span></div>
                 <div className="kv"><span>累計Push</span><span className="mono">{replayStats.total_pushed}</span></div>
@@ -532,8 +575,8 @@ function RLView({ rl, apiBase }) {
             </div>
           ) : <div className="small">ボタンを押すと Replay Buffer 統計を表示</div>}
           {replaySamples && replaySamples.length > 0 ? (
-            <div style={{ marginTop: 8, maxHeight: 200, overflowY: 'auto' }}>
-              <table className="simple-table" style={{ fontSize: 11, width: '100%' }}>
+            <div className="mt8 scrollBox">
+              <table className="simple-table tableCompact">
                 <thead><tr><th>task</th><th>outcome</th><th>score</th><th>diff</th><th>prio</th></tr></thead>
                 <tbody>
                   {replaySamples.map((s, i) => (
@@ -563,12 +606,12 @@ function RLView({ rl, apiBase }) {
             <button className="link" onClick={fetchExperiments} disabled={!!busyOp}>{busyOp === 'experiments' ? '取得中…' : '🧪 実験一覧'}</button>
           </div>
           {experimentsData ? (
-            <div style={{ marginTop: 8 }}>
+            <div className="mt8">
               <div className="kv"><span>総実験数</span><span className="mono">{experimentsData.total_experiments}</span></div>
               <div className="kv"><span>アクティブ</span><span className="mono">{experimentsData.active_experiments}</span></div>
               <div className="kv"><span>総結果数</span><span className="mono">{experimentsData.total_results}</span></div>
               {experimentsData.experiments && experimentsData.experiments.length > 0 ? (
-                <table className="simple-table" style={{ fontSize: 11, width: '100%', marginTop: 8 }}>
+                <table className="simple-table tableCompact mt8">
                   <thead><tr><th>ID</th><th>名前</th><th>N</th><th>成功率</th><th>平均スコア</th><th>状態</th></tr></thead>
                   <tbody>
                     {experimentsData.experiments.map((e, i) => (
@@ -587,10 +630,10 @@ function RLView({ rl, apiBase }) {
             </div>
           ) : <div className="small">ボタンを押すと A/B 実験一覧を表示</div>}
           {expCompare && expCompare.experiments && expCompare.experiments.length > 0 ? (
-            <div style={{ marginTop: 8 }}>
-              <div className="small" style={{ marginBottom: 4 }}>横比較レポート</div>
+            <div className="mt8">
+              <div className="small mb4">横比較レポート</div>
               {expCompare.experiments.map((e, i) => (
-                <div key={i} className="kv" style={{ borderLeft: `3px solid ${e.status === 'ready' ? 'var(--ok)' : 'var(--caution)'}`, paddingLeft: 8, marginBottom: 4 }}>
+                <div key={i} className="kv kvBorder" style={{ borderLeft: `3px solid ${e.status === 'ready' ? 'var(--ok)' : 'var(--caution)'}` }}>
                   <span>{e.name} ({e.exp_id})</span>
                   <span className="mono">{e.status === 'ready' ? `${(e.success_rate * 100).toFixed(1)}% / ${Number(e.avg_score).toFixed(3)} ±${Number(e.score_stddev || 0).toFixed(3)}` : 'データ不足'}</span>
                 </div>
@@ -600,7 +643,148 @@ function RLView({ rl, apiBase }) {
         </div>
       </div>
 
-      <div className="small" style={{ marginTop: 12 }}>
+      {/* ───────── AUTO-CURRICULUM (Round 6) ───────── */}
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">AUTO-CURRICULUM</span>
+          <span>適応的難易度調整</span>
+          <span className="small">/api/rl/curriculum</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" onClick={fetchCurriculum} disabled={!!busyOp}>{busyOp === 'curriculum' ? '分析中…' : '📊 推薦を取得'}</button>
+            <button className="link" onClick={applyCurriculum} disabled={!!busyOp}>{busyOp === 'curriculum_apply' ? '適用中…' : '⚡ 推薦を即適用'}</button>
+          </div>
+          {curriculumData ? (
+            <div className="mt8">
+              <div className="kv"><span>現在の難易度</span><span className="mono">{curriculumData.current}</span></div>
+              <div className="kv"><span>推薦</span><span className={`mono ${curriculumData.changed ? 'ok' : ''}`}>{curriculumData.recommended}</span></div>
+              <div className="kv"><span>変更</span><span className={curriculumData.changed ? 'ok' : 'small'}>{curriculumData.changed ? '✅ YES' : 'ステイ'}</span></div>
+              <div className="kv"><span>確信度</span><span className="mono">{(curriculumData.confidence * 100).toFixed(1)}%</span></div>
+              {curriculumData.applied !== undefined && (
+                <div className="kv"><span>適用</span><span className={curriculumData.applied ? 'ok' : 'small'}>{curriculumData.applied ? '✅ 適用済み' : '未適用'}</span></div>
+              )}
+              <div className="small mt4">{curriculumData.reasoning}</div>
+              {curriculumData.signals ? (
+                <div className="mt4">
+                  <div className="small mb4">シグナル</div>
+                  <div className="statsGrid">
+                    {Object.entries(curriculumData.signals).map(([k, v]) => (
+                      <div key={k} className="kv"><span className="small">{k}</span><span className="mono">{typeof v === 'number' ? Number(v).toFixed(4) : String(v)}</span></div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : <div className="small">ボタンを押すとカリキュラム推薦を表示</div>}
+        </div>
+      </div>
+
+      {/* ───────── REPLAY RE-EVALUATION (Round 6) ───────── */}
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">REPLAY RE-EVALUATION</span>
+          <span>過去の経験を再評価</span>
+          <span className="small">/api/rl/replay/evaluate</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" onClick={fetchReplayEval} disabled={!!busyOp}>{busyOp === 'replay_eval' ? '再評価中…' : '🔄 再評価を実行'}</button>
+          </div>
+          {replayEvalData && replayEvalData.ok ? (
+            <div className="mt8">
+              <div className="statsGrid">
+                <div className="kv"><span>評価数</span><span className="mono">{replayEvalData.total_evaluated}</span></div>
+                <div className="kv"><span>平均ドリフト</span><span className={`mono ${replayEvalData.avg_drift > 0.01 ? 'ok' : replayEvalData.avg_drift < -0.01 ? 'err' : ''}`}>{replayEvalData.avg_drift > 0 ? '+' : ''}{Number(replayEvalData.avg_drift).toFixed(4)}</span></div>
+                <div className="kv"><span>スコア上昇</span><span className="mono ok">{replayEvalData.positive_drift_count}</span></div>
+                <div className="kv"><span>スコア低下</span><span className="mono err">{replayEvalData.negative_drift_count}</span></div>
+              </div>
+              {replayEvalData.drift_by_outcome ? (
+                <div className="mt4">
+                  <div className="small mb4">Outcome別ドリフト</div>
+                  {Object.entries(replayEvalData.drift_by_outcome).map(([k, v]) => (
+                    <div key={k} className="kv"><span className="small">{k}</span><span className={`mono ${v > 0.01 ? 'ok' : v < -0.01 ? 'err' : ''}`}>{v > 0 ? '+' : ''}{Number(v).toFixed(4)}</span></div>
+                  ))}
+                </div>
+              ) : null}
+              {replayEvalData.insights && replayEvalData.insights.length > 0 ? (
+                <div className="mt4">
+                  <div className="small mb4">💡 インサイト</div>
+                  {replayEvalData.insights.map((ins, i) => (
+                    <div key={i} className="small" style={{ paddingLeft: '0.5rem', borderLeft: '2px solid var(--accent)', marginBottom: '2px' }}>{ins}</div>
+                  ))}
+                </div>
+              ) : null}
+              {replayEvalData.results && replayEvalData.results.length > 0 ? (
+                <details className="mt4">
+                  <summary className="small">詳細結果 ({replayEvalData.results.length}件)</summary>
+                  <table className="simple-table tableCompact mt4">
+                    <thead><tr><th>Task</th><th>旧スコア</th><th>新スコア</th><th>ドリフト</th><th>理由</th></tr></thead>
+                    <tbody>
+                      {replayEvalData.results.slice(0, 20).map((r, i) => (
+                        <tr key={i}>
+                          <td className="mono">{r.task_id?.substring(0, 16)}</td>
+                          <td className="mono">{Number(r.original_score).toFixed(3)}</td>
+                          <td className="mono">{Number(r.new_score).toFixed(3)}</td>
+                          <td className={`mono ${r.drift > 0.01 ? 'ok' : r.drift < -0.01 ? 'err' : ''}`}>{r.drift > 0 ? '+' : ''}{Number(r.drift).toFixed(3)}</td>
+                          <td className="small">{r.reason}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </details>
+              ) : null}
+            </div>
+          ) : replayEvalData && !replayEvalData.ok ? (
+            <div className="err">{replayEvalData.error || 'エラー'}</div>
+          ) : <div className="small">ボタンを押すとリプレイバッファの経験を再評価</div>}
+        </div>
+      </div>
+
+      {/* ───────── ANOMALY ALERTS (Round 6) ───────── */}
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">ANOMALY DETECTION</span>
+          <span>異常検知 & アラート</span>
+          <span className="small">/api/rl/alerts</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" onClick={fetchAlerts} disabled={!!busyOp}>{busyOp === 'alerts' ? 'チェック中…' : '🚨 異常チェック'}</button>
+          </div>
+          {alertsData && alertsData.ok ? (
+            <div className="mt8">
+              <div className="statsGrid">
+                <div className="kv"><span>総アラート数</span><span className="mono">{alertsData.total_alerts}</span></div>
+                <div className="kv"><span>新規アラート</span><span className={`mono ${alertsData.count > 0 ? 'err' : 'ok'}`}>{alertsData.count}</span></div>
+              </div>
+              {alertsData.by_severity ? (
+                <div className="mt4">
+                  <div className="small mb4">重要度別</div>
+                  {Object.entries(alertsData.by_severity).map(([k, v]) => (
+                    <div key={k} className="kv"><span className={`small ${k === 'critical' ? 'err' : k === 'warning' ? 'caution' : ''}`}>{k}</span><span className="mono">{v}</span></div>
+                  ))}
+                </div>
+              ) : null}
+              {alertsData.recent && alertsData.recent.length > 0 ? (
+                <div className="mt4">
+                  <div className="small mb4">直近アラート</div>
+                  {alertsData.recent.slice(-8).reverse().map((a, i) => (
+                    <div key={i} className="kv kvBorder" style={{ borderLeft: `3px solid ${a.severity === 'critical' ? 'var(--err)' : a.severity === 'warning' ? 'var(--caution)' : 'var(--accent)'}` }}>
+                      <span className="small">[{a.alert_type}] {a.message}</span>
+                      <span className="mono small">{a.severity}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : <div className="small mt4">アラートなし — 正常 ✅</div>}
+            </div>
+          ) : alertsData && !alertsData.ok ? (
+            <div className="err">{alertsData.error || 'エラー'}</div>
+          ) : <div className="small">ボタンを押すとパフォーマンス異常をチェック</div>}
+        </div>
+      </div>
+
+      <div className="small mt12">
         Princeton RLAnything (Policy×Reward×Environment 同時最適化) — MEMORY.md 自動更新 / スキル自動抽出 / 難易度自動調整
       </div>
     </div>
@@ -898,9 +1082,9 @@ export default function App() {
   )
 }
 
-function Box({ title, children, style }) {
+function Box({ title, children, style, className }) {
   return (
-    <div className="box" style={style}>
+    <div className={`box${className ? ' ' + className : ''}`} style={style}>
       <div className="boxTitle">{title}</div>
       <div className="boxBody">{children}</div>
     </div>
@@ -1017,7 +1201,7 @@ function StatusView({ host, nextActions, nextActionHints, onRunAction, actionRes
         <div className="kv"><span>RX</span><span>{fmtBytes(host?.net?.bytes_recv)}</span></div>
       </Box>
 
-      <Box title="次の一手" style={{ gridColumn: '1 / -1' }}>
+      <Box title="次の一手" className="fullSpan">
         {hints.length > 0 ? (
           <div>
             {hints.map((h, i) => (
@@ -1047,7 +1231,7 @@ function StatusView({ host, nextActions, nextActionHints, onRunAction, actionRes
         )}
 
         {actionResult ? (
-          <div style={{ marginTop: 10 }}>
+          <div className="mt10">
             <div className="small">直近アクション結果</div>
             <div className="kv"><span>ID</span><span className="mono">{actionResult.action_id}</span></div>
             <div className="kv"><span>結果</span><span className={actionResult.result?.ok ? 'ok' : 'danger'}>{actionResult.result?.ok ? 'OK' : 'NG'}</span></div>
@@ -1164,11 +1348,11 @@ function BestiaryView({ models }) {
             <span className="small">{byType.get(t)?.length ?? 0}件</span>
           </div>
           <div className="table">
-            <div className="tr th" style={{ gridTemplateColumns: '1.2fr 1.5fr 0.7fr 0.5fr 0.6fr 0.7fr 1.8fr' }}>
+            <div className="tr th colsBestiary">
               <div>ID</div><div>NAME</div><div>TYPE</div><div>VER</div><div>QUANT</div><div>VRAM</div><div>TAGS</div>
             </div>
             {(byType.get(t) || []).map((m) => (
-              <div key={m.id} className={`tr${m.loaded ? ' trLoaded' : ''}`} style={{ gridTemplateColumns: '1.2fr 1.5fr 0.7fr 0.5fr 0.6fr 0.7fr 1.8fr' }}>
+              <div key={m.id} className={`tr colsBestiary${m.loaded ? ' trLoaded' : ''}`}>
                 <div className="mono">{m.id}</div>
                 <div>{m.name}</div>
                 <div className="mono">{m.type}</div>
@@ -1794,12 +1978,12 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         </div>
         <div className="boxBody">
           <div className="small">Unified integrations/status: {unifiedOk ? <span className="ok">OK</span> : <span className="danger">NG</span>}</div>
-          <div className="table" style={{ marginTop: 10 }}>
-            <div className="tr th" style={{ gridTemplateColumns: '1.5fr 2fr 0.7fr 1.2fr 1.5fr' }}>
+          <div className="table mt10">
+            <div className="tr th colsTools">
               <div>CATEGORY</div><div>TOOL</div><div>TYPE</div><div>AVAILABLE</div><div>KEY</div>
             </div>
             {toolRows.map((r, i) => (
-              <div key={i} className={`tr${r.availability === 'NO' || r.availability === 'AUTH' ? ' trDanger' : ''}`} style={{ gridTemplateColumns: '1.5fr 2fr 0.7fr 1.2fr 1.5fr' }}>
+              <div key={i} className={`tr colsTools${r.availability === 'NO' || r.availability === 'AUTH' ? ' trDanger' : ''}`}>
                 <div>{r.cat}</div>
                 <div>{r.tool}</div>
                 <div className="mono">{r.type}</div>
@@ -1825,7 +2009,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           <span className="small">/api/ollama/generate</span>
         </div>
         <div className="boxBody">
-          {ollamaModelErr ? <div className="small danger" style={{ marginBottom: 6 }}>{ollamaModelErr}</div> : null}
+          {ollamaModelErr ? <div className="small danger mb6">{ollamaModelErr}</div> : null}
           {ollamaTemplates.length ? (
             <div className="kv"><span>TEMPLATE</span>
               <span>
@@ -1973,7 +2157,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
             {' / '}write_gate: {unifiedWriteEnabled ? <span className="ok">ON</span> : <span className="caution">OFF</span>}
           </div>
 
-          <div className="kv" style={{ marginTop: 10 }}><span>QUERY</span>
+          <div className="kv mt10"><span>QUERY</span>
             <span>
               <input className="input" value={memoryQuery} onChange={(e) => setMemoryQuery(e.target.value)} placeholder="memory recall query（必須）" aria-label="メモリ検索クエリ" />
             </span>
@@ -1989,7 +2173,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           </div>
           <div className="kv"><span>LIMIT</span>
             <span>
-              <input className="input" type="number" min={1} max={50} value={memoryLimit} onChange={(e) => setMemoryLimit(Number(e.target.value) || 1)} aria-label="メモリ検索件数" style={{ width: 120 }} />
+              <input className="input inputNarrow" type="number" min={1} max={50} value={memoryLimit} onChange={(e) => setMemoryLimit(Number(e.target.value) || 1)} aria-label="メモリ検索件数" />
             </span>
           </div>
           <div className="skillActions">
@@ -2245,7 +2429,7 @@ function SystemsView({ unified, onRunAction, actionResult, actionsEnabled, runni
       ) : null}
 
       {health || openapi ? (
-        <div className="sectionBlock" style={{ marginTop: 10 }}>
+        <div className="sectionBlock mt10">
           <div className="sectionHead">
             <span className="mono">MCP</span>
             <span>Unified health / openapi</span>
@@ -2265,7 +2449,7 @@ function SystemsView({ unified, onRunAction, actionResult, actionsEnabled, runni
             )}
 
             {openapi ? (
-              <div style={{ marginTop: 10 }}>
+              <div className="mt10">
                 <div className="kv"><span>title</span><span className="mono">{String(openapi.title || '—')}</span></div>
                 <div className="kv"><span>version</span><span className="mono">{String(openapi.version || '—')}</span></div>
                 <div className="kv"><span>paths</span><span className="mono">{String(openapi.paths_count ?? '—')}</span></div>
@@ -2274,13 +2458,13 @@ function SystemsView({ unified, onRunAction, actionResult, actionsEnabled, runni
                 ) : null}
               </div>
             ) : (
-              <div className="small" style={{ marginTop: 10 }}>openapi: —</div>
+              <div className="small mt10">openapi: —</div>
             )}
           </div>
         </div>
       ) : null}
 
-      <div className="sectionBlock" style={{ marginTop: 10 }}>
+      <div className="sectionBlock mt10">
         <div className="sectionHead">
           <span className="mono">MRL</span>
           <span>mrl-memory status</span>
@@ -2290,7 +2474,7 @@ function SystemsView({ unified, onRunAction, actionResult, actionsEnabled, runni
           <div className="small">base: <span className="mono">{String(mrlBase || '—')}</span></div>
           <div className="small">health: {mrlOk ? <span className="ok">OK</span> : <span className="danger">NG</span>}</div>
           {mrlHealth ? (
-            <div style={{ marginTop: 8 }}>
+            <div className="mt8">
               <div className="kv"><span>service</span><span className="mono">{String(mrlHealth.service || '—')}</span></div>
               <div className="kv"><span>status</span><span className={String(mrlHealth.status) === 'healthy' ? 'ok' : 'caution'}>{String(mrlHealth.status || '—')}</span></div>
               {typeof mrlHealth.auth_required !== 'undefined' ? (
@@ -2299,13 +2483,13 @@ function SystemsView({ unified, onRunAction, actionResult, actionsEnabled, runni
             </div>
           ) : null}
           {mrlCfg ? (
-            <div style={{ marginTop: 8 }}>
+            <div className="mt8">
               <div className="kv"><span>write_mode</span><span className="mono">{String(mrlCfg.write_mode || '—')}</span></div>
               <div className="kv"><span>write_enabled</span><span className="mono">{String(mrlCfg.write_enabled || '—')}</span></div>
             </div>
           ) : null}
 
-          <div className="skillActions" style={{ marginTop: 10 }}>
+          <div className="skillActions mt10">
             <button
               className="link"
               disabled={actionsEnabled === false || !!runningAction}
@@ -2324,7 +2508,7 @@ function SystemsView({ unified, onRunAction, actionResult, actionsEnabled, runni
           </div>
 
           {actionResult?.action_id === 'mrl_memory_write_on_full' || actionResult?.action_id === 'mrl_memory_write_off' ? (
-            <div className="sectionBlock" style={{ marginTop: 8 }}>
+            <div className="sectionBlock mt8">
               <div className="small">last action: <span className="mono">{String(actionResult.action_id || '—')}</span></div>
               <div className="small">ok: {String(Boolean(actionResult?.result?.ok))}</div>
             </div>
@@ -2333,18 +2517,18 @@ function SystemsView({ unified, onRunAction, actionResult, actionsEnabled, runni
       </div>
 
       {rows.length > 0 ? (
-        <div className="sectionBlock" style={{ marginTop: 10 }}>
+        <div className="sectionBlock mt10">
           <div className="sectionHead">
             <span className="mono">INTEGRATIONS</span>
             <span>サービス一覧</span>
             <span className="small">{rows.length}件</span>
           </div>
           <div className="table">
-            <div className="tr th" style={{ gridTemplateColumns: '1.5fr 2fr 0.8fr 2.5fr' }}>
+            <div className="tr th colsToolAvail">
               <div>KEY</div><div>NAME</div><div>AVAILABLE</div><div>REASON</div>
             </div>
             {rows.map((x) => (
-              <div key={x.key} className={`tr${x.available ? '' : ' trDanger'}`} style={{ gridTemplateColumns: '1.5fr 2fr 0.8fr 2.5fr' }}>
+              <div key={x.key} className={`tr colsToolAvail${x.available ? '' : ' trDanger'}`}>
                 <div className="mono">{x.key}</div>
                 <div>{x.name || '—'}</div>
                 <div className={x.available ? 'ok' : 'danger'}>{x.available ? 'YES' : 'NO'}</div>
@@ -2354,7 +2538,7 @@ function SystemsView({ unified, onRunAction, actionResult, actionsEnabled, runni
           </div>
         </div>
       ) : (
-        <div className="small" style={{ marginTop: 10 }}>データなし（APIキー未設定/認証NG の可能性）</div>
+        <div className="small mt10">データなし（APIキー未設定/認証NG の可能性）</div>
       )}
       <div className="small">必要なら環境変数で <span className="mono">MANAOS_UNIFIED_API_KEY</span>（または <span className="mono">MANAOS_INTEGRATION_READONLY_API_KEY</span>）をRPG backend側に渡す</div>
     </div>
@@ -2384,7 +2568,7 @@ function QuestsView({ quests, apiBase, onRunAction, actionResult, runningAction 
       <div className="panelTitle">クエスト（タスク） <span className="small">{list.length}件</span></div>
       <div className="small">kind=api はクリック（GET）/ kind=action は実行（POST, backendで許可されたもののみ）</div>
       {actionResult ? (
-        <div className="box" style={{ marginBottom: 12 }}>
+        <div className="box mb12">
           <div className="boxTitle">直近アクション結果</div>
           <div className="boxBody">
             <div className="kv"><span>ID</span><span className="mono">{actionResult.action_id}</span></div>
@@ -2399,11 +2583,11 @@ function QuestsView({ quests, apiBase, onRunAction, actionResult, runningAction 
         </div>
       ) : null}
       <div className="table">
-        <div className="tr th" style={{ gridTemplateColumns: '1.2fr 2fr 0.8fr 1.5fr 0.8fr' }}>
+        <div className="tr th colsQuests">
           <div>ID</div><div>LABEL</div><div>KIND</div><div>ENDPOINT</div><div>ACTION</div>
         </div>
         {list.map((q) => (
-          <div key={q.id} className="tr" style={{ gridTemplateColumns: '1.2fr 2fr 0.8fr 1.5fr 0.8fr' }}>
+          <div key={q.id} className="tr colsQuests">
             <div className="mono">{q.id}</div>
             <div>{q.label}</div>
             <div className="mono">{q.kind}</div>
@@ -2423,7 +2607,7 @@ function QuestsView({ quests, apiBase, onRunAction, actionResult, runningAction 
         ))}
       </div>
       {questResult ? (
-        <div style={{ marginTop: 12 }}>
+        <div className="mt12">
           <div className="small">結果: <span className="mono">{questResult.endpoint}</span></div>
           <OutputBlock text={questResult.text} onClear={() => setQuestResult(null)} />
         </div>
@@ -2498,11 +2682,11 @@ function MapView({ devices }) {
         <div className="small">デバイスが未登録です（registry/devices.yaml を追加）</div>
       ) : (
         <div className="table">
-          <div className="tr th" style={{ gridTemplateColumns: '1.2fr 2fr 1fr 0.8fr 2fr' }}>
+          <div className="tr th colsMap">
             <div>ID</div><div>NAME</div><div>KIND</div><div>STATUS</div><div>TAGS</div>
           </div>
           {list.map((d) => (
-            <div key={d.id} className={`tr${typeof d.alive === 'boolean' && !d.alive ? ' trDanger' : ''}`} style={{ gridTemplateColumns: '1.2fr 2fr 1fr 0.8fr 2fr' }}>
+            <div key={d.id} className={`tr colsMap${typeof d.alive === 'boolean' && !d.alive ? ' trDanger' : ''}`}>
               <div className="mono">{d.id}</div>
               <div>{d.name}</div>
               <div className="mono">{d.kind}</div>
@@ -2594,7 +2778,7 @@ function ItemsView({ items, apiBase }) {
                         )
                       })}
                       {!expanded && groupItems.length > 24 ? (
-                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 8 }}>
+                        <div className="fullSpan showMore">
                           <button className="link" onClick={() => setExpandedGroups((prev) => new Set(prev).add(rid))}>
                             もっと見る（残り {groupItems.length - 24}件）
                           </button>

@@ -301,3 +301,92 @@ def prometheus_metrics() -> str:
         return _get_rl().prom.render()
     except Exception as e:
         return f"# error: {e}\n"
+
+
+# ═══════════════════════════════════════════════════════
+# Auto-Curriculum / Replay Evaluator / Anomaly Detector (round 6)
+# ═══════════════════════════════════════════════════════
+
+@router.get("/curriculum/recommend")
+def curriculum_recommend() -> Dict[str, Any]:
+    """Auto-Curriculum の推薦結果を取得"""
+    try:
+        rl = _get_rl()
+        history = rl.get_history(limit=100)
+        rec = rl.curriculum.recommend(
+            history, rl.evolution.current_difficulty,
+            replay_stats=rl.replay.get_stats(),
+        )
+        return {"ok": True, **rec.to_dict()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/curriculum/apply")
+def curriculum_apply() -> Dict[str, Any]:
+    """Auto-Curriculum の推薦を即時適用"""
+    try:
+        rl = _get_rl()
+        history = rl.get_history(limit=100)
+        rec = rl.curriculum.recommend(
+            history, rl.evolution.current_difficulty,
+            replay_stats=rl.replay.get_stats(),
+        )
+        applied = False
+        if rec.changed and rec.confidence >= 0.3:
+            rl.evolution.current_difficulty = rec.recommended
+            rl._persist_state()
+            applied = True
+        return {"ok": True, "applied": applied, **rec.to_dict()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/replay/evaluate")
+def replay_evaluate(sample_size: int = 30, prioritized: bool = True) -> Dict[str, Any]:
+    """Replay Buffer から経験をサンプルして再評価"""
+    try:
+        rl = _get_rl()
+        report = rl.replay_evaluator.evaluate_buffer(
+            rl.replay, sample_size=sample_size, prioritized=prioritized,
+        )
+        return {"ok": True, **report.to_dict()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/alerts")
+def anomaly_alerts() -> Dict[str, Any]:
+    """異常検知アラートの統計と直近アラート"""
+    try:
+        rl = _get_rl()
+        return {"ok": True, **rl.anomaly_detector.get_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/alerts/check")
+def anomaly_check() -> Dict[str, Any]:
+    """手動で異常検知チェックを実行"""
+    try:
+        rl = _get_rl()
+        history = rl.get_history(limit=200)
+        alerts = rl.anomaly_detector.check(history)
+        return {
+            "ok": True,
+            "new_alerts": [a.to_dict() for a in alerts],
+            "count": len(alerts),
+            **rl.anomaly_detector.get_stats(),
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/alerts/clear")
+def anomaly_clear() -> Dict[str, Any]:
+    """アラート履歴をクリア"""
+    try:
+        _get_rl().anomaly_detector.clear_history()
+        return {"ok": True, "cleared": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}

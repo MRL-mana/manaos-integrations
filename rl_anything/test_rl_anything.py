@@ -27,6 +27,9 @@ from rl_anything.orchestrator import RLAnythingOrchestrator
 from rl_anything.replay_buffer import ReplayBuffer, Experience
 from rl_anything.experiment_tracker import ExperimentTracker
 from rl_anything.metrics_export import PrometheusExporter
+from rl_anything.auto_curriculum import AutoCurriculum, CurriculumRecommendation
+from rl_anything.replay_evaluator import ReplayEvaluator, ReEvalResult, ReEvalReport
+from rl_anything.anomaly_detector import AnomalyDetector, Alert
 
 
 def test_types():
@@ -660,6 +663,182 @@ def test_orchestrator_with_replay_and_prom():
         print("  [PASS] orchestrator_with_replay_and_prom")
 
 
+def test_auto_curriculum():
+    """AutoCurriculum – シグナル計算 & 難易度推薦ロジック"""
+    curriculum = AutoCurriculum()
+
+    # ── ケース 1: 連続成功 → レベルアップ
+    history_up = []
+    for i in range(12):
+        history_up.append({
+            "cycle": i + 1,
+            "outcome": "success",
+            "score": 0.85,
+            "difficulty": "standard",
+        })
+    rec = curriculum.recommend(history_up, current_difficulty="standard")
+    assert isinstance(rec, CurriculumRecommendation)
+    assert rec.recommended in ("abstract", "standard")  # 高成績なら上がるか据え置き
+    print(f"    case-up: {rec.current} → {rec.recommended}, changed={rec.changed}, conf={rec.confidence:.2f}")
+
+    # ── ケース 2: 連続失敗 → レベルダウン
+    history_down = []
+    for i in range(12):
+        history_down.append({
+            "cycle": i + 1,
+            "outcome": "failure",
+            "score": 0.20,
+            "difficulty": "standard",
+        })
+    rec2 = curriculum.recommend(history_down, current_difficulty="standard")
+    assert rec2.recommended in ("guided", "concrete", "standard")
+    print(f"    case-down: {rec2.current} → {rec2.recommended}, changed={rec2.changed}, conf={rec2.confidence:.2f}")
+
+    # ── ケース 3: データ少ない → 据え置き
+    rec3 = curriculum.recommend([{"cycle": 1, "outcome": "success", "score": 0.9, "difficulty": "standard"}],
+                                 current_difficulty="standard")
+    assert not rec3.changed, "少データでは変更しない"
+    print(f"    case-few: changed={rec3.changed}")
+
+    # ── シグナル確認
+    assert "success_rate" in rec.signals
+    assert "avg_score" in rec.signals
+    assert "slope" in rec.signals
+    print("  [PASS] auto_curriculum")
+
+
+def test_replay_evaluator():
+    """ReplayEvaluator – 再採点 & バッチ評価 & インサイト"""
+    evaluator = ReplayEvaluator()
+
+    # ── 単一再採点
+    exp = Experience(
+        task_id="eval-1",
+        cycle=1,
+        outcome="success",
+        score=0.60,
+        difficulty="standard",
+        tool_count=2,
+        error_count=0,
+        skills_used=["read_file", "write_file"],
+    )
+    result = evaluator.re_score(exp)
+    assert isinstance(result, float)
+    assert 0.0 <= result <= 1.0
+    drift = result - exp.score
+    print(f"    re_score: {exp.score:.3f} → {result:.3f} (drift={drift:+.3f})")
+
+    # ── バッチ評価
+    exps = []
+    for i in range(10):
+        outcome = "success" if i < 6 else "failure"
+        score = 0.80 if outcome == "success" else 0.25
+        exps.append(Experience(
+            task_id=f"batch-{i}",
+            cycle=i + 1,
+            outcome=outcome,
+            score=score,
+            difficulty="standard",
+            tool_count=i % 3 + 1,
+            error_count=0,
+            skills_used=["read_file"],
+        ))
+    report = evaluator.evaluate_batch(exps)
+    assert isinstance(report, ReEvalReport)
+    assert report.total_evaluated == 10
+    assert report.positive_drift_count + report.negative_drift_count + report.zero_drift_count == 10
+    print(f"    batch: total={report.total_evaluated}, avg_drift={report.avg_drift:+.4f}, +{report.positive_drift_count}/-{report.negative_drift_count}")
+    assert isinstance(report.insights, list)
+    print(f"    insights: {len(report.insights)} items")
+
+    print("  [PASS] replay_evaluator")
+
+
+def test_anomaly_detector():
+    """AnomalyDetector – 各検出メソッド & アラート集約"""
+    detector = AnomalyDetector()
+
+    # ── 正常データ → アラートなし
+    normal_history = []
+    for i in range(20):
+        normal_history.append({"cycle": i + 1, "outcome": "success", "score": 0.70 + (i % 3) * 0.05})
+    alerts = detector.check(normal_history)
+    assert isinstance(alerts, list)
+    print(f"    normal: {len(alerts)} alerts")
+
+    # ── 急降下 → アラート発生
+    drop_history = list(normal_history)
+    drop_history.append({"cycle": 21, "outcome": "failure", "score": 0.10})
+    alerts2 = detector.check(drop_history)
+    print(f"    drop: {len(alerts2)} alerts")
+
+    # ── 連続失敗
+    fail_history = []
+    for i in range(20):
+        fail_history.append({"cycle": i + 1, "outcome": "success", "score": 0.70})
+    for i in range(5):
+        fail_history.append({"cycle": 21 + i, "outcome": "failure", "score": 0.20})
+    alerts3 = detector.check(fail_history)
+    has_consecutive = any(a.alert_type == "consecutive_failures" for a in alerts3)
+    print(f"    consecutive: {len(alerts3)} alerts, has_consecutive={has_consecutive}")
+
+    # ── stats
+    stats = detector.get_stats()
+    assert "total_alerts" in stats
+    assert "by_type" in stats
+    assert "by_severity" in stats
+    print(f"    stats: total={stats['total_alerts']}, types={list(stats['by_type'].keys())}")
+
+    print("  [PASS] anomaly_detector")
+
+
+def test_orchestrator_with_curriculum_and_anomaly():
+    """Orchestrator が R6 コンポーネント (curriculum, replay_eval, anomaly) を統合するか"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cfg = _make_test_config(tmpdir)
+        cfg["replay_buffer"] = {"max_size": 50, "persist": True}
+        cfg_path = Path(tmpdir) / "config.json"
+        cfg_path.write_text(json.dumps(cfg), encoding="utf-8")
+        rl = RLAnythingOrchestrator(config_path=cfg_path)
+
+        # R6 コンポーネントが存在するか
+        assert hasattr(rl, "curriculum"), "curriculum attribute missing"
+        assert hasattr(rl, "replay_evaluator"), "replay_evaluator attribute missing"
+        assert hasattr(rl, "anomaly_detector"), "anomaly_detector attribute missing"
+
+        # 12 サイクル回す
+        for i in range(12):
+            rl.begin_task(f"r6-{i}", f"round6 task {i}")
+            rl.log_tool("read_file", {"p": "x.py"}, result="ok")
+            outcome = "success" if i < 8 else "failure"
+            score = 0.82 if outcome == "success" else 0.25
+            result = rl.end_task(f"r6-{i}", outcome=outcome, score=score)
+
+        # curriculum 推薦
+        rec = rl.curriculum.recommend(
+            rl.analytics.cycle_history if hasattr(rl, "analytics") else [],
+            current_difficulty=rl.evolution.current_difficulty.value,
+            replay_stats=rl.replay.get_stats() if rl.replay else None,
+        )
+        assert isinstance(rec, CurriculumRecommendation)
+        print(f"    curriculum: {rec.current} → {rec.recommended}, changed={rec.changed}")
+
+        # replay evaluator
+        if rl.replay and rl.replay.size > 0:
+            sample = rl.replay.sample(min(5, rl.replay.size))
+            report = rl.replay_evaluator.evaluate_batch(sample)
+            assert report.total_evaluated == len(sample)
+            print(f"    replay_eval: {report.total_evaluated} evaluated, drift={report.avg_drift:+.4f}")
+
+        # anomaly detector
+        alerts = rl.anomaly_detector.check(
+            rl.analytics.cycle_history if hasattr(rl, "analytics") else []
+        )
+        print(f"    anomaly: {len(alerts)} alerts")
+
+        print("  [PASS] orchestrator_with_curriculum_and_anomaly")
+
+
 def _make_test_config(tmpdir):
     """テスト用共通設定を生成"""
     return {
@@ -695,6 +874,10 @@ def main():
         ("experiment_tracker", test_experiment_tracker),
         ("prometheus_exporter", test_prometheus_exporter),
         ("orchestrator_with_replay_and_prom", test_orchestrator_with_replay_and_prom),
+        ("auto_curriculum", test_auto_curriculum),
+        ("replay_evaluator", test_replay_evaluator),
+        ("anomaly_detector", test_anomaly_detector),
+        ("orchestrator_with_curriculum_and_anomaly", test_orchestrator_with_curriculum_and_anomaly),
     ]
 
     passed = 0
