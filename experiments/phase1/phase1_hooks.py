@@ -76,6 +76,45 @@ def _rl_bridge_on_turn(
     except Exception:
         pass  # 観測専用 — 本線に影響させない
 
+
+def rl_end_conversation(thread_id: str, outcome: str = "unknown") -> None:
+    """
+    会話終了時に RLAnything タスクを閉じる。
+    ルーターや終了フック側で明示的に呼ぶ。
+    outcome: "success" | "partial" | "failure" | "unknown"
+    """
+    rl = _get_rl()
+    if rl is None:
+        return
+    try:
+        task_id = f"phase1_{thread_id}"
+        if task_id in rl.observer.get_active_tasks():
+            rl.end_task(task_id, outcome=outcome)
+    except Exception:
+        pass
+
+
+def rl_log_tool_use(
+    thread_id: str,
+    tool_name: str,
+    params: Optional[dict] = None,
+    result: Optional[str] = None,
+    error: Optional[str] = None,
+) -> None:
+    """
+    ツール使用を RLAnything に記録する透過的ブリッジ。
+    外部（ルーター等）から呼べるパブリック API。
+    """
+    rl = _get_rl()
+    if rl is None:
+        return
+    try:
+        task_id = f"phase1_{thread_id}"
+        if task_id in rl.observer.get_active_tasks():
+            rl.log_tool(tool_name, params or {}, result=result, error=error, task_id=task_id)
+    except Exception:
+        pass
+
 # thread_id -> 次に使う turn_id（user 受信で +1 してから assistant に同じ値を使う）
 _turn_by_thread: dict[str, int] = {}
 # thread_id -> テーマID（Phase2 メモ用。最初の user 発話から算出）
@@ -261,3 +300,5 @@ def log_turn_assistant(
             user_msg_len=user_msg_len,
             run_id=run_id,
         )
+        # RLAnything: reflection OFF でもタスク自動開始だけは行う
+        _rl_bridge_on_turn(thread_id, turn_id, None, None, reflection_on=False)

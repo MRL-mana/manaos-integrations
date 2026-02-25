@@ -1,6 +1,7 @@
 param(
 	[switch]$Lan,
 	[switch]$EnableActions,
+	[switch]$EnableUnifiedWrite,
 	[int]$ApiPort = 9510,
 	[int]$UiPort = 5173
 )
@@ -23,6 +24,7 @@ function Test-Listening([int]$Port) {
 $backendArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $PSScriptRoot 'run_backend.ps1'), '-Port', "$ApiPort")
 if ($Lan.IsPresent) { $backendArgs += '-Lan' }
 if ($EnableActions.IsPresent) { $backendArgs += '-EnableActions' }
+if ($EnableUnifiedWrite.IsPresent) { $backendArgs += '-EnableUnifiedWrite' }
 
 $frontendArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $PSScriptRoot 'run_frontend.ps1'), '-Port', "$UiPort")
 if ($Lan.IsPresent) { $frontendArgs += '-Lan' }
@@ -52,4 +54,23 @@ if ($Lan.IsPresent) {
 } else {
 	Write-Host "  UI:  http://127.0.0.1:$UiPort/" -ForegroundColor Green
 	Write-Host "  API: http://127.0.0.1:$ApiPort/health" -ForegroundColor Green
+}
+
+# ─── RLAnything ヘルスチェック ─────────────────────────
+Write-Host ""
+Write-Host "[manaos-rpg] RLAnything status:" -ForegroundColor Cyan
+try {
+	$rlResp = Invoke-RestMethod -Uri "http://127.0.0.1:$ApiPort/api/rl/dashboard" -TimeoutSec 5 -ErrorAction Stop
+	$cycles  = $rlResp.cycle_count
+	$diff    = $rlResp.current_difficulty
+	$skills  = $rlResp.evolution.skills_count
+	$rate    = $rlResp.observation.success_rate
+	Write-Host "  RL enabled  : YES" -ForegroundColor Green
+	Write-Host "  cycles      : $cycles" -ForegroundColor Green
+	Write-Host "  difficulty  : $diff" -ForegroundColor Green
+	Write-Host "  skills      : $skills" -ForegroundColor Green
+	Write-Host "  success_rate: $rate" -ForegroundColor Green
+} catch {
+	Write-Host "  RL endpoint : NOT AVAILABLE (backend may still be starting)" -ForegroundColor Yellow
+	Write-Host "  Check later : curl http://127.0.0.1:$ApiPort/api/rl/dashboard" -ForegroundColor DarkGray
 }

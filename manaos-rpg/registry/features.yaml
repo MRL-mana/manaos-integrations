@@ -24,6 +24,9 @@ menu:
   - id: items
     label: アイテム（生成物）
     icon: "🎒"
+  - id: rl
+    label: 強化学習(RL)
+    icon: "🧠"
   - id: systems
     label: システム（統合）
     icon: "⚙️"
