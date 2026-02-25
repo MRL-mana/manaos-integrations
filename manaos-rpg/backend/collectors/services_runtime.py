@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-import json
-import shutil
-import subprocess
 from typing import Any
 
-from .docker_inspect import get_docker_container_runtime
-from .ports_probe import is_port_open
-from .http_probe import http_probe
-from .pm2_runtime import get_pm2_runtime_by_name
+from collectors.docker_inspect import get_docker_container_runtime
+from collectors.http_probe import http_probe
+from collectors.pm2_runtime import get_pm2_runtime_by_name
+from collectors.ports_probe import is_port_open
 
 
-def compute_services_status(services: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def compute_services_status(
+    services: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for s in services:
         runtime = _compute_one(s)
@@ -39,12 +38,23 @@ def _compute_one(service: dict[str, Any]) -> dict[str, Any]:
 
     if kind == "docker":
         container = service.get("container")
-        docker_rt = get_docker_container_runtime(str(container)) if container else None
-        docker_status = docker_rt.get("docker_status") if isinstance(docker_rt, dict) else None
-        docker_health = docker_rt.get("docker_health") if isinstance(docker_rt, dict) else None
-        restart_count = docker_rt.get("restart_count") if isinstance(docker_rt, dict) else None
-        started_at = docker_rt.get("started_at") if isinstance(docker_rt, dict) else None
-        finished_at = docker_rt.get("finished_at") if isinstance(docker_rt, dict) else None
+        docker_rt = (
+            get_docker_container_runtime(str(container))
+            if container
+            else None
+        )
+        if isinstance(docker_rt, dict):
+            docker_status = docker_rt.get("docker_status")
+            docker_health = docker_rt.get("docker_health")
+            restart_count = docker_rt.get("restart_count")
+            started_at = docker_rt.get("started_at")
+            finished_at = docker_rt.get("finished_at")
+        else:
+            docker_status = None
+            docker_health = None
+            restart_count = None
+            started_at = None
+            finished_at = None
 
         alive_by_docker = False
         alive_by_docker_health = False
@@ -57,12 +67,25 @@ def _compute_one(service: dict[str, Any]) -> dict[str, Any]:
         if docker_health == "healthy":
             alive_by_docker_health = True
 
-        alive = alive_by_docker or alive_by_docker_health or alive_by_http or alive_by_port
+        alive = (
+            alive_by_docker
+            or alive_by_docker_health
+            or alive_by_http
+            or alive_by_port
+        )
 
         alive_by = (
             "docker_health"
             if alive_by_docker_health
-            else ("docker" if alive_by_docker else ("http" if alive_by_http else ("port" if alive_by_port else "none")))
+            else (
+                "docker"
+                if alive_by_docker
+                else (
+                    "http"
+                    if alive_by_http
+                    else ("port" if alive_by_port else "none")
+                )
+            )
         )
         return {
             "alive": bool(alive),
@@ -77,10 +100,16 @@ def _compute_one(service: dict[str, Any]) -> dict[str, Any]:
         }
 
     if kind == "pm2":
-        pm2_name = service.get("pm2") or service.get("pm2_name") or service.get("name")
+        pm2_name = (
+            service.get("pm2")
+            or service.get("pm2_name")
+            or service.get("name")
+        )
         rt = get_pm2_runtime_by_name(str(pm2_name)) if pm2_name else None
         pm2_status = rt.get("pm2_status") if isinstance(rt, dict) else None
-        restart_count = rt.get("restart_count") if isinstance(rt, dict) else None
+        restart_count = (
+            rt.get("restart_count") if isinstance(rt, dict) else None
+        )
         pm_uptime = rt.get("pm_uptime") if isinstance(rt, dict) else None
         pm2_found = rt.get("pm2_found") if isinstance(rt, dict) else None
 
@@ -89,7 +118,15 @@ def _compute_one(service: dict[str, Any]) -> dict[str, Any]:
             degraded = True
 
         alive = alive_by_pm2 or alive_by_http or alive_by_port
-        alive_by = "pm2" if alive_by_pm2 else ("http" if alive_by_http else ("port" if alive_by_port else "none"))
+        alive_by = (
+            "pm2"
+            if alive_by_pm2
+            else (
+                "http"
+                if alive_by_http
+                else ("port" if alive_by_port else "none")
+            )
+        )
         return {
             "alive": bool(alive),
             "alive_by": alive_by,
@@ -104,7 +141,9 @@ def _compute_one(service: dict[str, Any]) -> dict[str, Any]:
     alive = alive_by_http or alive_by_port
     return {
         "alive": bool(alive),
-        "alive_by": "http" if alive_by_http else ("port" if alive_by_port else "none"),
+        "alive_by": (
+            "http" if alive_by_http else ("port" if alive_by_port else "none")
+        ),
         "http_status": http_status,
         "degraded": False,
         "restart_count": None,

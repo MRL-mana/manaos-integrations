@@ -19,6 +19,7 @@ UNIFIED_DOCTOR_CACHE_TTL_S = 60
 
 DEFAULT_UNIFIED_API_BASE = os.environ.get("MANAOS_UNIFIED_API_BASE", "http://127.0.0.1:9502").rstrip("/")
 DEFAULT_OLLAMA_BASE = os.environ.get("MANAOS_OLLAMA_BASE", "http://127.0.0.1:11434").rstrip("/")
+DEFAULT_MRL_MEMORY_BASE = os.environ.get("MANAOS_MRL_MEMORY_BASE", "http://127.0.0.1:9507").rstrip("/")
 
 _RPG_API_TOKEN = os.environ.get("MANAOS_RPG_API_TOKEN", "").strip()
 

@@ -61,6 +61,7 @@ if (-not (Test-Path $bootstrap)) { throw "not found: $bootstrap" }
 foreach ($p in @(
         (Join-Path $root 'pixel7_api_gateway.py'),
         (Join-Path $root 'termux\start_pixel7_api_gateway.sh'),
+        (Join-Path $root 'termux\boot_start_pixel7_api_gateway.sh'),
         (Join-Path $root '.pixel7_api_token.txt')
     )) {
     if (-not (Test-Path $p)) {

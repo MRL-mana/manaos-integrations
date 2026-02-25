@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ==================== コアサービス ====================
   
@@ -8,9 +6,9 @@ services:
     build: .
     container_name: manaos-unified-api
     ports:
-      - "${UNIFIED_API_PORT:-9502}:9502"
+      - "${UNIFIED_API_PORT:-9502}:9500"
     environment:
-      - PORT=9502
+      - PORT=9500
       - BRAVE_API_KEY=${BRAVE_API_KEY:-}
       - CIVITAI_API_KEY=${CIVITAI_API_KEY:-}
     volumes:
@@ -21,7 +19,7 @@ services:
     networks:
       - manaos-network
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:9502/health')"]
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:9500/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -35,10 +33,19 @@ services:
     container_name: manaos-mrl-memory
     command: python -m mrl_memory_integration
     ports:
-      - "${MRL_MEMORY_PORT:-9507}:9507"
+      - "${MRL_MEMORY_PORT:-9507}:9502"
     environment:
-      - MRL_MEMORY_PORT=9507
+      - PORT=9502
+      - MRL_MEMORY_PORT=9502
       - MRL_MEMORY_HOST=0.0.0.0
+      - MRL_MEMORY_DIR=/app/data/memory_cache
+      # NOTE: host側のFWPKM_*が他用途でセットされていても影響を受けないよう
+      # mrl-memoryは専用の MRL_FWPKM_* を参照し、コンテナ内でFWPKM_*へ写像する。
+      - FWPKM_ENABLED=${MRL_FWPKM_ENABLED:-1}
+      - FWPKM_WRITE_ENABLED=${MRL_FWPKM_WRITE_ENABLED:-0}
+      - FWPKM_WRITE_MODE=${MRL_FWPKM_WRITE_MODE:-readonly}
+      - FWPKM_WRITE_SAMPLE_RATE=${MRL_FWPKM_WRITE_SAMPLE_RATE:-0.1}
+      - FWPKM_REVIEW_EFFECT=${MRL_FWPKM_REVIEW_EFFECT:-0}
     volumes:
       - ./data/memory_cache:/app/data/memory_cache
       - ./logs:/app/logs
@@ -46,7 +53,7 @@ services:
     networks:
       - manaos-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9507/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:9502/health"]
       interval: 30s
       timeout: 10s
       retries: 3

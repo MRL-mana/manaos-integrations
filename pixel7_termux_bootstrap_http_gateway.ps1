@@ -144,11 +144,13 @@ if ($InstallWaitSec -gt 0) {
     Start-Sleep -Seconds $InstallWaitSec
 }
 
-Send-TermuxLine 'rm -f pixel7_api_gateway.py start_pixel7_api_gateway.sh api_token.txt'
+Send-TermuxLine 'rm -f pixel7_api_gateway.py start_pixel7_api_gateway.sh boot_start_pixel7_api_gateway.sh api_token.txt'
 Send-TermuxLine ("curl -fsSL {0}/pixel7_api_gateway.py -o pixel7_api_gateway.py" -f $base)
 Send-TermuxLine ("curl -fsSL {0}/termux/start_pixel7_api_gateway.sh -o start_pixel7_api_gateway.sh" -f $base)
+Send-TermuxLine ("curl -fsSL {0}/termux/boot_start_pixel7_api_gateway.sh -o boot_start_pixel7_api_gateway.sh" -f $base)
 Send-TermuxLine ("curl -fsSL {0}/.pixel7_api_token.txt -o api_token.txt" -f $base)
 Send-TermuxLine 'chmod +x start_pixel7_api_gateway.sh'
+Send-TermuxLine 'chmod +x boot_start_pixel7_api_gateway.sh'
 
 Write-Host 'OK (files fetched into Termux $HOME; now run start script)' -ForegroundColor Green
 Write-Host 'Next: run the VS Code task to start the gateway, or execute ./start_pixel7_api_gateway.sh in Termux.' -ForegroundColor Yellow

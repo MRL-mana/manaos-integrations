@@ -9,6 +9,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from collections import defaultdict
+import os
 
 from mrl_memory_extractor import MRLMemoryExtractor, MemoryEntry
 
@@ -38,7 +39,11 @@ class MRLMemoryRehearsal:
             memory_dir: メモリディレクトリ
         """
         if memory_dir is None:
-            memory_dir = Path(__file__).parent / "mrl_memory"
+            env_dir = str(os.getenv("MRL_MEMORY_DIR", "") or "").strip()
+            if env_dir:
+                memory_dir = Path(env_dir)
+            else:
+                memory_dir = Path(__file__).parent / "mrl_memory"
         
         self.memory_dir = Path(memory_dir)
         self.scratchpad_path = self.memory_dir / "scratchpad.jsonl"

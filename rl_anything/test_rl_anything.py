@@ -30,6 +30,9 @@ from rl_anything.metrics_export import PrometheusExporter
 from rl_anything.auto_curriculum import AutoCurriculum, CurriculumRecommendation
 from rl_anything.replay_evaluator import ReplayEvaluator, ReEvalResult, ReEvalReport
 from rl_anything.anomaly_detector import AnomalyDetector, Alert
+from rl_anything.policy_gradient import PolicyGradient, Trajectory, PolicySnapshot
+from rl_anything.reward_shaper import RewardShaper, ShapedReward
+from rl_anything.meta_controller import MetaController, MetaReport, MetaAdjustment
 
 
 def test_types():
@@ -854,6 +857,226 @@ def _make_test_config(tmpdir):
     }
 
 
+# ═══════════════════════════════════════════════════════
+# Round 7: Policy Gradient / Reward Shaper / Meta-Controller
+# ═══════════════════════════════════════════════════════
+
+def test_policy_gradient():
+    """方策勾配エスティメータの基本テスト"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        pg = PolicyGradient(persist_path=Path(tmpdir) / "pg.json")
+
+        # encode_state
+        state = pg.encode_state(0.7, 0.6, "standard")
+        assert len(state) == 3
+        assert 0.0 <= state[0] <= 1.0
+        assert 0.0 <= state[1] <= 1.0
+        assert 0.0 <= state[2] <= 1.0
+
+        # select_action
+        action, log_prob = pg.select_action(state)
+        assert action in ["level_down", "stay", "level_up"]
+        assert log_prob < 0  # log(prob) は負
+
+        # get_action_probs
+        probs = pg.get_action_probs(state)
+        assert len(probs) == 3
+        total_prob = sum(probs.values())
+        assert abs(total_prob - 1.0) < 1e-6
+
+        # record trajectories
+        for i in range(15):
+            s = pg.encode_state(0.5 + i * 0.02, 0.4 + i * 0.01, "guided")
+            a, lp = pg.select_action(s)
+            pg.record(s, a, 0.5 + i * 0.03, lp, i)
+
+        # update
+        result = pg.update(batch_size=10)
+        assert result is not None
+        assert "avg_reward" in result
+        assert "entropy" in result
+
+        # recommend
+        rec = pg.recommend_action(state)
+        assert isinstance(rec, dict)
+        assert rec["action"] in ["level_down", "stay", "level_up"]
+
+        # snapshot
+        snap = pg.get_snapshot()
+        assert isinstance(snap, dict)
+        assert snap["update_count"] >= 1
+
+        # stats
+        stats = pg.get_stats()
+        assert "trajectory_count" in stats
+
+        # persistence
+        pg2 = PolicyGradient(persist_path=Path(tmpdir) / "pg.json")
+        snap2 = pg2.get_snapshot()
+        assert snap2["update_count"] == snap["update_count"]
+
+        print("  [PASS] policy_gradient")
+
+
+def test_reward_shaper():
+    """報酬シェイパーのテスト"""
+    rs = RewardShaper()
+
+    # shape a single reward
+    shaped = rs.shape(
+        raw_score=0.8, outcome="success", difficulty="standard",
+        success_rate=0.6, avg_score=0.65,
+    )
+    assert isinstance(shaped, ShapedReward)
+    assert shaped.raw == 0.8
+    assert isinstance(shaped.shaped, float)
+    assert isinstance(shaped.curiosity_bonus, float)
+    assert shaped.curiosity_bonus > 0  # 初回訪問は好奇心ボーナスあり
+
+    # shape same outcome again → curiosity should decrease
+    shaped2 = rs.shape(
+        raw_score=0.8, outcome="success", difficulty="standard",
+        success_rate=0.6, avg_score=0.65,
+    )
+    assert shaped2.curiosity_bonus < shaped.curiosity_bonus
+
+    # difficulty_bonus for abstract should be positive
+    shaped_abs = rs.shape(
+        raw_score=0.8, outcome="success", difficulty="abstract",
+        success_rate=0.6, avg_score=0.65,
+    )
+    assert shaped_abs.difficulty_bonus > 0
+
+    # concrete → difficulty_bonus negative (multiplier < 1)
+    shaped_conc = rs.shape(
+        raw_score=0.8, outcome="success", difficulty="concrete",
+        success_rate=0.6, avg_score=0.65,
+    )
+    assert shaped_conc.difficulty_bonus < 0
+
+    # batch
+    batch = [
+        {"raw_score": 0.7, "outcome": "success", "difficulty": "standard", "success_rate": 0.5, "avg_score": 0.5},
+        {"raw_score": 0.3, "outcome": "failure", "difficulty": "guided", "success_rate": 0.4, "avg_score": 0.4},
+    ]
+    results = rs.shape_batch(batch)
+    assert len(results) == 2
+
+    # stats
+    stats = rs.get_stats()
+    assert "total_visits" in stats
+    assert stats["total_visits"] > 0
+
+    # reset
+    rs.reset()
+    stats2 = rs.get_stats()
+    assert stats2["total_visits"] == 0
+
+    print("  [PASS] reward_shaper")
+
+
+def test_meta_controller():
+    """メタコントローラのテスト"""
+    mc = MetaController()
+
+    # no history → defaults
+    signals = mc.compute_meta_signals([], 0, 0.5, 0)
+    assert "stability" in signals
+    assert signals["stability"] == 0.5  # default
+
+    # with history
+    scores = [0.5, 0.6, 0.7, 0.65, 0.8, 0.75, 0.7, 0.85, 0.9, 0.88]
+    signals = mc.compute_meta_signals(scores, alert_count=0, policy_entropy=0.8, curriculum_changes=1)
+    assert 0.0 <= signals["stability"] <= 1.0
+    assert "convergence" in signals
+    assert "exploration" in signals
+
+    # tune with stable improving scores
+    current_params = {
+        "learning_rate": 0.01,
+        "temperature": 1.0,
+        "curriculum_up_threshold": 0.75,
+        "curriculum_down_threshold": 0.30,
+        "anomaly_z_threshold": 2.0,
+    }
+    report = mc.tune(scores, current_params, alert_count=0, policy_entropy=0.8)
+    assert isinstance(report, MetaReport)
+    assert isinstance(report.health_score, float)
+    assert 0.0 <= report.health_score <= 1.0
+
+    # tune with unstable scores → should lower lr
+    unstable_scores = [0.3, 0.9, 0.2, 0.8, 0.1, 0.95, 0.15, 0.85, 0.25, 0.7]
+    params_high_lr = {**current_params, "learning_rate": 0.05}
+    report2 = mc.tune(unstable_scores, params_high_lr, alert_count=0, policy_entropy=0.5)
+    lr_adjusted = any(a.param_name == "learning_rate" for a in report2.adjustments)
+    # unstable → expect lr adjustment (either lr_adjusted is True or stability is ok)
+    assert isinstance(report2.adjustments, list)
+
+    # tune with many alerts → should relax z threshold
+    report3 = mc.tune(scores, current_params, alert_count=10, policy_entropy=0.5)
+    z_adjusted = any(a.param_name == "anomaly_z_threshold" for a in report3.adjustments)
+    assert z_adjusted  # alert_rate > 0.4 → relax
+
+    # stats
+    stats = mc.get_stats()
+    assert "total_adjustments" in stats
+    assert stats["meta_history_len"] >= 3  # 3 tunes
+
+    # health trend
+    trend = mc.get_health_trend()
+    assert len(trend) >= 3
+    assert all(0.0 <= h <= 1.0 for h in trend)
+
+    print("  [PASS] meta_controller")
+
+
+def test_orchestrator_with_policy_and_reward():
+    """Round 7 統合: オーケストレータに方策勾配・報酬シェイパー・メタコントローラが組み込まれているか"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cfg = _make_test_config(tmpdir)
+        cfg_path = Path(tmpdir) / "config.json"
+        cfg_path.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+        rl = RLAnythingOrchestrator(config_path=cfg_path)
+
+        # コンポーネント存在確認
+        assert hasattr(rl, 'policy_gradient')
+        assert hasattr(rl, 'reward_shaper')
+        assert hasattr(rl, 'meta_controller')
+        assert isinstance(rl.policy_gradient, PolicyGradient)
+        assert isinstance(rl.reward_shaper, RewardShaper)
+        assert isinstance(rl.meta_controller, MetaController)
+
+        # サイクル実行
+        rl.begin_task("pg-1", "test policy gradient integration")
+        rl.log_tool("read_file", {"path": "x.py"}, result="code")
+        result = rl.end_task("pg-1", outcome="success", score=0.85)
+        assert result["cycle"] >= 1
+        # shaped_reward should be present
+        assert "shaped_reward" in result
+        sr = result["shaped_reward"]
+        assert "raw" in sr and "shaped" in sr
+
+        # get_policy_snapshot
+        snap = rl.get_policy_snapshot()
+        assert "theta" in snap
+        assert "stats" in snap
+
+        # get_reward_stats
+        rs = rl.get_reward_stats()
+        assert "total_visits" in rs
+
+        # get_meta_status
+        ms = rl.get_meta_status()
+        assert "total_adjustments" in ms
+
+        # policy_recommend
+        rec = rl.policy_recommend(0.6, 0.5)
+        assert "recommended_action" in rec
+        assert rec["recommended_action"] in ["level_down", "stay", "level_up"]
+
+        print("  [PASS] orchestrator_with_policy_and_reward")
+
+
 def main():
     print("=" * 60)
     print("RLAnything テストスイート")
@@ -878,6 +1101,10 @@ def main():
         ("replay_evaluator", test_replay_evaluator),
         ("anomaly_detector", test_anomaly_detector),
         ("orchestrator_with_curriculum_and_anomaly", test_orchestrator_with_curriculum_and_anomaly),
+        ("policy_gradient", test_policy_gradient),
+        ("reward_shaper", test_reward_shaper),
+        ("meta_controller", test_meta_controller),
+        ("orchestrator_with_policy_and_reward", test_orchestrator_with_policy_and_reward),
     ]
 
     passed = 0

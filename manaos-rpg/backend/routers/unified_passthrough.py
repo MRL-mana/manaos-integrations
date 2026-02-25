@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import json
 import urllib.parse
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
+from core.config import DEFAULT_MRL_MEMORY_BASE
+from core.http_client import _http_json_post
 from core.unified_client import (
     _expand_item_uris,
     _require_unified_write,
@@ -14,6 +17,70 @@ from core.unified_client import (
 )
 
 router = APIRouter()
+
+
+def _mrl_post(
+    path: str,
+    payload: dict[str, Any],
+    timeout_s: float = 20.0,
+) -> dict[str, Any]:
+    path = str(path or "").strip()
+    if not path.startswith("/"):
+        path = "/" + path
+    url = f"{DEFAULT_MRL_MEMORY_BASE}{path}"
+    r = _http_json_post(
+        url,
+        payload=payload,
+        timeout_s=timeout_s,
+        headers={},
+    )
+    if not r.get("ok"):
+        return {
+            "ok": False,
+            "url": url,
+            "status": r.get("status"),
+            "error": r.get("error"),
+            "via": "mrl-memory",
+        }
+    return {
+        "ok": True,
+        "url": url,
+        "status": r.get("status"),
+        "data": r.get("data"),
+        "via": "mrl-memory",
+    }
+
+
+def _looks_like_unified_memory_unavailable(resp: dict[str, Any]) -> bool:
+    if not isinstance(resp, dict):
+        return False
+    status = int(resp.get("status") or 0)
+    if status != 503:
+        return False
+    err = resp.get("error")
+    if err is None:
+        return True
+
+    # error が JSON 文字列の場合（例: {"error":"\\u7d71..."}）を復号して判定する
+    if isinstance(err, str):
+        s = err.strip()
+        if s.startswith("{") and "\"error\"" in s:
+            try:
+                parsed = json.loads(s)
+                if isinstance(parsed, dict):
+                    err = parsed.get("error") or parsed.get("detail") or err
+            except (json.JSONDecodeError, TypeError, ValueError):
+                pass
+        if isinstance(err, str):
+            lowered = err.lower()
+            return (
+                ("統一記憶" in err)
+                or ("memory" in lowered)
+                or ("unavailable" in lowered)
+            )
+
+    # 503 は（統一記憶未搭載/停止など）で返るケースが多いのでフォールバック対象にする
+    return True
 
 
 # --- GET passthrough ---
@@ -81,12 +148,28 @@ def api_unified_memory_recall(
     scope_s = str(scope or "all").strip() or "all"
     limit_i = max(1, min(int(limit), 50))
 
-    # Unified の実体が MCP API Server の場合、/api/memory/recall は存在しない。
-    # read-only で使える /api/memory/search へ寄せる。
-    payload: dict[str, Any] = {"query": q, "limit": limit_i}
-    if scope_s and scope_s != "all":
-        payload["scope"] = scope_s
-    return _unified_post("/api/memory/search", payload=payload, timeout_s=12.0)
+    # 互換: 旧Unified(/api/memory/recall) → 404 の場合は MCP(/api/memory/search)
+    qs = urllib.parse.urlencode(
+        {"query": q, "scope": scope_s, "limit": str(limit_i)}
+    )
+    r = _unified_get(f"/api/memory/recall?{qs}", timeout_s=12.0)
+    if _looks_like_unified_memory_unavailable(r):
+        mrl_payload: dict[str, Any] = {"query": q, "limit": limit_i}
+        return _mrl_post(
+            "/api/memory/search",
+            payload=mrl_payload,
+            timeout_s=12.0,
+        )
+    if int(r.get("status") or 0) == 404:
+        payload: dict[str, Any] = {"query": q, "limit": limit_i}
+        if scope_s and scope_s != "all":
+            payload["scope"] = scope_s
+        return _unified_post(
+            "/api/memory/search",
+            payload=payload,
+            timeout_s=12.0,
+        )
+    return r
 
 
 @router.get("/api/unified/notify/job/{job_id}")
@@ -94,11 +177,17 @@ def api_unified_notify_job(job_id: str) -> dict[str, Any]:
     jid = str(job_id or "").strip()
     if not jid:
         raise HTTPException(status_code=400, detail="job_id is required")
-    # MCP API Server: /api/ops/job/{job_id}
-    return _unified_get(
-        f"/api/ops/job/{urllib.parse.quote(jid, safe='')}",
+    # 互換: 旧Unified(/notify/job/<id>) → 404 の場合は MCP(/api/ops/job/<id>)
+    r = _unified_get(
+        f"/notify/job/{urllib.parse.quote(jid, safe='')}",
         timeout_s=8.0,
     )
+    if int(r.get("status") or 0) == 404:
+        return _unified_get(
+            f"/api/ops/job/{urllib.parse.quote(jid, safe='')}",
+            timeout_s=8.0,
+        )
+    return r
 
 
 # --- POST passthrough ---
@@ -136,9 +225,23 @@ def api_unified_notify_send(body: dict[str, Any]) -> dict[str, Any]:
     payload = _validate_proxy_body(body)
     message = str(payload.get("message") or payload.get("text") or "").strip()
     if not message:
-        raise HTTPException(status_code=400, detail="message (or text) is required")
-    # MCP API Server: /api/ops/notify
-    return _unified_post("/api/ops/notify", payload=payload, timeout_s=30.0)
+        raise HTTPException(
+            status_code=400,
+            detail="message (or text) is required",
+        )
+    # 互換: 旧Unified(/api/notification/send) → 404 の場合は MCP(/api/ops/notify)
+    r = _unified_post(
+        "/api/notification/send",
+        payload=payload,
+        timeout_s=30.0,
+    )
+    if int(r.get("status") or 0) == 404:
+        return _unified_post(
+            "/api/ops/notify",
+            payload=payload,
+            timeout_s=30.0,
+        )
+    return r
 
 
 @router.post("/api/unified/memory/store")
@@ -152,9 +255,34 @@ def api_unified_memory_store(body: dict[str, Any]) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail="content is required")
     meta = payload.get("metadata")
     if meta is not None and not isinstance(meta, dict):
-        raise HTTPException(status_code=400, detail="metadata must be an object")
-    # MCP API Server: /api/memory/write
-    return _unified_post("/api/memory/write", payload=payload, timeout_s=20.0)
+        raise HTTPException(
+            status_code=400,
+            detail="metadata must be an object",
+        )
+    # 互換: 旧Unified(/api/memory/store) → 404 の場合は MCP(/api/memory/write)
+    r = _unified_post("/api/memory/store", payload=payload, timeout_s=20.0)
+    if _looks_like_unified_memory_unavailable(r):
+        text = str(payload.get("content") or "").strip()
+        if not text:
+            raise HTTPException(status_code=400, detail="content is required")
+        mrl_payload: dict[str, Any] = {
+            "text": text,
+            "source": str(payload.get("source") or "manaos-rpg"),
+            "enable_rehearsal": True,
+            "enable_promotion": False,
+        }
+        return _mrl_post(
+            "/api/memory/process",
+            payload=mrl_payload,
+            timeout_s=20.0,
+        )
+    if int(r.get("status") or 0) == 404:
+        return _unified_post(
+            "/api/memory/write",
+            payload=payload,
+            timeout_s=20.0,
+        )
+    return r
 
 
 @router.post("/api/unified/svi/generate")
@@ -175,11 +303,19 @@ def api_unified_svi_extend(body: dict[str, Any]) -> dict[str, Any]:
 def api_unified_ltx2_generate(body: dict[str, Any]) -> dict[str, Any]:
     _require_unified_write()
     payload = _expand_item_uris(_validate_proxy_body(body))
-    return _unified_post("/api/ltx2/generate", payload=payload, timeout_s=180.0)
+    return _unified_post(
+        "/api/ltx2/generate",
+        payload=payload,
+        timeout_s=180.0,
+    )
 
 
 @router.post("/api/unified/ltx2-infinity/generate")
 def api_unified_ltx2_infinity_generate(body: dict[str, Any]) -> dict[str, Any]:
     _require_unified_write()
     payload = _expand_item_uris(_validate_proxy_body(body))
-    return _unified_post("/api/ltx2-infinity/generate", payload=payload, timeout_s=300.0)
+    return _unified_post(
+        "/api/ltx2-infinity/generate",
+        payload=payload,
+        timeout_s=300.0,
+    )

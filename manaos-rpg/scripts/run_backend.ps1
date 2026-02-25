@@ -3,6 +3,8 @@ param(
 	[int]$Port = 9510,
 	[switch]$ForceKill,
 	[switch]$EnableActions,
+	[switch]$EnableUnifiedWrite,
+	[switch]$EnableUnifiedDangerous,
 	[switch]$Lan
 )
 
@@ -93,6 +95,16 @@ if ($Lan.IsPresent) {
 if ($EnableActions.IsPresent) {
 	$env:MANAOS_RPG_ENABLE_ACTIONS = '1'
 	Write-Host "[manaos-rpg] Actions ENABLED (MANAOS_RPG_ENABLE_ACTIONS=1)" -ForegroundColor Yellow
+}
+
+if ($EnableUnifiedWrite.IsPresent) {
+	$env:MANAOS_RPG_ENABLE_UNIFIED_WRITE = '1'
+	Write-Host "[manaos-rpg] Unified WRITE ENABLED (MANAOS_RPG_ENABLE_UNIFIED_WRITE=1)" -ForegroundColor Yellow
+}
+
+if ($EnableUnifiedDangerous.IsPresent) {
+	$env:MANAOS_RPG_ENABLE_UNIFIED_DANGEROUS = '1'
+	Write-Host "[manaos-rpg] Unified DANGEROUS ENABLED (MANAOS_RPG_ENABLE_UNIFIED_DANGEROUS=1)" -ForegroundColor Yellow
 }
 
 Write-Host "[manaos-rpg] Starting API on http://${BindHost}:${Port}" -ForegroundColor Green

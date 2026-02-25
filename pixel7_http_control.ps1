@@ -123,6 +123,20 @@ function Invoke-Pixel7Api([string]$method, [string]$path, $body = $null, [bool]$
     return Invoke-RestMethod -Method $method -Uri $uri -Headers $headers -TimeoutSec $TimeoutSec -ContentType 'application/json' -Body $json
 }
 
+function Get-CompactApiError([string]$stderr) {
+    $text = [string]($stderr ?? '')
+    if ([string]::IsNullOrWhiteSpace($text)) { return 'unknown error' }
+
+    $flat = ($text -replace "`r", ' ' -replace "`n", ' ' -replace '\s+', ' ').Trim()
+    if ($flat -match 'Unable to connect to window manager') {
+        return 'window manager unavailable'
+    }
+    if ($flat.Length -gt 180) {
+        return ($flat.Substring(0, 180) + '...')
+    }
+    return $flat
+}
+
 Write-Host ("=== Pixel7 HTTP Control: {0} ===" -f $Action) -ForegroundColor Cyan
 Write-Host ("Base: {0}" -f $base) -ForegroundColor DarkGray
 
@@ -146,13 +160,13 @@ switch ($Action) {
     'OpenUrl' {
         if ([string]::IsNullOrWhiteSpace($Url)) { throw "-Url is required" }
         $r = Invoke-Pixel7Api 'POST' '/api/open/url' @{ url = $Url }
-        if ($null -ne $r.ok -and -not $r.ok) { throw ("OpenUrl failed: {0}" -f ($r.stderr)) }
+        if ($null -ne $r.ok -and -not $r.ok) { throw ("OpenUrl failed: {0}" -f (Get-CompactApiError $r.stderr)) }
         $r | ConvertTo-Json -Depth 8
     }
     'OpenOpenWebUI' {
         $u = Get-OpenWebUiUrl
         $r = Invoke-Pixel7Api 'POST' '/api/open/url' @{ url = $u }
-        if ($null -ne $r.ok -and -not $r.ok) { throw ("OpenOpenWebUI failed: {0}" -f ($r.stderr)) }
+        if ($null -ne $r.ok -and -not $r.ok) { throw ("OpenOpenWebUI failed: {0}" -f (Get-CompactApiError $r.stderr)) }
         $r | ConvertTo-Json -Depth 8
     }
     'OpenApp' {
@@ -160,7 +174,7 @@ switch ($Action) {
         $payload = @{ package = $Package }
         if (-not [string]::IsNullOrWhiteSpace($Activity)) { $payload.activity = $Activity }
         $r = Invoke-Pixel7Api 'POST' '/api/open/app' $payload
-        if ($null -ne $r.ok -and -not $r.ok) { throw ("OpenApp failed: {0}" -f ($r.stderr)) }
+        if ($null -ne $r.ok -and -not $r.ok) { throw ("OpenApp failed: {0}" -f (Get-CompactApiError $r.stderr)) }
         $r | ConvertTo-Json -Depth 8
     }
     'BroadcastMacro' {
@@ -175,7 +189,7 @@ switch ($Action) {
             }
         }
         $r = Invoke-Pixel7Api 'POST' '/api/macro/broadcast' $payload
-        if ($null -ne $r.ok -and -not $r.ok) { throw ("BroadcastMacro failed: {0}" -f ($r.stderr)) }
+        if ($null -ne $r.ok -and -not $r.ok) { throw ("BroadcastMacro failed: {0}" -f (Get-CompactApiError $r.stderr)) }
         $r | ConvertTo-Json -Depth 8
     }
     'MacroCommands' {

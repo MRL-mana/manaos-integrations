@@ -4,6 +4,8 @@ MRL Memory Integration
 既存システム（LLMルーティング/n8n/Slack/Obsidian）との統合
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Dict, Any, Optional
 import json

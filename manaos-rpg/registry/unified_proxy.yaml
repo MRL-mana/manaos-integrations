@@ -5,133 +5,33 @@
 #   - read: 実行OK
 #   - write: MANAOS_RPG_ENABLE_UNIFIED_WRITE=1 が必要
 #   - danger: write + MANAOS_RPG_ENABLE_UNIFIED_DANGEROUS=1 が必要
-#
-# ops: auto-enabled core read rules at 2026-02-24 20:34:16
 
 rules:
-- id: post_api_dev_deploy
-  label: Queue deploy task
-  method: POST
-  path: /api/dev/deploy
-  gate: danger
-  enabled: false
-  timeout_s: 12
-- id: post_api_dev_patch
-  label: Queue patch task
-  method: POST
-  path: /api/dev/patch
-  gate: danger
-  enabled: false
-  timeout_s: 12
-- id: post_api_dev_test
-  label: Queue test task
-  method: POST
-  path: /api/dev/test
-  gate: write
-  enabled: true
-  timeout_s: 12
-- id: post_api_memory_search
-  label: Search memory
-  method: POST
-  path: /api/memory/search
-  gate: read
-  enabled: true
-  timeout_s: 12
-- id: post_api_memory_write
-  label: Write memory
-  method: POST
-  path: /api/memory/write
-  gate: write
-  enabled: true
-  timeout_s: 12
-- id: post_api_ops_exec
-  label: Execute approved operation
-  method: POST
-  path: /api/ops/exec
-  gate: danger
-  enabled: false
-  timeout_s: 12
-- id: get_api_ops_job_job_id
-  label: Get operation/dev job status
+- id: get_api_civitai_search
+  label: CivitAIでモデルを検索
   method: GET
-  path: /api/ops/job/{job_id}
+  path: /api/civitai/search
   gate: read
   enabled: true
   timeout_s: 12
-- id: post_api_ops_notify
-  label: Send operation notification
+- id: post_api_comfyui_generate
+  label: ComfyUIで画像を生成
   method: POST
-  path: /api/ops/notify
+  path: /api/comfyui/generate
   gate: write
   enabled: true
-  timeout_s: 12
-- id: post_api_ops_plan
-  label: Create operation plan
+  timeout_s: 180
+- id: post_api_google_drive_upload
+  label: Google Driveにファイルをアップロード
   method: POST
-  path: /api/ops/plan
+  path: /api/google_drive/upload
   gate: write
   enabled: true
-  timeout_s: 12
-- id: post_dev_deploy
-  label: Queue deploy task
+  timeout_s: 120
+- id: post_api_obsidian_create
+  label: Obsidianにノートを作成
   method: POST
-  path: /dev/deploy
-  gate: write
-  enabled: true
-  timeout_s: 12
-- id: post_dev_patch
-  label: Queue patch task
-  method: POST
-  path: /dev/patch
-  gate: write
-  enabled: true
-  timeout_s: 12
-- id: post_dev_test
-  label: Queue test task
-  method: POST
-  path: /dev/test
-  gate: write
-  enabled: true
-  timeout_s: 12
-- id: post_memory_search
-  label: Search memory
-  method: POST
-  path: /memory/search
-  gate: read
-  enabled: true
-  timeout_s: 12
-- id: post_memory_write
-  label: Write memory
-  method: POST
-  path: /memory/write
-  gate: write
-  enabled: true
-  timeout_s: 12
-- id: post_ops_exec
-  label: Execute approved operation
-  method: POST
-  path: /ops/exec
-  gate: danger
-  enabled: false
-  timeout_s: 12
-- id: get_ops_job_job_id
-  label: Get operation/dev job status
-  method: GET
-  path: /ops/job/{job_id}
-  gate: read
-  enabled: true
-  timeout_s: 12
-- id: post_ops_notify
-  label: Send operation notification
-  method: POST
-  path: /ops/notify
-  gate: write
-  enabled: true
-  timeout_s: 12
-- id: post_ops_plan
-  label: Create operation plan
-  method: POST
-  path: /ops/plan
+  path: /api/obsidian/create
   gate: write
   enabled: true
   timeout_s: 12

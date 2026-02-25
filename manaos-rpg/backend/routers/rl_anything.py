@@ -390,3 +390,68 @@ def anomaly_clear() -> Dict[str, Any]:
         return {"ok": True, "cleared": True}
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+# ═══════════════════════════════════════════════════════
+# Round 7: Policy Gradient / Reward Shaper / Meta-Controller
+# ═══════════════════════════════════════════════════════
+
+@router.get("/policy/snapshot")
+def policy_snapshot() -> Dict[str, Any]:
+    """方策勾配パラメータ・ポリシーサンプル"""
+    try:
+        return {"ok": True, **_get_rl().get_policy_snapshot()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/policy/update")
+def policy_update(batch_size: int = Body(10, embed=True)) -> Dict[str, Any]:
+    """方策勾配の手動更新"""
+    try:
+        result = _get_rl().manual_policy_update(batch_size=batch_size)
+        return {"ok": True, **result}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/policy/recommend")
+def policy_recommend(
+    success_rate: float = 0.5,
+    avg_score: float = 0.5,
+    difficulty: Optional[str] = None,
+) -> Dict[str, Any]:
+    """現在の方策から推奨アクションを取得"""
+    try:
+        return {"ok": True, **_get_rl().policy_recommend(success_rate, avg_score, difficulty)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/reward/stats")
+def reward_stats() -> Dict[str, Any]:
+    """報酬シェイパーの統計"""
+    try:
+        return {"ok": True, **_get_rl().get_reward_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/meta/status")
+def meta_status() -> Dict[str, Any]:
+    """メタコントローラの状態と健全度"""
+    try:
+        return {"ok": True, **_get_rl().get_meta_status()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/meta/tune")
+def meta_tune() -> Dict[str, Any]:
+    """メタコントローラの手動チューニング"""
+    try:
+        result = _get_rl().manual_meta_tune()
+        return {"ok": True, **result}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+

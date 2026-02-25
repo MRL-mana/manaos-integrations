@@ -1,6 +1,7 @@
 param(
 	[switch]$Lan,
 	[switch]$EnableActions,
+	[switch]$EnableUnifiedWrite,
 	[int]$ApiPort = 9510,
 	[int]$UiPort = 5173
 )
@@ -8,14 +9,14 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $taskName = 'ManaOS-RPG-AlwaysOn'
-$root = Split-Path -Parent $PSScriptRoot
 $runner = Join-Path $PSScriptRoot 'run_always_on.ps1'
 
-$args = @('-NoProfile','-ExecutionPolicy','Bypass','-File', "`"$runner`"", '-ApiPort', $ApiPort, '-UiPort', $UiPort)
-if ($Lan.IsPresent) { $args += '-Lan' }
-if ($EnableActions.IsPresent) { $args += '-EnableActions' }
+$psArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File', "`"$runner`"", '-ApiPort', $ApiPort, '-UiPort', $UiPort)
+if ($Lan.IsPresent) { $psArgs += '-Lan' }
+if ($EnableActions.IsPresent) { $psArgs += '-EnableActions' }
+if ($EnableUnifiedWrite.IsPresent) { $psArgs += '-EnableUnifiedWrite' }
 
-$cmd = 'pwsh ' + ($args -join ' ')
+$cmd = 'pwsh ' + ($psArgs -join ' ')
 
 # 既存があれば更新
 schtasks /Query /TN $taskName *> $null 2>&1

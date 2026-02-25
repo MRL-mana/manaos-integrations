@@ -5,6 +5,7 @@ MRL Memory Promoter
 """
 
 import json
+import os
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
@@ -48,9 +49,15 @@ class MRLMemoryPromoter:
             obsidian_vault: Obsidian Vaultパス（オプション）
         """
         if memory_dir is None:
-            memory_dir = Path(__file__).parent / "mrl_memory"
-        
+            env_dir = str(os.getenv("MRL_MEMORY_DIR", "") or "").strip()
+            if env_dir:
+                memory_dir = Path(env_dir)
+            else:
+                memory_dir = Path(__file__).parent / "mrl_memory"
+
         self.memory_dir = Path(memory_dir)
+        self.memory_dir.mkdir(parents=True, exist_ok=True)
+
         self.scratchpad_path = self.memory_dir / "scratchpad.jsonl"
         self.promoted_path = self.memory_dir / "promoted.jsonl"
         

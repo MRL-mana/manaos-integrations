@@ -1,0 +1,10 @@
+# Pixel7 半自律監視: 祝日リスト（yyyy-MM-dd）
+#
+# 使い方:
+# - 1行に1日付で記述（例: 2026-01-01）
+# - 空行と # で始まる行は無視
+# - `pixel7_edge_watch_profile_start.ps1 -EnableHolidayAsWeekend` で有効化
+#
+# 例:
+# 2026-01-01
+# 2026-02-11

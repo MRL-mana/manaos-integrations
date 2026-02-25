@@ -39,13 +39,27 @@ $env:MANAOS_RPG_ENABLE_ACTIONS='1'
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_backend.ps1
 ```
 
+#### Unified への書き込み（memory store / notify send 等）を有効化する場合
+
+セキュリティのため、Unified 側への POST はデフォルト無効です。
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_backend.ps1 -EnableUnifiedWrite
+```
+
+危険系（dangerous）を有効化したい場合（通常は不要）:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_backend.ps1 -EnableUnifiedWrite -EnableUnifiedDangerous
+```
+
 - 許可アクション定義: `registry/actions.yaml`
 - クエスト一覧: `registry/quests.yaml`（`kind: action` で `action_id` を指定）
 
 確認:
 
-- http://localhost:9510/health
-- http://localhost:9510/api/snapshot
+- <http://localhost:9510/health>
+- <http://localhost:9510/api/snapshot>
 
 ### 2) Frontend
 
@@ -55,7 +69,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_frontend.ps1
 
 確認:
 
-- http://localhost:5173/
+- <http://localhost:5173/>
 
 ### 3) 自動更新（任意）
 
@@ -83,6 +97,12 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_always_on.ps1 -Lan
 
 ```powershell
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_always_on.ps1 -EnableActions
+```
+
+Unified への書き込み（memory store / notify send 等）も使う場合:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_always_on.ps1 -EnableUnifiedWrite
 ```
 
 ### ログオン時に自動起動（常時アクセス）
@@ -127,13 +147,13 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\open_firewall_ports.ps1
 
 ```yaml
 - id: tool_server_pm2
-	name: tool-server
-	kind: pm2
-	pm2_name: tool-server
-	port: 9502
-	health_url: http://127.0.0.1:9502/health
-	tags: [core, always_on]
-	depends_on: []
+  name: tool-server
+  kind: pm2
+  pm2_name: tool-server
+  port: 9502
+  health_url: http://127.0.0.1:9502/health
+  tags: [core, always_on]
+  depends_on: []
 ```
 
 UI表示:
@@ -165,4 +185,29 @@ nvidia-smi --query-apps=pid,process_name,used_gpu_memory --format=csv,noheader,n
 
 - 「魔法（スキル）✨」→ ComfyUI 起動/再起動（actions有効時）
 - または `start_comfyui_local.ps1` を実行
+
+## MRL Memory（統一記憶のフォールバック）
+
+Unified 側の memory が未搭載で 503 の場合、RPG は mrl-memory（既定: `http://127.0.0.1:9507`）へフォールバックします。
+
+### 書き込みモード（安全デフォルト）
+
+mrl-memory はデフォルトで **読み取り専用（readonly）** です。
+書き込みをONにしたい場合は、ホスト側の `FWPKM_*` ではなく **`MRL_FWPKM_*`** を明示して再起動します（他用途の環境変数に引っ張られないため）。
+
+例（full）:
+
+```powershell
+$env:MRL_FWPKM_WRITE_ENABLED='1'
+$env:MRL_FWPKM_WRITE_MODE='full'
+docker compose up -d --force-recreate mrl-memory
+```
+
+スクリプト1発（full / sampled）:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\actions\enable_mrl_memory_write.ps1 -Full
+# または
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\actions\enable_mrl_memory_write.ps1 -SampleRate 0.1
+```
 

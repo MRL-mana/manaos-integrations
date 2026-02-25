@@ -7,7 +7,7 @@ import time
 
 import psutil
 
-from .gpu_stats import get_nvidia_compute_apps, get_nvidia_gpus
+from collectors.gpu_stats import get_nvidia_compute_apps, get_nvidia_gpus
 
 
 def get_host_stats() -> dict:

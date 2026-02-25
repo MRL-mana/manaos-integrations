@@ -12,6 +12,7 @@ from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, asdict
 import hashlib
 import threading
+import os
 
 # 統一モジュールのインポート
 try:
@@ -53,7 +54,11 @@ class MRLMemoryExtractor:
             memory_dir: メモリディレクトリ（Noneの場合はデフォルト）
         """
         if memory_dir is None:
-            memory_dir = Path(__file__).parent / "mrl_memory"
+            env_dir = str(os.getenv("MRL_MEMORY_DIR", "") or "").strip()
+            if env_dir:
+                memory_dir = Path(env_dir)
+            else:
+                memory_dir = Path(__file__).parent / "mrl_memory"
         
         self.memory_dir = Path(memory_dir)
         self.memory_dir.mkdir(parents=True, exist_ok=True)
@@ -175,6 +180,22 @@ class MRLMemoryExtractor:
                 confidence="high",
                 ttl="1d"
             ))
+
+        # 6. raw テキスト（検索性の担保）
+        # 抽出型だと「入力全文」で検索できないので、短いTTLの raw を1件入れておく。
+        raw = str(text or "").strip()
+        if raw:
+            h = hashlib.sha256(raw.encode("utf-8", errors="ignore")).hexdigest()[:12]
+            entries.append(
+                MemoryEntry(
+                    timestamp=timestamp,
+                    source=source,
+                    key=f"raw:{h}",
+                    value=(raw[:8000] + ("…" if len(raw) > 8000 else "")),
+                    confidence="low",
+                    ttl="1d",
+                )
+            )
         
         # 重複チェック（同じキーと値の組み合わせは除外）
         entries = self._deduplicate(entries)
@@ -302,7 +323,11 @@ class MRLMemoryRetriever:
             memory_dir: メモリディレクトリ
         """
         if memory_dir is None:
-            memory_dir = Path(__file__).parent / "mrl_memory"
+            env_dir = str(os.getenv("MRL_MEMORY_DIR", "") or "").strip()
+            if env_dir:
+                memory_dir = Path(env_dir)
+            else:
+                memory_dir = Path(__file__).parent / "mrl_memory"
         
         self.memory_dir = Path(memory_dir)
         self.scratchpad_path = self.memory_dir / "scratchpad.jsonl"

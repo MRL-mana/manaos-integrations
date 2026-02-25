@@ -10,7 +10,7 @@
 
 ## Pixel側セットアップ（Termux）
 
-- Termux をインストール
+- Termux をインストール（推奨: **F-Droid版**。Play版だと Termux:Boot などのアドオンが揃わないことがあります）
 - Termux:API をインストール（可能なら）
 - 依存導入
 
@@ -36,8 +36,14 @@
 
 ### 自動起動（任意）
 
-- Termux:Boot を使って `~/.termux/boot/` に起動スクリプトを置く
+- Termux:Boot を使って `~/.termux/boot/` に起動スクリプトを置く（F-Droidで `Termux:Boot` をインストール）
 - 端末スリープで止まる場合は `termux-wake-lock` を検討
+
+補足:
+
+- 再起動後、初回は依存導入（pip install）で `/health` が返るまで数分かかることがあります
+- Termux:Boot が動いているかは `/storage/emulated/0/Download/pixel7_termux_boot.log` を見ると確認できます
+- 再起動テストは `pwsh -File .\manaos_integrations\pixel7_http_autostart_reboot_test.ps1` が便利です
 
 ## MacroDroid 連携（Intent受信）
 
@@ -104,6 +110,52 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
 - 「ManaOS: Pixel7 HTTP 監視開始（バックグラウンド）」
 - 「ManaOS: Pixel7 外出モード HTTP 監視開始（Tailscaleのみ/バックグラウンド）」
 - 「ManaOS: Pixel7 HTTP 監視停止」
+- 「ManaOS: Pixel7 半自律チェック（確認→復旧→通知）」
+  - `pixel7_edge_onebutton.ps1` を実行し、`health確認 →（必要時）無線ADB復旧 + Termux起動補助 → 再health確認 → smoketest` を1本で実行
+  - 実行結果は `logs/pixel7_edge_onebutton_latest.json` と `logs/pixel7_edge_onebutton_history.jsonl` に保存
+  - `-AutoRecoverOnFailure` で自己復旧を有効化（タスク既定）
+  - 通知は `MANAOS_WEBHOOK_URL` / `MANAOS_WEBHOOK_FORMAT` / `MANAOS_WEBHOOK_MENTION` を使って失敗時に送信（`-NotifyOnSuccess` で成功通知も可）
+- 「ManaOS: Pixel7 半自律監視開始（5分/バックグラウンド）」
+  - `pixel7_edge_watch.ps1` を常駐実行し、5分ごとに `pixel7_edge_onebutton.ps1` を自動実行
+  - 連続失敗2回で監視間隔を短縮（300秒→60秒）、復帰後は300秒へ自動復元
+  - 段階復旧を実行（既定）
+    - 失敗2回以上: detailに応じた強制Gateway復旧（`status_file_missing` / `status_parse_failed`）
+    - 失敗5回以上: 強復旧（無線ADB復旧 + Termux起動補助）
+    - 失敗8回以上: （`-EnableRebootTestRecovery` 指定時のみ）再起動テスト復旧
+  - 失敗通知は状態遷移時に即時送信し、連続失敗中は15分クールダウンで追撃通知
+  - `status_file_missing` / `status_parse_failed` が続く場合は、クールダウン付きで `無線ADB復旧 + Termux起動補助` を強制実行
+  - 監視状態は `.pixel7_edge_watch.status.json`、ログは `logs/pixel7_edge_watch_YYYYMMDD.log`
+  - 通知は「状態遷移時のみ」（正常→異常、異常→正常）に送るため、通知スパムを抑制
+- 「ManaOS: Pixel7 半自律監視開始（攻め: 再起動復旧ON）」
+  - `-EnableRebootTestRecovery` を付けた監視開始タスク
+  - 長時間異常が継続した場合、再起動テストを使う最終段の自動復旧まで実施
+- 「ManaOS: Pixel7 外出モード 半自律監視開始（攻め: 再起動復旧ON/Tailscale）」
+  - 攻めモード + `-RemoteOnly`（Tailscale経路前提）
+- 「ManaOS: Pixel7 半自律監視（通常）ワンボタン」
+  - 監視開始（通常）→状態確認を順に実行
+- 「ManaOS: Pixel7 半自律監視（攻め）ワンボタン」
+  - 監視開始（攻め）→状態確認を順に実行
+- 「ManaOS: Pixel7 半自律監視開始（自動切替: 昼通常/夜攻め）」
+  - `pixel7_edge_watch_profile_start.ps1 -Profile Auto` を実行
+  - 昼（7:00-21:59）は通常、夜（22:00-6:59）は攻め（再起動復旧ON）で開始
+- 「ManaOS: Pixel7 外出モード 半自律監視開始（自動切替: 昼通常/夜攻め）」
+  - 上記に `-RemoteOnly` を付与した外出モード
+- 「ManaOS: Pixel7 半自律監視（自動切替）ワンボタン」
+  - 自動切替監視開始→状態確認を順に実行
+- 「ManaOS: Pixel7 半自律監視開始（自動切替+週次しきい値）」
+  - `-EnableWeeklyThresholdProfile` を有効化
+  - 平日: しきい値 `2/5/8`（degraded/strong/reboot）
+  - 休日: しきい値 `3/6/10`（degraded/strong/reboot）
+  - `-RebootRecoveryMode NightWeekendOnly` 指定時は「夜かつ休日」の場合のみ再起動復旧を有効化
+  - `-EnableHolidayAsWeekend -HolidayDateFile config/pixel7_holidays_jp.txt` で、祝日を休日扱いにできる
+  - 祝日ファイルは `config/pixel7_holidays_jp.txt`（`yyyy-MM-dd` を1行1件）
+- 「ManaOS: Pixel7 外出モード 半自律監視開始（自動切替+週次しきい値）」
+  - 上記に `-RemoteOnly` を付与した外出モード
+- 「ManaOS: Pixel7 半自律監視（自動切替+週次）ワンボタン」
+  - 自動切替+週次しきい値監視開始→状態確認を順に実行
+- 「ManaOS: Pixel7 半自律監視 状態確認」 / 「ManaOS: Pixel7 半自律監視 停止」
+  - 状態確認: `pixel7_edge_watch_status.ps1`
+  - 停止: `pixel7_edge_watch_stop.ps1 -Force`
 - 「ManaOS: Pixel7 外出フル常駐+HTTP（keepalive + scrcpy + reboot + http watch）」
 - 「ManaOS: Pixel7 URLを開く（HTTP→ADB 自動フォールバック）」
 - 「ManaOS: Pixel7 MacroDroid cmd送信（HTTP）」

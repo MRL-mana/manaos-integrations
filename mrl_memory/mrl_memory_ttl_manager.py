@@ -8,6 +8,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
 import json
+import os
 
 # 統一モジュールのインポート
 try:
@@ -36,7 +37,11 @@ class TTLManager:
             memory_dir: メモリディレクトリ
         """
         if memory_dir is None:
-            memory_dir = Path(__file__).parent / "mrl_memory"
+            env_dir = str(os.getenv("MRL_MEMORY_DIR", "") or "").strip()
+            if env_dir:
+                memory_dir = Path(env_dir)
+            else:
+                memory_dir = Path(__file__).parent / "mrl_memory"
         
         self.memory_dir = Path(memory_dir)
         self.scratchpad_path = self.memory_dir / "scratchpad.jsonl"

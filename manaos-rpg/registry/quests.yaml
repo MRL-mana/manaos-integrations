@@ -59,3 +59,15 @@ quests:
     kind: action
     action_id: unified_proxy_enable_read_exists
     tags: [ops]
+
+  - id: run_mrl_memory_write_on_full
+    label: mrl-memory 書き込みON（full）
+    kind: action
+    action_id: mrl_memory_write_on_full
+    tags: [memory, ops]
+
+  - id: run_mrl_memory_write_off
+    label: mrl-memory 書き込みOFF（readonly）
+    kind: action
+    action_id: mrl_memory_write_off
+    tags: [memory, ops]

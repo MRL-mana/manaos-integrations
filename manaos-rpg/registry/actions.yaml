@@ -72,3 +72,20 @@ actions:
     cwd: .\
     timeout_sec: 120
     tags: [ops]
+
+  - id: mrl_memory_write_on_full
+    label: mrl-memory 書き込みON（full / recreate）
+    kind: pwsh_file
+    path: manaos-rpg/scripts/actions/enable_mrl_memory_write.ps1
+    args: ["-Full"]
+    cwd: .\
+    timeout_sec: 120
+    tags: [memory, ops]
+
+  - id: mrl_memory_write_off
+    label: mrl-memory 書き込みOFF（readonly / recreate）
+    kind: pwsh_file
+    path: manaos-rpg/scripts/actions/disable_mrl_memory_write.ps1
+    cwd: .\
+    timeout_sec: 120
+    tags: [memory, ops]

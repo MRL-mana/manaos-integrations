@@ -98,6 +98,18 @@ function Resolve-LogPath([string]$p) {
     return $p
 }
 
+function Get-PosixDirName([string]$p) {
+    $p = [string]($p ?? '')
+    if ([string]::IsNullOrWhiteSpace($p)) { return '' }
+
+    # Normalize any accidental backslashes (Windows path semantics) to '/'
+    $p = $p -replace '\\', '/'
+
+    $lastSlash = $p.LastIndexOf('/')
+    if ($lastSlash -le 0) { return '' }
+    return $p.Substring(0, $lastSlash)
+}
+
 $LogPathResolved = Resolve-LogPath $LogPath
 if ($LogPathResolved -and $LogPathResolved -ne $LogPath) {
     Write-Host ("LogPath corrected: {0} -> {1}" -f $LogPath, $LogPathResolved) -ForegroundColor DarkGray
@@ -148,7 +160,7 @@ if ([string]::IsNullOrWhiteSpace($LogPath)) {
     # Run in background and log to an adb-accessible location
     # NOTE: do not wrap path in quotes to keep adb input simple
     $lp = $LogPathResolved
-    $dir = [System.IO.Path]::GetDirectoryName($lp)
+    $dir = Get-PosixDirName $lp
     if ($dir) {
         # Ensure directory exists (Android mkdir -p)
         Send-TermuxLine ("mkdir -p {0}" -f $dir)

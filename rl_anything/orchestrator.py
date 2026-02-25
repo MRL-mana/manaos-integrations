@@ -46,6 +46,9 @@ from .metrics_export import PrometheusExporter
 from .auto_curriculum import AutoCurriculum
 from .replay_evaluator import ReplayEvaluator
 from .anomaly_detector import AnomalyDetector
+from .policy_gradient import PolicyGradient
+from .reward_shaper import RewardShaper
+from .meta_controller import MetaController
 
 _DIR = Path(__file__).parent
 _STATE_DIR = _DIR.parent / "logs" / "rl_anything"
@@ -133,6 +136,16 @@ class RLAnythingOrchestrator:
         # Anomaly Detector
         self.anomaly_detector = AnomalyDetector(config=cfg)
 
+        # Policy Gradient Estimator (Round 7)
+        pg_persist = state_dir / "policy_gradient.json"
+        self.policy_gradient = PolicyGradient(persist_path=pg_persist)
+
+        # Reward Shaper (Round 7)
+        self.reward_shaper = RewardShaper(config=cfg)
+
+        # Meta-Controller (Round 7)
+        self.meta_controller = MetaController(config=cfg)
+
     # ═══════════════════════════════════════════════════════
     # Prometheus メトリクス初期化
     # ═══════════════════════════════════════════════════════
@@ -147,6 +160,10 @@ class RLAnythingOrchestrator:
         self.prom.register("rl_active_experiments", "gauge", "Active A/B experiments")
         self.prom.register("rl_alerts_total", "counter", "Total anomaly alerts fired")
         self.prom.register("rl_curriculum_changes", "counter", "Auto-curriculum difficulty changes")
+        self.prom.register("rl_policy_updates", "counter", "Policy gradient update steps")
+        self.prom.register("rl_reward_shaped", "histogram", "Shaped reward values")
+        self.prom.register("rl_meta_adjustments", "counter", "Meta-controller parameter adjustments")
+        self.prom.register("rl_health_score", "gauge", "Meta-controller system health score")
 
     # ═══════════════════════════════════════════════════════
     # タスクライフサイクル
@@ -300,7 +317,185 @@ class RLAnythingOrchestrator:
             })
             result["alerts"] = [a.to_dict() for a in alerts]
 
+        # ──── Reward Shaping (Round 7) ────
+        try:
+            shaped = self.reward_shaper.shape(
+                raw_score=score,
+                outcome=outcome,
+                difficulty=self.evolution.current_difficulty.value,
+                success_rate=success_rate,
+                avg_score=sum(e.get("score", 0) for e in history[-20:]) / max(1, len(history[-20:])),
+            )
+            result["shaped_reward"] = {
+                "raw": shaped.raw, "shaped": shaped.shaped,
+                "potential_bonus": shaped.potential_bonus,
+                "curiosity_bonus": shaped.curiosity_bonus,
+                "difficulty_bonus": shaped.difficulty_bonus,
+                "consistency_bonus": shaped.consistency_bonus,
+            }
+            self.prom.observe("rl_reward_shaped", shaped.shaped, labels={"outcome": outcome})
+        except Exception as e:
+            _log.warning("reward shaping error: %s", e)
+            shaped = None
+
+        # ──── Policy Gradient (Round 7) ────
+        try:
+            pg_state = self.policy_gradient.encode_state(
+                success_rate=success_rate,
+                avg_score=sum(e.get("score", 0) for e in history[-20:]) / max(1, len(history[-20:])),
+                difficulty=self.evolution.current_difficulty.value,
+            )
+            # 前回のアクション結果を報酬として記録
+            reward_val = shaped.shaped if shaped else score
+            # 推奨アクションを取得して記録
+            action, log_prob = self.policy_gradient.select_action(pg_state)
+            self.policy_gradient.record(pg_state, action, reward_val, log_prob, self._cycle_count)
+
+            # 一定間隔でポリシー更新
+            if self._cycle_count % 5 == 0 and self._cycle_count > 0:
+                update_stats = self.policy_gradient.update()
+                if update_stats:
+                    self.prom.inc("rl_policy_updates")
+                    result["policy_update"] = update_stats
+        except Exception as e:
+            _log.warning("policy gradient error: %s", e)
+
+        # ──── Meta-Controller Tuning (Round 7) ────
+        try:
+            if self._cycle_count % 10 == 0 and len(history) >= 5:
+                # 現在のパラメータを収集
+                pg_snap = self.policy_gradient.get_snapshot()
+                current_params = {
+                    "learning_rate": pg_snap.get("learning_rate", 0.01),
+                    "temperature": pg_snap.get("temperature", 1.0),
+                    "curriculum_up_threshold": getattr(self.curriculum, 'up_threshold', 0.75),
+                    "curriculum_down_threshold": getattr(self.curriculum, 'down_threshold', 0.30),
+                    "anomaly_z_threshold": getattr(self.anomaly_detector, 'z_threshold', 2.0),
+                }
+                score_series = [e.get("score", 0) for e in history]
+                # ポリシーエントロピ
+                probs = self.policy_gradient.get_action_probs(pg_state)
+                import math as _math
+                entropy = -sum(p * _math.log(max(p, 1e-10)) for p in probs.values())
+
+                meta_report = self.meta_controller.tune(
+                    score_history=score_series,
+                    current_params=current_params,
+                    alert_count=len(alerts) if alerts else 0,
+                    policy_entropy=entropy,
+                    curriculum_changes=0,
+                )
+                # 調整を適用
+                for adj in meta_report.adjustments:
+                    self._apply_meta_adjustment(adj)
+                    self.prom.inc("rl_meta_adjustments", labels={"param": adj.param_name})
+                self.prom.set("rl_health_score", meta_report.health_score)
+                if meta_report.adjustments:
+                    self._emit_event("meta_tuning", meta_report.to_dict())
+                    result["meta_tuning"] = meta_report.to_dict()
+        except Exception as e:
+            _log.warning("meta-controller error: %s", e)
+
         return result
+
+    # ═══════════════════════════════════════════════════════
+    # Meta 調整の適用
+    # ═══════════════════════════════════════════════════════
+    def _apply_meta_adjustment(self, adj) -> None:
+        """MetaAdjustment を対応コンポーネントに反映"""
+        try:
+            if adj.param_name == "learning_rate":
+                self.policy_gradient.lr = adj.new_value
+            elif adj.param_name == "temperature":
+                self.policy_gradient.temperature = adj.new_value
+            elif adj.param_name == "curriculum_up_threshold":
+                if hasattr(self.curriculum, 'up_threshold'):
+                    self.curriculum.up_threshold = adj.new_value
+            elif adj.param_name == "curriculum_down_threshold":
+                if hasattr(self.curriculum, 'down_threshold'):
+                    self.curriculum.down_threshold = adj.new_value
+            elif adj.param_name == "anomaly_z_threshold":
+                if hasattr(self.anomaly_detector, 'z_threshold'):
+                    self.anomaly_detector.z_threshold = adj.new_value
+            _log.info("meta-adjustment applied: %s → %s", adj.param_name, adj.new_value)
+        except Exception as e:
+            _log.warning("meta-adjustment failed: %s → %s", adj.param_name, e)
+
+    # ═══════════════════════════════════════════════════════
+    # Round 7: Policy / Reward / Meta ダッシュボード
+    # ═══════════════════════════════════════════════════════
+    def get_policy_snapshot(self) -> Dict[str, Any]:
+        """方策勾配パラメータとポリシーサンプル"""
+        snap = self.policy_gradient.get_snapshot()
+        stats = self.policy_gradient.get_stats()
+        return {**snap, "stats": stats}
+
+    def get_reward_stats(self) -> Dict[str, Any]:
+        """報酬シェイパーの統計"""
+        return self.reward_shaper.get_stats()
+
+    def get_meta_status(self) -> Dict[str, Any]:
+        """メタコントローラの状態"""
+        stats = self.meta_controller.get_stats()
+        health_trend = self.meta_controller.get_health_trend()
+        return {
+            **stats,
+            "health_trend": health_trend,
+        }
+
+    def policy_recommend(self, success_rate: float = 0.5, avg_score: float = 0.5,
+                         difficulty: Optional[str] = None) -> Dict[str, Any]:
+        """方策からアクション推奨を取得"""
+        diff = difficulty or self.evolution.current_difficulty.value
+        state = self.policy_gradient.encode_state(success_rate, avg_score, diff)
+        rec = self.policy_gradient.recommend_action(state)
+        return {
+            "recommended_action": rec.get("action", "stay"),
+            "action_probabilities": rec.get("probs", {}),
+            "entropy": rec.get("entropy", 0),
+            "state": state,
+            "difficulty": diff,
+        }
+
+    def manual_policy_update(self, batch_size: int = 10) -> Dict[str, Any]:
+        """方策勾配の手動更新"""
+        result = self.policy_gradient.update(batch_size=batch_size)
+        if result:
+            self.prom.inc("rl_policy_updates")
+        return result or {"status": "no_update", "reason": "insufficient_trajectories"}
+
+    def manual_meta_tune(self) -> Dict[str, Any]:
+        """メタコントローラの手動チューニング"""
+        history = self.get_history(limit=100)
+        if len(history) < 3:
+            return {"status": "skipped", "reason": "insufficient_history"}
+
+        pg_snap = self.policy_gradient.get_snapshot()
+        current_params = {
+            "learning_rate": pg_snap.get("learning_rate", 0.01),
+            "temperature": pg_snap.get("temperature", 1.0),
+            "curriculum_up_threshold": getattr(self.curriculum, 'up_threshold', 0.75),
+            "curriculum_down_threshold": getattr(self.curriculum, 'down_threshold', 0.30),
+            "anomaly_z_threshold": getattr(self.anomaly_detector, 'z_threshold', 2.0),
+        }
+        score_series = [e.get("score", 0) for e in history]
+
+        # ポリシーエントロピ計算
+        import math as _math
+        state = self.policy_gradient.encode_state(0.5, 0.5, self.evolution.current_difficulty.value)
+        probs = self.policy_gradient.get_action_probs(state)
+        entropy = -sum(p * _math.log(max(p, 1e-10)) for p in probs.values())
+
+        report = self.meta_controller.tune(
+            score_history=score_series,
+            current_params=current_params,
+            policy_entropy=entropy,
+        )
+        for adj in report.adjustments:
+            self._apply_meta_adjustment(adj)
+            self.prom.inc("rl_meta_adjustments", labels={"param": adj.param_name})
+        self.prom.set("rl_health_score", report.health_score)
+        return report.to_dict()
 
     # ═══════════════════════════════════════════════════════
     # 自動スコアリング

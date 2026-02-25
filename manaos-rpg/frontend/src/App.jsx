@@ -25,6 +25,14 @@ class ErrorBoundary extends React.Component {
 
 const TITLE_BASE = 'MANAOS // RPG COMMAND'
 
+/** 共通定数: マジックナンバー排除 */
+const MAX_OUTPUT_LEN = 18000
+const AUTO_REFRESH_MS = 30000
+const ERROR_DISMISS_MS = 15000
+const EVENTS_LIMIT = 120
+const ITEMS_SHOW_LIMIT = 24
+const TICK_INTERVAL_MS = 60000
+
 const FALLBACK_MENU = [
   { id: 'status', label: 'ステータス', icon: '🧍' },
   { id: 'party', label: 'パーティ（サービス）', icon: '🧩' },
@@ -100,6 +108,11 @@ function fmtBytes(n) {
 const DIFFICULTY_CLS = { beginner: 'ok', standard: '', advanced: 'caution', expert: 'danger' }
 function difficultyColor(d) { return DIFFICULTY_CLS[String(d)] || '' }
 
+/** 長すぎる出力を安全にトランケートする */
+function truncateOutput(text) {
+  return text.length > MAX_OUTPUT_LEN ? (text.slice(0, MAX_OUTPUT_LEN) + '\n... (truncated)') : text
+}
+
 /** SVG スパークライン — values 配列をインライン折れ線チャートで描画 */
 function Sparkline({ values = [], width = 300, height = 40, color = '#4ade80', strokeWidth = 1.5 }) {
   if (!values || values.length < 2) return null
@@ -149,6 +162,9 @@ function RLView({ rl, apiBase }) {
   const [curriculumData, setCurriculumData] = useState(null)
   const [replayEvalData, setReplayEvalData] = useState(null)
   const [alertsData, setAlertsData] = useState(null)
+  const [policyData, setPolicyData] = useState(null)
+  const [rewardData, setRewardData] = useState(null)
+  const [metaData, setMetaData] = useState(null)
 
   async function fetchLiveDashboard() {
     if (busyOp) return
@@ -223,6 +239,7 @@ function RLView({ rl, apiBase }) {
 
   async function runCleanup() {
     if (busyOp) return
+    if (!window.confirm('Staleデータのクリーンアップを実行しますか？')) return
     setBusyOp('cleanup')
     try {
       const r = await fetch(`${apiBase}/api/rl/cleanup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
@@ -257,6 +274,7 @@ function RLView({ rl, apiBase }) {
 
   async function toggleScheduler(action) {
     if (busyOp) return
+    if (!window.confirm(`スケジューラを ${action} しますか？`)) return
     setBusyOp('scheduler')
     try {
       const r = await fetch(`${apiBase}/api/rl/scheduler/${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
@@ -272,7 +290,7 @@ function RLView({ rl, apiBase }) {
     try {
       const r = await fetchJson('/api/rl/replay/stats')
       if (r?.ok) setReplayStats(r)
-    } catch (e) { /* ignore */ }
+    } catch (e) { console.warn('fetchReplayStats:', e) }
     finally { setBusyOp('') }
   }
 
@@ -282,7 +300,7 @@ function RLView({ rl, apiBase }) {
     try {
       const r = await fetchJson(`/api/rl/replay/sample?n=8&prioritized=${prioritized}`)
       if (r?.ok) setReplaySamples(r.samples || [])
-    } catch (e) { /* ignore */ }
+    } catch (e) { console.warn('fetchReplaySamples:', e) }
     finally { setBusyOp('') }
   }
 
@@ -294,7 +312,7 @@ function RLView({ rl, apiBase }) {
       if (r?.ok) setExperimentsData(r)
       const c = await fetchJson('/api/rl/experiments/compare?min_samples=2')
       if (c?.ok) setExpCompare(c)
-    } catch (e) { /* ignore */ }
+    } catch (e) { console.warn('fetchExperiments:', e) }
     finally { setBusyOp('') }
   }
 
@@ -304,17 +322,18 @@ function RLView({ rl, apiBase }) {
     try {
       const r = await fetchJson('/api/rl/curriculum/recommend')
       if (r?.ok !== undefined) setCurriculumData(r)
-    } catch (e) { /* ignore */ }
+    } catch (e) { console.warn('fetchCurriculum:', e) }
     finally { setBusyOp('') }
   }
 
   async function applyCurriculum() {
     if (busyOp) return
+    if (!window.confirm('カリキュラムを適用しますか？（設定が変更されます）')) return
     setBusyOp('curriculum_apply')
     try {
       const r = await fetchJson('/api/rl/curriculum/apply', { method: 'POST' })
       if (r?.ok !== undefined) setCurriculumData(r)
-    } catch (e) { /* ignore */ }
+    } catch (e) { console.warn('applyCurriculum:', e) }
     finally { setBusyOp('') }
   }
 
@@ -324,7 +343,7 @@ function RLView({ rl, apiBase }) {
     try {
       const r = await fetchJson('/api/rl/replay/evaluate?sample_size=30&prioritized=true')
       if (r?.ok !== undefined) setReplayEvalData(r)
-    } catch (e) { /* ignore */ }
+    } catch (e) { console.warn('fetchReplayEval:', e) }
     finally { setBusyOp('') }
   }
 
@@ -334,7 +353,57 @@ function RLView({ rl, apiBase }) {
     try {
       const r = await fetchJson('/api/rl/alerts/check', { method: 'POST' })
       if (r?.ok !== undefined) setAlertsData(r)
-    } catch (e) { /* ignore */ }
+    } catch (e) { console.warn('fetchAlerts:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchPolicy() {
+    if (busyOp) return
+    setBusyOp('policy')
+    try {
+      const r = await fetchJson('/api/rl/policy/snapshot')
+      if (r?.ok !== undefined) setPolicyData(r)
+    } catch (e) { console.warn('fetchPolicy:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchPolicyUpdate() {
+    if (busyOp) return
+    setBusyOp('policyUpdate')
+    try {
+      const r = await fetchJson('/api/rl/policy/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(10) })
+      if (r) setPolicyData((prev) => prev ? { ...prev, _lastUpdate: r } : prev)
+    } catch (e) { console.warn('fetchPolicyUpdate:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchReward() {
+    if (busyOp) return
+    setBusyOp('reward')
+    try {
+      const r = await fetchJson('/api/rl/reward/stats')
+      if (r?.ok !== undefined) setRewardData(r)
+    } catch (e) { console.warn('fetchReward:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchMeta() {
+    if (busyOp) return
+    setBusyOp('meta')
+    try {
+      const r = await fetchJson('/api/rl/meta/status')
+      if (r?.ok !== undefined) setMetaData(r)
+    } catch (e) { console.warn('fetchMeta:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchMetaTune() {
+    if (busyOp) return
+    setBusyOp('metaTune')
+    try {
+      const r = await fetchJson('/api/rl/meta/tune', { method: 'POST' })
+      if (r) setMetaData((prev) => prev ? { ...prev, _lastTune: r } : r)
+    } catch (e) { console.warn('fetchMetaTune:', e) }
     finally { setBusyOp('') }
   }
 
@@ -770,7 +839,7 @@ function RLView({ rl, apiBase }) {
                 <div className="mt4">
                   <div className="small mb4">直近アラート</div>
                   {alertsData.recent.slice(-8).reverse().map((a, i) => (
-                    <div key={i} className="kv kvBorder" style={{ borderLeft: `3px solid ${a.severity === 'critical' ? 'var(--err)' : a.severity === 'warning' ? 'var(--caution)' : 'var(--accent)'}` }}>
+                    <div key={i} className="kv kvBorder" style={{ borderLeft: `3px solid ${a.severity === 'critical' ? 'var(--danger)' : a.severity === 'warning' ? 'var(--caution)' : 'var(--accent)'}` }}>
                       <span className="small">[{a.alert_type}] {a.message}</span>
                       <span className="mono small">{a.severity}</span>
                     </div>
@@ -781,6 +850,143 @@ function RLView({ rl, apiBase }) {
           ) : alertsData && !alertsData.ok ? (
             <div className="err">{alertsData.error || 'エラー'}</div>
           ) : <div className="small">ボタンを押すとパフォーマンス異常をチェック</div>}
+        </div>
+      </div>
+
+      {/* ───────── POLICY GRADIENT (Round 7) ───────── */}
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">POLICY GRADIENT</span>
+          <span>方策勾配推定 (REINFORCE)</span>
+          <span className="small">/api/rl/policy</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" onClick={fetchPolicy} disabled={!!busyOp}>{busyOp === 'policy' ? '取得中…' : '📊 ポリシー取得'}</button>
+            <button className="link" onClick={fetchPolicyUpdate} disabled={!!busyOp}>{busyOp === 'policyUpdate' ? '更新中…' : '⚡ 手動更新'}</button>
+          </div>
+          {policyData && policyData.ok ? (
+            <div className="mt8">
+              <div className="statsGrid">
+                <div className="kv"><span>学習率</span><span className="mono">{policyData.learning_rate}</span></div>
+                <div className="kv"><span>温度</span><span className="mono">{policyData.temperature}</span></div>
+                <div className="kv"><span>ベースライン</span><span className="mono">{typeof policyData.baseline === 'number' ? policyData.baseline.toFixed(4) : '—'}</span></div>
+                <div className="kv"><span>更新回数</span><span className="mono">{policyData.update_count}</span></div>
+                <div className="kv"><span>エントロピ係数</span><span className="mono">{policyData.entropy_coeff}</span></div>
+              </div>
+              {policyData.stats ? (
+                <div className="mt4">
+                  <div className="small mb4">統計</div>
+                  <div className="statsGrid">
+                    <div className="kv"><span>軌跡数</span><span className="mono">{policyData.stats.trajectory_count}</span></div>
+                    {policyData.stats.recent_actions ? Object.entries(policyData.stats.recent_actions).map(([k, v]) => (
+                      <div key={k} className="kv"><span className="small">{k}</span><span className="mono">{v}</span></div>
+                    )) : null}
+                  </div>
+                </div>
+              ) : null}
+              {policyData.theta ? (
+                <details className="mt4">
+                  <summary className="link">θ パラメータ</summary>
+                  <pre className="mono small">{JSON.stringify(policyData.theta, null, 2)}</pre>
+                </details>
+              ) : null}
+            </div>
+          ) : policyData && !policyData.ok ? (
+            <div className="err">{policyData.error || 'エラー'}</div>
+          ) : <div className="small">方策パラメータと REINFORCE 更新の状態</div>}
+        </div>
+      </div>
+
+      {/* ───────── REWARD SHAPER (Round 7) ───────── */}
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">REWARD SHAPER</span>
+          <span>報酬シェイピング (Potential-Based)</span>
+          <span className="small">/api/rl/reward</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" onClick={fetchReward} disabled={!!busyOp}>{busyOp === 'reward' ? '取得中…' : '🎯 統計取得'}</button>
+          </div>
+          {rewardData && rewardData.ok ? (
+            <div className="mt8">
+              <div className="statsGrid">
+                <div className="kv"><span>累計訪問数</span><span className="mono">{rewardData.total_visits}</span></div>
+                <div className="kv"><span>スコア履歴数</span><span className="mono">{rewardData.score_history_len}</span></div>
+                <div className="kv"><span>直近平均スコア</span><span className="mono">{typeof rewardData.recent_avg_score === 'number' ? rewardData.recent_avg_score.toFixed(4) : '—'}</span></div>
+                <div className="kv"><span>現在ポテンシャル</span><span className="mono">{typeof rewardData.current_potential === 'number' ? rewardData.current_potential.toFixed(4) : '—'}</span></div>
+              </div>
+              {rewardData.visit_distribution ? (
+                <div className="mt4">
+                  <div className="small mb4">訪問分布</div>
+                  {Object.entries(rewardData.visit_distribution).map(([k, v]) => (
+                    <div key={k} className="kv"><span className="small">{k}</span><span className="mono">{v}</span></div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : rewardData && !rewardData.ok ? (
+            <div className="err">{rewardData.error || 'エラー'}</div>
+          ) : <div className="small">PBRS + 好奇心ボーナス + 一貫性ボーナスの統計</div>}
+        </div>
+      </div>
+
+      {/* ───────── META-CONTROLLER (Round 7) ───────── */}
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">META-CONTROLLER</span>
+          <span>自律ハイパーパラメータ調整</span>
+          <span className="small">/api/rl/meta</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" onClick={fetchMeta} disabled={!!busyOp}>{busyOp === 'meta' ? '取得中…' : '🧠 状態取得'}</button>
+            <button className="link" onClick={fetchMetaTune} disabled={!!busyOp}>{busyOp === 'metaTune' ? '調整中…' : '🔧 手動チューニング'}</button>
+          </div>
+          {metaData && metaData.ok ? (
+            <div className="mt8">
+              <div className="statsGrid">
+                <div className="kv"><span>総調整回数</span><span className="mono">{metaData.total_adjustments}</span></div>
+                <div className="kv"><span>メタ履歴数</span><span className="mono">{metaData.meta_history_len}</span></div>
+              </div>
+              {metaData.latest_signals && Object.keys(metaData.latest_signals).length > 0 ? (
+                <div className="mt4">
+                  <div className="small mb4">最新メタシグナル</div>
+                  {Object.entries(metaData.latest_signals).map(([k, v]) => (
+                    <div key={k} className="kv"><span className="small">{k}</span><span className={`mono ${k === 'stability' && v < 0.4 ? 'err' : k === 'convergence' && v < -0.05 ? 'err' : ''}`}>{typeof v === 'number' ? v.toFixed(4) : v}</span></div>
+                  ))}
+                </div>
+              ) : null}
+              {metaData.health_trend && metaData.health_trend.length > 0 ? (
+                <div className="mt4">
+                  <div className="small mb4">ヘルストレンド</div>
+                  <div className="mono small">{metaData.health_trend.map((h) => h.toFixed(2)).join(' → ')}</div>
+                </div>
+              ) : null}
+              {metaData.param_change_counts && Object.keys(metaData.param_change_counts).length > 0 ? (
+                <div className="mt4">
+                  <div className="small mb4">パラメータ変更回数</div>
+                  {Object.entries(metaData.param_change_counts).map(([k, v]) => (
+                    <div key={k} className="kv"><span className="small">{k}</span><span className="mono">{v}</span></div>
+                  ))}
+                </div>
+              ) : null}
+              {metaData.recent_adjustments && metaData.recent_adjustments.length > 0 ? (
+                <details className="mt4">
+                  <summary className="link">直近の調整ログ</summary>
+                  {metaData.recent_adjustments.slice(-5).reverse().map((a, i) => (
+                    <div key={i} className="kv kvBorder mt4">
+                      <span className="small">[{a.param_name}] {a.old_value?.toFixed?.(4)} → {a.new_value?.toFixed?.(4)}</span>
+                      <span className="mono small">{a.reason}</span>
+                    </div>
+                  ))}
+                </details>
+              ) : null}
+            </div>
+          ) : metaData && !metaData.ok ? (
+            <div className="err">{metaData.error || 'エラー'}</div>
+          ) : <div className="small">メタ学習による lr / 温度 / 閾値の自動調整</div>}
         </div>
       </div>
 
@@ -892,15 +1098,15 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Auto-dismiss error after 15 seconds
+  // Auto-dismiss error after ERROR_DISMISS_MS
   useEffect(() => {
     if (!err) return
-    const id = setTimeout(() => setErr(''), 15000)
+    const id = setTimeout(() => setErr(''), ERROR_DISMISS_MS)
     return () => clearTimeout(id)
   }, [err])
 
   const refreshEvents = useCallback(() => {
-    fetchJson('/api/events?limit=120')
+    fetchJson(`/api/events?limit=${EVENTS_LIMIT}`)
       .then((r) => setEvents(r.events || []))
       .catch(() => {})
   }, [])
@@ -911,7 +1117,7 @@ export default function App() {
       refreshSnapshot().then(() => {
         if (active === 'logs') refreshEvents()
       })
-    }, 30000)
+    }, AUTO_REFRESH_MS)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefresh, active])
@@ -921,9 +1127,9 @@ export default function App() {
     panelRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
   }, [active, refreshEvents])
 
-  // Tick every 60s to keep fmtAgo up-to-date
+  // Tick every TICK_INTERVAL_MS to keep fmtAgo up-to-date
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 60000)
+    const id = setInterval(() => setTick((t) => t + 1), TICK_INTERVAL_MS)
     return () => clearInterval(id)
   }, [])
 
@@ -1016,11 +1222,40 @@ export default function App() {
       </header>
 
       <main className="main">
-        <nav className="menu" aria-label="メインメニュー">
+        <nav className="menu" aria-label="メインメニュー" role="tablist" aria-orientation="vertical"
+          onKeyDown={(e) => {
+            const ids = menu.map((m) => m.id)
+            const idx = ids.indexOf(active)
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+              e.preventDefault()
+              const next = ids[(idx + 1) % ids.length]
+              setActive(next)
+              e.currentTarget.querySelector(`[data-tab="${next}"]`)?.focus()
+            } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+              e.preventDefault()
+              const prev = ids[(idx - 1 + ids.length) % ids.length]
+              setActive(prev)
+              e.currentTarget.querySelector(`[data-tab="${prev}"]`)?.focus()
+            } else if (e.key === 'Home') {
+              e.preventDefault()
+              setActive(ids[0])
+              e.currentTarget.querySelector(`[data-tab="${ids[0]}"]`)?.focus()
+            } else if (e.key === 'End') {
+              e.preventDefault()
+              setActive(ids[ids.length - 1])
+              e.currentTarget.querySelector(`[data-tab="${ids[ids.length - 1]}"]`)?.focus()
+            }
+          }}
+        >
           <div className="menuTitle">コマンド</div>
           {menu.map((m) => (
             <button
               key={m.id}
+              data-tab={m.id}
+              role="tab"
+              aria-selected={m.id === active}
+              aria-controls={`panel-${m.id}`}
+              tabIndex={m.id === active ? 0 : -1}
               className={m.id === active ? 'menuItem active' : 'menuItem'}
               onClick={() => setActive(m.id)}
             >
@@ -1030,7 +1265,8 @@ export default function App() {
           ))}
         </nav>
 
-        <section className="panel" ref={panelRef}>
+        <section className="panel" ref={panelRef} role="tabpanel" id={`panel-${active}`} aria-labelledby={`tab-${active}`} tabIndex={0}>
+          <div id="main-content">
           {!state && !err ? (
             <div className="loading">データを読み込み中…</div>
           ) : null}
@@ -1075,6 +1311,7 @@ export default function App() {
               runningAction={runningAction}
             />
           ) : null}
+          </div>
         </section>
       </main>
     </div>
@@ -1540,7 +1777,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
       const path = ent.path
       const r = await fetchJson(path)
       const text = JSON.stringify(r, null, 2)
-      setMonitorOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
+      setMonitorOut(truncateOutput(text))
     } catch (e) {
       setMonitorOut(`ERR: ${String(e?.message || e)}`)
     } finally {
@@ -1566,7 +1803,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
       const qs = new URLSearchParams({ query: q, scope, limit: String(lim) }).toString()
       const r = await fetchJson(`/api/unified/memory/recall?${qs}`)
       const text = JSON.stringify(r, null, 2)
-      setMemoryOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
+      setMemoryOut(truncateOutput(text))
     } catch (e) {
       setMemoryOut(`ERR: ${String(e?.message || e)}`)
     } finally {
@@ -1575,6 +1812,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
   }
 
   async function runNotifySend() {
+    if (!window.confirm('通知を送信しますか？')) return
     setNotifyOut('')
     setBusyOp('notify_send')
     try {
@@ -1606,7 +1844,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
       }
       if (data?.data?.job_id) setNotifyJobId(String(data.data.job_id))
       const text = JSON.stringify(data, null, 2)
-      setNotifyOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
+      setNotifyOut(truncateOutput(text))
     } catch (e) {
       setNotifyOut(`ERR: ${String(e?.message || e)}`)
     } finally {
@@ -1629,7 +1867,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
       }
       const r = await fetchJson(`/api/unified/notify/job/${encodeURIComponent(jid)}`)
       const text = JSON.stringify(r, null, 2)
-      setNotifyOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
+      setNotifyOut(truncateOutput(text))
     } catch (e) {
       setNotifyOut(`ERR: ${String(e?.message || e)}`)
     } finally {
@@ -1678,7 +1916,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         return
       }
       const text = JSON.stringify(data, null, 2)
-      setMemoryStoreOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
+      setMemoryStoreOut(truncateOutput(text))
     } catch (e) {
       setMemoryStoreOut(`ERR: ${String(e?.message || e)}`)
     } finally {
@@ -1736,7 +1974,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         return
       }
       const text = JSON.stringify(data, null, 2)
-      setRouteOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
+      setRouteOut(truncateOutput(text))
     } catch (e) {
       setRouteOut(`ERR: ${String(e?.message || e)}`)
     } finally {
@@ -1785,7 +2023,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         return
       }
       const text = JSON.stringify(data, null, 2)
-      setAnalyzeOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
+      setAnalyzeOut(truncateOutput(text))
     } catch (e) {
       setAnalyzeOut(`ERR: ${String(e?.message || e)}`)
     } finally {
@@ -1842,7 +2080,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         return
       }
       const text = JSON.stringify(data, null, 2)
-      setProxyOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
+      setProxyOut(truncateOutput(text))
     } catch (e) {
       setProxyOut(`ERR: ${String(e?.message || e)}`)
     } finally {
@@ -2556,7 +2794,7 @@ function QuestsView({ quests, apiBase, onRunAction, actionResult, runningAction 
     try {
       const r = await fetchJson(endpoint)
       const text = JSON.stringify(r, null, 2)
-      setQuestResult({ endpoint, text: text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text, ok: true })
+      setQuestResult({ endpoint, text: truncateOutput(text), ok: true })
     } catch (e) {
       setQuestResult({ endpoint, text: `ERR: ${String(e?.message || e)}`, ok: false })
     } finally {
@@ -2743,7 +2981,7 @@ function ItemsView({ items, apiBase }) {
                 {(() => {
                   const groupItems = grouped.get(rid) || []
                   const expanded = expandedGroups.has(rid)
-                  const limit = expanded ? groupItems.length : 24
+                  const limit = expanded ? groupItems.length : ITEMS_SHOW_LIMIT
                   const visible = groupItems.slice(0, limit)
                   return (
                     <>
@@ -2777,10 +3015,10 @@ function ItemsView({ items, apiBase }) {
                           </div>
                         )
                       })}
-                      {!expanded && groupItems.length > 24 ? (
+                      {!expanded && groupItems.length > ITEMS_SHOW_LIMIT ? (
                         <div className="fullSpan showMore">
                           <button className="link" onClick={() => setExpandedGroups((prev) => new Set(prev).add(rid))}>
-                            もっと見る（残り {groupItems.length - 24}件）
+                            もっと見る（残り {groupItems.length - ITEMS_SHOW_LIMIT}件）
                           </button>
                         </div>
                       ) : null}
