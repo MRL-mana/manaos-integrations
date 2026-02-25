@@ -1,0 +1,87 @@
+---
+name: rl-anything
+description: RLAnything自己進化ループ — タスク観測→フィードバック→スキル抽出を自動実行し、MEMORY.mdを更新する
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# RLAnything 自己進化スキル
+
+**目的**: エージェントのタスク実行を観測し、3要素同時最適化（Policy/Reward/Environment）で自動学習する。
+
+## アーキテクチャ
+
+```
+rl_anything/
+  types.py            # 共有型定義 (TaskRecord, Skill, RewardSignal)
+  config.json         # 全フェーズ設定
+  observation_hook.py # Phase 1: 行動ログ (JSONL)
+  feedback_engine.py  # Phase 2: 統合/一貫性/評価フィードバック
+  evolution_engine.py # Phase 3: スキル抽出 + MEMORY.md + 難易度調整
+  orchestrator.py     # 統合オーケストレータ
+```
+
+## 使い方 (Python)
+
+```python
+from rl_anything.orchestrator import RLAnythingOrchestrator
+
+rl = RLAnythingOrchestrator()
+
+# タスク開始
+rl.begin_task("task-001", "Reactコンポーネントにテストを追加")
+
+# ツール使用を記録
+rl.log_tool("read_file", {"path": "src/App.tsx"}, result="...")
+rl.log_tool("create_file", {"path": "src/App.test.tsx"}, result="...")
+
+# 中間スコア
+rl.score_intermediate("task-001", 0.8, "lint pass")
+
+# タスク終了 → 自動で3フィードバック + 進化
+result = rl.end_task("task-001", outcome="success", score=0.95)
+
+# ダッシュボード
+print(rl.get_dashboard())
+
+# プロンプト注入用スキル
+print(rl.get_skills_for_prompt())
+```
+
+## manaos-rpg 連携
+
+バックエンド (port 9510) に以下のエンドポイントが追加されています:
+
+- `GET  /api/rl/dashboard`  — 全体ステータス
+- `GET  /api/rl/skills`     — 学習済みスキル一覧
+- `POST /api/rl/task/begin` — タスク開始
+- `POST /api/rl/task/end`   — タスク終了（自動進化トリガー）
+- `POST /api/rl/tool`       — ツール使用記録
+
+## phase1_hooks 連携
+
+`experiments/phase1/phase1_hooks.py` の `log_turn_assistant()` 完了時に
+rl_anything へ satisfaction スコアが自動送信されます。
+
+## MEMORY.md 自動更新
+
+進化エンジンが `MEMORY.md` の `<!-- rl_anything:start/end -->` マーカー内を
+自動更新し、学習済みスキルと推奨行動指針を書き込みます。
+
+## カリキュラム難易度
+
+| レベル   | 成功率帯   | 指示の詳しさ |
+|----------|-----------|-------------|
+| concrete | 0-20%     | 超具体的     |
+| guided   | 20-50%    | ガイド付き   |
+| standard | 50-80%    | 通常         |
+| abstract | 80-100%   | 最小限       |

@@ -1,0 +1,55 @@
+{
+  "version": "0.1.0",
+  "enabled": true,
+
+  "observation": {
+    "enabled": true,
+    "log_dir": "logs/rl_anything",
+    "max_log_entries": 10000,
+    "log_tool_params": true,
+    "log_result_preview_chars": 500,
+    "auto_flush_interval_s": 30
+  },
+
+  "reward_model": {
+    "enabled": true,
+    "intermediate_weight": 0.4,
+    "final_weight": 0.6,
+    "consistency_auto_update": true,
+    "scoring_criteria": {
+      "test_written_first": 0.15,
+      "error_handled": 0.10,
+      "code_commented": 0.05,
+      "single_responsibility": 0.10,
+      "no_regressions": 0.20,
+      "task_completed": 0.40
+    }
+  },
+
+  "curriculum": {
+    "enabled": true,
+    "target_success_rate": 0.80,
+    "window_size": 20,
+    "difficulty_levels": {
+      "concrete":  { "min_rate": 0.00, "max_rate": 0.20, "instruction_detail": "very_specific" },
+      "guided":    { "min_rate": 0.20, "max_rate": 0.50, "instruction_detail": "guided" },
+      "standard":  { "min_rate": 0.50, "max_rate": 0.80, "instruction_detail": "normal" },
+      "abstract":  { "min_rate": 0.80, "max_rate": 1.00, "instruction_detail": "minimal" }
+    }
+  },
+
+  "evolution": {
+    "enabled": true,
+    "skill_extraction_min_samples": 3,
+    "skill_success_threshold": 0.70,
+    "memory_md_path": "MEMORY.md",
+    "max_skills": 100,
+    "auto_apply_skills": true
+  },
+
+  "integration": {
+    "phase1_hooks_compat": true,
+    "self_evolution_system_compat": true,
+    "mrl_memory_enabled": true
+  }
+}

@@ -1,0 +1,44 @@
+---
+description: RLAnything 学習済みスキル・行動パターンを参照する
+globs:
+alwaysApply: true
+---
+
+# RLAnything — 学習した行動パターンの適用
+
+## MEMORY.md の参照
+
+タスク開始前に `MEMORY.md` を読み、過去に学習した行動パターンを確認すること。
+
+```
+# ファイル位置: リポジトリルート / MEMORY.md
+```
+
+MEMORY.md の `<!-- rl_anything:start -->` 〜 `<!-- rl_anything:end -->` セクションに
+学習済みスキルと現在の難易度レベルが自動更新されている。
+
+## 優先すべき行動パターン
+
+1. **段階的実装 (incremental)** — 一度に全てを作らず、動く小さな単位で積み上げる
+2. **事前調査パターン (read_first)** — コードを変更する前に既存コードを読んで構造を理解する
+3. **テスト駆動 (test_first)** — テストを先に書き、通ることを確認してから次へ
+4. **ツール連携** — read→test→create の流れを守る
+
+## 難易度適応
+
+MEMORY.md に記載された `現在の難易度` に応じてタスク分割の粒度を調整する:
+
+- **beginner**: 1ステップずつ、毎回確認
+- **standard**: 2-3ステップをまとめてOK
+- **advanced**: 並列作業・大きめの変更可
+- **expert**: アーキテクチャ変更レベルの自由度
+
+## RLAnything API
+
+タスク実行時に以下のエンドポイントでフィードバックを送れる（RPG backend port 9510）:
+
+- `POST /api/rl/task/begin` — タスク開始
+- `POST /api/rl/tool` — ツール使用記録
+- `POST /api/rl/score` — 中間スコア
+- `POST /api/rl/task/end` — タスク終了（自動進化トリガー）
+- `GET /api/rl/dashboard` — ステータス確認

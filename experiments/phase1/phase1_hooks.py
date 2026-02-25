@@ -23,6 +23,59 @@ try:
 except ImportError:
     PHASE1_AVAILABLE = False
 
+# ─── RLAnything ブリッジ ───
+try:
+    import sys as _sys
+    from pathlib import Path as _Path
+
+    _rl_root = str(_Path(__file__).resolve().parent.parent.parent)
+    if _rl_root not in _sys.path:
+        _sys.path.insert(0, _rl_root)
+    from rl_anything.orchestrator import RLAnythingOrchestrator
+
+    _RL_AVAILABLE = True
+except ImportError:
+    _RL_AVAILABLE = False
+
+_rl_instance: Optional["RLAnythingOrchestrator"] = None
+
+
+def _get_rl() -> Optional["RLAnythingOrchestrator"]:
+    """RLAnything シングルトンを遅延初期化。"""
+    global _rl_instance
+    if not _RL_AVAILABLE:
+        return None
+    if os.environ.get("RL_ANYTHING", "").strip().lower() not in ("1", "on", "true", "yes"):
+        return None
+    if _rl_instance is None:
+        _rl_instance = RLAnythingOrchestrator()
+    return _rl_instance
+
+
+def _rl_bridge_on_turn(
+    thread_id: str,
+    turn_id: int,
+    satisfaction: Optional[int],
+    reason: Optional[str],
+    reflection_on: bool,
+) -> None:
+    """assistant ターン完了時に RLAnything へスコアを送信。"""
+    rl = _get_rl()
+    if rl is None:
+        return
+    try:
+        task_id = f"phase1_{thread_id}"
+        # タスクがまだ開始されていなければ開始
+        if task_id not in rl.observer.get_active_tasks():
+            rl.begin_task(task_id, f"phase1 conversation {thread_id}")
+
+        # satisfaction → 中間スコア (1-5 → 0.0-1.0)
+        if satisfaction is not None:
+            score = max(0.0, min(1.0, (satisfaction - 1) / 4.0))
+            rl.score_intermediate(task_id, score, reason or "")
+    except Exception:
+        pass  # 観測専用 — 本線に影響させない
+
 # thread_id -> 次に使う turn_id（user 受信で +1 してから assistant に同じ値を使う）
 _turn_by_thread: dict[str, int] = {}
 # thread_id -> テーマID（Phase2 メモ用。最初の user 発話から算出）
@@ -191,6 +244,8 @@ def log_turn_assistant(
         )
         # Phase2: 同一テーマメモにリアルタイム追記（PHASE2_MEMO_APPEND=on 時）
         _append_phase2_memo_if_enabled(thread_id, turn_id, satisfaction, reason)
+        # RLAnything: satisfaction スコアをブリッジ
+        _rl_bridge_on_turn(thread_id, turn_id, satisfaction, reason, reflection_on=True)
     else:
         log_reflection_off(
             thread_id=thread_id,

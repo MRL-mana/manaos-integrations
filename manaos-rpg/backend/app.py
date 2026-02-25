@@ -16,6 +16,7 @@ from routers import (
     items,
     ollama,
     registry,
+    rl_anything,
     snapshot,
     unified_passthrough,
     unified_proxy,
@@ -40,6 +41,7 @@ for _r in (
     ollama,
     generate,
     items,
+    rl_anything,
 ):
     app.include_router(_r.router)
 

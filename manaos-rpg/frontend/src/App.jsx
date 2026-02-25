@@ -1,5 +1,42 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { fetchJson, getApiBase } from './api.js'
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { error: null }
+  }
+  static getDerivedStateFromError(error) {
+    return { error }
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 40, color: '#FF6B6B', fontFamily: 'monospace' }}>
+          <h2>レンダーエラー</h2>
+          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{String(this.state.error)}</pre>
+          <button onClick={() => this.setState({ error: null })} style={{ marginTop: 12, padding: '8px 16px', cursor: 'pointer' }}>再試行</button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
+const TITLE_BASE = 'MANAOS // RPG COMMAND'
+
+const FALLBACK_MENU = [
+  { id: 'status', label: 'ステータス', icon: '🧍' },
+  { id: 'party', label: 'パーティ（サービス）', icon: '🧩' },
+  { id: 'bestiary', label: '図鑑（モデル）', icon: '📚' },
+  { id: 'skills', label: '魔法（スキル）', icon: '✨' },
+  { id: 'quests', label: 'クエスト（タスク）', icon: '🗺' },
+  { id: 'logs', label: '戦闘ログ', icon: '📜' },
+  { id: 'map', label: 'マップ（デバイス）', icon: '🧭' },
+  { id: 'items', label: 'アイテム（生成物）', icon: '🎒' },
+  { id: 'rl', label: '強化学習(RL)', icon: '🧠' },
+  { id: 'systems', label: 'システム（統合）', icon: '⚙️' }
+]
 
 function pad2(n) {
   return String(n).padStart(2, '0')
@@ -24,47 +61,304 @@ function dangerRank(danger) {
   return { label: 'OK', cls: 'ok' }
 }
 
+function fmtAgo(tsMs, _tick) {
+  if (!tsMs) return ''
+  const sec = Math.floor((Date.now() - tsMs) / 1000)
+  if (sec < 5) return 'たった今'
+  if (sec < 60) return `${sec}秒前`
+  const min = Math.floor(sec / 60)
+  if (min < 60) return `${min}分前`
+  return `${Math.floor(min / 60)}時間前`
+}
+
+function logTypeCls(type) {
+  const t = String(type || '').toUpperCase()
+  if (t === 'DOWN' || t === 'ERROR' || t === 'CRITICAL' || t === 'FATAL') return 'danger'
+  if (t === 'RECOVERY' || t === 'START' || t === 'UP' || t === 'RESOLVED') return 'ok'
+  if (t === 'WARN' || t === 'WARNING' || t === 'CAUTION' || t === 'SLOW') return 'caution'
+  return ''
+}
+
+function RLView({ rl, apiBase }) {
+  const enabled = Boolean(rl?.enabled)
+  const obs = rl?.observation || {}
+  const evo = rl?.evolution || {}
+  const fb = rl?.feedback || {}
+  const skills = Array.isArray(rl?.skills) ? rl.skills : []
+  const criteria = rl?.scoring_criteria && typeof rl.scoring_criteria === 'object' ? rl.scoring_criteria : {}
+
+  const [taskId, setTaskId] = useState('')
+  const [taskDesc, setTaskDesc] = useState('')
+  const [taskOut, setTaskOut] = useState('')
+  const [busyOp, setBusyOp] = useState('')
+
+  const [liveData, setLiveData] = useState(null)
+  const [liveErr, setLiveErr] = useState('')
+
+  async function fetchLiveDashboard() {
+    setLiveErr('')
+    try {
+      const r = await fetchJson('/api/rl/dashboard')
+      if (r?.ok) {
+        setLiveData(r)
+      } else {
+        setLiveErr(String(r?.error || 'unknown'))
+      }
+    } catch (e) {
+      setLiveErr(String(e?.message || e))
+    }
+  }
+
+  async function runTaskBegin() {
+    setTaskOut('')
+    setBusyOp('begin')
+    try {
+      const id = taskId.trim() || `task-${Date.now()}`
+      const desc = taskDesc.trim() || '(manual)'
+      const res = await fetch(`${apiBase}/api/rl/task/begin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_id: id, description: desc })
+      })
+      const data = await res.json().catch(() => ({}))
+      setTaskOut(JSON.stringify(data, null, 2))
+      if (!taskId.trim()) setTaskId(id)
+    } catch (e) {
+      setTaskOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+
+  async function runTaskEnd(outcome) {
+    setTaskOut('')
+    setBusyOp('end')
+    try {
+      const id = taskId.trim()
+      if (!id) { setTaskOut('ERR: task_id required'); return }
+      const res = await fetch(`${apiBase}/api/rl/task/end`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_id: id, outcome })
+      })
+      const data = await res.json().catch(() => ({}))
+      setTaskOut(JSON.stringify(data, null, 2))
+    } catch (e) {
+      setTaskOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+
+  const difficultyColor = (d) => {
+    const m = { beginner: 'ok', standard: '', advanced: 'caution', expert: 'danger' }
+    return m[String(d)] || ''
+  }
+
+  const display = liveData || rl
+
+  return (
+    <div>
+      <div className="panelTitle">強化学習 (RLAnything) <span className="small">3要素同時最適化</span></div>
+
+      {!enabled ? (
+        <div className="err">RLAnything が無効または未初期化（start_rl_anything.ps1 で有効化）</div>
+      ) : null}
+
+      <div className="grid">
+        <Box title="方策 (Policy)">
+          <div className="kv"><span>タスク完了数</span><span className="mono">{obs.total ?? 0}</span></div>
+          <div className="kv"><span>成功率</span><span className={Number(obs.success_rate || 0) >= 0.7 ? 'ok' : Number(obs.success_rate || 0) >= 0.4 ? 'caution' : 'danger'}>{((obs.success_rate ?? 0) * 100).toFixed(1)}%</span></div>
+          <div className="kv"><span>進行中タスク</span><span className="mono">{obs.active_tasks ?? 0}</span></div>
+          <div className="kv"><span>平均アクション/タスク</span><span className="mono">{obs.avg_actions_per_task ?? '—'}</span></div>
+        </Box>
+
+        <Box title="報酬 (Reward)">
+          <div className="kv"><span>サイクル数</span><span className="mono">{rl?.cycle_count ?? 0}</span></div>
+          <div className="kv"><span>統合回数</span><span className="mono">{fb.integration_runs ?? 0}</span></div>
+          <div className="kv"><span>一貫性更新</span><span className="mono">{fb.consistency_updates ?? 0}</span></div>
+          <div className="kv"><span>評価回数</span><span className="mono">{fb.evaluation_runs ?? 0}</span></div>
+        </Box>
+
+        <Box title="環境 (Environment)">
+          <div className="kv"><span>難易度</span><span className={`mono ${difficultyColor(rl?.current_difficulty)}`}>{String(rl?.current_difficulty || '—').toUpperCase()}</span></div>
+          <div className="kv"><span>学習スキル数</span><span className="mono">{evo.skills_count ?? 0}</span></div>
+          <div className="kv"><span>難易度変更回数</span><span className="mono">{evo.difficulty_changes ?? 0}</span></div>
+          <div className="kv"><span>MEMORY.md更新</span><span className="mono">{evo.memory_updates ?? 0}</span></div>
+        </Box>
+
+        <Box title="スコアリング基準（自動更新）">
+          {Object.keys(criteria).length > 0 ? (
+            Object.entries(criteria).map(([k, v]) => (
+              <div key={k} className="kv">
+                <span>{k}</span>
+                <span className="mono">{typeof v === 'number' ? (v * 100).toFixed(0) + '%' : String(v)}</span>
+              </div>
+            ))
+          ) : (
+            <div className="small">基準データなし</div>
+          )}
+        </Box>
+      </div>
+
+      <div className="sectionBlock" style={{ marginTop: 12 }}>
+        <div className="sectionHead">
+          <span className="mono">SKILLS</span>
+          <span>学習済みスキル</span>
+          <span className="small">{skills.length}件</span>
+        </div>
+        {skills.length === 0 ? (
+          <div className="small">まだスキルが抽出されていません（タスクを3回以上完了すると自動抽出）</div>
+        ) : (
+          <div className="table">
+            <div className="tr th" style={{ gridTemplateColumns: '2fr 3fr 0.8fr 0.8fr' }}>
+              <div>NAME</div><div>DESCRIPTION</div><div>SUCCESS</div><div>SAMPLES</div>
+            </div>
+            {skills.map((s) => (
+              <div key={s.skill_id || s.name} className="tr" style={{ gridTemplateColumns: '2fr 3fr 0.8fr 0.8fr' }}>
+                <div className="mono">{s.name}</div>
+                <div className="small">{s.description}</div>
+                <div className={Number(s.success_rate || 0) >= 0.7 ? 'ok' : 'caution'}>{((s.success_rate ?? 0) * 100).toFixed(0)}%</div>
+                <div className="mono">{s.sample_count ?? '—'}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="sectionBlock" style={{ marginTop: 12 }}>
+        <div className="sectionHead">
+          <span className="mono">CONTROL</span>
+          <span>タスク手動操作</span>
+          <span className="small">API: /api/rl/task/*</span>
+        </div>
+        <div className="boxBody">
+          <div className="kv"><span>TASK ID</span>
+            <span><input className="input" value={taskId} onChange={(e) => setTaskId(e.target.value)} placeholder="task-001 (空なら自動生成)" style={{ marginTop: 0 }} /></span>
+          </div>
+          <div className="kv"><span>DESCRIPTION</span>
+            <span><input className="input" value={taskDesc} onChange={(e) => setTaskDesc(e.target.value)} placeholder="タスクの説明" style={{ marginTop: 0 }} /></span>
+          </div>
+          <div className="skillActions">
+            <button className="link" onClick={runTaskBegin} disabled={!!busyOp}>{busyOp === 'begin' ? '開始中…' : '▶ タスク開始'}</button>
+            <button className="link" onClick={() => runTaskEnd('success')} disabled={!!busyOp || !taskId.trim()}>{busyOp === 'end' ? '…' : '✅ 成功終了'}</button>
+            <button className="link" onClick={() => runTaskEnd('partial')} disabled={!!busyOp || !taskId.trim()}>⚠ 部分終了</button>
+            <button className="link" onClick={() => runTaskEnd('failure')} disabled={!!busyOp || !taskId.trim()}>❌ 失敗終了</button>
+          </div>
+          {taskOut ? <OutputBlock text={taskOut} onClear={() => setTaskOut('')} /> : <div className="small">結果はここに出る（自動スコアリング + 進化サイクル結果）</div>}
+        </div>
+      </div>
+
+      <div className="sectionBlock" style={{ marginTop: 12 }}>
+        <div className="sectionHead">
+          <span className="mono">LIVE</span>
+          <span>リアルタイムダッシュボード</span>
+          <span className="small">/api/rl/dashboard</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" onClick={fetchLiveDashboard}>最新取得</button>
+          </div>
+          {liveErr ? <div className="small danger">{liveErr}</div> : null}
+          {liveData ? <OutputBlock text={JSON.stringify(liveData, null, 2)} onClear={() => setLiveData(null)} /> : <div className="small">ボタンを押すと /api/rl/dashboard の生データを表示</div>}
+        </div>
+      </div>
+
+      <div className="small" style={{ marginTop: 12 }}>
+        Princeton RLAnything (Policy×Reward×Environment 同時最適化) — MEMORY.md 自動更新 / スキル自動抽出 / 難易度自動調整
+      </div>
+    </div>
+  )
+}
+
+function encodeRelPath(relPath) {
+  const p = String(relPath || '').replace(/\\/g, '/')
+  return p.split('/').map(encodeURIComponent).join('/')
+}
+
+function fmtBytes(n) {
+  const v = Number(n || 0)
+  if (!Number.isFinite(v) || v <= 0) return '0B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let x = v
+  let i = 0
+  while (x >= 1024 && i < units.length - 1) {
+    x /= 1024
+    i++
+  }
+  return `${x.toFixed(i === 0 ? 0 : 1)}${units[i]}`
+}
+
+const MONITOR_ROUTES = {
+  comfyui_queue: { path: '/api/unified/comfyui/queue', requires: '/api/comfyui/queue' },
+  comfyui_history: { path: '/api/unified/comfyui/history', requires: '/api/comfyui/history' },
+  svi_queue: { path: '/api/unified/svi/queue', requires: '/api/svi/queue' },
+  svi_history: { path: '/api/unified/svi/history', requires: '/api/svi/history' },
+  ltx2_queue: { path: '/api/unified/ltx2/queue', requires: '/api/ltx2/queue' },
+  ltx2_history: { path: '/api/unified/ltx2/history', requires: '/api/ltx2/history' },
+  images_recent: { path: '/api/unified/images/recent?limit=30', requires: '/api/images/recent' },
+  llm_health: { path: '/api/unified/llm/health', requires: '/api/llm/health' },
+  llm_models: { path: '/api/unified/llm/models-enhanced', requires: '/api/llm/models-enhanced' },
+  unified_openapi: { path: '/api/unified/openapi' },
+  unified_proxy_doctor: { path: '/api/unified/proxy/doctor?limit=200&probe_timeout_s=1.5&max_total_s=8' }
+}
+
 export default function App() {
   const [state, setState] = useState(null)
   const [events, setEvents] = useState([])
   const [active, setActive] = useState('status')
   const [err, setErr] = useState('')
   const [actionResult, setActionResult] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [autoRefresh, setAutoRefresh] = useState(false)
+  const [lastRefreshTs, setLastRefreshTs] = useState(null)
+  const [tick, setTick] = useState(0)
+  const panelRef = useRef(null)
+  const refreshingRef = useRef(false)
   const apiBase = useMemo(() => getApiBase(), [])
 
-  async function refreshSnapshot() {
+  const refreshSnapshot = useCallback(async function refreshSnapshot() {
+    if (refreshingRef.current) return null
+    refreshingRef.current = true
     setErr('')
+    setLoading(true)
     try {
       const snap = await fetchJson('/api/snapshot')
       setState(snap)
-      if (active === 'logs') {
-        const e = await fetchJson('/api/events?limit=120')
-        setEvents(e.events || [])
-      }
+      setLastRefreshTs(Date.now())
       return snap
     } catch (e) {
       setErr(String(e?.message || e))
       return null
+    } finally {
+      setLoading(false)
+      refreshingRef.current = false
     }
-  }
+  }, [])
 
-  async function refreshState() {
+  const refreshState = useCallback(async function refreshState() {
     setErr('')
+    setLoading(true)
     try {
       const st = await fetchJson('/api/state')
       setState(st)
+      setLastRefreshTs(Date.now())
     } catch (e) {
       setErr(String(e?.message || e))
+    } finally {
+      setLoading(false)
     }
-  }
+  }, [])
+
+  const [runningAction, setRunningAction] = useState('')
 
   async function runAction(actionId) {
     setErr('')
     setActionResult(null)
+    setRunningAction(actionId)
     try {
       const beforeUnifiedRules = Array.isArray(state?.unified?.proxy?.rules) ? state.unified.proxy.rules.length : null
-      const base = getApiBase()
-      const res = await fetch(`${base}/api/actions/${encodeURIComponent(actionId)}/run`, {
+      const res = await fetch(`${apiBase}/api/actions/${encodeURIComponent(actionId)}/run`, {
         method: 'POST'
       })
       const data = await res.json().catch(() => ({}))
@@ -82,6 +376,8 @@ export default function App() {
       })
     } catch (e) {
       setErr(String(e?.message || e))
+    } finally {
+      setRunningAction('')
     }
   }
 
@@ -90,46 +386,126 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Auto-dismiss error after 15 seconds
   useEffect(() => {
-    if (active === 'logs') {
-      fetchJson('/api/events?limit=120')
-        .then((r) => setEvents(r.events || []))
-        .catch(() => {})
-    }
-  }, [active])
+    if (!err) return
+    const id = setTimeout(() => setErr(''), 15000)
+    return () => clearTimeout(id)
+  }, [err])
 
-  const menu = Array.isArray(state?.menu) ? state.menu : [
-    { id: 'status', label: 'ステータス', icon: '🧍' },
-    { id: 'party', label: 'パーティ（サービス）', icon: '🧩' },
-    { id: 'bestiary', label: '図鑑（モデル）', icon: '📚' },
-    { id: 'skills', label: '魔法（スキル）', icon: '✨' },
-    { id: 'quests', label: 'クエスト（タスク）', icon: '🗺' },
-    { id: 'logs', label: '戦闘ログ', icon: '📜' },
-    { id: 'map', label: 'マップ（デバイス）', icon: '🧭' },
-    { id: 'items', label: 'アイテム（生成物）', icon: '🎒' },
-    { id: 'systems', label: 'システム（統合）', icon: '⚙️' }
-  ]
+  const refreshEvents = useCallback(() => {
+    fetchJson('/api/events?limit=120')
+      .then((r) => setEvents(r.events || []))
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!autoRefresh) return
+    const id = setInterval(() => {
+      refreshSnapshot().then(() => {
+        if (active === 'logs') refreshEvents()
+      })
+    }, 30000)
+    return () => clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRefresh, active])
+
+  useEffect(() => {
+    if (active === 'logs') refreshEvents()
+    panelRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [active, refreshEvents])
+
+  // Tick every 60s to keep fmtAgo up-to-date
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 60000)
+    return () => clearInterval(id)
+  }, [])
+
+  // Keyboard shortcuts: 1-9 for tabs, r for refresh
+  useEffect(() => {
+    function handleKey(e) {
+      // Ignore when typing in input/textarea/select
+      const tag = e.target?.tagName?.toLowerCase()
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return
+
+      const tabIds = ['status', 'party', 'bestiary', 'skills', 'quests', 'logs', 'map', 'items', 'rl', 'systems']
+      const num = parseInt(e.key, 10)
+      if (num >= 1 && num <= 9) {
+        e.preventDefault()
+        setActive(tabIds[num - 1])
+        return
+      }
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault()
+        refreshSnapshot()
+      }
+      if (e.key === 'Escape') {
+        setErr('')
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const menu = Array.isArray(state?.menu) ? state.menu : FALLBACK_MENU
 
   const rank = dangerRank(state?.danger)
 
+  // Fix 5: Dynamic document title with active tab
+  const activeLabel = useMemo(() => {
+    const m = menu.find((x) => x.id === active)
+    return m?.label || active
+  }, [menu, active])
+
+  useEffect(() => {
+    if (!state) {
+      document.title = TITLE_BASE
+    } else {
+      const d = Number(state?.danger || 0)
+      document.title = `[${rank.label} ${d}] ${activeLabel} — ${TITLE_BASE}`
+    }
+  }, [state, rank.label, activeLabel])
+
+  // Fix 12: Service alive count
+  const services = state?.services
+  const aliveCount = useMemo(() => {
+    const svcs = Array.isArray(services) ? services : []
+    return svcs.filter((s) => s.alive).length
+  }, [services])
+  const totalCount = Array.isArray(services) ? services.length : 0
+
   return (
+    <ErrorBoundary>
     <div className="screen">
       <header className="header">
         <div className="title">MANAOS // RPG COMMAND</div>
         <div className={`badge ${rank.cls}`}>危険度: {rank.label} ({Number(state?.danger || 0)})</div>
         <div className="meta">
           <span>API: {apiBase}</span>
-          <span>更新: {fmtTs(state?.ts)}</span>
+          <span>サービス: {aliveCount}/{totalCount} alive</span>
+          <span>更新: {fmtTs(state?.ts)}{lastRefreshTs ? ` (${fmtAgo(lastRefreshTs, tick)})` : ''}</span>
+          <span title="1-9: タブ切替 / R: 更新 / Esc: エラー閉じる">⌨ ショートカット有</span>
         </div>
         <div className="actions">
-          <button onClick={refreshSnapshot}>更新（/api/snapshot）</button>
-          <button onClick={refreshState}>読込（/api/state）</button>
+          <button onClick={refreshSnapshot} disabled={loading}>更新（/api/snapshot）</button>
+          <button onClick={refreshState} disabled={loading}>読込（/api/state）</button>
+          <label className="autoRefresh">
+            <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />
+            自動更新（30秒）
+            {autoRefresh ? <span className="pulse">●</span> : null}
+          </label>
         </div>
-        {err ? <div className="err">{err}</div> : null}
+        {loading ? <div className="loading" role="status" aria-live="polite">更新中…</div> : null}
+        {err ? (
+          <div className="err" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <span>{err}</span>
+            <button className="link" onClick={() => setErr('')} style={{ flexShrink: 0 }} aria-label="エラーを閉じる">✕</button>
+          </div>
+        ) : null}
       </header>
 
       <main className="main">
-        <nav className="menu">
+        <nav className="menu" aria-label="メインメニュー">
           <div className="menuTitle">コマンド</div>
           {menu.map((m) => (
             <button
@@ -143,8 +519,11 @@ export default function App() {
           ))}
         </nav>
 
-        <section className="panel">
-          {active === 'status' ? (
+        <section className="panel" ref={panelRef}>
+          {!state && !err ? (
+            <div className="loading">データを読み込み中…</div>
+          ) : null}
+          {state && active === 'status' ? (
             <StatusView
               host={state?.host}
               nextActions={state?.next_actions}
@@ -152,41 +531,75 @@ export default function App() {
               onRunAction={runAction}
               actionResult={actionResult}
               actionsEnabled={state?.actions_enabled}
+              runningAction={runningAction}
             />
           ) : null}
-          {active === 'party' ? <PartyView services={state?.services} /> : null}
-          {active === 'bestiary' ? <BestiaryView models={state?.models} /> : null}
-          {active === 'skills' ? (
-            <SkillsView
-              skills={state?.skills}
-              prompts={state?.prompts}
-              unifiedIntegrations={state?.unified?.integrations}
-              unifiedProxy={state?.unified?.proxy}
-              itemsRecent={state?.items?.recent}
+          {state && active === 'party' ? <PartyView services={state?.services} /> : null}
+          {state && active === 'bestiary' ? <BestiaryView models={state?.models} /> : null}
+          {state ? (
+            <div style={{ display: active === 'skills' ? 'block' : 'none' }}>
+              <SkillsView
+                skills={state?.skills}
+                prompts={state?.prompts}
+                unifiedIntegrations={state?.unified?.integrations}
+                unifiedProxy={state?.unified?.proxy}
+                itemsRecent={state?.items?.recent}
+                apiBase={apiBase}
+                onRunAction={runAction}
+                runningAction={runningAction}
+              />
+            </div>
+          ) : null}
+          {state && active === 'quests' ? <QuestsView quests={state?.quests} apiBase={apiBase} onRunAction={runAction} actionResult={actionResult} runningAction={runningAction} /> : null}
+          {state && active === 'logs' ? <LogsView events={events} onRefresh={refreshEvents} /> : null}
+          {state && active === 'map' ? <MapView devices={state?.devices} /> : null}
+          {state && active === 'items' ? <ItemsView items={state?.items} apiBase={apiBase} /> : null}
+          {state && active === 'rl' ? <RLView rl={state?.rl_anything} apiBase={apiBase} /> : null}
+          {state && active === 'systems' ? (
+            <SystemsView
+              unified={state?.unified}
               onRunAction={runAction}
+              actionResult={actionResult}
+              actionsEnabled={state?.actions_enabled}
+              runningAction={runningAction}
             />
           ) : null}
-          {active === 'quests' ? <QuestsView quests={state?.quests} apiBase={apiBase} onRunAction={runAction} actionResult={actionResult} /> : null}
-          {active === 'logs' ? <LogsView events={events} /> : null}
-          {active === 'map' ? <MapView devices={state?.devices} /> : null}
-          {active === 'items' ? <ItemsView items={state?.items} apiBase={apiBase} /> : null}
-          {active === 'systems' ? <SystemsView unified={state?.unified} /> : null}
         </section>
       </main>
     </div>
+    </ErrorBoundary>
   )
 }
 
-function Box({ title, children }) {
+function Box({ title, children, style }) {
   return (
-    <div className="box">
+    <div className="box" style={style}>
       <div className="boxTitle">{title}</div>
       <div className="boxBody">{children}</div>
     </div>
   )
 }
 
-function StatusView({ host, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled }) {
+function OutputBlock({ text, onClear }) {
+  const [copied, setCopied] = useState(false)
+  function handleCopy() {
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    }).catch(() => {})
+  }
+  return (
+    <div style={{ position: 'relative' }}>
+      <pre className="output">{text}</pre>
+      <div className="outputActions">
+        <button className="link" onClick={handleCopy} aria-label="出力をクリップボードにコピー">{copied ? 'コピー済' : 'コピー'}</button>
+        {onClear ? <button className="link" onClick={onClear} aria-label="出力をクリア">クリア</button> : null}
+      </div>
+    </div>
+  )
+}
+
+function StatusView({ host, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction }) {
   const cpu = host?.cpu?.percent
   const mem = host?.mem?.percent
   const diskFree = host?.disk?.free_gb
@@ -237,8 +650,18 @@ function StatusView({ host, nextActions, nextActionHints, onRunAction, actionRes
           nvidia.map((g, i) => (
             <div key={i} className="gpuRow">
               <div className="mono">{g.name}</div>
-              <div className="small">
-                UTIL {g.utilization_gpu ?? '—'}% / VRAM {g.mem_used_mb ?? '—'}MB / {g.mem_total_mb ?? '—'}MB / TEMP {g.temperature_c ?? '—'}C
+              {typeof g.utilization_gpu === 'number' ? (
+                <div className="mono" style={{ marginTop: 4 }}>UTIL {bar(g.utilization_gpu)}</div>
+              ) : (
+                <div className="small" style={{ marginTop: 4 }}>UTIL —</div>
+              )}
+              {typeof g.mem_used_mb === 'number' && typeof g.mem_total_mb === 'number' && g.mem_total_mb > 0 ? (
+                <div className="mono" style={{ marginTop: 2 }}>VRAM {bar((g.mem_used_mb / g.mem_total_mb) * 100)} ({g.mem_used_mb}MB / {g.mem_total_mb}MB)</div>
+              ) : (
+                <div className="small" style={{ marginTop: 2 }}>VRAM {g.mem_used_mb ?? '—'}MB / {g.mem_total_mb ?? '—'}MB</div>
+              )}
+              <div className="small" style={{ marginTop: 2 }}>
+                TEMP {g.temperature_c ?? '—'}°C
                 {typeof g.power_draw_w === 'number' ? ` / PWR ${g.power_draw_w}W` : ''}
               </div>
             </div>
@@ -263,11 +686,11 @@ function StatusView({ host, nextActions, nextActionHints, onRunAction, actionRes
       </Box>
 
       <Box title="NETWORK">
-        <div className="kv"><span>TX</span><span>{host?.net?.bytes_sent ?? '—'} bytes</span></div>
-        <div className="kv"><span>RX</span><span>{host?.net?.bytes_recv ?? '—'} bytes</span></div>
+        <div className="kv"><span>TX</span><span>{fmtBytes(host?.net?.bytes_sent)}</span></div>
+        <div className="kv"><span>RX</span><span>{fmtBytes(host?.net?.bytes_recv)}</span></div>
       </Box>
 
-      <Box title="次の一手">
+      <Box title="次の一手" style={{ gridColumn: '1 / -1' }}>
         {hints.length > 0 ? (
           <div>
             {hints.map((h, i) => (
@@ -283,7 +706,9 @@ function StatusView({ host, nextActions, nextActionHints, onRunAction, actionRes
               >
                 <div className="small">- {h?.label || '—'}</div>
                 {h?.action_id ? (
-                  <button className="link" disabled={actionsEnabled === false} onClick={() => onRunAction?.(h.action_id)}>実行</button>
+                  <button className="link" disabled={actionsEnabled === false || !!runningAction} onClick={() => onRunAction?.(h.action_id)}>
+                    {runningAction === h.action_id ? '実行中…' : '実行'}
+                  </button>
                 ) : null}
               </div>
             ))}
@@ -318,10 +743,10 @@ function StatusView({ host, nextActions, nextActionHints, onRunAction, actionRes
               <div className="small danger">{actionResult.result.error}</div>
             ) : null}
             {actionResult.result?.stdout ? (
-              <pre className="output">{actionResult.result.stdout}</pre>
+              <OutputBlock text={actionResult.result.stdout} />
             ) : null}
             {actionResult.result?.stderr ? (
-              <pre className="output">{actionResult.result.stderr}</pre>
+              <OutputBlock text={actionResult.result.stderr} />
             ) : null}
           </div>
         ) : null}
@@ -331,16 +756,25 @@ function StatusView({ host, nextActions, nextActionHints, onRunAction, actionRes
 }
 
 function PartyView({ services }) {
-  const list = Array.isArray(services) ? services : []
+  const raw = Array.isArray(services) ? services : []
+  const list = useMemo(() => {
+    return [...raw].sort((a, b) => {
+      if (a.alive === b.alive) return 0
+      return a.alive ? 1 : -1
+    })
+  }, [raw])
   return (
     <div>
-      <div className="panelTitle">パーティ（サービス）</div>
+      <div className="panelTitle">パーティ（サービス） <span className="small">{list.length}件</span></div>
+      {list.length === 0 ? (
+        <div className="small">サービスが未登録です（registry/services.yaml を追加）</div>
+      ) : (
       <div className="table">
         <div className="tr th">
           <div>ID</div><div>NAME</div><div>KIND</div><div>PORT</div><div>STATUS</div><div>DETAIL</div>
         </div>
         {list.map((s) => (
-          <div key={s.id} className="tr">
+          <div key={s.id} className="tr" style={s.alive ? undefined : { background: 'rgba(255,107,107,0.08)' }}>
             <div className="mono">{s.id}</div>
             <div>{s.name}</div>
             <div className="mono">{s.kind}</div>
@@ -360,33 +794,50 @@ function PartyView({ services }) {
           </div>
         ))}
       </div>
+      )}
     </div>
   )
 }
 
 function BestiaryView({ models }) {
   const list = Array.isArray(models) ? models : []
+  const [filterText, setFilterText] = useState('')
 
-  const byType = new Map()
-  for (const m of list) {
-    const t = String(m?.type || 'other')
-    if (!byType.has(t)) byType.set(t, [])
-    byType.get(t).push(m)
-  }
+  const filtered = useMemo(() => {
+    if (!filterText.trim()) return list
+    const q = filterText.trim().toLowerCase()
+    return list.filter((m) => {
+      const haystack = [m?.id, m?.name, m?.type, m?.quant, ...(Array.isArray(m?.tags) ? m.tags : [])].join(' ').toLowerCase()
+      return haystack.includes(q)
+    })
+  }, [list, filterText])
 
-  const order = ['llm', 'image', 'video', 'voice', 'embedding', 'reranker', 'lora', 'other']
-  const types = Array.from(byType.keys()).sort((a, b) => {
-    const ia = order.indexOf(a)
-    const ib = order.indexOf(b)
-    if (ia === -1 && ib === -1) return a.localeCompare(b)
-    if (ia === -1) return 1
-    if (ib === -1) return -1
-    return ia - ib
-  })
+  const { byType, types } = useMemo(() => {
+    const map = new Map()
+    for (const m of filtered) {
+      const t = String(m?.type || 'other')
+      if (!map.has(t)) map.set(t, [])
+      map.get(t).push(m)
+    }
+    const order = ['llm', 'image', 'video', 'voice', 'embedding', 'reranker', 'lora', 'other']
+    const sorted = Array.from(map.keys()).sort((a, b) => {
+      const ia = order.indexOf(a)
+      const ib = order.indexOf(b)
+      if (ia === -1 && ib === -1) return a.localeCompare(b)
+      if (ia === -1) return 1
+      if (ib === -1) return -1
+      return ia - ib
+    })
+    return { byType: map, types: sorted }
+  }, [filtered])
 
   return (
     <div>
-      <div className="panelTitle">図鑑（モデル）</div>
+      <div className="panelTitle">図鑑（モデル） <span className="small">{filtered.length}/{list.length}件 / {types.length}タイプ</span></div>
+      <input className="input" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="フィルター（名前/ID/タグで絞り込み）" style={{ marginBottom: 12, maxWidth: 400 }} />
+      {list.length === 0 ? (
+        <div className="small">モデルが見つかりません（Ollama / registry を確認）</div>
+      ) : null}
       {types.map((t) => (
         <div key={t} className="sectionBlock">
           <div className="sectionHead">
@@ -395,11 +846,11 @@ function BestiaryView({ models }) {
             <span className="small">{byType.get(t)?.length ?? 0}件</span>
           </div>
           <div className="table">
-            <div className="tr th">
+            <div className="tr th" style={{ gridTemplateColumns: '1.2fr 1.5fr 0.7fr 0.5fr 0.6fr 0.7fr 1.8fr' }}>
               <div>ID</div><div>NAME</div><div>TYPE</div><div>VER</div><div>QUANT</div><div>VRAM</div><div>TAGS</div>
             </div>
             {(byType.get(t) || []).map((m) => (
-              <div key={m.id} className="tr">
+              <div key={m.id} className="tr" style={{ gridTemplateColumns: '1.2fr 1.5fr 0.7fr 0.5fr 0.6fr 0.7fr 1.8fr', ...(m.loaded ? { background: 'rgba(124,255,107,0.06)' } : {}) }}>
                 <div className="mono">{m.id}</div>
                 <div>{m.name}</div>
                 <div className="mono">{m.type}</div>
@@ -422,7 +873,7 @@ function BestiaryView({ models }) {
   )
 }
 
-function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsRecent, onRunAction }) {
+function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsRecent, apiBase, onRunAction, runningAction }) {
   const list = Array.isArray(skills) ? skills : []
   const ollamaTemplates = Array.isArray(prompts?.ollama) ? prompts.ollama : []
   const imageTemplates = Array.isArray(prompts?.image) ? prompts.image : []
@@ -461,7 +912,10 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
     return rows
   }, [list, unifiedData])
 
+  const [busyOp, setBusyOp] = useState('')
+
   const [ollamaModels, setOllamaModels] = useState([])
+  const [ollamaModelErr, setOllamaModelErr] = useState('')
   const [ollamaModel, setOllamaModel] = useState('')
   const [ollamaTpl, setOllamaTpl] = useState('')
   const [ollamaPrompt, setOllamaPrompt] = useState('')
@@ -539,19 +993,20 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
 
   const proxyRules = Array.isArray(unifiedProxy?.rules) ? unifiedProxy.rules : []
 
-  const unifiedOk = Boolean(unifiedIntegrations?.ok)
-  const unifiedData = unifiedIntegrations?.data
-  const openapi = unifiedData?.openapi
-  const openapiPaths = Array.isArray(openapi?.paths_sample) ? openapi.paths_sample : []
-  const supportsPath = (p) => {
+  const openapi = unifiedIntegrations?.data?.openapi
+  const openapiPathSet = useMemo(() => {
+    const arr = Array.isArray(openapi?.paths_sample) ? openapi.paths_sample : []
+    return new Set(arr)
+  }, [openapi])
+  const supportsPath = useCallback((p) => {
     const s = String(p || '')
     if (!s) return false
-    if (openapiPaths.includes(s)) return true
+    if (openapiPathSet.has(s)) return true
     // OpenAPIが /api と非/api の両方を持つことがある
-    if (s.startsWith('/api/') && openapiPaths.includes(s.replace('/api/', '/'))) return true
-    if (s.startsWith('/') && openapiPaths.includes('/api' + s)) return true
+    if (s.startsWith('/api/') && openapiPathSet.has(s.replace('/api/', '/'))) return true
+    if (s.startsWith('/') && openapiPathSet.has('/api' + s)) return true
     return false
-  }
+  }, [openapiPathSet])
 
   const unifiedWriteEnabled = Boolean(unifiedProxy?.write_enabled)
 
@@ -569,36 +1024,36 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
 
   async function fetchMonitor(which) {
     setMonitorOut('')
+    setBusyOp('monitor')
     try {
-      const routes = {
-        comfyui_queue: '/api/unified/comfyui/queue',
-        comfyui_history: '/api/unified/comfyui/history',
-        svi_queue: '/api/unified/svi/queue',
-        svi_history: '/api/unified/svi/history',
-        ltx2_queue: '/api/unified/ltx2/queue',
-        ltx2_history: '/api/unified/ltx2/history',
-        images_recent: '/api/unified/images/recent?limit=30',
-        llm_health: '/api/unified/llm/health',
-        llm_models: '/api/unified/llm/models-enhanced',
-        unified_openapi: '/api/unified/openapi',
-        unified_proxy_doctor: '/api/unified/proxy/doctor?limit=200&probe_timeout_s=1.5&max_total_s=8'
-      }
-      const path = routes[String(which)]
-      if (!path) {
+      const ent = MONITOR_ROUTES[String(which)]
+      if (!ent?.path) {
         setMonitorOut('ERR: unknown route')
         return
       }
+      if (ent.requires && !supportsPath(ent.requires)) {
+        setMonitorOut(`UNSUPPORTED: Unified OpenAPI に ${ent.requires} が無い（いまのUnifiedでは未対応）`)
+        return
+      }
+      const path = ent.path
       const r = await fetchJson(path)
       const text = JSON.stringify(r, null, 2)
       setMonitorOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
     } catch (e) {
       setMonitorOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
     }
   }
 
   async function runMemoryRecall() {
     setMemoryOut('')
+    setBusyOp('memory_recall')
     try {
+      if (!supportsPath('/api/memory/search') && !supportsPath('/api/memory/recall')) {
+        setMemoryOut('ERR: このUnified(OpenAPI)では memory 検索が未対応')
+        return
+      }
       const q = memoryQuery.trim()
       if (!q) {
         setMemoryOut('ERR: query is required')
@@ -612,11 +1067,14 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
       setMemoryOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
     } catch (e) {
       setMemoryOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
     }
   }
 
   async function runNotifySend() {
     setNotifyOut('')
+    setBusyOp('notify_send')
     try {
       if (!unifiedWriteEnabled) {
         setNotifyOut('ERR: Unified write が無効（backendで MANAOS_RPG_ENABLE_UNIFIED_WRITE=1 を設定）')
@@ -634,8 +1092,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         async: Boolean(notifyAsync)
       }
 
-      const base = getApiBase()
-      const res = await fetch(`${base}/api/unified/notify/send`, {
+      const res = await fetch(`${apiBase}/api/unified/notify/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -650,12 +1107,19 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
       setNotifyOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
     } catch (e) {
       setNotifyOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
     }
   }
 
   async function runNotifyJob() {
     setNotifyOut('')
+    setBusyOp('notify_job')
     try {
+      if (!supportsPath('/api/ops/job/{job_id}') && !supportsPath('/ops/job/{job_id}')) {
+        setNotifyOut('ERR: このUnified(OpenAPI)では job status が未対応')
+        return
+      }
       const jid = notifyJobId.trim()
       if (!jid) {
         setNotifyOut('ERR: job_id is required')
@@ -666,11 +1130,14 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
       setNotifyOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
     } catch (e) {
       setNotifyOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
     }
   }
 
   async function runMemoryStore() {
     setMemoryStoreOut('')
+    setBusyOp('memory_store')
     try {
       if (!unifiedWriteEnabled) {
         setMemoryStoreOut('ERR: Unified write が無効（backendで MANAOS_RPG_ENABLE_UNIFIED_WRITE=1 を設定）')
@@ -698,8 +1165,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         ...(metaObj ? { metadata: metaObj } : {})
       }
 
-      const base = getApiBase()
-      const res = await fetch(`${base}/api/unified/memory/store`, {
+      const res = await fetch(`${apiBase}/api/unified/memory/store`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -713,11 +1179,14 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
       setMemoryStoreOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
     } catch (e) {
       setMemoryStoreOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
     }
   }
 
   async function runRouteEnhanced() {
     setRouteOut('')
+    setBusyOp('route')
     try {
       if (!supportsPath('/api/llm/route-enhanced')) {
         setRouteOut('ERR: このUnified(OpenAPI)では /api/llm/route-enhanced が未対応')
@@ -754,8 +1223,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         ...(routeCodeContext && routeCodeContext.trim() ? { code_context: routeCodeContext } : {})
       }
 
-      const base = getApiBase()
-      const res = await fetch(`${base}/api/unified/llm/route-enhanced`, {
+      const res = await fetch(`${apiBase}/api/unified/llm/route-enhanced`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -769,11 +1237,14 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
       setRouteOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
     } catch (e) {
       setRouteOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
     }
   }
 
   async function runLlmAnalyze() {
     setAnalyzeOut('')
+    setBusyOp('analyze')
     try {
       if (!supportsPath('/api/llm/analyze')) {
         setAnalyzeOut('ERR: このUnified(OpenAPI)では /api/llm/analyze が未対応')
@@ -801,8 +1272,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         ...(analyzeCodeContext && analyzeCodeContext.trim() ? { code_context: analyzeCodeContext } : {})
       }
 
-      const base = getApiBase()
-      const res = await fetch(`${base}/api/unified/llm/analyze`, {
+      const res = await fetch(`${apiBase}/api/unified/llm/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -816,11 +1286,14 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
       setAnalyzeOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
     } catch (e) {
       setAnalyzeOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
     }
   }
 
   async function runUnifiedProxy() {
     setProxyOut('')
+    setBusyOp('proxy')
     try {
       const id = proxyId.trim()
       if (!id) {
@@ -856,8 +1329,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         return
       }
 
-      const base = getApiBase()
-      const res = await fetch(`${base}/api/unified/proxy/run`, {
+      const res = await fetch(`${apiBase}/api/unified/proxy/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, query: q, body: b })
@@ -871,6 +1343,8 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
       setProxyOut(text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text)
     } catch (e) {
       setProxyOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
     }
   }
 
@@ -903,8 +1377,8 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
 
   async function runVideo() {
     setVideoOut('')
+    setBusyOp('video')
     try {
-      const base = getApiBase()
       let payload = {}
       try {
         payload = videoBody && videoBody.trim() ? JSON.parse(videoBody) : {}
@@ -913,7 +1387,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         return
       }
 
-      const res = await fetch(`${base}${videoEndpoint}`, {
+      const res = await fetch(`${apiBase}${videoEndpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -926,6 +1400,8 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
       setVideoOut(JSON.stringify(data, null, 2))
     } catch (e) {
       setVideoOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
     }
   }
 
@@ -934,43 +1410,58 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
       .then((r) => {
         const models = (r?.data?.models || []).map((m) => m?.name).filter(Boolean)
         setOllamaModels(models)
+        setOllamaModelErr('')
         if (!ollamaModel && models.length) setOllamaModel(models[0])
       })
-      .catch(() => {})
+      .catch((e) => {
+        setOllamaModelErr(`Ollamaモデル取得失敗: ${String(e?.message || e)}`)
+      })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function runOllama() {
     setOllamaOut('')
-    const base = getApiBase()
-    const res = await fetch(`${base}/api/ollama/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: ollamaModel, prompt: ollamaPrompt })
-    })
-    const data = await res.json().catch(() => ({}))
-    if (!res.ok || !data?.ok) {
-      setOllamaOut(`ERR: ${data?.detail || data?.error || res.status}`)
-      return
+    setBusyOp('ollama')
+    try {
+      const res = await fetch(`${apiBase}/api/ollama/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: ollamaModel, prompt: ollamaPrompt })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setOllamaOut(`ERR: ${data?.detail || data?.error || res.status}`)
+        return
+      }
+      setOllamaOut(String(data.response || ''))
+    } catch (e) {
+      setOllamaOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
     }
-    setOllamaOut(String(data.response || ''))
   }
 
   async function queueImage() {
     setImgResult('')
-    const base = getApiBase()
-    const res = await fetch(`${base}/api/generate/image`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: imgPrompt, negative_prompt: imgNegative, width: 768, height: 768, steps: 20, seed: -1 })
-    })
-    const data = await res.json().catch(() => ({}))
-    if (!res.ok || !data?.ok) {
-      setImgResult(`ERR: ${data?.detail || data?.error || res.status}`)
-      return
+    setBusyOp('image')
+    try {
+      const res = await fetch(`${apiBase}/api/generate/image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: imgPrompt, negative_prompt: imgNegative, width: 768, height: 768, steps: 20, seed: -1 })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setImgResult(`ERR: ${data?.detail || data?.error || res.status}`)
+        return
+      }
+      const pid = data?.data?.prompt_id
+      setImgResult(pid ? `queued: prompt_id=${pid}` : `queued: ${JSON.stringify(data.data).slice(0, 300)}`)
+    } catch (e) {
+      setImgResult(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
     }
-    const pid = data?.data?.prompt_id
-    setImgResult(pid ? `queued: prompt_id=${pid}` : `queued: ${JSON.stringify(data.data).slice(0, 300)}`)
   }
 
   return (
@@ -986,11 +1477,11 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         <div className="boxBody">
           <div className="small">Unified integrations/status: {unifiedOk ? <span className="ok">OK</span> : <span className="danger">NG</span>}</div>
           <div className="table" style={{ marginTop: 10 }}>
-            <div className="tr th">
+            <div className="tr th" style={{ gridTemplateColumns: '1.5fr 2fr 0.7fr 1.2fr 1.5fr' }}>
               <div>CATEGORY</div><div>TOOL</div><div>TYPE</div><div>AVAILABLE</div><div>KEY</div>
             </div>
             {toolRows.map((r, i) => (
-              <div key={i} className="tr">
+              <div key={i} className="tr" style={{ gridTemplateColumns: '1.5fr 2fr 0.7fr 1.2fr 1.5fr', ...(r.availability === 'NO' || r.availability === 'AUTH' ? { background: 'rgba(255,107,107,0.08)' } : {}) }}>
                 <div>{r.cat}</div>
                 <div>{r.tool}</div>
                 <div className="mono">{r.type}</div>
@@ -1016,6 +1507,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           <span className="small">/api/ollama/generate</span>
         </div>
         <div className="boxBody">
+          {ollamaModelErr ? <div className="small danger" style={{ marginBottom: 6 }}>{ollamaModelErr}</div> : null}
           {ollamaTemplates.length ? (
             <div className="kv"><span>TEMPLATE</span>
               <span>
@@ -1036,9 +1528,9 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           </div>
           <textarea className="input" rows={4} value={ollamaPrompt} onChange={(e) => setOllamaPrompt(e.target.value)} placeholder="ここに質問や指示（例：要約して、案を出して、など）" />
           <div className="skillActions">
-            <button className="link" onClick={runOllama} disabled={!ollamaModel || !ollamaPrompt.trim()}>実行</button>
+            <button className="link" onClick={runOllama} disabled={!!busyOp || !ollamaModel || !ollamaPrompt.trim()}>{busyOp === 'ollama' ? '実行中…' : '実行'}</button>
           </div>
-          {ollamaOut ? <pre className="output">{ollamaOut}</pre> : <div className="small">結果はここに出る（OpenWebUIも併用OK）</div>}
+          {ollamaOut ? <OutputBlock text={ollamaOut} onClear={() => setOllamaOut('')} /> : <div className="small">結果はここに出る（OpenWebUIも併用OK）</div>}
         </div>
       </div>
 
@@ -1063,7 +1555,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           <textarea className="input" rows={3} value={imgPrompt} onChange={(e) => setImgPrompt(e.target.value)} placeholder="画像プロンプト（例：a cozy room, cinematic light, masterpiece）" />
           <textarea className="input" rows={2} value={imgNegative} onChange={(e) => setImgNegative(e.target.value)} placeholder="ネガティブ（任意）" />
           <div className="skillActions">
-            <button className="link" onClick={queueImage} disabled={!imgPrompt.trim()}>キュー投入</button>
+            <button className="link" onClick={queueImage} disabled={!!busyOp || !imgPrompt.trim()}>{busyOp === 'image' ? '投入中…' : 'キュー投入'}</button>
             <span className="small">生成物は「アイテム🎒」に出る</span>
           </div>
           {imgResult ? <div className="small">{imgResult}</div> : null}
@@ -1078,20 +1570,20 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         </div>
         <div className="boxBody">
           <div className="skillActions" style={{ flexWrap: 'wrap' }}>
-            <button className="link" onClick={() => fetchMonitor('comfyui_queue')}>ComfyUI queue</button>
-            <button className="link" onClick={() => fetchMonitor('comfyui_history')}>ComfyUI history</button>
-            <button className="link" onClick={() => fetchMonitor('svi_queue')}>SVI queue</button>
-            <button className="link" onClick={() => fetchMonitor('svi_history')}>SVI history</button>
-            <button className="link" onClick={() => fetchMonitor('ltx2_queue')}>LTX2 queue</button>
-            <button className="link" onClick={() => fetchMonitor('ltx2_history')}>LTX2 history</button>
-            <button className="link" onClick={() => fetchMonitor('images_recent')}>images recent</button>
-            <button className="link" onClick={() => fetchMonitor('llm_health')}>LLM health</button>
-            <button className="link" onClick={() => fetchMonitor('llm_models')}>LLM models</button>
-            <button className="link" onClick={() => fetchMonitor('unified_openapi')}>Unified OpenAPI</button>
-            <button className="link" onClick={() => fetchMonitor('unified_proxy_doctor')}>Proxy Doctor</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('comfyui_queue')}>{busyOp === 'monitor' ? '…' : 'ComfyUI queue'}</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('comfyui_history')}>ComfyUI history</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('svi_queue')}>SVI queue</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('svi_history')}>SVI history</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('ltx2_queue')}>LTX2 queue</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('ltx2_history')}>LTX2 history</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('images_recent')}>images recent</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('llm_health')}>LLM health</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('llm_models')}>LLM models</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('unified_openapi')}>Unified OpenAPI</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('unified_proxy_doctor')}>Proxy Doctor</button>
             <span className="small">AUTH? が出る場合は `MANAOS_UNIFIED_API_KEY` を設定</span>
           </div>
-          {monitorOut ? <pre className="output">{monitorOut}</pre> : <div className="small">ここにJSONを表示（エラーも含む）</div>}
+          {monitorOut ? <OutputBlock text={monitorOut} onClear={() => setMonitorOut('')} /> : <div className="small">ここにJSONを表示（エラーも含む）</div>}
         </div>
       </div>
 
@@ -1139,10 +1631,10 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
               ) : null}
 
               <div className="skillActions">
-                <button className="link" onClick={runUnifiedProxy} disabled={!proxyId.trim() || !proxyRuleEnabled}>実行</button>
+                <button className="link" onClick={runUnifiedProxy} disabled={!!busyOp || !proxyId.trim() || !proxyRuleEnabled}>{busyOp === 'proxy' ? '実行中…' : '実行'}</button>
                 <span className="small">write/danger は backend の環境変数ゲートが必要</span>
               </div>
-              {proxyOut ? <pre className="output">{proxyOut}</pre> : <div className="small">結果はここに出る（ok/status/data/error）</div>}
+              {proxyOut ? <OutputBlock text={proxyOut} onClear={() => setProxyOut('')} /> : <div className="small">結果はここに出る（ok/status/data/error）</div>}
             </div>
           )}
         </div>
@@ -1156,18 +1648,10 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         </div>
         <div className="boxBody">
           <div className="small">
-            Memory: {' '}
-            {unifiedOk && unifiedData?.memory_unified ? (
-              unifiedData.memory_unified.available ? <span className="ok">AVAILABLE</span> : <span className="danger">UNAVAILABLE</span>
-            ) : (
-              <span className={unifiedOk ? 'small' : 'caution'}>{unifiedOk ? '—' : 'AUTH?'}</span>
-            )}
-            {' / '}Notification Hub: {' '}
-            {unifiedOk && unifiedData?.notification_hub ? (
-              unifiedData.notification_hub.available ? <span className="ok">AVAILABLE</span> : <span className="danger">UNAVAILABLE</span>
-            ) : (
-              <span className={unifiedOk ? 'small' : 'caution'}>{unifiedOk ? '—' : 'AUTH?'}</span>
-            )}
+            Unified: {unifiedOk ? <span className="ok">OK</span> : <span className="danger">NG</span>}
+            {' / '}Memory Search: {supportsPath('/api/memory/search') ? <span className="ok">SUPPORTED</span> : <span className="danger">UNSUPPORTED</span>}
+            {' / '}Notify: {supportsPath('/api/ops/notify') ? <span className="ok">SUPPORTED</span> : <span className="danger">UNSUPPORTED</span>}
+            {' / '}write_gate: {unifiedWriteEnabled ? <span className="ok">ON</span> : <span className="caution">OFF</span>}
           </div>
 
           <div className="kv" style={{ marginTop: 10 }}><span>QUERY</span>
@@ -1186,14 +1670,14 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           </div>
           <div className="kv"><span>LIMIT</span>
             <span>
-              <input className="input" type="number" min={1} max={50} value={memoryLimit} onChange={(e) => setMemoryLimit(e.target.value)} style={{ width: 120 }} />
+              <input className="input" type="number" min={1} max={50} value={memoryLimit} onChange={(e) => setMemoryLimit(Number(e.target.value) || 1)} style={{ width: 120 }} />
             </span>
           </div>
           <div className="skillActions">
-            <button className="link" onClick={runMemoryRecall} disabled={!memoryQuery.trim()}>recall（GET）</button>
+            <button className="link" onClick={runMemoryRecall} disabled={!!busyOp || !memoryQuery.trim()}>{busyOp === 'memory_recall' ? '検索中…' : 'recall（GET）'}</button>
             <span className="small">※ Unified APIの認証が必要（KEY未設定だとAUTH?）</span>
           </div>
-          {memoryOut ? <pre className="output">{memoryOut}</pre> : <div className="small">結果はここに出る</div>}
+          {memoryOut ? <OutputBlock text={memoryOut} onClear={() => setMemoryOut('')} /> : <div className="small">結果はここに出る</div>}
 
           <div className="hr" style={{ margin: '14px 0' }} />
 
@@ -1215,10 +1699,10 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           </div>
           <textarea className="input" rows={3} value={memoryStoreMeta} onChange={(e) => setMemoryStoreMeta(e.target.value)} placeholder="metadata（任意・JSON）" />
           <div className="skillActions">
-            <button className="link" onClick={runMemoryStore} disabled={!memoryStoreContent.trim()}>保存（POST）</button>
+            <button className="link" onClick={runMemoryStore} disabled={!!busyOp || !memoryStoreContent.trim()}>{busyOp === 'memory_store' ? '保存中…' : '保存（POST）'}</button>
             <span className="small">※ backendで `MANAOS_RPG_ENABLE_UNIFIED_WRITE=1` が必要</span>
           </div>
-          {memoryStoreOut ? <pre className="output">{memoryStoreOut}</pre> : <div className="small">結果はここに出る（memory_id）</div>}
+          {memoryStoreOut ? <OutputBlock text={memoryStoreOut} onClear={() => setMemoryStoreOut('')} /> : <div className="small">結果はここに出る（memory_id）</div>}
 
           <div className="hr" style={{ margin: '14px 0' }} />
 
@@ -1248,7 +1732,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           </div>
 
           <div className="skillActions">
-            <button className="link" onClick={runNotifySend} disabled={!notifyMsg.trim()}>送信（POST）</button>
+            <button className="link" onClick={runNotifySend} disabled={!!busyOp || !notifyMsg.trim()}>{busyOp === 'notify_send' ? '送信中…' : '送信（POST）'}</button>
             <span className="small">※ backendで `MANAOS_RPG_ENABLE_UNIFIED_WRITE=1` が必要</span>
           </div>
 
@@ -1258,10 +1742,10 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
             </span>
           </div>
           <div className="skillActions">
-            <button className="link" onClick={runNotifyJob} disabled={!notifyJobId.trim()}>ジョブ確認（GET）</button>
+            <button className="link" onClick={runNotifyJob} disabled={!!busyOp || !notifyJobId.trim()}>{busyOp === 'notify_job' ? '確認中…' : 'ジョブ確認（GET）'}</button>
           </div>
 
-          {notifyOut ? <pre className="output">{notifyOut}</pre> : <div className="small">結果はここに出る（queued/sent/failed など）</div>}
+          {notifyOut ? <OutputBlock text={notifyOut} onClear={() => setNotifyOut('')} /> : <div className="small">結果はここに出る（queued/sent/failed など）</div>}
         </div>
       </div>
 
@@ -1278,10 +1762,10 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           <textarea className="input" rows={4} value={routeContext} onChange={(e) => setRouteContext(e.target.value)} placeholder="context（任意・JSON）" />
           <textarea className="input" rows={4} value={routePrefs} onChange={(e) => setRoutePrefs(e.target.value)} placeholder="preferences（任意・JSON）" />
           <div className="skillActions">
-            <button className="link" onClick={runRouteEnhanced} disabled={!routePrompt.trim()}>実行（POST）</button>
+            <button className="link" onClick={runRouteEnhanced} disabled={!!busyOp || !routePrompt.trim()}>{busyOp === 'route' ? '実行中…' : '実行（POST）'}</button>
             <span className="small">※ backendで `MANAOS_RPG_ENABLE_UNIFIED_WRITE=1` が必要</span>
           </div>
-          {routeOut ? <pre className="output">{routeOut}</pre> : <div className="small">結果はここに出る（選ばれたモデル/ルート/理由など）</div>}
+          {routeOut ? <OutputBlock text={routeOut} onClear={() => setRouteOut('')} /> : <div className="small">結果はここに出る（選ばれたモデル/ルート/理由など）</div>}
 
           <div className="hr" style={{ margin: '14px 0' }} />
 
@@ -1294,9 +1778,9 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           <textarea className="input" rows={3} value={analyzeCodeContext} onChange={(e) => setAnalyzeCodeContext(e.target.value)} placeholder="code_context（任意・そのまま文字列）" />
           <textarea className="input" rows={3} value={analyzeContext} onChange={(e) => setAnalyzeContext(e.target.value)} placeholder="context（任意・JSON）" />
           <div className="skillActions">
-            <button className="link" onClick={runLlmAnalyze} disabled={!analyzePrompt.trim()}>分析（POST）</button>
+            <button className="link" onClick={runLlmAnalyze} disabled={!!busyOp || !analyzePrompt.trim()}>{busyOp === 'analyze' ? '分析中…' : '分析（POST）'}</button>
           </div>
-          {analyzeOut ? <pre className="output">{analyzeOut}</pre> : <div className="small">difficulty_score / level / recommended_model が出る</div>}
+          {analyzeOut ? <OutputBlock text={analyzeOut} onClear={() => setAnalyzeOut('')} /> : <div className="small">difficulty_score / level / recommended_model が出る</div>}
         </div>
       </div>
 
@@ -1351,10 +1835,10 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
 
           <textarea className="input" rows={8} value={videoBody} onChange={(e) => setVideoBody(e.target.value)} placeholder="ここにJSONボディ（テンプレ適用→編集）" />
           <div className="skillActions">
-            <button className="link" onClick={runVideo} disabled={!videoEndpoint}>実行（POST）</button>
+            <button className="link" onClick={runVideo} disabled={!!busyOp || !videoEndpoint}>{busyOp === 'video' ? '実行中…' : '実行（POST）'}</button>
             <span className="small">※ backendで `MANAOS_RPG_ENABLE_UNIFIED_WRITE=1` が必要</span>
           </div>
-          {videoOut ? <pre className="output">{videoOut}</pre> : <div className="small">結果はここに出る（prompt_id / success / error）</div>}
+          {videoOut ? <OutputBlock text={videoOut} onClear={() => setVideoOut('')} /> : <div className="small">結果はここに出る（prompt_id / success / error）</div>}
         </div>
       </div>
 
@@ -1391,7 +1875,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
                           <a className="link" href={it.url} target="_blank" rel="noreferrer">開く</a>
                         ) : null}
                         {typeof it.action_id === 'string' && it.action_id ? (
-                          <button className="link" onClick={() => onRunAction?.(it.action_id)}>実行</button>
+                          <button className="link" disabled={!!runningAction} onClick={() => onRunAction?.(it.action_id)}>{runningAction === it.action_id ? '実行中…' : '実行'}</button>
                         ) : null}
                       </div>
                     </div>
@@ -1407,21 +1891,30 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
   )
 }
 
-function SystemsView({ unified }) {
+function SystemsView({ unified, onRunAction, actionResult, actionsEnabled, runningAction }) {
   const base = unified?.base
   const r = unified?.integrations
   const ok = Boolean(r?.ok)
   const data = r?.data && typeof r.data === 'object' ? r.data : null
 
+  const mrl = unified?.mrl_memory
+  const mrlOk = Boolean(mrl?.ok)
+  const mrlBase = mrl?.base
+  const mrlHealth = mrl?.health && typeof mrl.health === 'object' ? mrl.health : null
+  const mrlCfg = mrl?.metrics?.config && typeof mrl.metrics.config === 'object' ? mrl.metrics.config : null
+
   const health = data?.health && typeof data.health === 'object' ? data.health : null
   const openapi = data?.openapi && typeof data.openapi === 'object' ? data.openapi : null
 
-  const rows = data ? Object.entries(data).map(([k, v]) => ({
-    key: k,
-    name: v?.name,
-    available: Boolean(v?.available),
-    reason: v?.reason
-  })) : []
+  const rows = useMemo(() => {
+    if (!data) return []
+    return Object.entries(data).map(([k, v]) => ({
+      key: k,
+      name: v?.name,
+      available: Boolean(v?.available),
+      reason: v?.reason
+    }))
+  }, [data])
 
   return (
     <div>
@@ -1468,33 +1961,108 @@ function SystemsView({ unified }) {
         </div>
       ) : null}
 
-      {rows.length && !health && !openapi ? (
-        <div className="table" style={{ marginTop: 10 }}>
-          <div className="tr th">
-            <div>KEY</div><div>NAME</div><div>AVAILABLE</div><div>REASON</div>
-          </div>
-          {rows.map((x) => (
-            <div key={x.key} className="tr">
-              <div className="mono">{x.key}</div>
-              <div>{x.name || '—'}</div>
-              <div className={x.available ? 'ok' : 'danger'}>{x.available ? 'YES' : 'NO'}</div>
-              <div className="small">{x.reason || '—'}</div>
+      <div className="sectionBlock" style={{ marginTop: 10 }}>
+        <div className="sectionHead">
+          <span className="mono">MRL</span>
+          <span>mrl-memory status</span>
+          <span className="small">（Unified memory 503時のフォールバック）</span>
+        </div>
+        <div className="boxBody">
+          <div className="small">base: <span className="mono">{String(mrlBase || '—')}</span></div>
+          <div className="small">health: {mrlOk ? <span className="ok">OK</span> : <span className="danger">NG</span>}</div>
+          {mrlHealth ? (
+            <div style={{ marginTop: 8 }}>
+              <div className="kv"><span>service</span><span className="mono">{String(mrlHealth.service || '—')}</span></div>
+              <div className="kv"><span>status</span><span className={String(mrlHealth.status) === 'healthy' ? 'ok' : 'caution'}>{String(mrlHealth.status || '—')}</span></div>
+              {typeof mrlHealth.auth_required !== 'undefined' ? (
+                <div className="kv"><span>auth</span><span className="mono">{String(mrlHealth.auth_required)}</span></div>
+              ) : null}
             </div>
-          ))}
+          ) : null}
+          {mrlCfg ? (
+            <div style={{ marginTop: 8 }}>
+              <div className="kv"><span>write_mode</span><span className="mono">{String(mrlCfg.write_mode || '—')}</span></div>
+              <div className="kv"><span>write_enabled</span><span className="mono">{String(mrlCfg.write_enabled || '—')}</span></div>
+            </div>
+          ) : null}
+
+          <div className="skillActions" style={{ marginTop: 10 }}>
+            <button
+              className="link"
+              disabled={actionsEnabled === false || !!runningAction}
+              onClick={() => onRunAction?.('mrl_memory_write_on_full')}
+            >
+              {runningAction === 'mrl_memory_write_on_full' ? '実行中…' : '書き込みON（full）'}
+            </button>
+            <button
+              className="link"
+              disabled={actionsEnabled === false || !!runningAction}
+              onClick={() => onRunAction?.('mrl_memory_write_off')}
+            >
+              {runningAction === 'mrl_memory_write_off' ? '実行中…' : '書き込みOFF（readonly）'}
+            </button>
+            {actionsEnabled === false ? <span className="caution">actions disabled</span> : null}
+          </div>
+
+          {actionResult?.action_id === 'mrl_memory_write_on_full' || actionResult?.action_id === 'mrl_memory_write_off' ? (
+            <div className="sectionBlock" style={{ marginTop: 8 }}>
+              <div className="small">last action: <span className="mono">{String(actionResult.action_id || '—')}</span></div>
+              <div className="small">ok: {String(Boolean(actionResult?.result?.ok))}</div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {rows.length > 0 ? (
+        <div className="sectionBlock" style={{ marginTop: 10 }}>
+          <div className="sectionHead">
+            <span className="mono">INTEGRATIONS</span>
+            <span>サービス一覧</span>
+            <span className="small">{rows.length}件</span>
+          </div>
+          <div className="table">
+            <div className="tr th" style={{ gridTemplateColumns: '1.5fr 2fr 0.8fr 2.5fr' }}>
+              <div>KEY</div><div>NAME</div><div>AVAILABLE</div><div>REASON</div>
+            </div>
+            {rows.map((x) => (
+              <div key={x.key} className="tr" style={{ gridTemplateColumns: '1.5fr 2fr 0.8fr 2.5fr', ...(x.available ? {} : { background: 'rgba(255,107,107,0.08)' }) }}>
+                <div className="mono">{x.key}</div>
+                <div>{x.name || '—'}</div>
+                <div className={x.available ? 'ok' : 'danger'}>{x.available ? 'YES' : 'NO'}</div>
+                <div className="small">{x.reason || '—'}</div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
-        <div className="small">データなし（APIキー未設定/認証NG の可能性）</div>
+        <div className="small" style={{ marginTop: 10 }}>データなし（APIキー未設定/認証NG の可能性）</div>
       )}
       <div className="small">必要なら環境変数で <span className="mono">MANAOS_UNIFIED_API_KEY</span>（または <span className="mono">MANAOS_INTEGRATION_READONLY_API_KEY</span>）をRPG backend側に渡す</div>
     </div>
   )
 }
 
-function QuestsView({ quests, apiBase, onRunAction, actionResult }) {
+function QuestsView({ quests, apiBase, onRunAction, actionResult, runningAction }) {
   const list = Array.isArray(quests) ? quests : []
+  const [questLoading, setQuestLoading] = useState('')
+  const [questResult, setQuestResult] = useState(null)
+
+  async function runApiQuest(endpoint) {
+    setQuestLoading(endpoint)
+    setQuestResult(null)
+    try {
+      const r = await fetchJson(endpoint)
+      const text = JSON.stringify(r, null, 2)
+      setQuestResult({ endpoint, text: text.length > 18000 ? (text.slice(0, 18000) + '\n... (truncated)') : text, ok: true })
+    } catch (e) {
+      setQuestResult({ endpoint, text: `ERR: ${String(e?.message || e)}`, ok: false })
+    } finally {
+      setQuestLoading('')
+    }
+  }
   return (
     <div>
-      <div className="panelTitle">クエスト（タスク）</div>
+      <div className="panelTitle">クエスト（タスク） <span className="small">{list.length}件</span></div>
       <div className="small">kind=api はクリック（GET）/ kind=action は実行（POST, backendで許可されたもののみ）</div>
       {actionResult ? (
         <div className="box" style={{ marginBottom: 12 }}>
@@ -1512,20 +2080,22 @@ function QuestsView({ quests, apiBase, onRunAction, actionResult }) {
         </div>
       ) : null}
       <div className="table">
-        <div className="tr th">
+        <div className="tr th" style={{ gridTemplateColumns: '1.2fr 2fr 0.8fr 1.5fr 0.8fr' }}>
           <div>ID</div><div>LABEL</div><div>KIND</div><div>ENDPOINT</div><div>ACTION</div>
         </div>
         {list.map((q) => (
-          <div key={q.id} className="tr">
+          <div key={q.id} className="tr" style={{ gridTemplateColumns: '1.2fr 2fr 0.8fr 1.5fr 0.8fr' }}>
             <div className="mono">{q.id}</div>
             <div>{q.label}</div>
             <div className="mono">{q.kind}</div>
             <div className="mono">{q.endpoint ?? q.action_id ?? '—'}</div>
             <div>
               {q.kind === 'api' && q.endpoint ? (
-                <a className="link" href={`${apiBase}${q.endpoint}`} target="_blank" rel="noreferrer">実行</a>
+                <button className="link" disabled={!!questLoading} onClick={() => runApiQuest(q.endpoint)}>
+                  {questLoading === q.endpoint ? '実行中…' : '実行'}
+                </button>
               ) : q.kind === 'action' && q.action_id ? (
-                <button className="link" onClick={() => onRunAction?.(q.action_id)}>実行</button>
+                <button className="link" disabled={!!runningAction} onClick={() => onRunAction?.(q.action_id)}>{runningAction === q.action_id ? '実行中…' : '実行'}</button>
               ) : (
                 <span className="small">—</span>
               )}
@@ -1533,23 +2103,63 @@ function QuestsView({ quests, apiBase, onRunAction, actionResult }) {
           </div>
         ))}
       </div>
+      {questResult ? (
+        <div style={{ marginTop: 12 }}>
+          <div className="small">結果: <span className="mono">{questResult.endpoint}</span></div>
+          <OutputBlock text={questResult.text} onClear={() => setQuestResult(null)} />
+        </div>
+      ) : null}
     </div>
   )
 }
 
-function LogsView({ events }) {
+function LogsView({ events, onRefresh }) {
   const list = Array.isArray(events) ? events : []
+  const [logFilter, setLogFilter] = useState('')
+  const [logTypeFilter, setLogTypeFilter] = useState('')
+
+  const logTypes = useMemo(() => {
+    const s = new Set()
+    for (const e of list) if (e?.type) s.add(String(e.type).toUpperCase())
+    return Array.from(s).sort()
+  }, [list])
+
+  const filtered = useMemo(() => {
+    let out = list
+    if (logTypeFilter) {
+      out = out.filter((e) => String(e?.type || '').toUpperCase() === logTypeFilter)
+    }
+    if (logFilter.trim()) {
+      const q = logFilter.trim().toLowerCase()
+      out = out.filter((e) => String(e?.message || '').toLowerCase().includes(q) || String(e?.type || '').toLowerCase().includes(q))
+    }
+    return out
+  }, [list, logFilter, logTypeFilter])
+
+  const reversed = useMemo(() => filtered.slice().reverse(), [filtered])
+
   return (
     <div>
-      <div className="panelTitle">戦闘ログ</div>
+      <div className="panelTitle" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span>戦闘ログ</span>
+        <button className="link" onClick={onRefresh}>再読込</button>
+        <span className="small">{filtered.length}/{list.length}件</span>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+        <input className="input" value={logFilter} onChange={(e) => setLogFilter(e.target.value)} placeholder="テキストで絞り込み" style={{ marginTop: 0, maxWidth: 280 }} />
+        <select value={logTypeFilter} onChange={(e) => setLogTypeFilter(e.target.value)} style={{ padding: '4px 6px' }}>
+          <option value="">全タイプ</option>
+          {logTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+      </div>
       <div className="log">
-        {list.length === 0 ? (
-          <div className="small">events.log がまだ空です（サービスダウン等で自動追記）</div>
+        {filtered.length === 0 ? (
+          <div className="small">{list.length === 0 ? 'events.log がまだ空です（サービスダウン等で自動追記）' : 'フィルターに一致するログがありません'}</div>
         ) : (
-          list.slice().reverse().map((e, idx) => (
-            <div key={idx} className="logLine">
+          reversed.map((e, idx) => (
+            <div key={`${e.ts}-${e.type}-${idx}`} className="logLine">
               <span className="mono">{fmtTs(e.ts)}</span>
-              <span className="mono">[{e.type}]</span>
+              <span className={`mono ${logTypeCls(e.type)}`}>[{e.type}]</span>
               <span>{e.message}</span>
             </div>
           ))
@@ -1561,65 +2171,58 @@ function LogsView({ events }) {
 
 function MapView({ devices }) {
   const list = Array.isArray(devices) ? devices : []
+  const aliveDevices = useMemo(() => list.filter((d) => d.alive), [list])
   return (
     <div>
-      <div className="panelTitle">マップ（デバイス）</div>
-      <div className="table">
-        <div className="tr th">
-          <div>ID</div><div>NAME</div><div>KIND</div><div>TAGS</div>
-        </div>
-        {list.map((d) => (
-          <div key={d.id} className="tr">
-            <div className="mono">{d.id}</div>
-            <div>{d.name}</div>
-            <div className="mono">{d.kind}</div>
-            <div className="small">{Array.isArray(d.tags) ? d.tags.join(', ') : '—'}</div>
+      <div className="panelTitle">マップ（デバイス） <span className="small">{list.length}件{list.length > 0 ? ` / ${aliveDevices.length} online` : ''}</span></div>
+      {list.length === 0 ? (
+        <div className="small">デバイスが未登録です（registry/devices.yaml を追加）</div>
+      ) : (
+        <div className="table">
+          <div className="tr th" style={{ gridTemplateColumns: '1.2fr 2fr 1fr 0.8fr 2fr' }}>
+            <div>ID</div><div>NAME</div><div>KIND</div><div>STATUS</div><div>TAGS</div>
           </div>
-        ))}
-      </div>
+          {list.map((d) => (
+            <div key={d.id} className="tr" style={{ gridTemplateColumns: '1.2fr 2fr 1fr 0.8fr 2fr', ...(typeof d.alive === 'boolean' && !d.alive ? { background: 'rgba(255,107,107,0.08)' } : {}) }}>
+              <div className="mono">{d.id}</div>
+              <div>{d.name}</div>
+              <div className="mono">{d.kind}</div>
+              <div>{typeof d.alive === 'boolean' ? <span className={d.alive ? 'ok' : 'danger'}>{d.alive ? 'ONLINE' : 'OFFLINE'}</span> : <span className="small">—</span>}</div>
+              <div className="small">{Array.isArray(d.tags) ? d.tags.join(', ') : '—'}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
-}
-
-function encodeRelPath(relPath) {
-  const p = String(relPath || '').replace(/\\/g, '/')
-  return p.split('/').map(encodeURIComponent).join('/')
-}
-
-function fmtBytes(n) {
-  const v = Number(n || 0)
-  if (!Number.isFinite(v) || v <= 0) return '0B'
-  const units = ['B', 'KB', 'MB', 'GB', 'TB']
-  let x = v
-  let i = 0
-  while (x >= 1024 && i < units.length - 1) {
-    x /= 1024
-    i++
-  }
-  return `${x.toFixed(i === 0 ? 0 : 1)}${units[i]}`
 }
 
 function ItemsView({ items, apiBase }) {
   const recent = Array.isArray(items?.recent) ? items.recent : []
   const roots = Array.isArray(items?.roots) ? items.roots : []
+  const [brokenImgs, setBrokenImgs] = useState(() => new Set())
+  const [expandedGroups, setExpandedGroups] = useState(() => new Set())
 
-  const labelById = new Map(roots.map((r) => [r.id, r.label]))
-  const grouped = new Map()
-  for (const it of recent) {
-    const rid = String(it?.root_id || 'unknown')
-    if (!grouped.has(rid)) grouped.set(rid, [])
-    grouped.get(rid).push(it)
-  }
+  const labelById = useMemo(() => new Map(roots.map((r) => [r.id, r.label])), [roots])
 
-  const groupKeys = Array.from(grouped.keys()).sort((a, b) => {
-    const la = labelById.get(a) || a
-    const lb = labelById.get(b) || b
-    return String(la).localeCompare(String(lb))
-  })
+  const { grouped, groupKeys } = useMemo(() => {
+    const map = new Map()
+    for (const it of recent) {
+      const rid = String(it?.root_id || 'unknown')
+      if (!map.has(rid)) map.set(rid, [])
+      map.get(rid).push(it)
+    }
+    const keys = Array.from(map.keys()).sort((a, b) => {
+      const la = labelById.get(a) || a
+      const lb = labelById.get(b) || b
+      return String(la).localeCompare(String(lb))
+    })
+    return { grouped: map, groupKeys: keys }
+  }, [recent, labelById])
 
   return (
     <div>
-      <div className="panelTitle">アイテム（生成物）</div>
+      <div className="panelTitle">アイテム（生成物） <span className="small">{recent.length}件</span></div>
       <div className="small">監視フォルダ: {roots.length ? roots.map((r) => r.label).join(' / ') : '未設定（registry/items.yaml）'}</div>
 
       {recent.length === 0 ? (
@@ -1634,32 +2237,53 @@ function ItemsView({ items, apiBase }) {
                 <span className="small">{grouped.get(rid)?.length ?? 0}件</span>
               </div>
               <div className="itemsGrid">
-                {(grouped.get(rid) || []).slice(0, 24).map((it, idx) => {
-                  const url = `${apiBase}/files/${encodeURIComponent(it.root_id)}/${encodeRelPath(it.rel_path)}`
+                {(() => {
+                  const groupItems = grouped.get(rid) || []
+                  const expanded = expandedGroups.has(rid)
+                  const limit = expanded ? groupItems.length : 24
+                  const visible = groupItems.slice(0, limit)
                   return (
-                    <div key={`${it.root_id}:${it.rel_path}:${idx}`} className="itemCard">
-                      <div className="itemHead">
-                        <div className="mono">{it.kind}</div>
-                        <div className="small">{fmtTs(it.mtime)} / {fmtBytes(it.size_bytes)}</div>
-                      </div>
-                      <div className="itemBody">
-                        {it.kind === 'image' ? (
-                          <a href={url} target="_blank" rel="noreferrer" className="itemMedia">
-                            <img src={url} alt={it.name} loading="lazy" />
-                          </a>
-                        ) : it.kind === 'video' ? (
-                          <video className="itemVideo" src={url} controls preload="metadata" />
-                        ) : (
-                          <a className="link" href={url} target="_blank" rel="noreferrer">開く</a>
-                        )}
-                      </div>
-                      <div className="itemFoot">
-                        <div className="small">{it.name}</div>
-                        <div className="mono">{it.rel_path}</div>
-                      </div>
-                    </div>
+                    <>
+                      {visible.map((it, idx) => {
+                        const url = `${apiBase}/files/${encodeURIComponent(it.root_id)}/${encodeRelPath(it.rel_path)}`
+                        return (
+                          <div key={`${it.root_id}:${it.rel_path}:${idx}`} className="itemCard">
+                            <div className="itemHead">
+                              <div className="mono">{it.kind}</div>
+                              <div className="small">{fmtTs(it.mtime)} / {fmtBytes(it.size_bytes)}</div>
+                            </div>
+                            <div className="itemBody">
+                              {it.kind === 'image' ? (
+                                brokenImgs.has(`${it.root_id}:${it.rel_path}`) ? (
+                                  <span className="small">画像読込失敗</span>
+                                ) : (
+                                  <a href={url} target="_blank" rel="noreferrer" className="itemMedia">
+                                    <img src={url} alt={it.name} loading="lazy" onError={() => setBrokenImgs((prev) => new Set(prev).add(`${it.root_id}:${it.rel_path}`))} />
+                                  </a>
+                                )
+                              ) : it.kind === 'video' ? (
+                                <video className="itemVideo" src={url} controls preload="metadata" />
+                              ) : (
+                                <a className="link" href={url} target="_blank" rel="noreferrer">開く</a>
+                              )}
+                            </div>
+                            <div className="itemFoot">
+                              <div className="small">{it.name}</div>
+                              <div className="mono">{it.rel_path}</div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {!expanded && groupItems.length > 24 ? (
+                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 8 }}>
+                          <button className="link" onClick={() => setExpandedGroups((prev) => new Set(prev).add(rid))}>
+                            もっと見る（残り {groupItems.length - 24}件）
+                          </button>
+                        </div>
+                      ) : null}
+                    </>
                   )
-                })}
+                })()}
               </div>
             </div>
           ))}

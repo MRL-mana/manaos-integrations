@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import json
+import sys
 import time
+from pathlib import Path
 from typing import Any
 
 from core.config import (
+    DEFAULT_MRL_MEMORY_BASE,
     DEFAULT_UNIFIED_API_BASE,
     EVENTS_FILE,
     REG,
@@ -18,12 +21,30 @@ from core.unified_client import (
     _unified_write_enabled,
     get_unified_integrations_status,
 )
+from core.http_client import _http_json_get
 from collectors.events import append_event
 from collectors.host_stats import get_host_stats
 from collectors.items_collector import resolve_item_roots, scan_items
 from collectors.ollama_runtime import get_ollama_ps_models
 from collectors.services_runtime import compute_services_status
 from services.actions import _actions_enabled, _load_actions
+
+
+# ── RLAnything 統合 (安全インポート) ──
+def _get_rl_dashboard() -> dict | None:
+    """RLAnything のダッシュボード情報を安全に取得"""
+    try:
+        _repo_root = str(Path(__file__).resolve().parent.parent.parent.parent)
+        if _repo_root not in sys.path:
+            sys.path.insert(0, _repo_root)
+        from rl_anything.orchestrator import RLAnythingOrchestrator
+        rl = RLAnythingOrchestrator()
+        dash = rl.get_dashboard()
+        dash["skills"] = [s.to_dict() for s in rl.evolution.skills]
+        dash["enabled"] = True
+        return dash
+    except Exception:
+        return {"enabled": False, "error": "rl_anything not available"}
 from services.unified_doctor import (
     _load_unified_proxy_rules,
     _maybe_refresh_unified_doctor_cache,
@@ -129,6 +150,30 @@ def snapshot() -> dict[str, Any]:
             "error": "unified_api_down",
             "auth_configured": bool(_unified_api_key()),
         }
+
+    # mrl-memory (Unified memory未搭載時のフォールバック先)
+    mrl_health = _http_json_get(f"{DEFAULT_MRL_MEMORY_BASE}/health", timeout_s=3.0)
+    mrl_metrics = _http_json_get(f"{DEFAULT_MRL_MEMORY_BASE}/api/metrics", timeout_s=4.0)
+    mrl_status: dict[str, Any] = {
+        "ok": bool(mrl_health.get("ok")),
+        "base": DEFAULT_MRL_MEMORY_BASE,
+        "health": mrl_health.get("data") if mrl_health.get("ok") else None,
+        "metrics": mrl_metrics.get("data") if mrl_metrics.get("ok") else None,
+        "checks": {
+            "health": {
+                "url": f"{DEFAULT_MRL_MEMORY_BASE}/health",
+                "ok": bool(mrl_health.get("ok")),
+                "status": mrl_health.get("status"),
+                "error": mrl_health.get("error"),
+            },
+            "metrics": {
+                "url": f"{DEFAULT_MRL_MEMORY_BASE}/api/metrics",
+                "ok": bool(mrl_metrics.get("ok")),
+                "status": mrl_metrics.get("status"),
+                "error": mrl_metrics.get("error"),
+            },
+        },
+    }
 
     prev_state: dict[str, Any] = {}
     if STATE_FILE.exists():
@@ -253,6 +298,30 @@ def snapshot() -> dict[str, Any]:
         next_actions.append(f"常駐が落ちてる：{', '.join([str(x) for x in always_on_down])} を復旧")
 
     next_action_hints: list[dict[str, Any]] = []
+
+    try:
+        if mrl_status.get("ok") and isinstance(mrl_status.get("metrics"), dict):
+            cfg = mrl_status.get("metrics", {}).get("config")
+            if isinstance(cfg, dict):
+                write_mode = str(cfg.get("write_mode") or "").strip().lower()
+                write_enabled = str(cfg.get("write_enabled") or "").strip()
+                if write_mode == "readonly" or write_enabled in {"0", "false", "no"}:
+                    next_actions.append(
+                        "mrl-memory が readonly：memory store は readonly_mode（永続化したいなら MRL_FWPKM_WRITE_ENABLED=1 を明示）"
+                    )
+                    _append_next_action_hint(
+                        next_action_hints,
+                        label="実行：mrl-memory 書き込みON（full / recreate）",
+                        action_id="mrl_memory_write_on_full",
+                    )
+                else:
+                    _append_next_action_hint(
+                        next_action_hints,
+                        label="実行：mrl-memory 書き込みOFF（readonly / recreate）",
+                        action_id="mrl_memory_write_off",
+                    )
+    except Exception:
+        pass
 
     unhealthy = [
         str(s.get("id"))
@@ -420,6 +489,7 @@ def snapshot() -> dict[str, Any]:
         "unified": {
             "base": DEFAULT_UNIFIED_API_BASE,
             "integrations": unified_integrations,
+            "mrl_memory": mrl_status,
             "proxy": {
                 "enabled": True,
                 "rules": unified_proxy_rules,
@@ -442,4 +512,5 @@ def snapshot() -> dict[str, Any]:
         "next_actions": next_actions,
         "next_action_hints": next_action_hints,
         "always_on_down": down_now,
+        "rl_anything": _get_rl_dashboard(),
     }
