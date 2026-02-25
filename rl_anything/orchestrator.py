@@ -26,6 +26,8 @@ RLAnything オーケストレータ
 from __future__ import annotations
 
 import json
+import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -36,15 +38,21 @@ from .feedback_engine import FeedbackEngine
 from .evolution_engine import EvolutionEngine
 
 _DIR = Path(__file__).parent
+_STATE_DIR = _DIR.parent / "logs" / "rl_anything"
 
 
 class RLAnythingOrchestrator:
     """
     3 要素同時最適化の司令塔。
     各フェーズを統合し、タスクごとに自己進化ループを回す。
+    永続化: state.json にサイクル数・難易度を保存し再起動後も継続。
     """
 
+    # Stale task timeout (seconds) — 30分以上放置されたタスクを自動終了
+    STALE_TIMEOUT_S = 30 * 60
+
     def __init__(self, config_path: Optional[Path] = None):
+        self._config_path = config_path
         cfg = self._load_config(config_path)
 
         # 3 コンポーネント
@@ -52,8 +60,15 @@ class RLAnythingOrchestrator:
         self.feedback = FeedbackEngine(config=cfg)
         self.evolution = EvolutionEngine(config=cfg)
 
-        # ループカウンタ
+        # 永続化ディレクトリ
+        _STATE_DIR.mkdir(parents=True, exist_ok=True)
+        self._state_path = _STATE_DIR / "state.json"
+        self._metrics_path = _STATE_DIR / "metrics.jsonl"
+        self._lock = threading.Lock()
+
+        # ループカウンタ（永続化から復元）
         self._cycle_count = 0
+        self._restore_state()
 
     # ═══════════════════════════════════════════════════════
     # タスクライフサイクル
@@ -119,7 +134,7 @@ class RLAnythingOrchestrator:
 
         self._cycle_count += 1
 
-        return {
+        result = {
             "task_id": task_id,
             "outcome": outcome,
             "cycle": self._cycle_count,
@@ -127,6 +142,12 @@ class RLAnythingOrchestrator:
             "evolution": evo_result,
             "stats": self.get_dashboard(),
         }
+
+        # 永続化: state.json + metrics.jsonl
+        self._persist_state()
+        self._append_metric(task_id, outcome, score, fb_result, evo_result)
+
+        return result
 
     # ═══════════════════════════════════════════════════════
     # 自動スコアリング
@@ -217,6 +238,130 @@ class RLAnythingOrchestrator:
         lines.append(difficulty_hint)
 
         return "\n".join(lines)
+
+    # ═══════════════════════════════════════════════════════
+    # Stale タスク自動クリーンアップ
+    # ═══════════════════════════════════════════════════════
+    def cleanup_stale_tasks(self, timeout_s: Optional[float] = None) -> Dict[str, Any]:
+        """
+        一定時間アクティブなままのタスクを自動終了 (outcome=unknown)。
+        返り値: {"cleaned": [...task_ids], "count": N}
+        """
+        timeout = timeout_s or self.STALE_TIMEOUT_S
+        now = time.time()
+        cleaned: List[str] = []
+
+        stale_ids = []
+        for tid, record in list(self.observer._active_tasks.items()):
+            try:
+                started = datetime.fromisoformat(record.start_time).timestamp()
+                if now - started > timeout:
+                    stale_ids.append(tid)
+            except Exception:
+                pass
+
+        for tid in stale_ids:
+            try:
+                self.end_task(tid, outcome="unknown", score=None)
+                cleaned.append(tid)
+            except Exception:
+                pass
+
+        return {"cleaned": cleaned, "count": len(cleaned)}
+
+    # ═══════════════════════════════════════════════════════
+    # メトリクス履歴
+    # ═══════════════════════════════════════════════════════
+    def get_history(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """
+        直近の完了サイクルを metrics.jsonl から返す。
+        フロントエンド履歴チャート用。
+        """
+        if not self._metrics_path.exists():
+            return []
+        try:
+            lines = self._metrics_path.read_text(encoding="utf-8").strip().splitlines()
+            entries = []
+            for line in lines[-limit:]:
+                line = line.strip()
+                if line:
+                    entries.append(json.loads(line))
+            return entries
+        except Exception:
+            return []
+
+    # ═══════════════════════════════════════════════════════
+    # Config ホットリロード
+    # ═══════════════════════════════════════════════════════
+    def reload_config(self) -> Dict[str, Any]:
+        """
+        config.json を再読み込みして feedback の scoring_criteria を更新。
+        再起動なしで設定変更を反映。
+        """
+        try:
+            cfg = self._load_config(self._config_path)
+            reward_cfg = cfg.get("reward_model", {})
+            if reward_cfg.get("scoring_criteria"):
+                self.feedback.scoring_criteria = dict(reward_cfg["scoring_criteria"])
+            evo_cfg = cfg.get("evolution", {})
+            if evo_cfg.get("skill_success_threshold"):
+                self.evolution.success_threshold = evo_cfg["skill_success_threshold"]
+            return {"ok": True, "reloaded": True, "criteria": dict(self.feedback.scoring_criteria)}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    # ═══════════════════════════════════════════════════════
+    # 永続化 (state.json)
+    # ═══════════════════════════════════════════════════════
+    def _persist_state(self) -> None:
+        """cycle_count と difficulty を state.json に保存"""
+        try:
+            state = {
+                "cycle_count": self._cycle_count,
+                "current_difficulty": self.evolution.current_difficulty.value,
+                "last_updated": datetime.now().isoformat(),
+            }
+            with self._lock:
+                self._state_path.write_text(
+                    json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8"
+                )
+        except Exception:
+            pass
+
+    def _restore_state(self) -> None:
+        """起動時に state.json からサイクル数・難易度を復元"""
+        if not self._state_path.exists():
+            return
+        try:
+            data = json.loads(self._state_path.read_text(encoding="utf-8"))
+            self._cycle_count = data.get("cycle_count", 0)
+            diff_val = data.get("current_difficulty", "standard")
+            self.evolution.current_difficulty = DifficultyLevel(diff_val)
+        except Exception:
+            pass
+
+    def _append_metric(self, task_id: str, outcome: str, score: float,
+                       fb_result: Dict, evo_result: Dict) -> None:
+        """サイクル結果を metrics.jsonl に追記（履歴分析用）"""
+        try:
+            entry = {
+                "ts": datetime.now().isoformat(),
+                "cycle": self._cycle_count,
+                "task_id": task_id,
+                "outcome": outcome,
+                "score": score,
+                "difficulty": self.evolution.current_difficulty.value,
+                "skills_total": len(self.evolution.skills),
+                "integration_score": fb_result.get("integration", {}).get("score"),
+                "consistency_score": fb_result.get("consistency", {}).get("score"),
+                "new_skills": len(evo_result.get("new_skills", [])),
+                "success_rate": self.observer.get_stats().get("success_rate", 0),
+            }
+            with self._lock:
+                with open(self._metrics_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        except Exception:
+            pass
 
     # ═══════════════════════════════════════════════════════
     # 設定

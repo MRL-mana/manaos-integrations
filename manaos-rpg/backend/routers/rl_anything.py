@@ -127,3 +127,36 @@ def score_intermediate(
         return {"ok": True}
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+# ═══════════════════════════════════════════════════════
+# 履歴 / 管理エンドポイント (round 3)
+# ═══════════════════════════════════════════════════════
+
+@router.get("/history")
+def history(limit: int = 50) -> Dict[str, Any]:
+    """直近のサイクル履歴 (metrics.jsonl)"""
+    try:
+        entries = _get_rl().get_history(limit=limit)
+        return {"ok": True, "entries": entries, "count": len(entries)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/cleanup")
+def cleanup_stale(timeout_s: Optional[float] = Body(None)) -> Dict[str, Any]:
+    """放置されたタスクを自動終了"""
+    try:
+        result = _get_rl().cleanup_stale_tasks(timeout_s=timeout_s)
+        return {"ok": True, **result}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/config/reload")
+def config_reload() -> Dict[str, Any]:
+    """config.json を再読み込み（再起動不要）"""
+    try:
+        return _get_rl().reload_config()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}

@@ -79,6 +79,27 @@ function logTypeCls(type) {
   return ''
 }
 
+function encodeRelPath(relPath) {
+  const p = String(relPath || '').replace(/\\/g, '/')
+  return p.split('/').map(encodeURIComponent).join('/')
+}
+
+function fmtBytes(n) {
+  const v = Number(n || 0)
+  if (!Number.isFinite(v) || v <= 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let x = v
+  let i = 0
+  while (x >= 1024 && i < units.length - 1) {
+    x /= 1024
+    i++
+  }
+  return `${x.toFixed(i === 0 ? 0 : 1)} ${units[i]}`
+}
+
+const DIFFICULTY_CLS = { beginner: 'ok', standard: '', advanced: 'caution', expert: 'danger' }
+function difficultyColor(d) { return DIFFICULTY_CLS[String(d)] || '' }
+
 function RLView({ rl, apiBase }) {
   const enabled = Boolean(rl?.enabled)
   const obs = rl?.observation || {}
@@ -95,8 +116,13 @@ function RLView({ rl, apiBase }) {
   const [liveData, setLiveData] = useState(null)
   const [liveErr, setLiveErr] = useState('')
 
+  const [historyData, setHistoryData] = useState(null)
+  const [historyErr, setHistoryErr] = useState('')
+
   async function fetchLiveDashboard() {
+    if (busyOp) return
     setLiveErr('')
+    setBusyOp('live')
     try {
       const r = await fetchJson('/api/rl/dashboard')
       if (r?.ok) {
@@ -106,6 +132,8 @@ function RLView({ rl, apiBase }) {
       }
     } catch (e) {
       setLiveErr(String(e?.message || e))
+    } finally {
+      setBusyOp('')
     }
   }
 
@@ -148,11 +176,6 @@ function RLView({ rl, apiBase }) {
     } finally {
       setBusyOp('')
     }
-  }
-
-  const difficultyColor = (d) => {
-    const m = { beginner: 'ok', standard: '', advanced: 'caution', expert: 'danger' }
-    return m[String(d)] || ''
   }
 
   const display = liveData || rl
@@ -201,7 +224,7 @@ function RLView({ rl, apiBase }) {
         </Box>
       </div>
 
-      <div className="sectionBlock" style={{ marginTop: 12 }}>
+      <div className="sectionBlock">
         <div className="sectionHead">
           <span className="mono">SKILLS</span>
           <span>学習済みスキル</span>
@@ -226,7 +249,7 @@ function RLView({ rl, apiBase }) {
         )}
       </div>
 
-      <div className="sectionBlock" style={{ marginTop: 12 }}>
+      <div className="sectionBlock">
         <div className="sectionHead">
           <span className="mono">CONTROL</span>
           <span>タスク手動操作</span>
@@ -234,10 +257,10 @@ function RLView({ rl, apiBase }) {
         </div>
         <div className="boxBody">
           <div className="kv"><span>TASK ID</span>
-            <span><input className="input" value={taskId} onChange={(e) => setTaskId(e.target.value)} placeholder="task-001 (空なら自動生成)" style={{ marginTop: 0 }} /></span>
+            <span><input className="input" value={taskId} onChange={(e) => setTaskId(e.target.value)} placeholder="task-001 (空なら自動生成)" aria-label="タスクID" style={{ marginTop: 0 }} /></span>
           </div>
           <div className="kv"><span>DESCRIPTION</span>
-            <span><input className="input" value={taskDesc} onChange={(e) => setTaskDesc(e.target.value)} placeholder="タスクの説明" style={{ marginTop: 0 }} /></span>
+            <span><input className="input" value={taskDesc} onChange={(e) => setTaskDesc(e.target.value)} placeholder="タスクの説明" aria-label="タスクの説明" style={{ marginTop: 0 }} /></span>
           </div>
           <div className="skillActions">
             <button className="link" onClick={runTaskBegin} disabled={!!busyOp}>{busyOp === 'begin' ? '開始中…' : '▶ タスク開始'}</button>
@@ -249,7 +272,7 @@ function RLView({ rl, apiBase }) {
         </div>
       </div>
 
-      <div className="sectionBlock" style={{ marginTop: 12 }}>
+      <div className="sectionBlock">
         <div className="sectionHead">
           <span className="mono">LIVE</span>
           <span>リアルタイムダッシュボード</span>
@@ -257,10 +280,79 @@ function RLView({ rl, apiBase }) {
         </div>
         <div className="boxBody">
           <div className="skillActions">
-            <button className="link" onClick={fetchLiveDashboard}>最新取得</button>
+            <button className="link" onClick={fetchLiveDashboard} disabled={!!busyOp}>{busyOp === 'live' ? '取得中…' : '最新取得'}</button>
           </div>
           {liveErr ? <div className="small danger">{liveErr}</div> : null}
           {liveData ? <OutputBlock text={JSON.stringify(liveData, null, 2)} onClear={() => setLiveData(null)} /> : <div className="small">ボタンを押すと /api/rl/dashboard の生データを表示</div>}
+        </div>
+      </div>
+
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">HISTORY</span>
+          <span>サイクル履歴</span>
+          <span className="small">/api/rl/history</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" onClick={async () => {
+              if (busyOp) return
+              setHistoryErr('')
+              setBusyOp('history')
+              try {
+                const r = await fetchJson('/api/rl/history?limit=20')
+                if (r?.ok) setHistoryData(r.entries || [])
+                else setHistoryErr(String(r?.error || 'unknown'))
+              } catch (e) { setHistoryErr(String(e?.message || e)) }
+              finally { setBusyOp('') }
+            }} disabled={!!busyOp}>{busyOp === 'history' ? '取得中…' : '📊 履歴取得'}</button>
+            <button className="link" onClick={async () => {
+              if (busyOp) return
+              setBusyOp('cleanup')
+              try {
+                const r = await fetch(`${apiBase}/api/rl/cleanup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+                const d = await r.json().catch(() => ({}))
+                setTaskOut(`Cleanup: ${JSON.stringify(d)}`)
+              } catch (e) { setTaskOut(`ERR: ${e?.message}`) }
+              finally { setBusyOp('') }
+            }} disabled={!!busyOp}>🧹 Stale一掃</button>
+            <button className="link" onClick={async () => {
+              if (busyOp) return
+              setBusyOp('reload')
+              try {
+                const r = await fetch(`${apiBase}/api/rl/config/reload`, { method: 'POST' })
+                const d = await r.json().catch(() => ({}))
+                setTaskOut(`Config reload: ${JSON.stringify(d)}`)
+              } catch (e) { setTaskOut(`ERR: ${e?.message}`) }
+              finally { setBusyOp('') }
+            }} disabled={!!busyOp}>🔄 Config再読込</button>
+          </div>
+          {historyErr ? <div className="small danger">{historyErr}</div> : null}
+          {historyData && historyData.length > 0 ? (
+            <div>
+              <div className="table">
+                <div className="tr th" style={{ gridTemplateColumns: '0.5fr 1.5fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr' }}>
+                  <div>#</div><div>TASK</div><div>OUTCOME</div><div>SCORE</div><div>DIFF</div><div>SKILLS</div><div>RATE</div>
+                </div>
+                {historyData.slice().reverse().map((h, i) => (
+                  <div key={i} className="tr" style={{ gridTemplateColumns: '0.5fr 1.5fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr' }}>
+                    <div className="mono">{h.cycle ?? '—'}</div>
+                    <div className="small" title={h.task_id}>{(h.task_id || '?').slice(0, 24)}</div>
+                    <div className={h.outcome === 'success' ? 'ok' : h.outcome === 'failure' ? 'danger' : 'caution'}>{h.outcome}</div>
+                    <div className="mono">{h.score != null ? Number(h.score).toFixed(2) : '—'}</div>
+                    <div className="mono">{h.difficulty ?? '—'}</div>
+                    <div className="mono">{h.skills_total ?? '—'}</div>
+                    <div className="mono">{h.success_rate != null ? (Number(h.success_rate) * 100).toFixed(0) + '%' : '—'}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="small" style={{ marginTop: 4 }}>直近 {historyData.length} サイクル（新しい順）</div>
+            </div>
+          ) : historyData ? (
+            <div className="small">履歴なし（タスクを完了するとここに蓄積）</div>
+          ) : (
+            <div className="small">ボタンを押すと直近のサイクルが表形式で表示</div>
+          )}
         </div>
       </div>
 
@@ -269,24 +361,6 @@ function RLView({ rl, apiBase }) {
       </div>
     </div>
   )
-}
-
-function encodeRelPath(relPath) {
-  const p = String(relPath || '').replace(/\\/g, '/')
-  return p.split('/').map(encodeURIComponent).join('/')
-}
-
-function fmtBytes(n) {
-  const v = Number(n || 0)
-  if (!Number.isFinite(v) || v <= 0) return '0B'
-  const units = ['B', 'KB', 'MB', 'GB', 'TB']
-  let x = v
-  let i = 0
-  while (x >= 1024 && i < units.length - 1) {
-    x /= 1024
-    i++
-  }
-  return `${x.toFixed(i === 0 ? 0 : 1)}${units[i]}`
 }
 
 const MONITOR_ROUTES = {
@@ -315,6 +389,7 @@ export default function App() {
   const [tick, setTick] = useState(0)
   const panelRef = useRef(null)
   const refreshingRef = useRef(false)
+  const stateRef = useRef(null)
   const apiBase = useMemo(() => getApiBase(), [])
 
   const refreshSnapshot = useCallback(async function refreshSnapshot() {
@@ -352,12 +427,15 @@ export default function App() {
 
   const [runningAction, setRunningAction] = useState('')
 
-  async function runAction(actionId) {
+  // Keep stateRef in sync for stable runAction callback
+  stateRef.current = state
+
+  const runAction = useCallback(async function runAction(actionId) {
     setErr('')
     setActionResult(null)
     setRunningAction(actionId)
     try {
-      const beforeUnifiedRules = Array.isArray(state?.unified?.proxy?.rules) ? state.unified.proxy.rules.length : null
+      const beforeUnifiedRules = Array.isArray(stateRef.current?.unified?.proxy?.rules) ? stateRef.current.unified.proxy.rules.length : null
       const res = await fetch(`${apiBase}/api/actions/${encodeURIComponent(actionId)}/run`, {
         method: 'POST'
       })
@@ -379,7 +457,7 @@ export default function App() {
     } finally {
       setRunningAction('')
     }
-  }
+  }, [apiBase, refreshSnapshot])
 
   useEffect(() => {
     refreshSnapshot()
@@ -429,6 +507,11 @@ export default function App() {
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return
 
       const tabIds = ['status', 'party', 'bestiary', 'skills', 'quests', 'logs', 'map', 'items', 'rl', 'systems']
+      if (e.key === '0') {
+        e.preventDefault()
+        setActive(tabIds[9])
+        return
+      }
       const num = parseInt(e.key, 10)
       if (num >= 1 && num <= 9) {
         e.preventDefault()
@@ -484,7 +567,7 @@ export default function App() {
           <span>API: {apiBase}</span>
           <span>サービス: {aliveCount}/{totalCount} alive</span>
           <span>更新: {fmtTs(state?.ts)}{lastRefreshTs ? ` (${fmtAgo(lastRefreshTs, tick)})` : ''}</span>
-          <span title="1-9: タブ切替 / R: 更新 / Esc: エラー閉じる">⌨ ショートカット有</span>
+          <span title="1-9,0: タブ切替 / R: 更新 / Esc: エラー閉じる">⌨ ショートカット有</span>
         </div>
         <div className="actions">
           <button onClick={refreshSnapshot} disabled={loading}>更新（/api/snapshot）</button>
@@ -834,7 +917,7 @@ function BestiaryView({ models }) {
   return (
     <div>
       <div className="panelTitle">図鑑（モデル） <span className="small">{filtered.length}/{list.length}件 / {types.length}タイプ</span></div>
-      <input className="input" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="フィルター（名前/ID/タグで絞り込み）" style={{ marginBottom: 12, maxWidth: 400 }} />
+      <input className="input" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="フィルター（名前/ID/タグで絞り込み）" aria-label="モデルフィルター" style={{ marginBottom: 12, maxWidth: 400 }} />
       {list.length === 0 ? (
         <div className="small">モデルが見つかりません（Ollama / registry を確認）</div>
       ) : null}
@@ -2146,8 +2229,8 @@ function LogsView({ events, onRefresh }) {
         <span className="small">{filtered.length}/{list.length}件</span>
       </div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-        <input className="input" value={logFilter} onChange={(e) => setLogFilter(e.target.value)} placeholder="テキストで絞り込み" style={{ marginTop: 0, maxWidth: 280 }} />
-        <select value={logTypeFilter} onChange={(e) => setLogTypeFilter(e.target.value)} style={{ padding: '4px 6px' }}>
+        <input className="input" value={logFilter} onChange={(e) => setLogFilter(e.target.value)} placeholder="テキストで絞り込み" aria-label="ログ検索" style={{ marginTop: 0, maxWidth: 280 }} />
+        <select value={logTypeFilter} onChange={(e) => setLogTypeFilter(e.target.value)} aria-label="ログタイプフィルター" style={{ padding: '4px 6px' }}>
           <option value="">全タイプ</option>
           {logTypes.map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
