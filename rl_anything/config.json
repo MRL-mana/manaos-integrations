@@ -51,5 +51,19 @@
     "phase1_hooks_compat": true,
     "self_evolution_system_compat": true,
     "mrl_memory_enabled": true
+  },
+
+  "webhooks": [
+    {
+      "_comment": "Slack/Discord/generic webhook URL — 空なら無効",
+      "url": "",
+      "events": ["difficulty_changed", "skills_acquired"]
+    }
+  ],
+
+  "auto_scheduler": {
+    "enabled": false,
+    "interval_s": 300,
+    "_comment": "true にすると 5分毎に stale タスク自動掃除"
   }
 }

@@ -100,6 +100,28 @@ function fmtBytes(n) {
 const DIFFICULTY_CLS = { beginner: 'ok', standard: '', advanced: 'caution', expert: 'danger' }
 function difficultyColor(d) { return DIFFICULTY_CLS[String(d)] || '' }
 
+/** SVG スパークライン — values 配列をインライン折れ線チャートで描画 */
+function Sparkline({ values = [], width = 300, height = 40, color = '#4ade80', strokeWidth = 1.5 }) {
+  if (!values || values.length < 2) return null
+  const nums = values.map(Number).filter(Number.isFinite)
+  if (nums.length < 2) return null
+  const min = Math.min(...nums)
+  const max = Math.max(...nums)
+  const range = max - min || 1
+  const padY = 2
+  const points = nums.map((v, i) => {
+    const x = (i / (nums.length - 1)) * width
+    const y = height - padY - ((v - min) / range) * (height - padY * 2)
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  }).join(' ')
+  return (
+    <svg width={width} height={height} style={{ display: 'block', background: 'rgba(0,0,0,0.15)', borderRadius: 4 }}>
+      <polyline fill="none" stroke={color} strokeWidth={strokeWidth} points={points} />
+      <circle cx={(nums.length - 1) / (nums.length - 1) * width} cy={height - padY - ((nums[nums.length - 1] - min) / range) * (height - padY * 2)} r="2.5" fill={color} />
+    </svg>
+  )
+}
+
 function RLView({ rl, apiBase }) {
   const enabled = Boolean(rl?.enabled)
   const obs = rl?.observation || {}
@@ -118,6 +140,8 @@ function RLView({ rl, apiBase }) {
 
   const [historyData, setHistoryData] = useState(null)
   const [historyErr, setHistoryErr] = useState('')
+  const [analyticsData, setAnalyticsData] = useState(null)
+  const [analyticsErr, setAnalyticsErr] = useState('')
 
   async function fetchLiveDashboard() {
     if (busyOp) return
@@ -176,6 +200,63 @@ function RLView({ rl, apiBase }) {
     } finally {
       setBusyOp('')
     }
+  }
+
+  async function fetchHistory() {
+    if (busyOp) return
+    setHistoryErr('')
+    setBusyOp('history')
+    try {
+      const r = await fetchJson('/api/rl/history?limit=20')
+      if (r?.ok) setHistoryData(r.entries || [])
+      else setHistoryErr(String(r?.error || 'unknown'))
+    } catch (e) { setHistoryErr(String(e?.message || e)) }
+    finally { setBusyOp('') }
+  }
+
+  async function runCleanup() {
+    if (busyOp) return
+    setBusyOp('cleanup')
+    try {
+      const r = await fetch(`${apiBase}/api/rl/cleanup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      const d = await r.json().catch(() => ({}))
+      setTaskOut(`Cleanup: ${JSON.stringify(d)}`)
+    } catch (e) { setTaskOut(`ERR: ${e?.message}`) }
+    finally { setBusyOp('') }
+  }
+
+  async function runConfigReload() {
+    if (busyOp) return
+    setBusyOp('reload')
+    try {
+      const r = await fetch(`${apiBase}/api/rl/config/reload`, { method: 'POST' })
+      const d = await r.json().catch(() => ({}))
+      setTaskOut(`Config reload: ${JSON.stringify(d)}`)
+    } catch (e) { setTaskOut(`ERR: ${e?.message}`) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchAnalytics() {
+    if (busyOp) return
+    setAnalyticsErr('')
+    setBusyOp('analytics')
+    try {
+      const r = await fetchJson('/api/rl/analytics?windows=5,10,20')
+      if (r?.ok) setAnalyticsData(r)
+      else setAnalyticsErr(String(r?.error || 'unknown'))
+    } catch (e) { setAnalyticsErr(String(e?.message || e)) }
+    finally { setBusyOp('') }
+  }
+
+  async function toggleScheduler(action) {
+    if (busyOp) return
+    setBusyOp('scheduler')
+    try {
+      const r = await fetch(`${apiBase}/api/rl/scheduler/${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      const d = await r.json().catch(() => ({}))
+      setTaskOut(`Scheduler ${action}: ${JSON.stringify(d)}`)
+    } catch (e) { setTaskOut(`ERR: ${e?.message}`) }
+    finally { setBusyOp('') }
   }
 
   const display = liveData || rl
@@ -295,37 +376,9 @@ function RLView({ rl, apiBase }) {
         </div>
         <div className="boxBody">
           <div className="skillActions">
-            <button className="link" onClick={async () => {
-              if (busyOp) return
-              setHistoryErr('')
-              setBusyOp('history')
-              try {
-                const r = await fetchJson('/api/rl/history?limit=20')
-                if (r?.ok) setHistoryData(r.entries || [])
-                else setHistoryErr(String(r?.error || 'unknown'))
-              } catch (e) { setHistoryErr(String(e?.message || e)) }
-              finally { setBusyOp('') }
-            }} disabled={!!busyOp}>{busyOp === 'history' ? '取得中…' : '📊 履歴取得'}</button>
-            <button className="link" onClick={async () => {
-              if (busyOp) return
-              setBusyOp('cleanup')
-              try {
-                const r = await fetch(`${apiBase}/api/rl/cleanup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
-                const d = await r.json().catch(() => ({}))
-                setTaskOut(`Cleanup: ${JSON.stringify(d)}`)
-              } catch (e) { setTaskOut(`ERR: ${e?.message}`) }
-              finally { setBusyOp('') }
-            }} disabled={!!busyOp}>🧹 Stale一掃</button>
-            <button className="link" onClick={async () => {
-              if (busyOp) return
-              setBusyOp('reload')
-              try {
-                const r = await fetch(`${apiBase}/api/rl/config/reload`, { method: 'POST' })
-                const d = await r.json().catch(() => ({}))
-                setTaskOut(`Config reload: ${JSON.stringify(d)}`)
-              } catch (e) { setTaskOut(`ERR: ${e?.message}`) }
-              finally { setBusyOp('') }
-            }} disabled={!!busyOp}>🔄 Config再読込</button>
+            <button className="link" onClick={fetchHistory} disabled={!!busyOp}>{busyOp === 'history' ? '取得中…' : '📊 履歴取得'}</button>
+            <button className="link" onClick={runCleanup} disabled={!!busyOp}>🧹 Stale一掃</button>
+            <button className="link" onClick={runConfigReload} disabled={!!busyOp}>🔄 Config再読込</button>
           </div>
           {historyErr ? <div className="small danger">{historyErr}</div> : null}
           {historyData && historyData.length > 0 ? (
@@ -352,6 +405,63 @@ function RLView({ rl, apiBase }) {
             <div className="small">履歴なし（タスクを完了するとここに蓄積）</div>
           ) : (
             <div className="small">ボタンを押すと直近のサイクルが表形式で表示</div>
+          )}
+        </div>
+      </div>
+
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">ANALYTICS</span>
+          <span>トレンド分析</span>
+          <span className="small">/api/rl/analytics</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" onClick={fetchAnalytics} disabled={!!busyOp}>{busyOp === 'analytics' ? '分析中…' : '📈 トレンド分析'}</button>
+            <button className="link" onClick={() => toggleScheduler('start')} disabled={!!busyOp}>⏱ Scheduler開始</button>
+            <button className="link" onClick={() => toggleScheduler('stop')} disabled={!!busyOp}>⏹ Scheduler停止</button>
+          </div>
+          {analyticsErr ? <div className="small danger">{analyticsErr}</div> : null}
+          {analyticsData ? (
+            <div>
+              <div className="grid" style={{ marginTop: 8 }}>
+                <Box title="Rolling 成功率">
+                  {Object.entries(analyticsData.rolling_success_rate || {}).map(([k, v]) => (
+                    <div key={k} className="kv"><span>{k}</span><span className={v >= 0.7 ? 'ok' : v >= 0.4 ? 'caution' : 'danger'}>{(v * 100).toFixed(1)}%</span></div>
+                  ))}
+                  {Object.keys(analyticsData.rolling_success_rate || {}).length === 0 && <div className="small">データ不足</div>}
+                </Box>
+                <Box title="Rolling 平均スコア">
+                  {Object.entries(analyticsData.rolling_avg_score || {}).map(([k, v]) => (
+                    <div key={k} className="kv"><span>{k}</span><span className="mono">{Number(v).toFixed(3)}</span></div>
+                  ))}
+                  {Object.keys(analyticsData.rolling_avg_score || {}).length === 0 && <div className="small">データ不足</div>}
+                </Box>
+                <Box title="Outcome 分布">
+                  {Object.entries(analyticsData.outcome_distribution || {}).map(([k, v]) => (
+                    <div key={k} className="kv"><span className={k === 'success' ? 'ok' : k === 'failure' ? 'danger' : 'caution'}>{k}</span><span className="mono">{v}</span></div>
+                  ))}
+                </Box>
+                <Box title="サマリ">
+                  <div className="kv"><span>総サイクル</span><span className="mono">{analyticsData.total_cycles ?? 0}</span></div>
+                  <div className="kv"><span>スコア中央値</span><span className="mono">{analyticsData.score_series?.length > 0 ? Number(analyticsData.score_series.sort((a,b) => a - b)[Math.floor(analyticsData.score_series.length / 2)]).toFixed(3) : '—'}</span></div>
+                </Box>
+              </div>
+              {analyticsData.score_series && analyticsData.score_series.length >= 2 ? (
+                <div style={{ marginTop: 8 }}>
+                  <div className="small" style={{ marginBottom: 4 }}>スコア推移（SVGスパークライン）</div>
+                  <Sparkline values={analyticsData.score_series} width={400} height={48} color="var(--ok)" />
+                </div>
+              ) : null}
+              {analyticsData.skill_growth && analyticsData.skill_growth.length >= 2 ? (
+                <div style={{ marginTop: 8 }}>
+                  <div className="small" style={{ marginBottom: 4 }}>スキル成長</div>
+                  <Sparkline values={analyticsData.skill_growth.map(g => g.skills_total || 0)} width={400} height={36} color="var(--caution)" />
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div className="small">ボタンを押すとローリング統計・推移チャートを表示</div>
           )}
         </div>
       </div>
@@ -697,17 +807,17 @@ function StatusView({ host, nextActions, nextActionHints, onRunAction, actionRes
   const hints = Array.isArray(nextActionHints) ? nextActionHints : []
   const actions = Array.isArray(nextActions) ? nextActions : []
 
-  const suppressRules = []
-  if (hints.some((h) => h?.action_id === 'unified_proxy_disable_404')) {
-    suppressRules.push(/404自動無効化|台帳掃除|GET 404/)
-  }
-  if (hints.some((h) => h?.action_id === 'unified_proxy_sync')) {
-    suppressRules.push(/allowlist.*同期|同期\/有効化|同期→/)
-  }
-
-  const filteredNextActions = suppressRules.length === 0
-    ? actions
-    : actions.filter((x) => !suppressRules.some((re) => re.test(String(x || ''))))
+  const filteredNextActions = useMemo(() => {
+    const suppressRules = []
+    if (hints.some((h) => h?.action_id === 'unified_proxy_disable_404')) {
+      suppressRules.push(/404自動無効化|台帳掃除|GET 404/)
+    }
+    if (hints.some((h) => h?.action_id === 'unified_proxy_sync')) {
+      suppressRules.push(/allowlist.*同期|同期\/有効化|同期→/)
+    }
+    if (suppressRules.length === 0) return actions
+    return actions.filter((x) => !suppressRules.some((re) => re.test(String(x || ''))))
+  }, [hints, actions])
 
   return (
     <div className="grid">
@@ -734,16 +844,16 @@ function StatusView({ host, nextActions, nextActionHints, onRunAction, actionRes
             <div key={i} className="gpuRow">
               <div className="mono">{g.name}</div>
               {typeof g.utilization_gpu === 'number' ? (
-                <div className="mono" style={{ marginTop: 4 }}>UTIL {bar(g.utilization_gpu)}</div>
+                <div className="mono gpuDetail">UTIL {bar(g.utilization_gpu)}</div>
               ) : (
-                <div className="small" style={{ marginTop: 4 }}>UTIL —</div>
+                <div className="small gpuDetail">UTIL —</div>
               )}
               {typeof g.mem_used_mb === 'number' && typeof g.mem_total_mb === 'number' && g.mem_total_mb > 0 ? (
-                <div className="mono" style={{ marginTop: 2 }}>VRAM {bar((g.mem_used_mb / g.mem_total_mb) * 100)} ({g.mem_used_mb}MB / {g.mem_total_mb}MB)</div>
+                <div className="mono gpuDetail">VRAM {bar((g.mem_used_mb / g.mem_total_mb) * 100)} ({g.mem_used_mb}MB / {g.mem_total_mb}MB)</div>
               ) : (
-                <div className="small" style={{ marginTop: 2 }}>VRAM {g.mem_used_mb ?? '—'}MB / {g.mem_total_mb ?? '—'}MB</div>
+                <div className="small gpuDetail">VRAM {g.mem_used_mb ?? '—'}MB / {g.mem_total_mb ?? '—'}MB</div>
               )}
-              <div className="small" style={{ marginTop: 2 }}>
+              <div className="small gpuDetail">
                 TEMP {g.temperature_c ?? '—'}°C
                 {typeof g.power_draw_w === 'number' ? ` / PWR ${g.power_draw_w}W` : ''}
               </div>
@@ -777,16 +887,7 @@ function StatusView({ host, nextActions, nextActionHints, onRunAction, actionRes
         {hints.length > 0 ? (
           <div>
             {hints.map((h, i) => (
-              <div
-                key={i}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '10px',
-                  marginBottom: '6px'
-                }}
-              >
+              <div key={i} className="hintRow">
                 <div className="small">- {h?.label || '—'}</div>
                 {h?.action_id ? (
                   <button className="link" disabled={actionsEnabled === false || !!runningAction} onClick={() => onRunAction?.(h.action_id)}>
@@ -1594,22 +1695,22 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           {ollamaTemplates.length ? (
             <div className="kv"><span>TEMPLATE</span>
               <span>
-                <select value={ollamaTpl} onChange={(e) => setOllamaTpl(e.target.value)}>
+                <select value={ollamaTpl} onChange={(e) => setOllamaTpl(e.target.value)} aria-label="Ollamaテンプレート">
                   <option value="">(select)</option>
                   {ollamaTemplates.map((t) => <option key={t.id} value={t.id}>{t.label || t.id}</option>)}
                 </select>
-                <button className="link" style={{ marginLeft: 8 }} onClick={applyOllamaTemplate} disabled={!ollamaTpl}>適用</button>
+                <button className="link ml" onClick={applyOllamaTemplate} disabled={!ollamaTpl}>適用</button>
               </span>
             </div>
           ) : null}
           <div className="kv"><span>MODEL</span>
             <span>
-              <select value={ollamaModel} onChange={(e) => setOllamaModel(e.target.value)}>
+              <select value={ollamaModel} onChange={(e) => setOllamaModel(e.target.value)} aria-label="Ollamaモデル">
                 {ollamaModels.length ? ollamaModels.map((m) => <option key={m} value={m}>{m}</option>) : <option value="">(no models)</option>}
               </select>
             </span>
           </div>
-          <textarea className="input" rows={4} value={ollamaPrompt} onChange={(e) => setOllamaPrompt(e.target.value)} placeholder="ここに質問や指示（例：要約して、案を出して、など）" />
+          <textarea className="input" rows={4} value={ollamaPrompt} onChange={(e) => setOllamaPrompt(e.target.value)} placeholder="ここに質問や指示（例：要約して、案を出して、など）" aria-label="Ollamaプロンプト" />
           <div className="skillActions">
             <button className="link" onClick={runOllama} disabled={!!busyOp || !ollamaModel || !ollamaPrompt.trim()}>{busyOp === 'ollama' ? '実行中…' : '実行'}</button>
           </div>
@@ -1627,16 +1728,16 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           {imageTemplates.length ? (
             <div className="kv"><span>TEMPLATE</span>
               <span>
-                <select value={imgTpl} onChange={(e) => setImgTpl(e.target.value)}>
+                <select value={imgTpl} onChange={(e) => setImgTpl(e.target.value)} aria-label="画像テンプレート">
                   <option value="">(select)</option>
                   {imageTemplates.map((t) => <option key={t.id} value={t.id}>{t.label || t.id}</option>)}
                 </select>
-                <button className="link" style={{ marginLeft: 8 }} onClick={applyImageTemplate} disabled={!imgTpl}>適用</button>
+                <button className="link ml" onClick={applyImageTemplate} disabled={!imgTpl}>適用</button>
               </span>
             </div>
           ) : null}
-          <textarea className="input" rows={3} value={imgPrompt} onChange={(e) => setImgPrompt(e.target.value)} placeholder="画像プロンプト（例：a cozy room, cinematic light, masterpiece）" />
-          <textarea className="input" rows={2} value={imgNegative} onChange={(e) => setImgNegative(e.target.value)} placeholder="ネガティブ（任意）" />
+          <textarea className="input" rows={3} value={imgPrompt} onChange={(e) => setImgPrompt(e.target.value)} placeholder="画像プロンプト（例：a cozy room, cinematic light, masterpiece）" aria-label="画像プロンプト" />
+          <textarea className="input" rows={2} value={imgNegative} onChange={(e) => setImgNegative(e.target.value)} placeholder="ネガティブ（任意）" aria-label="ネガティブプロンプト" />
           <div className="skillActions">
             <button className="link" onClick={queueImage} disabled={!!busyOp || !imgPrompt.trim()}>{busyOp === 'image' ? '投入中…' : 'キュー投入'}</button>
             <span className="small">生成物は「アイテム🎒」に出る</span>
@@ -1683,7 +1784,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
             <div>
               <div className="kv"><span>RULE</span>
                 <span>
-                  <select value={proxyId} onChange={(e) => setProxyId(e.target.value)}>
+                  <select value={proxyId} onChange={(e) => setProxyId(e.target.value)} aria-label="Proxyルール">
                     <option value="">(select)</option>
                     {proxyRules.map((r) => (
                       <option key={r.id} value={r.id}>{(r.enabled === false ? '[DISABLED] ' : '') + (r.label || r.id)}</option>
@@ -1694,11 +1795,11 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
               {proxyRule ? (
                 <div className="small">
                   <span className="mono">{String(proxyRule.method || 'GET')}</span>
-                  <span className="mono" style={{ marginLeft: 8 }}>{String(proxyRule.path || '')}</span>
-                  <span className={String(proxyRule.gate || 'read') === 'danger' ? 'danger' : 'small'} style={{ marginLeft: 8 }}>
+                  <span className="mono ml">{String(proxyRule.path || '')}</span>
+                  <span className={`${String(proxyRule.gate || 'read') === 'danger' ? 'danger' : 'small'} ml`}>
                     gate={String(proxyRule.gate || 'read')}
                   </span>
-                  {proxyRule.enabled === false ? <span className="danger" style={{ marginLeft: 8 }}>DISABLED</span> : null}
+                  {proxyRule.enabled === false ? <span className="danger ml">DISABLED</span> : null}
                 </div>
               ) : null}
 
@@ -1708,9 +1809,10 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
                 value={proxyQuery}
                 onChange={(e) => setProxyQuery(e.target.value)}
                 placeholder={'query（任意・JSON） 例: {"limit":30} / path params は {"job_id":"..."} で渡す'}
+                aria-label="ProxyクエリJSON"
               />
               {proxyRule && String(proxyRule.method || '').toUpperCase() === 'POST' ? (
-                <textarea className="input" rows={4} value={proxyBody} onChange={(e) => setProxyBody(e.target.value)} placeholder="body（任意・JSON）" />
+                <textarea className="input" rows={4} value={proxyBody} onChange={(e) => setProxyBody(e.target.value)} placeholder="body（任意・JSON）" aria-label="ProxyボディJSON" />
               ) : null}
 
               <div className="skillActions">
@@ -1744,7 +1846,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           </div>
           <div className="kv"><span>SCOPE</span>
             <span>
-              <select value={memoryScope} onChange={(e) => setMemoryScope(e.target.value)}>
+              <select value={memoryScope} onChange={(e) => setMemoryScope(e.target.value)} aria-label="メモリスコープ">
                 <option value="all">all</option>
                 <option value="short">short</option>
                 <option value="long">long</option>
@@ -1762,17 +1864,17 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           </div>
           {memoryOut ? <OutputBlock text={memoryOut} onClear={() => setMemoryOut('')} /> : <div className="small">結果はここに出る</div>}
 
-          <div className="hr" style={{ margin: '14px 0' }} />
+          <div className="hr" />
 
           <div className="sectionHead" style={{ marginTop: 0 }}>
             <span className="mono">MEMORY</span>
             <span>保存（POST）</span>
             <span className="small">/api/unified/memory/store</span>
           </div>
-          <textarea className="input" rows={3} value={memoryStoreContent} onChange={(e) => setMemoryStoreContent(e.target.value)} placeholder="content（必須）" />
+          <textarea className="input" rows={3} value={memoryStoreContent} onChange={(e) => setMemoryStoreContent(e.target.value)} placeholder="content（必須）" aria-label="メモリ保存内容" />
           <div className="kv"><span>FORMAT</span>
             <span>
-              <select value={memoryStoreFormat} onChange={(e) => setMemoryStoreFormat(e.target.value)}>
+              <select value={memoryStoreFormat} onChange={(e) => setMemoryStoreFormat(e.target.value)} aria-label="メモリ保存形式">
                 <option value="auto">auto</option>
                 <option value="memo">memo</option>
                 <option value="conversation">conversation</option>
@@ -1780,14 +1882,14 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
               </select>
             </span>
           </div>
-          <textarea className="input" rows={3} value={memoryStoreMeta} onChange={(e) => setMemoryStoreMeta(e.target.value)} placeholder="metadata（任意・JSON）" />
+          <textarea className="input" rows={3} value={memoryStoreMeta} onChange={(e) => setMemoryStoreMeta(e.target.value)} placeholder="metadata（任意・JSON）" aria-label="メモリメタデータJSON" />
           <div className="skillActions">
             <button className="link" onClick={runMemoryStore} disabled={!!busyOp || !memoryStoreContent.trim()}>{busyOp === 'memory_store' ? '保存中…' : '保存（POST）'}</button>
             <span className="small">※ backendで `MANAOS_RPG_ENABLE_UNIFIED_WRITE=1` が必要</span>
           </div>
           {memoryStoreOut ? <OutputBlock text={memoryStoreOut} onClear={() => setMemoryStoreOut('')} /> : <div className="small">結果はここに出る（memory_id）</div>}
 
-          <div className="hr" style={{ margin: '14px 0' }} />
+          <div className="hr" />
 
           <div className="sectionHead" style={{ marginTop: 0 }}>
             <span className="mono">NOTIFY</span>
@@ -1795,10 +1897,10 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
             <span className="small">/api/unified/notify/send</span>
           </div>
 
-          <textarea className="input" rows={3} value={notifyMsg} onChange={(e) => setNotifyMsg(e.target.value)} placeholder="通知メッセージ（必須）" />
+          <textarea className="input" rows={3} value={notifyMsg} onChange={(e) => setNotifyMsg(e.target.value)} placeholder="通知メッセージ（必須）" aria-label="通知メッセージ" />
           <div className="kv"><span>PRIORITY</span>
             <span>
-              <select value={notifyPriority} onChange={(e) => setNotifyPriority(e.target.value)}>
+              <select value={notifyPriority} onChange={(e) => setNotifyPriority(e.target.value)} aria-label="通知優先度">
                 <option value="low">low</option>
                 <option value="normal">normal</option>
                 <option value="high">high</option>
@@ -1807,7 +1909,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           </div>
           <div className="kv"><span>ASYNC</span>
             <span>
-              <select value={notifyAsync ? '1' : '0'} onChange={(e) => setNotifyAsync(e.target.value === '1')}>
+              <select value={notifyAsync ? '1' : '0'} onChange={(e) => setNotifyAsync(e.target.value === '1')} aria-label="非同期モード">
                 <option value="1">true（queued）</option>
                 <option value="0">false（sync）</option>
               </select>
@@ -1840,26 +1942,26 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
         </div>
         <div className="boxBody">
           <div className="small">難易度だけ見たい場合は下の analyze（LLM呼び出しなし）</div>
-          <textarea className="input" rows={3} value={routePrompt} onChange={(e) => setRoutePrompt(e.target.value)} placeholder="prompt（必須）" />
-          <textarea className="input" rows={3} value={routeCodeContext} onChange={(e) => setRouteCodeContext(e.target.value)} placeholder="code_context（任意・そのまま文字列）" />
-          <textarea className="input" rows={4} value={routeContext} onChange={(e) => setRouteContext(e.target.value)} placeholder="context（任意・JSON）" />
-          <textarea className="input" rows={4} value={routePrefs} onChange={(e) => setRoutePrefs(e.target.value)} placeholder="preferences（任意・JSON）" />
+          <textarea className="input" rows={3} value={routePrompt} onChange={(e) => setRoutePrompt(e.target.value)} placeholder="prompt（必須）" aria-label="Routeプロンプト" />
+          <textarea className="input" rows={3} value={routeCodeContext} onChange={(e) => setRouteCodeContext(e.target.value)} placeholder="code_context（任意・そのまま文字列）" aria-label="Routeコードコンテキスト" />
+          <textarea className="input" rows={4} value={routeContext} onChange={(e) => setRouteContext(e.target.value)} placeholder="context（任意・JSON）" aria-label="RouteコンテキストJSON" />
+          <textarea className="input" rows={4} value={routePrefs} onChange={(e) => setRoutePrefs(e.target.value)} placeholder="preferences（任意・JSON）" aria-label="RouteプリファレンスJSON" />
           <div className="skillActions">
             <button className="link" onClick={runRouteEnhanced} disabled={!!busyOp || !routePrompt.trim()}>{busyOp === 'route' ? '実行中…' : '実行（POST）'}</button>
             <span className="small">※ backendで `MANAOS_RPG_ENABLE_UNIFIED_WRITE=1` が必要</span>
           </div>
           {routeOut ? <OutputBlock text={routeOut} onClear={() => setRouteOut('')} /> : <div className="small">結果はここに出る（選ばれたモデル/ルート/理由など）</div>}
 
-          <div className="hr" style={{ margin: '14px 0' }} />
+          <div className="hr" />
 
           <div className="sectionHead" style={{ marginTop: 0 }}>
             <span className="mono">ANALYZE</span>
             <span>難易度分析（POST）</span>
             <span className="small">/api/unified/llm/analyze</span>
           </div>
-          <textarea className="input" rows={3} value={analyzePrompt} onChange={(e) => setAnalyzePrompt(e.target.value)} placeholder="prompt（必須）" />
-          <textarea className="input" rows={3} value={analyzeCodeContext} onChange={(e) => setAnalyzeCodeContext(e.target.value)} placeholder="code_context（任意・そのまま文字列）" />
-          <textarea className="input" rows={3} value={analyzeContext} onChange={(e) => setAnalyzeContext(e.target.value)} placeholder="context（任意・JSON）" />
+          <textarea className="input" rows={3} value={analyzePrompt} onChange={(e) => setAnalyzePrompt(e.target.value)} placeholder="prompt（必須）" aria-label="Analyzeプロンプト" />
+          <textarea className="input" rows={3} value={analyzeCodeContext} onChange={(e) => setAnalyzeCodeContext(e.target.value)} placeholder="code_context（任意・そのまま文字列）" aria-label="Analyzeコードコンテキスト" />
+          <textarea className="input" rows={3} value={analyzeContext} onChange={(e) => setAnalyzeContext(e.target.value)} placeholder="context（任意・JSON）" aria-label="AnalyzeコンテキストJSON" />
           <div className="skillActions">
             <button className="link" onClick={runLlmAnalyze} disabled={!!busyOp || !analyzePrompt.trim()}>{busyOp === 'analyze' ? '分析中…' : '分析（POST）'}</button>
           </div>
@@ -1877,18 +1979,18 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           {videoTemplates.length ? (
             <div className="kv"><span>TEMPLATE</span>
               <span>
-                <select value={videoTpl} onChange={(e) => setVideoTpl(e.target.value)}>
+                <select value={videoTpl} onChange={(e) => setVideoTpl(e.target.value)} aria-label="動画テンプレート">
                   <option value="">(select)</option>
                   {videoTemplates.map((t) => <option key={t.id} value={t.id}>{t.label || t.id}</option>)}
                 </select>
-                <button className="link" style={{ marginLeft: 8 }} onClick={applyVideoTemplate} disabled={!videoTpl}>適用</button>
+                <button className="link ml" onClick={applyVideoTemplate} disabled={!videoTpl}>適用</button>
               </span>
             </div>
           ) : null}
 
           <div className="kv"><span>ENDPOINT</span>
             <span>
-              <select value={videoEndpoint} onChange={(e) => setVideoEndpoint(e.target.value)}>
+              <select value={videoEndpoint} onChange={(e) => setVideoEndpoint(e.target.value)} aria-label="動画エンドポイント">
                 <option value="/api/unified/svi/generate">/api/unified/svi/generate</option>
                 <option value="/api/unified/svi/extend">/api/unified/svi/extend</option>
                 <option value="/api/unified/ltx2/generate">/api/unified/ltx2/generate</option>
@@ -1900,7 +2002,7 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
           {mediaRecent.length ? (
             <div className="kv"><span>ITEMS</span>
               <span>
-                <select value={pickRel} onChange={(e) => setPickRel(e.target.value)}>
+                <select value={pickRel} onChange={(e) => setPickRel(e.target.value)} aria-label="メディアピッカー">
                   <option value="">(recent images/videos)</option>
                   {mediaRecent.map((x, i) => {
                     const v = `${x.root_id}|${x.rel_path}`
@@ -1908,15 +2010,15 @@ function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsR
                     return <option key={i} value={v}>{label}</option>
                   })}
                 </select>
-                <button className="link" style={{ marginLeft: 8 }} onClick={() => tryInsertPathField('start_image_path')} disabled={!pickRel}>start_imageへ</button>
-                <button className="link" style={{ marginLeft: 8 }} onClick={() => tryInsertPathField('previous_video_path')} disabled={!pickRel}>prev_videoへ</button>
+                <button className="link ml" onClick={() => tryInsertPathField('start_image_path')} disabled={!pickRel}>start_imageへ</button>
+                <button className="link ml" onClick={() => tryInsertPathField('previous_video_path')} disabled={!pickRel}>prev_videoへ</button>
               </span>
             </div>
           ) : (
             <div className="small">recent items が空：先に何か生成/保存して「アイテム🎒」に出す</div>
           )}
 
-          <textarea className="input" rows={8} value={videoBody} onChange={(e) => setVideoBody(e.target.value)} placeholder="ここにJSONボディ（テンプレ適用→編集）" />
+          <textarea className="input" rows={8} value={videoBody} onChange={(e) => setVideoBody(e.target.value)} placeholder="ここにJSONボディ（テンプレ適用→編集）" aria-label="動画生成JSONボディ" />
           <div className="skillActions">
             <button className="link" onClick={runVideo} disabled={!!busyOp || !videoEndpoint}>{busyOp === 'video' ? '実行中…' : '実行（POST）'}</button>
             <span className="small">※ backendで `MANAOS_RPG_ENABLE_UNIFIED_WRITE=1` が必要</span>
@@ -2223,7 +2325,7 @@ function LogsView({ events, onRefresh }) {
 
   return (
     <div>
-      <div className="panelTitle" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="panelTitleRow">
         <span>戦闘ログ</span>
         <button className="link" onClick={onRefresh}>再読込</button>
         <span className="small">{filtered.length}/{list.length}件</span>

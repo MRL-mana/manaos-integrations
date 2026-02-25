@@ -14,6 +14,8 @@ import traceback
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from pydantic import BaseModel
+
 from fastapi import APIRouter, Body
 
 # rl_anything パッケージへの PATH 追加
@@ -158,5 +160,40 @@ def config_reload() -> Dict[str, Any]:
     """config.json を再読み込み（再起動不要）"""
     try:
         return _get_rl().reload_config()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ═══════════════════════════════════════════════════════
+# Analytics / Scheduler (round 4)
+# ═══════════════════════════════════════════════════════
+
+@router.get("/analytics")
+def analytics(windows: str = "5,10,20") -> Dict[str, Any]:
+    """トレンド分析（rolling success rate, score, difficulty, skill growth）"""
+    try:
+        w = [int(x.strip()) for x in windows.split(",") if x.strip().isdigit()]
+        return {"ok": True, **_get_rl().get_analytics(windows=w or None)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+class _SchedulerStartBody(BaseModel):
+    interval_s: Optional[float] = None
+
+@router.post("/scheduler/start")
+def scheduler_start(body: _SchedulerStartBody = _SchedulerStartBody()) -> Dict[str, Any]:
+    """Auto-scheduler 開始"""
+    try:
+        return _get_rl().start_scheduler(interval_s=body.interval_s)
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/scheduler/stop")
+def scheduler_stop() -> Dict[str, Any]:
+    """Auto-scheduler 停止"""
+    try:
+        return _get_rl().stop_scheduler()
     except Exception as e:
         return {"ok": False, "error": str(e)}
