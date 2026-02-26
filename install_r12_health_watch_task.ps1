@@ -41,28 +41,32 @@ if (-not $NotifyOnSuccess.IsPresent -and -not [string]::IsNullOrWhiteSpace($env:
 }
 
 $taskArgs = @(
-    '-NoProfile',
-    '-ExecutionPolicy',
+    '-NoP',
+    '-EP',
     'Bypass',
     '-File',
-    "`"$jobScript`"",
-    '-BaseUrl',
-    "`"$BaseUrl`"",
-    '-WebhookFormat',
-    $WebhookFormat
+    "`"$jobScript`""
 )
+
+if ($BaseUrl -ne 'http://127.0.0.1:9510') {
+    $taskArgs += @('-BaseUrl', "`"$BaseUrl`"")
+}
+
+if ($WebhookFormat -ne 'discord') {
+    $taskArgs += @('-WebhookFormat', $WebhookFormat)
+}
 
 if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
     $taskArgs += @('-WebhookUrl', "`"$WebhookUrl`"")
-}
-if (-not [string]::IsNullOrWhiteSpace($WebhookMention)) {
-    $taskArgs += @('-WebhookMention', "`"$WebhookMention`"")
+    if (-not [string]::IsNullOrWhiteSpace($WebhookMention)) {
+        $taskArgs += @('-WebhookMention', "`"$WebhookMention`"")
+    }
 }
 if ($NotifyOnSuccess.IsPresent) {
     $taskArgs += '-NotifyOnSuccess'
 }
 
-$taskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe " + ($taskArgs -join ' ')
+$taskRun = "pwsh " + ($taskArgs -join ' ')
 
 Write-Host "=== Register R12 Health Watch Task ===" -ForegroundColor Cyan
 Write-Host "TaskName : $TaskName" -ForegroundColor Gray

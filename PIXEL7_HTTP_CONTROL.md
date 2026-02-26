@@ -157,17 +157,23 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
     - 状態: `status_pixel7_holidays_update_task.ps1`
     - 解除: `uninstall_pixel7_holidays_update_task.ps1`
     - タスク: 「ManaOS: Pixel7 祝日更新タスク登録（年次）」 / 「ManaOS: Pixel7 祝日更新タスク状態確認」 / 「ManaOS: Pixel7 祝日更新タスク解除」
+    - ワンボタン: 「ManaOS: Pixel7 祝日更新タスク登録→状態確認（ワンボタン）」 / 「ManaOS: Pixel7 祝日更新タスク解除→未登録確認（ワンボタン）」
   - 再登録保険（ガード: 月次）
     - 登録: `install_pixel7_holidays_update_guard_task.ps1`
     - 状態: `status_pixel7_holidays_update_guard_task.ps1`
     - 解除: `uninstall_pixel7_holidays_update_guard_task.ps1`
-    - タスク: 「ManaOS: Pixel7 祝日ガード タスク登録」 / 「ManaOS: Pixel7 祝日ガード タスク状態確認」 / 「ManaOS: Pixel7 祝日ガード タスク解除」
+    - タスク: 「ManaOS: Pixel7 祝日更新ガードタスク登録（月次）」 / 「ManaOS: Pixel7 祝日更新ガードタスク状態確認」 / 「ManaOS: Pixel7 祝日更新ガードタスク解除」
+    - ワンボタン: 「ManaOS: Pixel7 祝日更新ガード登録→状態確認（ワンボタン）」 / 「ManaOS: Pixel7 祝日更新ガード解除→未登録確認（ワンボタン）」
     - 権限不足で `HIGHEST` 登録に失敗した場合は、自動で `LIMITED` へフォールバックして登録
+  - 統合ワンボタン（運用開始/終了）
+    - 開始: 「ManaOS: Pixel7 祝日運用セットアップ（年次+ガード）」
+    - 終了: 「ManaOS: Pixel7 祝日運用クリーンアップ（年次+ガード）」
   - R12健全性監視（5分間隔）
     - 登録: `install_r12_health_watch_task.ps1`
     - 状態: `status_r12_health_watch_task.ps1`
     - 解除: `uninstall_r12_health_watch_task.ps1`
     - タスク: 「ManaOS: R12 Health Watch タスク登録（5分）」 / 「ManaOS: R12 Health Watch タスク状態確認」 / 「ManaOS: R12 Health Watch 単発実行」 / 「ManaOS: R12 Health Watch タスク解除」
+      - ワンボタン: 「ManaOS: R12 Health Watch 登録→状態確認（ワンボタン）」 / 「ManaOS: R12 Health Watch 解除→未登録確認（ワンボタン）」
     - 実体: `manaos-rpg/scripts/run_r12_health_watch.ps1`（タスクからは `run_r12_health_watch_once.ps1` を呼び出し）
     - ログ: `logs/r12_health_watch_task.jsonl`
     - 例: `pwsh -File .\install_r12_health_watch_task.ps1 -RunNow`

@@ -116,6 +116,38 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: R12 Health Watch 登録→状態確認（ワンボタン）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "& \"${workspaceFolder}/install_r12_health_watch_task.ps1\"; & \"${workspaceFolder}/status_r12_health_watch_task.ps1\"; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: R12 Health Watch 解除→未登録確認（ワンボタン）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "& \"${workspaceFolder}/uninstall_r12_health_watch_task.ps1\"; & \"${workspaceFolder}/status_r12_health_watch_task.ps1\"; if ($LASTEXITCODE -ne 0) { Write-Host \"[OK] R12 task not found expected after uninstall\"; exit 0 }"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: Pixel7 祝日ガード タスク登録",
       "type": "shell",
       "command": "pwsh",
