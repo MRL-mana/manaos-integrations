@@ -152,6 +152,11 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
   - 祝日ファイル更新は `update_pixel7_holidays_jp.ps1` で実行
     - 例: `pwsh -File .\update_pixel7_holidays_jp.ps1 -IncludeNextYear`
     - タスク: 「ManaOS: Pixel7 祝日ファイル更新（今年+来年）」
+  - 年次自動更新（年末実行）
+    - 登録: `install_pixel7_holidays_update_task.ps1`
+    - 状態: `status_pixel7_holidays_update_task.ps1`
+    - 解除: `uninstall_pixel7_holidays_update_task.ps1`
+    - タスク: 「ManaOS: Pixel7 祝日更新タスク登録（年次）」 / 「ManaOS: Pixel7 祝日更新タスク状態確認」 / 「ManaOS: Pixel7 祝日更新タスク解除」
 - 「ManaOS: Pixel7 外出モード 半自律監視開始（自動切替+週次しきい値）」
   - 上記に `-RemoteOnly` を付与した外出モード
 - 「ManaOS: Pixel7 半自律監視（自動切替+週次）ワンボタン」

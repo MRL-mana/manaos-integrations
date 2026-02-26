@@ -69,42 +69,35 @@ function Build-JpHolidayMap {
     Add-Holiday -Map $map -Date ([datetime]::new($Year, 11, 3)) -Name '文化の日'
     Add-Holiday -Map $map -Date ([datetime]::new($Year, 11, 23)) -Name '勤労感謝の日'
 
-    $changed = $true
-    while ($changed) {
-        $changed = $false
+    $baseKeys = @($map.Keys | Sort-Object)
+    foreach ($k in $baseKeys) {
+        $d = [datetime]::ParseExact($k, 'yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
+        if ($d.DayOfWeek -ne [System.DayOfWeek]::Sunday) { continue }
 
-        $keys = @($map.Keys | Sort-Object)
-        foreach ($k in $keys) {
-            $d = [datetime]::ParseExact($k, 'yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
-            if ($d.DayOfWeek -ne [System.DayOfWeek]::Sunday) { continue }
-
-            $sub = $d.AddDays(1)
-            while ($sub.Year -eq $Year) {
-                $sk = $sub.ToString('yyyy-MM-dd')
-                if (-not $map.ContainsKey($sk)) {
-                    $map[$sk] = '振替休日'
-                    $changed = $true
-                    break
-                }
-                $sub = $sub.AddDays(1)
+        $sub = $d.AddDays(1)
+        while ($sub.Year -eq $Year) {
+            $sk = $sub.ToString('yyyy-MM-dd')
+            if (-not $map.ContainsKey($sk)) {
+                $map[$sk] = '振替休日'
+                break
             }
+            $sub = $sub.AddDays(1)
         }
+    }
 
-        $ordered = @($map.Keys | Sort-Object)
-        for ($i = 0; $i -lt $ordered.Count - 1; $i++) {
-            $d1 = [datetime]::ParseExact($ordered[$i], 'yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
-            $d2 = [datetime]::ParseExact($ordered[$i + 1], 'yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
-            if (($d2 - $d1).Days -ne 2) { continue }
+    $ordered = @($map.Keys | Sort-Object)
+    for ($i = 0; $i -lt $ordered.Count - 1; $i++) {
+        $d1 = [datetime]::ParseExact($ordered[$i], 'yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
+        $d2 = [datetime]::ParseExact($ordered[$i + 1], 'yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
+        if (($d2 - $d1).Days -ne 2) { continue }
 
-            $mid = $d1.AddDays(1)
-            if ($mid.DayOfWeek -eq [System.DayOfWeek]::Sunday) { continue }
-            if ($mid.Year -ne $Year) { continue }
+        $mid = $d1.AddDays(1)
+        if ($mid.DayOfWeek -eq [System.DayOfWeek]::Sunday) { continue }
+        if ($mid.Year -ne $Year) { continue }
 
-            $mk = $mid.ToString('yyyy-MM-dd')
-            if (-not $map.ContainsKey($mk)) {
-                $map[$mk] = '国民の休日'
-                $changed = $true
-            }
+        $mk = $mid.ToString('yyyy-MM-dd')
+        if (-not $map.ContainsKey($mk)) {
+            $map[$mk] = '国民の休日'
         }
     }
 
