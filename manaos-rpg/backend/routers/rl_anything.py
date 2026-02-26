@@ -687,3 +687,118 @@ def comms_history(limit: int = 50) -> Dict[str, Any]:
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
+
+# ═══════════════════════════════════════════════════════
+# Round 11: Temporal / Adversarial / Causal
+# ═══════════════════════════════════════════════════════
+
+@router.get("/temporal/stats")
+def temporal_stats() -> Dict[str, Any]:
+    """時間認識統計"""
+    try:
+        return {"ok": True, **_get_rl().get_temporal_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/temporal/trend")
+def temporal_trend() -> Dict[str, Any]:
+    """現在のトレンド"""
+    try:
+        return {"ok": True, **_get_rl().get_temporal_trend()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/temporal/patterns")
+def temporal_patterns() -> Dict[str, Any]:
+    """周期パターン"""
+    try:
+        return {"ok": True, **_get_rl().get_temporal_patterns()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/temporal/sessions")
+def temporal_sessions(limit: int = 20) -> Dict[str, Any]:
+    """セッション一覧"""
+    try:
+        return {"ok": True, **_get_rl().get_temporal_sessions(limit)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/temporal/td-values")
+def temporal_td_values() -> Dict[str, Any]:
+    """TD学習価値マップ"""
+    try:
+        return {"ok": True, **_get_rl().get_temporal_td_values()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/adversarial/stats")
+def adversarial_stats() -> Dict[str, Any]:
+    """敵対的ロバストネス統計"""
+    try:
+        return {"ok": True, **_get_rl().get_adversarial_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/adversarial/report")
+def adversarial_report() -> Dict[str, Any]:
+    """ロバストネスレポート"""
+    try:
+        return {"ok": True, **_get_rl().get_adversarial_report()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/adversarial/vulnerable")
+def adversarial_vulnerable(limit: int = 20) -> Dict[str, Any]:
+    """脆弱状態一覧"""
+    try:
+        return {"ok": True, **_get_rl().get_adversarial_vulnerable(limit)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/causal/stats")
+def causal_stats() -> Dict[str, Any]:
+    """因果推論統計"""
+    try:
+        return {"ok": True, **_get_rl().get_causal_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/causal/attributions")
+def causal_attributions(top_k: int = 10) -> Dict[str, Any]:
+    """寄与帰属"""
+    try:
+        return {"ok": True, **_get_rl().get_causal_attributions(top_k)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/causal/graph")
+def causal_graph() -> Dict[str, Any]:
+    """因果グラフ"""
+    try:
+        return {"ok": True, **_get_rl().get_causal_graph()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/causal/counterfactual")
+def causal_counterfactual(body: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """反事実分析"""
+    try:
+        return {"ok": True, **_get_rl().causal_counterfactual(
+            task_id=body.get("task_id", ""),
+            remove_tools=body.get("remove_tools", []),
+        )}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+

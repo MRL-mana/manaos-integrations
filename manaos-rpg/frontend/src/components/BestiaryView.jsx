@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 
 export default function BestiaryView({ models }) {
-  const list = Array.isArray(models) ? models : []
+  const list = useMemo(() => (Array.isArray(models) ? models : []), [models])
   const [filterText, setFilterText] = useState('')
 
   const filtered = useMemo(() => {

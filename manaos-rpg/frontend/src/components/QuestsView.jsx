@@ -3,7 +3,7 @@ import { truncateOutput } from '../utils.js'
 import { fetchJson } from '../api.js'
 import OutputBlock from './OutputBlock.jsx'
 
-export default function QuestsView({ quests, apiBase, onRunAction, actionResult, runningAction }) {
+export default function QuestsView({ quests, onRunAction, actionResult, runningAction }) {
   const list = Array.isArray(quests) ? quests : []
   const [questLoading, setQuestLoading] = useState('')
   const [questResult, setQuestResult] = useState(null)

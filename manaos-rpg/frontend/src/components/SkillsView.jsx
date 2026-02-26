@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { MONITOR_ROUTES, truncateOutput, encodeRelPath } from '../utils.js'
+import { MONITOR_ROUTES, truncateOutput } from '../utils.js'
 import { fetchJson } from '../api.js'
 import OutputBlock from './OutputBlock.jsx'
 
@@ -40,7 +40,7 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
       }
     }
     return rows
-  }, [list, unifiedData])
+  }, [list, unifiedData, unifiedOk])
 
   const [busyOp, setBusyOp] = useState('')
 
@@ -61,13 +61,13 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
   const [videoBody, setVideoBody] = useState('')
   const [videoOut, setVideoOut] = useState('')
 
-  const recent = Array.isArray(itemsRecent) ? itemsRecent : []
   const mediaRecent = useMemo(() => {
+    const recent = Array.isArray(itemsRecent) ? itemsRecent : []
     const okExt = new Set(['png', 'jpg', 'jpeg', 'webp', 'mp4', 'mov', 'mkv', 'gif'])
     return recent
       .filter((x) => okExt.has(String(x?.ext || '').toLowerCase()))
       .slice(0, 40)
-  }, [recent])
+  }, [itemsRecent])
   const [pickRel, setPickRel] = useState('')
 
   function itemUriFromPick() {
@@ -120,7 +120,7 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
   const [analyzeCodeContext, setAnalyzeCodeContext] = useState('')
   const [analyzeOut, setAnalyzeOut] = useState('')
 
-  const proxyRules = Array.isArray(unifiedProxy?.rules) ? unifiedProxy.rules : []
+  const proxyRules = useMemo(() => (Array.isArray(unifiedProxy?.rules) ? unifiedProxy.rules : []), [unifiedProxy])
 
   const openapi = unifiedIntegrations?.data?.openapi
   const openapiPathSet = useMemo(() => {

@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState, Suspense, lazy } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense, lazy } from 'react'
 import { fetchJson, getApiBase } from './api.js'
 import {
   TITLE_BASE, AUTO_REFRESH_MS, ERROR_DISMISS_MS, EVENTS_LIMIT,
   TICK_INTERVAL_MS, FALLBACK_MENU,
-  fmtTs, fmtAgo, dangerRank, encodeRelPath
+  fmtTs, fmtAgo, dangerRank
 } from './utils.js'
 
 import ErrorBoundary from './components/ErrorBoundary.jsx'

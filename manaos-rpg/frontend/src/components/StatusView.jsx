@@ -15,8 +15,8 @@ export default function StatusView({ host, nextActions, nextActionHints, onRunAc
   const nvidia = Array.isArray(host?.gpu?.nvidia) ? host.gpu.nvidia : []
   const apps = Array.isArray(host?.gpu?.apps) ? host.gpu.apps : []
 
-  const hints = Array.isArray(nextActionHints) ? nextActionHints : []
-  const actions = Array.isArray(nextActions) ? nextActions : []
+  const hints = useMemo(() => (Array.isArray(nextActionHints) ? nextActionHints : []), [nextActionHints])
+  const actions = useMemo(() => (Array.isArray(nextActions) ? nextActions : []), [nextActions])
 
   const filteredNextActions = useMemo(() => {
     const suppressRules = []

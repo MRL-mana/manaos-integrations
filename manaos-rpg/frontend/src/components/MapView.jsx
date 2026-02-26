@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 
 export default function MapView({ devices }) {
-  const list = Array.isArray(devices) ? devices : []
+  const list = useMemo(() => (Array.isArray(devices) ? devices : []), [devices])
   const aliveDevices = useMemo(() => list.filter((d) => d.alive), [list])
   return (
     <div>

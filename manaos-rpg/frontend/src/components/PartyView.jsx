@@ -1,13 +1,13 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 
 export default function PartyView({ services }) {
-  const raw = Array.isArray(services) ? services : []
   const list = useMemo(() => {
-    return [...raw].sort((a, b) => {
+    const raw = Array.isArray(services) ? services : []
+    return raw.slice().sort((a, b) => {
       if (a.alive === b.alive) return 0
       return a.alive ? 1 : -1
     })
-  }, [raw])
+  }, [services])
   return (
     <div>
       <div className="panelTitle">パーティ（サービス） <span className="small">{list.length}件</span></div>

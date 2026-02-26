@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react'
 import { ITEMS_SHOW_LIMIT, encodeRelPath, fmtTs, fmtBytes } from '../utils.js'
 
 export default function ItemsView({ items, apiBase }) {
-  const recent = Array.isArray(items?.recent) ? items.recent : []
-  const roots = Array.isArray(items?.roots) ? items.roots : []
+  const recent = useMemo(() => (Array.isArray(items?.recent) ? items.recent : []), [items])
+  const roots = useMemo(() => (Array.isArray(items?.roots) ? items.roots : []), [items])
   const [brokenImgs, setBrokenImgs] = useState(() => new Set())
   const [expandedGroups, setExpandedGroups] = useState(() => new Set())
 

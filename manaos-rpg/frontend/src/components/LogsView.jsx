@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { fmtTs, logTypeCls } from '../utils.js'
 
 export default function LogsView({ events, onRefresh }) {
-  const list = Array.isArray(events) ? events : []
+  const list = useMemo(() => (Array.isArray(events) ? events : []), [events])
   const [logFilter, setLogFilter] = useState('')
   const [logTypeFilter, setLogTypeFilter] = useState('')
 
