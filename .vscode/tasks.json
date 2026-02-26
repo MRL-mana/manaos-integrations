@@ -66,6 +66,24 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: R12 Health Watch タスク登録（15分）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/install_r12_health_watch_task.ps1",
+        "-IntervalMinutes",
+        "15"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: R12 Health Watch タスク状態確認",
       "type": "shell",
       "command": "pwsh",
@@ -158,6 +176,17 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: R12 Health Watch 運用セットアップ（15分/ワンボタン）",
+      "dependsOn": [
+        "ManaOS: R12 Health Watch タスク登録（15分）",
+        "ManaOS: R12 Health Watch タスク状態確認"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: R12 Health Watch 運用チェック（状態+ログ末尾）",
       "type": "shell",
       "command": "pwsh",
@@ -166,7 +195,7 @@
         "-ExecutionPolicy",
         "Bypass",
         "-Command",
-        "& \"${workspaceFolder}/status_r12_health_watch_task.ps1\"; $log = \"${workspaceFolder}/logs/r12_health_watch_task.jsonl\"; if (Test-Path $log) { Write-Host \"=== R12 Health Watch Log Tail (last 20) ===\"; Get-Content $log -Tail 20 } else { Write-Host \"[INFO] log file not found: $log\" }"
+        "& \"${workspaceFolder}/status_r12_health_watch_task.ps1\"; if (Test-Path \"${workspaceFolder}/logs/r12_health_watch_task.jsonl\") { Write-Host \"=== R12 Health Watch Log Tail ===\"; Get-Content \"${workspaceFolder}/logs/r12_health_watch_task.jsonl\" -Tail 20 } else { Write-Host \"[INFO] log file not found: ${workspaceFolder}/logs/r12_health_watch_task.jsonl\" }"
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
