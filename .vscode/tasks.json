@@ -148,6 +148,26 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: R12 Health Watch 運用セットアップ（ワンボタン）",
+      "dependsOn": [
+        "ManaOS: R12 Health Watch 登録→状態確認（ワンボタン）"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: R12 Health Watch 運用クリーンアップ（ワンボタン）",
+      "dependsOn": [
+        "ManaOS: R12 Health Watch 解除→未登録確認（ワンボタン）"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: RLAnything ブートストラップ タスク登録（ログオン）",
       "type": "shell",
       "command": "pwsh",
