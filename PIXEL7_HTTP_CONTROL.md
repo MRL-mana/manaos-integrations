@@ -157,6 +157,12 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
     - 状態: `status_pixel7_holidays_update_task.ps1`
     - 解除: `uninstall_pixel7_holidays_update_task.ps1`
     - タスク: 「ManaOS: Pixel7 祝日更新タスク登録（年次）」 / 「ManaOS: Pixel7 祝日更新タスク状態確認」 / 「ManaOS: Pixel7 祝日更新タスク解除」
+  - 再登録保険（ガード: 月次）
+    - 登録: `install_pixel7_holidays_update_guard_task.ps1`
+    - 状態: `status_pixel7_holidays_update_guard_task.ps1`
+    - 解除: `uninstall_pixel7_holidays_update_guard_task.ps1`
+    - タスク: 「ManaOS: Pixel7 祝日更新ガードタスク登録（月次）」 / 「ManaOS: Pixel7 祝日更新ガードタスク状態確認」 / 「ManaOS: Pixel7 祝日更新ガードタスク解除」
+    - 権限不足で `HIGHEST` 登録に失敗した場合は、自動で `LIMITED` へフォールバックして登録
 - 「ManaOS: Pixel7 外出モード 半自律監視開始（自動切替+週次しきい値）」
   - 上記に `-RemoteOnly` を付与した外出モード
 - 「ManaOS: Pixel7 半自律監視（自動切替+週次）ワンボタン」
