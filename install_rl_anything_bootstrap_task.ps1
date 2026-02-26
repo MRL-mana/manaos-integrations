@@ -1,6 +1,6 @@
 param(
     [string]$TaskName = "ManaOS_RLAnything_Bootstrap_Logon",
-    [int]$IntervalMinutes = 30,
+    [int]$IntervalMinutes = 15,
     [ValidateSet('LIMITED','HIGHEST')]
     [string]$RunLevel = 'LIMITED',
     [switch]$NoFallbackToLimited,

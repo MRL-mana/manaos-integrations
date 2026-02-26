@@ -158,6 +158,22 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: R12 Health Watch 運用チェック（状態+ログ末尾）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "& \"${workspaceFolder}/status_r12_health_watch_task.ps1\"; $log = \"${workspaceFolder}/logs/r12_health_watch_task.jsonl\"; if (Test-Path $log) { Write-Host \"=== R12 Health Watch Log Tail (last 20) ===\"; Get-Content $log -Tail 20 } else { Write-Host \"[INFO] log file not found: $log\" }"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: R12 Health Watch 運用クリーンアップ（ワンボタン）",
       "dependsOn": [
         "ManaOS: R12 Health Watch 解除→未登録確認（ワンボタン）"
@@ -168,7 +184,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: RLAnything ブートストラップ タスク登録（ログオン）",
+      "label": "ManaOS: RLAnything ブートストラップ タスク登録（15分）",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -176,7 +192,9 @@
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        "${workspaceFolder}/install_rl_anything_bootstrap_task.ps1"
+        "${workspaceFolder}/install_rl_anything_bootstrap_task.ps1",
+        "-IntervalMinutes",
+        "15"
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
