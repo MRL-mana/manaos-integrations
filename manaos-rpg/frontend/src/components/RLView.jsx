@@ -79,6 +79,10 @@ export default function RLView({ rl, apiBase }) {
   const [counterfactualTools, setCounterfactualTools] = useState('read_file')
   const [counterfactualOut, setCounterfactualOut] = useState('')
 
+  // Round 12 state
+  const [r12Summary, setR12Summary] = useState(null)
+  const [r12Recommendations, setR12Recommendations] = useState(null)
+
   async function fetchLiveDashboard() {
     if (busyOp) return
     setLiveErr('')
@@ -635,6 +639,16 @@ export default function RLView({ rl, apiBase }) {
     } finally {
       setBusyOp('')
     }
+  }
+  async function fetchR12Summary() {
+    if (busyOp) return; setBusyOp('r12summary')
+    try { const r = await fetchJson('/api/rl/r12/summary'); if (r?.ok) setR12Summary(r) }
+    catch (e) { console.warn('fetchR12Summary:', e) } finally { setBusyOp('') }
+  }
+  async function fetchR12Recommendations() {
+    if (busyOp) return; setBusyOp('r12recs')
+    try { const r = await fetchJson('/api/rl/r12/recommendations'); if (r?.ok) setR12Recommendations(r) }
+    catch (e) { console.warn('fetchR12Recommendations:', e) } finally { setBusyOp('') }
   }
 
   return (
@@ -1967,6 +1981,35 @@ export default function RLView({ rl, apiBase }) {
             </div>
             {counterfactualOut ? <OutputBlock text={counterfactualOut} onClear={() => setCounterfactualOut('')} /> : null}
           </div>
+        </Box>
+      </div>
+
+      <div className="mt12">
+        <Box title="Integrated Insight Layer (R12)" collapsible>
+          <div className="btnRow">
+            <button disabled={!!busyOp} onClick={fetchR12Summary}>{busyOp === 'r12summary' ? '…' : 'Summary'}</button>
+            <button disabled={!!busyOp} onClick={fetchR12Recommendations}>{busyOp === 'r12recs' ? '…' : 'Recommendations'}</button>
+          </div>
+          {r12Summary ? (
+            <div className="mt4">
+              <div className="kv"><span>Health Score</span><span className="mono">{r12Summary.health_score ?? '—'}</span></div>
+              <div className="kv"><span>Risk Level</span><span className="mono">{r12Summary.risk_level ?? '—'}</span></div>
+              <div className="kv"><span>Confidence</span><span className="mono">{r12Summary.confidence ?? '—'}</span></div>
+              <div className="kv"><span>Trend</span><span className="mono">{r12Summary.trend_direction ?? '—'}</span></div>
+              <div className="kv"><span>Top Tool</span><span className="mono">{r12Summary.top_causal_tool ?? '—'}</span></div>
+              <div className="kv"><span>Driver</span><span className="mono">{r12Summary.primary_driver ?? '—'}</span></div>
+            </div>
+          ) : null}
+          {r12Recommendations?.recommendations?.length > 0 ? (
+            <div className="mt4">
+              <div className="small mb4">Action Recommendations ({r12Recommendations.count})</div>
+              <ul className="small" style={{ margin: 0, paddingLeft: 16 }}>
+                {r12Recommendations.recommendations.map((rec, i) => (
+                  <li key={i}>{rec}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </Box>
       </div>
 

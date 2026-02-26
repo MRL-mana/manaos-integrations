@@ -802,3 +802,25 @@ def causal_counterfactual(body: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
+
+# ═══════════════════════════════════════════════════════
+# Round 12: Integrated Insight Layer
+# ═══════════════════════════════════════════════════════
+
+@router.get("/r12/summary")
+def r12_summary() -> Dict[str, Any]:
+    """Round 12 統合インサイトサマリー"""
+    try:
+        return {"ok": True, **_get_rl().get_r12_summary()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/r12/recommendations")
+def r12_recommendations() -> Dict[str, Any]:
+    """Round 12 推奨アクション"""
+    try:
+        return {"ok": True, **_get_rl().get_r12_recommendations()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+

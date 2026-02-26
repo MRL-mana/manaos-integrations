@@ -247,6 +247,9 @@ class RLAnythingOrchestrator:
         self.prom.register("rl_robustness_tests", "counter", "Adversarial robustness tests")
         self.prom.register("rl_causal_observations", "counter", "Causal reasoning observations")
         self.prom.register("rl_causal_tools", "gauge", "Unique causal tools tracked")
+        # Round 12 metrics
+        self.prom.register("rl_r12_health_score", "gauge", "Integrated health score from temporal/adversarial/causal")
+        self.prom.register("rl_r12_risk_level", "gauge", "Integrated risk level from temporal/adversarial/causal")
 
     # ═══════════════════════════════════════════════════════
     # タスクライフサイクル
@@ -716,6 +719,20 @@ class RLAnythingOrchestrator:
         except Exception as e:
             _log.warning("causal reasoning error: %s", e)
 
+        # ──── Integrated Insight Layer (Round 12) ────
+        try:
+            summary = self.get_r12_summary()
+            self.prom.set("rl_r12_health_score", float(summary.get("health_score", 0.0)))
+            self.prom.set("rl_r12_risk_level", float(summary.get("risk_level", 1.0)))
+            result["r12_insight"] = {
+                "health_score": summary.get("health_score", 0.0),
+                "risk_level": summary.get("risk_level", 1.0),
+                "primary_driver": summary.get("primary_driver", "unknown"),
+                "confidence": summary.get("confidence", 0.0),
+            }
+        except Exception as e:
+            _log.warning("round12 insight error: %s", e)
+
         return result
 
     # ═══════════════════════════════════════════════════════
@@ -996,6 +1013,7 @@ class RLAnythingOrchestrator:
             ("temporal", "temporal_abstraction", ["time", "trend"]),
             ("adversarial", "adversarial_robustness", ["robustness", "testing"]),
             ("causal", "causal_reasoning", ["causality", "attribution"]),
+            ("insight", "integrated_insight", ["fusion", "recommendation"]),
         ]
         for agent_id, agent_type, caps in components:
             self.comms.register_agent(agent_id, agent_type, caps)
@@ -1060,6 +1078,64 @@ class RLAnythingOrchestrator:
         """反事実分析"""
         result = self.causal.counterfactual(task_id, remove_tools)
         return result.to_dict()
+
+    # ═══════════════════════════════════════════════════════
+    # Round 12: Integrated Insight Layer
+    # ═══════════════════════════════════════════════════════
+    def get_r12_summary(self) -> Dict[str, Any]:
+        """Temporal / Adversarial / Causal を統合した健全性サマリー"""
+        trend = self.temporal.get_trend()
+        adv_stats = self.adversarial.get_stats()
+        attrs = self.causal.get_attributions(top_k=1)
+
+        direction = trend.direction
+        trend_risk = 1.0 if direction == "falling" else (0.5 if direction == "stable" else 0.0)
+
+        total_tests = max(1, int(adv_stats.get("total_tests", 0) or 0))
+        vulnerable_count = int(adv_stats.get("vulnerable_count", 0) or 0)
+        robustness_score = float(adv_stats.get("overall_robustness", 1.0) or 1.0)
+        vulnerable_ratio = vulnerable_count / total_tests
+
+        top_tool = attrs[0].tool if attrs else "unknown"
+        primary_driver = top_tool if top_tool != "unknown" else f"trend:{direction}"
+
+        base_health = (robustness_score * 0.6) + ((1.0 - vulnerable_ratio) * 0.4)
+        health_score = max(0.0, min(1.0, base_health - (trend_risk * 0.2)))
+        risk_level = max(0.0, min(1.0, 1.0 - health_score))
+
+        obs_count = int(self.causal.get_stats().get("total_observations", 0) or 0)
+        confidence = max(0.0, min(1.0, min(total_tests, obs_count, int(self.temporal.get_stats().get("total_events", 0) or 0)) / 10.0))
+
+        return {
+            "health_score": round(health_score, 4),
+            "risk_level": round(risk_level, 4),
+            "confidence": round(confidence, 4),
+            "trend_direction": direction,
+            "robustness_score": round(robustness_score, 4),
+            "vulnerable_ratio": round(vulnerable_ratio, 4),
+            "top_causal_tool": top_tool,
+            "primary_driver": primary_driver,
+        }
+
+    def get_r12_recommendations(self) -> Dict[str, Any]:
+        """統合サマリーから次アクションを提案"""
+        summary = self.get_r12_summary()
+        recs: List[str] = []
+
+        if summary["trend_direction"] == "falling":
+            recs.append("recent task templatesを見直し、difficultyを1段階下げて再学習")
+        if summary["vulnerable_ratio"] >= 0.3:
+            recs.append("adversarial vulnerable states上位を固定で再テスト")
+        if summary["top_causal_tool"] not in ("unknown", ""):
+            recs.append(f"{summary['top_causal_tool']} の使用条件を明示化し成功パスへ組み込む")
+        if not recs:
+            recs.append("現状方針を維持し、探索率を微増して性能上限を探索")
+
+        return {
+            "summary": summary,
+            "recommendations": recs,
+            "count": len(recs),
+        }
 
     # ═══════════════════════════════════════════════════════
     # 自動スコアリング

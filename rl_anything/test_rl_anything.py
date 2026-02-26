@@ -1988,6 +1988,7 @@ def test_orchestrator_with_r11_components():
         assert "temporal" in result
         assert "adversarial" in result
         assert "causal" in result
+        assert "r12_insight" in result
 
     # Temporal Stats
     ts = rl.get_temporal_stats()
@@ -2037,6 +2038,17 @@ def test_orchestrator_with_r11_components():
     # Causal Counterfactual
     cc = rl.causal_counterfactual("r11-0", ["read_file"])
     assert "counterfactual_score" in cc
+
+    # Round 12 Summary
+    r12s = rl.get_r12_summary()
+    assert "health_score" in r12s
+    assert "risk_level" in r12s
+    assert "primary_driver" in r12s
+
+    # Round 12 Recommendations
+    r12r = rl.get_r12_recommendations()
+    assert "recommendations" in r12r
+    assert isinstance(r12r["recommendations"], list)
 
     # Comms: 9 agents now (6 from R10 + 3 from R11)
     comms_stats = rl.get_comms_stats()
