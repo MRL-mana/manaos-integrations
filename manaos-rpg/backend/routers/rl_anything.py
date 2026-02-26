@@ -455,3 +455,83 @@ def meta_tune() -> Dict[str, Any]:
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
+
+# ─── Round 8: Multi-Objective / Transfer Learning / Ensemble Policy ────
+
+@router.get("/multi-objective/stats")
+def multi_objective_stats() -> Dict[str, Any]:
+    """多目的最適化の統計・パレートフロント"""
+    try:
+        return {"ok": True, **_get_rl().get_multi_objective_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/multi-objective/trade-off")
+def multi_objective_trade_off() -> Dict[str, Any]:
+    """Objective 間のトレードオフ分析"""
+    try:
+        return {"ok": True, **_get_rl().get_trade_off_analysis()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/transfer/stats")
+def transfer_stats() -> Dict[str, Any]:
+    """転移学習の統計・類似度行列"""
+    try:
+        return {"ok": True, **_get_rl().get_transfer_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/transfer/suggest")
+def transfer_suggest(target_domain: str = "coding") -> Dict[str, Any]:
+    """指定ドメインへの転移提案"""
+    try:
+        return {"ok": True, **_get_rl().suggest_transfer(target_domain)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/transfer/apply")
+def transfer_apply(target_domain: str = Body("coding", embed=True)) -> Dict[str, Any]:
+    """転移を適用"""
+    try:
+        result = _get_rl().apply_transfer(target_domain)
+        return {"ok": True, **result}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/ensemble/stats")
+def ensemble_stats() -> Dict[str, Any]:
+    """アンサンブルポリシーの統計"""
+    try:
+        return {"ok": True, **_get_rl().get_ensemble_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/ensemble/decide")
+def ensemble_decide(
+    success_rate: float = 0.5,
+    avg_score: float = 0.5,
+    difficulty: Optional[str] = None,
+    method: Optional[str] = None,
+) -> Dict[str, Any]:
+    """アンサンブルで意思決定"""
+    try:
+        return {"ok": True, **_get_rl().ensemble_decide(success_rate, avg_score, difficulty, method)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/ensemble/diversity")
+def ensemble_diversity() -> Dict[str, Any]:
+    """アンサンブルメンバー間の多様性指標"""
+    try:
+        return {"ok": True, **_get_rl().get_ensemble_diversity()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+

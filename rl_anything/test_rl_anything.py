@@ -33,6 +33,9 @@ from rl_anything.anomaly_detector import AnomalyDetector, Alert
 from rl_anything.policy_gradient import PolicyGradient, Trajectory, PolicySnapshot
 from rl_anything.reward_shaper import RewardShaper, ShapedReward
 from rl_anything.meta_controller import MetaController, MetaReport, MetaAdjustment
+from rl_anything.multi_objective import MultiObjectiveOptimizer, Objective, Solution
+from rl_anything.transfer_learning import TransferLearning, DomainProfile, TransferResult
+from rl_anything.ensemble_policy import EnsemblePolicy, PolicyMember, EnsembleDecision
 
 
 def test_types():
@@ -1077,6 +1080,239 @@ def test_orchestrator_with_policy_and_reward():
         print("  [PASS] orchestrator_with_policy_and_reward")
 
 
+def test_multi_objective():
+    """多目的最適化テスト"""
+    with tempfile.TemporaryDirectory() as td:
+        persist = Path(td) / "mo.json"
+        mo = MultiObjectiveOptimizer(persist_path=persist)
+
+        # デフォルト目的関数
+        objs = mo.get_objectives()
+        assert len(objs) >= 4, f"Expected >= 4 objectives, got {len(objs)}"
+        assert "score" in objs
+        assert "success_rate" in objs
+
+        # 目的関数追加・削除
+        mo.add_objective("latency", direction="minimize", weight=0.1)
+        assert "latency" in mo.get_objectives()
+        mo.remove_objective("latency")
+        assert "latency" not in mo.get_objectives()
+
+        # ソリューション記録
+        mo.record_solution(1, {"score": 0.8, "success_rate": 0.9, "efficiency": 0.5, "exploration": 0.3})
+        mo.record_solution(2, {"score": 0.5, "success_rate": 0.6, "efficiency": 0.9, "exploration": 0.8})
+        mo.record_solution(3, {"score": 0.9, "success_rate": 0.95, "efficiency": 0.7, "exploration": 0.6})
+        mo.record_solution(4, {"score": 0.6, "success_rate": 0.7, "efficiency": 0.8, "exploration": 0.4})
+
+        # パレートフロント
+        front = mo.get_pareto_front()
+        assert len(front) >= 1, "Pareto front should not be empty"
+
+        # ベストスカラ化
+        best = mo.get_best_scalarized()
+        assert best is not None
+        assert "scalarized" in best
+
+        # トレードオフ
+        analysis = mo.get_trade_off_analysis()
+        assert "correlations" in analysis or "status" in analysis
+        if "correlations" in analysis:
+            assert "trends" in analysis
+
+        # 推奨ウェイト
+        rec = mo.recommend_weights()
+        assert len(rec) >= 4
+        total = sum(rec.values())
+        assert abs(total - 1.0) < 0.01, f"Weights should sum to 1.0, got {total}"
+
+        # 統計
+        stats = mo.get_stats()
+        assert stats["total_solutions"] == 4
+        assert stats["pareto_size"] >= 1
+
+        # 永続化
+        mo2 = MultiObjectiveOptimizer(persist_path=persist)
+        assert mo2.get_stats()["total_solutions"] == 4
+
+        print("  [PASS] multi_objective")
+
+
+def test_transfer_learning():
+    """転移学習テスト"""
+    with tempfile.TemporaryDirectory() as td:
+        persist = Path(td) / "tl.json"
+        tl = TransferLearning(persist_path=persist)
+
+        # ドメイン更新
+        for i in range(5):
+            tl.update_domain("testing", 0.7 + i * 0.05, "success", "standard")
+        for i in range(5):
+            tl.update_domain("debugging", 0.4 + i * 0.03, "partial" if i < 2 else "success", "hard")
+
+        # ドメイン推論
+        d = tl.infer_domain("fix the broken test assertion")
+        assert d in ("testing", "debugging")
+
+        d2 = tl.infer_domain("write documentation for the API")
+        assert d2 == "documentation"
+
+        # 類似度行列
+        sim = tl.get_similarity_matrix()
+        assert "testing" in sim
+        assert "debugging" in sim
+        # 同ドメインは1.0
+        assert abs(sim["testing"]["testing"] - 1.0) < 0.001
+
+        # 転移提案
+        suggestion = tl.suggest_transfer("coding")
+        # codingはデータなしなので None かも
+        # ドメインにデータを追加
+        for i in range(5):
+            tl.update_domain("coding", 0.3, "failure", "easy")
+        suggestion = tl.suggest_transfer("coding")
+        # testing or debugging から転移が来るかも
+        if suggestion is not None:
+            assert isinstance(suggestion, TransferResult)
+            assert suggestion.target_domain == "coding"
+
+        # 転移適用
+        result = tl.apply_transfer("coding")
+        # result は None (転移不可の場合) or dict (成功)
+        if result is not None:
+            assert "source_domain" in result or "ts" in result
+
+        # 統計
+        stats = tl.get_stats()
+        assert stats["domain_count"] >= 2
+
+        # 永続化
+        tl2 = TransferLearning(persist_path=persist)
+        assert tl2.get_stats()["domain_count"] >= 2
+
+        print("  [PASS] transfer_learning")
+
+
+def test_ensemble_policy():
+    """アンサンブルポリシーテスト"""
+    with tempfile.TemporaryDirectory() as td:
+        persist = Path(td) / "ep.json"
+        ep = EnsemblePolicy(n_members=5, persist_path=persist)
+
+        # メンバー数
+        stats = ep.get_stats()
+        assert stats["member_count"] == 5
+
+        # 決定
+        state = [0.6, 0.5, 0.0]  # success_rate, avg_score, difficulty_encoded
+        decision = ep.decide(state)
+        assert isinstance(decision, EnsembleDecision)
+        assert decision.action in ("level_down", "stay", "level_up")
+        assert 0 <= decision.agreement <= 1
+        assert 0 <= decision.confidence <= 1
+        assert len(decision.probabilities) == 3
+
+        # 各方式テスト
+        for method in ["weighted_average", "majority_vote", "boltzmann_mix", "best_of_n"]:
+            d = ep.decide(state, method=method)
+            assert d.method == method
+            assert d.action in ("level_down", "stay", "level_up")
+
+        # 報酬更新
+        ep.update_rewards(0.8)
+        stats_r = ep.get_stats()
+        for m in stats_r["members"]:
+            assert m["avg_reward"] > 0
+
+        # 多様性
+        div = ep.get_diversity(state)
+        assert "action_entropy" in div
+        assert "param_variance" in div
+
+        # 摂動
+        ep.perturb_member(0, magnitude=0.1)
+
+        # 永続化
+        ep2 = EnsemblePolicy(n_members=5, persist_path=persist)
+        stats2 = ep2.get_stats()
+        assert stats2["member_count"] == 5
+        assert stats2["total_decisions"] >= 4  # we called decide 5 times
+
+        print("  [PASS] ensemble_policy")
+
+
+def test_orchestrator_with_r8_components():
+    """Round 8 コンポーネント統合テスト"""
+    with tempfile.TemporaryDirectory() as td:
+        cfg_path = Path(td) / "rl_config.json"
+        cfg_path.write_text(json.dumps({
+            "enabled": True,
+            "log_dir": str(Path(td) / "logs"),
+            "difficulty": "standard",
+            "scoring": {
+                "outcome_weight": 0.35,
+                "tool_efficiency_weight": 0.25,
+                "consistency_weight": 0.20,
+                "exploration_weight": 0.10,
+                "difficulty_bonus": 0.10
+            }
+        }))
+
+        rl = RLAnythingOrchestrator(config_path=cfg_path)
+
+        # コンポーネント存在確認
+        assert hasattr(rl, 'multi_objective')
+        assert hasattr(rl, 'transfer_learning')
+        assert hasattr(rl, 'ensemble_policy')
+        assert isinstance(rl.multi_objective, MultiObjectiveOptimizer)
+        assert isinstance(rl.transfer_learning, TransferLearning)
+        assert isinstance(rl.ensemble_policy, EnsemblePolicy)
+
+        # サイクル実行
+        rl.begin_task("r8-1", "fix bug in test module")
+        rl.log_tool("read_file", {"path": "test.py"}, result="code")
+        rl.log_tool("write_file", {"path": "test.py"}, result="fixed")
+        result = rl.end_task("r8-1", outcome="success", score=0.9)
+        assert result["cycle"] >= 1
+
+        rl.begin_task("r8-2", "write documentation for API")
+        rl.log_tool("read_file", {"path": "api.py"}, result="class API")
+        result2 = rl.end_task("r8-2", outcome="success", score=0.75)
+        assert result2["cycle"] >= 2
+
+        # 3つ目のタスクでトレードオフ分析に必要なデータを確保
+        rl.begin_task("r8-3", "refactor shared module")
+        rl.log_tool("read_file", {"path": "shared.py"}, result="module")
+        result3 = rl.end_task("r8-3", outcome="partial", score=0.5)
+        assert result3["cycle"] >= 3
+
+        # Multi-Objective 統計
+        mo_stats = rl.get_multi_objective_stats()
+        assert "total_solutions" in mo_stats
+        assert mo_stats["total_solutions"] >= 3
+
+        # トレードオフ
+        to = rl.get_trade_off_analysis()
+        assert "correlation_matrix" in to or "trends" in to or "status" in to
+
+        # Transfer 統計
+        ts = rl.get_transfer_stats()
+        assert "domain_count" in ts
+
+        # Ensemble 統計
+        es = rl.get_ensemble_stats()
+        assert "member_count" in es
+
+        # Ensemble 決定
+        ed = rl.ensemble_decide(0.6, 0.5)
+        assert "action" in ed
+
+        # Ensemble 多様性
+        dv = rl.get_ensemble_diversity()
+        assert "action_entropy" in dv or "diversity" in dv
+
+        print("  [PASS] orchestrator_with_r8_components")
+
+
 def main():
     print("=" * 60)
     print("RLAnything テストスイート")
@@ -1105,6 +1341,10 @@ def main():
         ("reward_shaper", test_reward_shaper),
         ("meta_controller", test_meta_controller),
         ("orchestrator_with_policy_and_reward", test_orchestrator_with_policy_and_reward),
+        ("multi_objective", test_multi_objective),
+        ("transfer_learning", test_transfer_learning),
+        ("ensemble_policy", test_ensemble_policy),
+        ("orchestrator_with_r8_components", test_orchestrator_with_r8_components),
     ]
 
     passed = 0

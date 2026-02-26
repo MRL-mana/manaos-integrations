@@ -5,5 +5,14 @@ export default defineConfig({
   plugins: [react()],
   server: {
     strictPort: true
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom']
+        }
+      }
+    }
   }
 })

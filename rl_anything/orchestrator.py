@@ -49,6 +49,9 @@ from .anomaly_detector import AnomalyDetector
 from .policy_gradient import PolicyGradient
 from .reward_shaper import RewardShaper
 from .meta_controller import MetaController
+from .multi_objective import MultiObjectiveOptimizer
+from .transfer_learning import TransferLearning
+from .ensemble_policy import EnsemblePolicy
 
 _DIR = Path(__file__).parent
 _STATE_DIR = _DIR.parent / "logs" / "rl_anything"
@@ -146,6 +149,18 @@ class RLAnythingOrchestrator:
         # Meta-Controller (Round 7)
         self.meta_controller = MetaController(config=cfg)
 
+        # Multi-Objective Optimizer (Round 8)
+        mo_persist = state_dir / "multi_objective.json"
+        self.multi_objective = MultiObjectiveOptimizer(persist_path=mo_persist)
+
+        # Transfer Learning Engine (Round 8)
+        tl_persist = state_dir / "transfer_learning.json"
+        self.transfer_learning = TransferLearning(persist_path=tl_persist, config=cfg)
+
+        # Ensemble Policy (Round 8)
+        ep_persist = state_dir / "ensemble_policy.json"
+        self.ensemble_policy = EnsemblePolicy(n_members=3, persist_path=ep_persist)
+
     # ═══════════════════════════════════════════════════════
     # Prometheus メトリクス初期化
     # ═══════════════════════════════════════════════════════
@@ -164,6 +179,10 @@ class RLAnythingOrchestrator:
         self.prom.register("rl_reward_shaped", "histogram", "Shaped reward values")
         self.prom.register("rl_meta_adjustments", "counter", "Meta-controller parameter adjustments")
         self.prom.register("rl_health_score", "gauge", "Meta-controller system health score")
+        self.prom.register("rl_pareto_size", "gauge", "Multi-objective Pareto front size")
+        self.prom.register("rl_transfer_count", "counter", "Knowledge transfer events")
+        self.prom.register("rl_ensemble_decisions", "counter", "Ensemble policy decisions")
+        self.prom.register("rl_ensemble_agreement", "histogram", "Ensemble agreement distribution")
 
     # ═══════════════════════════════════════════════════════
     # タスクライフサイクル
@@ -396,6 +415,76 @@ class RLAnythingOrchestrator:
         except Exception as e:
             _log.warning("meta-controller error: %s", e)
 
+        # ──── Multi-Objective Recording (Round 8) ────
+        try:
+            # 効率 = score / max(1, tool_count) — アクション数に対するスコア比
+            tool_count = len(record.actions) if hasattr(record, "actions") else 1
+            efficiency = score / max(1, tool_count) * 10  # スケーリング
+            # 探索度 = ポリシーエントロピ (pg_state があれば)
+            try:
+                probs_for_mo = self.policy_gradient.get_action_probs(pg_state)
+                import math as _math_mo
+                exploration = -sum(p * _math_mo.log(max(p, 1e-10)) for p in probs_for_mo.values())
+            except Exception:
+                exploration = 0.5
+
+            mo_values = {
+                "score": score,
+                "success_rate": success_rate,
+                "efficiency": efficiency,
+                "exploration": exploration,
+            }
+            sol = self.multi_objective.record_solution(self._cycle_count, mo_values)
+            self.prom.set("rl_pareto_size", float(
+                sum(1 for s in self.multi_objective._solutions if s.is_pareto)
+            ))
+            result["multi_objective"] = {
+                "scalarized": sol.scalarized,
+                "is_pareto": sol.is_pareto,
+                "values": mo_values,
+            }
+        except Exception as e:
+            _log.warning("multi-objective error: %s", e)
+
+        # ──── Transfer Learning Domain Update (Round 8) ────
+        try:
+            # タスク説明からドメインを推定
+            desc = ""
+            if hasattr(record, "description"):
+                desc = record.description or ""
+            elif hasattr(record, "task_id"):
+                desc = record.task_id or ""
+            domain = self.transfer_learning.infer_domain(desc)
+            self.transfer_learning.update_domain(
+                domain=domain,
+                score=score,
+                outcome=outcome,
+                difficulty=self.evolution.current_difficulty.value,
+            )
+            result["transfer_domain"] = domain
+        except Exception as e:
+            _log.warning("transfer learning error: %s", e)
+
+        # ──── Ensemble Policy Decision (Round 8) ────
+        try:
+            ens_state = self.policy_gradient.encode_state(
+                success_rate=success_rate,
+                avg_score=sum(e.get("score", 0) for e in history[-20:]) / max(1, len(history[-20:])),
+                difficulty=self.evolution.current_difficulty.value,
+            )
+            ens_decision = self.ensemble_policy.decide(ens_state)
+            self.ensemble_policy.update_rewards(score)
+            self.prom.inc("rl_ensemble_decisions")
+            self.prom.observe("rl_ensemble_agreement", ens_decision.agreement)
+            result["ensemble"] = {
+                "action": ens_decision.action,
+                "agreement": ens_decision.agreement,
+                "confidence": ens_decision.confidence,
+                "method": ens_decision.method,
+            }
+        except Exception as e:
+            _log.warning("ensemble policy error: %s", e)
+
         return result
 
     # ═══════════════════════════════════════════════════════
@@ -496,6 +585,64 @@ class RLAnythingOrchestrator:
             self.prom.inc("rl_meta_adjustments", labels={"param": adj.param_name})
         self.prom.set("rl_health_score", report.health_score)
         return report.to_dict()
+
+    # ═══════════════════════════════════════════════════════
+    # Round 8: Multi-Objective / Transfer / Ensemble
+    # ═══════════════════════════════════════════════════════
+    def get_multi_objective_stats(self) -> Dict[str, Any]:
+        """多目的最適化の統計とパレートフロント"""
+        stats = self.multi_objective.get_stats()
+        front = self.multi_objective.get_pareto_front()
+        return {**stats, "pareto_front": front}
+
+    def get_trade_off_analysis(self) -> Dict[str, Any]:
+        """Objective 間のトレードオフ分析"""
+        return self.multi_objective.get_trade_off_analysis()
+
+    def get_transfer_stats(self) -> Dict[str, Any]:
+        """転移学習の統計"""
+        stats = self.transfer_learning.get_stats()
+        similarity = self.transfer_learning.get_similarity_matrix()
+        return {**stats, "similarity_matrix": similarity}
+
+    def suggest_transfer(self, target_domain: str) -> Dict[str, Any]:
+        """指定ドメインへの転移提案"""
+        result = self.transfer_learning.suggest_transfer(target_domain)
+        if result is None:
+            return {"status": "no_transfer", "reason": "no suitable source found"}
+        return result.to_dict()
+
+    def apply_transfer(self, target_domain: str) -> Dict[str, Any]:
+        """転移を適用"""
+        result = self.transfer_learning.apply_transfer(target_domain)
+        if result is None:
+            return {"status": "no_transfer", "reason": "no suitable source found"}
+        self.prom.inc("rl_transfer_count")
+        self._emit_event("knowledge_transfer", {
+            "source": result.get("source_domain"),
+            "target": result.get("target_domain"),
+            "similarity": result.get("similarity"),
+        })
+        return result
+
+    def get_ensemble_stats(self) -> Dict[str, Any]:
+        """アンサンブルポリシーの統計"""
+        return self.ensemble_policy.get_stats()
+
+    def ensemble_decide(self, success_rate: float = 0.5, avg_score: float = 0.5,
+                        difficulty: Optional[str] = None,
+                        method: Optional[str] = None) -> Dict[str, Any]:
+        """アンサンブルで意思決定"""
+        diff = difficulty or self.evolution.current_difficulty.value
+        state = self.policy_gradient.encode_state(success_rate, avg_score, diff)
+        decision = self.ensemble_policy.decide(state, method=method)
+        self.prom.inc("rl_ensemble_decisions")
+        self.prom.observe("rl_ensemble_agreement", decision.agreement)
+        return decision.to_dict()
+
+    def get_ensemble_diversity(self) -> Dict[str, Any]:
+        """メンバー間の多様性指標"""
+        return self.ensemble_policy.get_diversity()
 
     # ═══════════════════════════════════════════════════════
     # 自動スコアリング

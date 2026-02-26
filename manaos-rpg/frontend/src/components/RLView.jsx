@@ -36,6 +36,15 @@ export default function RLView({ rl, apiBase }) {
   const [rewardData, setRewardData] = useState(null)
   const [metaData, setMetaData] = useState(null)
 
+  // Round 8 state
+  const [moData, setMoData] = useState(null)
+  const [tradeOffData, setTradeOffData] = useState(null)
+  const [transferData, setTransferData] = useState(null)
+  const [transferSuggestion, setTransferSuggestion] = useState(null)
+  const [ensembleData, setEnsembleData] = useState(null)
+  const [ensembleDecision, setEnsembleDecision] = useState(null)
+  const [diversityData, setDiversityData] = useState(null)
+
   async function fetchLiveDashboard() {
     if (busyOp) return
     setLiveErr('')
@@ -274,6 +283,93 @@ export default function RLView({ rl, apiBase }) {
       const r = await fetchJson('/api/rl/meta/tune', { method: 'POST' })
       if (r) setMetaData((prev) => prev ? { ...prev, _lastTune: r } : r)
     } catch (e) { console.warn('fetchMetaTune:', e) }
+    finally { setBusyOp('') }
+  }
+
+  // ─── Round 8 fetch functions ──────────────────────
+  async function fetchMultiObjective() {
+    if (busyOp) return
+    setBusyOp('mo')
+    try {
+      const r = await fetchJson('/api/rl/multi-objective/stats')
+      if (r?.ok) setMoData(r)
+    } catch (e) { console.warn('fetchMultiObjective:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchTradeOff() {
+    if (busyOp) return
+    setBusyOp('tradeoff')
+    try {
+      const r = await fetchJson('/api/rl/multi-objective/trade-off')
+      if (r?.ok) setTradeOffData(r)
+    } catch (e) { console.warn('fetchTradeOff:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchTransfer() {
+    if (busyOp) return
+    setBusyOp('transfer')
+    try {
+      const r = await fetchJson('/api/rl/transfer/stats')
+      if (r?.ok) setTransferData(r)
+    } catch (e) { console.warn('fetchTransfer:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchTransferSuggest(domain = 'coding') {
+    if (busyOp) return
+    setBusyOp('transferSuggest')
+    try {
+      const r = await fetchJson(`/api/rl/transfer/suggest?target_domain=${encodeURIComponent(domain)}`)
+      if (r?.ok !== undefined) setTransferSuggestion(r)
+    } catch (e) { console.warn('fetchTransferSuggest:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function applyTransfer(domain = 'coding') {
+    if (busyOp) return
+    if (!window.confirm(`"${domain}" への転移を適用しますか？`)) return
+    setBusyOp('transferApply')
+    try {
+      const r = await fetchJson('/api/rl/transfer/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(domain),
+      })
+      if (r) setTransferSuggestion(r)
+    } catch (e) { console.warn('applyTransfer:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchEnsemble() {
+    if (busyOp) return
+    setBusyOp('ensemble')
+    try {
+      const r = await fetchJson('/api/rl/ensemble/stats')
+      if (r?.ok) setEnsembleData(r)
+    } catch (e) { console.warn('fetchEnsemble:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchEnsembleDecide(method = '') {
+    if (busyOp) return
+    setBusyOp('ensembleDecide')
+    try {
+      const url = `/api/rl/ensemble/decide?success_rate=0.5&avg_score=0.5${method ? `&method=${method}` : ''}`
+      const r = await fetchJson(url)
+      if (r?.ok !== undefined) setEnsembleDecision(r)
+    } catch (e) { console.warn('fetchEnsembleDecide:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchDiversity() {
+    if (busyOp) return
+    setBusyOp('diversity')
+    try {
+      const r = await fetchJson('/api/rl/ensemble/diversity')
+      if (r?.ok) setDiversityData(r)
+    } catch (e) { console.warn('fetchDiversity:', e) }
     finally { setBusyOp('') }
   }
 
@@ -857,6 +953,228 @@ export default function RLView({ rl, apiBase }) {
           ) : metaData && !metaData.ok ? (
             <div className="err">{metaData.error || 'エラー'}</div>
           ) : <div className="small">メタ学習による lr / 温度 / 閾値の自動調整</div>}
+        </div>
+      </div>
+
+      {/* ───────── MULTI-OBJECTIVE OPTIMIZER (Round 8) ───────── */}
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">MULTI-OBJECTIVE</span>
+          <span>パレートフロント & トレードオフ</span>
+          <span className="small">/api/rl/multi-objective</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" onClick={fetchMultiObjective} disabled={!!busyOp}>{busyOp === 'mo' ? '取得中…' : '📊 統計取得'}</button>
+            <button className="link" onClick={fetchTradeOff} disabled={!!busyOp}>{busyOp === 'tradeoff' ? '分析中…' : '⚖ トレードオフ'}</button>
+          </div>
+          {moData ? (
+            <div className="mt8">
+              <div className="statsGrid">
+                <div className="kv"><span>総ソリューション数</span><span className="mono">{moData.total_solutions ?? 0}</span></div>
+                <div className="kv"><span>パレートサイズ</span><span className="mono ok">{moData.pareto_size ?? 0}</span></div>
+              </div>
+              {moData.objectives && moData.objectives.length > 0 ? (
+                <div className="mt4">
+                  <div className="small mb4">目的関数</div>
+                  {moData.objectives.map((o, i) => (
+                    <div key={i} className="kv"><span className="small">{o.name} ({o.direction})</span><span className="mono">w={Number(o.weight).toFixed(2)}</span></div>
+                  ))}
+                </div>
+              ) : null}
+              {moData.best_scalarized ? (
+                <div className="mt4">
+                  <div className="small mb4">ベストスカラ化</div>
+                  <div className="kv"><span>スコア</span><span className="mono ok">{Number(moData.best_scalarized.scalarized || 0).toFixed(4)}</span></div>
+                  <div className="kv"><span>サイクル</span><span className="mono">{moData.best_scalarized.cycle ?? '—'}</span></div>
+                </div>
+              ) : null}
+              {moData.recommended_weights ? (
+                <div className="mt4">
+                  <div className="small mb4">推奨ウェイト</div>
+                  {Object.entries(moData.recommended_weights).map(([k, v]) => (
+                    <div key={k} className="kv"><span className="small">{k}</span><span className="mono">{Number(v).toFixed(3)}</span></div>
+                  ))}
+                </div>
+              ) : null}
+              {moData.pareto_front && moData.pareto_front.length > 0 ? (
+                <details className="mt4">
+                  <summary className="link">パレートフロント ({moData.pareto_front.length}件)</summary>
+                  <table className="simple-table tableCompact mt4">
+                    <thead><tr><th>Cycle</th><th>Score</th><th>Scalarized</th></tr></thead>
+                    <tbody>
+                      {moData.pareto_front.slice(0, 20).map((p, i) => (
+                        <tr key={i}>
+                          <td className="mono">{p.cycle}</td>
+                          <td className="mono">{p.values?.score != null ? Number(p.values.score).toFixed(3) : '—'}</td>
+                          <td className="mono ok">{Number(p.scalarized).toFixed(4)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </details>
+              ) : null}
+            </div>
+          ) : <div className="small">パレートフロントと多目的最適化の統計</div>}
+          {tradeOffData ? (
+            <div className="mt8">
+              <div className="small mb4">トレードオフ分析</div>
+              {tradeOffData.trends && Object.keys(tradeOffData.trends).length > 0 ? (
+                <div className="mt4">
+                  <div className="small mb4">トレンド</div>
+                  {Object.entries(tradeOffData.trends).map(([k, v]) => (
+                    <div key={k} className="kv"><span className="small">{k}</span><span className={`mono ${v === 'improving' ? 'ok' : v === 'worsening' ? 'err' : ''}`}>{v}</span></div>
+                  ))}
+                </div>
+              ) : null}
+              {tradeOffData.conflicts && tradeOffData.conflicts.length > 0 ? (
+                <div className="mt4">
+                  <div className="small mb4">コンフリクト（負の相関）</div>
+                  {tradeOffData.conflicts.map((c, i) => (
+                    <div key={i} className="kv kvBorder" style={{ borderLeft: '3px solid var(--danger)' }}>
+                      <span className="small">{c[0]} vs {c[1]}</span>
+                      <span className="mono err">{Number(c[2]).toFixed(3)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : <div className="small">コンフリクトなし ✅</div>}
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {/* ───────── TRANSFER LEARNING (Round 8) ───────── */}
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">TRANSFER LEARNING</span>
+          <span>ドメイン間知識転移</span>
+          <span className="small">/api/rl/transfer</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" onClick={fetchTransfer} disabled={!!busyOp}>{busyOp === 'transfer' ? '取得中…' : '📊 統計取得'}</button>
+            <button className="link" onClick={() => fetchTransferSuggest('coding')} disabled={!!busyOp}>{busyOp === 'transferSuggest' ? '分析中…' : '💡 転移提案'}</button>
+            <button className="link" onClick={() => applyTransfer('coding')} disabled={!!busyOp}>{busyOp === 'transferApply' ? '適用中…' : '⚡ 転移適用'}</button>
+          </div>
+          {transferData ? (
+            <div className="mt8">
+              <div className="statsGrid">
+                <div className="kv"><span>ドメイン数</span><span className="mono">{transferData.domain_count ?? 0}</span></div>
+                <div className="kv"><span>累計転移</span><span className="mono">{transferData.transfer_count ?? 0}</span></div>
+              </div>
+              {transferData.domains && typeof transferData.domains === 'object' ? (
+                <div className="mt4">
+                  <div className="small mb4">ドメイン一覧</div>
+                  <table className="simple-table tableCompact">
+                    <thead><tr><th>Domain</th><th>Tasks</th><th>Avg Score</th><th>Success</th></tr></thead>
+                    <tbody>
+                      {Object.entries(transferData.domains).map(([name, d], i) => (
+                        <tr key={i}>
+                          <td className="mono">{name}</td>
+                          <td className="mono">{d.total_tasks}</td>
+                          <td className="mono">{Number(d.avg_score || 0).toFixed(3)}</td>
+                          <td className={`mono ${d.success_rate >= 0.7 ? 'ok' : d.success_rate >= 0.4 ? 'caution' : 'danger'}`}>{(d.success_rate * 100).toFixed(0)}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+              {transferData.similarity_matrix && Object.keys(transferData.similarity_matrix).length > 0 ? (
+                <details className="mt4">
+                  <summary className="link">類似度行列</summary>
+                  <div className="mt4 scrollBox">
+                    {Object.entries(transferData.similarity_matrix).map(([src, targets]) => (
+                      <div key={src} className="kv">
+                        <span className="mono small">{src}</span>
+                        <span className="mono small">{Object.entries(targets).map(([t, v]) => `${t}:${Number(v).toFixed(2)}`).join(' ')}</span>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              ) : null}
+            </div>
+          ) : <div className="small">ドメイン間の知識転移と類似度</div>}
+          {transferSuggestion ? (
+            <div className="mt8">
+              <div className="small mb4">転移結果</div>
+              <OutputBlock text={JSON.stringify(transferSuggestion, null, 2)} onClear={() => setTransferSuggestion(null)} />
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {/* ───────── ENSEMBLE POLICY (Round 8) ───────── */}
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">ENSEMBLE POLICY</span>
+          <span>多方策アンサンブル</span>
+          <span className="small">/api/rl/ensemble</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" onClick={fetchEnsemble} disabled={!!busyOp}>{busyOp === 'ensemble' ? '取得中…' : '📊 統計取得'}</button>
+            <button className="link" onClick={() => fetchEnsembleDecide('')} disabled={!!busyOp}>{busyOp === 'ensembleDecide' ? '決定中…' : '🎯 意思決定'}</button>
+            <button className="link" onClick={fetchDiversity} disabled={!!busyOp}>{busyOp === 'diversity' ? '取得中…' : '🌈 多様性'}</button>
+          </div>
+          {ensembleData ? (
+            <div className="mt8">
+              <div className="statsGrid">
+                <div className="kv"><span>メンバー数</span><span className="mono">{ensembleData.member_count ?? 0}</span></div>
+                <div className="kv"><span>総決定数</span><span className="mono">{ensembleData.total_decisions ?? 0}</span></div>
+              </div>
+              {ensembleData.members && ensembleData.members.length > 0 ? (
+                <div className="mt4">
+                  <div className="small mb4">メンバー</div>
+                  <table className="simple-table tableCompact">
+                    <thead><tr><th>ID</th><th>Avg Reward</th><th>Decisions</th><th>Accuracy</th><th>Temp</th></tr></thead>
+                    <tbody>
+                      {ensembleData.members.map((m, i) => (
+                        <tr key={i}>
+                          <td className="mono">{m.member_id}</td>
+                          <td className="mono">{Number(m.avg_reward || 0).toFixed(3)}</td>
+                          <td className="mono">{m.decision_count}</td>
+                          <td className={`mono ${m.accuracy >= 0.7 ? 'ok' : m.accuracy >= 0.4 ? 'caution' : ''}`}>{(m.accuracy * 100).toFixed(0)}%</td>
+                          <td className="mono">{Number(m.temperature).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+            </div>
+          ) : <div className="small">アンサンブルメンバーの統計と意思決定</div>}
+          {ensembleDecision ? (
+            <div className="mt8">
+              <div className="small mb4">最新のアンサンブル決定</div>
+              <div className="statsGrid">
+                <div className="kv"><span>行動</span><span className="mono ok">{ensembleDecision.action ?? '—'}</span></div>
+                <div className="kv"><span>合意度</span><span className={`mono ${(ensembleDecision.agreement || 0) >= 0.7 ? 'ok' : 'caution'}`}>{((ensembleDecision.agreement || 0) * 100).toFixed(0)}%</span></div>
+                <div className="kv"><span>信頼度</span><span className="mono">{((ensembleDecision.confidence || 0) * 100).toFixed(0)}%</span></div>
+                <div className="kv"><span>方式</span><span className="mono small">{ensembleDecision.method ?? '—'}</span></div>
+              </div>
+              {ensembleDecision.probabilities ? (
+                <div className="mt4">
+                  <div className="small mb4">確率分布</div>
+                  {Object.entries(ensembleDecision.probabilities).map(([k, v]) => (
+                    <div key={k} className="kv"><span className="small">{k}</span><span className="mono">{(Number(v) * 100).toFixed(1)}%</span></div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {diversityData ? (
+            <div className="mt8">
+              <div className="small mb4">多様性指標</div>
+              <div className="statsGrid">
+                <div className="kv"><span>行動エントロピ</span><span className="mono">{Number(diversityData.action_entropy || 0).toFixed(4)}</span></div>
+                <div className="kv"><span>パラメータ分散</span><span className="mono">{Number(diversityData.param_variance || 0).toFixed(4)}</span></div>
+                {diversityData.agreement_trend && diversityData.agreement_trend.length > 0 ? (
+                  <div className="kv"><span>合意トレンド</span><span className="mono small">{diversityData.agreement_trend.slice(-5).map(v => Number(v).toFixed(2)).join(' → ')}</span></div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
