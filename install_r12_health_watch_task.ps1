@@ -2,6 +2,11 @@ param(
     [string]$TaskName = "ManaOS_R12_Health_Watch_5min",
     [string]$BaseUrl = "http://127.0.0.1:9510",
     [int]$IntervalMinutes = 5,
+    [ValidateSet('generic','slack','discord')]
+    [string]$WebhookFormat = "discord",
+    [string]$WebhookUrl = "",
+    [string]$WebhookMention = "",
+    [switch]$NotifyOnSuccess,
     [ValidateSet('LIMITED','HIGHEST')]
     [string]$RunLevel = 'LIMITED',
     [switch]$NoFallbackToLimited,
@@ -22,7 +27,42 @@ if ($IntervalMinutes -lt 1 -or $IntervalMinutes -gt 1440) {
     throw "IntervalMinutes must be 1..1440"
 }
 
-$taskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$jobScript`" -BaseUrl `"$BaseUrl`""
+if ([string]::IsNullOrWhiteSpace($WebhookUrl) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_URL)) {
+    $WebhookUrl = $env:MANAOS_WEBHOOK_URL
+}
+if ([string]::IsNullOrWhiteSpace($WebhookMention) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_MENTION)) {
+    $WebhookMention = $env:MANAOS_WEBHOOK_MENTION
+}
+if (-not $NotifyOnSuccess.IsPresent -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_NOTIFY_ON_SUCCESS)) {
+    $raw = $env:MANAOS_NOTIFY_ON_SUCCESS.Trim().ToLowerInvariant()
+    if ($raw -in @('1','true','yes','on')) {
+        $NotifyOnSuccess = $true
+    }
+}
+
+$taskArgs = @(
+    '-NoProfile',
+    '-ExecutionPolicy',
+    'Bypass',
+    '-File',
+    "`"$jobScript`"",
+    '-BaseUrl',
+    "`"$BaseUrl`"",
+    '-WebhookFormat',
+    $WebhookFormat
+)
+
+if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
+    $taskArgs += @('-WebhookUrl', "`"$WebhookUrl`"")
+}
+if (-not [string]::IsNullOrWhiteSpace($WebhookMention)) {
+    $taskArgs += @('-WebhookMention', "`"$WebhookMention`"")
+}
+if ($NotifyOnSuccess.IsPresent) {
+    $taskArgs += '-NotifyOnSuccess'
+}
+
+$taskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe " + ($taskArgs -join ' ')
 
 Write-Host "=== Register R12 Health Watch Task ===" -ForegroundColor Cyan
 Write-Host "TaskName : $TaskName" -ForegroundColor Gray

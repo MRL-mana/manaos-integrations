@@ -1,5 +1,10 @@
 param(
-    [string]$BaseUrl = 'http://127.0.0.1:9510'
+    [string]$BaseUrl = 'http://127.0.0.1:9510',
+    [ValidateSet('generic','slack','discord')]
+    [string]$WebhookFormat = 'discord',
+    [string]$WebhookUrl = '',
+    [string]$WebhookMention = '',
+    [switch]$NotifyOnSuccess
 )
 
 $ErrorActionPreference = 'Stop'
@@ -13,4 +18,27 @@ if (-not (Test-Path $mainScript)) {
     throw "Main script not found: $mainScript"
 }
 
-pwsh -NoProfile -ExecutionPolicy Bypass -File $mainScript -BaseUrl $BaseUrl -Once -FailOnError -JsonLogPath $logPath
+$forward = @(
+    '-NoProfile',
+    '-ExecutionPolicy',
+    'Bypass',
+    '-File',
+    $mainScript,
+    '-BaseUrl', $BaseUrl,
+    '-Once',
+    '-FailOnError',
+    '-JsonLogPath', $logPath,
+    '-WebhookFormat', $WebhookFormat
+)
+
+if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
+    $forward += @('-WebhookUrl', $WebhookUrl)
+}
+if (-not [string]::IsNullOrWhiteSpace($WebhookMention)) {
+    $forward += @('-WebhookMention', $WebhookMention)
+}
+if ($NotifyOnSuccess.IsPresent) {
+    $forward += '-NotifyOnSuccess'
+}
+
+pwsh @forward

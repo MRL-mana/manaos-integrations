@@ -170,6 +170,8 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
     - 実体: `manaos-rpg/scripts/run_r12_health_watch.ps1`（タスクからは `run_r12_health_watch_once.ps1` を呼び出し）
     - ログ: `logs/r12_health_watch_task.jsonl`
     - 例: `pwsh -File .\install_r12_health_watch_task.ps1 -RunNow`
+    - 通知（任意）: `MANAOS_WEBHOOK_URL` / `MANAOS_WEBHOOK_FORMAT` (`generic|slack|discord`) / `MANAOS_WEBHOOK_MENTION` / `MANAOS_NOTIFY_ON_SUCCESS`
+      - 既定は「失敗時のみ通知」。成功通知も欲しい場合は `MANAOS_NOTIFY_ON_SUCCESS=1`
 - 「ManaOS: Pixel7 外出モード 半自律監視開始（自動切替+週次しきい値）」
   - 上記に `-RemoteOnly` を付与した外出モード
 - 「ManaOS: Pixel7 半自律監視（自動切替+週次）ワンボタン」
