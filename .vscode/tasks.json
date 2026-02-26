@@ -203,6 +203,25 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: R12 Health Watch 運用チェック（JSON）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/check_r12_health_watch_quick.ps1",
+        "-Json",
+        "-JsonOutFile",
+        "${workspaceFolder}/logs/r12_health_watch_check.latest.json"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: R12 Health Watch 運用クリーンアップ（ワンボタン）",
       "dependsOn": [
         "ManaOS: R12 Health Watch 解除→未登録確認（ワンボタン）"
@@ -226,7 +245,7 @@
     {
       "label": "ManaOS: R12+RL 運用チェック（ワンボタン）",
       "dependsOn": [
-        "ManaOS: R12 Health Watch 運用チェック（状態+ログ末尾）",
+        "ManaOS: R12 Health Watch 運用チェック（JSON）",
         "ManaOS: RLAnything ブートストラップ タスク状態確認"
       ],
       "dependsOrder": "sequence",
@@ -241,6 +260,59 @@
         "ManaOS: RLAnything ブートストラップ 解除→未登録確認（ワンボタン）"
       ],
       "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: R12+RL 運用セットアップ（直実行）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/setup_r12_rl_ops.ps1",
+        "-R12IntervalMinutes",
+        "15",
+        "-RLIntervalMinutes",
+        "15",
+        "-RunNow"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: R12+RL 運用チェック（直実行）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_r12_rl_ops.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: R12+RL 運用クリーンアップ（直実行）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/cleanup_r12_rl_ops.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true },
       "group": "none"
