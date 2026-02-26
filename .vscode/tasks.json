@@ -236,7 +236,7 @@
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        "${workspaceFolder}/check_manaos_scheduled_tasks_health.ps1"
+        "${workspaceFolder}/monitor_manaos_scheduled_tasks_health.ps1"
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
@@ -252,7 +252,7 @@
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        "${workspaceFolder}/check_manaos_scheduled_tasks_health.ps1",
+        "${workspaceFolder}/monitor_manaos_scheduled_tasks_health.ps1",
         "-Json"
       ],
       "options": { "cwd": "${workspaceFolder}" },

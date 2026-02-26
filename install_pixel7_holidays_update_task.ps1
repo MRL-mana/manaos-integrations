@@ -3,6 +3,8 @@ param(
     [string]$StartTime = "03:30",
     [string]$Month = "DEC",
     [int]$Day = 25,
+    [switch]$RunAsSystem,
+    [switch]$KeepBatteryRestrictions,
     [switch]$RunNow,
     [switch]$PrintOnly
 )
@@ -28,9 +30,42 @@ if ($monthUpper -notin $validMonths) {
 
 $taskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$jobScript`" -IncludeNextYear"
 
+function Set-TaskBatteryPolicy {
+    param(
+        [string]$InTaskName,
+        [switch]$Skip
+    )
+
+    if ($Skip.IsPresent) {
+        Write-Host "[INFO] Keep battery restrictions enabled" -ForegroundColor DarkGray
+        return
+    }
+
+    try {
+        $service = New-Object -ComObject 'Schedule.Service'
+        $service.Connect()
+        $root = $service.GetFolder('\\')
+        $task = $root.GetTask($InTaskName)
+        if ($null -eq $task) {
+            Write-Host "[WARN] Task not found for battery policy update: $InTaskName" -ForegroundColor Yellow
+            return
+        }
+
+        $definition = $task.Definition
+        $definition.Settings.DisallowStartIfOnBatteries = $false
+        $definition.Settings.StopIfGoingOnBatteries = $false
+        $definition.Settings.WakeToRun = $true
+        $null = $root.RegisterTaskDefinition($InTaskName, $definition, 6, $null, $null, $task.Definition.Principal.LogonType, $null)
+        Write-Host "[OK] Battery policy relaxed (start/continue on battery, wake enabled)" -ForegroundColor Green
+    } catch {
+        Write-Host "[WARN] Failed to update battery policy: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+}
+
 Write-Host "=== Register Pixel7 Holiday Update Task ===" -ForegroundColor Cyan
 Write-Host "TaskName : $TaskName" -ForegroundColor Gray
 Write-Host "Schedule : MONTHLY $monthUpper/$Day $StartTime" -ForegroundColor Gray
+Write-Host "Account  : $(if ($RunAsSystem.IsPresent) { 'SYSTEM' } else { $env:USERNAME })" -ForegroundColor Gray
 Write-Host "Script   : $jobScript" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 
@@ -39,10 +74,16 @@ if ($PrintOnly) {
     exit 0
 }
 
-schtasks /Create /SC MONTHLY /M $monthUpper /D $Day /TN $TaskName /TR $taskRun /ST $StartTime /F | Out-Null
+$createArgs = @('/Create', '/SC', 'MONTHLY', '/M', $monthUpper, '/D', "$Day", '/TN', $TaskName, '/TR', $taskRun, '/ST', $StartTime, '/F')
+if ($RunAsSystem.IsPresent) {
+    $createArgs += @('/RU', 'SYSTEM', '/RL', 'HIGHEST')
+}
+schtasks @createArgs | Out-Null
 if ($LASTEXITCODE -ne 0) {
     throw "Failed to create scheduled task (exit=$LASTEXITCODE)"
 }
+
+Set-TaskBatteryPolicy -InTaskName $TaskName -Skip:$KeepBatteryRestrictions
 
 Write-Host "[OK] Scheduled task created: $TaskName" -ForegroundColor Green
 schtasks /Query /TN $TaskName /V /FO LIST

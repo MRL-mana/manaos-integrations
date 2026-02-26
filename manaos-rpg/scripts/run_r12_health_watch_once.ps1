@@ -1,5 +1,7 @@
 param(
     [string]$BaseUrl = 'http://127.0.0.1:9510',
+    [int]$MaxJsonLogSizeMB = 20,
+    [int]$MaxJsonLogFiles = 5,
     [ValidateSet('generic','slack','discord')]
     [string]$WebhookFormat = 'discord',
     [string]$WebhookUrl = '',
@@ -28,6 +30,8 @@ $forward = @(
     '-Once',
     '-FailOnError',
     '-JsonLogPath', $logPath,
+    '-MaxJsonLogSizeMB', "$MaxJsonLogSizeMB",
+    '-MaxJsonLogFiles', "$MaxJsonLogFiles",
     '-WebhookFormat', $WebhookFormat
 )
 

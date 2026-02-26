@@ -5,6 +5,8 @@ param(
 	[switch]$Once,
 	[switch]$FailOnError,
 	[string]$JsonLogPath = '',
+	[int]$MaxJsonLogSizeMB = 20,
+	[int]$MaxJsonLogFiles = 5,
 	[ValidateSet('generic','slack','discord')]
 	[string]$WebhookFormat = 'discord',
 	[string]$WebhookUrl = '',
@@ -67,6 +69,8 @@ function Invoke-R12Check {
 function Write-JsonLine {
 	param(
 		[string]$Path,
+		[int]$MaxSizeMB,
+		[int]$MaxFiles,
 		$Obj
 	)
 	if ([string]::IsNullOrWhiteSpace($Path)) { return }
@@ -74,6 +78,27 @@ function Write-JsonLine {
 	if ($dir -and -not (Test-Path $dir)) {
 		New-Item -ItemType Directory -Force -Path $dir | Out-Null
 	}
+
+	if ($MaxSizeMB -gt 0 -and $MaxFiles -gt 0 -and (Test-Path $Path)) {
+		$maxBytes = [int64]$MaxSizeMB * 1MB
+		$currentBytes = (Get-Item $Path).Length
+		if ($currentBytes -ge $maxBytes) {
+			for ($index = $MaxFiles - 1; $index -ge 1; $index--) {
+				$src = "$Path.$index"
+				$dst = "$Path.$($index + 1)"
+				if (Test-Path $src) {
+					if ($index -eq $MaxFiles - 1) {
+						Remove-Item -Force $src
+					} else {
+						Move-Item -Force $src $dst
+					}
+				}
+			}
+			Move-Item -Force $Path "$Path.1"
+			Write-Host "[INFO] Rotated log: $Path" -ForegroundColor DarkGray
+		}
+	}
+
 	($Obj | ConvertTo-Json -Depth 8 -Compress) | Add-Content -Encoding UTF8 -Path $Path
 }
 
@@ -161,7 +186,7 @@ while ($true) {
 	$loop++
 	Write-Host "=== Round12 Health Watch (loop=$loop) ===" -ForegroundColor Yellow
 	$res = Invoke-R12Check -Base $BaseUrl
-	Write-JsonLine -Path $JsonLogPath -Obj $res
+	Write-JsonLine -Path $JsonLogPath -MaxSizeMB $MaxJsonLogSizeMB -MaxFiles $MaxJsonLogFiles -Obj $res
 
 	$shouldNotify = ($res.failed -gt 0) -or ($NotifyOnSuccess -and $res.failed -eq 0)
 	if ($shouldNotify -and -not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
