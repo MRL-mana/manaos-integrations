@@ -163,6 +163,13 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
     - 解除: `uninstall_pixel7_holidays_update_guard_task.ps1`
     - タスク: 「ManaOS: Pixel7 祝日更新ガードタスク登録（月次）」 / 「ManaOS: Pixel7 祝日更新ガードタスク状態確認」 / 「ManaOS: Pixel7 祝日更新ガードタスク解除」
     - 権限不足で `HIGHEST` 登録に失敗した場合は、自動で `LIMITED` へフォールバックして登録
+  - R12健全性監視（5分間隔）
+    - 登録: `install_r12_health_watch_task.ps1`
+    - 状態: `status_r12_health_watch_task.ps1`
+    - 解除: `uninstall_r12_health_watch_task.ps1`
+    - 実体: `manaos-rpg/scripts/run_r12_health_watch.ps1`（タスクからは `run_r12_health_watch_once.ps1` を呼び出し）
+    - ログ: `logs/r12_health_watch_task.jsonl`
+    - 例: `pwsh -File .\install_r12_health_watch_task.ps1 -RunNow`
 - 「ManaOS: Pixel7 外出モード 半自律監視開始（自動切替+週次しきい値）」
   - 上記に `-RemoteOnly` を付与した外出モード
 - 「ManaOS: Pixel7 半自律監視（自動切替+週次）ワンボタン」

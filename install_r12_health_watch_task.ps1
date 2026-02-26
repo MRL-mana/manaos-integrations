@@ -12,8 +12,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$jobScript = Join-Path $scriptDir "manaos-rpg\scripts\run_r12_health_watch.ps1"
-$logPath = Join-Path $scriptDir "logs\r12_health_watch_task.jsonl"
+$jobScript = Join-Path $scriptDir "manaos-rpg\scripts\run_r12_health_watch_once.ps1"
 
 if (-not (Test-Path $jobScript)) {
     throw "Job script not found: $jobScript"
@@ -23,14 +22,13 @@ if ($IntervalMinutes -lt 1 -or $IntervalMinutes -gt 1440) {
     throw "IntervalMinutes must be 1..1440"
 }
 
-$taskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$jobScript`" -BaseUrl `"$BaseUrl`" -Once -FailOnError -JsonLogPath `"$logPath`""
+$taskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$jobScript`" -BaseUrl `"$BaseUrl`""
 
 Write-Host "=== Register R12 Health Watch Task ===" -ForegroundColor Cyan
 Write-Host "TaskName : $TaskName" -ForegroundColor Gray
 Write-Host "Schedule : MINUTE /MO $IntervalMinutes" -ForegroundColor Gray
 Write-Host "RunLevel : $RunLevel" -ForegroundColor Gray
 Write-Host "Script   : $jobScript" -ForegroundColor Gray
-Write-Host "LogPath  : $logPath" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 
 if ($PrintOnly) {
