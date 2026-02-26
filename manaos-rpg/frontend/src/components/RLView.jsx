@@ -75,6 +75,9 @@ export default function RLView({ rl, apiBase }) {
   const [causalData, setCausalData] = useState(null)
   const [causalAttrs, setCausalAttrs] = useState(null)
   const [causalGraph, setCausalGraph] = useState(null)
+  const [counterfactualTaskId, setCounterfactualTaskId] = useState('')
+  const [counterfactualTools, setCounterfactualTools] = useState('read_file')
+  const [counterfactualOut, setCounterfactualOut] = useState('')
 
   async function fetchLiveDashboard() {
     if (busyOp) return
@@ -606,6 +609,32 @@ export default function RLView({ rl, apiBase }) {
     if (busyOp) return; setBusyOp('causalGraph')
     try { const r = await fetchJson('/api/rl/causal/graph'); if (r?.ok) setCausalGraph(r) }
     catch (e) { console.warn('fetchCausalGraph:', e) } finally { setBusyOp('') }
+  }
+  async function runCausalCounterfactual() {
+    if (busyOp) return
+    setBusyOp('causalCf')
+    try {
+      const taskId = counterfactualTaskId.trim()
+      if (!taskId) {
+        setCounterfactualOut('ERR: task_id が必要です')
+        return
+      }
+      const removeTools = counterfactualTools
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+      const res = await fetch(`${apiBase}/api/rl/causal/counterfactual`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_id: taskId, remove_tools: removeTools })
+      })
+      const data = await res.json().catch(() => ({}))
+      setCounterfactualOut(JSON.stringify(data, null, 2))
+    } catch (e) {
+      setCounterfactualOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
   }
 
   return (
@@ -1923,6 +1952,21 @@ export default function RLView({ rl, apiBase }) {
               ) : null}
             </div>
           ) : null}
+
+          <div className="mt8">
+            <div className="small mb4">Counterfactual</div>
+            <div className="kv"><span>TASK ID</span>
+              <span><input className="input inputFlush" value={counterfactualTaskId} onChange={(e) => setCounterfactualTaskId(e.target.value)} placeholder="r11-0" aria-label="counterfactual task id" /></span>
+            </div>
+            <div className="kv"><span>REMOVE TOOLS</span>
+              <span><input className="input inputFlush" value={counterfactualTools} onChange={(e) => setCounterfactualTools(e.target.value)} placeholder="read_file,create_file" aria-label="counterfactual remove tools" /></span>
+            </div>
+            <div className="btnRow">
+              <button disabled={!!busyOp} onClick={runCausalCounterfactual}>{busyOp === 'causalCf' ? '…' : 'Run Counterfactual'}</button>
+              {counterfactualOut ? <button disabled={!!busyOp} onClick={() => setCounterfactualOut('')}>Clear</button> : null}
+            </div>
+            {counterfactualOut ? <OutputBlock text={counterfactualOut} onClear={() => setCounterfactualOut('')} /> : null}
+          </div>
         </Box>
       </div>
 
