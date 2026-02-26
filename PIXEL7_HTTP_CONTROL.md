@@ -180,6 +180,9 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
       - ワンボタン: 「ManaOS: R12 Health Watch 登録→状態確認（ワンボタン）」 / 「ManaOS: R12 Health Watch 解除→未登録確認（ワンボタン）」
       - 統合ワンボタン: 「ManaOS: R12 Health Watch 運用セットアップ（ワンボタン）」 / 「ManaOS: R12 Health Watch 運用クリーンアップ（ワンボタン）」
       - 運用チェック: 「ManaOS: R12 Health Watch 運用チェック（状態+ログ末尾）」
+      - JSONチェック: 「ManaOS: R12 Health Watch 運用チェック（JSON）」
+        - 出力: `logs/r12_health_watch_check.latest.json`
+        - 正常時は1行要約のみ、異常時のみ赤字要約 + タスク生ログ + ログ末尾20件を表示
     - 実体: `manaos-rpg/scripts/run_r12_health_watch.ps1`（タスクからは `run_r12_health_watch_once.ps1` を呼び出し）
     - ログ: `logs/r12_health_watch_task.jsonl`
       - ローテーション: `-MaxJsonLogSizeMB`（既定20MB）/ `-MaxJsonLogFiles`（既定5世代）
