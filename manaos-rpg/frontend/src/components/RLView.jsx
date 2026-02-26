@@ -45,6 +45,15 @@ export default function RLView({ rl, apiBase }) {
   const [ensembleDecision, setEnsembleDecision] = useState(null)
   const [diversityData, setDiversityData] = useState(null)
 
+  // Round 9 state
+  const [curiosityData, setCuriosityData] = useState(null)
+  const [noveltyMap, setNoveltyMap] = useState(null)
+  const [hierarchicalData, setHierarchicalData] = useState(null)
+  const [hierarchicalDecision, setHierarchicalDecision] = useState(null)
+  const [safetyData, setSafetyData] = useState(null)
+  const [safetyCheck, setSafetyCheck] = useState(null)
+  const [safetyViolations, setSafetyViolations] = useState(null)
+
   async function fetchLiveDashboard() {
     if (busyOp) return
     setLiveErr('')
@@ -370,6 +379,77 @@ export default function RLView({ rl, apiBase }) {
       const r = await fetchJson('/api/rl/ensemble/diversity')
       if (r?.ok) setDiversityData(r)
     } catch (e) { console.warn('fetchDiversity:', e) }
+    finally { setBusyOp('') }
+  }
+
+  // Round 9 fetchers
+  async function fetchCuriosity() {
+    if (busyOp) return
+    setBusyOp('curiosity')
+    try {
+      const r = await fetchJson('/api/rl/curiosity/stats')
+      if (r?.ok) setCuriosityData(r)
+    } catch (e) { console.warn('fetchCuriosity:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchNoveltyMap() {
+    if (busyOp) return
+    setBusyOp('noveltyMap')
+    try {
+      const r = await fetchJson('/api/rl/curiosity/novelty-map')
+      if (r?.ok) setNoveltyMap(r)
+    } catch (e) { console.warn('fetchNoveltyMap:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchHierarchical() {
+    if (busyOp) return
+    setBusyOp('hierarchical')
+    try {
+      const r = await fetchJson('/api/rl/hierarchical/stats')
+      if (r?.ok) setHierarchicalData(r)
+    } catch (e) { console.warn('fetchHierarchical:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchHierarchicalDecide() {
+    if (busyOp) return
+    setBusyOp('hDecide')
+    try {
+      const r = await fetchJson('/api/rl/hierarchical/decide')
+      if (r?.ok) setHierarchicalDecision(r)
+    } catch (e) { console.warn('fetchHierarchicalDecide:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchSafety() {
+    if (busyOp) return
+    setBusyOp('safety')
+    try {
+      const r = await fetchJson('/api/rl/safety/stats')
+      if (r?.ok) setSafetyData(r)
+    } catch (e) { console.warn('fetchSafety:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchSafetyCheck() {
+    if (busyOp) return
+    setBusyOp('safetyCheck')
+    try {
+      const r = await fetchJson('/api/rl/safety/check')
+      if (r?.ok) setSafetyCheck(r)
+    } catch (e) { console.warn('fetchSafetyCheck:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchSafetyViolations() {
+    if (busyOp) return
+    setBusyOp('violations')
+    try {
+      const r = await fetchJson('/api/rl/safety/violations')
+      if (r?.ok) setSafetyViolations(r)
+    } catch (e) { console.warn('fetchSafetyViolations:', e) }
     finally { setBusyOp('') }
   }
 
@@ -1176,6 +1256,221 @@ export default function RLView({ rl, apiBase }) {
             </div>
           ) : null}
         </div>
+      </div>
+
+      {/* ── Round 9: Curiosity Explorer ── */}
+      <div className="section mt12">
+        <div className="sectionTitle">🔍 好奇心駆動探索 (Curiosity Explorer)</div>
+        <div className="actions">
+          <button className="link" onClick={fetchCuriosity} disabled={!!busyOp}>{busyOp === 'curiosity' ? '取得中…' : '📊 統計取得'}</button>
+          <button className="link" onClick={fetchNoveltyMap} disabled={!!busyOp}>{busyOp === 'noveltyMap' ? '取得中…' : '🗺️ 新規性マップ'}</button>
+        </div>
+        <div className="statsGrid mt8">
+          {curiosityData ? (
+            <>
+              <div className="kv"><span>総訪問数</span><span className="mono">{curiosityData.total_visits ?? 0}</span></div>
+              <div className="kv"><span>ユニーク状態</span><span className="mono">{curiosityData.unique_states ?? 0}</span></div>
+              <div className="kv"><span>新規発見</span><span className="mono ok">{curiosityData.novel_discoveries ?? 0}</span></div>
+              <div className="kv"><span>探索率</span><span className="mono">{((curiosityData.exploration_rate || 0) * 100).toFixed(1)}%</span></div>
+              <div className="kv"><span>平均新規性</span><span className="mono">{Number(curiosityData.recent_avg_novelty || 0).toFixed(4)}</span></div>
+              <div className="kv"><span>平均好奇心</span><span className="mono">{Number(curiosityData.recent_avg_curiosity || 0).toFixed(4)}</span></div>
+            </>
+          ) : <div className="muted small">未取得</div>}
+        </div>
+        {curiosityData?.budget ? (
+          <div className="mt8">
+            <div className="small mb4">探索バジェット</div>
+            <div className="statsGrid">
+              <div className="kv"><span>使用済</span><span className="mono">{curiosityData.budget.used}/{curiosityData.budget.total}</span></div>
+              <div className="kv"><span>効率</span><span className={`mono ${(curiosityData.budget.efficiency || 0) >= 0.3 ? 'ok' : 'caution'}`}>{((curiosityData.budget.efficiency || 0) * 100).toFixed(1)}%</span></div>
+              <div className="kv"><span>浪費</span><span className={`mono ${(curiosityData.budget.wasted || 0) > 10 ? 'caution' : ''}`}>{curiosityData.budget.wasted}</span></div>
+            </div>
+          </div>
+        ) : null}
+        {curiosityData?.recommendations?.length > 0 ? (
+          <div className="mt8">
+            <div className="small mb4">探索推薦 (Top 5)</div>
+            <table className="statsTable">
+              <thead><tr><th>状態Hash</th><th>優先度</th><th>訪問数</th><th>新規性</th></tr></thead>
+              <tbody>
+                {curiosityData.recommendations.map((r, i) => (
+                  <tr key={i}>
+                    <td className="mono small">{r.state_hash}</td>
+                    <td className="mono">{Number(r.priority).toFixed(2)}</td>
+                    <td className="mono">{r.visit_count}</td>
+                    <td className="mono">{Number(r.novelty).toFixed(3)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+        {noveltyMap ? (
+          <div className="mt8">
+            <div className="small mb4">新規性マップ ({noveltyMap.total_states ?? 0} 状態)</div>
+            <div className="statsGrid">
+              <div className="kv"><span>既知</span><span className="mono">{noveltyMap.familiar_count ?? 0}</span></div>
+              <div className="kv"><span>新規</span><span className="mono ok">{noveltyMap.novel_count ?? 0}</span></div>
+              <div className="kv"><span>カバレッジ</span><span className="mono">{((noveltyMap.coverage || 0) * 100).toFixed(1)}%</span></div>
+            </div>
+            {noveltyMap.states?.length > 0 ? (
+              <table className="statsTable mt4">
+                <thead><tr><th>Hash</th><th>訪問</th><th>新規性</th><th>平均報酬</th><th>状態</th></tr></thead>
+                <tbody>
+                  {noveltyMap.states.slice(0, 10).map((s, i) => (
+                    <tr key={i}>
+                      <td className="mono small">{s.state_hash}</td>
+                      <td className="mono">{s.visit_count}</td>
+                      <td className="mono">{Number(s.novelty).toFixed(3)}</td>
+                      <td className="mono">{Number(s.avg_reward).toFixed(3)}</td>
+                      <td>{s.is_familiar ? '🔵 既知' : '🟢 新規'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      {/* ── Round 9: Hierarchical Policy ── */}
+      <div className="section mt12">
+        <div className="sectionTitle">🏛️ 階層型方策 (Hierarchical Policy)</div>
+        <div className="actions">
+          <button className="link" onClick={fetchHierarchical} disabled={!!busyOp}>{busyOp === 'hierarchical' ? '取得中…' : '📊 統計取得'}</button>
+          <button className="link" onClick={fetchHierarchicalDecide} disabled={!!busyOp}>{busyOp === 'hDecide' ? '実行中…' : '⚡ 意思決定'}</button>
+        </div>
+        {hierarchicalData ? (
+          <div className="mt8">
+            <div className="statsGrid">
+              <div className="kv"><span>総決定数</span><span className="mono">{hierarchicalData.total_decisions ?? 0}</span></div>
+              <div className="kv"><span>Option切替</span><span className="mono">{hierarchicalData.option_switches ?? 0}</span></div>
+              <div className="kv"><span>Option数</span><span className="mono">{hierarchicalData.option_count ?? 0}</span></div>
+            </div>
+            {hierarchicalData.active_option ? (
+              <div className="mt4">
+                <div className="small mb4">アクティブOption</div>
+                <div className="statsGrid">
+                  <div className="kv"><span>名前</span><span className="mono ok">{hierarchicalData.active_option.name}</span></div>
+                  <div className="kv"><span>ステップ</span><span className="mono">{hierarchicalData.active_option.active_steps ?? 0}</span></div>
+                  <div className="kv"><span>成功率</span><span className="mono">{((hierarchicalData.active_option.success_rate || 0) * 100).toFixed(0)}%</span></div>
+                </div>
+              </div>
+            ) : null}
+            {hierarchicalData.options?.length > 0 ? (
+              <div className="mt8">
+                <div className="small mb4">Options一覧</div>
+                <table className="statsTable">
+                  <thead><tr><th>名前</th><th>選択回数</th><th>平均報酬</th><th>成功率</th><th>Weight</th></tr></thead>
+                  <tbody>
+                    {hierarchicalData.options.map((o, i) => (
+                      <tr key={i}>
+                        <td>{o.name}</td>
+                        <td className="mono">{o.times_selected}</td>
+                        <td className="mono">{Number(o.avg_reward).toFixed(3)}</td>
+                        <td className="mono">{((o.success_rate || 0) * 100).toFixed(0)}%</td>
+                        <td className="mono">{Number(o.manager_weight).toFixed(3)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+          </div>
+        ) : <div className="muted small mt8">未取得</div>}
+        {hierarchicalDecision ? (
+          <div className="mt8">
+            <div className="small mb4">最新決定</div>
+            <div className="statsGrid">
+              <div className="kv"><span>Option</span><span className="mono ok">{hierarchicalDecision.option_name ?? '—'}</span></div>
+              <div className="kv"><span>行動</span><span className="mono">{hierarchicalDecision.action ?? '—'}</span></div>
+              <div className="kv"><span>レベル</span><span className="mono">{hierarchicalDecision.level ?? '—'}</span></div>
+              <div className="kv"><span>信頼度</span><span className="mono">{((hierarchicalDecision.confidence || 0) * 100).toFixed(0)}%</span></div>
+              <div className="kv"><span>終了判定</span><span className="mono">{hierarchicalDecision.should_terminate ? '✅ 終了' : '継続中'}</span></div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {/* ── Round 9: Safety Constraints ── */}
+      <div className="section mt12">
+        <div className="sectionTitle">🛡️ 安全制約 (Safety Constraints)</div>
+        <div className="actions">
+          <button className="link" onClick={fetchSafety} disabled={!!busyOp}>{busyOp === 'safety' ? '取得中…' : '📊 統計取得'}</button>
+          <button className="link" onClick={fetchSafetyCheck} disabled={!!busyOp}>{busyOp === 'safetyCheck' ? 'チェック中…' : '🔍 安全チェック'}</button>
+          <button className="link" onClick={fetchSafetyViolations} disabled={!!busyOp}>{busyOp === 'violations' ? '取得中…' : '⚠️ 違反履歴'}</button>
+        </div>
+        {safetyData ? (
+          <div className="mt8">
+            <div className="statsGrid">
+              <div className="kv"><span>安全スコア</span><span className={`mono ${(safetyData.safety_score || 0) >= 0.7 ? 'ok' : (safetyData.safety_score || 0) >= 0.4 ? 'caution' : 'error'}`}>{((safetyData.safety_score || 0) * 100).toFixed(0)}%</span></div>
+              <div className="kv"><span>チェック数</span><span className="mono">{safetyData.total_checks ?? 0}</span></div>
+              <div className="kv"><span>総違反数</span><span className={`mono ${(safetyData.total_violations || 0) > 0 ? 'caution' : ''}`}>{safetyData.total_violations ?? 0}</span></div>
+              <div className="kv"><span>ペナルティ合計</span><span className="mono">{Number(safetyData.total_penalties || 0).toFixed(3)}</span></div>
+              <div className="kv"><span>Hard制約</span><span className="mono">{safetyData.hard_constraints ?? 0}</span></div>
+              <div className="kv"><span>Soft制約</span><span className="mono">{safetyData.soft_constraints ?? 0}</span></div>
+            </div>
+            {safetyData.constraints && Object.keys(safetyData.constraints).length > 0 ? (
+              <div className="mt8">
+                <div className="small mb4">制約一覧</div>
+                <table className="statsTable">
+                  <thead><tr><th>名前</th><th>種別</th><th>メトリクス</th><th>条件</th><th>違反数</th><th>状態</th></tr></thead>
+                  <tbody>
+                    {Object.entries(safetyData.constraints).map(([cid, c]) => (
+                      <tr key={cid}>
+                        <td>{c.name}</td>
+                        <td className="mono small">{c.constraint_type}</td>
+                        <td className="mono small">{c.metric}</td>
+                        <td className="mono small">{c.operator} {c.threshold}</td>
+                        <td className={`mono ${(c.violation_count || 0) > 0 ? 'caution' : ''}`}>{c.violation_count ?? 0}</td>
+                        <td>{c.last_check_status === 'ok' ? '✅' : c.last_check_status === 'warning' ? '⚠️' : c.last_check_status === 'violated' ? '🚫' : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+          </div>
+        ) : <div className="muted small mt8">未取得</div>}
+        {safetyCheck ? (
+          <div className="mt8">
+            <div className="small mb4">チェック結果</div>
+            <div className="statsGrid">
+              <div className="kv"><span>安全</span><span className={`mono ${safetyCheck.safe ? 'ok' : 'error'}`}>{safetyCheck.safe ? '✅ 安全' : '🚫 危険'}</span></div>
+              <div className="kv"><span>ペナルティ</span><span className="mono">{Number(safetyCheck.total_penalty || 0).toFixed(3)}</span></div>
+              <div className="kv"><span>違反</span><span className={`mono ${(safetyCheck.violations?.length || 0) > 0 ? 'error' : ''}`}>{safetyCheck.violations?.length ?? 0}</span></div>
+              <div className="kv"><span>警告</span><span className={`mono ${(safetyCheck.warnings?.length || 0) > 0 ? 'caution' : ''}`}>{safetyCheck.warnings?.length ?? 0}</span></div>
+            </div>
+            {safetyCheck.recovery?.length > 0 ? (
+              <div className="mt4">
+                <div className="small mb4">回復提案</div>
+                {safetyCheck.recovery.map((r, i) => (
+                  <div key={i} className="kv"><span className="small">P{r.priority}: {r.action}</span><span className="mono small">{r.reason}</span></div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        {safetyViolations?.violations?.length > 0 ? (
+          <div className="mt8">
+            <div className="small mb4">違反履歴 (直近{safetyViolations.total}件)</div>
+            <table className="statsTable">
+              <thead><tr><th>制約</th><th>種別</th><th>実測値</th><th>閾値</th><th>深刻度</th><th>Cycle</th></tr></thead>
+              <tbody>
+                {safetyViolations.violations.slice(-10).map((v, i) => (
+                  <tr key={i}>
+                    <td>{v.constraint_name}</td>
+                    <td className="mono small">{v.constraint_type}</td>
+                    <td className="mono">{Number(v.actual_value).toFixed(3)}</td>
+                    <td className="mono">{Number(v.threshold).toFixed(3)}</td>
+                    <td className={v.severity === 'violation' ? 'error' : v.severity === 'critical' ? 'error' : 'caution'}>{v.severity}</td>
+                    <td className="mono">{v.cycle}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
       </div>
 
       <div className="small mt12">

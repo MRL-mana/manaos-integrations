@@ -52,6 +52,9 @@ from .meta_controller import MetaController
 from .multi_objective import MultiObjectiveOptimizer
 from .transfer_learning import TransferLearning
 from .ensemble_policy import EnsemblePolicy
+from .curiosity_explorer import CuriosityExplorer
+from .hierarchical_policy import HierarchicalPolicy
+from .safety_constraint import SafetyConstraintManager
 
 _DIR = Path(__file__).parent
 _STATE_DIR = _DIR.parent / "logs" / "rl_anything"
@@ -161,6 +164,18 @@ class RLAnythingOrchestrator:
         ep_persist = state_dir / "ensemble_policy.json"
         self.ensemble_policy = EnsemblePolicy(n_members=3, persist_path=ep_persist)
 
+        # Curiosity Explorer (Round 9)
+        ce_persist = state_dir / "curiosity_explorer.json"
+        self.curiosity = CuriosityExplorer(persist_path=ce_persist, config=cfg)
+
+        # Hierarchical Policy (Round 9)
+        hp_persist = state_dir / "hierarchical_policy.json"
+        self.hierarchical = HierarchicalPolicy(persist_path=hp_persist, config=cfg)
+
+        # Safety Constraint Manager (Round 9)
+        sc_persist = state_dir / "safety_constraint.json"
+        self.safety = SafetyConstraintManager(persist_path=sc_persist, config=cfg)
+
     # ═══════════════════════════════════════════════════════
     # Prometheus メトリクス初期化
     # ═══════════════════════════════════════════════════════
@@ -183,6 +198,11 @@ class RLAnythingOrchestrator:
         self.prom.register("rl_transfer_count", "counter", "Knowledge transfer events")
         self.prom.register("rl_ensemble_decisions", "counter", "Ensemble policy decisions")
         self.prom.register("rl_ensemble_agreement", "histogram", "Ensemble agreement distribution")
+        self.prom.register("rl_curiosity_bonus", "histogram", "Curiosity bonus distribution")
+        self.prom.register("rl_novel_states", "gauge", "Total novel state discoveries")
+        self.prom.register("rl_option_switches", "counter", "Hierarchical option switches")
+        self.prom.register("rl_safety_violations", "counter", "Safety constraint violations")
+        self.prom.register("rl_safety_score", "gauge", "Overall safety score")
 
     # ═══════════════════════════════════════════════════════
     # タスクライフサイクル
@@ -485,6 +505,59 @@ class RLAnythingOrchestrator:
         except Exception as e:
             _log.warning("ensemble policy error: %s", e)
 
+        # ──── Curiosity Exploration (Round 9) ────
+        try:
+            tools_used = [a.tool_name for a in (record.actions if hasattr(record, 'actions') else [])]
+            domain = result.get("transfer_domain", "unknown")
+            state_hash = CuriosityExplorer.hash_state(
+                difficulty=self.evolution.current_difficulty.value,
+                outcome=outcome,
+                tool_names=tools_used,
+                domain=domain,
+            )
+            signal = self.curiosity.observe(state_hash, score, self._cycle_count)
+            self.prom.observe("rl_curiosity_bonus", signal.curiosity_bonus)
+            self.prom.set("rl_novel_states", float(self.curiosity._novel_count))
+            result["curiosity"] = signal.to_dict()
+        except Exception as e:
+            _log.warning("curiosity explorer error: %s", e)
+
+        # ──── Hierarchical Policy Decision (Round 9) ────
+        try:
+            h_decision = self.hierarchical.decide(
+                difficulty=self.evolution.current_difficulty.value,
+                cycle=self._cycle_count,
+            )
+            self.hierarchical.update_reward(score, outcome)
+            if h_decision.should_terminate:
+                self.prom.inc("rl_option_switches")
+            result["hierarchical"] = h_decision.to_dict()
+        except Exception as e:
+            _log.warning("hierarchical policy error: %s", e)
+
+        # ──── Safety Constraint Check (Round 9) ────
+        try:
+            exploration_rate = self.curiosity.get_stats().get("exploration_rate", 0.5)
+            safety_metrics = SafetyConstraintManager.extract_metrics(history, exploration_rate)
+            safety_result = self.safety.check_all(safety_metrics, self._cycle_count)
+            self.prom.set("rl_safety_score", self.safety.get_safety_score())
+            if not safety_result["safe"]:
+                self.prom.inc("rl_safety_violations")
+                self._emit_event("safety_violation", {
+                    "violations": safety_result["violations"],
+                    "recovery": safety_result["recovery"],
+                    "cycle": self._cycle_count,
+                })
+            result["safety"] = {
+                "safe": safety_result["safe"],
+                "total_penalty": safety_result["total_penalty"],
+                "violation_count": len(safety_result["violations"]),
+                "warning_count": len(safety_result["warnings"]),
+                "recovery": safety_result["recovery"],
+            }
+        except Exception as e:
+            _log.warning("safety constraint error: %s", e)
+
         return result
 
     # ═══════════════════════════════════════════════════════
@@ -643,6 +716,64 @@ class RLAnythingOrchestrator:
     def get_ensemble_diversity(self) -> Dict[str, Any]:
         """メンバー間の多様性指標"""
         return self.ensemble_policy.get_diversity()
+
+    # ═══════════════════════════════════════════════════════
+    # Round 9: Curiosity / Hierarchical / Safety
+    # ═══════════════════════════════════════════════════════
+    def get_curiosity_stats(self) -> Dict[str, Any]:
+        """好奇心探索の統計"""
+        stats = self.curiosity.get_stats()
+        recent = self.curiosity.get_recent_signals(limit=10)
+        recommendations = self.curiosity.recommend_exploration(top_k=5)
+        return {**stats, "recent_signals": recent, "recommendations": recommendations}
+
+    def get_novelty_map(self) -> Dict[str, Any]:
+        """新規性マップ"""
+        return self.curiosity.get_novelty_map()
+
+    def get_hierarchical_stats(self) -> Dict[str, Any]:
+        """階層型方策の統計"""
+        stats = self.hierarchical.get_stats()
+        recent = self.hierarchical.get_recent_decisions(limit=10)
+        performance = self.hierarchical.get_option_performance()
+        return {**stats, "recent_decisions": recent, "option_performance": performance}
+
+    def hierarchical_decide(self, difficulty: Optional[str] = None) -> Dict[str, Any]:
+        """階層的意思決定を実行"""
+        diff = difficulty or self.evolution.current_difficulty.value
+        decision = self.hierarchical.decide(difficulty=diff, cycle=self._cycle_count)
+        if decision.should_terminate:
+            self.prom.inc("rl_option_switches")
+        return decision.to_dict()
+
+    def get_safety_stats(self) -> Dict[str, Any]:
+        """安全制約の統計"""
+        stats = self.safety.get_stats()
+        constraints = self.safety.get_constraints()
+        safety_score = self.safety.get_safety_score()
+        return {**stats, "constraints": constraints, "safety_score": safety_score}
+
+    def check_safety(self) -> Dict[str, Any]:
+        """安全制約をチェック"""
+        history = self.get_history(limit=100)
+        exploration_rate = self.curiosity.get_stats().get("exploration_rate", 0.5)
+        metrics = SafetyConstraintManager.extract_metrics(history, exploration_rate)
+        result = self.safety.check_all(metrics, self._cycle_count)
+        self.prom.set("rl_safety_score", self.safety.get_safety_score())
+        return result
+
+    def get_safety_violations(self, limit: int = 50) -> Dict[str, Any]:
+        """安全違反履歴"""
+        violations = self.safety.get_violation_history(limit=limit)
+        return {
+            "violations": violations,
+            "total": len(violations),
+            "safety_score": self.safety.get_safety_score(),
+        }
+
+    def get_options(self) -> Dict[str, Any]:
+        """階層型Optionsの一覧"""
+        return self.hierarchical.get_options()
 
     # ═══════════════════════════════════════════════════════
     # 自動スコアリング

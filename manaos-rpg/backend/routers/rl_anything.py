@@ -535,3 +535,77 @@ def ensemble_diversity() -> Dict[str, Any]:
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
+
+# ── Round 9 ─────────────────────────────────────────────
+
+@router.get("/curiosity/stats")
+def curiosity_stats() -> Dict[str, Any]:
+    """好奇心探索エンジンの統計"""
+    try:
+        return {"ok": True, **_get_rl().get_curiosity_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/curiosity/novelty-map")
+def curiosity_novelty_map() -> Dict[str, Any]:
+    """新規性マップ"""
+    try:
+        return {"ok": True, **_get_rl().get_novelty_map()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/hierarchical/stats")
+def hierarchical_stats() -> Dict[str, Any]:
+    """階層型方策の統計"""
+    try:
+        return {"ok": True, **_get_rl().get_hierarchical_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/hierarchical/decide")
+def hierarchical_decide(difficulty: Optional[str] = None) -> Dict[str, Any]:
+    """階層的意思決定"""
+    try:
+        return {"ok": True, **_get_rl().hierarchical_decide(difficulty)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/hierarchical/options")
+def hierarchical_options() -> Dict[str, Any]:
+    """階層型Options一覧"""
+    try:
+        return {"ok": True, "options": _get_rl().get_options()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/safety/stats")
+def safety_stats() -> Dict[str, Any]:
+    """安全制約の統計"""
+    try:
+        return {"ok": True, **_get_rl().get_safety_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/safety/check")
+def safety_check() -> Dict[str, Any]:
+    """安全制約をチェック"""
+    try:
+        return {"ok": True, **_get_rl().check_safety()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/safety/violations")
+def safety_violations(limit: int = 50) -> Dict[str, Any]:
+    """安全違反履歴"""
+    try:
+        return {"ok": True, **_get_rl().get_safety_violations(limit)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+

@@ -36,6 +36,9 @@ from rl_anything.meta_controller import MetaController, MetaReport, MetaAdjustme
 from rl_anything.multi_objective import MultiObjectiveOptimizer, Objective, Solution
 from rl_anything.transfer_learning import TransferLearning, DomainProfile, TransferResult
 from rl_anything.ensemble_policy import EnsemblePolicy, PolicyMember, EnsembleDecision
+from rl_anything.curiosity_explorer import CuriosityExplorer, CuriositySignal, StateVisit, ExplorationBudget
+from rl_anything.hierarchical_policy import HierarchicalPolicy, HierarchicalDecision, Option
+from rl_anything.safety_constraint import SafetyConstraintManager, SafetyConstraint, Violation, RecoveryAction
 
 
 def test_types():
@@ -1313,6 +1316,261 @@ def test_orchestrator_with_r8_components():
         print("  [PASS] orchestrator_with_r8_components")
 
 
+def test_curiosity_explorer():
+    """好奇心駆動探索テスト"""
+    with tempfile.TemporaryDirectory() as td:
+        persist = Path(td) / "curiosity.json"
+        ce = CuriosityExplorer(persist_path=persist)
+
+        # 状態ハッシュ
+        h1 = CuriosityExplorer.hash_state(0.5, "success", ["read_file"], "coding")
+        h2 = CuriosityExplorer.hash_state(0.8, "failure", ["write_file"], "testing")
+        assert len(h1) == 16
+        assert h1 != h2
+
+        # 同じパラメータなら同じハッシュ
+        h1a = CuriosityExplorer.hash_state(0.5, "success", ["read_file"], "coding")
+        assert h1 == h1a
+
+        # observe
+        sig1 = ce.observe(h1, 0.7, cycle=1)
+        assert isinstance(sig1, CuriositySignal)
+        assert sig1.is_novel  # 初回は常にnovel
+        assert sig1.curiosity_bonus > 0
+        assert sig1.cycle == 1
+
+        sig2 = ce.observe(h1, 0.8, cycle=2)
+        assert sig2.visit_count >= 2
+        assert sig2.novelty <= sig1.novelty  # 2回目はnovelty低下
+
+        sig3 = ce.observe(h2, 0.3, cycle=3)
+        assert sig3.is_novel  # h2は初回
+
+        # 統計
+        stats = ce.get_stats()
+        assert stats["total_visits"] >= 3
+        assert stats["unique_states"] == 2
+        assert stats["novel_discoveries"] == 2
+
+        # 最近のシグナル
+        recent = ce.get_recent_signals(10)
+        assert len(recent) == 3
+
+        # 新規性マップ
+        nm = ce.get_novelty_map()
+        assert nm["total_states"] == 2
+
+        # 探索推薦
+        recs = ce.recommend_exploration(5)
+        assert len(recs) == 2
+
+        # バジェット
+        assert stats["budget"]["used"] == 3
+
+        # 永続化
+        ce2 = CuriosityExplorer(persist_path=persist)
+        s2 = ce2.get_stats()
+        assert s2["unique_states"] == 2
+
+        print("  [PASS] curiosity_explorer")
+
+
+def test_hierarchical_policy():
+    """階層型方策テスト"""
+    with tempfile.TemporaryDirectory() as td:
+        persist = Path(td) / "hierarchical.json"
+        hp = HierarchicalPolicy(persist_path=persist)
+
+        # デフォルトオプション確認
+        opts = hp.get_options()
+        assert len(opts) >= 4  # consolidate, explore_up, recover, balanced
+
+        # 意思決定
+        d1 = hp.decide(difficulty=0.3, state={"cycle": 1}, cycle=1)
+        assert isinstance(d1, HierarchicalDecision)
+        assert d1.action in ["level_down", "stay", "level_up"]
+        assert d1.level in ["manager", "worker"]
+        assert 0 <= d1.confidence <= 1
+
+        # 報酬更新
+        hp.update_reward(0.8, "success")
+
+        d2 = hp.decide(difficulty=0.7, state={"cycle": 2}, cycle=2)
+        hp.update_reward(0.3, "failure")
+
+        d3 = hp.decide(difficulty=0.5, state={"cycle": 3}, cycle=3)
+        hp.update_reward(0.6, "partial")
+
+        # 統計
+        stats = hp.get_stats()
+        assert stats["total_decisions"] >= 3
+        assert stats["option_count"] >= 4
+
+        # 最近の決定
+        recent = hp.get_recent_decisions(10)
+        assert len(recent) == 3
+
+        # オプションパフォーマンス
+        perf = hp.get_option_performance()
+        assert len(perf) >= 4
+
+        # アクティブオプション
+        active = hp.get_active_option()
+        assert active is not None
+
+        # 永続化
+        hp2 = HierarchicalPolicy(persist_path=persist)
+        s2 = hp2.get_stats()
+        assert s2["total_decisions"] >= 3
+
+        print("  [PASS] hierarchical_policy")
+
+
+def test_safety_constraint():
+    """安全制約テスト"""
+    with tempfile.TemporaryDirectory() as td:
+        persist = Path(td) / "safety.json"
+        sc = SafetyConstraintManager(persist_path=persist)
+
+        # デフォルト制約
+        constraints = sc.get_constraints()
+        assert len(constraints) >= 5
+
+        # メトリクス抽出
+        history = [
+            {"outcome": "success", "score": 0.8},
+            {"outcome": "success", "score": 0.7},
+            {"outcome": "failure", "score": 0.2},
+            {"outcome": "success", "score": 0.9},
+            {"outcome": "partial", "score": 0.5},
+        ]
+        metrics = SafetyConstraintManager.extract_metrics(history, exploration_rate=0.1)
+        assert "success_rate" in metrics
+        assert "avg_score" in metrics
+        assert abs(metrics["success_rate"] - 0.6) < 0.01  # 3/5
+
+        # 安全チェック（安全な状態）
+        result = sc.check_all(metrics, cycle=1)
+        assert "safe" in result
+        assert "total_penalty" in result
+        assert "violations" in result
+
+        # 危険な状態テスト
+        bad_history = [{"outcome": "failure", "score": 0.1}] * 15
+        bad_metrics = SafetyConstraintManager.extract_metrics(bad_history, exploration_rate=0.0)
+        bad_result = sc.check_all(bad_metrics, cycle=2)
+        assert bad_result["safe"] is False or bad_result["total_penalty"] > 0
+
+        # 統計
+        stats = sc.get_stats()
+        assert stats["total_checks"] >= 2
+        assert "safety_score" in stats or "total_violations" in stats
+
+        # 安全スコア
+        score = sc.get_safety_score()
+        assert 0 <= score <= 1
+
+        # 違反履歴
+        vh = sc.get_violation_history(50)
+        assert isinstance(vh, list)
+
+        # 制約の緩和・厳格化
+        cid = list(constraints.keys())[0]
+        sc.relax_constraint(cid, 1.5)
+        relaxed = sc.get_constraints()
+        assert relaxed[cid]["relaxation_factor"] == 1.5
+
+        sc.tighten_constraint(cid, 0.8)
+        tight = sc.get_constraints()
+        assert tight[cid]["relaxation_factor"] == 0.8
+
+        # 永続化
+        sc2 = SafetyConstraintManager(persist_path=persist)
+        s2 = sc2.get_stats()
+        assert s2["total_checks"] >= 2
+
+        print("  [PASS] safety_constraint")
+
+
+def test_orchestrator_with_r9_components():
+    """Round 9 コンポーネント統合テスト"""
+    with tempfile.TemporaryDirectory() as td:
+        cfg_path = Path(td) / "rl_config.json"
+        cfg_path.write_text(json.dumps({
+            "enabled": True,
+            "log_dir": str(Path(td) / "logs"),
+            "difficulty": "standard",
+            "scoring": {
+                "outcome_weight": 0.35,
+                "tool_efficiency_weight": 0.25,
+                "consistency_weight": 0.20,
+                "exploration_weight": 0.10,
+                "difficulty_bonus": 0.10
+            }
+        }))
+
+        rl = RLAnythingOrchestrator(config_path=cfg_path)
+
+        # R9コンポーネント存在確認
+        assert hasattr(rl, 'curiosity')
+        assert hasattr(rl, 'hierarchical')
+        assert hasattr(rl, 'safety')
+        assert isinstance(rl.curiosity, CuriosityExplorer)
+        assert isinstance(rl.hierarchical, HierarchicalPolicy)
+        assert isinstance(rl.safety, SafetyConstraintManager)
+
+        # タスクサイクル
+        rl.begin_task("r9-1", "implement curiosity driven exploration")
+        rl.log_tool("read_file", {"path": "curiosity.py"}, result="code")
+        rl.log_tool("write_file", {"path": "curiosity.py"}, result="implemented")
+        result = rl.end_task("r9-1", outcome="success", score=0.85)
+        assert result["cycle"] >= 1
+
+        rl.begin_task("r9-2", "test hierarchical policy")
+        rl.log_tool("run_tests", {"suite": "hierarchy"}, result="3/3 passed")
+        result2 = rl.end_task("r9-2", outcome="success", score=0.9)
+        assert result2["cycle"] >= 2
+
+        rl.begin_task("r9-3", "fix safety constraint violation")
+        rl.log_tool("read_file", {"path": "safety.py"}, result="constraints")
+        result3 = rl.end_task("r9-3", outcome="partial", score=0.5)
+        assert result3["cycle"] >= 3
+
+        # Curiosity Stats
+        cs = rl.get_curiosity_stats()
+        assert "total_visits" in cs or "unique_states" in cs
+
+        # Novelty Map
+        nm = rl.get_novelty_map()
+        assert "total_states" in nm or "states" in nm
+
+        # Hierarchical Stats
+        hs = rl.get_hierarchical_stats()
+        assert "total_decisions" in hs or "option_count" in hs
+
+        # Hierarchical Decide
+        hd = rl.hierarchical_decide(0.6)
+        assert "action" in hd
+
+        # Options
+        opts = rl.get_options()
+        assert isinstance(opts, list) or isinstance(opts, dict)
+
+        # Safety Stats
+        ss = rl.get_safety_stats()
+        assert "total_checks" in ss or "safety_score" in ss
+
+        # Safety Check
+        sc = rl.check_safety()
+        assert "safe" in sc
+
+        # Safety Violations
+        sv = rl.get_safety_violations(10)
+        assert isinstance(sv, list) or isinstance(sv, dict)
+
+        print("  [PASS] orchestrator_with_r9_components")
+
+
 def main():
     print("=" * 60)
     print("RLAnything テストスイート")
@@ -1345,6 +1603,10 @@ def main():
         ("transfer_learning", test_transfer_learning),
         ("ensemble_policy", test_ensemble_policy),
         ("orchestrator_with_r8_components", test_orchestrator_with_r8_components),
+        ("curiosity_explorer", test_curiosity_explorer),
+        ("hierarchical_policy", test_hierarchical_policy),
+        ("safety_constraint", test_safety_constraint),
+        ("orchestrator_with_r9_components", test_orchestrator_with_r9_components),
     ]
 
     passed = 0
