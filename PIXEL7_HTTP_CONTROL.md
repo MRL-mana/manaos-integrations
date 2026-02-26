@@ -166,6 +166,8 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
     - ワンボタン: 「ManaOS: Pixel7 祝日更新ガード登録→状態確認（ワンボタン）」 / 「ManaOS: Pixel7 祝日更新ガード解除→未登録確認（ワンボタン）」
     - 権限不足で `HIGHEST` 登録に失敗した場合は、自動で `LIMITED` へフォールバックして登録
     - 無人運用が必要な場合は `-RunAsSystem` を付与（ログオン有無に依存しない実行）
+      - 権限不足で `SYSTEM` 登録に失敗した場合は、既定で現在ユーザーに自動フォールバック
+      - `SYSTEM` 固定で失敗時に止めたい場合は `-NoFallbackToCurrentUser` を付与
     - 既定はバッテリでも実行継続（旧挙動に戻す場合は `-KeepBatteryRestrictions`）
   - 統合ワンボタン（運用開始/終了）
     - 開始: 「ManaOS: Pixel7 祝日運用セットアップ（年次+ガード）」
@@ -176,11 +178,15 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
     - 解除: `uninstall_r12_health_watch_task.ps1`
     - タスク: 「ManaOS: R12 Health Watch タスク登録（5分）」 / 「ManaOS: R12 Health Watch タスク状態確認」 / 「ManaOS: R12 Health Watch 単発実行」 / 「ManaOS: R12 Health Watch タスク解除」
       - ワンボタン: 「ManaOS: R12 Health Watch 登録→状態確認（ワンボタン）」 / 「ManaOS: R12 Health Watch 解除→未登録確認（ワンボタン）」
+      - 統合ワンボタン: 「ManaOS: R12 Health Watch 運用セットアップ（ワンボタン）」 / 「ManaOS: R12 Health Watch 運用クリーンアップ（ワンボタン）」
+      - 運用チェック: 「ManaOS: R12 Health Watch 運用チェック（状態+ログ末尾）」
     - 実体: `manaos-rpg/scripts/run_r12_health_watch.ps1`（タスクからは `run_r12_health_watch_once.ps1` を呼び出し）
     - ログ: `logs/r12_health_watch_task.jsonl`
       - ローテーション: `-MaxJsonLogSizeMB`（既定20MB）/ `-MaxJsonLogFiles`（既定5世代）
     - 例: `pwsh -File .\install_r12_health_watch_task.ps1 -RunNow`
       - 無人運用: `pwsh -File .\install_r12_health_watch_task.ps1 -RunAsSystem -RunNow`
+        - 権限不足で `SYSTEM` 登録に失敗した場合は、既定で現在ユーザーに自動フォールバック
+        - `SYSTEM` 固定で失敗時に止めたい場合は `-NoFallbackToCurrentUser` を付与
     - 監視補助タスク: 「ManaOS: Scheduled Tasks 健全性チェック」 / 「ManaOS: Scheduled Tasks 健全性チェック（JSON）」
     - 通知（任意）: `MANAOS_WEBHOOK_URL` / `MANAOS_WEBHOOK_FORMAT` (`generic|slack|discord`) / `MANAOS_WEBHOOK_MENTION` / `MANAOS_NOTIFY_ON_SUCCESS`
       - 既定は「失敗時のみ通知」。成功通知も欲しい場合は `MANAOS_NOTIFY_ON_SUCCESS=1`

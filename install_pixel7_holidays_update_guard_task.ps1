@@ -7,6 +7,7 @@ param(
     [string]$RunLevel = 'LIMITED',
     [switch]$RunAsSystem,
     [switch]$KeepBatteryRestrictions,
+    [switch]$NoFallbackToCurrentUser,
     [switch]$NoFallbackToLimited,
     [switch]$RunNow,
     [switch]$PrintOnly
@@ -27,6 +28,7 @@ if ($Day -lt 1 -or $Day -gt 31) {
 
 $taskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$jobScript`""
 $effectiveRunLevel = $RunLevel
+$useSystemAccount = $RunAsSystem.IsPresent
 if ($RunAsSystem.IsPresent -and $effectiveRunLevel -eq 'LIMITED') {
     $effectiveRunLevel = 'HIGHEST'
 }
@@ -46,7 +48,8 @@ function Set-TaskBatteryPolicy {
         $service = New-Object -ComObject 'Schedule.Service'
         $service.Connect()
         $root = $service.GetFolder('\\')
-        $task = $root.GetTask($InTaskName)
+        $taskPath = if ($InTaskName.StartsWith('\\')) { $InTaskName } else { "\\$InTaskName" }
+        $task = $root.GetTask($taskPath)
         if ($null -eq $task) {
             Write-Host "[WARN] Task not found for battery policy update: $InTaskName" -ForegroundColor Yellow
             return
@@ -56,10 +59,21 @@ function Set-TaskBatteryPolicy {
         $definition.Settings.DisallowStartIfOnBatteries = $false
         $definition.Settings.StopIfGoingOnBatteries = $false
         $definition.Settings.WakeToRun = $true
-        $null = $root.RegisterTaskDefinition($InTaskName, $definition, 6, $null, $null, $task.Definition.Principal.LogonType, $null)
+        $principal = $definition.Principal
+        $userId = $principal.UserId
+        if ([string]::IsNullOrWhiteSpace($userId)) {
+            $userId = $null
+        }
+        $logonType = [int]$principal.LogonType
+        $null = $root.RegisterTaskDefinition($taskPath, $definition, 6, $userId, $null, $logonType, $null)
         Write-Host "[OK] Battery policy relaxed (start/continue on battery, wake enabled)" -ForegroundColor Green
     } catch {
-        Write-Host "[WARN] Failed to update battery policy: $($_.Exception.Message)" -ForegroundColor Yellow
+        $msg = $_.Exception.Message
+        if ($msg -match '0x8007007B') {
+            Write-Host "[INFO] Battery policy update skipped (task remains valid): $msg" -ForegroundColor DarkGray
+            return
+        }
+        Write-Host "[WARN] Failed to update battery policy: $msg" -ForegroundColor Yellow
     }
 }
 
@@ -67,7 +81,7 @@ Write-Host "=== Register Pixel7 Holiday Guard Task ===" -ForegroundColor Cyan
 Write-Host "TaskName : $TaskName" -ForegroundColor Gray
 Write-Host "Schedule : MONTHLY $Months/$Day $StartTime" -ForegroundColor Gray
 Write-Host "RunLevel : $effectiveRunLevel" -ForegroundColor Gray
-Write-Host "Account  : $(if ($RunAsSystem.IsPresent) { 'SYSTEM' } else { $env:USERNAME })" -ForegroundColor Gray
+Write-Host "Account  : $(if ($useSystemAccount) { 'SYSTEM' } else { $env:USERNAME })" -ForegroundColor Gray
 Write-Host "Script   : $jobScript" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 
@@ -77,21 +91,29 @@ if ($PrintOnly) {
 }
 
 $createArgs = @('/Create', '/SC', 'MONTHLY', '/M', $Months, '/D', "$Day", '/TN', $TaskName, '/TR', $taskRun, '/ST', $StartTime, '/RL', $effectiveRunLevel, '/F')
-if ($RunAsSystem.IsPresent) {
+if ($useSystemAccount) {
     $createArgs += @('/RU', 'SYSTEM')
 }
 schtasks @createArgs | Out-Null
 if ($LASTEXITCODE -ne 0) {
-    if ($effectiveRunLevel -eq 'HIGHEST' -and -not $NoFallbackToLimited -and -not $RunAsSystem.IsPresent) {
+    if ($useSystemAccount -and -not $NoFallbackToCurrentUser) {
+        Write-Host "[WARN] SYSTEM registration failed. retry with current user..." -ForegroundColor Yellow
+        $useSystemAccount = $false
+        if ($effectiveRunLevel -eq 'HIGHEST' -and -not $NoFallbackToLimited) {
+            $effectiveRunLevel = 'LIMITED'
+        }
+        $createArgs = @('/Create', '/SC', 'MONTHLY', '/M', $Months, '/D', "$Day", '/TN', $TaskName, '/TR', $taskRun, '/ST', $StartTime, '/RL', $effectiveRunLevel, '/F')
+        schtasks @createArgs | Out-Null
+    }
+    if ($LASTEXITCODE -ne 0 -and $effectiveRunLevel -eq 'HIGHEST' -and -not $NoFallbackToLimited -and -not $useSystemAccount) {
         Write-Host "[WARN] HIGHEST registration failed. retry with LIMITED..." -ForegroundColor Yellow
         schtasks /Create /SC MONTHLY /M $Months /D $Day /TN $TaskName /TR $taskRun /ST $StartTime /RL LIMITED /F | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to create scheduled guard task (exit=$LASTEXITCODE)"
+        if ($LASTEXITCODE -eq 0) {
+            $effectiveRunLevel = 'LIMITED'
+            Write-Host "[OK] Guard task created with LIMITED (fallback)" -ForegroundColor Green
         }
-        $effectiveRunLevel = 'LIMITED'
-        Write-Host "[OK] Guard task created with LIMITED (fallback)" -ForegroundColor Green
     }
-    else {
+    if ($LASTEXITCODE -ne 0) {
         throw "Failed to create scheduled guard task (exit=$LASTEXITCODE)"
     }
 }
@@ -99,6 +121,7 @@ if ($LASTEXITCODE -ne 0) {
 Set-TaskBatteryPolicy -InTaskName $TaskName -Skip:$KeepBatteryRestrictions
 
 Write-Host "[OK] Scheduled guard task created: $TaskName" -ForegroundColor Green
+Write-Host "[OK] Effective Account : $(if ($useSystemAccount) { 'SYSTEM' } else { $env:USERNAME })" -ForegroundColor Green
 schtasks /Query /TN $TaskName /V /FO LIST
 
 if ($RunNow) {

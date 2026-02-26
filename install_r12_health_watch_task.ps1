@@ -11,6 +11,7 @@ param(
     [string]$RunLevel = 'LIMITED',
     [switch]$RunAsSystem,
     [switch]$KeepBatteryRestrictions,
+    [switch]$NoFallbackToCurrentUser,
     [switch]$NoFallbackToLimited,
     [switch]$RunNow,
     [switch]$PrintOnly
@@ -70,6 +71,7 @@ if ($NotifyOnSuccess.IsPresent) {
 
 $taskRun = "pwsh " + ($taskArgs -join ' ')
 $effectiveRunLevel = $RunLevel
+$useSystemAccount = $RunAsSystem.IsPresent
 if ($RunAsSystem.IsPresent -and $effectiveRunLevel -eq 'LIMITED') {
     $effectiveRunLevel = 'HIGHEST'
 }
@@ -89,7 +91,8 @@ function Set-TaskBatteryPolicy {
         $service = New-Object -ComObject 'Schedule.Service'
         $service.Connect()
         $root = $service.GetFolder('\\')
-        $task = $root.GetTask($InTaskName)
+        $taskPath = if ($InTaskName.StartsWith('\\')) { $InTaskName } else { "\\$InTaskName" }
+        $task = $root.GetTask($taskPath)
         if ($null -eq $task) {
             Write-Host "[WARN] Task not found for battery policy update: $InTaskName" -ForegroundColor Yellow
             return
@@ -105,7 +108,7 @@ function Set-TaskBatteryPolicy {
             $userId = $null
         }
         $logonType = [int]$principal.LogonType
-        $null = $root.RegisterTaskDefinition($InTaskName, $definition, 6, $userId, $null, $logonType, $null)
+        $null = $root.RegisterTaskDefinition($taskPath, $definition, 6, $userId, $null, $logonType, $null)
         Write-Host "[OK] Battery policy relaxed (start/continue on battery, wake enabled)" -ForegroundColor Green
     } catch {
         $msg = $_.Exception.Message
@@ -121,7 +124,7 @@ Write-Host "=== Register R12 Health Watch Task ===" -ForegroundColor Cyan
 Write-Host "TaskName : $TaskName" -ForegroundColor Gray
 Write-Host "Schedule : MINUTE /MO $IntervalMinutes" -ForegroundColor Gray
 Write-Host "RunLevel : $effectiveRunLevel" -ForegroundColor Gray
-Write-Host "Account  : $(if ($RunAsSystem.IsPresent) { 'SYSTEM' } else { $env:USERNAME })" -ForegroundColor Gray
+Write-Host "Account  : $(if ($useSystemAccount) { 'SYSTEM' } else { $env:USERNAME })" -ForegroundColor Gray
 Write-Host "Script   : $jobScript" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 
@@ -133,7 +136,7 @@ if ($PrintOnly) {
 $createTask = {
     param([string]$Level)
     $args = @('/Create', '/SC', 'MINUTE', '/MO', "$IntervalMinutes", '/TN', $TaskName, '/TR', $taskRun, '/RL', $Level, '/F')
-    if ($RunAsSystem.IsPresent) {
+    if ($useSystemAccount) {
         $args += @('/RU', 'SYSTEM')
     }
     schtasks @args | Out-Null
@@ -141,7 +144,15 @@ $createTask = {
 }
 
 $exitCode = & $createTask $effectiveRunLevel
-if ($exitCode -ne 0 -and $effectiveRunLevel -eq 'HIGHEST' -and -not $NoFallbackToLimited -and -not $RunAsSystem.IsPresent) {
+if ($exitCode -ne 0 -and $useSystemAccount -and -not $NoFallbackToCurrentUser) {
+    Write-Host "[WARN] SYSTEM registration failed. retry with current user..." -ForegroundColor Yellow
+    $useSystemAccount = $false
+    if ($effectiveRunLevel -eq 'HIGHEST' -and -not $NoFallbackToLimited) {
+        $effectiveRunLevel = 'LIMITED'
+    }
+    $exitCode = & $createTask $effectiveRunLevel
+}
+if ($exitCode -ne 0 -and $effectiveRunLevel -eq 'HIGHEST' -and -not $NoFallbackToLimited -and -not $useSystemAccount) {
     Write-Host "[WARN] HIGHEST registration failed. retry with LIMITED..." -ForegroundColor Yellow
     $effectiveRunLevel = 'LIMITED'
     $exitCode = & $createTask $effectiveRunLevel
@@ -154,6 +165,7 @@ Set-TaskBatteryPolicy -InTaskName $TaskName -Skip:$KeepBatteryRestrictions
 
 Write-Host "[OK] Scheduled task created: $TaskName" -ForegroundColor Green
 Write-Host "[OK] Effective RunLevel: $effectiveRunLevel" -ForegroundColor Green
+Write-Host "[OK] Effective Account : $(if ($useSystemAccount) { 'SYSTEM' } else { $env:USERNAME })" -ForegroundColor Green
 schtasks /Query /TN $TaskName /V /FO LIST
 
 if ($RunNow) {
