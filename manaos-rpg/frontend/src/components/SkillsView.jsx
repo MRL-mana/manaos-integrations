@@ -4,7 +4,7 @@ import { fetchJson } from '../api.js'
 import OutputBlock from './OutputBlock.jsx'
 
 export default function SkillsView({ skills, prompts, unifiedIntegrations, unifiedProxy, itemsRecent, apiBase, onRunAction, runningAction }) {
-  const list = Array.isArray(skills) ? skills : []
+  const list = useMemo(() => (Array.isArray(skills) ? skills : []), [skills])
   const ollamaTemplates = Array.isArray(prompts?.ollama) ? prompts.ollama : []
   const imageTemplates = Array.isArray(prompts?.image) ? prompts.image : []
   const videoTemplates = Array.isArray(prompts?.video) ? prompts.video : []

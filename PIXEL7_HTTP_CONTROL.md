@@ -149,6 +149,9 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
   - `-RebootRecoveryMode NightWeekendOnly` 指定時は「夜かつ休日」の場合のみ再起動復旧を有効化
   - `-EnableHolidayAsWeekend -HolidayDateFile config/pixel7_holidays_jp.txt` で、祝日を休日扱いにできる
   - 祝日ファイルは `config/pixel7_holidays_jp.txt`（`yyyy-MM-dd` を1行1件）
+  - 祝日ファイル更新は `update_pixel7_holidays_jp.ps1` で実行
+    - 例: `pwsh -File .\update_pixel7_holidays_jp.ps1 -IncludeNextYear`
+    - タスク: 「ManaOS: Pixel7 祝日ファイル更新（今年+来年）」
 - 「ManaOS: Pixel7 外出モード 半自律監視開始（自動切替+週次しきい値）」
   - 上記に `-RemoteOnly` を付与した外出モード
 - 「ManaOS: Pixel7 半自律監視（自動切替+週次）ワンボタン」
