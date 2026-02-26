@@ -609,3 +609,81 @@ def safety_violations(limit: int = 50) -> Dict[str, Any]:
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
+
+# ─────────────────────────────────────────────────────────
+# Round 10: Model-Based Planner / Distributional / Comms
+# ─────────────────────────────────────────────────────────
+@router.get("/planner/stats")
+def planner_stats() -> Dict[str, Any]:
+    """モデルベースプランナー統計"""
+    try:
+        return {"ok": True, **_get_rl().get_planner_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/planner/plan")
+def planner_plan(body: Dict[str, Any] = Body(default={})) -> Dict[str, Any]:
+    """明示的にプランニング実行"""
+    try:
+        return {"ok": True, **_get_rl().planner_plan(
+            difficulty=body.get("difficulty"),
+            success_rate=body.get("success_rate", 0.5),
+        )}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/planner/transitions")
+def planner_transitions(limit: int = 20) -> Dict[str, Any]:
+    """プランナー遷移履歴"""
+    try:
+        return {"ok": True, **_get_rl().get_planner_transitions(limit)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/distributional/stats")
+def distributional_stats() -> Dict[str, Any]:
+    """分布型報酬統計"""
+    try:
+        return {"ok": True, **_get_rl().get_distributional_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/distributional/risk-profile")
+def distributional_risk_profile() -> Dict[str, Any]:
+    """リスクプロファイル"""
+    try:
+        return {"ok": True, **_get_rl().get_risk_profile()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/distributional/quantiles")
+def distributional_quantiles() -> Dict[str, Any]:
+    """分位数サマリー"""
+    try:
+        return {"ok": True, **_get_rl().get_quantile_summary()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/comms/stats")
+def comms_stats() -> Dict[str, Any]:
+    """通信プロトコル統計"""
+    try:
+        return {"ok": True, **_get_rl().get_comms_stats()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/comms/history")
+def comms_history(limit: int = 50) -> Dict[str, Any]:
+    """通信メッセージ履歴"""
+    try:
+        return {"ok": True, **_get_rl().get_comms_history(limit)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+

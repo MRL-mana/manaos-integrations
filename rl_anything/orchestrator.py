@@ -55,6 +55,9 @@ from .ensemble_policy import EnsemblePolicy
 from .curiosity_explorer import CuriosityExplorer
 from .hierarchical_policy import HierarchicalPolicy
 from .safety_constraint import SafetyConstraintManager
+from .model_based_planner import ModelBasedPlanner
+from .distributional_reward import DistributionalReward
+from .communication_protocol import CommunicationProtocol
 
 _DIR = Path(__file__).parent
 _STATE_DIR = _DIR.parent / "logs" / "rl_anything"
@@ -176,6 +179,19 @@ class RLAnythingOrchestrator:
         sc_persist = state_dir / "safety_constraint.json"
         self.safety = SafetyConstraintManager(persist_path=sc_persist, config=cfg)
 
+        # Model-Based Planner (Round 10)
+        mbp_persist = state_dir / "model_based_planner.json"
+        self.planner = ModelBasedPlanner(persist_path=mbp_persist, config=cfg)
+
+        # Distributional Reward (Round 10)
+        dr_persist = state_dir / "distributional_reward.json"
+        self.distributional = DistributionalReward(persist_path=dr_persist, config=cfg)
+
+        # Communication Protocol (Round 10)
+        cp_persist = state_dir / "communication_protocol.json"
+        self.comms = CommunicationProtocol(persist_path=cp_persist, config=cfg)
+        self._init_comms_agents()
+
     # ═══════════════════════════════════════════════════════
     # Prometheus メトリクス初期化
     # ═══════════════════════════════════════════════════════
@@ -203,6 +219,12 @@ class RLAnythingOrchestrator:
         self.prom.register("rl_option_switches", "counter", "Hierarchical option switches")
         self.prom.register("rl_safety_violations", "counter", "Safety constraint violations")
         self.prom.register("rl_safety_score", "gauge", "Overall safety score")
+        # Round 10 metrics
+        self.prom.register("rl_plan_value", "histogram", "Model-based planner expected values")
+        self.prom.register("rl_model_accuracy", "gauge", "World model prediction accuracy")
+        self.prom.register("rl_reward_cvar", "gauge", "Distributional reward CVaR")
+        self.prom.register("rl_risk_checks", "counter", "Distributional risk checks")
+        self.prom.register("rl_messages_sent", "counter", "Communication protocol messages sent")
 
     # ═══════════════════════════════════════════════════════
     # タスクライフサイクル
@@ -558,6 +580,62 @@ class RLAnythingOrchestrator:
         except Exception as e:
             _log.warning("safety constraint error: %s", e)
 
+        # ──── Model-Based Planner (Round 10) ────
+        try:
+            diff_val = self.evolution.current_difficulty.value
+            curr_state = self.planner.encode_state(diff_val, success_rate, self._cycle_count)
+            plan = self.planner.plan(curr_state)
+            self.prom.observe("rl_plan_value", plan.expected_value)
+            self.prom.set("rl_model_accuracy", plan.model_accuracy)
+            result["planner"] = plan.to_dict() if hasattr(plan, 'to_dict') else {
+                "best_action": plan.best_action,
+                "expected_value": plan.expected_value,
+                "model_accuracy": plan.model_accuracy,
+                "confidence": plan.confidence,
+            }
+            # Record transition for next cycle
+            action_taken = result.get("new_level", diff_val)
+            next_state = self.planner.encode_state(action_taken, score, self._cycle_count)
+            self.planner.record_transition(curr_state, diff_val, next_state, score, self._cycle_count)
+        except Exception as e:
+            _log.warning("model-based planner error: %s", e)
+
+        # ──── Distributional Reward (Round 10) ────
+        try:
+            dist_key = f"{self.evolution.current_difficulty.value}|{outcome}"
+            dist_info = self.distributional.record(dist_key, score)
+            risk_adj = self.distributional.risk_adjust(score, key=dist_key)
+            self.prom.set("rl_reward_cvar", risk_adj.cvar)
+            self.prom.inc("rl_risk_checks")
+            result["distributional"] = {
+                "key": dist_key,
+                "mean": dist_info.mean,
+                "cvar": dist_info.cvar_at_alpha,
+                "var": dist_info.var_at_alpha,
+                "risk_adjusted_score": risk_adj.risk_adjusted,
+                "risk_penalty": risk_adj.risk_penalty,
+                "count": dist_info.count,
+            }
+        except Exception as e:
+            _log.warning("distributional reward error: %s", e)
+
+        # ──── Communication Protocol broadcast (Round 10) ────
+        try:
+            self.comms.broadcast(
+                sender="orchestrator",
+                channel="cycle_complete",
+                msg_type="event",
+                payload={
+                    "cycle": self._cycle_count,
+                    "score": score,
+                    "outcome": outcome,
+                    "difficulty": self.evolution.current_difficulty.value,
+                },
+            )
+            self.prom.inc("rl_messages_sent")
+        except Exception as e:
+            _log.warning("communication protocol error: %s", e)
+
         return result
 
     # ═══════════════════════════════════════════════════════
@@ -774,6 +852,72 @@ class RLAnythingOrchestrator:
     def get_options(self) -> Dict[str, Any]:
         """階層型Optionsの一覧"""
         return self.hierarchical.get_options()
+
+    # ═══════════════════════════════════════════════════════
+    # Round 10: Model-Based Planner / Distributional / Comms
+    # ═══════════════════════════════════════════════════════
+    def get_planner_stats(self) -> Dict[str, Any]:
+        """モデルベースプランナーの統計"""
+        stats = self.planner.get_stats()
+        model_info = self.planner.get_model_info()
+        recent = self.planner.get_recent_plans(limit=10)
+        return {**stats, "model_info": model_info, "recent_plans": recent}
+
+    def planner_plan(self, difficulty: Optional[str] = None,
+                     success_rate: float = 0.5) -> Dict[str, Any]:
+        """明示的にプランニング実行"""
+        diff = difficulty or self.evolution.current_difficulty.value
+        state = self.planner.encode_state(diff, success_rate, self._cycle_count)
+        plan = self.planner.plan(state)
+        return plan.to_dict() if hasattr(plan, 'to_dict') else {
+            "best_action": plan.best_action,
+            "expected_value": plan.expected_value,
+        }
+
+    def get_planner_transitions(self, limit: int = 20) -> Dict[str, Any]:
+        """プランナーの遷移履歴"""
+        transitions = self.planner.get_recent_transitions(limit=limit)
+        return {"transitions": transitions, "total": self.planner.get_transition_count()}
+
+    def get_distributional_stats(self) -> Dict[str, Any]:
+        """分布型報酬の統計"""
+        return self.distributional.get_stats()
+
+    def get_risk_profile(self) -> Dict[str, Any]:
+        """リスクプロファイル"""
+        profile = self.distributional.get_risk_profile()
+        return profile.to_dict()
+
+    def get_quantile_summary(self) -> Dict[str, Any]:
+        """全分布の分位数サマリー"""
+        return self.distributional.get_quantile_summary()
+
+    def get_comms_stats(self) -> Dict[str, Any]:
+        """通信プロトコル統計"""
+        stats = self.comms.get_stats()
+        agents = self.comms.get_agents()
+        channels = self.comms.get_channel_stats()
+        return {**stats, "agents": agents, "channels": channels}
+
+    def get_comms_history(self, limit: int = 50) -> Dict[str, Any]:
+        """通信履歴"""
+        history = self.comms.get_message_history(limit=limit)
+        return {"messages": history, "total": len(history)}
+
+    def _init_comms_agents(self) -> None:
+        """コンポーネントを通信エージェントとして登録"""
+        components = [
+            ("orchestrator", "orchestrator", ["coordination", "lifecycle"]),
+            ("curiosity", "curiosity_explorer", ["exploration", "novelty"]),
+            ("hierarchical", "hierarchical_policy", ["planning", "options"]),
+            ("safety", "safety_constraint", ["monitoring", "violations"]),
+            ("planner", "model_based_planner", ["planning", "world_model"]),
+            ("distributional", "distributional_reward", ["risk", "reward"]),
+        ]
+        for agent_id, agent_type, caps in components:
+            self.comms.register_agent(agent_id, agent_type, caps)
+            self.comms.subscribe(agent_id, "cycle_complete")
+            self.comms.subscribe(agent_id, "knowledge.policy_update")
 
     # ═══════════════════════════════════════════════════════
     # 自動スコアリング

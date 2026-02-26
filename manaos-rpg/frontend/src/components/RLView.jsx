@@ -54,6 +54,16 @@ export default function RLView({ rl, apiBase }) {
   const [safetyCheck, setSafetyCheck] = useState(null)
   const [safetyViolations, setSafetyViolations] = useState(null)
 
+  // Round 10 state
+  const [plannerData, setPlannerData] = useState(null)
+  const [plannerPlan, setPlannerPlan] = useState(null)
+  const [plannerTransitions, setPlannerTransitions] = useState(null)
+  const [distribData, setDistribData] = useState(null)
+  const [riskProfile, setRiskProfile] = useState(null)
+  const [quantileData, setQuantileData] = useState(null)
+  const [commsData, setCommsData] = useState(null)
+  const [commsHistory, setCommsHistory] = useState(null)
+
   async function fetchLiveDashboard() {
     if (busyOp) return
     setLiveErr('')
@@ -450,6 +460,87 @@ export default function RLView({ rl, apiBase }) {
       const r = await fetchJson('/api/rl/safety/violations')
       if (r?.ok) setSafetyViolations(r)
     } catch (e) { console.warn('fetchSafetyViolations:', e) }
+    finally { setBusyOp('') }
+  }
+
+  // Round 10 fetchers
+  async function fetchPlannerStats() {
+    if (busyOp) return
+    setBusyOp('planner')
+    try {
+      const r = await fetchJson('/api/rl/planner/stats')
+      if (r?.ok) setPlannerData(r)
+    } catch (e) { console.warn('fetchPlanner:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchPlannerPlan() {
+    if (busyOp) return
+    setBusyOp('plannerPlan')
+    try {
+      const r = await fetchJson('/api/rl/planner/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      if (r?.ok) setPlannerPlan(r)
+    } catch (e) { console.warn('fetchPlannerPlan:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchPlannerTransitions() {
+    if (busyOp) return
+    setBusyOp('plannerTx')
+    try {
+      const r = await fetchJson('/api/rl/planner/transitions')
+      if (r?.ok) setPlannerTransitions(r)
+    } catch (e) { console.warn('fetchPlannerTransitions:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchDistribStats() {
+    if (busyOp) return
+    setBusyOp('distrib')
+    try {
+      const r = await fetchJson('/api/rl/distributional/stats')
+      if (r?.ok) setDistribData(r)
+    } catch (e) { console.warn('fetchDistrib:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchRiskProfile() {
+    if (busyOp) return
+    setBusyOp('risk')
+    try {
+      const r = await fetchJson('/api/rl/distributional/risk-profile')
+      if (r?.ok) setRiskProfile(r)
+    } catch (e) { console.warn('fetchRisk:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchQuantiles() {
+    if (busyOp) return
+    setBusyOp('quantile')
+    try {
+      const r = await fetchJson('/api/rl/distributional/quantiles')
+      if (r?.ok) setQuantileData(r)
+    } catch (e) { console.warn('fetchQuantiles:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchCommsStats() {
+    if (busyOp) return
+    setBusyOp('comms')
+    try {
+      const r = await fetchJson('/api/rl/comms/stats')
+      if (r?.ok) setCommsData(r)
+    } catch (e) { console.warn('fetchComms:', e) }
+    finally { setBusyOp('') }
+  }
+
+  async function fetchCommsHistory() {
+    if (busyOp) return
+    setBusyOp('commsHist')
+    try {
+      const r = await fetchJson('/api/rl/comms/history')
+      if (r?.ok) setCommsHistory(r)
+    } catch (e) { console.warn('fetchCommsHistory:', e) }
     finally { setBusyOp('') }
   }
 
@@ -1471,6 +1562,136 @@ export default function RLView({ rl, apiBase }) {
             </table>
           </div>
         ) : null}
+      </div>
+
+      {/* ══════════ Round 10: Model-Based Planner ══════════ */}
+      <div className="mt12">
+        <Box title="Model-Based Planner (R10)" collapsible>
+          <div className="btnRow">
+            <button disabled={!!busyOp} onClick={fetchPlannerStats}>{busyOp === 'planner' ? '…' : 'Stats'}</button>
+            <button disabled={!!busyOp} onClick={fetchPlannerPlan}>{busyOp === 'plannerPlan' ? '…' : 'Plan'}</button>
+            <button disabled={!!busyOp} onClick={fetchPlannerTransitions}>{busyOp === 'plannerTx' ? '…' : 'Transitions'}</button>
+          </div>
+          {plannerData ? (
+            <div className="mt4">
+              <div className="kv"><span>Total Plans</span><span className="mono">{plannerData.total_plans ?? 0}</span></div>
+              <div className="kv"><span>Total Transitions</span><span className="mono">{plannerData.total_transitions ?? 0}</span></div>
+              <div className="kv"><span>Unique States</span><span className="mono">{plannerData.unique_states ?? 0}</span></div>
+              <div className="kv"><span>Model Accuracy</span><span className="mono">{Number(plannerData.model_accuracy || 0).toFixed(3)}</span></div>
+              <div className="kv"><span>Avg Plan Value</span><span className="mono">{Number(plannerData.avg_plan_value || 0).toFixed(3)}</span></div>
+            </div>
+          ) : null}
+          {plannerPlan ? (
+            <div className="mt4">
+              <div className="small mb4">Planning Result</div>
+              <div className="kv"><span>Best Action</span><span className="mono">{plannerPlan.best_action}</span></div>
+              <div className="kv"><span>Expected Value</span><span className="mono">{Number(plannerPlan.expected_value || 0).toFixed(4)}</span></div>
+              <div className="kv"><span>Confidence</span><span className="mono">{Number(plannerPlan.confidence || 0).toFixed(3)}</span></div>
+              <div className="kv"><span>Model Accuracy</span><span className="mono">{Number(plannerPlan.model_accuracy || 0).toFixed(3)}</span></div>
+            </div>
+          ) : null}
+          {plannerTransitions?.transitions?.length > 0 ? (
+            <div className="mt4">
+              <div className="small mb4">Recent Transitions ({plannerTransitions.total} total)</div>
+              <table className="statsTable">
+                <thead><tr><th>State</th><th>Action</th><th>Next</th><th>Reward</th><th>Cycle</th></tr></thead>
+                <tbody>
+                  {plannerTransitions.transitions.slice(-8).map((t, i) => (
+                    <tr key={i}>
+                      <td className="mono small">{t.state?.substring(0, 8)}…</td>
+                      <td className="mono">{t.action}</td>
+                      <td className="mono small">{t.next_state?.substring(0, 8)}…</td>
+                      <td className="mono">{Number(t.reward).toFixed(3)}</td>
+                      <td className="mono">{t.cycle}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </Box>
+      </div>
+
+      {/* ══════════ Round 10: Distributional Reward ══════════ */}
+      <div className="mt12">
+        <Box title="Distributional Reward (R10)" collapsible>
+          <div className="btnRow">
+            <button disabled={!!busyOp} onClick={fetchDistribStats}>{busyOp === 'distrib' ? '…' : 'Stats'}</button>
+            <button disabled={!!busyOp} onClick={fetchRiskProfile}>{busyOp === 'risk' ? '…' : 'Risk Profile'}</button>
+            <button disabled={!!busyOp} onClick={fetchQuantiles}>{busyOp === 'quantile' ? '…' : 'Quantiles'}</button>
+          </div>
+          {distribData ? (
+            <div className="mt4">
+              <div className="kv"><span>Total Samples</span><span className="mono">{distribData.total_samples ?? 0}</span></div>
+              <div className="kv"><span>Distributions</span><span className="mono">{distribData.distribution_count ?? 0}</span></div>
+              <div className="kv"><span>Risk Checks</span><span className="mono">{distribData.risk_checks ?? 0}</span></div>
+              <div className="kv"><span>Alpha</span><span className="mono">{distribData.alpha ?? 0.1}</span></div>
+              {distribData.global_distribution ? (
+                <div className="mt4">
+                  <div className="small mb4">Global Distribution</div>
+                  <div className="kv"><span>Mean</span><span className="mono">{Number(distribData.global_distribution.mean || 0).toFixed(4)}</span></div>
+                  <div className="kv"><span>Std</span><span className="mono">{Number(distribData.global_distribution.std || 0).toFixed(4)}</span></div>
+                  <div className="kv"><span>Min / Max</span><span className="mono">{Number(distribData.global_distribution.min || 0).toFixed(3)} / {Number(distribData.global_distribution.max || 0).toFixed(3)}</span></div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {riskProfile ? (
+            <div className="mt4">
+              <div className="small mb4">Risk Profile</div>
+              <div className="kv"><span>CVaR</span><span className="mono">{Number(riskProfile.overall_cvar || 0).toFixed(4)}</span></div>
+              <div className="kv"><span>VaR</span><span className="mono">{Number(riskProfile.overall_var || 0).toFixed(4)}</span></div>
+              <div className="kv"><span>Risk Level</span><span className={riskProfile.risk_level === 'high_risk' ? 'error' : riskProfile.risk_level === 'moderate_risk' ? 'caution' : 'ok'}>{riskProfile.risk_level}</span></div>
+              <div className="kv"><span>Tail Risk</span><span className="mono">{Number(riskProfile.tail_risk_ratio || 0).toFixed(3)}</span></div>
+              <div className="small mt4">{riskProfile.recommendation}</div>
+            </div>
+          ) : null}
+        </Box>
+      </div>
+
+      {/* ══════════ Round 10: Communication Protocol ══════════ */}
+      <div className="mt12">
+        <Box title="Communication Protocol (R10)" collapsible>
+          <div className="btnRow">
+            <button disabled={!!busyOp} onClick={fetchCommsStats}>{busyOp === 'comms' ? '…' : 'Stats'}</button>
+            <button disabled={!!busyOp} onClick={fetchCommsHistory}>{busyOp === 'commsHist' ? '…' : 'History'}</button>
+          </div>
+          {commsData ? (
+            <div className="mt4">
+              <div className="kv"><span>Messages Sent</span><span className="mono">{commsData.total_sent ?? 0}</span></div>
+              <div className="kv"><span>Broadcasts</span><span className="mono">{commsData.total_broadcast ?? 0}</span></div>
+              <div className="kv"><span>Acknowledged</span><span className="mono">{commsData.total_acknowledged ?? 0}</span></div>
+              <div className="kv"><span>Agents</span><span className="mono">{commsData.registered_agents ?? 0}</span></div>
+              <div className="kv"><span>Channels</span><span className="mono">{commsData.active_channels ?? 0}</span></div>
+              {commsData.agents && Object.keys(commsData.agents).length > 0 ? (
+                <div className="mt4">
+                  <div className="small mb4">Registered Agents</div>
+                  {Object.entries(commsData.agents).map(([id, a]) => (
+                    <div key={id} className="kv"><span className="mono small">{id}</span><span className="mono small">{a.agent_type} (sent:{a.messages_sent} recv:{a.messages_received})</span></div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {commsHistory?.messages?.length > 0 ? (
+            <div className="mt4">
+              <div className="small mb4">Recent Messages ({commsHistory.total})</div>
+              <table className="statsTable">
+                <thead><tr><th>From</th><th>Channel</th><th>Type</th><th>Priority</th></tr></thead>
+                <tbody>
+                  {commsHistory.messages.slice(-10).map((m, i) => (
+                    <tr key={i}>
+                      <td className="mono small">{m.sender}</td>
+                      <td className="mono small">{m.channel}</td>
+                      <td className="mono">{m.msg_type}</td>
+                      <td className="mono">{m.priority}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </Box>
       </div>
 
       <div className="small mt12">

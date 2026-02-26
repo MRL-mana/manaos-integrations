@@ -39,6 +39,9 @@ from rl_anything.ensemble_policy import EnsemblePolicy, PolicyMember, EnsembleDe
 from rl_anything.curiosity_explorer import CuriosityExplorer, CuriositySignal, StateVisit, ExplorationBudget
 from rl_anything.hierarchical_policy import HierarchicalPolicy, HierarchicalDecision, Option
 from rl_anything.safety_constraint import SafetyConstraintManager, SafetyConstraint, Violation, RecoveryAction
+from rl_anything.model_based_planner import ModelBasedPlanner, WorldModel, Transition, PlanResult, PlanningStats
+from rl_anything.distributional_reward import DistributionalReward, RewardDistribution, RiskProfile, RiskAdjustedScore
+from rl_anything.communication_protocol import CommunicationProtocol, Message, AgentInfo, ChannelStats
 
 
 def test_types():
@@ -1571,6 +1574,279 @@ def test_orchestrator_with_r9_components():
         print("  [PASS] orchestrator_with_r9_components")
 
 
+def test_model_based_planner():
+    """Model-Based Planner 単体テスト"""
+    with tempfile.TemporaryDirectory() as td:
+        persist = Path(td) / "planner.json"
+        planner = ModelBasedPlanner(persist_path=persist)
+
+        # 状態エンコーディング
+        s1 = ModelBasedPlanner.encode_state("standard", 0.7, 5)
+        s2 = ModelBasedPlanner.encode_state("standard", 0.7, 5)
+        s3 = ModelBasedPlanner.encode_state("advanced", 0.3, 10)
+        assert s1 == s2  # 同一入力は同一ハッシュ
+        assert s1 != s3  # 異なる入力は異なるハッシュ
+        assert len(s1) == 12
+
+        # 遷移記録
+        t1 = planner.record_transition(s1, "level_up", s3, 0.8, 5)
+        assert isinstance(t1, Transition)
+        assert t1.state == s1
+        assert t1.action == "level_up"
+        assert t1.reward == 0.8
+
+        # 複数遷移記録
+        for i in range(10):
+            src = ModelBasedPlanner.encode_state("standard", 0.5 + i * 0.03, i)
+            dst = ModelBasedPlanner.encode_state("standard", 0.5 + i * 0.03 + 0.05, i + 1)
+            planner.record_transition(src, "stay", dst, 0.5 + i * 0.02, i)
+
+        assert planner.get_transition_count() >= 11
+
+        # プランニング
+        plan = planner.plan(s1)
+        assert isinstance(plan, PlanResult)
+        assert plan.best_action in ["level_down", "stay", "level_up"]
+        assert 0 <= plan.expected_value
+        assert plan.simulations > 0
+        assert plan.depth > 0
+
+        # 統計
+        stats = planner.get_stats()
+        assert stats["total_plans"] >= 1
+        assert stats["total_transitions"] >= 11
+        assert stats["unique_states"] >= 2
+
+        # モデル情報
+        model_info = planner.get_model_info()
+        assert "unique_states" in model_info
+        assert "total_observed_transitions" in model_info
+
+        # 最近の遷移・プラン
+        recent_tx = planner.get_recent_transitions(5)
+        assert len(recent_tx) <= 5
+        recent_plans = planner.get_recent_plans(5)
+        assert len(recent_plans) <= 5
+
+        # 永続化・復元
+        assert persist.exists()
+        planner2 = ModelBasedPlanner(persist_path=persist)
+        assert planner2.get_transition_count() >= 11
+
+        print("  [PASS] model_based_planner")
+
+
+def test_distributional_reward():
+    """Distributional Reward 単体テスト"""
+    with tempfile.TemporaryDirectory() as td:
+        persist = Path(td) / "distrib.json"
+        dr = DistributionalReward(persist_path=persist)
+
+        # 報酬記録
+        for i in range(20):
+            score = 0.3 + (i % 10) * 0.05
+            dist = dr.record("standard|success", score)
+        assert isinstance(dist, RewardDistribution)
+        assert dist.count == 20
+        assert dist.mean > 0
+        assert dist.std >= 0
+        assert "q050" in dist.quantiles or "q005" in dist.quantiles
+
+        # バッチ記録
+        dist2 = dr.record_batch("standard|failure", [0.1, 0.2, 0.15, 0.25, 0.1])
+        assert dist2.count == 5
+        assert dist2.mean < 0.3
+
+        # 分布取得
+        all_dists = dr.get_all_distributions()
+        assert len(all_dists) == 2
+        assert "standard|success" in all_dists
+        assert "standard|failure" in all_dists
+
+        # リスク調整
+        ra = dr.risk_adjust(0.7, key="standard|success")
+        assert isinstance(ra, RiskAdjustedScore)
+        assert ra.raw_score == 0.7
+        assert 0 <= ra.risk_adjusted <= 1
+        assert ra.risk_penalty >= 0
+
+        # リスクプロファイル
+        profile = dr.get_risk_profile()
+        assert isinstance(profile, RiskProfile)
+        assert profile.risk_level in ["high_risk", "moderate_risk", "low_risk"]
+        assert profile.recommendation
+
+        # 統計
+        stats = dr.get_stats()
+        assert stats["total_samples"] >= 25
+        assert stats["distribution_count"] == 2
+        assert stats["risk_checks"] >= 1
+
+        # Quantile summary
+        qs = dr.get_quantile_summary()
+        assert len(qs) == 2
+
+        # 永続化
+        assert persist.exists()
+        dr2 = DistributionalReward(persist_path=persist)
+        assert dr2.get_stats()["total_samples"] >= 25
+
+        print("  [PASS] distributional_reward")
+
+
+def test_communication_protocol():
+    """Communication Protocol 単体テスト"""
+    with tempfile.TemporaryDirectory() as td:
+        persist = Path(td) / "comms.json"
+        comms = CommunicationProtocol(persist_path=persist)
+
+        # エージェント登録
+        a1 = comms.register_agent("orchestrator", "orchestrator", ["coordination"])
+        a2 = comms.register_agent("curiosity", "curiosity_explorer", ["exploration"])
+        a3 = comms.register_agent("planner", "model_based_planner", ["planning"])
+        assert isinstance(a1, AgentInfo)
+        assert a1.agent_id == "orchestrator"
+
+        agents = comms.get_agents()
+        assert len(agents) == 3
+
+        # チャンネル購読
+        assert comms.subscribe("curiosity", "cycle_complete")
+        assert comms.subscribe("planner", "cycle_complete")
+        assert not comms.subscribe("nonexistent", "cycle_complete")
+
+        # ダイレクトメッセージ
+        msg = comms.send(
+            sender="orchestrator", receiver="curiosity",
+            channel="direct", msg_type="event",
+            payload={"test": True}, priority=1,
+        )
+        assert isinstance(msg, Message)
+        assert msg.sender == "orchestrator"
+        assert msg.receiver == "curiosity"
+
+        # ブロードキャスト
+        bc = comms.broadcast(
+            sender="orchestrator", channel="cycle_complete",
+            msg_type="event", payload={"cycle": 1, "score": 0.8},
+        )
+        assert bc.receiver == "__broadcast__"
+
+        # 受信
+        msgs_curiosity = comms.receive("curiosity")
+        assert len(msgs_curiosity) >= 2  # direct + broadcast
+
+        msgs_planner = comms.receive("planner")
+        assert len(msgs_planner) >= 1  # broadcast only
+
+        # 知識共有
+        km = comms.share_knowledge("curiosity", "state_info", {"novel_states": 5})
+        assert km.msg_type == "knowledge"
+
+        # 統計
+        stats = comms.get_stats()
+        assert stats["total_sent"] >= 3
+        assert stats["total_broadcast"] >= 1
+        assert stats["registered_agents"] == 3
+
+        # チャンネル統計
+        cs = comms.get_channel_stats()
+        assert len(cs) >= 1
+
+        # 履歴
+        history = comms.get_message_history(50)
+        assert len(history) >= 3
+
+        # 永続化
+        assert persist.exists()
+        comms2 = CommunicationProtocol(persist_path=persist)
+        assert comms2.get_stats()["total_sent"] >= 3
+        assert len(comms2.get_agents()) == 3
+
+        print("  [PASS] communication_protocol")
+
+
+def test_orchestrator_with_r10_components():
+    """Round 10 コンポーネント統合テスト"""
+    with tempfile.TemporaryDirectory() as td:
+        cfg_path = Path(td) / "rl_config.json"
+        cfg_path.write_text(json.dumps({
+            "enabled": True,
+            "log_dir": str(Path(td) / "logs"),
+            "difficulty": "standard",
+            "scoring": {
+                "outcome_weight": 0.35,
+                "tool_efficiency_weight": 0.25,
+                "consistency_weight": 0.20,
+                "exploration_weight": 0.10,
+                "difficulty_bonus": 0.10
+            }
+        }))
+
+        rl = RLAnythingOrchestrator(config_path=cfg_path)
+
+        # R10コンポーネント存在確認
+        assert hasattr(rl, 'planner')
+        assert hasattr(rl, 'distributional')
+        assert hasattr(rl, 'comms')
+        assert isinstance(rl.planner, ModelBasedPlanner)
+        assert isinstance(rl.distributional, DistributionalReward)
+        assert isinstance(rl.comms, CommunicationProtocol)
+
+        # タスクサイクル
+        rl.begin_task("r10-1", "implement model-based planning")
+        rl.log_tool("read_file", {"path": "planner.py"}, result="code")
+        rl.log_tool("write_file", {"path": "planner.py"}, result="implemented")
+        result = rl.end_task("r10-1", outcome="success", score=0.85)
+        assert result["cycle"] >= 1
+
+        rl.begin_task("r10-2", "test distributional reward")
+        rl.log_tool("run_tests", {"suite": "distributional"}, result="5/5 passed")
+        result2 = rl.end_task("r10-2", outcome="success", score=0.9)
+        assert result2["cycle"] >= 2
+
+        rl.begin_task("r10-3", "setup communication protocol")
+        rl.log_tool("read_file", {"path": "comms.py"}, result="protocol")
+        result3 = rl.end_task("r10-3", outcome="partial", score=0.6)
+        assert result3["cycle"] >= 3
+
+        # Planner Stats
+        ps = rl.get_planner_stats()
+        assert isinstance(ps, dict)
+
+        # Planner Plan
+        pp = rl.planner_plan()
+        assert "best_action" in pp or "expected_value" in pp
+
+        # Planner Transitions
+        pt = rl.get_planner_transitions()
+        assert isinstance(pt, dict)
+
+        # Distributional Stats
+        ds = rl.get_distributional_stats()
+        assert "total_samples" in ds
+
+        # Risk Profile
+        rp = rl.get_risk_profile()
+        assert isinstance(rp, dict)
+
+        # Quantile Summary
+        qs = rl.get_quantile_summary()
+        assert isinstance(qs, dict)
+
+        # Comms Stats
+        cs = rl.get_comms_stats()
+        assert "total_sent" in cs
+        assert cs["registered_agents"] >= 6  # 6 コンポーネント
+
+        # Comms History
+        ch = rl.get_comms_history()
+        assert isinstance(ch, dict)
+        assert ch["total"] >= 3  # 3サイクル分のブロードキャスト
+
+        print("  [PASS] orchestrator_with_r10_components")
+
+
 def main():
     print("=" * 60)
     print("RLAnything テストスイート")
@@ -1607,6 +1883,10 @@ def main():
         ("hierarchical_policy", test_hierarchical_policy),
         ("safety_constraint", test_safety_constraint),
         ("orchestrator_with_r9_components", test_orchestrator_with_r9_components),
+        ("model_based_planner", test_model_based_planner),
+        ("distributional_reward", test_distributional_reward),
+        ("communication_protocol", test_communication_protocol),
+        ("orchestrator_with_r10_components", test_orchestrator_with_r10_components),
     ]
 
     passed = 0
