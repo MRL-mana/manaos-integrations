@@ -194,8 +194,8 @@
         "-NoProfile",
         "-ExecutionPolicy",
         "Bypass",
-        "-Command",
-        "& \"${workspaceFolder}/status_r12_health_watch_task.ps1\"; if (Test-Path \"${workspaceFolder}/logs/r12_health_watch_task.jsonl\") { Write-Host \"=== R12 Health Watch Log Tail ===\"; Get-Content \"${workspaceFolder}/logs/r12_health_watch_task.jsonl\" -Tail 20 } else { Write-Host \"[INFO] log file not found: ${workspaceFolder}/logs/r12_health_watch_task.jsonl\" }"
+        "-File",
+        "${workspaceFolder}/check_r12_health_watch_quick.ps1"
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
@@ -206,6 +206,39 @@
       "label": "ManaOS: R12 Health Watch 運用クリーンアップ（ワンボタン）",
       "dependsOn": [
         "ManaOS: R12 Health Watch 解除→未登録確認（ワンボタン）"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: R12+RL 運用セットアップ（15分/ワンボタン）",
+      "dependsOn": [
+        "ManaOS: R12 Health Watch 運用セットアップ（15分/ワンボタン）",
+        "ManaOS: RLAnything ブートストラップ 登録→状態確認（ワンボタン）"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: R12+RL 運用チェック（ワンボタン）",
+      "dependsOn": [
+        "ManaOS: R12 Health Watch 運用チェック（状態+ログ末尾）",
+        "ManaOS: RLAnything ブートストラップ タスク状態確認"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: R12+RL 運用クリーンアップ（ワンボタン）",
+      "dependsOn": [
+        "ManaOS: R12 Health Watch 運用クリーンアップ（ワンボタン）",
+        "ManaOS: RLAnything ブートストラップ 解除→未登録確認（ワンボタン）"
       ],
       "dependsOrder": "sequence",
       "problemMatcher": [],
