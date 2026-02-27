@@ -3,7 +3,13 @@ param(
     [string]$ConfigFile = "",
     [string]$BaseUrl = "",
     [string]$LogPath = "",
-    [string]$JsonOutFile = ""
+    [string]$JsonOutFile = "",
+    [ValidateSet('generic','slack','discord')]
+    [string]$WebhookFormat = "discord",
+    [string]$WebhookUrl = "",
+    [string]$WebhookMention = "",
+    [int]$NotifyFailureCooldownMinutes = 15,
+    [string]$NotifyStateFile = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -21,9 +27,105 @@ if (Test-Path $ConfigFile) {
         if ($cfg.base_url) { $BaseUrl = [string]$cfg.base_url }
         if ($cfg.log_path) { $LogPath = [string]$cfg.log_path }
         if ($cfg.json_out_file) { $JsonOutFile = [string]$cfg.json_out_file }
+        if ($cfg.webhook_format) { $WebhookFormat = [string]$cfg.webhook_format }
+        if ($cfg.webhook_url) { $WebhookUrl = [string]$cfg.webhook_url }
+        if ($cfg.webhook_mention) { $WebhookMention = [string]$cfg.webhook_mention }
+        if ($null -ne $cfg.notify_failure_cooldown_minutes) { $NotifyFailureCooldownMinutes = [int]$cfg.notify_failure_cooldown_minutes }
+        if ($cfg.notify_state_file) { $NotifyStateFile = [string]$cfg.notify_state_file }
     }
     catch {
         Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($WebhookUrl) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_URL)) {
+    $WebhookUrl = $env:MANAOS_WEBHOOK_URL
+}
+if ([string]::IsNullOrWhiteSpace($WebhookMention) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_MENTION)) {
+    $WebhookMention = $env:MANAOS_WEBHOOK_MENTION
+}
+if ([string]::IsNullOrWhiteSpace($NotifyStateFile)) {
+    $NotifyStateFile = Join-Path $scriptDir "logs\openwebui_tailscale_watch_notify_state.json"
+}
+if ($NotifyFailureCooldownMinutes -lt 0) {
+    $NotifyFailureCooldownMinutes = 0
+}
+
+function Ensure-ParentDir {
+    param([string]$Path)
+    $dir = Split-Path -Parent $Path
+    if (-not [string]::IsNullOrWhiteSpace($dir) -and -not (Test-Path $dir)) {
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+    }
+}
+
+function Load-NotifyState {
+    param([string]$Path)
+
+    if (-not (Test-Path $Path)) {
+        return [pscustomobject]@{
+            last_failure_notified_at = ''
+            last_status = ''
+        }
+    }
+
+    try {
+        return Get-Content -Path $Path -Raw | ConvertFrom-Json
+    }
+    catch {
+        return [pscustomobject]@{
+            last_failure_notified_at = ''
+            last_status = ''
+        }
+    }
+}
+
+function Save-NotifyState {
+    param(
+        [string]$Path,
+        [string]$LastFailureNotifiedAt,
+        [string]$LastStatus
+    )
+
+    Ensure-ParentDir -Path $Path
+    $obj = [ordered]@{
+        last_failure_notified_at = $LastFailureNotifiedAt
+        last_status = $LastStatus
+        updated_at = [datetimeoffset]::Now.ToString('o')
+    }
+    ($obj | ConvertTo-Json -Depth 4) | Set-Content -Path $Path -Encoding UTF8
+}
+
+function Send-WebhookNotification {
+    param(
+        [string]$Url,
+        [ValidateSet('generic','slack','discord')]
+        [string]$Format,
+        [string]$Status,
+        [string]$Title,
+        [string]$Body,
+        [string]$Mention = ''
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Url)) { return }
+
+    $content = if ([string]::IsNullOrWhiteSpace($Mention)) { "$Title`n$Body" } else { "$Mention $Title`n$Body" }
+    if ($Format -eq 'discord') {
+        $payload = @{ content = $content }
+    }
+    elseif ($Format -eq 'slack') {
+        $payload = @{ text = $content }
+    }
+    else {
+        $payload = @{ status = $Status; title = $Title; body = $Body; mention = $Mention }
+    }
+
+    try {
+        Invoke-RestMethod -Uri $Url -Method Post -ContentType 'application/json' -Body ($payload | ConvertTo-Json -Depth 8) | Out-Null
+        Write-Host "[OK] Webhook notified ($Status)" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "[WARN] Webhook notify failed: $($_.Exception.Message)" -ForegroundColor Yellow
     }
 }
 
@@ -44,6 +146,7 @@ $logDir = Split-Path -Parent $LogPath
 if (-not [string]::IsNullOrWhiteSpace($logDir) -and -not (Test-Path $logDir)) {
     New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 }
+Ensure-ParentDir -Path $NotifyStateFile
 
 $openwebuiOk = $false
 $openwebuiStatusCode = $null
@@ -90,6 +193,14 @@ if (-not $portListening) {
 
 $ok = ($issues.Count -eq 0)
 
+$notifyState = Load-NotifyState -Path $NotifyStateFile
+$lastFailureNotifiedAt = [string]$notifyState.last_failure_notified_at
+$lastFailureNotifiedDt = $null
+if (-not [string]::IsNullOrWhiteSpace($lastFailureNotifiedAt)) {
+    try { $lastFailureNotifiedDt = [datetimeoffset]::Parse($lastFailureNotifiedAt) } catch { $lastFailureNotifiedDt = $null }
+}
+$failureNotified = $false
+
 $payload = [ordered]@{
     ts = [datetimeoffset]::Now.ToString("o")
     task = $TaskName
@@ -119,6 +230,7 @@ if ($ok) {
     if ($openwebuiStatusCode) { $msg += " | status=$openwebuiStatusCode" }
     if ($tailscaleIp) { $msg += " | ip=$tailscaleIp" }
     Write-Host $msg -ForegroundColor Green
+    Save-NotifyState -Path $NotifyStateFile -LastFailureNotifiedAt $lastFailureNotifiedAt -LastStatus 'success'
     exit 0
 }
 
@@ -126,4 +238,23 @@ Write-Host "[ALERT] OpenWebUI/Tailscale watch issues detected" -ForegroundColor 
 foreach ($issue in $issues) {
     Write-Host " - $issue" -ForegroundColor Red
 }
+
+if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
+    $shouldNotifyFailure = $false
+    if ($null -eq $lastFailureNotifiedDt) {
+        $shouldNotifyFailure = $true
+    }
+    elseif (([datetimeoffset]::Now - $lastFailureNotifiedDt).TotalMinutes -ge $NotifyFailureCooldownMinutes) {
+        $shouldNotifyFailure = $true
+    }
+
+    if ($shouldNotifyFailure) {
+        $body = "base_url=$BaseUrl issues=$([string]::Join('; ', @($issues)))"
+        Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'failure' -Title '[OpenWebUI Watch] FAILURE' -Body $body -Mention $WebhookMention
+        $lastFailureNotifiedAt = [datetimeoffset]::Now.ToString('o')
+        $failureNotified = $true
+    }
+}
+
+Save-NotifyState -Path $NotifyStateFile -LastFailureNotifiedAt $lastFailureNotifiedAt -LastStatus 'failure'
 exit 1

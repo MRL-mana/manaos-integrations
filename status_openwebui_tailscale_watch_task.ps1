@@ -43,6 +43,10 @@ try {
     Write-Host "base_url: $($cfg.base_url)" -ForegroundColor Gray
     Write-Host "log_path: $($cfg.log_path)" -ForegroundColor Gray
     Write-Host "json_out_file: $($cfg.json_out_file)" -ForegroundColor Gray
+    Write-Host "webhook_format: $($cfg.webhook_format)" -ForegroundColor Gray
+    Write-Host "webhook_enabled: $(-not [string]::IsNullOrWhiteSpace([string]$cfg.webhook_url))" -ForegroundColor Gray
+    Write-Host "notify_failure_cooldown_minutes: $($cfg.notify_failure_cooldown_minutes)" -ForegroundColor Gray
+    Write-Host "notify_state_file: $($cfg.notify_state_file)" -ForegroundColor Gray
 }
 catch {
     Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow
