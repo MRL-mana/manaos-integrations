@@ -66,9 +66,36 @@ try {
     if (-not [string]::IsNullOrWhiteSpace($latestFile) -and (Test-Path $latestFile)) {
         try {
             $latest = Get-Content -Path $latestFile -Raw | ConvertFrom-Json
+
+            $latestOk = $null
+            if ($null -ne $latest.ok) {
+                try { $latestOk = [bool]$latest.ok } catch { $latestOk = $null }
+            }
+            elseif ($null -ne $latest.issues) {
+                try {
+                    $latestOk = (@($latest.issues).Count -eq 0)
+                }
+                catch { $latestOk = $null }
+            }
+            elseif ($null -ne $latest.openwebui_ok -or $null -ne $latest.port_3001_listening -or $null -ne $latest.tailscale_ip) {
+                $openwebuiOk = $false
+                $portListening = $false
+                $tailscaleOk = $false
+                if ($null -ne $latest.openwebui_ok) {
+                    try { $openwebuiOk = [bool]$latest.openwebui_ok } catch { $openwebuiOk = $false }
+                }
+                if ($null -ne $latest.port_3001_listening) {
+                    try { $portListening = [bool]$latest.port_3001_listening } catch { $portListening = $false }
+                }
+                if (-not [string]::IsNullOrWhiteSpace([string]$latest.tailscale_ip)) {
+                    $tailscaleOk = $true
+                }
+                $latestOk = ($openwebuiOk -and $portListening -and $tailscaleOk)
+            }
+
             Write-Host "--- Latest Output ---" -ForegroundColor Cyan
             Write-Host "latest_ts: $($latest.ts)" -ForegroundColor Gray
-            Write-Host "latest_ok: $($latest.ok)" -ForegroundColor Gray
+            Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
             Write-Host "latest_failure_category: $($latest.failure_category)" -ForegroundColor Gray
             Write-Host "latest_failure_notified: $($latest.failure_notified)" -ForegroundColor Gray
             Write-Host "latest_failure_notify_suppressed_reason: $($latest.failure_notify_suppressed_reason)" -ForegroundColor Gray
