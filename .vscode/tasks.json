@@ -299,6 +299,94 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: OpenWebUI Tailscale Watch タスク登録（5分）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/install_openwebui_tailscale_watch_task.ps1",
+        "-IntervalMinutes",
+        "5"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: OpenWebUI Tailscale Watch タスク状態確認",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_openwebui_tailscale_watch_task.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: OpenWebUI Tailscale Watch 単発実行",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/run_openwebui_tailscale_watch_once.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: OpenWebUI Tailscale Watch タスク解除",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/uninstall_openwebui_tailscale_watch_task.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: OpenWebUI Tailscale Watch 登録→状態確認（ワンボタン）",
+      "dependsOn": [
+        "ManaOS: OpenWebUI Tailscale Watch タスク登録（5分）",
+        "ManaOS: OpenWebUI Tailscale Watch タスク状態確認"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: OpenWebUI Tailscale Watch 解除→未登録確認（ワンボタン）",
+      "dependsOn": [
+        "ManaOS: OpenWebUI Tailscale Watch タスク解除",
+        "ManaOS: OpenWebUI Tailscale Watch タスク状態確認"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: R12 Health Watch タスク登録（5分 / 推奨）",
       "type": "shell",
       "command": "pwsh",
