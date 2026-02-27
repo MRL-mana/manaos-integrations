@@ -1158,6 +1158,18 @@
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true },
       "group": "test"
+    },
+    {
+      "label": "ManaOS: Reason Enum Lint Full",
+      "dependsOn": [
+        "ManaOS: Reason Enum Lint Task Install",
+        "ManaOS: Reason Enum Lint Task Status",
+        "ManaOS: Reason Enum Lint Task Run Once"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
     }
   ]
 }
