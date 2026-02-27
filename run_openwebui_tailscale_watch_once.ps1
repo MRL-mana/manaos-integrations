@@ -65,6 +65,7 @@ function Load-NotifyState {
     if (-not (Test-Path $Path)) {
         return [pscustomobject]@{
             last_failure_notified_at = ''
+            last_failure_category = ''
             last_status = ''
         }
     }
@@ -75,6 +76,7 @@ function Load-NotifyState {
     catch {
         return [pscustomobject]@{
             last_failure_notified_at = ''
+            last_failure_category = ''
             last_status = ''
         }
     }
@@ -84,12 +86,14 @@ function Save-NotifyState {
     param(
         [string]$Path,
         [string]$LastFailureNotifiedAt,
+        [string]$LastFailureCategory,
         [string]$LastStatus
     )
 
     Ensure-ParentDir -Path $Path
     $obj = [ordered]@{
         last_failure_notified_at = $LastFailureNotifiedAt
+        last_failure_category = $LastFailureCategory
         last_status = $LastStatus
         updated_at = [datetimeoffset]::Now.ToString('o')
     }
@@ -214,9 +218,24 @@ $ok = ($issues.Count -eq 0)
 
 $notifyState = Load-NotifyState -Path $NotifyStateFile
 $lastFailureNotifiedAt = [string]$notifyState.last_failure_notified_at
+$lastFailureCategory = [string]$notifyState.last_failure_category
 $lastFailureNotifiedDt = $null
 if (-not [string]::IsNullOrWhiteSpace($lastFailureNotifiedAt)) {
     try { $lastFailureNotifiedDt = [datetimeoffset]::Parse($lastFailureNotifiedAt) } catch { $lastFailureNotifiedDt = $null }
+}
+
+$failureCategory = 'generic'
+if ($issues -contains 'Tailscale IP not found' -and $issues -contains 'Port 3001 is not listening') {
+    $failureCategory = 'network_and_port'
+}
+elseif ($issues -contains 'Tailscale IP not found') {
+    $failureCategory = 'tailscale_ip_missing'
+}
+elseif ($issues -contains 'Port 3001 is not listening') {
+    $failureCategory = 'port_not_listening'
+}
+elseif ($issues.Count -gt 0 -and $issues[0] -like 'OpenWebUI check failed*') {
+    $failureCategory = 'openwebui_unreachable'
 }
 
 $failureNotified = $false
@@ -235,6 +254,7 @@ $payload = [ordered]@{
     port_3001_listening = $portListening
     firewall_rule_count = $firewallRuleCount
     notify_failure_cooldown_minutes = $NotifyFailureCooldownMinutes
+    failure_category = if ($ok) { '' } else { $failureCategory }
     failure_notify_attempted = $false
     failure_notified = $false
     failure_notify_suppressed_reason = ''
@@ -251,7 +271,7 @@ if ($ok) {
     if ($openwebuiStatusCode) { $msg += " | status=$openwebuiStatusCode" }
     if ($tailscaleIp) { $msg += " | ip=$tailscaleIp" }
     Write-Host $msg -ForegroundColor Green
-    Save-NotifyState -Path $NotifyStateFile -LastFailureNotifiedAt $lastFailureNotifiedAt -LastStatus 'success'
+    Save-NotifyState -Path $NotifyStateFile -LastFailureNotifiedAt $lastFailureNotifiedAt -LastFailureCategory '' -LastStatus 'success'
     exit 0
 }
 
@@ -265,6 +285,9 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
     $shouldNotifyFailure = $false
     $elapsedMinutes = $null
     if ($null -eq $lastFailureNotifiedDt) {
+        $shouldNotifyFailure = $true
+    }
+    elseif ([string]::IsNullOrWhiteSpace($lastFailureCategory) -or $lastFailureCategory -ne $failureCategory) {
         $shouldNotifyFailure = $true
     }
     else {
@@ -283,6 +306,7 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
         $body = "base_url=$BaseUrl issues=$([string]::Join('; ', @($issues)))"
         Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'failure' -Title '[OpenWebUI Watch] FAILURE' -Body $body -Mention $WebhookMention
         $lastFailureNotifiedAt = [datetimeoffset]::Now.ToString('o')
+        $lastFailureCategory = $failureCategory
         $failureNotified = $true
         $failureNotifySuppressedReason = ''
         Write-Host "[INFO] Failure webhook sent" -ForegroundColor Yellow
