@@ -8,6 +8,10 @@ param(
     [string]$WebhookUrl = "",
     [string]$WebhookMention = "",
     [switch]$NotifyOnSuccess,
+    [bool]$NotifyOnDegraded = $true,
+    [int]$NotifyDegradedAfter = 3,
+    [int]$NotifyDegradedCooldownMinutes = 60,
+    [string]$DegradedStateFile = "",
     [switch]$Json
 )
 
@@ -22,6 +26,9 @@ if ([string]::IsNullOrWhiteSpace($JsonOutFile)) {
 }
 if ([string]::IsNullOrWhiteSpace($SummaryLogPath)) {
     $SummaryLogPath = Join-Path $scriptDir "logs\r12_rl_ops_watch.jsonl"
+}
+if ([string]::IsNullOrWhiteSpace($DegradedStateFile)) {
+    $DegradedStateFile = Join-Path $scriptDir "logs\r12_rl_ops_watch_state.json"
 }
 
 if (-not (Test-Path $StatusScript)) {
@@ -73,12 +80,86 @@ function Resolve-NotifySettings {
         $resolvedNotifyOnSuccess = ($rawUser -in @("1", "true", "yes", "on"))
     }
 
+    $resolvedNotifyOnDegraded = $NotifyOnDegraded
+    if (-not [string]::IsNullOrWhiteSpace($env:MANAOS_R12RL_NOTIFY_ON_DEGRADED)) {
+        $raw = $env:MANAOS_R12RL_NOTIFY_ON_DEGRADED.Trim().ToLowerInvariant()
+        $resolvedNotifyOnDegraded = ($raw -in @("1", "true", "yes", "on"))
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("MANAOS_R12RL_NOTIFY_ON_DEGRADED", "User"))) {
+        $rawUser = [Environment]::GetEnvironmentVariable("MANAOS_R12RL_NOTIFY_ON_DEGRADED", "User").Trim().ToLowerInvariant()
+        $resolvedNotifyOnDegraded = ($rawUser -in @("1", "true", "yes", "on"))
+    }
+
+    $resolvedNotifyDegradedAfter = $NotifyDegradedAfter
+    if (-not [string]::IsNullOrWhiteSpace($env:MANAOS_R12RL_NOTIFY_DEGRADED_AFTER)) {
+        try { $resolvedNotifyDegradedAfter = [int]$env:MANAOS_R12RL_NOTIFY_DEGRADED_AFTER } catch {}
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("MANAOS_R12RL_NOTIFY_DEGRADED_AFTER", "User"))) {
+        try { $resolvedNotifyDegradedAfter = [int][Environment]::GetEnvironmentVariable("MANAOS_R12RL_NOTIFY_DEGRADED_AFTER", "User") } catch {}
+    }
+
+    $resolvedNotifyDegradedCooldownMinutes = $NotifyDegradedCooldownMinutes
+    if (-not [string]::IsNullOrWhiteSpace($env:MANAOS_R12RL_NOTIFY_DEGRADED_COOLDOWN_MINUTES)) {
+        try { $resolvedNotifyDegradedCooldownMinutes = [int]$env:MANAOS_R12RL_NOTIFY_DEGRADED_COOLDOWN_MINUTES } catch {}
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("MANAOS_R12RL_NOTIFY_DEGRADED_COOLDOWN_MINUTES", "User"))) {
+        try { $resolvedNotifyDegradedCooldownMinutes = [int][Environment]::GetEnvironmentVariable("MANAOS_R12RL_NOTIFY_DEGRADED_COOLDOWN_MINUTES", "User") } catch {}
+    }
+
     return [pscustomobject]@{
         webhook_url = [string]$resolvedUrl
         webhook_format = [string]$resolvedFormat
         webhook_mention = [string]$resolvedMention
         notify_on_success = [bool]$resolvedNotifyOnSuccess
+        notify_on_degraded = [bool]$resolvedNotifyOnDegraded
+        notify_degraded_after = [int]$resolvedNotifyDegradedAfter
+        notify_degraded_cooldown_minutes = [int]$resolvedNotifyDegradedCooldownMinutes
     }
+}
+
+function Load-DegradedState {
+    param([string]$Path)
+
+    if (-not (Test-Path $Path)) {
+        return [pscustomobject]@{
+            consecutive_unhealthy = 0
+            last_degraded_notified_at = ''
+            last_ok = $true
+        }
+    }
+
+    try {
+        return Get-Content -Path $Path -Raw | ConvertFrom-Json
+    }
+    catch {
+        return [pscustomobject]@{
+            consecutive_unhealthy = 0
+            last_degraded_notified_at = ''
+            last_ok = $true
+        }
+    }
+}
+
+function Save-DegradedState {
+    param(
+        [string]$Path,
+        [int]$ConsecutiveUnhealthy,
+        [string]$LastDegradedNotifiedAt,
+        [bool]$LastOk
+    )
+
+    $dir = Split-Path -Parent $Path
+    if ($dir -and -not (Test-Path $dir)) {
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+    }
+
+    $obj = [ordered]@{
+        consecutive_unhealthy = $ConsecutiveUnhealthy
+        last_degraded_notified_at = $LastDegradedNotifiedAt
+        last_ok = $LastOk
+        updated_at = [datetimeoffset]::Now.ToString('o')
+    }
+    ($obj | ConvertTo-Json -Depth 6) | Set-Content -Path $Path -Encoding UTF8
 }
 
 function Send-WebhookNotification {
@@ -170,6 +251,12 @@ $WebhookUrl = [string]$notify.webhook_url
 $WebhookFormat = [string]$notify.webhook_format
 $WebhookMention = [string]$notify.webhook_mention
 $NotifyOnSuccess = [bool]$notify.notify_on_success
+$NotifyOnDegraded = [bool]$notify.notify_on_degraded
+$NotifyDegradedAfter = [int]$notify.notify_degraded_after
+$NotifyDegradedCooldownMinutes = [int]$notify.notify_degraded_cooldown_minutes
+
+if ($NotifyDegradedAfter -lt 1) { $NotifyDegradedAfter = 1 }
+if ($NotifyDegradedCooldownMinutes -lt 0) { $NotifyDegradedCooldownMinutes = 0 }
 
 $statusOutput = & pwsh -NoProfile -ExecutionPolicy Bypass -File $StatusScript -Json -JsonOutFile $JsonOutFile -TailLines $TailLines 2>&1
 $statusExit = $LASTEXITCODE
@@ -201,17 +288,29 @@ $summary = [pscustomobject]@{
     ops_watch_last_result = [string]$payload.opsWatchTask.lastResult
     ops_watch_state = [string]$payload.opsWatchTask.state
     status_exit = $statusExit
+    consecutive_unhealthy = 0
     failure_category = ''
     failure_reason = ''
     issues = $issues
     status_json = $JsonOutFile
 }
 
+$degradedState = Load-DegradedState -Path $DegradedStateFile
+$consecutiveUnhealthy = 0
+try { $consecutiveUnhealthy = [int]$degradedState.consecutive_unhealthy } catch { $consecutiveUnhealthy = 0 }
+if ($ok) { $consecutiveUnhealthy = 0 } else { $consecutiveUnhealthy += 1 }
+$summary.consecutive_unhealthy = $consecutiveUnhealthy
+
+$lastDegradedNotifiedAt = [string]$degradedState.last_degraded_notified_at
+$lastDegradedNotifiedDt = $null
+if (-not [string]::IsNullOrWhiteSpace($lastDegradedNotifiedAt)) {
+    try { $lastDegradedNotifiedDt = [datetimeoffset]::Parse($lastDegradedNotifiedAt) } catch { $lastDegradedNotifiedDt = $null }
+}
+
 $summaryDir = Split-Path -Parent $SummaryLogPath
 if ($summaryDir -and -not (Test-Path $summaryDir)) {
     New-Item -ItemType Directory -Path $summaryDir -Force | Out-Null
 }
-($summary | ConvertTo-Json -Depth 6 -Compress) | Add-Content -Path $SummaryLogPath -Encoding UTF8
 
 if ($ok) {
     $line = "[OK] R12+RL ops healthy | r12=$r12State/$r12Result rl=$rlState/$rlResult latest_failed=$latestFailed"
@@ -222,6 +321,8 @@ if ($ok) {
     if ($Json.IsPresent) {
         Write-Output ($summary | ConvertTo-Json -Depth 6)
     }
+    Save-DegradedState -Path $DegradedStateFile -ConsecutiveUnhealthy $consecutiveUnhealthy -LastDegradedNotifiedAt $lastDegradedNotifiedAt -LastOk $true
+    ($summary | ConvertTo-Json -Depth 6 -Compress) | Add-Content -Path $SummaryLogPath -Encoding UTF8
     exit 0
 }
 
@@ -239,8 +340,27 @@ if ($statusOutput) {
 if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
     $alertTitle = "[R12+RL Ops] FAILURE ($($classification.category))"
     Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'failure' -Title $alertTitle -Body $alertLine -Mention $WebhookMention
+
+    if ($NotifyOnDegraded -and $consecutiveUnhealthy -ge $NotifyDegradedAfter) {
+        $shouldNotifyDegraded = $false
+        if ($null -eq $lastDegradedNotifiedDt) {
+            $shouldNotifyDegraded = $true
+        }
+        elseif (([datetimeoffset]::Now - $lastDegradedNotifiedDt).TotalMinutes -ge $NotifyDegradedCooldownMinutes) {
+            $shouldNotifyDegraded = $true
+        }
+
+        if ($shouldNotifyDegraded) {
+            $degradedTitle = "[R12+RL Ops] DEGRADED (unhealthy_streak)"
+            $degradedBody = "$alertLine threshold=$NotifyDegradedAfter streak=$consecutiveUnhealthy"
+            Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'warning' -Title $degradedTitle -Body $degradedBody -Mention $WebhookMention
+            $lastDegradedNotifiedAt = [datetimeoffset]::Now.ToString('o')
+        }
+    }
 }
 if ($Json.IsPresent) {
     Write-Output ($summary | ConvertTo-Json -Depth 6)
 }
+Save-DegradedState -Path $DegradedStateFile -ConsecutiveUnhealthy $consecutiveUnhealthy -LastDegradedNotifiedAt $lastDegradedNotifiedAt -LastOk $false
+($summary | ConvertTo-Json -Depth 6 -Compress) | Add-Content -Path $SummaryLogPath -Encoding UTF8
 exit 1

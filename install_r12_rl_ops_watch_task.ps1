@@ -6,6 +6,10 @@ param(
     [string]$WebhookUrl = "",
     [string]$WebhookMention = "",
     [switch]$NotifyOnSuccess,
+    [switch]$DisableNotifyOnDegraded,
+    [int]$NotifyDegradedAfter = 3,
+    [int]$NotifyDegradedCooldownMinutes = 60,
+    [string]$DegradedStateFile = "",
     [ValidateSet('LIMITED','HIGHEST')]
     [string]$RunLevel = 'LIMITED',
     [switch]$RunAsSystem,
@@ -28,6 +32,15 @@ if (-not (Test-Path $jobScript)) {
 if ($IntervalMinutes -lt 1 -or $IntervalMinutes -gt 1440) {
     throw "IntervalMinutes must be 1..1440"
 }
+if ($NotifyDegradedAfter -lt 1) {
+    throw "NotifyDegradedAfter must be >= 1"
+}
+if ($NotifyDegradedCooldownMinutes -lt 0) {
+    throw "NotifyDegradedCooldownMinutes must be >= 0"
+}
+if ([string]::IsNullOrWhiteSpace($DegradedStateFile)) {
+    $DegradedStateFile = Join-Path $scriptDir "logs\r12_rl_ops_watch_state.json"
+}
 
 if ([string]::IsNullOrWhiteSpace($WebhookUrl) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_URL)) {
     $WebhookUrl = $env:MANAOS_WEBHOOK_URL
@@ -47,7 +60,13 @@ $taskArgs = @(
     '-File',
     "`"$jobScript`"",
     '-JsonOutFile',
-    "`"$jsonOut`""
+    "`"$jsonOut`"",
+    '-NotifyDegradedAfter',
+    "$NotifyDegradedAfter",
+    '-NotifyDegradedCooldownMinutes',
+    "$NotifyDegradedCooldownMinutes",
+    '-DegradedStateFile',
+    "`"$DegradedStateFile`""
 )
 
 if ($WebhookFormat -ne 'discord') {
@@ -61,6 +80,9 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
 }
 if ($NotifyOnSuccess.IsPresent) {
     $taskArgs += '-NotifyOnSuccess'
+}
+if ($DisableNotifyOnDegraded.IsPresent) {
+    $taskArgs += '-NotifyOnDegraded:$false'
 }
 
 $taskRun = "pwsh " + ($taskArgs -join ' ')
@@ -121,6 +143,7 @@ Write-Host "Schedule : MINUTE /MO $IntervalMinutes" -ForegroundColor Gray
 Write-Host "RunLevel : $effectiveRunLevel" -ForegroundColor Gray
 Write-Host "Account  : $(if ($useSystemAccount) { 'SYSTEM' } else { $env:USERNAME })" -ForegroundColor Gray
 Write-Host "Script   : $jobScript" -ForegroundColor Gray
+Write-Host "Degraded : enabled=$(if ($DisableNotifyOnDegraded.IsPresent) { 'false' } else { 'true' }), after=$NotifyDegradedAfter, cooldown=${NotifyDegradedCooldownMinutes}min" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 
 if ($PrintOnly) {
