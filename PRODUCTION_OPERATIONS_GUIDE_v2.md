@@ -166,7 +166,7 @@ VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status (JSON)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status (RequirePass)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Full`
-- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Install`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Install (30min)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Status`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Status (JSON)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Uninstall`

@@ -43,7 +43,7 @@ $payload = [ordered]@{
     lifecycle_status_ok_reason = 'source_missing'
 }
 
-$taskInfo = schtasks /Query /TN $TaskName /V /FO LIST
+$taskInfo = schtasks /Query /TN $TaskName /V /FO LIST 2>$null
 if ($LASTEXITCODE -ne 0 -or $null -eq $taskInfo) {
     $payload.snapshot_ok_reason = 'task_not_found'
     if ($AsJson) {
