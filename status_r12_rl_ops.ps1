@@ -366,13 +366,34 @@ Write-ConfigLinkSummary -Label "R12+RL Ops Watch" -TaskSnapshot $opsWatchTaskSna
 Write-Host ""
 Write-Host "=== Ops Watch Latest Notify ===" -ForegroundColor Cyan
 if ($null -ne $opsWatchSnapshot.latestSummary) {
-    Write-Host "failure_category: $($opsWatchSnapshot.latestSummary.failure_category)" -ForegroundColor Gray
-    Write-Host "failure_notify_attempted: $($opsWatchSnapshot.latestSummary.failure_notify_attempted)" -ForegroundColor Gray
-    Write-Host "failure_notified: $($opsWatchSnapshot.latestSummary.failure_notified)" -ForegroundColor Gray
-    Write-Host "failure_notify_suppressed_reason: $($opsWatchSnapshot.latestSummary.failure_notify_suppressed_reason)" -ForegroundColor Gray
-    Write-Host "degraded_notify_attempted: $($opsWatchSnapshot.latestSummary.degraded_notify_attempted)" -ForegroundColor Gray
-    Write-Host "degraded_notified: $($opsWatchSnapshot.latestSummary.degraded_notified)" -ForegroundColor Gray
-    Write-Host "degraded_notify_suppressed_reason: $($opsWatchSnapshot.latestSummary.degraded_notify_suppressed_reason)" -ForegroundColor Gray
+    $latestFailureCategory = [string]$opsWatchSnapshot.latestSummary.failure_category
+    $latestFailureNotifyAttempted = $null
+    if ($null -ne $opsWatchSnapshot.latestSummary.failure_notify_attempted) {
+        try { $latestFailureNotifyAttempted = [bool]$opsWatchSnapshot.latestSummary.failure_notify_attempted } catch { $latestFailureNotifyAttempted = $null }
+    }
+    $latestFailureNotified = $null
+    if ($null -ne $opsWatchSnapshot.latestSummary.failure_notified) {
+        try { $latestFailureNotified = [bool]$opsWatchSnapshot.latestSummary.failure_notified } catch { $latestFailureNotified = $null }
+    }
+    $latestFailureSuppressedReason = [string]$opsWatchSnapshot.latestSummary.failure_notify_suppressed_reason
+
+    $latestDegradedNotifyAttempted = $null
+    if ($null -ne $opsWatchSnapshot.latestSummary.degraded_notify_attempted) {
+        try { $latestDegradedNotifyAttempted = [bool]$opsWatchSnapshot.latestSummary.degraded_notify_attempted } catch { $latestDegradedNotifyAttempted = $null }
+    }
+    $latestDegradedNotified = $null
+    if ($null -ne $opsWatchSnapshot.latestSummary.degraded_notified) {
+        try { $latestDegradedNotified = [bool]$opsWatchSnapshot.latestSummary.degraded_notified } catch { $latestDegradedNotified = $null }
+    }
+    $latestDegradedSuppressedReason = [string]$opsWatchSnapshot.latestSummary.degraded_notify_suppressed_reason
+
+    Write-Host "latest_failure_category: $latestFailureCategory" -ForegroundColor Gray
+    Write-Host "latest_failure_notify_attempted: $latestFailureNotifyAttempted" -ForegroundColor Gray
+    Write-Host "latest_failure_notified: $latestFailureNotified" -ForegroundColor Gray
+    Write-Host "latest_failure_notify_suppressed_reason: $latestFailureSuppressedReason" -ForegroundColor Gray
+    Write-Host "latest_degraded_notify_attempted: $latestDegradedNotifyAttempted" -ForegroundColor Gray
+    Write-Host "latest_degraded_notified: $latestDegradedNotified" -ForegroundColor Gray
+    Write-Host "latest_degraded_notify_suppressed_reason: $latestDegradedSuppressedReason" -ForegroundColor Gray
 }
 else {
     $opsWatchIssues = @($opsWatchSnapshot.issues)
