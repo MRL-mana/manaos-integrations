@@ -409,6 +409,8 @@ $summary = [pscustomobject]@{
     ops_watch_last_result = [string]$payload.opsWatchTask.lastResult
     ops_watch_state = [string]$payload.opsWatchTask.state
     status_exit = $statusExit
+    previous_last_ok = $true
+    recovered_this_run = $false
     consecutive_unhealthy = 0
     consecutive_endpoint_refused = 0
     failure_category = ''
@@ -425,6 +427,10 @@ $summary = [pscustomobject]@{
 }
 
 $degradedState = Load-DegradedState -Path $DegradedStateFile
+$previousLastOk = $true
+try { $previousLastOk = [bool]$degradedState.last_ok } catch { $previousLastOk = $true }
+$summary.previous_last_ok = $previousLastOk
+
 $consecutiveUnhealthy = 0
 try { $consecutiveUnhealthy = [int]$degradedState.consecutive_unhealthy } catch { $consecutiveUnhealthy = 0 }
 if ($ok) { $consecutiveUnhealthy = 0 } else { $consecutiveUnhealthy += 1 }
@@ -459,6 +465,9 @@ if ($summaryDir -and -not (Test-Path $summaryDir)) {
 }
 
 if ($ok) {
+    if (-not $previousLastOk) {
+        $summary.recovered_this_run = $true
+    }
     $line = "[OK] R12+RL ops healthy | r12=$r12State/$r12Result rl=$rlState/$rlResult latest_failed=$latestFailed"
     Write-Host $line -ForegroundColor Green
     if ($NotifyOnSuccess -and -not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
