@@ -642,7 +642,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: R12+RL 監視登録→状態確認（ワンボタン / 劣化3回+60分 / 推奨）",
+      "label": "ManaOS: R12+RL 監視登録→状態確認（ワンボタン / 15分 / 互換エイリアス）",
       "dependsOn": [
         "ManaOS: R12+RL 監視タスク登録（15分 / 劣化3回+60分 / 推奨）",
         "ManaOS: R12+RL 監視タスク状態確認"
@@ -675,7 +675,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: R12+RL 監視解除→未登録確認（ワンボタン）",
+      "label": "ManaOS: R12+RL 監視解除→未登録確認（ワンボタン / 推奨）",
       "dependsOn": [
         "ManaOS: R12+RL 監視タスク解除",
         "ManaOS: R12+RL 監視タスク状態確認"
