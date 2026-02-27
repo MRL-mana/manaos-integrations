@@ -9,6 +9,7 @@ param(
     [switch]$DisableNotifyOnDegraded,
     [int]$NotifyDegradedAfter = 3,
     [int]$NotifyDegradedCooldownMinutes = 60,
+    [int]$MaxR12LogAgeMinutes = 20,
     [string]$DegradedStateFile = "",
     [switch]$DisableAutoRecovery,
     [int]$RecoverAfterConsecutiveEndpointDown = 3,
@@ -48,6 +49,9 @@ if ($NotifyDegradedAfter -lt 1) {
 if ($NotifyDegradedCooldownMinutes -lt 0) {
     throw "NotifyDegradedCooldownMinutes must be >= 0"
 }
+if ($MaxR12LogAgeMinutes -lt 1) {
+    throw "MaxR12LogAgeMinutes must be >= 1"
+}
 if ($RecoverAfterConsecutiveEndpointDown -lt 1) {
     throw "RecoverAfterConsecutiveEndpointDown must be >= 1"
 }
@@ -80,6 +84,7 @@ $configObj = [ordered]@{
     json_out_file = $jsonOut
     summary_log_path = $summaryLogPath
     tail_lines = 20
+    max_r12_log_age_minutes = [int]$MaxR12LogAgeMinutes
     webhook_format = $WebhookFormat
     webhook_url = $WebhookUrl
     webhook_mention = $WebhookMention
@@ -154,6 +159,7 @@ Write-Host "RunLevel : $effectiveRunLevel" -ForegroundColor Gray
 Write-Host "Account  : $(if ($useSystemAccount) { 'SYSTEM' } else { $env:USERNAME })" -ForegroundColor Gray
 Write-Host "Script   : $jobScript" -ForegroundColor Gray
 Write-Host "Config   : $configPath" -ForegroundColor Gray
+Write-Host "Freshness: max_r12_log_age_minutes=$MaxR12LogAgeMinutes" -ForegroundColor Gray
 Write-Host "Degraded : enabled=$(if ($DisableNotifyOnDegraded.IsPresent) { 'false' } else { 'true' }), after=$NotifyDegradedAfter, cooldown=${NotifyDegradedCooldownMinutes}min" -ForegroundColor Gray
 Write-Host "Recovery : enabled=$(if ($autoRecoveryEnabled) { 'true' } else { 'false' }), after=$RecoverAfterConsecutiveEndpointDown, cooldown=${RecoveryCooldownMinutes}min" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray

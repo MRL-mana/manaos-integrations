@@ -4,6 +4,7 @@ param(
     [string]$JsonOutFile = "",
     [string]$SummaryLogPath = "",
     [int]$TailLines = 20,
+    [int]$MaxR12LogAgeMinutes = 20,
     [ValidateSet('generic','slack','discord')]
     [string]$WebhookFormat = "discord",
     [string]$WebhookUrl = "",
@@ -48,6 +49,7 @@ if (Test-Path $ConfigFile) {
         if ($cfg.json_out_file) { $JsonOutFile = [string]$cfg.json_out_file }
         if ($cfg.summary_log_path) { $SummaryLogPath = [string]$cfg.summary_log_path }
         if ($null -ne $cfg.tail_lines) { $TailLines = [int]$cfg.tail_lines }
+        if ($null -ne $cfg.max_r12_log_age_minutes) { $MaxR12LogAgeMinutes = [int]$cfg.max_r12_log_age_minutes }
         if ($cfg.webhook_format) { $WebhookFormat = [string]$cfg.webhook_format }
         if ($cfg.webhook_url) { $WebhookUrl = [string]$cfg.webhook_url }
         if ($cfg.webhook_mention) { $WebhookMention = [string]$cfg.webhook_mention }
@@ -77,6 +79,9 @@ if ([string]::IsNullOrWhiteSpace($SummaryLogPath)) {
 }
 if ([string]::IsNullOrWhiteSpace($DegradedStateFile)) {
     $DegradedStateFile = Join-Path $scriptDir "logs\r12_rl_ops_watch_state.json"
+}
+if ($MaxR12LogAgeMinutes -lt 1) {
+    $MaxR12LogAgeMinutes = 1
 }
 if ($RecoverAfterConsecutiveEndpointDown -lt 1) {
     $RecoverAfterConsecutiveEndpointDown = 1
@@ -359,7 +364,7 @@ $NotifyDegradedCooldownMinutes = [int]$notify.notify_degraded_cooldown_minutes
 if ($NotifyDegradedAfter -lt 1) { $NotifyDegradedAfter = 1 }
 if ($NotifyDegradedCooldownMinutes -lt 0) { $NotifyDegradedCooldownMinutes = 0 }
 
-$statusOutput = & pwsh -NoProfile -ExecutionPolicy Bypass -File $StatusScript -Json -JsonOutFile $JsonOutFile -TailLines $TailLines 2>&1
+$statusOutput = & pwsh -NoProfile -ExecutionPolicy Bypass -File $StatusScript -Json -JsonOutFile $JsonOutFile -TailLines $TailLines -MaxR12LogAgeMinutes $MaxR12LogAgeMinutes 2>&1
 $statusExit = $LASTEXITCODE
 
 if (-not (Test-Path $JsonOutFile)) {
