@@ -10,15 +10,15 @@ function Invoke-QuickStep {
     param(
         [string]$Name,
         [string]$ScriptPath,
-        [string[]]$Args
+        [string[]]$StepParameters
     )
 
     if (-not (Test-Path $ScriptPath)) {
         return [pscustomobject]@{ name = $Name; ok = $false; exit_code = -1; output_tail = @("missing: $ScriptPath") }
     }
 
-    $cmdArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$ScriptPath) + $Args
-    $output = @(& pwsh @cmdArgs 2>&1 | ForEach-Object { [string]$_ })
+    $commandParameters = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$ScriptPath) + $StepParameters
+    $output = @(& pwsh @commandParameters 2>&1 | ForEach-Object { [string]$_ })
     $exitCode = [int]$LASTEXITCODE
     [pscustomobject]@{
         name = $Name
@@ -29,11 +29,11 @@ function Invoke-QuickStep {
 }
 
 $steps = @(
-    (Invoke-QuickStep -Name 'doctor_tasks' -ScriptPath (Join-Path $scriptDir 'doctor_reason_enum_ops_tasks.ps1') -Args @()),
-    (Invoke-QuickStep -Name 'export_snapshot_json' -ScriptPath (Join-Path $scriptDir 'export_reason_enum_ops_snapshot.ps1') -Args @('-AsJson')),
-    (Invoke-QuickStep -Name 'status_snapshot_task_json' -ScriptPath (Join-Path $scriptDir 'status_reason_enum_ops_snapshot_task.ps1') -Args @('-AsJson')),
-    (Invoke-QuickStep -Name 'status_lifecycle_json' -ScriptPath (Join-Path $scriptDir 'status_reason_enum_ops_snapshot_task_lifecycle.ps1') -Args @('-AsJson')),
-    (Invoke-QuickStep -Name 'install_snapshot_task_printonly' -ScriptPath (Join-Path $scriptDir 'install_reason_enum_ops_snapshot_task.ps1') -Args @('-PrintOnly'))
+    (Invoke-QuickStep -Name 'doctor_tasks' -ScriptPath (Join-Path $scriptDir 'doctor_reason_enum_ops_tasks.ps1') -StepParameters @()),
+    (Invoke-QuickStep -Name 'export_snapshot_json' -ScriptPath (Join-Path $scriptDir 'export_reason_enum_ops_snapshot.ps1') -StepParameters @('-AsJson')),
+    (Invoke-QuickStep -Name 'status_snapshot_task_json' -ScriptPath (Join-Path $scriptDir 'status_reason_enum_ops_snapshot_task.ps1') -StepParameters @('-AsJson')),
+    (Invoke-QuickStep -Name 'status_lifecycle_json' -ScriptPath (Join-Path $scriptDir 'status_reason_enum_ops_snapshot_task_lifecycle.ps1') -StepParameters @('-AsJson')),
+    (Invoke-QuickStep -Name 'install_snapshot_task_printonly' -ScriptPath (Join-Path $scriptDir 'install_reason_enum_ops_snapshot_task.ps1') -StepParameters @('-PrintOnly'))
 )
 
 $notes = @()
