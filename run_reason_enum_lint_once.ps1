@@ -9,7 +9,8 @@ param(
     [string]$WebhookUrl = "",
     [string]$WebhookMention = "",
     [int]$NotifyFailureCooldownMinutes = 60,
-    [string]$NotifyStateFile = ""
+    [string]$NotifyStateFile = "",
+    [switch]$SimulateFailure
 )
 
 $ErrorActionPreference = "Stop"
@@ -171,15 +172,23 @@ $failureNotifySuppressedReason = ''
 $webhookEnabled = -not [string]::IsNullOrWhiteSpace($WebhookUrl)
 
 try {
-    $pwshArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$lintScript)
-    if ($IncludeCheckScripts.IsPresent) {
-        $pwshArgs += '-IncludeCheckScripts'
+    if ($SimulateFailure.IsPresent) {
+        $outputLines = @('[SIMULATED] reason-enum lint forced failure for notification test')
+        $exitCode = 2
+        $ok = $false
+        $okReason = 'lint_failed'
     }
+    else {
+        $pwshArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$lintScript)
+        if ($IncludeCheckScripts.IsPresent) {
+            $pwshArgs += '-IncludeCheckScripts'
+        }
 
-    $outputLines = @(& pwsh @pwshArgs 2>&1 | ForEach-Object { [string]$_ })
-    $exitCode = $LASTEXITCODE
-    $ok = ($exitCode -eq 0)
-    $okReason = if ($ok) { 'lint_passed' } else { 'lint_failed' }
+        $outputLines = @(& pwsh @pwshArgs 2>&1 | ForEach-Object { [string]$_ })
+        $exitCode = $LASTEXITCODE
+        $ok = ($exitCode -eq 0)
+        $okReason = if ($ok) { 'lint_passed' } else { 'lint_failed' }
+    }
 }
 catch {
     $outputLines = @($_.Exception.Message)
