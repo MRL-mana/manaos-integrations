@@ -54,10 +54,54 @@ try {
     if (-not [string]::IsNullOrWhiteSpace($latestFile) -and (Test-Path $latestFile)) {
         try {
             $latest = Get-Content -Path $latestFile -Raw | ConvertFrom-Json
+
+            $latestTs = [string]$latest.generated_at
+            if ([string]::IsNullOrWhiteSpace($latestTs)) {
+                $latestTs = [string]$latest.ts
+            }
+
+            $latestRouteCategory = [string]$latest.route.category
+            if ([string]::IsNullOrWhiteSpace($latestRouteCategory)) {
+                $latestUnifiedReady = $false
+                $latestDirectReady = $false
+                if ($null -ne $latest.unified_api -and $null -ne $latest.unified_api.ready) {
+                    try { $latestUnifiedReady = [bool]$latest.unified_api.ready } catch { $latestUnifiedReady = $false }
+                }
+                if ($null -ne $latest.comfyui -and $null -ne $latest.comfyui.ready) {
+                    try { $latestDirectReady = [bool]$latest.comfyui.ready } catch { $latestDirectReady = $false }
+                }
+
+                if ($latestUnifiedReady) {
+                    $latestRouteCategory = 'unified_ready'
+                }
+                elseif ($latestDirectReady) {
+                    $latestRouteCategory = 'direct_fallback'
+                }
+                else {
+                    $latestRouteCategory = 'pipeline_down'
+                }
+            }
+
+            $latestOverallOk = $null
+            if ($null -ne $latest.overall -and $null -ne $latest.overall.ok) {
+                try { $latestOverallOk = [bool]$latest.overall.ok } catch { $latestOverallOk = $null }
+            }
+            elseif ($null -ne $latest.unified_api -or $null -ne $latest.comfyui) {
+                $latestUnifiedReadyForOk = $false
+                $latestDirectReadyForOk = $false
+                if ($null -ne $latest.unified_api -and $null -ne $latest.unified_api.ready) {
+                    try { $latestUnifiedReadyForOk = [bool]$latest.unified_api.ready } catch { $latestUnifiedReadyForOk = $false }
+                }
+                if ($null -ne $latest.comfyui -and $null -ne $latest.comfyui.ready) {
+                    try { $latestDirectReadyForOk = [bool]$latest.comfyui.ready } catch { $latestDirectReadyForOk = $false }
+                }
+                $latestOverallOk = ($latestUnifiedReadyForOk -or $latestDirectReadyForOk)
+            }
+
             Write-Host "--- Latest Output ---" -ForegroundColor Cyan
-            Write-Host "latest_ts: $($latest.generated_at)" -ForegroundColor Gray
-            Write-Host "latest_route_category: $($latest.route.category)" -ForegroundColor Gray
-            Write-Host "latest_overall_ok: $($latest.overall.ok)" -ForegroundColor Gray
+            Write-Host "latest_ts: $latestTs" -ForegroundColor Gray
+            Write-Host "latest_route_category: $latestRouteCategory" -ForegroundColor Gray
+            Write-Host "latest_overall_ok: $latestOverallOk" -ForegroundColor Gray
         }
         catch {
             Write-Host "[WARN] Failed to parse latest output file: $latestFile" -ForegroundColor Yellow
