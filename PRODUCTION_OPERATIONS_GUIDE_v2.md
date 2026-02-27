@@ -132,6 +132,10 @@ Reason lint notify diagnostics:
 - opsスナップショット状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1`
 - opsスナップショット状態（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1 -AsJson`
 - opsスナップショット状態（RequirePass / 失敗時 exit 1）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1 -RequirePass`
+- opsスナップショット定期タスク登録（30分）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install_reason_enum_ops_snapshot_task.ps1 -IntervalMinutes 30`
+- opsスナップショット定期タスク状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot_task.ps1`
+- opsスナップショット定期タスク状態（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot_task.ps1 -AsJson`
+- opsスナップショット定期タスク解除: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\uninstall_reason_enum_ops_snapshot_task.ps1`
 - opsスナップショット最新: `logs/reason_enum_ops_snapshot.latest.json`
 - opsスナップショット履歴: `logs/reason_enum_ops_snapshot.history.jsonl`
 - cooldown自己診断タスク状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_lint_cooldown_verify_task.ps1`
@@ -162,6 +166,11 @@ VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status (JSON)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status (RequirePass)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Full`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Install`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Status`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Status (JSON)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Uninstall`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Full`
 
 ## Troubleshooting
 

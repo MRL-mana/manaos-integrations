@@ -1200,6 +1200,83 @@
       "type": "shell",
       "command": "pwsh",
       "args": [
+        {
+          "label": "ManaOS: Reason Enum Ops Snapshot Task Install",
+          "type": "shell",
+          "command": "pwsh",
+          "args": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            "${workspaceFolder}/install_reason_enum_ops_snapshot_task.ps1"
+          ],
+          "options": { "cwd": "${workspaceFolder}" },
+          "problemMatcher": [],
+          "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+          "group": "none"
+        },
+        {
+          "label": "ManaOS: Reason Enum Ops Snapshot Task Status",
+          "type": "shell",
+          "command": "pwsh",
+          "args": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            "${workspaceFolder}/status_reason_enum_ops_snapshot_task.ps1"
+          ],
+          "options": { "cwd": "${workspaceFolder}" },
+          "problemMatcher": [],
+          "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+          "group": "none"
+        },
+        {
+          "label": "ManaOS: Reason Enum Ops Snapshot Task Status (JSON)",
+          "type": "shell",
+          "command": "pwsh",
+          "args": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            "${workspaceFolder}/status_reason_enum_ops_snapshot_task.ps1",
+            "-AsJson"
+          ],
+          "options": { "cwd": "${workspaceFolder}" },
+          "problemMatcher": [],
+          "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+          "group": "none"
+        },
+        {
+          "label": "ManaOS: Reason Enum Ops Snapshot Task Uninstall",
+          "type": "shell",
+          "command": "pwsh",
+          "args": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            "${workspaceFolder}/uninstall_reason_enum_ops_snapshot_task.ps1"
+          ],
+          "options": { "cwd": "${workspaceFolder}" },
+          "problemMatcher": [],
+          "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+          "group": "none"
+        },
+        {
+          "label": "ManaOS: Reason Enum Ops Snapshot Task Full",
+          "dependsOn": [
+            "ManaOS: Reason Enum Ops Snapshot Task Install",
+            "ManaOS: Reason Enum Ops Snapshot Task Status",
+            "ManaOS: Reason Enum Ops Snapshot Task Status (JSON)"
+          ],
+          "dependsOrder": "sequence",
+          "problemMatcher": [],
+          "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+          "group": "test"
+        },
         "-NoProfile",
         "-ExecutionPolicy",
         "Bypass",
@@ -1418,7 +1495,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: Reason Enum Ops Snapshot Status",
+      "label": "ManaOS: Reason Enum Ops Snapshot Task Install (30min)",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1426,7 +1503,9 @@
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        "${workspaceFolder}/status_reason_enum_ops_snapshot.ps1"
+        "${workspaceFolder}/install_reason_enum_ops_snapshot_task.ps1",
+        "-IntervalMinutes",
+        "30"
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
@@ -1434,7 +1513,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: Reason Enum Ops Snapshot Status (JSON)",
+      "label": "ManaOS: Reason Enum Ops Snapshot Task Status",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1442,7 +1521,23 @@
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        "${workspaceFolder}/status_reason_enum_ops_snapshot.ps1",
+        "${workspaceFolder}/status_reason_enum_ops_snapshot_task.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Reason Enum Ops Snapshot Task Status (JSON)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_reason_enum_ops_snapshot_task.ps1",
         "-AsJson"
       ],
       "options": { "cwd": "${workspaceFolder}" },
@@ -1451,7 +1546,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: Reason Enum Ops Snapshot Status (RequirePass)",
+      "label": "ManaOS: Reason Enum Ops Snapshot Task Uninstall",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1459,39 +1554,23 @@
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        "${workspaceFolder}/status_reason_enum_ops_snapshot.ps1",
-        "-RequirePass"
+        "${workspaceFolder}/uninstall_reason_enum_ops_snapshot_task.ps1"
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true },
-      "group": "test"
+      "group": "none"
     },
     {
-      "label": "ManaOS: Reason Enum Ops Snapshot Full",
+      "label": "ManaOS: Reason Enum Ops Snapshot Task Full",
       "dependsOn": [
         "ManaOS: Reason Enum Ops Snapshot Export",
-        "ManaOS: Reason Enum Ops Snapshot Export (JSON)",
-        "ManaOS: Reason Enum Ops Snapshot Status",
-        "ManaOS: Reason Enum Ops Snapshot Status (JSON)",
-        "ManaOS: Reason Enum Ops Snapshot Status (RequirePass)"
+        "ManaOS: Reason Enum Ops Snapshot Task Install (30min)",
+        "ManaOS: Reason Enum Ops Snapshot Task Status",
+        "ManaOS: Reason Enum Ops Snapshot Task Status (JSON)"
       ],
       "dependsOrder": "sequence",
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true },
       "group": "test"
     },
-    {
-      "label": "ManaOS: Reason Enum Lint Full",
-      "dependsOn": [
-        "ManaOS: Reason Enum Lint Task Install",
-        "ManaOS: Reason Enum Lint Task Status",
-        "ManaOS: Reason Enum Lint Task Run Once"
-      ],
-      "dependsOrder": "sequence",
-      "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
-      "group": "test"
-    }
-  ]
-}
