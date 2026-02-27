@@ -356,7 +356,149 @@ except ImportError:
         COMFYUI_AVAILABLE = True
         logger.info("ComfyUI統合モジュールを scripts.misc から読み込みました")
     except ImportError:
-        logger.warning("ComfyUI統合モジュールが見つかりません")
+        logger.warning("ComfyUI統合モジュールが見つかりません。軽量フォールバックを使用します")
+
+        class ComfyUIIntegration:
+            def __init__(self, base_url: str = "http://127.0.0.1:8188"):
+                self.base_url = (base_url or "http://127.0.0.1:8188").rstrip("/")
+
+            def is_available(self) -> bool:
+                if not REQUESTS_AVAILABLE:
+                    return False
+                try:
+                    response = requests.get(f"{self.base_url}/system_stats", timeout=5)
+                    return response.status_code == 200
+                except Exception:
+                    return False
+
+            def _list_checkpoints(self) -> List[str]:
+                if not REQUESTS_AVAILABLE:
+                    return []
+                try:
+                    response = requests.get(
+                        f"{self.base_url}/object_info/CheckpointLoaderSimple",
+                        timeout=10,
+                    )
+                    response.raise_for_status()
+                    data = response.json() or {}
+                    ckpts = (
+                        data.get("CheckpointLoaderSimple", {})
+                        .get("input", {})
+                        .get("required", {})
+                        .get("ckpt_name", [[[]]])[0]
+                    )
+                    return list(ckpts) if ckpts else []
+                except Exception:
+                    return []
+
+            def generate_image(
+                self,
+                prompt: str,
+                negative_prompt: str = "",
+                width: int = 512,
+                height: int = 512,
+                model: str = "",
+                loras: Optional[List[tuple]] = None,
+                steps: int = 20,
+                guidance_scale: float = 7.0,
+                sampler: str = "euler_ancestral",
+                scheduler: str = "karras",
+                seed: int = -1,
+            ) -> Optional[str]:
+                if not REQUESTS_AVAILABLE:
+                    return None
+                ckpts = self._list_checkpoints()
+                resolved_model = (model or "").strip()
+                if ckpts:
+                    if not resolved_model or resolved_model not in ckpts:
+                        resolved_model = ckpts[0]
+
+                if seed is None or int(seed) < 0:
+                    seed = int(time.time() * 1000) % (2**32)
+
+                workflow = {
+                    "1": {
+                        "inputs": {"ckpt_name": resolved_model},
+                        "class_type": "CheckpointLoaderSimple",
+                    },
+                    "2": {
+                        "inputs": {"text": prompt, "clip": ["1", 1]},
+                        "class_type": "CLIPTextEncode",
+                    },
+                    "3": {
+                        "inputs": {"text": negative_prompt or "", "clip": ["1", 1]},
+                        "class_type": "CLIPTextEncode",
+                    },
+                    "4": {
+                        "inputs": {
+                            "seed": int(seed),
+                            "steps": int(steps or 20),
+                            "cfg": float(guidance_scale or 7.0),
+                            "sampler_name": sampler or "euler_ancestral",
+                            "scheduler": scheduler or "karras",
+                            "denoise": 1.0,
+                            "model": ["1", 0],
+                            "positive": ["2", 0],
+                            "negative": ["3", 0],
+                            "latent_image": ["5", 0],
+                        },
+                        "class_type": "KSampler",
+                    },
+                    "5": {
+                        "inputs": {
+                            "width": int(width or 512),
+                            "height": int(height or 512),
+                            "batch_size": 1,
+                        },
+                        "class_type": "EmptyLatentImage",
+                    },
+                    "6": {
+                        "inputs": {"samples": ["4", 0], "vae": ["1", 2]},
+                        "class_type": "VAEDecode",
+                    },
+                    "7": {
+                        "inputs": {"filename_prefix": "manaos_txt2img", "images": ["6", 0]},
+                        "class_type": "SaveImage",
+                    },
+                }
+                try:
+                    response = requests.post(
+                        f"{self.base_url}/prompt",
+                        json={"prompt": workflow, "client_id": "manaos-unified-api"},
+                        timeout=30,
+                    )
+                    response.raise_for_status()
+                    return (response.json() or {}).get("prompt_id")
+                except Exception:
+                    return None
+
+            def get_queue_status(self) -> Dict[str, Any]:
+                if not REQUESTS_AVAILABLE:
+                    return {"error": "requests_unavailable"}
+                try:
+                    response = requests.get(f"{self.base_url}/queue", timeout=10)
+                    response.raise_for_status()
+                    return response.json() or {}
+                except Exception as e:
+                    return {"error": str(e)}
+
+            def get_history(self, max_items: int = 10) -> List[Dict[str, Any]]:
+                if not REQUESTS_AVAILABLE:
+                    return []
+                try:
+                    response = requests.get(f"{self.base_url}/history", timeout=10)
+                    response.raise_for_status()
+                    payload = response.json() or {}
+                    if isinstance(payload, dict):
+                        values = list(payload.values())
+                        return values[: max(1, min(int(max_items or 10), 50))]
+                    if isinstance(payload, list):
+                        return payload[: max(1, min(int(max_items or 10), 50))]
+                    return []
+                except Exception:
+                    return []
+
+        COMFYUI_AVAILABLE = REQUESTS_AVAILABLE
 
 # SVI × Wan 2.2動画生成統合（オプション）
 try:

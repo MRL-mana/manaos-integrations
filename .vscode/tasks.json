@@ -115,6 +115,43 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: Image Pipeline Probe 単発実行（履歴/通知/復旧）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/run_image_pipeline_probe_once_v2.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Image Pipeline Probe タスク登録（5分+自動復旧）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/install_image_pipeline_probe_task_v2.ps1",
+        "-EnableAutoRecovery",
+        "-RecoverAfterConsecutiveDown",
+        "3",
+        "-RecoveryCooldownSec",
+        "300"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: Image Pipeline Probe タスク状態確認",
       "type": "shell",
       "command": "pwsh",
