@@ -45,8 +45,10 @@ try {
     Write-Host "state_file: $($cfg.state_file)" -ForegroundColor Gray
     Write-Host "enable_auto_recovery: $($cfg.enable_auto_recovery)" -ForegroundColor Gray
     Write-Host "enable_auto_recovery_on_unified_degraded: $($cfg.enable_auto_recovery_on_unified_degraded)" -ForegroundColor Gray
+    Write-Host "notify_cooldown_minutes: $($cfg.notify_cooldown_minutes)" -ForegroundColor Gray
     Write-Host "notify_unified_degraded_after: $($cfg.notify_unified_degraded_after)" -ForegroundColor Gray
     Write-Host "notify_unified_degraded_cooldown_minutes: $($cfg.notify_unified_degraded_cooldown_minutes)" -ForegroundColor Gray
+    Write-Host "notify_state_file: $($cfg.notify_state_file)" -ForegroundColor Gray
 }
 catch {
     Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow

@@ -101,6 +101,7 @@ Write-Host "RunLevel : $effectiveRunLevel" -ForegroundColor Gray
 Write-Host "Config   : $configPath" -ForegroundColor Gray
 Write-Host "History  : $HistoryFile" -ForegroundColor Gray
 Write-Host "State    : $StateFile" -ForegroundColor Gray
+Write-Host "Failure  : cooldown=${NotifyCooldownMinutes}min" -ForegroundColor Gray
 Write-Host "Recovery : $(if ($effectiveEnableAutoRecovery) { 'enabled' } else { 'disabled' })" -ForegroundColor Gray
 Write-Host "Degraded : enabled=$(if ($DisableNotifyOnUnifiedDegraded) { 'false' } else { 'true' }), after=$NotifyUnifiedDegradedAfter, cooldown=${NotifyUnifiedDegradedCooldownMinutes}min" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
