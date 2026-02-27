@@ -227,7 +227,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: R12 Health Watch タスク登録（5分）",
+      "label": "ManaOS: R12 Health Watch タスク登録（5分 / 推奨）",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -243,7 +243,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: R12 Health Watch タスク登録（15分）",
+      "label": "ManaOS: R12 Health Watch タスク登録（15分 / 推奨）",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -277,7 +277,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: R12 Health Watch 単発実行",
+      "label": "ManaOS: R12 Health Watch 単発実行（推奨）",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -311,7 +311,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: R12 Health Watch 登録→状態確認（ワンボタン）",
+      "label": "ManaOS: R12 Health Watch 登録→状態確認（ワンボタン / 推奨）",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -343,9 +343,9 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: R12 Health Watch 運用セットアップ（ワンボタン）",
+      "label": "ManaOS: R12 Health Watch 運用セットアップ（ワンボタン / 推奨）",
       "dependsOn": [
-        "ManaOS: R12 Health Watch 登録→状態確認（ワンボタン）"
+        "ManaOS: R12 Health Watch 登録→状態確認（ワンボタン / 推奨）"
       ],
       "dependsOrder": "sequence",
       "problemMatcher": [],
@@ -353,9 +353,9 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: R12 Health Watch 運用セットアップ（15分/ワンボタン）",
+      "label": "ManaOS: R12 Health Watch 運用セットアップ（15分/ワンボタン / 推奨）",
       "dependsOn": [
-        "ManaOS: R12 Health Watch タスク登録（15分）",
+        "ManaOS: R12 Health Watch タスク登録（15分 / 推奨）",
         "ManaOS: R12 Health Watch タスク状態確認"
       ],
       "dependsOrder": "sequence",
@@ -411,7 +411,7 @@
     {
       "label": "ManaOS: R12+RL 運用セットアップ（15分/ワンボタン）",
       "dependsOn": [
-        "ManaOS: R12 Health Watch 運用セットアップ（15分/ワンボタン）",
+        "ManaOS: R12 Health Watch 運用セットアップ（15分/ワンボタン / 推奨）",
         "ManaOS: RLAnything ブートストラップ 登録→状態確認（ワンボタン）"
       ],
       "dependsOrder": "sequence",
