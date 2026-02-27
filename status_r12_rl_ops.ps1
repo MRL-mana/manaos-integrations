@@ -371,11 +371,28 @@ if ($null -ne $opsWatchSnapshot.latestSummary) {
         $latestTs = 'N/A'
     }
     $latestOk = $null
+    $latestOkReason = 'ok_missing'
     if ($null -ne $opsWatchSnapshot.latestSummary.ok) {
         try { $latestOk = [bool]$opsWatchSnapshot.latestSummary.ok } catch { $latestOk = $null }
+        if ($null -ne $latestOk) { $latestOkReason = 'from_ok_field' }
+    }
+    elseif ($null -ne $opsWatchSnapshot.latestSummary.issues) {
+        try {
+            $latestOk = (@($opsWatchSnapshot.latestSummary.issues).Count -eq 0)
+            $latestOkReason = 'from_issues_count'
+        }
+        catch { $latestOk = $null }
+    }
+    elseif ($null -ne $opsWatchSnapshot.latestSummary.r12_latest_failed) {
+        try {
+            $latestOk = ([int]$opsWatchSnapshot.latestSummary.r12_latest_failed -eq 0)
+            $latestOkReason = 'from_r12_latest_failed'
+        }
+        catch { $latestOk = $null }
     }
     elseif (-not [string]::IsNullOrWhiteSpace([string]$opsWatchSnapshot.latestSummary.failure_category)) {
         $latestOk = $false
+        $latestOkReason = 'from_failure_category'
     }
 
     $latestFailureCategory = [string]$opsWatchSnapshot.latestSummary.failure_category
@@ -401,6 +418,7 @@ if ($null -ne $opsWatchSnapshot.latestSummary) {
 
     Write-Host "latest_ts: $latestTs" -ForegroundColor Gray
     Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
+    Write-Host "latest_ok_reason: $latestOkReason" -ForegroundColor Gray
     Write-Host "latest_failure_category: $latestFailureCategory" -ForegroundColor Gray
     Write-Host "latest_failure_notify_attempted: $latestFailureNotifyAttempted" -ForegroundColor Gray
     Write-Host "latest_failure_notified: $latestFailureNotified" -ForegroundColor Gray
