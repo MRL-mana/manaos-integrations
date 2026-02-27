@@ -8,6 +8,24 @@ param(
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
+function Get-SchtasksLastResultMeaning {
+    param([int]$Code)
+
+    switch ($Code) {
+        0 { return "success" }
+        267008 { return "task_ready" }
+        267009 { return "task_running" }
+        267010 { return "task_disabled" }
+        267011 { return "task_has_not_run_yet" }
+        267012 { return "task_no_more_runs" }
+        267013 { return "task_not_scheduled" }
+        267014 { return "task_terminated" }
+        267015 { return "task_no_valid_triggers" }
+        267016 { return "task_event_trigger" }
+        default { return "unknown_or_error" }
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($ConfigFile)) {
     $ConfigFile = Join-Path $scriptDir "logs\reason_enum_lint_task.config.json"
 }
@@ -55,6 +73,22 @@ $taskToRunLine = $taskInfo | Where-Object { $_ -match '^(Task To Run|実行す�
 if (-not [string]::IsNullOrWhiteSpace($taskToRunLine)) {
     Write-Host "---" -ForegroundColor DarkGray
     Write-Host "TaskToRun: $taskToRunLine" -ForegroundColor Gray
+}
+
+$taskLastResultLine = $taskInfo | Where-Object { $_ -match '^(Last Result|前回の結果):\s*' } | Select-Object -First 1
+if (-not [string]::IsNullOrWhiteSpace($taskLastResultLine)) {
+    $taskLastResultRaw = [string](($taskLastResultLine -split ':', 2)[1]).Trim()
+    $taskLastResultCode = 0
+    if ([int]::TryParse($taskLastResultRaw, [ref]$taskLastResultCode)) {
+        $taskLastResultHex = ('0x{0:X8}' -f [uint32]$taskLastResultCode)
+        $taskLastResultMeaning = Get-SchtasksLastResultMeaning -Code $taskLastResultCode
+        Write-Host "task_last_result_code: $taskLastResultCode" -ForegroundColor Gray
+        Write-Host "task_last_result_hex: $taskLastResultHex" -ForegroundColor Gray
+        Write-Host "task_last_result_meaning: $taskLastResultMeaning" -ForegroundColor Gray
+    }
+    else {
+        Write-Host "task_last_result_raw: $taskLastResultRaw" -ForegroundColor Gray
+    }
 }
 
 Write-Host "LatestJsonFile: $LatestJsonFile" -ForegroundColor Gray
