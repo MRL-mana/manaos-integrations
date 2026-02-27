@@ -92,8 +92,11 @@ try {
                 catch { $latestOk = $null }
             }
             elseif (-not [string]::IsNullOrWhiteSpace([string]$latestSummary.failure_category)) {
-                $latestOk = $false
-                $latestOkReason = 'from_failure_category'
+                $failureCategory = ([string]$latestSummary.failure_category).Trim().ToLowerInvariant()
+                if ($failureCategory -notin @('none', 'ok', 'healthy', 'success', 'normal')) {
+                    $latestOk = $false
+                    $latestOkReason = 'from_failure_category'
+                }
             }
 
             $latestTsDisplay = [string]$latestSummary.ts

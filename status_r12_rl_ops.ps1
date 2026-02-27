@@ -235,8 +235,11 @@ function Resolve-OpsLatestOk {
         catch { $latestOk = $null }
     }
     elseif (-not [string]::IsNullOrWhiteSpace([string]$Summary.failure_category)) {
-        $latestOk = $false
-        $latestOkReason = 'from_failure_category'
+        $failureCategory = ([string]$Summary.failure_category).Trim().ToLowerInvariant()
+        if ($failureCategory -notin @('none', 'ok', 'healthy', 'success', 'normal')) {
+            $latestOk = $false
+            $latestOkReason = 'from_failure_category'
+        }
     }
 
     return @{
