@@ -129,6 +129,10 @@ Reason lint notify diagnostics:
 - cooldownライフサイクル履歴: `logs/reason_enum_cooldown_lifecycle.history.jsonl`
 - opsスナップショット出力: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\export_reason_enum_ops_snapshot.ps1`
 - opsスナップショット出力（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\export_reason_enum_ops_snapshot.ps1 -AsJson`
+- opsスナップショット通知チェック（異常時Webhook）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_reason_enum_ops_snapshot_notify_once.ps1`
+- opsスナップショット通知チェック（擬似失敗）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_reason_enum_ops_snapshot_notify_once.ps1 -SimulateFailure`
+- opsタスクdoctor（重複ラベル/依存欠損チェック）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\doctor_reason_enum_ops_tasks.ps1`
+- opsクイック回帰チェック: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\verify_reason_enum_ops_scripts_quick.ps1`
 - opsスナップショット状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1`
 - opsスナップショット状態（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1 -AsJson`
 - opsスナップショット状態（RequirePass / 失敗時 exit 1）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1 -RequirePass`
@@ -168,6 +172,9 @@ VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Full`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Export`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Export (JSON)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Notify Once`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Tasks Doctor`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status (JSON)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status (RequirePass)`
@@ -178,8 +185,8 @@ VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Status (RequirePass)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Uninstall`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Full`
-- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Lifecycle`
-- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Lifecycle (KeepInstalled)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Lifecycle Run`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Lifecycle Run (KeepInstalled)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Lifecycle Status`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Lifecycle Status (JSON)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Task Lifecycle Status (RequirePass)`

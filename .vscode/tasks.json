@@ -142,39 +142,6 @@
     },
     {
       "label": "ManaOS: Image Pipeline Probe 単発実行（推奨 v2: 履歴/通知/復旧）",
-        {
-          "label": "ManaOS: Reason Enum Ops Snapshot Task Lifecycle",
-          "type": "shell",
-          "command": "pwsh",
-          "args": [
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            "${workspaceFolder}/run_reason_enum_ops_snapshot_task_lifecycle.ps1"
-          ],
-          "options": { "cwd": "${workspaceFolder}" },
-          "problemMatcher": [],
-          "presentation": { "reveal": "always", "panel": "shared", "echo": true },
-          "group": "test"
-        },
-        {
-          "label": "ManaOS: Reason Enum Ops Snapshot Task Lifecycle (KeepInstalled)",
-          "type": "shell",
-          "command": "pwsh",
-          "args": [
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            "${workspaceFolder}/run_reason_enum_ops_snapshot_task_lifecycle.ps1",
-            "-KeepInstalled"
-          ],
-          "options": { "cwd": "${workspaceFolder}" },
-          "problemMatcher": [],
-          "presentation": { "reveal": "always", "panel": "shared", "echo": true },
-          "group": "test"
-        },
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -1233,39 +1200,6 @@
       "type": "shell",
       "command": "pwsh",
       "args": [
-        {
-          "label": "ManaOS: Reason Enum Ops Snapshot Task Lifecycle Run",
-          "type": "shell",
-          "command": "pwsh",
-          "args": [
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            "${workspaceFolder}/run_reason_enum_ops_snapshot_task_lifecycle.ps1"
-          ],
-          "options": { "cwd": "${workspaceFolder}" },
-          "problemMatcher": [],
-          "presentation": { "reveal": "always", "panel": "shared", "echo": true },
-          "group": "test"
-        },
-        {
-          "label": "ManaOS: Reason Enum Ops Snapshot Task Lifecycle Run (KeepInstalled)",
-          "type": "shell",
-          "command": "pwsh",
-          "args": [
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            "${workspaceFolder}/run_reason_enum_ops_snapshot_task_lifecycle.ps1",
-            "-KeepInstalled"
-          ],
-          "options": { "cwd": "${workspaceFolder}" },
-          "problemMatcher": [],
-          "presentation": { "reveal": "always", "panel": "shared", "echo": true },
-          "group": "test"
-        },
         "-NoProfile",
         "-ExecutionPolicy",
         "Bypass",
@@ -1484,6 +1418,54 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: Reason Enum Ops Snapshot Notify Once",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/run_reason_enum_ops_snapshot_notify_once.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: Reason Enum Ops Tasks Doctor",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/doctor_reason_enum_ops_tasks.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: Reason Enum Ops Quick Verify",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/verify_reason_enum_ops_scripts_quick.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
       "label": "ManaOS: Reason Enum Ops Snapshot Task Install (30min)",
       "type": "shell",
       "command": "pwsh",
@@ -1577,6 +1559,39 @@
         "ManaOS: Reason Enum Ops Snapshot Task Status (RequirePass)"
       ],
       "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: Reason Enum Ops Snapshot Task Lifecycle Run",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/run_reason_enum_ops_snapshot_task_lifecycle.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: Reason Enum Ops Snapshot Task Lifecycle Run (KeepInstalled)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/run_reason_enum_ops_snapshot_task_lifecycle.ps1",
+        "-KeepInstalled"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true },
       "group": "test"

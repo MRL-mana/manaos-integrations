@@ -81,6 +81,16 @@ function Invoke-StatusJson {
 }
 
 $runTs = [datetimeoffset]::Now.ToString('o')
+$sourceRevision = 'unknown'
+try {
+    $sourceRevision = [string]((& git -C $scriptDir rev-parse --short HEAD 2>$null) | Select-Object -First 1)
+    if ([string]::IsNullOrWhiteSpace($sourceRevision)) {
+        $sourceRevision = 'unknown'
+    }
+}
+catch {
+    $sourceRevision = 'unknown'
+}
 
 $lintPayload = [ordered]@{
     config_file = $LintConfigFile
@@ -162,6 +172,8 @@ if ($lifecycleResult.PSObject.Properties.Name -contains 'output_tail' -and $null
 }
 
 $payload = [ordered]@{
+    schema_version = 'reason_enum_ops_snapshot.v1'
+    source_revision = $sourceRevision
     ts = $runTs
     ok = $overallOk
     ok_reason = $overallReason
