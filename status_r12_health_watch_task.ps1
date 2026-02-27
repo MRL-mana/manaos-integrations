@@ -90,12 +90,12 @@ if (Test-Path $LogPath) {
     }
     catch {
         Write-Host "[WARN] Failed to parse latest log entry: $LogPath" -ForegroundColor Yellow
-        Write-LatestOutput -Ts 'N/A' -Total 'N/A' -Passed 'N/A' -Failed 'N/A' -Ok $null -OkReason 'ok_missing'
+        Write-LatestOutput -Ts 'N/A' -Total 'N/A' -Passed 'N/A' -Failed 'N/A' -Ok $false -OkReason 'source_missing'
     }
 }
 else {
     Write-Host "[WARN] Log file not found: $LogPath" -ForegroundColor Yellow
-    Write-LatestOutput -Ts 'N/A' -Total 'N/A' -Passed 'N/A' -Failed 'N/A' -Ok $null -OkReason 'ok_missing'
+    Write-LatestOutput -Ts 'N/A' -Total 'N/A' -Passed 'N/A' -Failed 'N/A' -Ok $false -OkReason 'source_missing'
 }
 
 exit 0

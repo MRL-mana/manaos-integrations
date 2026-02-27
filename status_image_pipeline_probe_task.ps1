@@ -43,7 +43,7 @@ Write-Host "TaskName: $TaskName" -ForegroundColor Gray
 $taskInfo = schtasks /Query /TN $TaskName /V /FO LIST
 if ($LASTEXITCODE -ne 0 -or $null -eq $taskInfo) {
     Write-Host "[INFO] Task not found: $TaskName" -ForegroundColor Yellow
-    Write-LatestOutput -Ts 'N/A' -Ok $null -OkReason 'ok_missing' -FailureCategory '' -FailureNotifyAttempted $null -FailureNotified $null -FailureSuppressedReason '' -RouteCategory 'unknown' -OverallOk $null -SourceSchema 'unknown'
+    Write-LatestOutput -Ts 'N/A' -Ok $false -OkReason 'task_not_found' -FailureCategory 'task_not_found' -FailureNotifyAttempted $false -FailureNotified $false -FailureSuppressedReason 'task_not_found' -RouteCategory 'task_not_found' -OverallOk $false -SourceSchema 'missing'
     exit 1
 }
 
@@ -61,7 +61,7 @@ if (-not [string]::IsNullOrWhiteSpace($taskToRunLine)) {
 Write-Host "ConfigFile: $ConfigFile" -ForegroundColor Gray
 if (-not (Test-Path $ConfigFile)) {
     Write-Host "[WARN] Config file not found: $ConfigFile" -ForegroundColor Yellow
-    Write-LatestOutput -Ts 'N/A' -Ok $null -OkReason 'ok_missing' -FailureCategory '' -FailureNotifyAttempted $null -FailureNotified $null -FailureSuppressedReason '' -RouteCategory 'unknown' -OverallOk $null -SourceSchema 'unknown'
+    Write-LatestOutput -Ts 'N/A' -Ok $false -OkReason 'source_missing' -FailureCategory 'source_missing' -FailureNotifyAttempted $false -FailureNotified $false -FailureSuppressedReason 'source_missing' -RouteCategory 'source_missing' -OverallOk $false -SourceSchema 'missing'
     exit 0
 }
 
@@ -182,11 +182,11 @@ try {
         }
         catch {
             Write-Host "[WARN] Failed to parse latest output file: $latestFile" -ForegroundColor Yellow
-            Write-LatestOutput -Ts 'N/A' -Ok $null -OkReason 'ok_missing' -FailureCategory $latestFailureCategory -FailureNotifyAttempted $latestFailureNotifyAttempted -FailureNotified $latestFailureNotified -FailureSuppressedReason $latestFailureSuppressedReason -RouteCategory 'unknown' -OverallOk $null -SourceSchema 'unknown'
+            Write-LatestOutput -Ts 'N/A' -Ok $false -OkReason 'source_missing' -FailureCategory 'source_missing' -FailureNotifyAttempted $latestFailureNotifyAttempted -FailureNotified $latestFailureNotified -FailureSuppressedReason 'source_missing' -RouteCategory 'source_missing' -OverallOk $false -SourceSchema 'missing'
         }
     }
     else {
-        Write-LatestOutput -Ts 'N/A' -Ok $null -OkReason 'ok_missing' -FailureCategory $latestFailureCategory -FailureNotifyAttempted $latestFailureNotifyAttempted -FailureNotified $latestFailureNotified -FailureSuppressedReason $latestFailureSuppressedReason -RouteCategory 'unknown' -OverallOk $null -SourceSchema 'unknown'
+        Write-LatestOutput -Ts 'N/A' -Ok $false -OkReason 'source_missing' -FailureCategory 'source_missing' -FailureNotifyAttempted $latestFailureNotifyAttempted -FailureNotified $latestFailureNotified -FailureSuppressedReason 'source_missing' -RouteCategory 'source_missing' -OverallOk $false -SourceSchema 'missing'
         if (-not [string]::IsNullOrWhiteSpace($latestFile)) {
             Write-Host "[WARN] Latest output file not found: $latestFile" -ForegroundColor Yellow
         }
@@ -194,7 +194,7 @@ try {
 }
 catch {
     Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow
-    Write-LatestOutput -Ts 'N/A' -Ok $null -OkReason 'ok_missing' -FailureCategory '' -FailureNotifyAttempted $null -FailureNotified $null -FailureSuppressedReason '' -RouteCategory 'unknown' -OverallOk $null -SourceSchema 'unknown'
+    Write-LatestOutput -Ts 'N/A' -Ok $false -OkReason 'source_missing' -FailureCategory 'source_missing' -FailureNotifyAttempted $false -FailureNotified $false -FailureSuppressedReason 'source_missing' -RouteCategory 'source_missing' -OverallOk $false -SourceSchema 'missing'
 }
 
 exit 0
