@@ -201,6 +201,33 @@ function Get-R12LogSnapshot {
     }
 }
 
+function Write-ConfigLinkSummary {
+    param(
+        [string]$Label,
+        $TaskSnapshot
+    )
+
+    if ($null -eq $TaskSnapshot -or -not $TaskSnapshot.exists) {
+        Write-Host "[WARN] $Label config linkage: task missing" -ForegroundColor Yellow
+        return
+    }
+
+    $cfg = $TaskSnapshot.configStatus
+    if ($null -eq $cfg) {
+        Write-Host "[WARN] $Label config linkage: not checked" -ForegroundColor Yellow
+        return
+    }
+
+    $cfgIssues = @($cfg.issues)
+    if ($cfgIssues.Count -eq 0) {
+        Write-Host "[OK] $Label config linkage: OK | path=$($cfg.configPath)" -ForegroundColor Green
+        return
+    }
+
+    $issueText = $cfgIssues -join '; '
+    Write-Host "[WARN] $Label config linkage: WARN | path=$($cfg.configPath) | issues=$issueText" -ForegroundColor Yellow
+}
+
 if ($Json.IsPresent) {
     $r12Task = Get-TaskSnapshot -TaskName "ManaOS_R12_Health_Watch_5min"
     $rlTask = Get-TaskSnapshot -TaskName "ManaOS_RLAnything_Bootstrap_Logon" -RequireConfigFile -DefaultConfigFile $rlConfig
@@ -244,6 +271,14 @@ Write-Host "=== Combined Ops Status (R12 + RL) ===" -ForegroundColor Cyan
 pwsh -NoProfile -ExecutionPolicy Bypass -File $r12Status
 pwsh -NoProfile -ExecutionPolicy Bypass -File $rlStatus
 pwsh -NoProfile -ExecutionPolicy Bypass -File $opsWatchStatus
+
+$rlTaskSnapshot = Get-TaskSnapshot -TaskName "ManaOS_RLAnything_Bootstrap_Logon" -RequireConfigFile -DefaultConfigFile $rlConfig
+$opsWatchTaskSnapshot = Get-TaskSnapshot -TaskName "ManaOS_R12_RL_Ops_Watch_15min" -RequireConfigFile -DefaultConfigFile $opsWatchConfig
+
+Write-Host ""
+Write-Host "=== Config Linkage Summary ===" -ForegroundColor Cyan
+Write-ConfigLinkSummary -Label "RLAnything" -TaskSnapshot $rlTaskSnapshot
+Write-ConfigLinkSummary -Label "R12+RL Ops Watch" -TaskSnapshot $opsWatchTaskSnapshot
 
 if (Test-Path $r12Log) {
     Write-Host "" 
