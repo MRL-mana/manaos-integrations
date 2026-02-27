@@ -96,6 +96,13 @@ try {
                 $latestOk = ($openwebuiOk -and $portListening -and $tailscaleOk)
                 $latestOkReason = 'from_component_fields'
             }
+            elseif (-not [string]::IsNullOrWhiteSpace([string]$latest.failure_category)) {
+                $failureCategory = ([string]$latest.failure_category).Trim().ToLowerInvariant()
+                if ($failureCategory -notin @('none', 'ok', 'healthy', 'success', 'normal')) {
+                    $latestOk = $false
+                    $latestOkReason = 'from_failure_category'
+                }
+            }
 
             $latestTsDisplay = [string]$latest.ts
             if ([string]::IsNullOrWhiteSpace($latestTsDisplay)) {
