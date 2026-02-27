@@ -402,6 +402,8 @@ if ($Json.IsPresent) {
         rlTask = $rlTask
         opsWatchTask = $opsWatchTask
         opsWatch = $opsWatchSnapshot
+        latest_ok = $opsWatchSnapshot.latestOk
+        latest_ok_reason = [string]$opsWatchSnapshot.latestOkReason
         latest_failure_category = $latestFailureCategory
         latest_failure_notify_attempted = $latestFailureNotifyAttempted
         latest_failure_notified = $latestFailureNotified
