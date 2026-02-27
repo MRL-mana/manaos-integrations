@@ -117,6 +117,8 @@ Reason lint notify diagnostics:
 - `latest_failure_notify_attempted: True` / `latest_failure_notified: False` / `latest_failure_notify_suppressed_reason: notify_send_failed` → Webhook送信失敗
 - `latest_failure_notify_attempted: True` / `latest_failure_notified: False` / `latest_failure_notify_suppressed_reason: same_category_cooldown(...m_remaining)` → クールダウン抑制
 - 通知テスト（擬似失敗）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_reason_enum_lint_once.ps1 -IncludeCheckScripts -SimulateFailure`
+- cooldown実地検証（Scheduler経由・自動復帰込み）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\verify_reason_enum_lint_cooldown.ps1`
+- 通知フロー一括テスト: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\test_reason_enum_lint_notify_flow.ps1 -IncludeCheckScripts`
 
 Reason lint (recommended before commit):
 ```powershell
