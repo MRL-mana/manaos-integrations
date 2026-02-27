@@ -33,7 +33,7 @@ if (Test-Path $LogPath) {
         $latestFailed = $null
         try { $latestFailed = [int]$latest.failed } catch { $latestFailed = $null }
         $latestOk = $null
-        $latestOkReason = 'failed_missing'
+        $latestOkReason = 'ok_missing'
         if ($null -ne $latestFailed) {
             $latestOk = ($latestFailed -eq 0)
             $latestOkReason = 'from_failed_count'

@@ -137,7 +137,7 @@ try {
             $latestOkReason = 'ok_missing'
             if ($null -ne $latest.overall -and $null -ne $latest.overall.ok) {
                 try { $latestOverallOk = [bool]$latest.overall.ok } catch { $latestOverallOk = $null }
-                if ($null -ne $latestOverallOk) { $latestOkReason = 'from_overall_ok_field' }
+                if ($null -ne $latestOverallOk) { $latestOkReason = 'from_ok_field' }
             }
             elseif ($null -ne $latest.unified_api -or $null -ne $latest.comfyui) {
                 $latestUnifiedReadyForOk = $false
