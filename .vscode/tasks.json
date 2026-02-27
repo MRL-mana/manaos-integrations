@@ -1338,11 +1338,29 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: Reason Enum Cooldown Lifecycle Status (RequirePass)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_reason_enum_lint_cooldown_lifecycle.ps1",
+        "-RequirePass"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
       "label": "ManaOS: Reason Enum Cooldown Lifecycle Full",
       "dependsOn": [
         "ManaOS: Reason Enum Cooldown Lifecycle Run (Log)",
         "ManaOS: Reason Enum Cooldown Lifecycle Status",
-        "ManaOS: Reason Enum Cooldown Lifecycle Status (JSON)"
+        "ManaOS: Reason Enum Cooldown Lifecycle Status (JSON)",
+        "ManaOS: Reason Enum Cooldown Lifecycle Status (RequirePass)"
       ],
       "dependsOrder": "sequence",
       "problemMatcher": [],

@@ -1,7 +1,8 @@
 param(
     [string]$LatestJsonFile = "",
     [string]$HistoryJsonl = "",
-    [switch]$AsJson
+    [switch]$AsJson,
+    [switch]$RequirePass
 )
 
 Set-StrictMode -Version Latest
@@ -74,10 +75,17 @@ if (Test-Path $HistoryJsonl) {
     }
 }
 
+$pass = ($payload.latest_found -and ($payload.latest_ok -eq $true))
+
 if ($AsJson) {
     $payload.failed_steps = Convert-ToCleanObjectArray -Value $payload.failed_steps
     $payload.status_after_summary = Convert-ToCleanObjectArray -Value $payload.status_after_summary
+    $payload.require_pass = [bool]$RequirePass
+    $payload.pass = $pass
     Write-Output ($payload | ConvertTo-Json -Depth 8)
+    if ($RequirePass.IsPresent -and -not $pass) {
+        exit 1
+    }
     exit 0
 }
 
@@ -88,6 +96,7 @@ Write-Host "latest_found: $($payload.latest_found)" -ForegroundColor Gray
 Write-Host "latest_ts: $($payload.latest_ts)" -ForegroundColor Gray
 Write-Host "latest_ok: $($payload.latest_ok)" -ForegroundColor Gray
 Write-Host "latest_ok_reason: $($payload.latest_ok_reason)" -ForegroundColor Gray
+Write-Host "pass: $pass" -ForegroundColor Gray
 Write-Host "failed_step_count: $($payload.failed_step_count)" -ForegroundColor Gray
 Write-Host "failed_steps: $(([string[]]$payload.failed_steps) -join ',')" -ForegroundColor Gray
 Write-Host "history_found: $($payload.history_found)" -ForegroundColor Gray
@@ -96,6 +105,11 @@ Write-Host "history_entries: $($payload.history_entries)" -ForegroundColor Gray
 if (@($payload.status_after_summary).Count -gt 0) {
     Write-Host "--- status_after_summary ---" -ForegroundColor Cyan
     @($payload.status_after_summary) | ForEach-Object { Write-Host ([string]$_) }
+}
+
+if ($RequirePass.IsPresent -and -not $pass) {
+    Write-Host "[ALERT] lifecycle latest status is not pass" -ForegroundColor Red
+    exit 1
 }
 
 exit 0

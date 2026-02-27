@@ -123,6 +123,7 @@ Reason lint notify diagnostics:
 - cooldown自己診断タスク解除→未登録確認: `pwsh -NoProfile -ExecutionPolicy Bypass -Command "& '.\uninstall_reason_enum_lint_cooldown_verify_task.ps1'; & '.\status_reason_enum_lint_cooldown_verify_task.ps1'; if ($LASTEXITCODE -ne 0) { Write-Host '[OK] Cooldown verify task not found expected after uninstall'; exit 0 }"`
 - cooldownライフサイクル実行（要約ログ保存）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_reason_enum_lint_cooldown_lifecycle.ps1`
 - cooldownライフサイクル状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_lint_cooldown_lifecycle.ps1`
+- cooldownライフサイクル状態（RequirePass / 失敗時 exit 1）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_lint_cooldown_lifecycle.ps1 -RequirePass`
 - cooldownライフサイクル最新ログ: `logs/reason_enum_cooldown_lifecycle.latest.json`
 - cooldownライフサイクル履歴: `logs/reason_enum_cooldown_lifecycle.history.jsonl`
 - cooldown自己診断タスク状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_lint_cooldown_verify_task.ps1`
@@ -144,6 +145,7 @@ VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Run (Log)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Status`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Status (JSON)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Status (RequirePass)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Full`
 
 ## Troubleshooting
