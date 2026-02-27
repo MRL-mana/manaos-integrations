@@ -418,7 +418,9 @@ $summary = [pscustomobject]@{
     auto_recovery_attempted = $false
     auto_recovery_started = $false
     auto_recovery_error = ''
+    failure_notify_attempted = $false
     failure_notified = $false
+    degraded_notify_attempted = $false
     degraded_notified = $false
     failure_notify_suppressed_reason = ''
     degraded_notify_suppressed_reason = ''
@@ -538,6 +540,7 @@ if ([bool]$EnableAutoRecovery -and $isEndpointRefused -and $consecutiveEndpointR
 
 if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
     $now = [datetimeoffset]::Now
+    $summary.failure_notify_attempted = $true
     $shouldNotifyFailure = $false
     if ([string]::IsNullOrWhiteSpace($lastFailureCategory) -or $lastFailureCategory -ne [string]$classification.category) {
         $shouldNotifyFailure = $true
@@ -567,8 +570,12 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
     elseif (-not [string]::IsNullOrWhiteSpace($summary.failure_notify_suppressed_reason)) {
         Write-Host "[INFO] Failure notification suppressed: $($summary.failure_notify_suppressed_reason)" -ForegroundColor DarkGray
     }
+    elseif (-not $summary.failure_notified) {
+        $summary.failure_notify_suppressed_reason = 'not_triggered'
+    }
 
     if ($NotifyOnDegraded -and $consecutiveUnhealthy -ge $NotifyDegradedAfter) {
+        $summary.degraded_notify_attempted = $true
         $shouldNotifyDegraded = $false
         if ([string]::IsNullOrWhiteSpace($lastDegradedCategory) -or $lastDegradedCategory -ne [string]$classification.category) {
             $shouldNotifyDegraded = $true
@@ -598,6 +605,9 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
         }
         elseif (-not [string]::IsNullOrWhiteSpace($summary.degraded_notify_suppressed_reason)) {
             Write-Host "[INFO] Degraded notification suppressed: $($summary.degraded_notify_suppressed_reason)" -ForegroundColor DarkGray
+        }
+        elseif (-not $summary.degraded_notified) {
+            $summary.degraded_notify_suppressed_reason = 'not_triggered'
         }
     }
     elseif ($NotifyOnDegraded -and $consecutiveUnhealthy -lt $NotifyDegradedAfter) {
