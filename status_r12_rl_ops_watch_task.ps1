@@ -45,9 +45,44 @@ try {
     Write-Host "notify_on_degraded: $($cfg.notify_on_degraded)" -ForegroundColor Gray
     Write-Host "notify_degraded_after: $($cfg.notify_degraded_after)" -ForegroundColor Gray
     Write-Host "notify_degraded_cooldown_minutes: $($cfg.notify_degraded_cooldown_minutes)" -ForegroundColor Gray
+    Write-Host "notify_failure_cooldown_minutes: $($cfg.notify_failure_cooldown_minutes)" -ForegroundColor Gray
+    Write-Host "degraded_state_file: $($cfg.degraded_state_file)" -ForegroundColor Gray
     Write-Host "enable_auto_recovery: $($cfg.enable_auto_recovery)" -ForegroundColor Gray
     Write-Host "recover_after_consecutive_endpoint_down: $($cfg.recover_after_consecutive_endpoint_down)" -ForegroundColor Gray
     Write-Host "recovery_cooldown_minutes: $($cfg.recovery_cooldown_minutes)" -ForegroundColor Gray
+
+    $stateFile = [string]$cfg.degraded_state_file
+    if (-not [string]::IsNullOrWhiteSpace($stateFile) -and (Test-Path $stateFile)) {
+        try {
+            $state = Get-Content -Path $stateFile -Raw | ConvertFrom-Json
+            Write-Host "--- Notify State ---" -ForegroundColor Cyan
+            Write-Host "last_failure_category: $($state.last_failure_category)" -ForegroundColor Gray
+            Write-Host "last_failure_notified_at: $($state.last_failure_notified_at)" -ForegroundColor Gray
+            Write-Host "last_degraded_category: $($state.last_degraded_category)" -ForegroundColor Gray
+            Write-Host "last_degraded_notified_at: $($state.last_degraded_notified_at)" -ForegroundColor Gray
+        }
+        catch {
+            Write-Host "[WARN] Failed to parse degraded state file: $stateFile" -ForegroundColor Yellow
+        }
+    }
+
+    $summaryLogPath = [string]$cfg.summary_log_path
+    if (-not [string]::IsNullOrWhiteSpace($summaryLogPath) -and (Test-Path $summaryLogPath)) {
+        try {
+            $latestSummary = Get-Content -Path $summaryLogPath -Tail 1 | ConvertFrom-Json
+            Write-Host "--- Latest Summary ---" -ForegroundColor Cyan
+            Write-Host "latest_ts: $($latestSummary.ts)" -ForegroundColor Gray
+            Write-Host "latest_ok: $($latestSummary.ok)" -ForegroundColor Gray
+            Write-Host "failure_category: $($latestSummary.failure_category)" -ForegroundColor Gray
+            Write-Host "failure_notified: $($latestSummary.failure_notified)" -ForegroundColor Gray
+            Write-Host "failure_notify_suppressed_reason: $($latestSummary.failure_notify_suppressed_reason)" -ForegroundColor Gray
+            Write-Host "degraded_notified: $($latestSummary.degraded_notified)" -ForegroundColor Gray
+            Write-Host "degraded_notify_suppressed_reason: $($latestSummary.degraded_notify_suppressed_reason)" -ForegroundColor Gray
+        }
+        catch {
+            Write-Host "[WARN] Failed to parse summary log tail: $summaryLogPath" -ForegroundColor Yellow
+        }
+    }
 }
 catch {
     Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow
