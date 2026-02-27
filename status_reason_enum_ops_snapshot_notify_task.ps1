@@ -1,7 +1,8 @@
 param(
     [string]$TaskName = "ManaOS_Reason_Enum_Ops_Snapshot_Notify_30min",
     [string]$LatestJsonFile = "",
-    [switch]$AsJson
+    [switch]$AsJson,
+    [switch]$RequirePass
 )
 
 $ErrorActionPreference = "Stop"
@@ -45,6 +46,8 @@ $taskInfo = schtasks /Query /TN $TaskName /V /FO LIST 2>$null
 if ($LASTEXITCODE -ne 0 -or $null -eq $taskInfo) {
     $payload.latest_ok_reason = 'task_not_found'
     if ($AsJson) {
+        $payload.require_pass = [bool]$RequirePass
+        $payload.pass = $false
         Write-Output ($payload | ConvertTo-Json -Depth 8)
     }
     else {
@@ -77,7 +80,13 @@ if (Test-Path $LatestJsonFile) {
 }
 
 if ($AsJson) {
+    $pass = ($payload.task_found -and $payload.latest_found -and ($payload.latest_ok -eq $true))
+    $payload.require_pass = [bool]$RequirePass
+    $payload.pass = $pass
     Write-Output ($payload | ConvertTo-Json -Depth 8)
+    if ($RequirePass.IsPresent -and -not $pass) {
+        exit 1
+    }
     exit 0
 }
 
@@ -94,5 +103,13 @@ Write-Host "latest_ts: $($payload.latest_ts)" -ForegroundColor Gray
 Write-Host "latest_ok: $($payload.latest_ok)" -ForegroundColor Gray
 Write-Host "latest_ok_reason: $($payload.latest_ok_reason)" -ForegroundColor Gray
 Write-Host "latest_failure_notify_suppressed_reason: $($payload.latest_failure_notify_suppressed_reason)" -ForegroundColor Gray
+
+$pass = ($payload.task_found -and $payload.latest_found -and ($payload.latest_ok -eq $true))
+Write-Host "pass: $pass" -ForegroundColor Gray
+
+if ($RequirePass.IsPresent -and -not $pass) {
+    Write-Host "[ALERT] ops snapshot notify task latest status is not pass" -ForegroundColor Red
+    exit 1
+}
 
 exit 0

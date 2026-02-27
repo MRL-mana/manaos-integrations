@@ -134,6 +134,7 @@ Reason lint notify diagnostics:
 - opsスナップショット通知 定期タスク登録（30分）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install_reason_enum_ops_snapshot_notify_task.ps1 -IntervalMinutes 30`
 - opsスナップショット通知 定期タスク状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot_notify_task.ps1`
 - opsスナップショット通知 定期タスク状態（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot_notify_task.ps1 -AsJson`
+- opsスナップショット通知 定期タスク状態（RequirePass / 失敗時 exit 1）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot_notify_task.ps1 -RequirePass`
 - opsスナップショット通知 定期タスク解除: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\uninstall_reason_enum_ops_snapshot_notify_task.ps1`
 - opsスナップショット通知 定期タスク ライフサイクル（登録→状態→解除）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_reason_enum_ops_snapshot_notify_task_lifecycle.ps1`
 - opsスナップショット通知 定期タスク ライフサイクル（登録維持）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_reason_enum_ops_snapshot_notify_task_lifecycle.ps1 -KeepInstalled`
@@ -196,6 +197,7 @@ VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Notify Task Install (30min)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Notify Task Status`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Notify Task Status (JSON)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Notify Task Status (RequirePass)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Notify Task Uninstall`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Notify Task Full`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Notify Task Lifecycle Run`

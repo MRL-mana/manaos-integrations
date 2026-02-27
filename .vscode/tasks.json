@@ -1485,6 +1485,23 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: Reason Enum Ops Snapshot Notify Task Status (RequirePass)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_reason_enum_ops_snapshot_notify_task.ps1",
+        "-RequirePass"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
       "label": "ManaOS: Reason Enum Ops Snapshot Notify Task Uninstall",
       "type": "shell",
       "command": "pwsh",
@@ -1506,7 +1523,8 @@
         "ManaOS: Reason Enum Ops Snapshot Notify Once",
         "ManaOS: Reason Enum Ops Snapshot Notify Task Install (30min)",
         "ManaOS: Reason Enum Ops Snapshot Notify Task Status",
-        "ManaOS: Reason Enum Ops Snapshot Notify Task Status (JSON)"
+        "ManaOS: Reason Enum Ops Snapshot Notify Task Status (JSON)",
+        "ManaOS: Reason Enum Ops Snapshot Notify Task Status (RequirePass)"
       ],
       "dependsOrder": "sequence",
       "problemMatcher": [],
