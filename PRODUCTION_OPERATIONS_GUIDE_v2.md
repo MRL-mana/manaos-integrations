@@ -121,7 +121,11 @@ Reason lint notify diagnostics:
 - cooldown自己診断タスク登録（週次）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install_reason_enum_lint_cooldown_verify_task.ps1 -Day SUN -StartTime 03:30`
 - cooldown自己診断タスク解除: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\uninstall_reason_enum_lint_cooldown_verify_task.ps1`
 - cooldown自己診断タスク解除→未登録確認: `pwsh -NoProfile -ExecutionPolicy Bypass -Command "& '.\uninstall_reason_enum_lint_cooldown_verify_task.ps1'; & '.\status_reason_enum_lint_cooldown_verify_task.ps1'; if ($LASTEXITCODE -ne 0) { Write-Host '[OK] Cooldown verify task not found expected after uninstall'; exit 0 }"`
+- cooldownライフサイクル実行（要約ログ保存）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_reason_enum_lint_cooldown_lifecycle.ps1`
+- cooldownライフサイクル最新ログ: `logs/reason_enum_cooldown_lifecycle.latest.json`
+- cooldownライフサイクル履歴: `logs/reason_enum_cooldown_lifecycle.history.jsonl`
 - cooldown自己診断タスク状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_lint_cooldown_verify_task.ps1`
+- cooldown自己診断タスク状態（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_lint_cooldown_verify_task.ps1 -AsJson`
 - 通知フロー一括テスト: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\test_reason_enum_lint_notify_flow.ps1 -IncludeCheckScripts`
 - フルチェーン一括テスト（通知 + クールダウン）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\test_reason_enum_lint_full_chain.ps1 -IncludeCheckScripts`
 - 補足: status出力の `task_last_result_meaning` で Scheduler の前回結果コードを即時解釈可能
@@ -135,6 +139,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ".\lint_reason_enum.ps1" -In
 VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Lint`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Verify Lifecycle`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Run (Log)`
 
 ## Troubleshooting
 

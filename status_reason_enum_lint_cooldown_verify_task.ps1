@@ -2,7 +2,8 @@ param(
     [string]$TaskName = "ManaOS_Reason_Enum_Lint_Cooldown_Verify_Weekly",
     [string]$ConfigFile = "",
     [string]$LatestJsonFile = "",
-    [string]$NotifyStateFile = ""
+    [string]$NotifyStateFile = "",
+    [switch]$AsJson
 )
 
 $ErrorActionPreference = "Stop"
@@ -38,6 +39,23 @@ function Get-TaskDerivedLatestOkReason {
     }
 }
 
+function Get-SchtasksListValue {
+    param(
+        [string[]]$Lines,
+        [string]$Pattern
+    )
+
+    $line = $Lines | Where-Object { $_ -match $Pattern } | Select-Object -First 1
+    if ([string]::IsNullOrWhiteSpace($line)) {
+        return ""
+    }
+    $parts = $line -split ':', 2
+    if ($parts.Count -lt 2) {
+        return ""
+    }
+    return [string]$parts[1].Trim()
+}
+
 $taskDerivedLatestOkReason = ''
 $taskDerivedLatestOk = $false
 
@@ -65,6 +83,93 @@ if ([string]::IsNullOrWhiteSpace($LatestJsonFile)) {
 }
 if ([string]::IsNullOrWhiteSpace($NotifyStateFile)) {
     $NotifyStateFile = Join-Path $scriptDir "logs\reason_enum_lint_notify_state.json"
+}
+
+if ($AsJson) {
+    $payload = [ordered]@{
+        task_name = $TaskName
+        config_file = $ConfigFile
+        task_found = $false
+        task_to_run = ""
+        task_last_result_code = $null
+        task_last_result_hex = ""
+        task_last_result_meaning = ""
+        task_last_result_latest_ok = $false
+        task_last_result_latest_ok_reason = ""
+        latest_json_file = $LatestJsonFile
+        notify_state_file = $NotifyStateFile
+        latest_ts = 'N/A'
+        latest_ok = $false
+        latest_ok_reason = 'source_missing'
+        latest_ok_reason_bridge = ""
+        latest_failure_category = ""
+        latest_failure_notify_attempted = $false
+        latest_failure_notified = $false
+        latest_failure_notify_suppressed_reason = 'source_missing'
+        state_last_failure_notified_at = ""
+        state_last_status = ""
+        state_updated_at = ""
+    }
+
+    $taskInfo = schtasks /Query /TN $TaskName /V /FO LIST
+    if ($LASTEXITCODE -ne 0 -or $null -eq $taskInfo) {
+        $payload.latest_ok_reason = 'task_not_found'
+        $payload.latest_failure_notify_suppressed_reason = 'task_not_found'
+        $payloadJson = ($payload | ConvertTo-Json -Depth 8)
+        Write-Output $payloadJson
+        exit 1
+    }
+
+    $payload.task_found = $true
+    $payload.task_to_run = Get-SchtasksListValue -Lines $taskInfo -Pattern '^(Task To Run|実行するタスク):\s*'
+    $taskLastResultRaw = Get-SchtasksListValue -Lines $taskInfo -Pattern '^(Last Result|前回の結果):\s*'
+    if (-not [string]::IsNullOrWhiteSpace($taskLastResultRaw)) {
+        $taskLastResultCode = 0
+        if ([int]::TryParse($taskLastResultRaw, [ref]$taskLastResultCode)) {
+            $payload.task_last_result_code = $taskLastResultCode
+            $payload.task_last_result_hex = ('0x{0:X8}' -f [uint32]$taskLastResultCode)
+            $payload.task_last_result_meaning = Get-SchtasksLastResultMeaning -Code $taskLastResultCode
+            $payload.task_last_result_latest_ok = ($taskLastResultCode -eq 0)
+            $payload.task_last_result_latest_ok_reason = Get-TaskDerivedLatestOkReason -Code $taskLastResultCode
+        }
+    }
+
+    if (Test-Path $LatestJsonFile) {
+        try {
+            $latest = Get-Content -Path $LatestJsonFile -Raw | ConvertFrom-Json
+            $payload.latest_ts = if (-not [string]::IsNullOrWhiteSpace([string]$latest.ts)) { [string]$latest.ts } else { 'N/A' }
+            $payload.latest_ok = if ($null -ne $latest.ok) { [bool]$latest.ok } else { $false }
+            $payload.latest_ok_reason = if (-not [string]::IsNullOrWhiteSpace([string]$latest.ok_reason)) { [string]$latest.ok_reason } else { 'source_missing' }
+            $payload.latest_failure_category = [string]$latest.failure_category
+            $payload.latest_failure_notify_attempted = if ($null -ne $latest.failure_notify_attempted) { [bool]$latest.failure_notify_attempted } else { $false }
+            $payload.latest_failure_notified = if ($null -ne $latest.failure_notified) { [bool]$latest.failure_notified } else { $false }
+            $payload.latest_failure_notify_suppressed_reason = if (-not [string]::IsNullOrWhiteSpace([string]$latest.failure_notify_suppressed_reason)) { [string]$latest.failure_notify_suppressed_reason } else { '' }
+        }
+        catch {
+            $payload.latest_ok = $false
+            $payload.latest_ok_reason = 'source_missing'
+            $payload.latest_failure_notify_suppressed_reason = 'source_missing'
+        }
+    }
+
+    if ($payload.latest_ok_reason -eq 'source_missing' -and -not [string]::IsNullOrWhiteSpace([string]$payload.task_last_result_latest_ok_reason)) {
+        $payload.latest_ok_reason_bridge = [string]$payload.task_last_result_latest_ok_reason
+    }
+
+    if (Test-Path $NotifyStateFile) {
+        try {
+            $state = Get-Content -Path $NotifyStateFile -Raw | ConvertFrom-Json
+            $payload.state_last_failure_notified_at = [string]$state.last_failure_notified_at
+            $payload.state_last_status = [string]$state.last_status
+            $payload.state_updated_at = [string]$state.updated_at
+        }
+        catch {
+        }
+    }
+
+    $payloadJson = ($payload | ConvertTo-Json -Depth 8)
+    Write-Output $payloadJson
+    exit 0
 }
 
 Write-Host "=== Reason Enum Cooldown Verify Task Status ===" -ForegroundColor Cyan
