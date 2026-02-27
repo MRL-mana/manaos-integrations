@@ -10,6 +10,7 @@ VS Code タスク「ManaOS: Generate Image」やターミナルから利用。
 import argparse
 import os
 import sys
+import time
 from pathlib import Path
 
 # リポジトリルートをパスに追加
@@ -26,6 +27,100 @@ try:
     import requests
 except ImportError:
     requests = None
+
+
+def _resolve_comfyui_base_url() -> str:
+    return (
+        os.getenv("COMFYUI_URL")
+        or f"http://127.0.0.1:{os.getenv('COMFYUI_PORT', '8188')}"
+    ).rstrip("/")
+
+
+def _direct_comfyui_generate(payload: dict) -> tuple[bool, str]:
+    base_url = _resolve_comfyui_base_url()
+
+    try:
+        ckpt_resp = requests.get(
+            f"{base_url}/object_info/CheckpointLoaderSimple",
+            timeout=20,
+        )
+        ckpt_resp.raise_for_status()
+        ckpt_data = ckpt_resp.json() or {}
+        ckpts = (
+            ckpt_data.get("CheckpointLoaderSimple", {})
+            .get("input", {})
+            .get("required", {})
+            .get("ckpt_name", [[[]]])[0]
+        )
+        if not ckpts:
+            return False, "ComfyUI checkpoint が見つかりません"
+        ckpt_name = ckpts[0]
+
+        seed = payload.get("seed", -1)
+        if seed is None or int(seed) < 0:
+            seed = int(time.time() * 1000) % (2**32)
+
+        workflow = {
+            "1": {
+                "inputs": {"ckpt_name": ckpt_name},
+                "class_type": "CheckpointLoaderSimple",
+            },
+            "2": {
+                "inputs": {"text": payload["prompt"], "clip": ["1", 1]},
+                "class_type": "CLIPTextEncode",
+            },
+            "3": {
+                "inputs": {
+                    "text": payload.get("negative_prompt") or "",
+                    "clip": ["1", 1],
+                },
+                "class_type": "CLIPTextEncode",
+            },
+            "4": {
+                "inputs": {
+                    "seed": int(seed),
+                    "steps": int(payload.get("steps", 20)),
+                    "cfg": 7.0,
+                    "sampler_name": "euler_ancestral",
+                    "scheduler": "karras",
+                    "denoise": 1.0,
+                    "model": ["1", 0],
+                    "positive": ["2", 0],
+                    "negative": ["3", 0],
+                    "latent_image": ["5", 0],
+                },
+                "class_type": "KSampler",
+            },
+            "5": {
+                "inputs": {
+                    "width": int(payload.get("width", 512)),
+                    "height": int(payload.get("height", 512)),
+                    "batch_size": 1,
+                },
+                "class_type": "EmptyLatentImage",
+            },
+            "6": {
+                "inputs": {"samples": ["4", 0], "vae": ["1", 2]},
+                "class_type": "VAEDecode",
+            },
+            "7": {
+                "inputs": {"filename_prefix": "manaos_txt2img", "images": ["6", 0]},
+                "class_type": "SaveImage",
+            },
+        }
+
+        submit = requests.post(
+            f"{base_url}/prompt",
+            json={"prompt": workflow, "client_id": "manaos-generate-image-cli"},
+            timeout=30,
+        )
+        submit.raise_for_status()
+        prompt_id = (submit.json() or {}).get("prompt_id")
+        if prompt_id:
+            return True, f"prompt_id: {prompt_id}"
+        return False, f"ComfyUI応答異常: {submit.text[:200]}"
+    except Exception as e:
+        return False, f"{e}"
 
 
 def main() -> int:
@@ -139,11 +234,32 @@ def main() -> int:
     except requests.exceptions.ConnectionError as e:
         print(f"❌ 統合APIに接続できません: {url} ({e})")
         print("   統合API (例: python unified_api_server.py) と ComfyUI (8188) が起動しているか確認してください。")
+        print("↪ ComfyUI直接生成にフォールバックします...")
+        ok, detail = _direct_comfyui_generate(payload)
+        if ok:
+            print(f"✅ ComfyUI直生成を開始しました ({detail})")
+            return 0
+        print(f"❌ フォールバック失敗: {detail}")
         return 1
     except requests.exceptions.HTTPError as e:
         print(f"❌ HTTP エラー: {e}")
         if hasattr(e, "response") and e.response is not None and e.response.text:
             print(e.response.text[:500])
+        body = ""
+        try:
+            body = e.response.text if e.response is not None else ""
+        except Exception:
+            body = ""
+
+        if e.response is not None and e.response.status_code == 503 and (
+            "comfyui" in body.lower() or "unavailable" in body.lower()
+        ):
+            print("↪ ComfyUI直接生成にフォールバックします...")
+            ok, detail = _direct_comfyui_generate(payload)
+            if ok:
+                print(f"✅ ComfyUI直生成を開始しました ({detail})")
+                return 0
+            print(f"❌ フォールバック失敗: {detail}")
         return 1
     except Exception as e:
         print(f"❌ エラー: {e}")
