@@ -350,8 +350,16 @@ if ($Json.IsPresent) {
 
 Write-Host "=== Combined Ops Status (R12 + RL) ===" -ForegroundColor Cyan
 
+Write-Host "" 
+Write-Host "=== Child Status: R12 Health Watch ===" -ForegroundColor Cyan
 pwsh -NoProfile -ExecutionPolicy Bypass -File $r12Status
+
+Write-Host ""
+Write-Host "=== Child Status: RLAnything Bootstrap ===" -ForegroundColor Cyan
 pwsh -NoProfile -ExecutionPolicy Bypass -File $rlStatus
+
+Write-Host ""
+Write-Host "=== Child Status: R12+RL Ops Watch ===" -ForegroundColor Cyan
 pwsh -NoProfile -ExecutionPolicy Bypass -File $opsWatchStatus
 
 $rlTaskSnapshot = Get-TaskSnapshot -TaskName "ManaOS_RLAnything_Bootstrap_Logon" -RequireConfigFile -DefaultConfigFile $rlConfig
