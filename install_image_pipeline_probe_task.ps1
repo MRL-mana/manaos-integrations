@@ -9,6 +9,8 @@ param(
     [string]$WebhookUrl = "",
     [string]$WebhookMention = "",
     [switch]$NotifyOnSuccess,
+    [int]$NotifyCooldownMinutes = 15,
+    [string]$NotifyStateFile = "",
     [ValidateSet('LIMITED','HIGHEST')]
     [string]$RunLevel = 'LIMITED',
     [switch]$RunAsSystem,
@@ -47,6 +49,17 @@ if (-not $NotifyOnSuccess.IsPresent -and -not [string]::IsNullOrWhiteSpace($env:
         $NotifyOnSuccess = $true
     }
 }
+if ($NotifyCooldownMinutes -lt 0) {
+    $NotifyCooldownMinutes = 0
+}
+if (-not [string]::IsNullOrWhiteSpace($env:MANAOS_NOTIFY_COOLDOWN_MINUTES)) {
+    try {
+        $NotifyCooldownMinutes = [int]$env:MANAOS_NOTIFY_COOLDOWN_MINUTES
+    }
+    catch {
+        Write-Host "[WARN] Invalid MANAOS_NOTIFY_COOLDOWN_MINUTES: $($env:MANAOS_NOTIFY_COOLDOWN_MINUTES)" -ForegroundColor Yellow
+    }
+}
 
 if ([string]::IsNullOrWhiteSpace($LogFile)) {
     $logDir = Join-Path $scriptDir "logs"
@@ -54,6 +67,10 @@ if ([string]::IsNullOrWhiteSpace($LogFile)) {
         New-Item -ItemType Directory -Path $logDir -Force | Out-Null
     }
     $LogFile = Join-Path $logDir "image_pipeline_probe.latest.json"
+}
+
+if ([string]::IsNullOrWhiteSpace($NotifyStateFile)) {
+    $NotifyStateFile = Join-Path (Join-Path $scriptDir "logs") "image_pipeline_probe_notify_state.json"
 }
 
 $configPath = Join-Path $scriptDir "logs\image_pipeline_probe_task.config.json"
@@ -65,6 +82,8 @@ $configObj = [ordered]@{
     webhook_url = $WebhookUrl
     webhook_mention = $WebhookMention
     notify_on_success = [bool]$NotifyOnSuccess
+    notify_cooldown_minutes = [int]$NotifyCooldownMinutes
+    notify_state_file = $NotifyStateFile
 }
 $configObj | ConvertTo-Json -Depth 4 | Set-Content -Path $configPath -Encoding UTF8
 
@@ -86,6 +105,8 @@ Write-Host "TaskRun  : $taskScript" -ForegroundColor Gray
 Write-Host "Config   : $configPath" -ForegroundColor Gray
 Write-Host "LogFile  : $LogFile" -ForegroundColor Gray
 Write-Host "Webhook  : $(if ([string]::IsNullOrWhiteSpace($WebhookUrl)) { 'disabled' } else { "$WebhookFormat ($WebhookUrl)" })" -ForegroundColor Gray
+Write-Host "Cooldown : $NotifyCooldownMinutes min" -ForegroundColor Gray
+Write-Host "State    : $NotifyStateFile" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 
 if ($PrintOnly) {

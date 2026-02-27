@@ -22,6 +22,8 @@ $webhookUrl = ""
 $webhookFormat = "discord"
 $webhookMention = ""
 $notifyOnSuccess = $false
+$notifyCooldownMinutes = 15
+$notifyStateFile = Join-Path $scriptDir "logs\image_pipeline_probe_notify_state.json"
 
 function Resolve-NotifySettings {
     param(
@@ -105,6 +107,64 @@ function Send-WebhookNotification {
     }
 }
 
+function Load-NotifyState {
+    param([string]$Path)
+
+    if (-not (Test-Path $Path)) {
+        return [pscustomobject]@{
+            last_status = ''
+            last_notified_at = ''
+            last_category = ''
+        }
+    }
+
+    try {
+        return (Get-Content -Path $Path -Raw | ConvertFrom-Json)
+    }
+    catch {
+        Write-Host "[WARN] Failed to parse notify state file: $Path" -ForegroundColor Yellow
+        return [pscustomobject]@{
+            last_status = ''
+            last_notified_at = ''
+            last_category = ''
+        }
+    }
+}
+
+function Save-NotifyState {
+    param(
+        [string]$Path,
+        [string]$Status,
+        [string]$Category,
+        [switch]$MarkNotified
+    )
+
+    $stateDir = Split-Path -Parent $Path
+    if (-not [string]::IsNullOrWhiteSpace($stateDir) -and -not (Test-Path $stateDir)) {
+        New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
+    }
+
+    $obj = [ordered]@{
+        last_status = $Status
+        last_category = $Category
+        updated_at = [datetimeoffset]::Now.ToString('o')
+    }
+    if ($MarkNotified.IsPresent) {
+        $obj.last_notified_at = [datetimeoffset]::Now.ToString('o')
+    }
+    else {
+        $existing = Load-NotifyState -Path $Path
+        if ($existing.last_notified_at) {
+            $obj.last_notified_at = [string]$existing.last_notified_at
+        }
+        else {
+            $obj.last_notified_at = ''
+        }
+    }
+
+    ($obj | ConvertTo-Json -Depth 4) | Set-Content -Path $Path -Encoding UTF8
+}
+
 if (Test-Path $ConfigFile) {
     try {
         $cfg = Get-Content -Path $ConfigFile -Raw | ConvertFrom-Json
@@ -115,10 +175,25 @@ if (Test-Path $ConfigFile) {
         if ($cfg.webhook_format) { $webhookFormat = [string]$cfg.webhook_format }
         if ($cfg.webhook_mention) { $webhookMention = [string]$cfg.webhook_mention }
         if ($null -ne $cfg.notify_on_success) { $notifyOnSuccess = [bool]$cfg.notify_on_success }
+        if ($null -ne $cfg.notify_cooldown_minutes) { $notifyCooldownMinutes = [int]$cfg.notify_cooldown_minutes }
+        if ($cfg.notify_state_file) { $notifyStateFile = [string]$cfg.notify_state_file }
     }
     catch {
         Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow
     }
+}
+
+if (-not [string]::IsNullOrWhiteSpace($env:MANAOS_NOTIFY_COOLDOWN_MINUTES)) {
+    try {
+        $notifyCooldownMinutes = [int]$env:MANAOS_NOTIFY_COOLDOWN_MINUTES
+    }
+    catch {
+        Write-Host "[WARN] Invalid MANAOS_NOTIFY_COOLDOWN_MINUTES: $($env:MANAOS_NOTIFY_COOLDOWN_MINUTES)" -ForegroundColor Yellow
+    }
+}
+
+if ($notifyCooldownMinutes -lt 0) {
+    $notifyCooldownMinutes = 0
 }
 
 $logDir = Split-Path -Parent $logFile
@@ -149,19 +224,56 @@ $routeCategory = if ($unifiedReady) {
 }
 
 $msg = "category=$routeCategory unifiedReady=$unifiedReady directReady=$directReady unifiedApi=$unifiedApiUrl comfyUi=$comfyUiUrl"
+$now = [datetimeoffset]::Now
+$notifyState = Load-NotifyState -Path $notifyStateFile
+$lastStatus = [string]$notifyState.last_status
+$lastNotifiedAt = $null
+if (-not [string]::IsNullOrWhiteSpace([string]$notifyState.last_notified_at)) {
+    try {
+        $lastNotifiedAt = [datetimeoffset]::Parse([string]$notifyState.last_notified_at)
+    }
+    catch {
+        $lastNotifiedAt = $null
+    }
+}
 
 if (-not $overallOk) {
     Write-Host "[ALERT] Image pipeline probe failed | $msg" -ForegroundColor Red
-    if (-not [string]::IsNullOrWhiteSpace($webhookUrl)) {
+    $shouldNotifyFailure = $false
+    if ($lastStatus -ne 'failure') {
+        $shouldNotifyFailure = $true
+    }
+    elseif ($null -eq $lastNotifiedAt) {
+        $shouldNotifyFailure = $true
+    }
+    else {
+        $elapsed = ($now - $lastNotifiedAt).TotalMinutes
+        if ($elapsed -ge $notifyCooldownMinutes) {
+            $shouldNotifyFailure = $true
+        }
+    }
+
+    if ($shouldNotifyFailure -and -not [string]::IsNullOrWhiteSpace($webhookUrl)) {
         Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'failure' -Title '[Image Pipeline Probe] FAILURE (pipeline_down)' -Body $msg -Mention $webhookMention
+        Save-NotifyState -Path $notifyStateFile -Status 'failure' -Category $routeCategory -MarkNotified
+    }
+    else {
+        if (-not [string]::IsNullOrWhiteSpace($webhookUrl)) {
+            Write-Host "[INFO] Failure notify skipped by cooldown ($notifyCooldownMinutes min)" -ForegroundColor DarkGray
+        }
+        Save-NotifyState -Path $notifyStateFile -Status 'failure' -Category $routeCategory
     }
     Write-Host "[INFO] Image pipeline probe saved: $logFile" -ForegroundColor Yellow
     exit 1
 }
 
 Write-Host "[OK] Image pipeline probe healthy | $msg" -ForegroundColor Green
-if ($notifyOnSuccess -and -not [string]::IsNullOrWhiteSpace($webhookUrl)) {
+if ($notifyOnSuccess -and -not [string]::IsNullOrWhiteSpace($webhookUrl) -and $lastStatus -eq 'failure') {
     Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'success' -Title "[Image Pipeline Probe] SUCCESS ($routeCategory)" -Body $msg -Mention $webhookMention
+    Save-NotifyState -Path $notifyStateFile -Status 'success' -Category $routeCategory -MarkNotified
+}
+else {
+    Save-NotifyState -Path $notifyStateFile -Status 'success' -Category $routeCategory
 }
 
 Write-Host "[OK] Image pipeline probe saved: $logFile" -ForegroundColor Green
