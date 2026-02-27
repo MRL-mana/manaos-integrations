@@ -129,6 +129,25 @@ function Send-WebhookNotification {
     }
 }
 
+function Write-WatchOutput {
+    param(
+        [object]$Payload,
+        [string]$LogPath,
+        [string]$JsonOutFile
+    )
+
+    $line = $Payload | ConvertTo-Json -Compress -Depth 8
+    Add-Content -Path $LogPath -Value $line -Encoding UTF8
+
+    if (-not [string]::IsNullOrWhiteSpace($JsonOutFile)) {
+        $jsonDir = Split-Path -Parent $JsonOutFile
+        if (-not [string]::IsNullOrWhiteSpace($jsonDir) -and -not (Test-Path $jsonDir)) {
+            New-Item -ItemType Directory -Path $jsonDir -Force | Out-Null
+        }
+        ($Payload | ConvertTo-Json -Depth 8) | Set-Content -Path $JsonOutFile -Encoding UTF8
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
     if (-not [string]::IsNullOrWhiteSpace($env:OPENWEBUI_URL)) {
         $BaseUrl = $env:OPENWEBUI_URL.TrimEnd('/')
@@ -199,10 +218,14 @@ $lastFailureNotifiedDt = $null
 if (-not [string]::IsNullOrWhiteSpace($lastFailureNotifiedAt)) {
     try { $lastFailureNotifiedDt = [datetimeoffset]::Parse($lastFailureNotifiedAt) } catch { $lastFailureNotifiedDt = $null }
 }
+
 $failureNotified = $false
+$failureNotifySuppressedReason = ''
+$failureNotifyAttempted = $false
+$now = [datetimeoffset]::Now
 
 $payload = [ordered]@{
-    ts = [datetimeoffset]::Now.ToString("o")
+    ts = $now.ToString("o")
     task = $TaskName
     base_url = $BaseUrl
     ok = $ok
@@ -211,21 +234,19 @@ $payload = [ordered]@{
     tailscale_ip = $tailscaleIp
     port_3001_listening = $portListening
     firewall_rule_count = $firewallRuleCount
+    notify_failure_cooldown_minutes = $NotifyFailureCooldownMinutes
+    failure_notify_attempted = $false
+    failure_notified = $false
+    failure_notify_suppressed_reason = ''
     issues = @($issues)
 }
 
-$line = $payload | ConvertTo-Json -Compress -Depth 6
-Add-Content -Path $LogPath -Value $line -Encoding UTF8
-
-if (-not [string]::IsNullOrWhiteSpace($JsonOutFile)) {
-    $jsonDir = Split-Path -Parent $JsonOutFile
-    if (-not [string]::IsNullOrWhiteSpace($jsonDir) -and -not (Test-Path $jsonDir)) {
-        New-Item -ItemType Directory -Path $jsonDir -Force | Out-Null
-    }
-    ($payload | ConvertTo-Json -Depth 6) | Set-Content -Path $JsonOutFile -Encoding UTF8
-}
-
 if ($ok) {
+    $payload.failure_notify_attempted = $false
+    $payload.failure_notified = $false
+    $payload.failure_notify_suppressed_reason = 'not_failure_path'
+    Write-WatchOutput -Payload $payload -LogPath $LogPath -JsonOutFile $JsonOutFile
+
     $msg = "[OK] OpenWebUI/Tailscale watch healthy"
     if ($openwebuiStatusCode) { $msg += " | status=$openwebuiStatusCode" }
     if ($tailscaleIp) { $msg += " | ip=$tailscaleIp" }
@@ -240,12 +261,22 @@ foreach ($issue in $issues) {
 }
 
 if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
+    $failureNotifyAttempted = $true
     $shouldNotifyFailure = $false
+    $elapsedMinutes = $null
     if ($null -eq $lastFailureNotifiedDt) {
         $shouldNotifyFailure = $true
     }
-    elseif (([datetimeoffset]::Now - $lastFailureNotifiedDt).TotalMinutes -ge $NotifyFailureCooldownMinutes) {
+    else {
+        $elapsedMinutes = ([datetimeoffset]::Now - $lastFailureNotifiedDt).TotalMinutes
+    }
+
+    if (-not $shouldNotifyFailure -and $elapsedMinutes -ge $NotifyFailureCooldownMinutes) {
         $shouldNotifyFailure = $true
+    }
+    elseif (-not $shouldNotifyFailure) {
+        $remainingCooldown = [math]::Ceiling($NotifyFailureCooldownMinutes - $elapsedMinutes)
+        $failureNotifySuppressedReason = "cooldown(${remainingCooldown}m_remaining)"
     }
 
     if ($shouldNotifyFailure) {
@@ -253,8 +284,28 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
         Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'failure' -Title '[OpenWebUI Watch] FAILURE' -Body $body -Mention $WebhookMention
         $lastFailureNotifiedAt = [datetimeoffset]::Now.ToString('o')
         $failureNotified = $true
+        $failureNotifySuppressedReason = ''
+        Write-Host "[INFO] Failure webhook sent" -ForegroundColor Yellow
+    }
+    else {
+        Write-Host "[INFO] Failure webhook suppressed: $failureNotifySuppressedReason" -ForegroundColor DarkGray
     }
 }
+else {
+    $failureNotifyAttempted = $false
+    $failureNotifySuppressedReason = 'webhook_not_configured'
+    Write-Host "[INFO] Failure webhook suppressed: webhook not configured" -ForegroundColor DarkGray
+}
+
+if (-not $failureNotified -and [string]::IsNullOrWhiteSpace($failureNotifySuppressedReason) -and $failureNotifyAttempted) {
+    $failureNotifySuppressedReason = 'not_triggered'
+    Write-Host "[INFO] Failure webhook suppressed: not triggered" -ForegroundColor DarkGray
+}
+
+$payload.failure_notify_attempted = $failureNotifyAttempted
+$payload.failure_notified = $failureNotified
+$payload.failure_notify_suppressed_reason = $failureNotifySuppressedReason
+Write-WatchOutput -Payload $payload -LogPath $LogPath -JsonOutFile $JsonOutFile
 
 Save-NotifyState -Path $NotifyStateFile -LastFailureNotifiedAt $lastFailureNotifiedAt -LastStatus 'failure'
 exit 1
