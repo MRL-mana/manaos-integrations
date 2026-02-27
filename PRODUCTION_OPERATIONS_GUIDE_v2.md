@@ -105,6 +105,9 @@ History (per-line JSON):
 - `logs/production_recovery_history.jsonl`
 - `logs/openwebui_tailscale_status_history.jsonl`
 
+Reason dictionary:
+- `latest_ok_reason` / `ok_reason` values and meanings: [REASON_ENUM.md](REASON_ENUM.md)
+
 ## Troubleshooting
 
 ### OpenWebUI not responding
