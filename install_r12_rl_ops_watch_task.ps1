@@ -51,7 +51,8 @@ if ($RecoveryCooldownMinutes -lt 0) {
 if ([string]::IsNullOrWhiteSpace($DegradedStateFile)) {
     $DegradedStateFile = Join-Path $scriptDir "logs\r12_rl_ops_watch_state.json"
 }
-if ([string]::IsNullOrWhiteSpace($RecoveryCommand)) {
+$hasCustomRecoveryCommand = -not [string]::IsNullOrWhiteSpace($RecoveryCommand)
+if (-not $hasCustomRecoveryCommand) {
     $RecoveryCommand = "Set-Location '$scriptDir'; pwsh -NoProfile -ExecutionPolicy Bypass -File '.\\manaos-rpg\\scripts\\run_backend.ps1' -ForceKill"
 }
 
@@ -85,10 +86,12 @@ $taskArgs = @(
     '-RecoverAfterConsecutiveEndpointDown',
     "$RecoverAfterConsecutiveEndpointDown",
     '-RecoveryCooldownMinutes',
-    "$RecoveryCooldownMinutes",
-    '-RecoveryCommand',
-    "`"$RecoveryCommand`""
+    "$RecoveryCooldownMinutes"
 )
+
+if ($hasCustomRecoveryCommand) {
+    $taskArgs += @('-RecoveryCommand', "`"$RecoveryCommand`"")
+}
 
 if ($WebhookFormat -ne 'discord') {
     $taskArgs += @('-WebhookFormat', $WebhookFormat)
