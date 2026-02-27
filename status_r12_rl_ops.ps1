@@ -201,6 +201,86 @@ function Get-R12LogSnapshot {
     }
 }
 
+function Get-OpsWatchSnapshot {
+    param(
+        [string]$ConfigPath
+    )
+
+    $issues = New-Object System.Collections.Generic.List[string]
+    $result = [ordered]@{
+        configPath = $ConfigPath
+        configExists = $false
+        configParseOk = $false
+        summaryLogPath = ""
+        stateFile = ""
+        latestSummary = $null
+        notifyState = $null
+        issues = @()
+    }
+
+    if (-not (Test-Path $ConfigPath)) {
+        $issues.Add("Ops watch config not found: $ConfigPath")
+        $result.issues = @($issues)
+        return $result
+    }
+
+    $result.configExists = $true
+    $cfg = $null
+    try {
+        $cfg = Get-Content -Path $ConfigPath -Raw | ConvertFrom-Json
+        $result.configParseOk = $true
+    }
+    catch {
+        $issues.Add("Ops watch config parse failed: $ConfigPath")
+        $result.issues = @($issues)
+        return $result
+    }
+
+    $summaryLogPath = [string]$cfg.summary_log_path
+    $stateFile = [string]$cfg.degraded_state_file
+    $result.summaryLogPath = $summaryLogPath
+    $result.stateFile = $stateFile
+
+    if ([string]::IsNullOrWhiteSpace($summaryLogPath)) {
+        $issues.Add("Ops watch summary_log_path is empty")
+    }
+    elseif (-not (Test-Path $summaryLogPath)) {
+        $issues.Add("Ops watch summary log not found: $summaryLogPath")
+    }
+    else {
+        try {
+            $latestSummaryLine = Get-Content -Path $summaryLogPath -Tail 1
+            if (-not [string]::IsNullOrWhiteSpace($latestSummaryLine)) {
+                $result.latestSummary = $latestSummaryLine | ConvertFrom-Json
+            }
+            else {
+                $issues.Add("Ops watch summary log is empty: $summaryLogPath")
+            }
+        }
+        catch {
+            $issues.Add("Ops watch summary log parse failed: $summaryLogPath")
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($stateFile)) {
+        $issues.Add("Ops watch degraded_state_file is empty")
+    }
+    elseif (-not (Test-Path $stateFile)) {
+        $issues.Add("Ops watch state file not found: $stateFile")
+    }
+    else {
+        try {
+            $result.notifyState = Get-Content -Path $stateFile -Raw | ConvertFrom-Json
+        }
+        catch {
+            $issues.Add("Ops watch state file parse failed: $stateFile")
+        }
+    }
+
+    $result.issues = @($issues)
+    return $result
+}
+
 function Write-ConfigLinkSummary {
     param(
         [string]$Label,
@@ -233,14 +313,16 @@ if ($Json.IsPresent) {
     $rlTask = Get-TaskSnapshot -TaskName "ManaOS_RLAnything_Bootstrap_Logon" -RequireConfigFile -DefaultConfigFile $rlConfig
     $opsWatchTask = Get-TaskSnapshot -TaskName "ManaOS_R12_RL_Ops_Watch_15min" -RequireConfigFile -DefaultConfigFile $opsWatchConfig
     $r12LogSnapshot = Get-R12LogSnapshot -LogPath $r12Log -TailCount $TailLines -MaxLogAgeMinutes $MaxR12LogAgeMinutes
+    $opsWatchSnapshot = Get-OpsWatchSnapshot -ConfigPath $opsWatchConfig
 
-    $allIssues = @($r12Task.issues) + @($rlTask.issues) + @($opsWatchTask.issues) + @($r12LogSnapshot.issues)
+    $allIssues = @($r12Task.issues) + @($rlTask.issues) + @($opsWatchTask.issues) + @($r12LogSnapshot.issues) + @($opsWatchSnapshot.issues)
     $payload = @{
         ok = ($allIssues.Count -eq 0)
         checkedAt = [datetimeoffset]::Now.ToString("o")
         r12Task = $r12Task
         rlTask = $rlTask
         opsWatchTask = $opsWatchTask
+        opsWatch = $opsWatchSnapshot
         r12Log = @{
             path = $r12Log
             exists = $r12LogSnapshot.exists
