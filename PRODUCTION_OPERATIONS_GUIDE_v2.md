@@ -112,6 +112,11 @@ Reason dictionary:
 - Lint task install (Webhook): `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install_reason_enum_lint_task.ps1 -IncludeCheckScripts -WebhookUrl "YOUR_WEBHOOK_URL" -WebhookFormat discord -WebhookMention "@ops" -NotifyFailureCooldownMinutes 60 -RunNow`
 - Lint task status: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_lint_task.ps1`
 
+Reason lint notify diagnostics:
+- `latest_failure_notify_attempted: True` / `latest_failure_notified: False` / `latest_failure_notify_suppressed_reason: webhook_not_configured` → Webhook未設定
+- `latest_failure_notify_attempted: True` / `latest_failure_notified: False` / `latest_failure_notify_suppressed_reason: notify_send_failed` → Webhook送信失敗
+- `latest_failure_notify_attempted: True` / `latest_failure_notified: False` / `latest_failure_notify_suppressed_reason: same_category_cooldown(...m_remaining)` → クールダウン抑制
+
 Reason lint (recommended before commit):
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File ".\lint_reason_enum.ps1" -IncludeCheckScripts
