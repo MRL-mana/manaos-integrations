@@ -131,6 +131,10 @@ Reason lint notify diagnostics:
 - opsスナップショット出力（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\export_reason_enum_ops_snapshot.ps1 -AsJson`
 - opsスナップショット通知チェック（異常時Webhook）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_reason_enum_ops_snapshot_notify_once.ps1`
 - opsスナップショット通知チェック（擬似失敗）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_reason_enum_ops_snapshot_notify_once.ps1 -SimulateFailure`
+- opsスナップショット通知 定期タスク登録（30分）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install_reason_enum_ops_snapshot_notify_task.ps1 -IntervalMinutes 30`
+- opsスナップショット通知 定期タスク状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot_notify_task.ps1`
+- opsスナップショット通知 定期タスク状態（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot_notify_task.ps1 -AsJson`
+- opsスナップショット通知 定期タスク解除: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\uninstall_reason_enum_ops_snapshot_notify_task.ps1`
 - opsタスクdoctor（重複ラベル/依存欠損チェック）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\doctor_reason_enum_ops_tasks.ps1`
 - opsクイック回帰チェック: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\verify_reason_enum_ops_scripts_quick.ps1`
 - opsスナップショット状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1`
@@ -173,6 +177,11 @@ VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Export`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Export (JSON)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Notify Once`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Notify Task Install (30min)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Notify Task Status`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Notify Task Status (JSON)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Notify Task Uninstall`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Notify Task Full`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Tasks Doctor`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status`
