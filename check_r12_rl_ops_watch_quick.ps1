@@ -403,7 +403,7 @@ if ($null -ne $payload.r12Log -and $null -ne $payload.r12Log.latest) {
     $latestFailed = $payload.r12Log.latest.failed
 }
 
-$summary = [pscustomobject]@{
+$summary = [pscustomobject][ordered]@{
     ts = [datetimeoffset]::Now.ToString('o')
     ok = $ok
     status_latest_ts = if (-not [string]::IsNullOrWhiteSpace([string]$payload.latest_ts)) { [string]$payload.latest_ts } elseif (-not [string]::IsNullOrWhiteSpace([string]$payload.opsWatch.latestTs)) { [string]$payload.opsWatch.latestTs } else { [string]$payload.opsWatch.latestSummary.ts }
@@ -416,13 +416,13 @@ $summary = [pscustomobject]@{
     r12_latest_failed = $latestFailed
     ops_watch_last_result = [string]$payload.opsWatchTask.lastResult
     ops_watch_state = [string]$payload.opsWatchTask.state
-    status_latest_failure_category = [string]$payload.latest_failure_category
-    status_latest_failure_notify_attempted = $payload.latest_failure_notify_attempted
-    status_latest_failure_notified = $payload.latest_failure_notified
-    status_latest_failure_notify_suppressed_reason = [string]$payload.latest_failure_notify_suppressed_reason
-    status_latest_degraded_notify_attempted = $payload.latest_degraded_notify_attempted
-    status_latest_degraded_notified = $payload.latest_degraded_notified
-    status_latest_degraded_notify_suppressed_reason = [string]$payload.latest_degraded_notify_suppressed_reason
+    status_latest_failure_category = if (-not [string]::IsNullOrWhiteSpace([string]$payload.latest_failure_category)) { [string]$payload.latest_failure_category } else { [string]$payload.opsWatch.latestFailureCategory }
+    status_latest_failure_notify_attempted = if ($null -ne $payload.latest_failure_notify_attempted) { $payload.latest_failure_notify_attempted } else { $payload.opsWatch.latestFailureNotifyAttempted }
+    status_latest_failure_notified = if ($null -ne $payload.latest_failure_notified) { $payload.latest_failure_notified } else { $payload.opsWatch.latestFailureNotified }
+    status_latest_failure_notify_suppressed_reason = if (-not [string]::IsNullOrWhiteSpace([string]$payload.latest_failure_notify_suppressed_reason)) { [string]$payload.latest_failure_notify_suppressed_reason } else { [string]$payload.opsWatch.latestFailureNotifySuppressedReason }
+    status_latest_degraded_notify_attempted = if ($null -ne $payload.latest_degraded_notify_attempted) { $payload.latest_degraded_notify_attempted } else { $payload.opsWatch.latestDegradedNotifyAttempted }
+    status_latest_degraded_notified = if ($null -ne $payload.latest_degraded_notified) { $payload.latest_degraded_notified } else { $payload.opsWatch.latestDegradedNotified }
+    status_latest_degraded_notify_suppressed_reason = if (-not [string]::IsNullOrWhiteSpace([string]$payload.latest_degraded_notify_suppressed_reason)) { [string]$payload.latest_degraded_notify_suppressed_reason } else { [string]$payload.opsWatch.latestDegradedNotifySuppressedReason }
     status_exit = $statusExit
     previous_last_ok = $true
     recovered_this_run = $false
