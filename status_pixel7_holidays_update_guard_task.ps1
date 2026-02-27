@@ -4,6 +4,36 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Test-TaskResultOk {
+    param([string]$RawResult)
+
+    if ([string]::IsNullOrWhiteSpace($RawResult)) {
+        return $null
+    }
+
+    $text = $RawResult.Trim().ToLowerInvariant()
+    if ($text -eq '0' -or $text -eq '0x0') {
+        return $true
+    }
+
+    $asInt = 0
+    if ([int]::TryParse($text, [ref]$asInt)) {
+        return ($asInt -eq 0)
+    }
+
+    if ($text -match '^0x[0-9a-f]+$') {
+        try {
+            $asHex = [convert]::ToInt64($text.Substring(2), 16)
+            return ($asHex -eq 0)
+        }
+        catch {
+            return $null
+        }
+    }
+
+    return $null
+}
+
 Write-Host "=== Pixel7 Holiday Guard Task Status ===" -ForegroundColor Cyan
 Write-Host "TaskName: $TaskName" -ForegroundColor Gray
 
@@ -48,7 +78,7 @@ if (-not [string]::IsNullOrWhiteSpace($nextRunLine)) {
 
 $latestOk = $null
 if (-not [string]::IsNullOrWhiteSpace($latestLastResult)) {
-    $latestOk = ($latestLastResult -eq '0')
+    $latestOk = Test-TaskResultOk -RawResult $latestLastResult
 }
 
 Write-Host "--- Latest Output ---" -ForegroundColor Cyan
