@@ -116,6 +116,9 @@ Reason lint (recommended before commit):
 powershell -NoProfile -ExecutionPolicy Bypass -File ".\lint_reason_enum.ps1" -IncludeCheckScripts
 ```
 
+VS Code task:
+- `Tasks: Run Task` → `ManaOS: Reason Enum Lint`
+
 ## Troubleshooting
 
 ### OpenWebUI not responding
