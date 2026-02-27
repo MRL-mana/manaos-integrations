@@ -4,6 +4,11 @@ param(
     [string]$UnifiedApiUrl = "http://127.0.0.1:9502",
     [string]$ComfyUiUrl = "http://127.0.0.1:8188",
     [string]$LogFile = "",
+    [ValidateSet('generic','slack','discord')]
+    [string]$WebhookFormat = "discord",
+    [string]$WebhookUrl = "",
+    [string]$WebhookMention = "",
+    [switch]$NotifyOnSuccess,
     [ValidateSet('LIMITED','HIGHEST')]
     [string]$RunLevel = 'LIMITED',
     [switch]$RunAsSystem,
@@ -30,6 +35,19 @@ if ($IntervalMinutes -lt 1 -or $IntervalMinutes -gt 1440) {
     throw "IntervalMinutes must be 1..1440"
 }
 
+if ([string]::IsNullOrWhiteSpace($WebhookUrl) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_URL)) {
+    $WebhookUrl = $env:MANAOS_WEBHOOK_URL
+}
+if ([string]::IsNullOrWhiteSpace($WebhookMention) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_MENTION)) {
+    $WebhookMention = $env:MANAOS_WEBHOOK_MENTION
+}
+if (-not $NotifyOnSuccess.IsPresent -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_NOTIFY_ON_SUCCESS)) {
+    $raw = $env:MANAOS_NOTIFY_ON_SUCCESS.Trim().ToLowerInvariant()
+    if ($raw -in @('1','true','yes','on')) {
+        $NotifyOnSuccess = $true
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($LogFile)) {
     $logDir = Join-Path $scriptDir "logs"
     if (-not (Test-Path $logDir)) {
@@ -43,6 +61,10 @@ $configObj = [ordered]@{
     unified_api_url = $UnifiedApiUrl
     comfyui_url = $ComfyUiUrl
     log_file = $LogFile
+    webhook_format = $WebhookFormat
+    webhook_url = $WebhookUrl
+    webhook_mention = $WebhookMention
+    notify_on_success = [bool]$NotifyOnSuccess
 }
 $configObj | ConvertTo-Json -Depth 4 | Set-Content -Path $configPath -Encoding UTF8
 
@@ -63,6 +85,7 @@ Write-Host "Probe    : $probeScript" -ForegroundColor Gray
 Write-Host "TaskRun  : $taskScript" -ForegroundColor Gray
 Write-Host "Config   : $configPath" -ForegroundColor Gray
 Write-Host "LogFile  : $LogFile" -ForegroundColor Gray
+Write-Host "Webhook  : $(if ([string]::IsNullOrWhiteSpace($WebhookUrl)) { 'disabled' } else { "$WebhookFormat ($WebhookUrl)" })" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 
 if ($PrintOnly) {
