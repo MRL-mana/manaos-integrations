@@ -82,6 +82,98 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: Image Pipeline Health Check (Probe Generate)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/monitor_image_pipeline.ps1",
+        "-ProbeGenerate"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Image Pipeline Probe タスク登録（5分）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/install_image_pipeline_probe_task.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Image Pipeline Probe タスク状態確認",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_image_pipeline_probe_task.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Image Pipeline Probe タスク解除",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/uninstall_image_pipeline_probe_task.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Image Pipeline Probe 登録→状態確認（ワンボタン）",
+      "dependsOn": [
+        "ManaOS: Image Pipeline Probe タスク登録（5分）",
+        "ManaOS: Image Pipeline Probe タスク状態確認"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Image Pipeline Probe 解除→未登録確認（ワンボタン）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "& \"${workspaceFolder}/uninstall_image_pipeline_probe_task.ps1\"; & \"${workspaceFolder}/status_image_pipeline_probe_task.ps1\"; if ($LASTEXITCODE -ne 0) { Write-Host \"[OK] Image Pipeline Probe task not found expected after uninstall\"; exit 0 }"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: R12 Health Watch タスク登録（5分）",
       "type": "shell",
       "command": "pwsh",
