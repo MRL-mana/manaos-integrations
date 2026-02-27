@@ -47,6 +47,21 @@ try {
     Write-Host "webhook_enabled: $(-not [string]::IsNullOrWhiteSpace([string]$cfg.webhook_url))" -ForegroundColor Gray
     Write-Host "notify_failure_cooldown_minutes: $($cfg.notify_failure_cooldown_minutes)" -ForegroundColor Gray
     Write-Host "notify_state_file: $($cfg.notify_state_file)" -ForegroundColor Gray
+
+    $latestFile = [string]$cfg.json_out_file
+    if (-not [string]::IsNullOrWhiteSpace($latestFile) -and (Test-Path $latestFile)) {
+        try {
+            $latest = Get-Content -Path $latestFile -Raw | ConvertFrom-Json
+            Write-Host "--- Latest Output ---" -ForegroundColor Cyan
+            Write-Host "latest_ts: $($latest.ts)" -ForegroundColor Gray
+            Write-Host "latest_ok: $($latest.ok)" -ForegroundColor Gray
+            Write-Host "failure_notified: $($latest.failure_notified)" -ForegroundColor Gray
+            Write-Host "failure_notify_suppressed_reason: $($latest.failure_notify_suppressed_reason)" -ForegroundColor Gray
+        }
+        catch {
+            Write-Host "[WARN] Failed to parse latest output file: $latestFile" -ForegroundColor Yellow
+        }
+    }
 }
 catch {
     Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow
