@@ -10,6 +10,10 @@ param(
     [int]$NotifyDegradedAfter = 3,
     [int]$NotifyDegradedCooldownMinutes = 60,
     [string]$DegradedStateFile = "",
+    [switch]$DisableAutoRecovery,
+    [int]$RecoverAfterConsecutiveEndpointDown = 3,
+    [int]$RecoveryCooldownMinutes = 10,
+    [string]$RecoveryCommand = "",
     [ValidateSet('LIMITED','HIGHEST')]
     [string]$RunLevel = 'LIMITED',
     [switch]$RunAsSystem,
@@ -38,9 +42,20 @@ if ($NotifyDegradedAfter -lt 1) {
 if ($NotifyDegradedCooldownMinutes -lt 0) {
     throw "NotifyDegradedCooldownMinutes must be >= 0"
 }
+if ($RecoverAfterConsecutiveEndpointDown -lt 1) {
+    throw "RecoverAfterConsecutiveEndpointDown must be >= 1"
+}
+if ($RecoveryCooldownMinutes -lt 0) {
+    throw "RecoveryCooldownMinutes must be >= 0"
+}
 if ([string]::IsNullOrWhiteSpace($DegradedStateFile)) {
     $DegradedStateFile = Join-Path $scriptDir "logs\r12_rl_ops_watch_state.json"
 }
+if ([string]::IsNullOrWhiteSpace($RecoveryCommand)) {
+    $RecoveryCommand = "Set-Location '$scriptDir'; pwsh -NoProfile -ExecutionPolicy Bypass -File '.\\manaos-rpg\\scripts\\run_backend.ps1' -ForceKill"
+}
+
+$autoRecoveryEnabled = -not $DisableAutoRecovery.IsPresent
 
 if ([string]::IsNullOrWhiteSpace($WebhookUrl) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_URL)) {
     $WebhookUrl = $env:MANAOS_WEBHOOK_URL
@@ -66,7 +81,13 @@ $taskArgs = @(
     '-NotifyDegradedCooldownMinutes',
     "$NotifyDegradedCooldownMinutes",
     '-DegradedStateFile',
-    "`"$DegradedStateFile`""
+    "`"$DegradedStateFile`"",
+    '-RecoverAfterConsecutiveEndpointDown',
+    "$RecoverAfterConsecutiveEndpointDown",
+    '-RecoveryCooldownMinutes',
+    "$RecoveryCooldownMinutes",
+    '-RecoveryCommand',
+    "`"$RecoveryCommand`""
 )
 
 if ($WebhookFormat -ne 'discord') {
@@ -83,6 +104,9 @@ if ($NotifyOnSuccess.IsPresent) {
 }
 if ($DisableNotifyOnDegraded.IsPresent) {
     $taskArgs += '-NotifyOnDegraded:$false'
+}
+if ($autoRecoveryEnabled) {
+    $taskArgs += '-EnableAutoRecovery'
 }
 
 $taskRun = "pwsh " + ($taskArgs -join ' ')
@@ -144,6 +168,7 @@ Write-Host "RunLevel : $effectiveRunLevel" -ForegroundColor Gray
 Write-Host "Account  : $(if ($useSystemAccount) { 'SYSTEM' } else { $env:USERNAME })" -ForegroundColor Gray
 Write-Host "Script   : $jobScript" -ForegroundColor Gray
 Write-Host "Degraded : enabled=$(if ($DisableNotifyOnDegraded.IsPresent) { 'false' } else { 'true' }), after=$NotifyDegradedAfter, cooldown=${NotifyDegradedCooldownMinutes}min" -ForegroundColor Gray
+Write-Host "Recovery : enabled=$(if ($autoRecoveryEnabled) { 'true' } else { 'false' }), after=$RecoverAfterConsecutiveEndpointDown, cooldown=${RecoveryCooldownMinutes}min" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 
 if ($PrintOnly) {

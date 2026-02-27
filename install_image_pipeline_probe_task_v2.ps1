@@ -20,6 +20,7 @@ param(
     [int]$NotifyUnifiedDegradedCooldownMinutes = 60,
     [string]$NotifyStateFile = "",
     [switch]$EnableAutoRecovery,
+    [switch]$DisableAutoRecovery,
     [int]$RecoverAfterConsecutiveDown = 3,
     [int]$RecoveryCooldownSec = 300,
     [string]$RecoveryCommand = "",
@@ -53,6 +54,14 @@ if ([string]::IsNullOrWhiteSpace($HistoryFile)) { $HistoryFile = Join-Path $logD
 if ([string]::IsNullOrWhiteSpace($StateFile)) { $StateFile = Join-Path $logDir "image_pipeline_probe.state.json" }
 if ([string]::IsNullOrWhiteSpace($NotifyStateFile)) { $NotifyStateFile = Join-Path $logDir "image_pipeline_probe_notify_state.json" }
 
+$effectiveEnableAutoRecovery = $true
+if ($DisableAutoRecovery.IsPresent) {
+    $effectiveEnableAutoRecovery = $false
+}
+elseif ($EnableAutoRecovery.IsPresent) {
+    $effectiveEnableAutoRecovery = $true
+}
+
 $configPath = Join-Path $logDir "image_pipeline_probe_task.config.json"
 $configObj = [ordered]@{
     unified_api_url = $UnifiedApiUrl
@@ -72,7 +81,7 @@ $configObj = [ordered]@{
     notify_unified_degraded_after = [int]$NotifyUnifiedDegradedAfter
     notify_unified_degraded_cooldown_minutes = [int]$NotifyUnifiedDegradedCooldownMinutes
     notify_state_file = $NotifyStateFile
-    enable_auto_recovery = [bool]$EnableAutoRecovery
+    enable_auto_recovery = [bool]$effectiveEnableAutoRecovery
     recover_after_consecutive_down = [int]$RecoverAfterConsecutiveDown
     recovery_cooldown_sec = [int]$RecoveryCooldownSec
     recovery_command = [string]$RecoveryCommand
@@ -91,7 +100,7 @@ Write-Host "RunLevel : $effectiveRunLevel" -ForegroundColor Gray
 Write-Host "Config   : $configPath" -ForegroundColor Gray
 Write-Host "History  : $HistoryFile" -ForegroundColor Gray
 Write-Host "State    : $StateFile" -ForegroundColor Gray
-Write-Host "Recovery : $(if ($EnableAutoRecovery.IsPresent) { "enabled" } else { 'disabled' })" -ForegroundColor Gray
+Write-Host "Recovery : $(if ($effectiveEnableAutoRecovery) { 'enabled' } else { 'disabled' })" -ForegroundColor Gray
 Write-Host "Degraded : enabled=$(if ($DisableNotifyOnUnifiedDegraded) { 'false' } else { 'true' }), after=$NotifyUnifiedDegradedAfter, cooldown=${NotifyUnifiedDegradedCooldownMinutes}min" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 if ($PrintOnly) { Write-Host "[INFO] PrintOnly mode: no task registration" -ForegroundColor Yellow; exit 0 }

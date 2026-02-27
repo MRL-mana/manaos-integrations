@@ -12,6 +12,10 @@ param(
     [int]$NotifyDegradedAfter = 3,
     [int]$NotifyDegradedCooldownMinutes = 60,
     [string]$DegradedStateFile = "",
+    [switch]$EnableAutoRecovery,
+    [int]$RecoverAfterConsecutiveEndpointDown = 3,
+    [int]$RecoveryCooldownMinutes = 10,
+    [string]$RecoveryCommand = "",
     [switch]$Json
 )
 
@@ -29,6 +33,15 @@ if ([string]::IsNullOrWhiteSpace($SummaryLogPath)) {
 }
 if ([string]::IsNullOrWhiteSpace($DegradedStateFile)) {
     $DegradedStateFile = Join-Path $scriptDir "logs\r12_rl_ops_watch_state.json"
+}
+if ($RecoverAfterConsecutiveEndpointDown -lt 1) {
+    $RecoverAfterConsecutiveEndpointDown = 1
+}
+if ($RecoveryCooldownMinutes -lt 0) {
+    $RecoveryCooldownMinutes = 0
+}
+if ([string]::IsNullOrWhiteSpace($RecoveryCommand)) {
+    $RecoveryCommand = "Set-Location '$scriptDir'; pwsh -NoProfile -ExecutionPolicy Bypass -File '.\\manaos-rpg\\scripts\\run_backend.ps1' -ForceKill"
 }
 
 if (-not (Test-Path $StatusScript)) {
@@ -123,7 +136,9 @@ function Load-DegradedState {
     if (-not (Test-Path $Path)) {
         return [pscustomobject]@{
             consecutive_unhealthy = 0
+            consecutive_endpoint_refused = 0
             last_degraded_notified_at = ''
+            last_recovery_at = ''
             last_ok = $true
         }
     }
@@ -134,7 +149,9 @@ function Load-DegradedState {
     catch {
         return [pscustomobject]@{
             consecutive_unhealthy = 0
+            consecutive_endpoint_refused = 0
             last_degraded_notified_at = ''
+            last_recovery_at = ''
             last_ok = $true
         }
     }
@@ -144,7 +161,9 @@ function Save-DegradedState {
     param(
         [string]$Path,
         [int]$ConsecutiveUnhealthy,
+        [int]$ConsecutiveEndpointRefused,
         [string]$LastDegradedNotifiedAt,
+        [string]$LastRecoveryAt,
         [bool]$LastOk
     )
 
@@ -155,11 +174,49 @@ function Save-DegradedState {
 
     $obj = [ordered]@{
         consecutive_unhealthy = $ConsecutiveUnhealthy
+        consecutive_endpoint_refused = $ConsecutiveEndpointRefused
         last_degraded_notified_at = $LastDegradedNotifiedAt
+        last_recovery_at = $LastRecoveryAt
         last_ok = $LastOk
         updated_at = [datetimeoffset]::Now.ToString('o')
     }
     ($obj | ConvertTo-Json -Depth 6) | Set-Content -Path $Path -Encoding UTF8
+}
+
+function Test-IsConnectionRefused {
+    param([string]$ErrorText)
+
+    if ([string]::IsNullOrWhiteSpace($ErrorText)) {
+        return $false
+    }
+
+    $text = $ErrorText.ToLowerInvariant()
+    if ($text -like '*actively refused*') { return $true }
+    if ($text -like '*connection refused*') { return $true }
+    if ($ErrorText -like '*接続できませんでした*' -and $ErrorText -like '*拒否*') { return $true }
+    return $false
+}
+
+function Invoke-R12AutoRecovery {
+    param([string]$CommandText)
+
+    $result = [ordered]@{
+        attempted = $true
+        started = $false
+        command = $CommandText
+        error = ''
+        at = [datetimeoffset]::Now.ToString('o')
+    }
+
+    try {
+        Start-Process -FilePath 'pwsh' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-Command',$CommandText) -WindowStyle Hidden | Out-Null
+        $result.started = $true
+    }
+    catch {
+        $result.error = $_.Exception.Message
+    }
+
+    return [pscustomobject]$result
 }
 
 function Send-WebhookNotification {
@@ -289,8 +346,12 @@ $summary = [pscustomobject]@{
     ops_watch_state = [string]$payload.opsWatchTask.state
     status_exit = $statusExit
     consecutive_unhealthy = 0
+    consecutive_endpoint_refused = 0
     failure_category = ''
     failure_reason = ''
+    auto_recovery_attempted = $false
+    auto_recovery_started = $false
+    auto_recovery_error = ''
     issues = $issues
     status_json = $JsonOutFile
 }
@@ -301,10 +362,19 @@ try { $consecutiveUnhealthy = [int]$degradedState.consecutive_unhealthy } catch 
 if ($ok) { $consecutiveUnhealthy = 0 } else { $consecutiveUnhealthy += 1 }
 $summary.consecutive_unhealthy = $consecutiveUnhealthy
 
+$consecutiveEndpointRefused = 0
+try { $consecutiveEndpointRefused = [int]$degradedState.consecutive_endpoint_refused } catch { $consecutiveEndpointRefused = 0 }
+
 $lastDegradedNotifiedAt = [string]$degradedState.last_degraded_notified_at
 $lastDegradedNotifiedDt = $null
 if (-not [string]::IsNullOrWhiteSpace($lastDegradedNotifiedAt)) {
     try { $lastDegradedNotifiedDt = [datetimeoffset]::Parse($lastDegradedNotifiedAt) } catch { $lastDegradedNotifiedDt = $null }
+}
+
+$lastRecoveryAt = [string]$degradedState.last_recovery_at
+$lastRecoveryDt = $null
+if (-not [string]::IsNullOrWhiteSpace($lastRecoveryAt)) {
+    try { $lastRecoveryDt = [datetimeoffset]::Parse($lastRecoveryAt) } catch { $lastRecoveryDt = $null }
 }
 
 $summaryDir = Split-Path -Parent $SummaryLogPath
@@ -321,7 +391,7 @@ if ($ok) {
     if ($Json.IsPresent) {
         Write-Output ($summary | ConvertTo-Json -Depth 6)
     }
-    Save-DegradedState -Path $DegradedStateFile -ConsecutiveUnhealthy $consecutiveUnhealthy -LastDegradedNotifiedAt $lastDegradedNotifiedAt -LastOk $true
+    Save-DegradedState -Path $DegradedStateFile -ConsecutiveUnhealthy $consecutiveUnhealthy -ConsecutiveEndpointRefused 0 -LastDegradedNotifiedAt $lastDegradedNotifiedAt -LastRecoveryAt $lastRecoveryAt -LastOk $true
     ($summary | ConvertTo-Json -Depth 6 -Compress) | Add-Content -Path $SummaryLogPath -Encoding UTF8
     exit 0
 }
@@ -330,6 +400,25 @@ $classification = Get-FailureClassification -StatusPayload $payload -StatusExitC
 $summary.failure_category = [string]$classification.category
 $summary.failure_reason = [string]$classification.reason
 
+$isEndpointRefused = $false
+if ($classification.category -eq 'r12_endpoint' -and $null -ne $payload.r12Log -and $null -ne $payload.r12Log.latest) {
+    $details = @($payload.r12Log.latest.details)
+    foreach ($detail in $details) {
+        if (Test-IsConnectionRefused -ErrorText ([string]$detail.error)) {
+            $isEndpointRefused = $true
+            break
+        }
+    }
+}
+
+if ($isEndpointRefused) {
+    $consecutiveEndpointRefused += 1
+}
+else {
+    $consecutiveEndpointRefused = 0
+}
+$summary.consecutive_endpoint_refused = $consecutiveEndpointRefused
+
 $issueText = if ($issues.Count -gt 0) { ($issues -join '; ') } else { [string]$classification.reason }
 $alertLine = "[ALERT] R12+RL ops unhealthy | category=$($classification.category) r12=$r12State/$r12Result rl=$rlState/$rlResult reason=$($classification.reason) issues=$issueText"
 Write-Host $alertLine -ForegroundColor Red
@@ -337,6 +426,31 @@ if ($statusOutput) {
     Write-Host "=== status_r12_rl_ops.ps1 output (raw) ===" -ForegroundColor Yellow
     $statusOutput | ForEach-Object { Write-Host $_ }
 }
+
+if ($EnableAutoRecovery.IsPresent -and $isEndpointRefused -and $consecutiveEndpointRefused -ge $RecoverAfterConsecutiveEndpointDown) {
+    $shouldRecover = $false
+    if ($null -eq $lastRecoveryDt) {
+        $shouldRecover = $true
+    }
+    elseif (([datetimeoffset]::Now - $lastRecoveryDt).TotalMinutes -ge $RecoveryCooldownMinutes) {
+        $shouldRecover = $true
+    }
+
+    if ($shouldRecover) {
+        $recovery = Invoke-R12AutoRecovery -CommandText $RecoveryCommand
+        $summary.auto_recovery_attempted = $true
+        $summary.auto_recovery_started = [bool]$recovery.started
+        $summary.auto_recovery_error = [string]$recovery.error
+        if ($recovery.started) {
+            $lastRecoveryAt = [datetimeoffset]::Now.ToString('o')
+            Write-Host "[WARN] R12 auto recovery started (endpoint refused streak=$consecutiveEndpointRefused)" -ForegroundColor Yellow
+        }
+        else {
+            Write-Host "[WARN] R12 auto recovery failed: $($recovery.error)" -ForegroundColor Yellow
+        }
+    }
+}
+
 if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
     $alertTitle = "[R12+RL Ops] FAILURE ($($classification.category))"
     Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'failure' -Title $alertTitle -Body $alertLine -Mention $WebhookMention
@@ -361,6 +475,6 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
 if ($Json.IsPresent) {
     Write-Output ($summary | ConvertTo-Json -Depth 6)
 }
-Save-DegradedState -Path $DegradedStateFile -ConsecutiveUnhealthy $consecutiveUnhealthy -LastDegradedNotifiedAt $lastDegradedNotifiedAt -LastOk $false
+Save-DegradedState -Path $DegradedStateFile -ConsecutiveUnhealthy $consecutiveUnhealthy -ConsecutiveEndpointRefused $consecutiveEndpointRefused -LastDegradedNotifiedAt $lastDegradedNotifiedAt -LastRecoveryAt $lastRecoveryAt -LastOk $false
 ($summary | ConvertTo-Json -Depth 6 -Compress) | Add-Content -Path $SummaryLogPath -Encoding UTF8
 exit 1
