@@ -16,6 +16,9 @@ $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $jobScript = Join-Path $scriptDir "run_openwebui_tailscale_watch_once.ps1"
+$logPath = Join-Path $scriptDir "logs\openwebui_tailscale_watch_task.jsonl"
+$jsonOutFile = Join-Path $scriptDir "logs\openwebui_tailscale_watch_task.latest.json"
+$configPath = Join-Path $scriptDir "logs\openwebui_tailscale_watch_task.config.json"
 
 if (-not (Test-Path $jobScript)) {
     throw "Job script not found: $jobScript"
@@ -25,21 +28,23 @@ if ($IntervalMinutes -lt 1 -or $IntervalMinutes -gt 1440) {
     throw "IntervalMinutes must be 1..1440"
 }
 
-$taskArgs = @(
-    '-NoP',
-    '-EP',
-    'Bypass',
-    '-File',
-    "`"$jobScript`"",
-    '-TaskName',
-    "`"$TaskName`""
-)
-
-if (-not [string]::IsNullOrWhiteSpace($BaseUrl)) {
-    $taskArgs += @('-BaseUrl', "`"$BaseUrl`"")
+$effectiveBaseUrl = $BaseUrl
+if ([string]::IsNullOrWhiteSpace($effectiveBaseUrl) -and -not [string]::IsNullOrWhiteSpace($env:OPENWEBUI_URL)) {
+    $effectiveBaseUrl = $env:OPENWEBUI_URL.TrimEnd('/')
+}
+if ([string]::IsNullOrWhiteSpace($effectiveBaseUrl)) {
+    $effectiveBaseUrl = "http://127.0.0.1:3001"
 }
 
-$taskRun = "pwsh " + ($taskArgs -join ' ')
+$configObj = [ordered]@{
+    task_name = $TaskName
+    base_url = $effectiveBaseUrl
+    log_path = $logPath
+    json_out_file = $jsonOutFile
+}
+$configObj | ConvertTo-Json -Depth 6 | Set-Content -Path $configPath -Encoding UTF8
+
+$taskRun = "pwsh -NoP -EP Bypass -File `"$jobScript`" -ConfigFile `"$configPath`""
 $effectiveRunLevel = $RunLevel
 $useSystemAccount = $RunAsSystem.IsPresent
 if ($RunAsSystem.IsPresent -and $effectiveRunLevel -eq 'LIMITED') {
@@ -97,6 +102,7 @@ Write-Host "Schedule : MINUTE /MO $IntervalMinutes" -ForegroundColor Gray
 Write-Host "RunLevel : $effectiveRunLevel" -ForegroundColor Gray
 Write-Host "Account  : $(if ($useSystemAccount) { 'SYSTEM' } else { $env:USERNAME })" -ForegroundColor Gray
 Write-Host "Script   : $jobScript" -ForegroundColor Gray
+Write-Host "Config   : $configPath" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 
 if ($PrintOnly) {

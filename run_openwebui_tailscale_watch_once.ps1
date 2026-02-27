@@ -1,5 +1,6 @@
 param(
     [string]$TaskName = "ManaOS_OpenWebUI_Tailscale_Watch_5min",
+    [string]$ConfigFile = "",
     [string]$BaseUrl = "",
     [string]$LogPath = "",
     [string]$JsonOutFile = ""
@@ -8,6 +9,23 @@ param(
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+if ([string]::IsNullOrWhiteSpace($ConfigFile)) {
+    $ConfigFile = Join-Path $scriptDir "logs\openwebui_tailscale_watch_task.config.json"
+}
+
+if (Test-Path $ConfigFile) {
+    try {
+        $cfg = Get-Content -Path $ConfigFile -Raw | ConvertFrom-Json
+        if ($cfg.task_name) { $TaskName = [string]$cfg.task_name }
+        if ($cfg.base_url) { $BaseUrl = [string]$cfg.base_url }
+        if ($cfg.log_path) { $LogPath = [string]$cfg.log_path }
+        if ($cfg.json_out_file) { $JsonOutFile = [string]$cfg.json_out_file }
+    }
+    catch {
+        Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow
+    }
+}
 
 if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
     if (-not [string]::IsNullOrWhiteSpace($env:OPENWEBUI_URL)) {
