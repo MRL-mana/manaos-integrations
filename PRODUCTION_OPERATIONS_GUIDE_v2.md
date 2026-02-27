@@ -119,6 +119,7 @@ Reason lint notify diagnostics:
 - 通知テスト（擬似失敗）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_reason_enum_lint_once.ps1 -IncludeCheckScripts -SimulateFailure`
 - cooldown実地検証（Scheduler経由・自動復帰込み）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\verify_reason_enum_lint_cooldown.ps1`
 - 通知フロー一括テスト: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\test_reason_enum_lint_notify_flow.ps1 -IncludeCheckScripts`
+- フルチェーン一括テスト（通知 + クールダウン）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\test_reason_enum_lint_full_chain.ps1 -IncludeCheckScripts`
 
 Reason lint (recommended before commit):
 ```powershell
