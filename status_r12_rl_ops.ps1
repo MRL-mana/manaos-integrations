@@ -1,7 +1,8 @@
 param(
     [switch]$Json,
     [string]$JsonOutFile = "",
-    [int]$TailLines = 20
+    [int]$TailLines = 20,
+    [int]$MaxR12LogAgeMinutes = 30
 )
 
 $ErrorActionPreference = "Stop"
@@ -71,7 +72,8 @@ function Get-TaskSnapshot {
 function Get-R12LogSnapshot {
     param(
         [string]$LogPath,
-        [int]$TailCount
+        [int]$TailCount,
+        [int]$MaxLogAgeMinutes
     )
 
     if (-not (Test-Path $LogPath)) {
@@ -83,6 +85,7 @@ function Get-R12LogSnapshot {
 
     $tail = Get-Content $LogPath -Tail $TailCount
     $latest = $null
+    $lastLogAgeMinutes = $null
     $issues = New-Object System.Collections.Generic.List[string]
     $latestLine = Get-Content $LogPath -Tail 1
     if (-not [string]::IsNullOrWhiteSpace($latestLine)) {
@@ -90,6 +93,14 @@ function Get-R12LogSnapshot {
             $latest = $latestLine | ConvertFrom-Json
             if ($null -ne $latest.failed -and [int]$latest.failed -gt 0) {
                 $issues.Add("Latest log has failed endpoints: $($latest.failed)")
+            }
+            if (-not [string]::IsNullOrWhiteSpace([string]$latest.ts)) {
+                $latestTs = [datetimeoffset]::Parse([string]$latest.ts)
+                $age = ([datetimeoffset]::Now - $latestTs).TotalMinutes
+                $lastLogAgeMinutes = [math]::Round($age, 1)
+                if ($age -gt $MaxLogAgeMinutes) {
+                    $issues.Add(("Latest log is stale: {0:N1} min old" -f $age))
+                }
             }
         } catch {
             $issues.Add("Failed to parse latest log line as JSON")
@@ -102,6 +113,7 @@ function Get-R12LogSnapshot {
         exists = $true
         tail = @($tail)
         latest = $latest
+        lastLogAgeMinutes = $lastLogAgeMinutes
         isHealthy = ($issues.Count -eq 0)
         issues = @($issues)
     }
@@ -111,7 +123,7 @@ if ($Json.IsPresent) {
     $r12Task = Get-TaskSnapshot -TaskName "ManaOS_R12_Health_Watch_5min"
     $rlTask = Get-TaskSnapshot -TaskName "ManaOS_RLAnything_Bootstrap_Logon"
     $opsWatchTask = Get-TaskSnapshot -TaskName "ManaOS_R12_RL_Ops_Watch_15min"
-    $r12LogSnapshot = Get-R12LogSnapshot -LogPath $r12Log -TailCount $TailLines
+    $r12LogSnapshot = Get-R12LogSnapshot -LogPath $r12Log -TailCount $TailLines -MaxLogAgeMinutes $MaxR12LogAgeMinutes
 
     $allIssues = @($r12Task.issues) + @($rlTask.issues) + @($r12LogSnapshot.issues)
     $payload = @{
@@ -125,6 +137,7 @@ if ($Json.IsPresent) {
             exists = $r12LogSnapshot.exists
             latest = $r12LogSnapshot.latest
             tail = $r12LogSnapshot.tail
+            lastLogAgeMinutes = $r12LogSnapshot.lastLogAgeMinutes
             isHealthy = $r12LogSnapshot.isHealthy
             issues = $r12LogSnapshot.issues
         }
