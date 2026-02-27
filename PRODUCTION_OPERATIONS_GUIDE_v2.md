@@ -138,6 +138,11 @@ Reason lint notify diagnostics:
 - opsタスクdoctor（重複ラベル/依存欠損チェック）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\doctor_reason_enum_ops_tasks.ps1`
 - opsクイック回帰チェック（通常モード）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\verify_reason_enum_ops_scripts_quick.ps1`
 - opsクイック回帰チェック（監視ゲート / snapshot task 必須）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\verify_reason_enum_ops_scripts_quick.ps1 -RequireSnapshotTaskInstalled`
+- opsクイック回帰 監視ゲート定期タスク登録（30分）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install_reason_enum_ops_quick_verify_gate_task.ps1 -IntervalMinutes 30`
+- opsクイック回帰 監視ゲート定期タスク状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_quick_verify_gate_task.ps1`
+- opsクイック回帰 監視ゲート定期タスク状態（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_quick_verify_gate_task.ps1 -AsJson`
+- opsクイック回帰 監視ゲート定期タスク状態（RequirePass / 失敗時 exit 1）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_quick_verify_gate_task.ps1 -RequirePass`
+- opsクイック回帰 監視ゲート定期タスク解除: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\uninstall_reason_enum_ops_quick_verify_gate_task.ps1`
 - opsスナップショット状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1`
 - opsスナップショット状態（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1 -AsJson`
 - opsスナップショット状態（RequirePass / 失敗時 exit 1）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1 -RequirePass`
@@ -186,6 +191,12 @@ VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Tasks Doctor`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify (Require Snapshot Task)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Install (30min)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Status`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Status (JSON)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Status (RequirePass)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Uninstall`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Full`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status (JSON)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status (RequirePass)`
