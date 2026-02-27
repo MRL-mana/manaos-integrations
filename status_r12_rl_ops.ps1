@@ -402,13 +402,9 @@ if ($Json.IsPresent) {
         $latestDegradedNotifySuppressedReason = [string]$opsWatchSnapshot.latestSummary.degraded_notify_suppressed_reason
     }
 
-    $payload = @{
+    $payload = [ordered]@{
         ok = ($allIssues.Count -eq 0)
         checkedAt = [datetimeoffset]::Now.ToString("o")
-        r12Task = $r12Task
-        rlTask = $rlTask
-        opsWatchTask = $opsWatchTask
-        opsWatch = $opsWatchSnapshot
         latest_ts = [string]$opsWatchSnapshot.latestTs
         latest_ok = $opsWatchSnapshot.latestOk
         latest_ok_reason = [string]$opsWatchSnapshot.latestOkReason
@@ -419,6 +415,10 @@ if ($Json.IsPresent) {
         latest_degraded_notify_attempted = $latestDegradedNotifyAttempted
         latest_degraded_notified = $latestDegradedNotified
         latest_degraded_notify_suppressed_reason = $latestDegradedNotifySuppressedReason
+        r12Task = $r12Task
+        rlTask = $rlTask
+        opsWatchTask = $opsWatchTask
+        opsWatch = $opsWatchSnapshot
         r12Log = @{
             path = $r12Log
             exists = $r12LogSnapshot.exists

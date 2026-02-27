@@ -5,6 +5,19 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Test-IsFailureCategory {
+    param(
+        [string]$Category
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Category)) {
+        return $false
+    }
+
+    $normalized = $Category.Trim().ToLowerInvariant()
+    return ($normalized -notin @('none', 'ok', 'healthy', 'success', 'normal'))
+}
+
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 if ([string]::IsNullOrWhiteSpace($ConfigFile)) {
     $ConfigFile = Join-Path $scriptDir "logs\r12_rl_ops_watch_task.config.json"
@@ -91,12 +104,9 @@ try {
                 }
                 catch { $latestOk = $null }
             }
-            elseif (-not [string]::IsNullOrWhiteSpace([string]$latestSummary.failure_category)) {
-                $failureCategory = ([string]$latestSummary.failure_category).Trim().ToLowerInvariant()
-                if ($failureCategory -notin @('none', 'ok', 'healthy', 'success', 'normal')) {
-                    $latestOk = $false
-                    $latestOkReason = 'from_failure_category'
-                }
+            elseif (Test-IsFailureCategory -Category ([string]$latestSummary.failure_category)) {
+                $latestOk = $false
+                $latestOkReason = 'from_failure_category'
             }
 
             $latestTsDisplay = [string]$latestSummary.ts
