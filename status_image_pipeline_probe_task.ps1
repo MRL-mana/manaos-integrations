@@ -50,6 +50,36 @@ try {
     Write-Host "notify_unified_degraded_cooldown_minutes: $($cfg.notify_unified_degraded_cooldown_minutes)" -ForegroundColor Gray
     Write-Host "notify_state_file: $($cfg.notify_state_file)" -ForegroundColor Gray
 
+    $stateFile = [string]$cfg.notify_state_file
+    if (-not [string]::IsNullOrWhiteSpace($stateFile) -and (Test-Path $stateFile)) {
+        try {
+            $state = Get-Content -Path $stateFile -Raw | ConvertFrom-Json
+            Write-Host "--- Notify State ---" -ForegroundColor Cyan
+            Write-Host "state_last_failure_category: $($state.last_category)" -ForegroundColor Gray
+            Write-Host "state_last_failure_notified_at: $($state.last_notified_at)" -ForegroundColor Gray
+            Write-Host "state_last_status: $($state.last_status)" -ForegroundColor Gray
+        }
+        catch {
+            Write-Host "[WARN] Failed to parse notify state file: $stateFile" -ForegroundColor Yellow
+        }
+    }
+
+    $latestFailureCategory = ''
+    $latestFailureNotified = $null
+    $latestFailureSuppressedReason = ''
+    $historyFile = [string]$cfg.history_file
+    if (-not [string]::IsNullOrWhiteSpace($historyFile) -and (Test-Path $historyFile)) {
+        try {
+            $historyLast = Get-Content -Path $historyFile -Tail 1 | ConvertFrom-Json
+            $latestFailureCategory = [string]$historyLast.failure_category
+            $latestFailureNotified = $historyLast.failure_notified
+            $latestFailureSuppressedReason = [string]$historyLast.failure_notify_suppressed_reason
+        }
+        catch {
+            Write-Host "[WARN] Failed to parse history tail: $historyFile" -ForegroundColor Yellow
+        }
+    }
+
     $latestFile = [string]$cfg.log_file
     if (-not [string]::IsNullOrWhiteSpace($latestFile) -and (Test-Path $latestFile)) {
         try {
@@ -116,22 +146,13 @@ try {
             Write-Host "latest_ts: $latestTs" -ForegroundColor Gray
             Write-Host "latest_route_category: $latestRouteCategory" -ForegroundColor Gray
             Write-Host "latest_overall_ok: $latestOverallOk" -ForegroundColor Gray
+            Write-Host "latest_ok: $latestOverallOk" -ForegroundColor Gray
+            Write-Host "latest_failure_category: $latestFailureCategory" -ForegroundColor Gray
+            Write-Host "latest_failure_notified: $latestFailureNotified" -ForegroundColor Gray
+            Write-Host "latest_failure_notify_suppressed_reason: $latestFailureSuppressedReason" -ForegroundColor Gray
         }
         catch {
             Write-Host "[WARN] Failed to parse latest output file: $latestFile" -ForegroundColor Yellow
-        }
-    }
-
-    $historyFile = [string]$cfg.history_file
-    if (-not [string]::IsNullOrWhiteSpace($historyFile) -and (Test-Path $historyFile)) {
-        try {
-            $historyLast = Get-Content -Path $historyFile -Tail 1 | ConvertFrom-Json
-            Write-Host "latest_failure_category: $($historyLast.failure_category)" -ForegroundColor Gray
-            Write-Host "latest_failure_notified: $($historyLast.failure_notified)" -ForegroundColor Gray
-            Write-Host "latest_failure_notify_suppressed_reason: $($historyLast.failure_notify_suppressed_reason)" -ForegroundColor Gray
-        }
-        catch {
-            Write-Host "[WARN] Failed to parse history tail: $historyFile" -ForegroundColor Yellow
         }
     }
 }
