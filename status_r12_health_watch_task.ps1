@@ -25,12 +25,38 @@ if ([string]::IsNullOrWhiteSpace($LogPath)) {
     $LogPath = Join-Path $scriptDir "logs\r12_health_watch_task.jsonl"
 }
 
+function Write-LatestOutput {
+    param(
+        [string]$Ts,
+        [object]$Total,
+        [object]$Passed,
+        [object]$Failed,
+        [object]$Ok,
+        [string]$OkReason
+    )
+
+    Write-Host "--- Latest Output ---" -ForegroundColor Cyan
+    Write-Host "latest_ts: $Ts" -ForegroundColor Gray
+    Write-Host "latest_total: $Total" -ForegroundColor Gray
+    Write-Host "latest_passed: $Passed" -ForegroundColor Gray
+    Write-Host "latest_failed: $Failed" -ForegroundColor Gray
+    Write-Host "latest_ok: $Ok" -ForegroundColor Gray
+    Write-Host "latest_ok_reason: $OkReason" -ForegroundColor Gray
+}
+
 Write-Host "=== R12 Health Watch Task Status ===" -ForegroundColor Cyan
 Write-Host "TaskName: $TaskName" -ForegroundColor Gray
 
 $taskInfo = schtasks /Query /TN $TaskName /V /FO LIST
 if ($LASTEXITCODE -ne 0 -or $null -eq $taskInfo) {
     Write-Host "[INFO] Task not found: $TaskName" -ForegroundColor Yellow
+    Write-Host "--- Latest Output ---" -ForegroundColor Cyan
+    Write-Host "latest_ts: N/A" -ForegroundColor Gray
+    Write-Host "latest_total: N/A" -ForegroundColor Gray
+    Write-Host "latest_passed: N/A" -ForegroundColor Gray
+    Write-Host "latest_failed: N/A" -ForegroundColor Gray
+    Write-Host "latest_ok: False" -ForegroundColor Gray
+    Write-Host "latest_ok_reason: task_not_found" -ForegroundColor Gray
     exit 1
 }
 
@@ -60,20 +86,16 @@ if (Test-Path $LogPath) {
             $latestTsDisplay = 'N/A'
         }
 
-        Write-Host "--- Latest Output ---" -ForegroundColor Cyan
-        Write-Host "latest_ts: $latestTsDisplay" -ForegroundColor Gray
-        Write-Host "latest_total: $($latest.total)" -ForegroundColor Gray
-        Write-Host "latest_passed: $($latest.passed)" -ForegroundColor Gray
-        Write-Host "latest_failed: $($latest.failed)" -ForegroundColor Gray
-        Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
-        Write-Host "latest_ok_reason: $latestOkReason" -ForegroundColor Gray
+        Write-LatestOutput -Ts $latestTsDisplay -Total $latest.total -Passed $latest.passed -Failed $latest.failed -Ok $latestOk -OkReason $latestOkReason
     }
     catch {
         Write-Host "[WARN] Failed to parse latest log entry: $LogPath" -ForegroundColor Yellow
+        Write-LatestOutput -Ts 'N/A' -Total 'N/A' -Passed 'N/A' -Failed 'N/A' -Ok $null -OkReason 'ok_missing'
     }
 }
 else {
     Write-Host "[WARN] Log file not found: $LogPath" -ForegroundColor Yellow
+    Write-LatestOutput -Ts 'N/A' -Total 'N/A' -Passed 'N/A' -Failed 'N/A' -Ok $null -OkReason 'ok_missing'
 }
 
 exit 0
