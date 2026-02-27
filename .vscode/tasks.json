@@ -50,6 +50,38 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: Generate Image (Direct ComfyUI)",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "scripts/generate_image_cli.py",
+        "--direct",
+        "--comfyui-url",
+        "http://127.0.0.1:8188",
+        "${input:manaosImagePrompt}"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Image Pipeline Health Check",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/monitor_image_pipeline.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: R12 Health Watch タスク登録（5分）",
       "type": "shell",
       "command": "pwsh",
