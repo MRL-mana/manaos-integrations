@@ -9,6 +9,7 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 $r12Status = Join-Path $scriptDir "status_r12_health_watch_task.ps1"
 $rlStatus = Join-Path $scriptDir "status_rl_anything_bootstrap_task.ps1"
+$opsWatchStatus = Join-Path $scriptDir "status_r12_rl_ops_watch_task.ps1"
 $r12Log = Join-Path $scriptDir "logs\r12_health_watch_task.jsonl"
 
 function Get-QueryValue {
@@ -109,6 +110,7 @@ function Get-R12LogSnapshot {
 if ($Json.IsPresent) {
     $r12Task = Get-TaskSnapshot -TaskName "ManaOS_R12_Health_Watch_5min"
     $rlTask = Get-TaskSnapshot -TaskName "ManaOS_RLAnything_Bootstrap_Logon"
+    $opsWatchTask = Get-TaskSnapshot -TaskName "ManaOS_R12_RL_Ops_Watch_15min"
     $r12LogSnapshot = Get-R12LogSnapshot -LogPath $r12Log -TailCount $TailLines
 
     $allIssues = @($r12Task.issues) + @($rlTask.issues) + @($r12LogSnapshot.issues)
@@ -117,6 +119,7 @@ if ($Json.IsPresent) {
         checkedAt = [datetimeoffset]::Now.ToString("o")
         r12Task = $r12Task
         rlTask = $rlTask
+        opsWatchTask = $opsWatchTask
         r12Log = @{
             path = $r12Log
             exists = $r12LogSnapshot.exists
@@ -145,6 +148,7 @@ Write-Host "=== Combined Ops Status (R12 + RL) ===" -ForegroundColor Cyan
 
 pwsh -NoProfile -ExecutionPolicy Bypass -File $r12Status
 pwsh -NoProfile -ExecutionPolicy Bypass -File $rlStatus
+pwsh -NoProfile -ExecutionPolicy Bypass -File $opsWatchStatus
 
 if (Test-Path $r12Log) {
     Write-Host "" 
