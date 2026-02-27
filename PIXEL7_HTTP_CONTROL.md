@@ -172,6 +172,16 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
   - 統合ワンボタン（運用開始/終了）
     - 開始: 「ManaOS: Pixel7 祝日運用セットアップ（年次+ガード）」
     - 終了: 「ManaOS: Pixel7 祝日運用クリーンアップ（年次+ガード）」
+  - OpenWebUI/Tailscale 入口死活監視（5分間隔）
+    - 登録: `install_openwebui_tailscale_watch_task.ps1`
+    - 状態: `status_openwebui_tailscale_watch_task.ps1`
+    - 単発: `run_openwebui_tailscale_watch_once.ps1`
+    - 解除: `uninstall_openwebui_tailscale_watch_task.ps1`
+    - タスク（Desktop）: 「ManaOS: Pixel7入口 5分監視タスク登録」 / 「ManaOS: Pixel7入口 5分監視タスク状態確認」 / 「ManaOS: Pixel7入口 5分監視チェック（JSON）」 / 「ManaOS: Pixel7入口 5分監視タスク解除」
+      - ワンボタン: 「ManaOS: Pixel7入口 5分監視 登録→状態確認（ワンボタン）」 / 「ManaOS: Pixel7入口 5分監視 解除→未登録確認（ワンボタン）」
+      - 統合ワンボタン: 「ManaOS: Pixel7入口+5分監視セットアップ（ワンボタン）」
+      - JSON出力: `logs/openwebui_tailscale_watch_check.latest.json`
+    - 監視ログ: `logs/openwebui_tailscale_watch_task.jsonl`
   - R12健全性監視（5分間隔）
     - 登録: `install_r12_health_watch_task.ps1`
     - 状態: `status_r12_health_watch_task.ps1`
