@@ -60,6 +60,9 @@ $latestLastRun = ''
 if (-not [string]::IsNullOrWhiteSpace($lastRunLine)) {
     $latestLastRun = ($lastRunLine -replace '^[^:：]+[:：]\s*','').Trim()
 }
+if ([string]::IsNullOrWhiteSpace($latestLastRun)) {
+    $latestLastRun = 'N/A'
+}
 
 $latestLastResult = ''
 if (-not [string]::IsNullOrWhiteSpace($lastResultLine)) {
@@ -74,6 +77,9 @@ if (-not [string]::IsNullOrWhiteSpace($stateLine)) {
 $latestNextRun = ''
 if (-not [string]::IsNullOrWhiteSpace($nextRunLine)) {
     $latestNextRun = ($nextRunLine -replace '^[^:：]+[:：]\s*','').Trim()
+}
+if ([string]::IsNullOrWhiteSpace($latestNextRun)) {
+    $latestNextRun = 'N/A'
 }
 
 $latestOk = $null
