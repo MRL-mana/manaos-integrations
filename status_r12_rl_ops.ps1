@@ -367,8 +367,10 @@ Write-Host ""
 Write-Host "=== Ops Watch Latest Notify ===" -ForegroundColor Cyan
 if ($null -ne $opsWatchSnapshot.latestSummary) {
     Write-Host "failure_category: $($opsWatchSnapshot.latestSummary.failure_category)" -ForegroundColor Gray
+    Write-Host "failure_notify_attempted: $($opsWatchSnapshot.latestSummary.failure_notify_attempted)" -ForegroundColor Gray
     Write-Host "failure_notified: $($opsWatchSnapshot.latestSummary.failure_notified)" -ForegroundColor Gray
     Write-Host "failure_notify_suppressed_reason: $($opsWatchSnapshot.latestSummary.failure_notify_suppressed_reason)" -ForegroundColor Gray
+    Write-Host "degraded_notify_attempted: $($opsWatchSnapshot.latestSummary.degraded_notify_attempted)" -ForegroundColor Gray
     Write-Host "degraded_notified: $($opsWatchSnapshot.latestSummary.degraded_notified)" -ForegroundColor Gray
     Write-Host "degraded_notify_suppressed_reason: $($opsWatchSnapshot.latestSummary.degraded_notify_suppressed_reason)" -ForegroundColor Gray
 }
