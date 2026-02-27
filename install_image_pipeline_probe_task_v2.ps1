@@ -14,7 +14,10 @@ param(
     [switch]$NotifyOnRecovery,
     [switch]$DisableNotifyOnPartial,
     [switch]$DisableNotifyOnDown,
+    [switch]$DisableNotifyOnUnifiedDegraded,
     [int]$NotifyCooldownMinutes = 15,
+    [int]$NotifyUnifiedDegradedAfter = 3,
+    [int]$NotifyUnifiedDegradedCooldownMinutes = 60,
     [string]$NotifyStateFile = "",
     [switch]$EnableAutoRecovery,
     [int]$RecoverAfterConsecutiveDown = 3,
@@ -36,6 +39,8 @@ if (-not (Test-Path $taskScript)) { throw "Task wrapper script not found: $taskS
 if ($IntervalMinutes -lt 1 -or $IntervalMinutes -gt 1440) { throw "IntervalMinutes must be 1..1440" }
 if ($RecoverAfterConsecutiveDown -lt 1) { throw "RecoverAfterConsecutiveDown must be >= 1" }
 if ($RecoveryCooldownSec -lt 0) { throw "RecoveryCooldownSec must be >= 0" }
+if ($NotifyUnifiedDegradedAfter -lt 1) { throw "NotifyUnifiedDegradedAfter must be >= 1" }
+if ($NotifyUnifiedDegradedCooldownMinutes -lt 0) { throw "NotifyUnifiedDegradedCooldownMinutes must be >= 0" }
 
 if ([string]::IsNullOrWhiteSpace($WebhookUrl) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_URL)) { $WebhookUrl = $env:MANAOS_WEBHOOK_URL }
 if ([string]::IsNullOrWhiteSpace($WebhookMention) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_MENTION)) { $WebhookMention = $env:MANAOS_WEBHOOK_MENTION }
@@ -62,7 +67,10 @@ $configObj = [ordered]@{
     notify_on_recovery = [bool]$NotifyOnRecovery
     notify_on_partial = -not [bool]$DisableNotifyOnPartial
     notify_on_down = -not [bool]$DisableNotifyOnDown
+    notify_on_unified_degraded = -not [bool]$DisableNotifyOnUnifiedDegraded
     notify_cooldown_minutes = [int]$NotifyCooldownMinutes
+    notify_unified_degraded_after = [int]$NotifyUnifiedDegradedAfter
+    notify_unified_degraded_cooldown_minutes = [int]$NotifyUnifiedDegradedCooldownMinutes
     notify_state_file = $NotifyStateFile
     enable_auto_recovery = [bool]$EnableAutoRecovery
     recover_after_consecutive_down = [int]$RecoverAfterConsecutiveDown
@@ -84,6 +92,7 @@ Write-Host "Config   : $configPath" -ForegroundColor Gray
 Write-Host "History  : $HistoryFile" -ForegroundColor Gray
 Write-Host "State    : $StateFile" -ForegroundColor Gray
 Write-Host "Recovery : $(if ($EnableAutoRecovery.IsPresent) { "enabled" } else { 'disabled' })" -ForegroundColor Gray
+Write-Host "Degraded : enabled=$(if ($DisableNotifyOnUnifiedDegraded) { 'false' } else { 'true' }), after=$NotifyUnifiedDegradedAfter, cooldown=${NotifyUnifiedDegradedCooldownMinutes}min" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 if ($PrintOnly) { Write-Host "[INFO] PrintOnly mode: no task registration" -ForegroundColor Yellow; exit 0 }
 
