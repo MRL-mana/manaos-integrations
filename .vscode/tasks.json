@@ -1305,6 +1305,22 @@
       "group": "test"
     },
     {
+      "label": "ManaOS: Reason Enum Cooldown Lifecycle Status",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_reason_enum_lint_cooldown_lifecycle.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: Reason Enum Lint Full",
       "dependsOn": [
         "ManaOS: Reason Enum Lint Task Install",
