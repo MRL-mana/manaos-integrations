@@ -420,7 +420,7 @@
       "label": "ManaOS: R12+RL 運用セットアップ（15分/ワンボタン / 推奨）",
       "dependsOn": [
         "ManaOS: R12 Health Watch 運用セットアップ（15分/ワンボタン / 推奨）",
-        "ManaOS: RLAnything ブートストラップ 登録→状態確認（ワンボタン）"
+        "ManaOS: RLAnything ブートストラップ 登録→状態確認（ワンボタン / 推奨）"
       ],
       "dependsOrder": "sequence",
       "problemMatcher": [],
@@ -506,7 +506,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: R12+RL 監視タスク登録（15分 / 劣化3回+60分）",
+      "label": "ManaOS: R12+RL 監視タスク登録（15分 / 劣化3回+60分 / 推奨）",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -544,7 +544,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: R12+RL 監視クイックチェック（通知付き / しきい値対応）",
+      "label": "ManaOS: R12+RL 監視クイックチェック（通知付き / しきい値対応 / 推奨）",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -576,9 +576,9 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: R12+RL 監視登録→状態確認（ワンボタン / 劣化3回+60分）",
+      "label": "ManaOS: R12+RL 監視登録→状態確認（ワンボタン / 劣化3回+60分 / 推奨）",
       "dependsOn": [
-        "ManaOS: R12+RL 監視タスク登録（15分 / 劣化3回+60分）",
+        "ManaOS: R12+RL 監視タスク登録（15分 / 劣化3回+60分 / 推奨）",
         "ManaOS: R12+RL 監視タスク状態確認"
       ],
       "dependsOrder": "sequence",
@@ -614,7 +614,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: RLAnything ブートストラップ タスク登録（15分）",
+      "label": "ManaOS: RLAnything ブートストラップ タスク登録（15分 / 推奨）",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -664,7 +664,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: RLAnything ブートストラップ 登録→状態確認（ワンボタン）",
+      "label": "ManaOS: RLAnything ブートストラップ 登録→状態確認（ワンボタン / 推奨）",
       "type": "shell",
       "command": "pwsh",
       "args": [
