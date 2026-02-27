@@ -1,7 +1,8 @@
 param(
     [string]$TaskName = "ManaOS_Reason_Enum_Ops_Snapshot_30min",
     [string]$LatestJsonFile = "",
-    [switch]$AsJson
+    [switch]$AsJson,
+    [switch]$RequirePass
 )
 
 $ErrorActionPreference = "Stop"
@@ -85,8 +86,15 @@ if (Test-Path $LatestJsonFile) {
     }
 }
 
+$pass = ($payload.task_found -and $payload.snapshot_found -and ($payload.snapshot_ok -eq $true))
+
 if ($AsJson) {
+    $payload.require_pass = [bool]$RequirePass
+    $payload.pass = $pass
     Write-Output ($payload | ConvertTo-Json -Depth 8)
+    if ($RequirePass.IsPresent -and -not $pass) {
+        exit 1
+    }
     exit 0
 }
 
@@ -105,5 +113,11 @@ Write-Host "snapshot_ok_reason: $($payload.snapshot_ok_reason)" -ForegroundColor
 Write-Host "lint_latest_ok_reason: $($payload.lint_latest_ok_reason)" -ForegroundColor Gray
 Write-Host "cooldown_verify_status_ok_reason: $($payload.cooldown_verify_status_ok_reason)" -ForegroundColor Gray
 Write-Host "lifecycle_status_ok_reason: $($payload.lifecycle_status_ok_reason)" -ForegroundColor Gray
+Write-Host "pass: $pass" -ForegroundColor Gray
+
+if ($RequirePass.IsPresent -and -not $pass) {
+    Write-Host "[ALERT] ops snapshot task latest status is not pass" -ForegroundColor Red
+    exit 1
+}
 
 exit 0
