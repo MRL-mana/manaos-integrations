@@ -123,7 +123,7 @@ if(-not $overallOk){
     if($lastStatus -ne 'failure'){
         $shouldNotifyFailure = $true
     }
-    elseif([string]::IsNullOrWhiteSpace($lastCategory) -or $lastCategory -ne $routeCategory){
+    elseif([string]::IsNullOrWhiteSpace($lastCategory) -or $lastCategory -ne $failureCategory){
         $shouldNotifyFailure = $true
     }
     elseif($null -eq $lastNotifiedAt){
@@ -142,8 +142,8 @@ if(-not $overallOk){
         Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'failure' -Title "[Image Pipeline Probe] FAILURE ($routeCategory)" -Body $failureBody -Mention $webhookMention
         $failureNotified = $true
         $failureNotifySuppressedReason = ''
-        Save-NotifyState -Path $notifyStateFile -Status 'failure' -Category $routeCategory -MarkNotified
-        Write-Host "[INFO] Failure webhook sent (category=$routeCategory)" -ForegroundColor Yellow
+        Save-NotifyState -Path $notifyStateFile -Status 'failure' -Category $failureCategory -MarkNotified
+        Write-Host "[INFO] Failure webhook sent (category=$failureCategory)" -ForegroundColor Yellow
     }
     else {
         if(-not $notifyOnDown){
@@ -160,7 +160,7 @@ if(-not $overallOk){
             $failureNotifySuppressedReason = 'not_triggered'
         }
 
-        Save-NotifyState -Path $notifyStateFile -Status 'failure' -Category $routeCategory
+        Save-NotifyState -Path $notifyStateFile -Status 'failure' -Category $failureCategory
         if(-not $notifyOnDown){
             Write-Host "[INFO] Failure webhook suppressed: notify_on_down disabled" -ForegroundColor DarkGray
         }
@@ -270,6 +270,7 @@ if($recoveryNotifySent){ Write-Host "[INFO] Recovery webhook sent (category=$rou
 Append-ProbeHistory -Path $historyFile -Entry ([ordered]@{
     ts=$now.ToString('o')
     category=$routeCategory
+    failure_category='none'
     unified_ready=$unifiedReady
     direct_ready=$directReady
     overall_ok=$overallOk
