@@ -145,14 +145,14 @@ try {
         Write-Host "--- Latest Output ---" -ForegroundColor Cyan
         Write-Host "latest_ts: N/A" -ForegroundColor Gray
         Write-Host "latest_ok: False" -ForegroundColor Gray
-        Write-Host "latest_ok_reason: summary_missing" -ForegroundColor Gray
-        Write-Host "latest_failure_category: summary_missing" -ForegroundColor Gray
+        Write-Host "latest_ok_reason: source_missing" -ForegroundColor Gray
+        Write-Host "latest_failure_category: source_missing" -ForegroundColor Gray
         Write-Host "latest_failure_notify_attempted: False" -ForegroundColor Gray
         Write-Host "latest_failure_notified: False" -ForegroundColor Gray
-        Write-Host "latest_failure_notify_suppressed_reason: summary_missing" -ForegroundColor Gray
+        Write-Host "latest_failure_notify_suppressed_reason: source_missing" -ForegroundColor Gray
         Write-Host "latest_degraded_notify_attempted: False" -ForegroundColor Gray
         Write-Host "latest_degraded_notified: False" -ForegroundColor Gray
-        Write-Host "latest_degraded_notify_suppressed_reason: summary_missing" -ForegroundColor Gray
+        Write-Host "latest_degraded_notify_suppressed_reason: source_missing" -ForegroundColor Gray
         if (-not [string]::IsNullOrWhiteSpace($summaryLogPath)) {
             Write-Host "[WARN] Summary log not found: $summaryLogPath" -ForegroundColor Yellow
         }
