@@ -24,6 +24,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$isJsonMode = $Json.IsPresent
 
 function To-Bool {
     param(
@@ -308,10 +309,14 @@ function Send-WebhookNotification {
 
     try {
         Invoke-RestMethod -Uri $Url -Method Post -ContentType 'application/json' -Body ($payload | ConvertTo-Json -Depth 8) | Out-Null
-        Write-Host "[OK] Webhook notified ($Status)" -ForegroundColor Green
+        if (-not $isJsonMode) {
+            Write-Host "[OK] Webhook notified ($Status)" -ForegroundColor Green
+        }
     }
     catch {
-        Write-Host "[WARN] Webhook notify failed: $($_.Exception.Message)" -ForegroundColor Yellow
+        if (-not $isJsonMode) {
+            Write-Host "[WARN] Webhook notify failed: $($_.Exception.Message)" -ForegroundColor Yellow
+        }
     }
 }
 
@@ -480,7 +485,9 @@ if ($ok) {
         $summary.recovered_this_run = $true
     }
     $line = "[OK] R12+RL ops healthy | r12=$r12State/$r12Result rl=$rlState/$rlResult latest_failed=$latestFailed"
-    Write-Host $line -ForegroundColor Green
+    if (-not $isJsonMode) {
+        Write-Host $line -ForegroundColor Green
+    }
     if ($NotifyOnSuccess -and -not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
         Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'success' -Title '[R12+RL Ops] SUCCESS' -Body $line -Mention $WebhookMention
     }
@@ -517,10 +524,14 @@ $summary.consecutive_endpoint_refused = $consecutiveEndpointRefused
 
 $issueText = if ($issues.Count -gt 0) { ($issues -join '; ') } else { [string]$classification.reason }
 $alertLine = "[ALERT] R12+RL ops unhealthy | category=$($classification.category) r12=$r12State/$r12Result rl=$rlState/$rlResult reason=$($classification.reason) issues=$issueText"
-Write-Host $alertLine -ForegroundColor Red
+if (-not $isJsonMode) {
+    Write-Host $alertLine -ForegroundColor Red
+}
 if ($statusOutput) {
-    Write-Host "=== status_r12_rl_ops.ps1 output (raw) ===" -ForegroundColor Yellow
-    $statusOutput | ForEach-Object { Write-Host $_ }
+    if (-not $isJsonMode) {
+        Write-Host "=== status_r12_rl_ops.ps1 output (raw) ===" -ForegroundColor Yellow
+        $statusOutput | ForEach-Object { Write-Host $_ }
+    }
 }
 
 if ([bool]$EnableAutoRecovery -and $isEndpointRefused -and $consecutiveEndpointRefused -ge $RecoverAfterConsecutiveEndpointDown) {
@@ -539,10 +550,14 @@ if ([bool]$EnableAutoRecovery -and $isEndpointRefused -and $consecutiveEndpointR
         $summary.auto_recovery_error = [string]$recovery.error
         if ($recovery.started) {
             $lastRecoveryAt = [datetimeoffset]::Now.ToString('o')
-            Write-Host "[WARN] R12 auto recovery started (endpoint refused streak=$consecutiveEndpointRefused)" -ForegroundColor Yellow
+            if (-not $isJsonMode) {
+                Write-Host "[WARN] R12 auto recovery started (endpoint refused streak=$consecutiveEndpointRefused)" -ForegroundColor Yellow
+            }
         }
         else {
-            Write-Host "[WARN] R12 auto recovery failed: $($recovery.error)" -ForegroundColor Yellow
+            if (-not $isJsonMode) {
+                Write-Host "[WARN] R12 auto recovery failed: $($recovery.error)" -ForegroundColor Yellow
+            }
         }
     }
 }
@@ -577,7 +592,9 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
         $summary.failure_notified = $true
     }
     elseif (-not [string]::IsNullOrWhiteSpace($summary.failure_notify_suppressed_reason)) {
-        Write-Host "[INFO] Failure notification suppressed: $($summary.failure_notify_suppressed_reason)" -ForegroundColor DarkGray
+        if (-not $isJsonMode) {
+            Write-Host "[INFO] Failure notification suppressed: $($summary.failure_notify_suppressed_reason)" -ForegroundColor DarkGray
+        }
     }
     elseif (-not $summary.failure_notified) {
         $summary.failure_notify_suppressed_reason = 'not_triggered'
@@ -613,7 +630,9 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
             $summary.degraded_notified = $true
         }
         elseif (-not [string]::IsNullOrWhiteSpace($summary.degraded_notify_suppressed_reason)) {
-            Write-Host "[INFO] Degraded notification suppressed: $($summary.degraded_notify_suppressed_reason)" -ForegroundColor DarkGray
+            if (-not $isJsonMode) {
+                Write-Host "[INFO] Degraded notification suppressed: $($summary.degraded_notify_suppressed_reason)" -ForegroundColor DarkGray
+            }
         }
         elseif (-not $summary.degraded_notified) {
             $summary.degraded_notify_suppressed_reason = 'not_triggered'
