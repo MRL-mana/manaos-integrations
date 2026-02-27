@@ -129,6 +129,9 @@ Reason lint notify diagnostics:
 - cooldownライフサイクル履歴: `logs/reason_enum_cooldown_lifecycle.history.jsonl`
 - opsスナップショット出力: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\export_reason_enum_ops_snapshot.ps1`
 - opsスナップショット出力（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\export_reason_enum_ops_snapshot.ps1 -AsJson`
+- opsスナップショット状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1`
+- opsスナップショット状態（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1 -AsJson`
+- opsスナップショット状態（RequirePass / 失敗時 exit 1）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1 -RequirePass`
 - opsスナップショット最新: `logs/reason_enum_ops_snapshot.latest.json`
 - opsスナップショット履歴: `logs/reason_enum_ops_snapshot.history.jsonl`
 - cooldown自己診断タスク状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_lint_cooldown_verify_task.ps1`
@@ -155,6 +158,10 @@ VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Full`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Export`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Export (JSON)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status (JSON)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status (RequirePass)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Full`
 
 ## Troubleshooting
 
