@@ -16,19 +16,38 @@ if ($IntervalMinutes -lt 1 -or $IntervalMinutes -gt 1440) {
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $jobScript = Join-Path $scriptDir "scripts\start_rl_anything.ps1"
+$runnerScript = Join-Path $scriptDir "run_rl_anything_bootstrap_once.ps1"
+$configPath = Join-Path $scriptDir "logs\rl_anything_bootstrap_task.config.json"
 
 if (-not (Test-Path $jobScript)) {
     throw "Script not found: $jobScript"
 }
+
+if (-not (Test-Path $runnerScript)) {
+    throw "Runner script not found: $runnerScript"
+}
+
+$logDir = Join-Path $scriptDir "logs"
+if (-not (Test-Path $logDir)) {
+    New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+}
+
+$configObj = [ordered]@{
+    task_name = $TaskName
+    script_path = $jobScript
+    enable = $true
+    dashboard = $true
+}
+$configObj | ConvertTo-Json -Depth 4 | Set-Content -Path $configPath -Encoding UTF8
 
 $taskArgs = @(
     '-NoP',
     '-EP',
     'Bypass',
     '-File',
-    "`"$jobScript`"",
-    '-Enable',
-    '-Dashboard'
+    "`"$runnerScript`"",
+    '-ConfigFile',
+    "`"$configPath`""
 )
 
 $taskRun = "pwsh " + ($taskArgs -join ' ')
@@ -37,7 +56,8 @@ Write-Host "=== Register RLAnything Bootstrap Task ===" -ForegroundColor Cyan
 Write-Host "TaskName : $TaskName" -ForegroundColor Gray
 Write-Host "Schedule : MINUTE /MO $IntervalMinutes" -ForegroundColor Gray
 Write-Host "RunLevel : $RunLevel" -ForegroundColor Gray
-Write-Host "Script   : $jobScript" -ForegroundColor Gray
+Write-Host "Script   : $runnerScript" -ForegroundColor Gray
+Write-Host "Config   : $configPath" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 
 if ($PrintOnly) {
