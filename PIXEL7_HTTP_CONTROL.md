@@ -197,10 +197,24 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
     - クイックチェック実体: `check_r12_rl_ops_watch_quick.ps1`
       - `status_r12_rl_ops.ps1 -Json` を実行し、1行サマリー + JSON (`logs/r12_rl_ops_status.latest.json`) を更新
       - 失敗時は `MANAOS_WEBHOOK_URL` 系設定を使って通知（`-NotifyOnSuccess` で成功通知も可）
+      - 劣化連続通知（warning）
+        - しきい値: `-NotifyDegradedAfter`（既定: `3`）
+        - 再通知クールダウン: `-NotifyDegradedCooldownMinutes`（既定: `60`）
+        - 無効化: `-NotifyOnDegraded:$false`（installer では `-DisableNotifyOnDegraded`）
+        - 状態ファイル: `logs/r12_rl_ops_watch_state.json`（連続回数と最終通知時刻を保持）
       - 履歴: `logs/r12_rl_ops_watch.jsonl`
     - 監視タスク登録/状態/解除: `install_r12_rl_ops_watch_task.ps1` / `status_r12_rl_ops_watch_task.ps1` / `uninstall_r12_rl_ops_watch_task.ps1`
+      - 運用推奨例: `pwsh -File .\install_r12_rl_ops_watch_task.ps1 -RunNow -NotifyDegradedAfter 3 -NotifyDegradedCooldownMinutes 60`
     - VS Code タスク: 「ManaOS: R12+RL 監視タスク登録（15分）」 / 「ManaOS: R12+RL 監視タスク状態確認」 / 「ManaOS: R12+RL 監視クイックチェック（通知付き）」 / 「ManaOS: R12+RL 監視タスク解除」
       - ワンボタン: 「ManaOS: R12+RL 監視登録→状態確認（ワンボタン）」 / 「ManaOS: R12+RL 監視解除→未登録確認（ワンボタン）」
+  - Image Pipeline Probe（5分間隔 / 劣化連続通知）
+    - 実体: `run_image_pipeline_probe_once_v2.ps1`
+    - 登録/状態/解除: `install_image_pipeline_probe_task_v2.ps1` / `status_image_pipeline_probe_task.ps1` / `uninstall_image_pipeline_probe_task.ps1`
+    - 劣化連続通知（`unified_ready=false` が継続）
+      - しきい値: `-NotifyUnifiedDegradedAfter`（既定: `3`）
+      - 再通知クールダウン: `-NotifyUnifiedDegradedCooldownMinutes`（既定: `60`）
+      - 状態ファイル: `logs/image_pipeline_probe.state.json`（`consecutive_unified_not_ready` / `last_unified_degraded_notified_at`）
+    - 運用推奨例: `pwsh -File .\install_image_pipeline_probe_task_v2.ps1 -RunNow -NotifyUnifiedDegradedAfter 3 -NotifyUnifiedDegradedCooldownMinutes 60`
 - 「ManaOS: Pixel7 外出モード 半自律監視開始（自動切替+週次しきい値）」
   - 上記に `-RemoteOnly` を付与した外出モード
 - 「ManaOS: Pixel7 半自律監視（自動切替+週次）ワンボタン」
