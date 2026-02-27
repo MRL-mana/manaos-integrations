@@ -104,7 +104,7 @@ try {
                 $latestTsDisplay = 'N/A'
             }
 
-            Write-Host "--- Latest Summary ---" -ForegroundColor Cyan
+            Write-Host "--- Latest Output ---" -ForegroundColor Cyan
             Write-Host "latest_ts: $latestTsDisplay" -ForegroundColor Gray
             Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
             Write-Host "latest_ok_reason: $latestOkReason" -ForegroundColor Gray
