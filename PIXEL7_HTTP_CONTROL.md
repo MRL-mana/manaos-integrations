@@ -172,23 +172,25 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
   - 統合ワンボタン（運用開始/終了）
     - 開始: 「ManaOS: Pixel7 祝日運用セットアップ（年次+ガード）」
     - 終了: 「ManaOS: Pixel7 祝日運用クリーンアップ（年次+ガード）」
-  - OpenWebUI/Tailscale 入口死活監視（5分間隔）
-    - 登録: `install_openwebui_tailscale_watch_task.ps1`
-    - 状態: `status_openwebui_tailscale_watch_task.ps1`
-    - 単発: `run_openwebui_tailscale_watch_once.ps1`
-    - 解除: `uninstall_openwebui_tailscale_watch_task.ps1`
-    - タスク（Desktop）: 「ManaOS: Pixel7入口 5分監視タスク登録」 / 「ManaOS: Pixel7入口 5分監視タスク状態確認」 / 「ManaOS: Pixel7入口 5分監視チェック（JSON）」 / 「ManaOS: Pixel7入口 5分監視タスク解除」
-      - ワンボタン: 「ManaOS: Pixel7入口 5分監視 登録→状態確認（ワンボタン）」 / 「ManaOS: Pixel7入口 5分監視 解除→未登録確認（ワンボタン）」
-      - 統合ワンボタン: 「ManaOS: Pixel7入口+5分監視セットアップ（ワンボタン）」
-      - JSON出力: `logs/openwebui_tailscale_watch_check.latest.json`
-    - 監視ログ: `logs/openwebui_tailscale_watch_task.jsonl`
+  - OpenWebUI/Tailscale 入口監視（5分/15分）
+    - 登録/状態/解除: `install_openwebui_tailscale_watch_task.ps1` / `status_openwebui_tailscale_watch_task.ps1` / `uninstall_openwebui_tailscale_watch_task.ps1`
+    - 単発実行: `run_openwebui_tailscale_watch_once.ps1`
+    - VS Code タスク:
+      - 「ManaOS: OpenWebUI Tailscale Watch タスク登録（5分 / 推奨）」
+      - 「ManaOS: OpenWebUI Tailscale Watch タスク登録（15分 / 推奨）」
+      - 「ManaOS: OpenWebUI Tailscale Watch タスク状態確認」
+      - 「ManaOS: OpenWebUI Tailscale Watch 単発実行（推奨）」
+      - 「ManaOS: OpenWebUI Tailscale Watch タスク解除」
+      - ワンボタン: 「ManaOS: OpenWebUI Tailscale Watch 登録→状態確認（ワンボタン / 推奨）」 / 「ManaOS: OpenWebUI Tailscale Watch 解除→未登録確認（ワンボタン / 推奨）」
+      - 5分/15分派生: 「...（ワンボタン / 5分 / 推奨）」 / 「...（ワンボタン / 15分 / 推奨）」
+    - 出力: `logs/openwebui_tailscale_watch_check.latest.json` / `logs/openwebui_tailscale_watch_task.jsonl`
   - R12健全性監視（5分間隔）
     - 登録: `install_r12_health_watch_task.ps1`
     - 状態: `status_r12_health_watch_task.ps1`
     - 解除: `uninstall_r12_health_watch_task.ps1`
-    - タスク: 「ManaOS: R12 Health Watch タスク登録（5分）」 / 「ManaOS: R12 Health Watch タスク状態確認」 / 「ManaOS: R12 Health Watch 単発実行」 / 「ManaOS: R12 Health Watch タスク解除」
-      - ワンボタン: 「ManaOS: R12 Health Watch 登録→状態確認（ワンボタン）」 / 「ManaOS: R12 Health Watch 解除→未登録確認（ワンボタン）」
-      - 統合ワンボタン: 「ManaOS: R12 Health Watch 運用セットアップ（ワンボタン）」 / 「ManaOS: R12 Health Watch 運用クリーンアップ（ワンボタン）」
+    - タスク: 「ManaOS: R12 Health Watch タスク登録（5分 / 推奨）」 / 「ManaOS: R12 Health Watch タスク登録（15分 / 推奨）」 / 「ManaOS: R12 Health Watch タスク状態確認」 / 「ManaOS: R12 Health Watch 単発実行（推奨）」 / 「ManaOS: R12 Health Watch タスク解除」
+      - ワンボタン: 「ManaOS: R12 Health Watch 登録→状態確認（ワンボタン / 推奨）」 / 「ManaOS: R12 Health Watch 解除→未登録確認（ワンボタン）」
+      - 統合ワンボタン: 「ManaOS: R12 Health Watch 運用セットアップ（ワンボタン / 推奨）」 / 「ManaOS: R12 Health Watch 運用クリーンアップ（ワンボタン）」
       - 運用チェック: 「ManaOS: R12 Health Watch 運用チェック（状態+ログ末尾）」
       - JSONチェック: 「ManaOS: R12 Health Watch 運用チェック（JSON）」
         - 出力: `logs/r12_health_watch_check.latest.json`
@@ -203,20 +205,15 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
     - 監視補助タスク: 「ManaOS: Scheduled Tasks 健全性チェック」 / 「ManaOS: Scheduled Tasks 健全性チェック（JSON）」
     - 通知（任意）: `MANAOS_WEBHOOK_URL` / `MANAOS_WEBHOOK_FORMAT` (`generic|slack|discord`) / `MANAOS_WEBHOOK_MENTION` / `MANAOS_NOTIFY_ON_SUCCESS`
       - 既定は「失敗時のみ通知」。成功通知も欲しい場合は `MANAOS_NOTIFY_ON_SUCCESS=1`
-  - R12+RL 統合監視（15分間隔 / 異常時通知）
+  - R12+RL 統合監視（5分/15分 / 異常時通知）
     - クイックチェック実体: `check_r12_rl_ops_watch_quick.ps1`
       - `status_r12_rl_ops.ps1 -Json` を実行し、1行サマリー + JSON (`logs/r12_rl_ops_status.latest.json`) を更新
       - 失敗時は `MANAOS_WEBHOOK_URL` 系設定を使って通知（`-NotifyOnSuccess` で成功通知も可）
-      - 劣化連続通知（warning）
-        - しきい値: `-NotifyDegradedAfter`（既定: `3`）
-        - 再通知クールダウン: `-NotifyDegradedCooldownMinutes`（既定: `60`）
-        - 無効化: `-NotifyOnDegraded:$false`（installer では `-DisableNotifyOnDegraded`）
-        - 状態ファイル: `logs/r12_rl_ops_watch_state.json`（連続回数と最終通知時刻を保持）
       - 履歴: `logs/r12_rl_ops_watch.jsonl`
     - 監視タスク登録/状態/解除: `install_r12_rl_ops_watch_task.ps1` / `status_r12_rl_ops_watch_task.ps1` / `uninstall_r12_rl_ops_watch_task.ps1`
-      - 運用推奨例: `pwsh -File .\install_r12_rl_ops_watch_task.ps1 -RunNow -NotifyDegradedAfter 3 -NotifyDegradedCooldownMinutes 60`
-    - VS Code タスク: 「ManaOS: R12+RL 監視タスク登録（15分）」 / 「ManaOS: R12+RL 監視タスク状態確認」 / 「ManaOS: R12+RL 監視クイックチェック（通知付き）」 / 「ManaOS: R12+RL 監視タスク解除」
-      - ワンボタン: 「ManaOS: R12+RL 監視登録→状態確認（ワンボタン）」 / 「ManaOS: R12+RL 監視解除→未登録確認（ワンボタン）」
+      - 運用推奨例: `pwsh -File .\install_r12_rl_ops_watch_task.ps1 -RunNow -IntervalMinutes 15`
+    - VS Code タスク: 「ManaOS: R12+RL 監視タスク登録（15分 / 劣化3回+60分 / 推奨）」 / 「ManaOS: R12+RL 監視タスク登録（5分 / 劣化3回+60分 / 推奨）」 / 「ManaOS: R12+RL 監視タスク状態確認」 / 「ManaOS: R12+RL 監視クイックチェック（通知付き / しきい値対応 / 推奨）」 / 「ManaOS: R12+RL 監視タスク解除」
+      - ワンボタン: 「ManaOS: R12+RL 監視登録→状態確認（ワンボタン / 推奨）」 / 「ManaOS: R12+RL 監視登録→状態確認（ワンボタン / 5分 / 劣化3回+60分 / 推奨）」 / 「ManaOS: R12+RL 監視登録→状態確認（ワンボタン / 15分 / 劣化3回+60分 / 推奨）」 / 「ManaOS: R12+RL 監視解除→未登録確認（ワンボタン / 推奨）」
   - Image Pipeline Probe（5分間隔 / 劣化連続通知）
     - 実体: `run_image_pipeline_probe_once_v2.ps1`
     - 登録/状態/解除: `install_image_pipeline_probe_task_v2.ps1` / `status_image_pipeline_probe_task.ps1` / `uninstall_image_pipeline_probe_task.ps1`
@@ -224,7 +221,8 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
       - しきい値: `-NotifyUnifiedDegradedAfter`（既定: `3`）
       - 再通知クールダウン: `-NotifyUnifiedDegradedCooldownMinutes`（既定: `60`）
       - 状態ファイル: `logs/image_pipeline_probe.state.json`（`consecutive_unified_not_ready` / `last_unified_degraded_notified_at`）
-    - 運用推奨例: `pwsh -File .\install_image_pipeline_probe_task_v2.ps1 -RunNow -NotifyUnifiedDegradedAfter 3 -NotifyUnifiedDegradedCooldownMinutes 60`
+    - 運用推奨例: `pwsh -File .\install_image_pipeline_probe_task_v2.ps1 -RunNow -NotifyUnifiedDegradedAfter 3 -NotifyUnifiedDegradedCooldownMinutes 60 -EnableAutoRecovery -RecoverAfterConsecutiveDown 3 -RecoveryCooldownSec 300`
+    - VS Code タスク: 「ManaOS: Image Pipeline Probe タスク登録（5分+自動復旧 / 推奨 v2 / 劣化3回+60分）」 / 「ManaOS: Image Pipeline Probe タスク状態確認」 / 「ManaOS: Image Pipeline Probe 単発実行（推奨 v2: 履歴/通知/復旧）」
 - 「ManaOS: Pixel7 外出モード 半自律監視開始（自動切替+週次しきい値）」
   - 上記に `-RemoteOnly` を付与した外出モード
 - 「ManaOS: Pixel7 半自律監視（自動切替+週次）ワンボタン」
