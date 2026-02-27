@@ -18,6 +18,13 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 import threading
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SCRIPTS_MISC_DIR = REPO_ROOT / "scripts" / "misc"
+for _sys_path in (REPO_ROOT, SCRIPTS_MISC_DIR):
+    _path_str = str(_sys_path)
+    if _sys_path.exists() and _path_str not in sys.path:
+        sys.path.insert(0, _path_str)
+
 try:
     from werkzeug.exceptions import HTTPException
 except Exception:  # pragma: no cover
@@ -343,7 +350,13 @@ try:
 
     COMFYUI_AVAILABLE = True
 except ImportError:
-    logger.warning("ComfyUI統合モジュールが見つかりません")
+    try:
+        from scripts.misc.comfyui_integration import ComfyUIIntegration
+
+        COMFYUI_AVAILABLE = True
+        logger.info("ComfyUI統合モジュールを scripts.misc から読み込みました")
+    except ImportError:
+        logger.warning("ComfyUI統合モジュールが見つかりません")
 
 # SVI × Wan 2.2動画生成統合（オプション）
 try:
@@ -1714,7 +1727,7 @@ def api_comfyui_generate():
     if not prompt:
         return _json_error("prompt is required", 400, error="bad_request", namespace="comfyui")
 
-    comfyui = integrations.get("comfyui")
+    comfyui = _get_or_init_comfyui()
     if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
         return _json_error("comfyui_unavailable", 503, error="unavailable", namespace="comfyui")
 
@@ -2381,6 +2394,18 @@ def _lazy_integration(key: str, factory):
         return None
 
 
+def _get_or_init_comfyui():
+    comfyui = integrations.get("comfyui")
+    if comfyui is not None:
+        return comfyui
+    if not COMFYUI_AVAILABLE:
+        return None
+    return _lazy_integration(
+        "comfyui",
+        lambda: ComfyUIIntegration(base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")),
+    )
+
+
 @app.route("/api/ltx2/generate", methods=["POST"])
 def api_ltx2_generate():
     """LTX-2 動画生成（ComfyUIへワークフロー送信して待機）"""
@@ -2910,7 +2935,7 @@ def api_vision_evaluate_url():
 @auth_manager.require_api_key
 def api_comfyui_queue():
     """ComfyUIキュー状態（要認証）"""
-    comfyui = integrations.get("comfyui")
+    comfyui = _get_or_init_comfyui()
     if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
         return _json_error("comfyui_unavailable", 503, error="unavailable", namespace="comfyui")
     try:
@@ -2924,7 +2949,7 @@ def api_comfyui_queue():
 @auth_manager.require_api_key
 def api_comfyui_history():
     """ComfyUI履歴"""
-    comfyui = integrations.get("comfyui")
+    comfyui = _get_or_init_comfyui()
     if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
         return _json_error("comfyui_unavailable", 503, error="unavailable", namespace="comfyui")
     try:
