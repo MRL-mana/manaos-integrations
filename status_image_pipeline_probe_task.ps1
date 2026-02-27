@@ -65,6 +65,7 @@ try {
     }
 
     $latestFailureCategory = ''
+    $latestFailureNotifyAttempted = $null
     $latestFailureNotified = $null
     $latestFailureSuppressedReason = ''
     $historyFile = [string]$cfg.history_file
@@ -72,6 +73,7 @@ try {
         try {
             $historyLast = Get-Content -Path $historyFile -Tail 1 | ConvertFrom-Json
             $latestFailureCategory = [string]$historyLast.failure_category
+            $latestFailureNotifyAttempted = $historyLast.failure_notify_attempted
             $latestFailureNotified = $historyLast.failure_notified
             $latestFailureSuppressedReason = [string]$historyLast.failure_notify_suppressed_reason
         }
@@ -148,6 +150,7 @@ try {
             Write-Host "latest_overall_ok: $latestOverallOk" -ForegroundColor Gray
             Write-Host "latest_ok: $latestOverallOk" -ForegroundColor Gray
             Write-Host "latest_failure_category: $latestFailureCategory" -ForegroundColor Gray
+            Write-Host "latest_failure_notify_attempted: $latestFailureNotifyAttempted" -ForegroundColor Gray
             Write-Host "latest_failure_notified: $latestFailureNotified" -ForegroundColor Gray
             Write-Host "latest_failure_notify_suppressed_reason: $latestFailureSuppressedReason" -ForegroundColor Gray
         }

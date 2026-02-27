@@ -97,6 +97,7 @@ try {
             Write-Host "latest_ts: $($latest.ts)" -ForegroundColor Gray
             Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
             Write-Host "latest_failure_category: $($latest.failure_category)" -ForegroundColor Gray
+            Write-Host "latest_failure_notify_attempted: $($latest.failure_notify_attempted)" -ForegroundColor Gray
             Write-Host "latest_failure_notified: $($latest.failure_notified)" -ForegroundColor Gray
             Write-Host "latest_failure_notify_suppressed_reason: $($latest.failure_notify_suppressed_reason)" -ForegroundColor Gray
         }
