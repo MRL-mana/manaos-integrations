@@ -200,9 +200,9 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: Image Pipeline Probe 登録→状態確認（ワンボタン）",
+      "label": "ManaOS: Image Pipeline Probe 登録→状態確認（ワンボタン / 推奨 v2）",
       "dependsOn": [
-        "ManaOS: Image Pipeline Probe タスク登録（5分 / 推奨 v2）",
+        "ManaOS: Image Pipeline Probe タスク登録（5分+自動復旧 / 推奨 v2）",
         "ManaOS: Image Pipeline Probe タスク状態確認"
       ],
       "dependsOrder": "sequence",
