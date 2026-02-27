@@ -134,8 +134,10 @@ try {
             }
 
             $latestOverallOk = $null
+            $latestOkReason = 'ok_missing'
             if ($null -ne $latest.overall -and $null -ne $latest.overall.ok) {
                 try { $latestOverallOk = [bool]$latest.overall.ok } catch { $latestOverallOk = $null }
+                if ($null -ne $latestOverallOk) { $latestOkReason = 'from_overall_ok_field' }
             }
             elseif ($null -ne $latest.unified_api -or $null -ne $latest.comfyui) {
                 $latestUnifiedReadyForOk = $false
@@ -147,11 +149,13 @@ try {
                     try { $latestDirectReadyForOk = [bool]$latest.comfyui.ready } catch { $latestDirectReadyForOk = $false }
                 }
                 $latestOverallOk = ($latestUnifiedReadyForOk -or $latestDirectReadyForOk)
+                $latestOkReason = 'from_component_fields'
             }
 
             Write-Host "--- Latest Output ---" -ForegroundColor Cyan
             Write-Host "latest_ts: $latestTs" -ForegroundColor Gray
             Write-Host "latest_ok: $latestOverallOk" -ForegroundColor Gray
+            Write-Host "latest_ok_reason: $latestOkReason" -ForegroundColor Gray
             Write-Host "latest_failure_category: $latestFailureCategory" -ForegroundColor Gray
             Write-Host "latest_failure_notify_attempted: $latestFailureNotifyAttempted" -ForegroundColor Gray
             Write-Host "latest_failure_notified: $latestFailureNotified" -ForegroundColor Gray

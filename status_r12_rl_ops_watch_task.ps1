@@ -72,23 +72,28 @@ try {
             $latestSummary = Get-Content -Path $summaryLogPath -Tail 1 | ConvertFrom-Json
 
             $latestOk = $null
+            $latestOkReason = 'ok_missing'
             if ($null -ne $latestSummary.ok) {
                 try { $latestOk = [bool]$latestSummary.ok } catch { $latestOk = $null }
+                if ($null -ne $latestOk) { $latestOkReason = 'from_ok_field' }
             }
             elseif ($null -ne $latestSummary.issues) {
                 try {
                     $latestOk = (@($latestSummary.issues).Count -eq 0)
+                    $latestOkReason = 'from_issues_count'
                 }
                 catch { $latestOk = $null }
             }
             elseif ($null -ne $latestSummary.r12_latest_failed) {
                 try {
                     $latestOk = ([int]$latestSummary.r12_latest_failed -eq 0)
+                    $latestOkReason = 'from_r12_latest_failed'
                 }
                 catch { $latestOk = $null }
             }
             elseif (-not [string]::IsNullOrWhiteSpace([string]$latestSummary.failure_category)) {
                 $latestOk = $false
+                $latestOkReason = 'from_failure_category'
             }
 
             $latestTsDisplay = [string]$latestSummary.ts
@@ -99,6 +104,7 @@ try {
             Write-Host "--- Latest Summary ---" -ForegroundColor Cyan
             Write-Host "latest_ts: $latestTsDisplay" -ForegroundColor Gray
             Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
+            Write-Host "latest_ok_reason: $latestOkReason" -ForegroundColor Gray
             Write-Host "latest_failure_category: $($latestSummary.failure_category)" -ForegroundColor Gray
             Write-Host "latest_failure_notify_attempted: $($latestSummary.failure_notify_attempted)" -ForegroundColor Gray
             Write-Host "latest_failure_notified: $($latestSummary.failure_notified)" -ForegroundColor Gray

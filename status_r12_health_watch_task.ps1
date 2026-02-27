@@ -33,8 +33,10 @@ if (Test-Path $LogPath) {
         $latestFailed = $null
         try { $latestFailed = [int]$latest.failed } catch { $latestFailed = $null }
         $latestOk = $null
+        $latestOkReason = 'failed_missing'
         if ($null -ne $latestFailed) {
             $latestOk = ($latestFailed -eq 0)
+            $latestOkReason = 'from_failed_count'
         }
 
         $latestTsDisplay = [string]$latest.ts
@@ -48,6 +50,7 @@ if (Test-Path $LogPath) {
         Write-Host "latest_passed: $($latest.passed)" -ForegroundColor Gray
         Write-Host "latest_failed: $($latest.failed)" -ForegroundColor Gray
         Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
+        Write-Host "latest_ok_reason: $latestOkReason" -ForegroundColor Gray
     }
     catch {
         Write-Host "[WARN] Failed to parse latest log entry: $LogPath" -ForegroundColor Yellow

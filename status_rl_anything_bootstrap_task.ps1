@@ -92,13 +92,21 @@ if ([string]::IsNullOrWhiteSpace($latestNextRun)) {
 }
 
 $latestOk = $null
+$latestOkReason = 'result_missing'
 if (-not [string]::IsNullOrWhiteSpace($latestLastResult)) {
     $latestOk = Test-TaskResultOk -RawResult $latestLastResult
+    if ($null -eq $latestOk) {
+        $latestOkReason = 'result_unparseable'
+    }
+    else {
+        $latestOkReason = 'from_last_result'
+    }
 }
 
 Write-Host "--- Latest Output ---" -ForegroundColor Cyan
 Write-Host "latest_ts: $latestLastRun" -ForegroundColor Gray
 Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
+Write-Host "latest_ok_reason: $latestOkReason" -ForegroundColor Gray
 Write-Host "latest_last_run: $latestLastRun" -ForegroundColor Gray
 Write-Host "latest_last_result: $latestLastResult" -ForegroundColor Gray
 Write-Host "latest_state: $latestState" -ForegroundColor Gray

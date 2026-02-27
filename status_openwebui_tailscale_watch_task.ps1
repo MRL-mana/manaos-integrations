@@ -68,12 +68,15 @@ try {
             $latest = Get-Content -Path $latestFile -Raw | ConvertFrom-Json
 
             $latestOk = $null
+            $latestOkReason = 'ok_missing'
             if ($null -ne $latest.ok) {
                 try { $latestOk = [bool]$latest.ok } catch { $latestOk = $null }
+                if ($null -ne $latestOk) { $latestOkReason = 'from_ok_field' }
             }
             elseif ($null -ne $latest.issues) {
                 try {
                     $latestOk = (@($latest.issues).Count -eq 0)
+                    $latestOkReason = 'from_issues_count'
                 }
                 catch { $latestOk = $null }
             }
@@ -91,6 +94,7 @@ try {
                     $tailscaleOk = $true
                 }
                 $latestOk = ($openwebuiOk -and $portListening -and $tailscaleOk)
+                $latestOkReason = 'from_component_fields'
             }
 
             $latestTsDisplay = [string]$latest.ts
@@ -101,6 +105,7 @@ try {
             Write-Host "--- Latest Output ---" -ForegroundColor Cyan
             Write-Host "latest_ts: $latestTsDisplay" -ForegroundColor Gray
             Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
+            Write-Host "latest_ok_reason: $latestOkReason" -ForegroundColor Gray
             Write-Host "latest_failure_category: $($latest.failure_category)" -ForegroundColor Gray
             Write-Host "latest_failure_notify_attempted: $($latest.failure_notify_attempted)" -ForegroundColor Gray
             Write-Host "latest_failure_notified: $($latest.failure_notified)" -ForegroundColor Gray
