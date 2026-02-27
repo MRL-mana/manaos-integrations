@@ -143,6 +143,8 @@ VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Verify Lifecycle`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Run (Log)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Status`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Status (JSON)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Full`
 
 ## Troubleshooting
 

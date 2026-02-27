@@ -9,6 +9,22 @@ $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
+function Convert-ToCleanObjectArray {
+    param([object]$Value)
+
+    if ($null -eq $Value) {
+        return [object[]]@()
+    }
+
+    $items = @($Value) | Where-Object {
+        if ($null -eq $_) { return $false }
+        $text = [string]$_
+        return -not [string]::IsNullOrWhiteSpace($text)
+    }
+
+    return [object[]]$items
+}
+
 if ([string]::IsNullOrWhiteSpace($LatestJsonFile)) {
     $LatestJsonFile = Join-Path $scriptDir "logs\reason_enum_cooldown_lifecycle.latest.json"
 }
@@ -24,8 +40,8 @@ $payload = [ordered]@{
     latest_ok = $false
     latest_ok_reason = 'source_missing'
     failed_step_count = -1
-    failed_steps = @()
-    status_after_summary = @()
+    failed_steps = [object[]]@()
+    status_after_summary = [object[]]@()
     history_found = $false
     history_entries = 0
 }
@@ -38,8 +54,8 @@ if (Test-Path $LatestJsonFile) {
         $payload.latest_ok = if ($null -ne $latest.ok) { [bool]$latest.ok } else { $false }
         $payload.latest_ok_reason = if (-not [string]::IsNullOrWhiteSpace([string]$latest.ok_reason)) { [string]$latest.ok_reason } else { 'source_missing' }
         $payload.failed_step_count = if ($null -ne $latest.failed_step_count) { [int]$latest.failed_step_count } else { -1 }
-        $payload.failed_steps = if ($null -ne $latest.failed_steps) { @($latest.failed_steps) } else { @() }
-        $payload.status_after_summary = if ($null -ne $latest.status_after_summary) { @($latest.status_after_summary) } else { @() }
+        $payload.failed_steps = Convert-ToCleanObjectArray -Value $latest.failed_steps
+        $payload.status_after_summary = Convert-ToCleanObjectArray -Value $latest.status_after_summary
     }
     catch {
         $payload.latest_found = $false
@@ -59,6 +75,8 @@ if (Test-Path $HistoryJsonl) {
 }
 
 if ($AsJson) {
+    $payload.failed_steps = Convert-ToCleanObjectArray -Value $payload.failed_steps
+    $payload.status_after_summary = Convert-ToCleanObjectArray -Value $payload.status_after_summary
     Write-Output ($payload | ConvertTo-Json -Depth 8)
     exit 0
 }
