@@ -107,9 +107,6 @@ try {
             if ([string]::IsNullOrWhiteSpace($latestTs)) {
                 $latestTs = 'N/A'
             }
-            if ([string]::IsNullOrWhiteSpace($latestTs)) {
-                $latestTs = 'N/A'
-            }
 
             $latestRouteCategory = [string]$latest.route.category
             if ([string]::IsNullOrWhiteSpace($latestRouteCategory)) {
