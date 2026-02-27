@@ -122,10 +122,15 @@ Reason lint notify diagnostics:
 - cooldown自己診断タスク解除: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\uninstall_reason_enum_lint_cooldown_verify_task.ps1`
 - cooldown自己診断タスク解除→未登録確認: `pwsh -NoProfile -ExecutionPolicy Bypass -Command "& '.\uninstall_reason_enum_lint_cooldown_verify_task.ps1'; & '.\status_reason_enum_lint_cooldown_verify_task.ps1'; if ($LASTEXITCODE -ne 0) { Write-Host '[OK] Cooldown verify task not found expected after uninstall'; exit 0 }"`
 - cooldownライフサイクル実行（要約ログ保存）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_reason_enum_lint_cooldown_lifecycle.ps1`
+- cooldownライフサイクル実行（RequirePassAfterRun）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_reason_enum_lint_cooldown_lifecycle.ps1 -RequirePassAfterRun`
 - cooldownライフサイクル状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_lint_cooldown_lifecycle.ps1`
 - cooldownライフサイクル状態（RequirePass / 失敗時 exit 1）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_lint_cooldown_lifecycle.ps1 -RequirePass`
 - cooldownライフサイクル最新ログ: `logs/reason_enum_cooldown_lifecycle.latest.json`
 - cooldownライフサイクル履歴: `logs/reason_enum_cooldown_lifecycle.history.jsonl`
+- opsスナップショット出力: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\export_reason_enum_ops_snapshot.ps1`
+- opsスナップショット出力（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\export_reason_enum_ops_snapshot.ps1 -AsJson`
+- opsスナップショット最新: `logs/reason_enum_ops_snapshot.latest.json`
+- opsスナップショット履歴: `logs/reason_enum_ops_snapshot.history.jsonl`
 - cooldown自己診断タスク状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_lint_cooldown_verify_task.ps1`
 - cooldown自己診断タスク状態（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_lint_cooldown_verify_task.ps1 -AsJson`
 - 通知フロー一括テスト: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\test_reason_enum_lint_notify_flow.ps1 -IncludeCheckScripts`
@@ -143,10 +148,13 @@ VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Verify Task Status (JSON)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Verify Lifecycle`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Run (Log)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Run (Log+RequirePass)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Status`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Status (JSON)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Status (RequirePass)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Full`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Export`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Export (JSON)`
 
 ## Troubleshooting
 

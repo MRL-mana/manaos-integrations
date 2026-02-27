@@ -5,7 +5,8 @@ param(
     [int]$NotifyFailureCooldownMinutes = 60,
     [int]$WaitAfterRunSeconds = 6,
     [string]$LatestJsonFile = "",
-    [string]$HistoryJsonl = ""
+    [string]$HistoryJsonl = "",
+    [switch]$RequirePassAfterRun
 )
 
 Set-StrictMode -Version Latest
@@ -22,10 +23,11 @@ if ([string]::IsNullOrWhiteSpace($HistoryJsonl)) {
 
 $installScript = Join-Path $scriptDir "install_reason_enum_lint_cooldown_verify_task.ps1"
 $statusScript = Join-Path $scriptDir "status_reason_enum_lint_cooldown_verify_task.ps1"
+$lifecycleStatusScript = Join-Path $scriptDir "status_reason_enum_lint_cooldown_lifecycle.ps1"
 $verifyScript = Join-Path $scriptDir "verify_reason_enum_lint_cooldown.ps1"
 $uninstallScript = Join-Path $scriptDir "uninstall_reason_enum_lint_cooldown_verify_task.ps1"
 
-foreach ($required in @($installScript, $statusScript, $verifyScript, $uninstallScript)) {
+foreach ($required in @($installScript, $statusScript, $lifecycleStatusScript, $verifyScript, $uninstallScript)) {
     if (-not (Test-Path $required)) {
         throw "Required script not found: $required"
     }
@@ -75,6 +77,10 @@ $ok = ($failed.Count -eq 0)
 $okReason = if ($ok) { 'cooldown_lifecycle_passed' } else { 'cooldown_lifecycle_failed' }
 $failedStepNames = @($failed | ForEach-Object { [string]$_.name })
 $allSteps = $steps.ToArray()
+$postCheckAttempted = $false
+$postCheckExit = -1
+$postCheckOk = $false
+$postCheckOutputTail = @()
 
 $statusAfter = $steps | Where-Object { $_.name -eq 'status_after_verify' } | Select-Object -First 1
 $statusSummary = @()
@@ -82,6 +88,29 @@ if ($null -ne $statusAfter) {
     $statusSummary = @($statusAfter.output_tail | Where-Object {
         $_ -match 'latest_ok:' -or $_ -match 'latest_ok_reason:' -or $_ -match 'latest_failure_notify_suppressed_reason:' -or $_ -match 'state_last_status:' -or $_ -match 'task_last_result_meaning:'
     })
+}
+
+if ($RequirePassAfterRun.IsPresent) {
+    $postCheckAttempted = $true
+    $postCheckArgs = @(
+        '-NoProfile','-ExecutionPolicy','Bypass','-File',$lifecycleStatusScript,
+        '-LatestJsonFile',$LatestJsonFile,
+        '-HistoryJsonl',$HistoryJsonl,
+        '-RequirePass',
+        '-AsJson'
+    )
+    $postCheckOutput = @(& pwsh @postCheckArgs 2>&1 | ForEach-Object { [string]$_ })
+    $postCheckExit = $LASTEXITCODE
+    $postCheckOk = ($postCheckExit -eq 0)
+    $postCheckOutputTail = @($postCheckOutput | Select-Object -Last 20)
+
+    if (-not $postCheckOk) {
+        $ok = $false
+        if ($okReason -eq 'cooldown_lifecycle_passed') {
+            $okReason = 'cooldown_lifecycle_postcheck_failed'
+        }
+        $failedStepNames += 'lifecycle_require_pass'
+    }
 }
 
 $payload = [ordered]@{
@@ -93,9 +122,14 @@ $payload = [ordered]@{
     start_time = $StartTime
     notify_failure_cooldown_minutes = [int]$NotifyFailureCooldownMinutes
     wait_after_run_seconds = [int]$WaitAfterRunSeconds
+    require_pass_after_run = [bool]$RequirePassAfterRun
+    post_check_attempted = $postCheckAttempted
+    post_check_ok = $postCheckOk
+    post_check_exit_code = [int]$postCheckExit
+    post_check_output_tail = $postCheckOutputTail
     latest_json_file = $LatestJsonFile
     history_jsonl = $HistoryJsonl
-    failed_step_count = $failed.Count
+    failed_step_count = $failedStepNames.Count
     failed_steps = $failedStepNames
     status_after_summary = $statusSummary
     steps = $allSteps
