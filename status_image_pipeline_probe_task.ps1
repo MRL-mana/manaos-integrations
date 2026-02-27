@@ -5,6 +5,33 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Write-LatestOutput {
+    param(
+        [string]$Ts,
+        [object]$Ok,
+        [string]$OkReason,
+        [string]$FailureCategory,
+        [object]$FailureNotifyAttempted,
+        [object]$FailureNotified,
+        [string]$FailureSuppressedReason,
+        [string]$RouteCategory,
+        [object]$OverallOk,
+        [string]$SourceSchema
+    )
+
+    Write-Host "--- Latest Output ---" -ForegroundColor Cyan
+    Write-Host "latest_ts: $Ts" -ForegroundColor Gray
+    Write-Host "latest_ok: $Ok" -ForegroundColor Gray
+    Write-Host "latest_ok_reason: $OkReason" -ForegroundColor Gray
+    Write-Host "latest_failure_category: $FailureCategory" -ForegroundColor Gray
+    Write-Host "latest_failure_notify_attempted: $FailureNotifyAttempted" -ForegroundColor Gray
+    Write-Host "latest_failure_notified: $FailureNotified" -ForegroundColor Gray
+    Write-Host "latest_failure_notify_suppressed_reason: $FailureSuppressedReason" -ForegroundColor Gray
+    Write-Host "latest_route_category: $RouteCategory" -ForegroundColor Gray
+    Write-Host "latest_overall_ok: $OverallOk" -ForegroundColor Gray
+    Write-Host "latest_source_schema: $SourceSchema" -ForegroundColor Gray
+}
+
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 if ([string]::IsNullOrWhiteSpace($ConfigFile)) {
     $ConfigFile = Join-Path $scriptDir "logs\image_pipeline_probe_task.config.json"
@@ -16,6 +43,7 @@ Write-Host "TaskName: $TaskName" -ForegroundColor Gray
 $taskInfo = schtasks /Query /TN $TaskName /V /FO LIST
 if ($LASTEXITCODE -ne 0 -or $null -eq $taskInfo) {
     Write-Host "[INFO] Task not found: $TaskName" -ForegroundColor Yellow
+    Write-LatestOutput -Ts 'N/A' -Ok $null -OkReason 'ok_missing' -FailureCategory '' -FailureNotifyAttempted $null -FailureNotified $null -FailureSuppressedReason '' -RouteCategory 'unknown' -OverallOk $null -SourceSchema 'unknown'
     exit 1
 }
 
@@ -33,6 +61,7 @@ if (-not [string]::IsNullOrWhiteSpace($taskToRunLine)) {
 Write-Host "ConfigFile: $ConfigFile" -ForegroundColor Gray
 if (-not (Test-Path $ConfigFile)) {
     Write-Host "[WARN] Config file not found: $ConfigFile" -ForegroundColor Yellow
+    Write-LatestOutput -Ts 'N/A' -Ok $null -OkReason 'ok_missing' -FailureCategory '' -FailureNotifyAttempted $null -FailureNotified $null -FailureSuppressedReason '' -RouteCategory 'unknown' -OverallOk $null -SourceSchema 'unknown'
     exit 0
 }
 
@@ -149,25 +178,23 @@ try {
                 $latestOkReason = 'from_component_fields'
             }
 
-            Write-Host "--- Latest Output ---" -ForegroundColor Cyan
-            Write-Host "latest_ts: $latestTs" -ForegroundColor Gray
-            Write-Host "latest_ok: $latestOverallOk" -ForegroundColor Gray
-            Write-Host "latest_ok_reason: $latestOkReason" -ForegroundColor Gray
-            Write-Host "latest_failure_category: $latestFailureCategory" -ForegroundColor Gray
-            Write-Host "latest_failure_notify_attempted: $latestFailureNotifyAttempted" -ForegroundColor Gray
-            Write-Host "latest_failure_notified: $latestFailureNotified" -ForegroundColor Gray
-            Write-Host "latest_failure_notify_suppressed_reason: $latestFailureSuppressedReason" -ForegroundColor Gray
-            Write-Host "latest_route_category: $latestRouteCategory" -ForegroundColor Gray
-            Write-Host "latest_overall_ok: $latestOverallOk" -ForegroundColor Gray
-            Write-Host "latest_source_schema: $latestSourceSchema" -ForegroundColor Gray
+            Write-LatestOutput -Ts $latestTs -Ok $latestOverallOk -OkReason $latestOkReason -FailureCategory $latestFailureCategory -FailureNotifyAttempted $latestFailureNotifyAttempted -FailureNotified $latestFailureNotified -FailureSuppressedReason $latestFailureSuppressedReason -RouteCategory $latestRouteCategory -OverallOk $latestOverallOk -SourceSchema $latestSourceSchema
         }
         catch {
             Write-Host "[WARN] Failed to parse latest output file: $latestFile" -ForegroundColor Yellow
+            Write-LatestOutput -Ts 'N/A' -Ok $null -OkReason 'ok_missing' -FailureCategory $latestFailureCategory -FailureNotifyAttempted $latestFailureNotifyAttempted -FailureNotified $latestFailureNotified -FailureSuppressedReason $latestFailureSuppressedReason -RouteCategory 'unknown' -OverallOk $null -SourceSchema 'unknown'
+        }
+    }
+    else {
+        Write-LatestOutput -Ts 'N/A' -Ok $null -OkReason 'ok_missing' -FailureCategory $latestFailureCategory -FailureNotifyAttempted $latestFailureNotifyAttempted -FailureNotified $latestFailureNotified -FailureSuppressedReason $latestFailureSuppressedReason -RouteCategory 'unknown' -OverallOk $null -SourceSchema 'unknown'
+        if (-not [string]::IsNullOrWhiteSpace($latestFile)) {
+            Write-Host "[WARN] Latest output file not found: $latestFile" -ForegroundColor Yellow
         }
     }
 }
 catch {
     Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow
+    Write-LatestOutput -Ts 'N/A' -Ok $null -OkReason 'ok_missing' -FailureCategory '' -FailureNotifyAttempted $null -FailureNotified $null -FailureSuppressedReason '' -RouteCategory 'unknown' -OverallOk $null -SourceSchema 'unknown'
 }
 
 exit 0
