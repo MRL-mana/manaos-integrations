@@ -107,6 +107,9 @@ try {
             if ([string]::IsNullOrWhiteSpace($latestTs)) {
                 $latestTs = 'N/A'
             }
+            if ([string]::IsNullOrWhiteSpace($latestTs)) {
+                $latestTs = 'N/A'
+            }
 
             $latestRouteCategory = [string]$latest.route.category
             if ([string]::IsNullOrWhiteSpace($latestRouteCategory)) {
@@ -147,15 +150,15 @@ try {
             }
 
             Write-Host "--- Latest Output ---" -ForegroundColor Cyan
-            Write-Host "latest_source_schema: $latestSourceSchema" -ForegroundColor Gray
             Write-Host "latest_ts: $latestTs" -ForegroundColor Gray
-            Write-Host "latest_route_category: $latestRouteCategory" -ForegroundColor Gray
-            Write-Host "latest_overall_ok: $latestOverallOk" -ForegroundColor Gray
             Write-Host "latest_ok: $latestOverallOk" -ForegroundColor Gray
             Write-Host "latest_failure_category: $latestFailureCategory" -ForegroundColor Gray
             Write-Host "latest_failure_notify_attempted: $latestFailureNotifyAttempted" -ForegroundColor Gray
             Write-Host "latest_failure_notified: $latestFailureNotified" -ForegroundColor Gray
             Write-Host "latest_failure_notify_suppressed_reason: $latestFailureSuppressedReason" -ForegroundColor Gray
+            Write-Host "latest_route_category: $latestRouteCategory" -ForegroundColor Gray
+            Write-Host "latest_overall_ok: $latestOverallOk" -ForegroundColor Gray
+            Write-Host "latest_source_schema: $latestSourceSchema" -ForegroundColor Gray
         }
         catch {
             Write-Host "[WARN] Failed to parse latest output file: $latestFile" -ForegroundColor Yellow
