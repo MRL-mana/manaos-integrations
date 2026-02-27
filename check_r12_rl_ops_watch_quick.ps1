@@ -191,6 +191,7 @@ function Load-DegradedState {
             consecutive_endpoint_refused = 0
             last_degraded_notified_at = ''
             last_failure_notified_at = ''
+            last_failure_category = ''
             last_recovery_at = ''
             last_ok = $true
         }
@@ -205,6 +206,7 @@ function Load-DegradedState {
             consecutive_endpoint_refused = 0
             last_degraded_notified_at = ''
             last_failure_notified_at = ''
+            last_failure_category = ''
             last_recovery_at = ''
             last_ok = $true
         }
@@ -218,6 +220,7 @@ function Save-DegradedState {
         [int]$ConsecutiveEndpointRefused,
         [string]$LastDegradedNotifiedAt,
         [string]$LastFailureNotifiedAt,
+        [string]$LastFailureCategory,
         [string]$LastRecoveryAt,
         [bool]$LastOk
     )
@@ -232,6 +235,7 @@ function Save-DegradedState {
         consecutive_endpoint_refused = $ConsecutiveEndpointRefused
         last_degraded_notified_at = $LastDegradedNotifiedAt
         last_failure_notified_at = $LastFailureNotifiedAt
+        last_failure_category = $LastFailureCategory
         last_recovery_at = $LastRecoveryAt
         last_ok = $LastOk
         updated_at = [datetimeoffset]::Now.ToString('o')
@@ -434,6 +438,7 @@ $lastFailureNotifiedDt = $null
 if (-not [string]::IsNullOrWhiteSpace($lastFailureNotifiedAt)) {
     try { $lastFailureNotifiedDt = [datetimeoffset]::Parse($lastFailureNotifiedAt) } catch { $lastFailureNotifiedDt = $null }
 }
+$lastFailureCategory = [string]$degradedState.last_failure_category
 
 $lastRecoveryAt = [string]$degradedState.last_recovery_at
 $lastRecoveryDt = $null
@@ -455,7 +460,7 @@ if ($ok) {
     if ($Json.IsPresent) {
         Write-Output ($summary | ConvertTo-Json -Depth 6)
     }
-    Save-DegradedState -Path $DegradedStateFile -ConsecutiveUnhealthy $consecutiveUnhealthy -ConsecutiveEndpointRefused 0 -LastDegradedNotifiedAt $lastDegradedNotifiedAt -LastFailureNotifiedAt $lastFailureNotifiedAt -LastRecoveryAt $lastRecoveryAt -LastOk $true
+    Save-DegradedState -Path $DegradedStateFile -ConsecutiveUnhealthy $consecutiveUnhealthy -ConsecutiveEndpointRefused 0 -LastDegradedNotifiedAt $lastDegradedNotifiedAt -LastFailureNotifiedAt '' -LastFailureCategory '' -LastRecoveryAt $lastRecoveryAt -LastOk $true
     ($summary | ConvertTo-Json -Depth 6 -Compress) | Add-Content -Path $SummaryLogPath -Encoding UTF8
     exit 0
 }
@@ -517,7 +522,10 @@ if ([bool]$EnableAutoRecovery -and $isEndpointRefused -and $consecutiveEndpointR
 
 if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
     $shouldNotifyFailure = $false
-    if ($null -eq $lastFailureNotifiedDt) {
+    if ([string]::IsNullOrWhiteSpace($lastFailureCategory) -or $lastFailureCategory -ne [string]$classification.category) {
+        $shouldNotifyFailure = $true
+    }
+    elseif ($null -eq $lastFailureNotifiedDt) {
         $shouldNotifyFailure = $true
     }
     elseif (([datetimeoffset]::Now - $lastFailureNotifiedDt).TotalMinutes -ge $NotifyFailureCooldownMinutes) {
@@ -528,6 +536,7 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
         $alertTitle = "[R12+RL Ops] FAILURE ($($classification.category))"
         Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'failure' -Title $alertTitle -Body $alertLine -Mention $WebhookMention
         $lastFailureNotifiedAt = [datetimeoffset]::Now.ToString('o')
+        $lastFailureCategory = [string]$classification.category
     }
 
     if ($NotifyOnDegraded -and $consecutiveUnhealthy -ge $NotifyDegradedAfter) {
@@ -550,6 +559,6 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
 if ($Json.IsPresent) {
     Write-Output ($summary | ConvertTo-Json -Depth 6)
 }
-Save-DegradedState -Path $DegradedStateFile -ConsecutiveUnhealthy $consecutiveUnhealthy -ConsecutiveEndpointRefused $consecutiveEndpointRefused -LastDegradedNotifiedAt $lastDegradedNotifiedAt -LastFailureNotifiedAt $lastFailureNotifiedAt -LastRecoveryAt $lastRecoveryAt -LastOk $false
+Save-DegradedState -Path $DegradedStateFile -ConsecutiveUnhealthy $consecutiveUnhealthy -ConsecutiveEndpointRefused $consecutiveEndpointRefused -LastDegradedNotifiedAt $lastDegradedNotifiedAt -LastFailureNotifiedAt $lastFailureNotifiedAt -LastFailureCategory $lastFailureCategory -LastRecoveryAt $lastRecoveryAt -LastOk $false
 ($summary | ConvertTo-Json -Depth 6 -Compress) | Add-Content -Path $SummaryLogPath -Encoding UTF8
 exit 1
