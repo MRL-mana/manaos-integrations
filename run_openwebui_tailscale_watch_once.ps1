@@ -318,12 +318,12 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
 else {
     $failureNotifyAttempted = $false
     $failureNotifySuppressedReason = 'webhook_not_configured'
-    Write-Host "[INFO] Failure webhook suppressed: webhook not configured" -ForegroundColor DarkGray
+    Write-Host "[INFO] Failure webhook suppressed: $failureNotifySuppressedReason" -ForegroundColor DarkGray
 }
 
 if (-not $failureNotified -and [string]::IsNullOrWhiteSpace($failureNotifySuppressedReason) -and $failureNotifyAttempted) {
     $failureNotifySuppressedReason = 'not_triggered'
-    Write-Host "[INFO] Failure webhook suppressed: not triggered" -ForegroundColor DarkGray
+    Write-Host "[INFO] Failure webhook suppressed: $failureNotifySuppressedReason" -ForegroundColor DarkGray
 }
 
 $payload.failure_notify_attempted = $failureNotifyAttempted
@@ -331,5 +331,5 @@ $payload.failure_notified = $failureNotified
 $payload.failure_notify_suppressed_reason = $failureNotifySuppressedReason
 Write-WatchOutput -Payload $payload -LogPath $LogPath -JsonOutFile $JsonOutFile
 
-Save-NotifyState -Path $NotifyStateFile -LastFailureNotifiedAt $lastFailureNotifiedAt -LastStatus 'failure'
+Save-NotifyState -Path $NotifyStateFile -LastFailureNotifiedAt $lastFailureNotifiedAt -LastFailureCategory $lastFailureCategory -LastStatus 'failure'
 exit 1

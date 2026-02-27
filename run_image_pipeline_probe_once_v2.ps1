@@ -162,10 +162,10 @@ if(-not $overallOk){
 
         Save-NotifyState -Path $notifyStateFile -Status 'failure' -Category $failureCategory
         if(-not $notifyOnDown){
-            Write-Host "[INFO] Failure webhook suppressed: notify_on_down disabled" -ForegroundColor DarkGray
+            Write-Host "[INFO] Failure webhook suppressed: $failureNotifySuppressedReason" -ForegroundColor DarkGray
         }
         elseif([string]::IsNullOrWhiteSpace($webhookUrl)){
-            Write-Host "[INFO] Failure webhook suppressed: webhook not configured" -ForegroundColor DarkGray
+            Write-Host "[INFO] Failure webhook suppressed: $failureNotifySuppressedReason" -ForegroundColor DarkGray
         }
         elseif(-not $shouldNotifyFailure){
             Write-Host "[INFO] Failure webhook suppressed: $failureSuppressReason" -ForegroundColor DarkGray
@@ -200,7 +200,7 @@ Write-Host "[OK] Image pipeline probe healthy | $msg" -ForegroundColor Green
 $shouldSendDegraded = $false
 $degradedSuppressReason = ''
 if(-not $notifyOnUnifiedDegraded){
-    $degradedSuppressReason = 'notify_on_unified_degraded disabled'
+    $degradedSuppressReason = 'notify_on_unified_degraded_disabled'
 }
 elseif($routeCategory -ne 'direct_fallback'){
     $degradedSuppressReason = "route=$routeCategory"
@@ -209,7 +209,7 @@ elseif($consecutiveUnifiedNotReady -lt $notifyUnifiedDegradedAfter){
     $degradedSuppressReason = "below_threshold(streak=$consecutiveUnifiedNotReady threshold=$notifyUnifiedDegradedAfter)"
 }
 elseif([string]::IsNullOrWhiteSpace($webhookUrl)){
-    $degradedSuppressReason = 'webhook not configured'
+    $degradedSuppressReason = 'webhook_not_configured'
 }
 else {
     $degradedLastNotifiedAt=$null
@@ -241,7 +241,7 @@ if($notifyOnPartial -and $routeCategory -eq 'direct_fallback' -and -not [string]
     $partialNotifySent = $true
 }
 elseif($notifyOnPartial -and $routeCategory -eq 'direct_fallback' -and [string]::IsNullOrWhiteSpace($webhookUrl)){
-    Write-Host "[INFO] Partial webhook suppressed: webhook not configured" -ForegroundColor DarkGray
+    Write-Host "[INFO] Partial webhook suppressed: webhook_not_configured" -ForegroundColor DarkGray
 }
 
 $recoveryNotifySent = $false
@@ -250,7 +250,7 @@ if($notifyOnRecovery -and -not [string]::IsNullOrWhiteSpace($webhookUrl) -and $r
     $recoveryNotifySent = $true
 }
 elseif($notifyOnRecovery -and $routeCategory -eq 'unified_ready' -and [string]::IsNullOrWhiteSpace($webhookUrl)){
-    Write-Host "[INFO] Recovery webhook suppressed: webhook not configured" -ForegroundColor DarkGray
+    Write-Host "[INFO] Recovery webhook suppressed: webhook_not_configured" -ForegroundColor DarkGray
 }
 
 if($notifyOnSuccess -and -not [string]::IsNullOrWhiteSpace($webhookUrl) -and $lastStatus -eq 'failure'){
@@ -260,7 +260,7 @@ if($notifyOnSuccess -and -not [string]::IsNullOrWhiteSpace($webhookUrl) -and $la
 else {
     Save-NotifyState -Path $notifyStateFile -Status 'success' -Category $routeCategory
     if($notifyOnSuccess -and [string]::IsNullOrWhiteSpace($webhookUrl) -and $lastStatus -eq 'failure'){
-        Write-Host "[INFO] Success webhook suppressed: webhook not configured" -ForegroundColor DarkGray
+        Write-Host "[INFO] Success webhook suppressed: webhook_not_configured" -ForegroundColor DarkGray
     }
 }
 
