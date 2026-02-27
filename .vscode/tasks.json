@@ -99,7 +99,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: Image Pipeline Probe タスク登録（5分）",
+      "label": "ManaOS: Image Pipeline Probe タスク登録（5分 / 推奨 v2）",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -115,7 +115,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: Image Pipeline Probe 単発実行（履歴/通知/復旧）",
+      "label": "ManaOS: Image Pipeline Probe 単発実行（推奨 v2: 履歴/通知/復旧）",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -131,7 +131,7 @@
       "group": "none"
     },
     {
-      "label": "ManaOS: Image Pipeline Probe タスク登録（5分+自動復旧）",
+      "label": "ManaOS: Image Pipeline Probe タスク登録（5分+自動復旧 / 推奨 v2）",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -145,6 +145,22 @@
         "3",
         "-RecoveryCooldownSec",
         "300"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Image Pipeline Probe タスク登録（5分 / 互換 legacy名）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/install_image_pipeline_probe_task.ps1"
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
@@ -186,7 +202,7 @@
     {
       "label": "ManaOS: Image Pipeline Probe 登録→状態確認（ワンボタン）",
       "dependsOn": [
-        "ManaOS: Image Pipeline Probe タスク登録（5分）",
+        "ManaOS: Image Pipeline Probe タスク登録（5分 / 推奨 v2）",
         "ManaOS: Image Pipeline Probe タスク状態確認"
       ],
       "dependsOrder": "sequence",
