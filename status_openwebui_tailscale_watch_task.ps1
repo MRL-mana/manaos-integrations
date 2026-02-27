@@ -29,6 +29,14 @@ Write-Host "TaskName: $TaskName" -ForegroundColor Gray
 $taskInfo = schtasks /Query /TN $TaskName /V /FO LIST
 if ($LASTEXITCODE -ne 0 -or $null -eq $taskInfo) {
     Write-Host "[INFO] Task not found: $TaskName" -ForegroundColor Yellow
+    Write-Host "--- Latest Output ---" -ForegroundColor Cyan
+    Write-Host "latest_ts: N/A" -ForegroundColor Gray
+    Write-Host "latest_ok: False" -ForegroundColor Gray
+    Write-Host "latest_ok_reason: task_not_found" -ForegroundColor Gray
+    Write-Host "latest_failure_category: task_not_found" -ForegroundColor Gray
+    Write-Host "latest_failure_notify_attempted: False" -ForegroundColor Gray
+    Write-Host "latest_failure_notified: False" -ForegroundColor Gray
+    Write-Host "latest_failure_notify_suppressed_reason: task_not_found" -ForegroundColor Gray
     exit 1
 }
 
@@ -135,8 +143,12 @@ try {
     else {
         Write-Host "--- Latest Output ---" -ForegroundColor Cyan
         Write-Host "latest_ts: N/A" -ForegroundColor Gray
-        Write-Host "latest_ok: " -ForegroundColor Gray
-        Write-Host "latest_ok_reason: ok_missing" -ForegroundColor Gray
+        Write-Host "latest_ok: False" -ForegroundColor Gray
+        Write-Host "latest_ok_reason: latest_output_missing" -ForegroundColor Gray
+        Write-Host "latest_failure_category: output_missing" -ForegroundColor Gray
+        Write-Host "latest_failure_notify_attempted: False" -ForegroundColor Gray
+        Write-Host "latest_failure_notified: False" -ForegroundColor Gray
+        Write-Host "latest_failure_notify_suppressed_reason: latest_output_missing" -ForegroundColor Gray
         if (-not [string]::IsNullOrWhiteSpace($latestFile)) {
             Write-Host "[WARN] Latest output file not found: $latestFile" -ForegroundColor Yellow
         }

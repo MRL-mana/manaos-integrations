@@ -29,6 +29,17 @@ Write-Host "TaskName: $TaskName" -ForegroundColor Gray
 $taskInfo = schtasks /Query /TN $TaskName /V /FO LIST
 if ($LASTEXITCODE -ne 0 -or $null -eq $taskInfo) {
     Write-Host "[INFO] Task not found: $TaskName" -ForegroundColor Yellow
+    Write-Host "--- Latest Output ---" -ForegroundColor Cyan
+    Write-Host "latest_ts: N/A" -ForegroundColor Gray
+    Write-Host "latest_ok: False" -ForegroundColor Gray
+    Write-Host "latest_ok_reason: task_not_found" -ForegroundColor Gray
+    Write-Host "latest_failure_category: task_not_found" -ForegroundColor Gray
+    Write-Host "latest_failure_notify_attempted: False" -ForegroundColor Gray
+    Write-Host "latest_failure_notified: False" -ForegroundColor Gray
+    Write-Host "latest_failure_notify_suppressed_reason: task_not_found" -ForegroundColor Gray
+    Write-Host "latest_degraded_notify_attempted: False" -ForegroundColor Gray
+    Write-Host "latest_degraded_notified: False" -ForegroundColor Gray
+    Write-Host "latest_degraded_notify_suppressed_reason: task_not_found" -ForegroundColor Gray
     exit 1
 }
 
@@ -133,8 +144,15 @@ try {
     else {
         Write-Host "--- Latest Output ---" -ForegroundColor Cyan
         Write-Host "latest_ts: N/A" -ForegroundColor Gray
-        Write-Host "latest_ok: " -ForegroundColor Gray
-        Write-Host "latest_ok_reason: ok_missing" -ForegroundColor Gray
+        Write-Host "latest_ok: False" -ForegroundColor Gray
+        Write-Host "latest_ok_reason: summary_missing" -ForegroundColor Gray
+        Write-Host "latest_failure_category: summary_missing" -ForegroundColor Gray
+        Write-Host "latest_failure_notify_attempted: False" -ForegroundColor Gray
+        Write-Host "latest_failure_notified: False" -ForegroundColor Gray
+        Write-Host "latest_failure_notify_suppressed_reason: summary_missing" -ForegroundColor Gray
+        Write-Host "latest_degraded_notify_attempted: False" -ForegroundColor Gray
+        Write-Host "latest_degraded_notified: False" -ForegroundColor Gray
+        Write-Host "latest_degraded_notify_suppressed_reason: summary_missing" -ForegroundColor Gray
         if (-not [string]::IsNullOrWhiteSpace($summaryLogPath)) {
             Write-Host "[WARN] Summary log not found: $summaryLogPath" -ForegroundColor Yellow
         }
