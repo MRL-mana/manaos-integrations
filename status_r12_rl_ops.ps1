@@ -356,11 +356,31 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File $opsWatchStatus
 
 $rlTaskSnapshot = Get-TaskSnapshot -TaskName "ManaOS_RLAnything_Bootstrap_Logon" -RequireConfigFile -DefaultConfigFile $rlConfig
 $opsWatchTaskSnapshot = Get-TaskSnapshot -TaskName "ManaOS_R12_RL_Ops_Watch_15min" -RequireConfigFile -DefaultConfigFile $opsWatchConfig
+$opsWatchSnapshot = Get-OpsWatchSnapshot -ConfigPath $opsWatchConfig
 
 Write-Host ""
 Write-Host "=== Config Linkage Summary ===" -ForegroundColor Cyan
 Write-ConfigLinkSummary -Label "RLAnything" -TaskSnapshot $rlTaskSnapshot
 Write-ConfigLinkSummary -Label "R12+RL Ops Watch" -TaskSnapshot $opsWatchTaskSnapshot
+
+Write-Host ""
+Write-Host "=== Ops Watch Latest Notify ===" -ForegroundColor Cyan
+if ($null -ne $opsWatchSnapshot.latestSummary) {
+    Write-Host "failure_category: $($opsWatchSnapshot.latestSummary.failure_category)" -ForegroundColor Gray
+    Write-Host "failure_notified: $($opsWatchSnapshot.latestSummary.failure_notified)" -ForegroundColor Gray
+    Write-Host "failure_notify_suppressed_reason: $($opsWatchSnapshot.latestSummary.failure_notify_suppressed_reason)" -ForegroundColor Gray
+    Write-Host "degraded_notified: $($opsWatchSnapshot.latestSummary.degraded_notified)" -ForegroundColor Gray
+    Write-Host "degraded_notify_suppressed_reason: $($opsWatchSnapshot.latestSummary.degraded_notify_suppressed_reason)" -ForegroundColor Gray
+}
+else {
+    $opsWatchIssues = @($opsWatchSnapshot.issues)
+    if ($opsWatchIssues.Count -gt 0) {
+        Write-Host "[WARN] Ops watch latest notify unavailable: $($opsWatchIssues -join '; ')" -ForegroundColor Yellow
+    }
+    else {
+        Write-Host "[INFO] Ops watch latest notify unavailable" -ForegroundColor Yellow
+    }
+}
 
 if (Test-Path $r12Log) {
     Write-Host "" 
