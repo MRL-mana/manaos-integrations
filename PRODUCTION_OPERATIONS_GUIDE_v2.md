@@ -138,6 +138,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ".\lint_reason_enum.ps1" -In
 
 VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Lint`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Verify Task Status (JSON)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Verify Lifecycle`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Cooldown Lifecycle Run (Log)`
 

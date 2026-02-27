@@ -1212,6 +1212,23 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: Reason Enum Cooldown Verify Task Status (JSON)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_reason_enum_lint_cooldown_verify_task.ps1",
+        "-AsJson"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: Reason Enum Cooldown Verify Task Uninstall",
       "type": "shell",
       "command": "pwsh",
@@ -1248,6 +1265,7 @@
       "dependsOn": [
         "ManaOS: Reason Enum Cooldown Verify Task Install (Weekly)",
         "ManaOS: Reason Enum Cooldown Verify Task Status",
+        "ManaOS: Reason Enum Cooldown Verify Task Status (JSON)",
         "ManaOS: Reason Enum Cooldown Verify Run Once"
       ],
       "dependsOrder": "sequence",
@@ -1261,6 +1279,7 @@
         "ManaOS: Reason Enum Cooldown Verify Uninstall→Status",
         "ManaOS: Reason Enum Cooldown Verify Task Install (Weekly)",
         "ManaOS: Reason Enum Cooldown Verify Task Status",
+        "ManaOS: Reason Enum Cooldown Verify Task Status (JSON)",
         "ManaOS: Reason Enum Cooldown Verify Run Once",
         "ManaOS: Reason Enum Cooldown Verify Uninstall→Status"
       ],
