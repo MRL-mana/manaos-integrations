@@ -13,6 +13,7 @@ param(
     [bool]$NotifyOnDegraded = $true,
     [int]$NotifyDegradedAfter = 3,
     [int]$NotifyDegradedCooldownMinutes = 60,
+    [int]$NotifyFailureCooldownMinutes = 15,
     [string]$DegradedStateFile = "",
     [switch]$EnableAutoRecovery,
     [int]$RecoverAfterConsecutiveEndpointDown = 3,
@@ -57,6 +58,8 @@ if (Test-Path $ConfigFile) {
         if ($null -ne $cfg.notify_on_degraded) { $NotifyOnDegraded = To-Bool $cfg.notify_on_degraded $true }
         if ($null -ne $cfg.notify_degraded_after) { $NotifyDegradedAfter = [int]$cfg.notify_degraded_after }
         if ($null -ne $cfg.notify_degraded_cooldown_minutes) { $NotifyDegradedCooldownMinutes = [int]$cfg.notify_degraded_cooldown_minutes }
+            if ($null -ne $cfg.notify_failure_cooldown_minutes) { $NotifyFailureCooldownMinutes = [int]$cfg.notify_failure_cooldown_minutes }
+        if ($null -ne $cfg.notify_failure_cooldown_minutes) { $NotifyFailureCooldownMinutes = [int]$cfg.notify_failure_cooldown_minutes }
         if ($cfg.degraded_state_file) { $DegradedStateFile = [string]$cfg.degraded_state_file }
         if ($null -ne $cfg.enable_auto_recovery) { $EnableAutoRecovery = To-Bool $cfg.enable_auto_recovery }
         if ($null -ne $cfg.recover_after_consecutive_endpoint_down) { $RecoverAfterConsecutiveEndpointDown = [int]$cfg.recover_after_consecutive_endpoint_down }
@@ -187,6 +190,7 @@ function Load-DegradedState {
             consecutive_unhealthy = 0
             consecutive_endpoint_refused = 0
             last_degraded_notified_at = ''
+            last_failure_notified_at = ''
             last_recovery_at = ''
             last_ok = $true
         }
@@ -200,6 +204,7 @@ function Load-DegradedState {
             consecutive_unhealthy = 0
             consecutive_endpoint_refused = 0
             last_degraded_notified_at = ''
+            last_failure_notified_at = ''
             last_recovery_at = ''
             last_ok = $true
         }
@@ -212,6 +217,7 @@ function Save-DegradedState {
         [int]$ConsecutiveUnhealthy,
         [int]$ConsecutiveEndpointRefused,
         [string]$LastDegradedNotifiedAt,
+        [string]$LastFailureNotifiedAt,
         [string]$LastRecoveryAt,
         [bool]$LastOk
     )
@@ -225,6 +231,7 @@ function Save-DegradedState {
         consecutive_unhealthy = $ConsecutiveUnhealthy
         consecutive_endpoint_refused = $ConsecutiveEndpointRefused
         last_degraded_notified_at = $LastDegradedNotifiedAt
+        last_failure_notified_at = $LastFailureNotifiedAt
         last_recovery_at = $LastRecoveryAt
         last_ok = $LastOk
         updated_at = [datetimeoffset]::Now.ToString('o')
@@ -363,6 +370,8 @@ $NotifyDegradedCooldownMinutes = [int]$notify.notify_degraded_cooldown_minutes
 
 if ($NotifyDegradedAfter -lt 1) { $NotifyDegradedAfter = 1 }
 if ($NotifyDegradedCooldownMinutes -lt 0) { $NotifyDegradedCooldownMinutes = 0 }
+if ($NotifyFailureCooldownMinutes -lt 0) { $NotifyFailureCooldownMinutes = 0 }
+if ($NotifyFailureCooldownMinutes -lt 0) { $NotifyFailureCooldownMinutes = 0 }
 
 $statusOutput = & pwsh -NoProfile -ExecutionPolicy Bypass -File $StatusScript -Json -JsonOutFile $JsonOutFile -TailLines $TailLines -MaxR12LogAgeMinutes $MaxR12LogAgeMinutes 2>&1
 $statusExit = $LASTEXITCODE
@@ -420,6 +429,12 @@ if (-not [string]::IsNullOrWhiteSpace($lastDegradedNotifiedAt)) {
     try { $lastDegradedNotifiedDt = [datetimeoffset]::Parse($lastDegradedNotifiedAt) } catch { $lastDegradedNotifiedDt = $null }
 }
 
+$lastFailureNotifiedAt = [string]$degradedState.last_failure_notified_at
+$lastFailureNotifiedDt = $null
+if (-not [string]::IsNullOrWhiteSpace($lastFailureNotifiedAt)) {
+    try { $lastFailureNotifiedDt = [datetimeoffset]::Parse($lastFailureNotifiedAt) } catch { $lastFailureNotifiedDt = $null }
+}
+
 $lastRecoveryAt = [string]$degradedState.last_recovery_at
 $lastRecoveryDt = $null
 if (-not [string]::IsNullOrWhiteSpace($lastRecoveryAt)) {
@@ -440,7 +455,7 @@ if ($ok) {
     if ($Json.IsPresent) {
         Write-Output ($summary | ConvertTo-Json -Depth 6)
     }
-    Save-DegradedState -Path $DegradedStateFile -ConsecutiveUnhealthy $consecutiveUnhealthy -ConsecutiveEndpointRefused 0 -LastDegradedNotifiedAt $lastDegradedNotifiedAt -LastRecoveryAt $lastRecoveryAt -LastOk $true
+    Save-DegradedState -Path $DegradedStateFile -ConsecutiveUnhealthy $consecutiveUnhealthy -ConsecutiveEndpointRefused 0 -LastDegradedNotifiedAt $lastDegradedNotifiedAt -LastFailureNotifiedAt $lastFailureNotifiedAt -LastRecoveryAt $lastRecoveryAt -LastOk $true
     ($summary | ConvertTo-Json -Depth 6 -Compress) | Add-Content -Path $SummaryLogPath -Encoding UTF8
     exit 0
 }
@@ -501,8 +516,19 @@ if ([bool]$EnableAutoRecovery -and $isEndpointRefused -and $consecutiveEndpointR
 }
 
 if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
-    $alertTitle = "[R12+RL Ops] FAILURE ($($classification.category))"
-    Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'failure' -Title $alertTitle -Body $alertLine -Mention $WebhookMention
+    $shouldNotifyFailure = $false
+    if ($null -eq $lastFailureNotifiedDt) {
+        $shouldNotifyFailure = $true
+    }
+    elseif (([datetimeoffset]::Now - $lastFailureNotifiedDt).TotalMinutes -ge $NotifyFailureCooldownMinutes) {
+        $shouldNotifyFailure = $true
+    }
+
+    if ($shouldNotifyFailure) {
+        $alertTitle = "[R12+RL Ops] FAILURE ($($classification.category))"
+        Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'failure' -Title $alertTitle -Body $alertLine -Mention $WebhookMention
+        $lastFailureNotifiedAt = [datetimeoffset]::Now.ToString('o')
+    }
 
     if ($NotifyOnDegraded -and $consecutiveUnhealthy -ge $NotifyDegradedAfter) {
         $shouldNotifyDegraded = $false
@@ -524,6 +550,6 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
 if ($Json.IsPresent) {
     Write-Output ($summary | ConvertTo-Json -Depth 6)
 }
-Save-DegradedState -Path $DegradedStateFile -ConsecutiveUnhealthy $consecutiveUnhealthy -ConsecutiveEndpointRefused $consecutiveEndpointRefused -LastDegradedNotifiedAt $lastDegradedNotifiedAt -LastRecoveryAt $lastRecoveryAt -LastOk $false
+Save-DegradedState -Path $DegradedStateFile -ConsecutiveUnhealthy $consecutiveUnhealthy -ConsecutiveEndpointRefused $consecutiveEndpointRefused -LastDegradedNotifiedAt $lastDegradedNotifiedAt -LastFailureNotifiedAt $lastFailureNotifiedAt -LastRecoveryAt $lastRecoveryAt -LastOk $false
 ($summary | ConvertTo-Json -Depth 6 -Compress) | Add-Content -Path $SummaryLogPath -Encoding UTF8
 exit 1
