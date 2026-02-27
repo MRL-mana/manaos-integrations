@@ -261,6 +261,7 @@ function Get-OpsWatchSnapshot {
         summaryLogPath = ""
         stateFile = ""
         latestSummary = $null
+        latestTs = 'N/A'
         latestOk = $null
         latestOkReason = 'ok_missing'
         notifyState = $null
@@ -301,6 +302,12 @@ function Get-OpsWatchSnapshot {
             $latestSummaryLine = Get-Content -Path $summaryLogPath -Tail 1
             if (-not [string]::IsNullOrWhiteSpace($latestSummaryLine)) {
                 $result.latestSummary = $latestSummaryLine | ConvertFrom-Json
+
+                $resolvedLatestTs = [string]$result.latestSummary.ts
+                if ([string]::IsNullOrWhiteSpace($resolvedLatestTs)) {
+                    $resolvedLatestTs = 'N/A'
+                }
+                $result.latestTs = $resolvedLatestTs
 
                 $resolvedLatestOk = Resolve-OpsLatestOk -Summary $result.latestSummary
                 $result.latestOk = $resolvedLatestOk.latestOk
@@ -402,6 +409,7 @@ if ($Json.IsPresent) {
         rlTask = $rlTask
         opsWatchTask = $opsWatchTask
         opsWatch = $opsWatchSnapshot
+        latest_ts = [string]$opsWatchSnapshot.latestTs
         latest_ok = $opsWatchSnapshot.latestOk
         latest_ok_reason = [string]$opsWatchSnapshot.latestOkReason
         latest_failure_category = $latestFailureCategory

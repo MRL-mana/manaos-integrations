@@ -413,6 +413,7 @@ $summary = [pscustomobject]@{
     r12_latest_failed = $latestFailed
     ops_watch_last_result = [string]$payload.opsWatchTask.lastResult
     ops_watch_state = [string]$payload.opsWatchTask.state
+    status_latest_ts = if (-not [string]::IsNullOrWhiteSpace([string]$payload.latest_ts)) { [string]$payload.latest_ts } elseif (-not [string]::IsNullOrWhiteSpace([string]$payload.opsWatch.latestTs)) { [string]$payload.opsWatch.latestTs } else { [string]$payload.opsWatch.latestSummary.ts }
     status_latest_ok = if ($null -ne $payload.latest_ok) { $payload.latest_ok } else { $payload.opsWatch.latestOk }
     status_latest_ok_reason = if (-not [string]::IsNullOrWhiteSpace([string]$payload.latest_ok_reason)) { [string]$payload.latest_ok_reason } else { [string]$payload.opsWatch.latestOkReason }
     status_latest_failure_category = [string]$payload.latest_failure_category
