@@ -97,11 +97,12 @@ if (-not [string]::IsNullOrWhiteSpace($latestLastResult)) {
 }
 
 Write-Host "--- Latest Output ---" -ForegroundColor Cyan
+Write-Host "latest_ts: $latestLastRun" -ForegroundColor Gray
+Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
 Write-Host "latest_last_run: $latestLastRun" -ForegroundColor Gray
 Write-Host "latest_last_result: $latestLastResult" -ForegroundColor Gray
 Write-Host "latest_state: $latestState" -ForegroundColor Gray
 Write-Host "latest_next_run: $latestNextRun" -ForegroundColor Gray
-Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
 
 Write-Host "ConfigFile: $ConfigFile" -ForegroundColor Gray
 if (-not (Test-Path $ConfigFile)) {
