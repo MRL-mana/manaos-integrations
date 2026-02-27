@@ -132,6 +132,15 @@ try {
             Write-Host "[WARN] Failed to parse latest output file: $latestFile" -ForegroundColor Yellow
         }
     }
+    else {
+        Write-Host "--- Latest Output ---" -ForegroundColor Cyan
+        Write-Host "latest_ts: N/A" -ForegroundColor Gray
+        Write-Host "latest_ok: " -ForegroundColor Gray
+        Write-Host "latest_ok_reason: ok_missing" -ForegroundColor Gray
+        if (-not [string]::IsNullOrWhiteSpace($latestFile)) {
+            Write-Host "[WARN] Latest output file not found: $latestFile" -ForegroundColor Yellow
+        }
+    }
 }
 catch {
     Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow
