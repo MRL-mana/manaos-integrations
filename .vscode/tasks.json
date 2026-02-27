@@ -119,6 +119,28 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: Image Pipeline Probe タスク登録（15分 / 推奨 v2 / 劣化3回+60分）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/install_image_pipeline_probe_task_v2.ps1",
+        "-IntervalMinutes",
+        "15",
+        "-NotifyUnifiedDegradedAfter",
+        "3",
+        "-NotifyUnifiedDegradedCooldownMinutes",
+        "60"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: Image Pipeline Probe 単発実行（推奨 v2: 履歴/通知/復旧）",
       "type": "shell",
       "command": "pwsh",
@@ -211,6 +233,28 @@
       "label": "ManaOS: Image Pipeline Probe 登録→状態確認（ワンボタン / 推奨 v2）",
       "dependsOn": [
         "ManaOS: Image Pipeline Probe タスク登録（5分+自動復旧 / 推奨 v2 / 劣化3回+60分）",
+        "ManaOS: Image Pipeline Probe タスク状態確認"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Image Pipeline Probe 登録→状態確認（ワンボタン / 5分 / 推奨 v2）",
+      "dependsOn": [
+        "ManaOS: Image Pipeline Probe タスク登録（5分 / 推奨 v2 / 劣化3回+60分）",
+        "ManaOS: Image Pipeline Probe タスク状態確認"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Image Pipeline Probe 登録→状態確認（ワンボタン / 15分 / 推奨 v2）",
+      "dependsOn": [
+        "ManaOS: Image Pipeline Probe タスク登録（15分 / 推奨 v2 / 劣化3回+60分）",
         "ManaOS: Image Pipeline Probe タスク状態確認"
       ],
       "dependsOrder": "sequence",
@@ -528,6 +572,28 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: R12+RL 監視タスク登録（5分 / 劣化3回+60分 / 推奨）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/install_r12_rl_ops_watch_task.ps1",
+        "-IntervalMinutes",
+        "5",
+        "-NotifyDegradedAfter",
+        "3",
+        "-NotifyDegradedCooldownMinutes",
+        "60"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: R12+RL 監視タスク状態確認",
       "type": "shell",
       "command": "pwsh",
@@ -577,6 +643,28 @@
     },
     {
       "label": "ManaOS: R12+RL 監視登録→状態確認（ワンボタン / 劣化3回+60分 / 推奨）",
+      "dependsOn": [
+        "ManaOS: R12+RL 監視タスク登録（15分 / 劣化3回+60分 / 推奨）",
+        "ManaOS: R12+RL 監視タスク状態確認"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: R12+RL 監視登録→状態確認（ワンボタン / 5分 / 劣化3回+60分 / 推奨）",
+      "dependsOn": [
+        "ManaOS: R12+RL 監視タスク登録（5分 / 劣化3回+60分 / 推奨）",
+        "ManaOS: R12+RL 監視タスク状態確認"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: R12+RL 監視登録→状態確認（ワンボタン / 15分 / 劣化3回+60分 / 推奨）",
       "dependsOn": [
         "ManaOS: R12+RL 監視タスク登録（15分 / 劣化3回+60分 / 推奨）",
         "ManaOS: R12+RL 監視タスク状態確認"
