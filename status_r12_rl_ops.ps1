@@ -201,6 +201,50 @@ function Get-R12LogSnapshot {
     }
 }
 
+function Resolve-OpsLatestOk {
+    param(
+        $Summary
+    )
+
+    $latestOk = $null
+    $latestOkReason = 'ok_missing'
+
+    if ($null -eq $Summary) {
+        return @{
+            latestOk = $latestOk
+            latestOkReason = $latestOkReason
+        }
+    }
+
+    if ($null -ne $Summary.ok) {
+        try { $latestOk = [bool]$Summary.ok } catch { $latestOk = $null }
+        if ($null -ne $latestOk) { $latestOkReason = 'from_ok_field' }
+    }
+    elseif ($null -ne $Summary.issues) {
+        try {
+            $latestOk = (@($Summary.issues).Count -eq 0)
+            $latestOkReason = 'from_issues_count'
+        }
+        catch { $latestOk = $null }
+    }
+    elseif ($null -ne $Summary.r12_latest_failed) {
+        try {
+            $latestOk = ([int]$Summary.r12_latest_failed -eq 0)
+            $latestOkReason = 'from_r12_latest_failed'
+        }
+        catch { $latestOk = $null }
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace([string]$Summary.failure_category)) {
+        $latestOk = $false
+        $latestOkReason = 'from_failure_category'
+    }
+
+    return @{
+        latestOk = $latestOk
+        latestOkReason = $latestOkReason
+    }
+}
+
 function Get-OpsWatchSnapshot {
     param(
         [string]$ConfigPath
@@ -255,28 +299,9 @@ function Get-OpsWatchSnapshot {
             if (-not [string]::IsNullOrWhiteSpace($latestSummaryLine)) {
                 $result.latestSummary = $latestSummaryLine | ConvertFrom-Json
 
-                if ($null -ne $result.latestSummary.ok) {
-                    try { $result.latestOk = [bool]$result.latestSummary.ok } catch { $result.latestOk = $null }
-                    if ($null -ne $result.latestOk) { $result.latestOkReason = 'from_ok_field' }
-                }
-                elseif ($null -ne $result.latestSummary.issues) {
-                    try {
-                        $result.latestOk = (@($result.latestSummary.issues).Count -eq 0)
-                        $result.latestOkReason = 'from_issues_count'
-                    }
-                    catch { $result.latestOk = $null }
-                }
-                elseif ($null -ne $result.latestSummary.r12_latest_failed) {
-                    try {
-                        $result.latestOk = ([int]$result.latestSummary.r12_latest_failed -eq 0)
-                        $result.latestOkReason = 'from_r12_latest_failed'
-                    }
-                    catch { $result.latestOk = $null }
-                }
-                elseif (-not [string]::IsNullOrWhiteSpace([string]$result.latestSummary.failure_category)) {
-                    $result.latestOk = $false
-                    $result.latestOkReason = 'from_failure_category'
-                }
+                $resolvedLatestOk = Resolve-OpsLatestOk -Summary $result.latestSummary
+                $result.latestOk = $resolvedLatestOk.latestOk
+                $result.latestOkReason = $resolvedLatestOk.latestOkReason
             }
             else {
                 $issues.Add("Ops watch summary log is empty: $summaryLogPath")
@@ -341,6 +366,32 @@ if ($Json.IsPresent) {
     $opsWatchSnapshot = Get-OpsWatchSnapshot -ConfigPath $opsWatchConfig
 
     $allIssues = @($r12Task.issues) + @($rlTask.issues) + @($opsWatchTask.issues) + @($r12LogSnapshot.issues) + @($opsWatchSnapshot.issues)
+
+    $latestFailureCategory = ''
+    $latestFailureNotifyAttempted = $null
+    $latestFailureNotified = $null
+    $latestFailureNotifySuppressedReason = ''
+    $latestDegradedNotifyAttempted = $null
+    $latestDegradedNotified = $null
+    $latestDegradedNotifySuppressedReason = ''
+    if ($null -ne $opsWatchSnapshot.latestSummary) {
+        $latestFailureCategory = [string]$opsWatchSnapshot.latestSummary.failure_category
+        if ($null -ne $opsWatchSnapshot.latestSummary.failure_notify_attempted) {
+            try { $latestFailureNotifyAttempted = [bool]$opsWatchSnapshot.latestSummary.failure_notify_attempted } catch { $latestFailureNotifyAttempted = $null }
+        }
+        if ($null -ne $opsWatchSnapshot.latestSummary.failure_notified) {
+            try { $latestFailureNotified = [bool]$opsWatchSnapshot.latestSummary.failure_notified } catch { $latestFailureNotified = $null }
+        }
+        $latestFailureNotifySuppressedReason = [string]$opsWatchSnapshot.latestSummary.failure_notify_suppressed_reason
+        if ($null -ne $opsWatchSnapshot.latestSummary.degraded_notify_attempted) {
+            try { $latestDegradedNotifyAttempted = [bool]$opsWatchSnapshot.latestSummary.degraded_notify_attempted } catch { $latestDegradedNotifyAttempted = $null }
+        }
+        if ($null -ne $opsWatchSnapshot.latestSummary.degraded_notified) {
+            try { $latestDegradedNotified = [bool]$opsWatchSnapshot.latestSummary.degraded_notified } catch { $latestDegradedNotified = $null }
+        }
+        $latestDegradedNotifySuppressedReason = [string]$opsWatchSnapshot.latestSummary.degraded_notify_suppressed_reason
+    }
+
     $payload = @{
         ok = ($allIssues.Count -eq 0)
         checkedAt = [datetimeoffset]::Now.ToString("o")
@@ -348,6 +399,13 @@ if ($Json.IsPresent) {
         rlTask = $rlTask
         opsWatchTask = $opsWatchTask
         opsWatch = $opsWatchSnapshot
+        latest_failure_category = $latestFailureCategory
+        latest_failure_notify_attempted = $latestFailureNotifyAttempted
+        latest_failure_notified = $latestFailureNotified
+        latest_failure_notify_suppressed_reason = $latestFailureNotifySuppressedReason
+        latest_degraded_notify_attempted = $latestDegradedNotifyAttempted
+        latest_degraded_notified = $latestDegradedNotified
+        latest_degraded_notify_suppressed_reason = $latestDegradedNotifySuppressedReason
         r12Log = @{
             path = $r12Log
             exists = $r12LogSnapshot.exists
@@ -403,30 +461,9 @@ if ($null -ne $opsWatchSnapshot.latestSummary) {
     if ([string]::IsNullOrWhiteSpace($latestTs)) {
         $latestTs = 'N/A'
     }
-    $latestOk = $null
-    $latestOkReason = 'ok_missing'
-    if ($null -ne $opsWatchSnapshot.latestSummary.ok) {
-        try { $latestOk = [bool]$opsWatchSnapshot.latestSummary.ok } catch { $latestOk = $null }
-        if ($null -ne $latestOk) { $latestOkReason = 'from_ok_field' }
-    }
-    elseif ($null -ne $opsWatchSnapshot.latestSummary.issues) {
-        try {
-            $latestOk = (@($opsWatchSnapshot.latestSummary.issues).Count -eq 0)
-            $latestOkReason = 'from_issues_count'
-        }
-        catch { $latestOk = $null }
-    }
-    elseif ($null -ne $opsWatchSnapshot.latestSummary.r12_latest_failed) {
-        try {
-            $latestOk = ([int]$opsWatchSnapshot.latestSummary.r12_latest_failed -eq 0)
-            $latestOkReason = 'from_r12_latest_failed'
-        }
-        catch { $latestOk = $null }
-    }
-    elseif (-not [string]::IsNullOrWhiteSpace([string]$opsWatchSnapshot.latestSummary.failure_category)) {
-        $latestOk = $false
-        $latestOkReason = 'from_failure_category'
-    }
+    $resolvedLatestOk = Resolve-OpsLatestOk -Summary $opsWatchSnapshot.latestSummary
+    $latestOk = $resolvedLatestOk.latestOk
+    $latestOkReason = $resolvedLatestOk.latestOkReason
 
     $latestFailureCategory = [string]$opsWatchSnapshot.latestSummary.failure_category
     $latestFailureNotifyAttempted = $null
