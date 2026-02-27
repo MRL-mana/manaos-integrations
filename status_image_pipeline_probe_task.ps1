@@ -68,6 +68,7 @@ try {
     if (-not [string]::IsNullOrWhiteSpace($historyFile) -and (Test-Path $historyFile)) {
         try {
             $historyLast = Get-Content -Path $historyFile -Tail 1 | ConvertFrom-Json
+            Write-Host "latest_failure_category: $($historyLast.failure_category)" -ForegroundColor Gray
             Write-Host "latest_failure_notified: $($historyLast.failure_notified)" -ForegroundColor Gray
             Write-Host "latest_failure_notify_suppressed_reason: $($historyLast.failure_notify_suppressed_reason)" -ForegroundColor Gray
         }
