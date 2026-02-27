@@ -406,9 +406,9 @@ if ($null -ne $payload.r12Log -and $null -ne $payload.r12Log.latest) {
 $summary = [pscustomobject][ordered]@{
     ts = [datetimeoffset]::Now.ToString('o')
     ok = $ok
-    status_latest_ts = if (-not [string]::IsNullOrWhiteSpace([string]$payload.latest_ts)) { [string]$payload.latest_ts } elseif (-not [string]::IsNullOrWhiteSpace([string]$payload.opsWatch.latestTs)) { [string]$payload.opsWatch.latestTs } else { [string]$payload.opsWatch.latestSummary.ts }
+    status_latest_ts = if (-not [string]::IsNullOrWhiteSpace([string]$payload.latest_ts)) { [string]$payload.latest_ts } elseif (-not [string]::IsNullOrWhiteSpace([string]$payload.opsWatch.latestTs)) { [string]$payload.opsWatch.latestTs } elseif (-not [string]::IsNullOrWhiteSpace([string]$payload.opsWatch.latestSummary.ts)) { [string]$payload.opsWatch.latestSummary.ts } else { 'N/A' }
     status_latest_ok = if ($null -ne $payload.latest_ok) { $payload.latest_ok } else { $payload.opsWatch.latestOk }
-    status_latest_ok_reason = if (-not [string]::IsNullOrWhiteSpace([string]$payload.latest_ok_reason)) { [string]$payload.latest_ok_reason } else { [string]$payload.opsWatch.latestOkReason }
+    status_latest_ok_reason = if (-not [string]::IsNullOrWhiteSpace([string]$payload.latest_ok_reason)) { [string]$payload.latest_ok_reason } elseif (-not [string]::IsNullOrWhiteSpace([string]$payload.opsWatch.latestOkReason)) { [string]$payload.opsWatch.latestOkReason } else { 'ok_missing' }
     r12_state = $r12State
     r12_last_result = $r12Result
     rl_state = $rlState
