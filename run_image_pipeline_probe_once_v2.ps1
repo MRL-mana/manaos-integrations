@@ -93,6 +93,21 @@ if($enableAutoRecovery -and ($shouldRecoverByDown -or $shouldRecoverByUnifiedDeg
 }
 
 $msg="category=$routeCategory unifiedReady=$unifiedReady directReady=$directReady consecutiveDown=$consecutiveDown consecutiveUnifiedNotReady=$consecutiveUnifiedNotReady unifiedApi=$unifiedApiUrl comfyUi=$comfyUiUrl"
+$failureCategory = 'none'
+if(-not $overallOk){
+    if($routeCategory -eq 'pipeline_down' -and -not $unifiedReady -and -not $directReady){
+        $failureCategory = 'full_pipeline_down'
+    }
+    elseif($routeCategory -eq 'pipeline_down'){
+        $failureCategory = 'pipeline_down_partial_signal'
+    }
+    elseif($routeCategory -eq 'direct_fallback'){
+        $failureCategory = 'unified_degraded_fallback'
+    }
+    else {
+        $failureCategory = 'unexpected_failure_state'
+    }
+}
 $lastStatus=[string]$notifyState.last_status
 $lastCategory=[string]$notifyState.last_category
 $lastNotifiedAt=$null; if(-not [string]::IsNullOrWhiteSpace([string]$notifyState.last_notified_at)){ try{$lastNotifiedAt=[datetimeoffset]::Parse([string]$notifyState.last_notified_at)}catch{$lastNotifiedAt=$null} }
@@ -101,7 +116,7 @@ $failureNotified = $false
 $failureNotifySuppressedReason = ''
 
 if(-not $overallOk){
-    Write-Host "[ALERT] Image pipeline probe failed | $msg" -ForegroundColor Red
+    Write-Host "[ALERT] Image pipeline probe failed | failureCategory=$failureCategory $msg" -ForegroundColor Red
 
     $shouldNotifyFailure = $false
     $failureSuppressReason = ''
@@ -123,7 +138,8 @@ if(-not $overallOk){
 
     if($notifyOnDown -and $shouldNotifyFailure -and -not [string]::IsNullOrWhiteSpace($webhookUrl)){
         $failureNotifyAttempted = $true
-        Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'failure' -Title "[Image Pipeline Probe] FAILURE ($routeCategory)" -Body $msg -Mention $webhookMention
+        $failureBody = "failureCategory=$failureCategory $msg"
+        Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'failure' -Title "[Image Pipeline Probe] FAILURE ($routeCategory)" -Body $failureBody -Mention $webhookMention
         $failureNotified = $true
         $failureNotifySuppressedReason = ''
         Save-NotifyState -Path $notifyStateFile -Status 'failure' -Category $routeCategory -MarkNotified
@@ -159,6 +175,7 @@ if(-not $overallOk){
     Append-ProbeHistory -Path $historyFile -Entry ([ordered]@{
         ts=$now.ToString('o')
         category=$routeCategory
+        failure_category=$failureCategory
         unified_ready=$unifiedReady
         direct_ready=$directReady
         overall_ok=$overallOk
