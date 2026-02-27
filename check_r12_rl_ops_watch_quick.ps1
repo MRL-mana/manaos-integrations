@@ -416,6 +416,10 @@ $summary = [pscustomobject]@{
     auto_recovery_attempted = $false
     auto_recovery_started = $false
     auto_recovery_error = ''
+    failure_notified = $false
+    degraded_notified = $false
+    failure_notify_suppressed_reason = ''
+    degraded_notify_suppressed_reason = ''
     issues = $issues
     status_json = $JsonOutFile
 }
@@ -524,6 +528,7 @@ if ([bool]$EnableAutoRecovery -and $isEndpointRefused -and $consecutiveEndpointR
 }
 
 if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
+    $now = [datetimeoffset]::Now
     $shouldNotifyFailure = $false
     if ([string]::IsNullOrWhiteSpace($lastFailureCategory) -or $lastFailureCategory -ne [string]$classification.category) {
         $shouldNotifyFailure = $true
@@ -531,15 +536,27 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
     elseif ($null -eq $lastFailureNotifiedDt) {
         $shouldNotifyFailure = $true
     }
-    elseif (([datetimeoffset]::Now - $lastFailureNotifiedDt).TotalMinutes -ge $NotifyFailureCooldownMinutes) {
-        $shouldNotifyFailure = $true
+    else {
+        $failureElapsedMinutes = ($now - $lastFailureNotifiedDt).TotalMinutes
+        if ($failureElapsedMinutes -ge $NotifyFailureCooldownMinutes) {
+            $shouldNotifyFailure = $true
+        }
+        else {
+            $remainingFailureCooldown = [math]::Ceiling($NotifyFailureCooldownMinutes - $failureElapsedMinutes)
+            $summary.failure_notify_suppressed_reason = "same_category_cooldown(${remainingFailureCooldown}m_remaining)"
+        }
     }
 
     if ($shouldNotifyFailure) {
+        $summary.failure_notify_suppressed_reason = ''
         $alertTitle = "[R12+RL Ops] FAILURE ($($classification.category))"
         Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'failure' -Title $alertTitle -Body $alertLine -Mention $WebhookMention
-        $lastFailureNotifiedAt = [datetimeoffset]::Now.ToString('o')
+        $lastFailureNotifiedAt = $now.ToString('o')
         $lastFailureCategory = [string]$classification.category
+        $summary.failure_notified = $true
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($summary.failure_notify_suppressed_reason)) {
+        Write-Host "[INFO] Failure notification suppressed: $($summary.failure_notify_suppressed_reason)" -ForegroundColor DarkGray
     }
 
     if ($NotifyOnDegraded -and $consecutiveUnhealthy -ge $NotifyDegradedAfter) {
@@ -550,18 +567,40 @@ if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
         elseif ($null -eq $lastDegradedNotifiedDt) {
             $shouldNotifyDegraded = $true
         }
-        elseif (([datetimeoffset]::Now - $lastDegradedNotifiedDt).TotalMinutes -ge $NotifyDegradedCooldownMinutes) {
-            $shouldNotifyDegraded = $true
+        else {
+            $degradedElapsedMinutes = ($now - $lastDegradedNotifiedDt).TotalMinutes
+            if ($degradedElapsedMinutes -ge $NotifyDegradedCooldownMinutes) {
+                $shouldNotifyDegraded = $true
+            }
+            else {
+                $remainingDegradedCooldown = [math]::Ceiling($NotifyDegradedCooldownMinutes - $degradedElapsedMinutes)
+                $summary.degraded_notify_suppressed_reason = "same_category_cooldown(${remainingDegradedCooldown}m_remaining)"
+            }
         }
 
         if ($shouldNotifyDegraded) {
+            $summary.degraded_notify_suppressed_reason = ''
             $degradedTitle = "[R12+RL Ops] DEGRADED (unhealthy_streak)"
             $degradedBody = "$alertLine threshold=$NotifyDegradedAfter streak=$consecutiveUnhealthy"
             Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'warning' -Title $degradedTitle -Body $degradedBody -Mention $WebhookMention
-            $lastDegradedNotifiedAt = [datetimeoffset]::Now.ToString('o')
+            $lastDegradedNotifiedAt = $now.ToString('o')
             $lastDegradedCategory = [string]$classification.category
+            $summary.degraded_notified = $true
+        }
+        elseif (-not [string]::IsNullOrWhiteSpace($summary.degraded_notify_suppressed_reason)) {
+            Write-Host "[INFO] Degraded notification suppressed: $($summary.degraded_notify_suppressed_reason)" -ForegroundColor DarkGray
         }
     }
+    elseif ($NotifyOnDegraded -and $consecutiveUnhealthy -lt $NotifyDegradedAfter) {
+        $summary.degraded_notify_suppressed_reason = "below_threshold(streak=$consecutiveUnhealthy threshold=$NotifyDegradedAfter)"
+    }
+    elseif (-not $NotifyOnDegraded) {
+        $summary.degraded_notify_suppressed_reason = 'disabled'
+    }
+}
+else {
+    $summary.failure_notify_suppressed_reason = 'webhook_not_configured'
+    $summary.degraded_notify_suppressed_reason = 'webhook_not_configured'
 }
 if ($Json.IsPresent) {
     Write-Output ($summary | ConvertTo-Json -Depth 6)
