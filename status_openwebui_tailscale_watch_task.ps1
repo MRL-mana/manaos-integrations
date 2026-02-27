@@ -93,8 +93,13 @@ try {
                 $latestOk = ($openwebuiOk -and $portListening -and $tailscaleOk)
             }
 
+            $latestTsDisplay = [string]$latest.ts
+            if ([string]::IsNullOrWhiteSpace($latestTsDisplay)) {
+                $latestTsDisplay = 'N/A'
+            }
+
             Write-Host "--- Latest Output ---" -ForegroundColor Cyan
-            Write-Host "latest_ts: $($latest.ts)" -ForegroundColor Gray
+            Write-Host "latest_ts: $latestTsDisplay" -ForegroundColor Gray
             Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
             Write-Host "latest_failure_category: $($latest.failure_category)" -ForegroundColor Gray
             Write-Host "latest_failure_notify_attempted: $($latest.failure_notify_attempted)" -ForegroundColor Gray

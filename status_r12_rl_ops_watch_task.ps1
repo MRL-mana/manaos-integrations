@@ -91,8 +91,13 @@ try {
                 $latestOk = $false
             }
 
+            $latestTsDisplay = [string]$latestSummary.ts
+            if ([string]::IsNullOrWhiteSpace($latestTsDisplay)) {
+                $latestTsDisplay = 'N/A'
+            }
+
             Write-Host "--- Latest Summary ---" -ForegroundColor Cyan
-            Write-Host "latest_ts: $($latestSummary.ts)" -ForegroundColor Gray
+            Write-Host "latest_ts: $latestTsDisplay" -ForegroundColor Gray
             Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
             Write-Host "latest_failure_category: $($latestSummary.failure_category)" -ForegroundColor Gray
             Write-Host "latest_failure_notify_attempted: $($latestSummary.failure_notify_attempted)" -ForegroundColor Gray

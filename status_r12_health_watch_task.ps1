@@ -37,8 +37,13 @@ if (Test-Path $LogPath) {
             $latestOk = ($latestFailed -eq 0)
         }
 
+        $latestTsDisplay = [string]$latest.ts
+        if ([string]::IsNullOrWhiteSpace($latestTsDisplay)) {
+            $latestTsDisplay = 'N/A'
+        }
+
         Write-Host "--- Latest Output ---" -ForegroundColor Cyan
-        Write-Host "latest_ts: $($latest.ts)" -ForegroundColor Gray
+        Write-Host "latest_ts: $latestTsDisplay" -ForegroundColor Gray
         Write-Host "latest_total: $($latest.total)" -ForegroundColor Gray
         Write-Host "latest_passed: $($latest.passed)" -ForegroundColor Gray
         Write-Host "latest_failed: $($latest.failed)" -ForegroundColor Gray
