@@ -405,9 +405,9 @@ if ($Json.IsPresent) {
     $payload = [ordered]@{
         ok = ($allIssues.Count -eq 0)
         checkedAt = [datetimeoffset]::Now.ToString("o")
-        latest_ts = [string]$opsWatchSnapshot.latestTs
+        latest_ts = if (-not [string]::IsNullOrWhiteSpace([string]$opsWatchSnapshot.latestTs)) { [string]$opsWatchSnapshot.latestTs } else { 'N/A' }
         latest_ok = $opsWatchSnapshot.latestOk
-        latest_ok_reason = [string]$opsWatchSnapshot.latestOkReason
+        latest_ok_reason = if (-not [string]::IsNullOrWhiteSpace([string]$opsWatchSnapshot.latestOkReason)) { [string]$opsWatchSnapshot.latestOkReason } else { 'ok_missing' }
         latest_failure_category = $latestFailureCategory
         latest_failure_notify_attempted = $latestFailureNotifyAttempted
         latest_failure_notified = $latestFailureNotified
