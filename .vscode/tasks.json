@@ -1660,6 +1660,89 @@
       "group": "test"
     },
     {
+      "label": "ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Run",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/run_reason_enum_ops_quick_verify_gate_task_lifecycle.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Run (KeepInstalled)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/run_reason_enum_ops_quick_verify_gate_task_lifecycle.ps1",
+        "-KeepInstalled"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Status",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_reason_enum_ops_quick_verify_gate_task_lifecycle.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Status (JSON)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_reason_enum_ops_quick_verify_gate_task_lifecycle.ps1",
+        "-AsJson"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Status (RequirePass)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_reason_enum_ops_quick_verify_gate_task_lifecycle.ps1",
+        "-RequirePass"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
       "label": "ManaOS: Reason Enum Ops Snapshot Task Install (30min)",
       "type": "shell",
       "command": "pwsh",

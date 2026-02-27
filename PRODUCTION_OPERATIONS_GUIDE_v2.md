@@ -143,6 +143,11 @@ Reason lint notify diagnostics:
 - opsクイック回帰 監視ゲート定期タスク状態（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_quick_verify_gate_task.ps1 -AsJson`
 - opsクイック回帰 監視ゲート定期タスク状態（RequirePass / 失敗時 exit 1）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_quick_verify_gate_task.ps1 -RequirePass`
 - opsクイック回帰 監視ゲート定期タスク解除: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\uninstall_reason_enum_ops_quick_verify_gate_task.ps1`
+- opsクイック回帰 監視ゲート定期タスク ライフサイクル（登録→状態→解除）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_reason_enum_ops_quick_verify_gate_task_lifecycle.ps1`
+- opsクイック回帰 監視ゲート定期タスク ライフサイクル（登録維持）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_reason_enum_ops_quick_verify_gate_task_lifecycle.ps1 -KeepInstalled`
+- opsクイック回帰 監視ゲート定期タスク ライフサイクル状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_quick_verify_gate_task_lifecycle.ps1`
+- opsクイック回帰 監視ゲート定期タスク ライフサイクル状態（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_quick_verify_gate_task_lifecycle.ps1 -AsJson`
+- opsクイック回帰 監視ゲート定期タスク ライフサイクル状態（RequirePass / 失敗時 exit 1）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_quick_verify_gate_task_lifecycle.ps1 -RequirePass`
 - opsスナップショット状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1`
 - opsスナップショット状態（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1 -AsJson`
 - opsスナップショット状態（RequirePass / 失敗時 exit 1）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_ops_snapshot.ps1 -RequirePass`
@@ -197,6 +202,11 @@ VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Status (RequirePass)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Uninstall`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Full`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Run`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Run (KeepInstalled)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Status`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Status (JSON)`
+- `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Status (RequirePass)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status (JSON)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status (RequirePass)`
