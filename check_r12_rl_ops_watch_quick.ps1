@@ -114,6 +114,57 @@ function Send-WebhookNotification {
     }
 }
 
+function Get-FailureClassification {
+    param(
+        $StatusPayload,
+        [int]$StatusExitCode
+    )
+
+    $r12Issues = @($StatusPayload.r12Task.issues)
+    $rlIssues = @($StatusPayload.rlTask.issues)
+    $logIssues = @($StatusPayload.r12Log.issues)
+    $latestFailed = $null
+    if ($null -ne $StatusPayload.r12Log -and $null -ne $StatusPayload.r12Log.latest) {
+        $latestFailed = $StatusPayload.r12Log.latest.failed
+    }
+
+    if ($r12Issues.Count -gt 0) {
+        return [pscustomobject]@{
+            category = 'r12_task'
+            reason = ($r12Issues -join '; ')
+        }
+    }
+    if ($rlIssues.Count -gt 0) {
+        return [pscustomobject]@{
+            category = 'rl_task'
+            reason = ($rlIssues -join '; ')
+        }
+    }
+    if ($null -ne $latestFailed -and [int]$latestFailed -gt 0) {
+        return [pscustomobject]@{
+            category = 'r12_endpoint'
+            reason = "r12 endpoints failed=$latestFailed"
+        }
+    }
+    if ($logIssues.Count -gt 0) {
+        return [pscustomobject]@{
+            category = 'r12_log'
+            reason = ($logIssues -join '; ')
+        }
+    }
+    if ($StatusExitCode -ne 0) {
+        return [pscustomobject]@{
+            category = 'status_script'
+            reason = "status script exit=$StatusExitCode"
+        }
+    }
+
+    return [pscustomobject]@{
+        category = 'unknown'
+        reason = 'unknown issue'
+    }
+}
+
 $notify = Resolve-NotifySettings -InWebhookUrl $WebhookUrl -InWebhookFormat $WebhookFormat -InWebhookMention $WebhookMention -InNotifyOnSuccess ([bool]$NotifyOnSuccess)
 $WebhookUrl = [string]$notify.webhook_url
 $WebhookFormat = [string]$notify.webhook_format
@@ -147,7 +198,11 @@ $summary = [pscustomobject]@{
     rl_state = $rlState
     rl_last_result = $rlResult
     r12_latest_failed = $latestFailed
+    ops_watch_last_result = [string]$payload.opsWatchTask.lastResult
+    ops_watch_state = [string]$payload.opsWatchTask.state
     status_exit = $statusExit
+    failure_category = ''
+    failure_reason = ''
     issues = $issues
     status_json = $JsonOutFile
 }
@@ -170,15 +225,20 @@ if ($ok) {
     exit 0
 }
 
-$issueText = if ($issues.Count -gt 0) { ($issues -join '; ') } else { 'unknown issue' }
-$alertLine = "[ALERT] R12+RL ops unhealthy | r12=$r12State/$r12Result rl=$rlState/$rlResult issues=$issueText"
+$classification = Get-FailureClassification -StatusPayload $payload -StatusExitCode $statusExit
+$summary.failure_category = [string]$classification.category
+$summary.failure_reason = [string]$classification.reason
+
+$issueText = if ($issues.Count -gt 0) { ($issues -join '; ') } else { [string]$classification.reason }
+$alertLine = "[ALERT] R12+RL ops unhealthy | category=$($classification.category) r12=$r12State/$r12Result rl=$rlState/$rlResult reason=$($classification.reason) issues=$issueText"
 Write-Host $alertLine -ForegroundColor Red
 if ($statusOutput) {
     Write-Host "=== status_r12_rl_ops.ps1 output (raw) ===" -ForegroundColor Yellow
     $statusOutput | ForEach-Object { Write-Host $_ }
 }
 if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
-    Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'failure' -Title '[R12+RL Ops] FAILURE' -Body $alertLine -Mention $WebhookMention
+    $alertTitle = "[R12+RL Ops] FAILURE ($($classification.category))"
+    Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'failure' -Title $alertTitle -Body $alertLine -Mention $WebhookMention
 }
 if ($Json.IsPresent) {
     Write-Output ($summary | ConvertTo-Json -Depth 6)
