@@ -55,6 +55,19 @@ try {
         try {
             $latest = Get-Content -Path $latestFile -Raw | ConvertFrom-Json
 
+            $hasLegacyFields = (-not [string]::IsNullOrWhiteSpace([string]$latest.generated_at)) -or ($null -ne $latest.route) -or ($null -ne $latest.overall)
+            $hasCurrentFields = (-not [string]::IsNullOrWhiteSpace([string]$latest.ts)) -or ($null -ne $latest.unified_api) -or ($null -ne $latest.comfyui)
+            $latestSourceSchema = 'unknown'
+            if ($hasLegacyFields -and $hasCurrentFields) {
+                $latestSourceSchema = 'mixed'
+            }
+            elseif ($hasLegacyFields) {
+                $latestSourceSchema = 'legacy'
+            }
+            elseif ($hasCurrentFields) {
+                $latestSourceSchema = 'current'
+            }
+
             $latestTs = [string]$latest.generated_at
             if ([string]::IsNullOrWhiteSpace($latestTs)) {
                 $latestTs = [string]$latest.ts
@@ -99,6 +112,7 @@ try {
             }
 
             Write-Host "--- Latest Output ---" -ForegroundColor Cyan
+            Write-Host "latest_source_schema: $latestSourceSchema" -ForegroundColor Gray
             Write-Host "latest_ts: $latestTs" -ForegroundColor Gray
             Write-Host "latest_route_category: $latestRouteCategory" -ForegroundColor Gray
             Write-Host "latest_overall_ok: $latestOverallOk" -ForegroundColor Gray

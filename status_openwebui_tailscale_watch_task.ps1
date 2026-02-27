@@ -52,7 +52,10 @@ try {
     if (-not [string]::IsNullOrWhiteSpace($stateFile) -and (Test-Path $stateFile)) {
         try {
             $state = Get-Content -Path $stateFile -Raw | ConvertFrom-Json
+            Write-Host "--- Notify State ---" -ForegroundColor Cyan
             Write-Host "state_last_failure_category: $($state.last_failure_category)" -ForegroundColor Gray
+            Write-Host "state_last_failure_notified_at: $($state.last_failure_notified_at)" -ForegroundColor Gray
+            Write-Host "state_last_status: $($state.last_status)" -ForegroundColor Gray
         }
         catch {
             Write-Host "[WARN] Failed to parse notify state file: $stateFile" -ForegroundColor Yellow
