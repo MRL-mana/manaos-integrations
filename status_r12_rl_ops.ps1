@@ -364,8 +364,20 @@ Write-ConfigLinkSummary -Label "RLAnything" -TaskSnapshot $rlTaskSnapshot
 Write-ConfigLinkSummary -Label "R12+RL Ops Watch" -TaskSnapshot $opsWatchTaskSnapshot
 
 Write-Host ""
-Write-Host "=== Ops Watch Latest Notify ===" -ForegroundColor Cyan
+Write-Host "=== Ops Watch Latest Output ===" -ForegroundColor Cyan
 if ($null -ne $opsWatchSnapshot.latestSummary) {
+    $latestTs = [string]$opsWatchSnapshot.latestSummary.ts
+    if ([string]::IsNullOrWhiteSpace($latestTs)) {
+        $latestTs = 'N/A'
+    }
+    $latestOk = $null
+    if ($null -ne $opsWatchSnapshot.latestSummary.ok) {
+        try { $latestOk = [bool]$opsWatchSnapshot.latestSummary.ok } catch { $latestOk = $null }
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace([string]$opsWatchSnapshot.latestSummary.failure_category)) {
+        $latestOk = $false
+    }
+
     $latestFailureCategory = [string]$opsWatchSnapshot.latestSummary.failure_category
     $latestFailureNotifyAttempted = $null
     if ($null -ne $opsWatchSnapshot.latestSummary.failure_notify_attempted) {
@@ -387,6 +399,8 @@ if ($null -ne $opsWatchSnapshot.latestSummary) {
     }
     $latestDegradedSuppressedReason = [string]$opsWatchSnapshot.latestSummary.degraded_notify_suppressed_reason
 
+    Write-Host "latest_ts: $latestTs" -ForegroundColor Gray
+    Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
     Write-Host "latest_failure_category: $latestFailureCategory" -ForegroundColor Gray
     Write-Host "latest_failure_notify_attempted: $latestFailureNotifyAttempted" -ForegroundColor Gray
     Write-Host "latest_failure_notified: $latestFailureNotified" -ForegroundColor Gray
