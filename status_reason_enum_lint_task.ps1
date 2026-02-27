@@ -52,6 +52,10 @@ try {
     Write-Host "include_check_scripts: $($cfg.include_check_scripts)" -ForegroundColor Gray
     Write-Host "latest_json_file: $($cfg.latest_json_file)" -ForegroundColor Gray
     Write-Host "history_jsonl: $($cfg.history_jsonl)" -ForegroundColor Gray
+    Write-Host "webhook_format: $($cfg.webhook_format)" -ForegroundColor Gray
+    Write-Host "webhook_enabled: $(-not [string]::IsNullOrWhiteSpace([string]$cfg.webhook_url))" -ForegroundColor Gray
+    Write-Host "notify_failure_cooldown_minutes: $($cfg.notify_failure_cooldown_minutes)" -ForegroundColor Gray
+    Write-Host "notify_state_file: $($cfg.notify_state_file)" -ForegroundColor Gray
 
     $latestJson = [string]$cfg.latest_json_file
     if (-not [string]::IsNullOrWhiteSpace($latestJson) -and (Test-Path $latestJson)) {
@@ -68,6 +72,10 @@ try {
             Write-Host "latest_ok_reason: $latestOkReason" -ForegroundColor Gray
             Write-Host "latest_exit_code: $latestExitCode" -ForegroundColor Gray
             Write-Host "latest_include_check_scripts: $($latest.include_check_scripts)" -ForegroundColor Gray
+            Write-Host "latest_failure_category: $($latest.failure_category)" -ForegroundColor Gray
+            Write-Host "latest_failure_notify_attempted: $($latest.failure_notify_attempted)" -ForegroundColor Gray
+            Write-Host "latest_failure_notified: $($latest.failure_notified)" -ForegroundColor Gray
+            Write-Host "latest_failure_notify_suppressed_reason: $($latest.failure_notify_suppressed_reason)" -ForegroundColor Gray
         }
         catch {
             Write-Host "[WARN] Failed to parse latest output file: $latestJson" -ForegroundColor Yellow

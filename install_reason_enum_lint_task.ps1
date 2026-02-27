@@ -2,6 +2,12 @@ param(
     [string]$TaskName = "ManaOS_Reason_Enum_Lint_60min",
     [int]$IntervalMinutes = 60,
     [switch]$IncludeCheckScripts,
+    [ValidateSet('generic','slack','discord')]
+    [string]$WebhookFormat = "discord",
+    [string]$WebhookUrl = "",
+    [string]$WebhookMention = "",
+    [int]$NotifyFailureCooldownMinutes = 60,
+    [string]$NotifyStateFile = "",
     [ValidateSet('LIMITED','HIGHEST')]
     [string]$RunLevel = 'LIMITED',
     [switch]$RunAsSystem,
@@ -25,6 +31,18 @@ if (-not (Test-Path $jobScript)) {
 if ($IntervalMinutes -lt 1 -or $IntervalMinutes -gt 1440) {
     throw "IntervalMinutes must be 1..1440"
 }
+if ($NotifyFailureCooldownMinutes -lt 0) {
+    throw "NotifyFailureCooldownMinutes must be >= 0"
+}
+if ([string]::IsNullOrWhiteSpace($WebhookUrl) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_URL)) {
+    $WebhookUrl = $env:MANAOS_WEBHOOK_URL
+}
+if ([string]::IsNullOrWhiteSpace($WebhookMention) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_MENTION)) {
+    $WebhookMention = $env:MANAOS_WEBHOOK_MENTION
+}
+if ([string]::IsNullOrWhiteSpace($NotifyStateFile)) {
+    $NotifyStateFile = Join-Path $scriptDir "logs\reason_enum_lint_notify_state.json"
+}
 
 $configObj = [ordered]@{
     task_name = $TaskName
@@ -34,6 +52,11 @@ $configObj = [ordered]@{
     lint_script = (Join-Path $scriptDir "lint_reason_enum.ps1")
     latest_json_file = $latestJsonFile
     history_jsonl = $historyJsonl
+    webhook_format = $WebhookFormat
+    webhook_url = $WebhookUrl
+    webhook_mention = $WebhookMention
+    notify_failure_cooldown_minutes = [int]$NotifyFailureCooldownMinutes
+    notify_state_file = $NotifyStateFile
     updated_at = [datetimeoffset]::Now.ToString('o')
 }
 $configObj | ConvertTo-Json -Depth 6 | Set-Content -Path $configPath -Encoding UTF8
@@ -98,6 +121,7 @@ Write-Host "Account  : $(if ($useSystemAccount) { 'SYSTEM' } else { $env:USERNAM
 Write-Host "Script   : $jobScript" -ForegroundColor Gray
 Write-Host "Config   : $configPath" -ForegroundColor Gray
 Write-Host "IncludeCheckScripts: $([bool]$IncludeCheckScripts)" -ForegroundColor Gray
+Write-Host "Failure  : cooldown=${NotifyFailureCooldownMinutes}min webhook=$(if ([string]::IsNullOrWhiteSpace($WebhookUrl)) { 'disabled' } else { 'enabled' })" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 
 if ($PrintOnly) {
