@@ -1546,6 +1546,23 @@
       "group": "test"
     },
     {
+      "label": "ManaOS: Reason Enum Ops Quick Verify (Require Snapshot Task)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/verify_reason_enum_ops_scripts_quick.ps1",
+        "-RequireSnapshotTaskInstalled"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
       "label": "ManaOS: Reason Enum Ops Snapshot Task Install (30min)",
       "type": "shell",
       "command": "pwsh",

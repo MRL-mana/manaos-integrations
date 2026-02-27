@@ -1,4 +1,6 @@
-param()
+param(
+    [switch]$RequireSnapshotTaskInstalled
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
@@ -34,6 +36,24 @@ $steps = @(
     (Invoke-QuickStep -Name 'install_snapshot_task_printonly' -ScriptPath (Join-Path $scriptDir 'install_reason_enum_ops_snapshot_task.ps1') -Args @('-PrintOnly'))
 )
 
+$notes = @()
+foreach ($step in $steps) {
+    if ($step.name -eq 'status_snapshot_task_json' -and -not $step.ok) {
+        $taskMissing = $false
+        foreach ($line in $step.output_tail) {
+            if ($line -match 'task_not_found') {
+                $taskMissing = $true
+                break
+            }
+        }
+        if ($taskMissing -and -not $RequireSnapshotTaskInstalled) {
+            $step.ok = $true
+            $step.exit_code = 0
+            $notes += 'status_snapshot_task_json skipped: snapshot task not installed (acceptable in non-strict mode)'
+        }
+    }
+}
+
 $failed = @($steps | Where-Object { -not $_.ok })
 $ok = ($failed.Count -eq 0)
 
@@ -45,6 +65,11 @@ $steps | ForEach-Object {
     $status = if ($_.ok) { 'OK' } else { 'FAIL' }
     $color = if ($_.ok) { 'Green' } else { 'Red' }
     Write-Host ("[{0}] {1} exit={2}" -f $status, $_.name, $_.exit_code) -ForegroundColor $color
+}
+
+if ($notes.Count -gt 0) {
+    Write-Host "--- notes ---" -ForegroundColor Yellow
+    $notes | ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
 }
 
 if (-not $ok) {
