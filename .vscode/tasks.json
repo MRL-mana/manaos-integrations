@@ -1233,6 +1233,39 @@
       "type": "shell",
       "command": "pwsh",
       "args": [
+        {
+          "label": "ManaOS: Reason Enum Ops Snapshot Task Lifecycle Run",
+          "type": "shell",
+          "command": "pwsh",
+          "args": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            "${workspaceFolder}/run_reason_enum_ops_snapshot_task_lifecycle.ps1"
+          ],
+          "options": { "cwd": "${workspaceFolder}" },
+          "problemMatcher": [],
+          "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+          "group": "test"
+        },
+        {
+          "label": "ManaOS: Reason Enum Ops Snapshot Task Lifecycle Run (KeepInstalled)",
+          "type": "shell",
+          "command": "pwsh",
+          "args": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            "${workspaceFolder}/run_reason_enum_ops_snapshot_task_lifecycle.ps1",
+            "-KeepInstalled"
+          ],
+          "options": { "cwd": "${workspaceFolder}" },
+          "problemMatcher": [],
+          "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+          "group": "test"
+        },
         "-NoProfile",
         "-ExecutionPolicy",
         "Bypass",
