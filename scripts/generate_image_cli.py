@@ -29,15 +29,17 @@ except ImportError:
     requests = None
 
 
-def _resolve_comfyui_base_url() -> str:
+def _resolve_comfyui_base_url(explicit_url: str | None = None) -> str:
+    if explicit_url and explicit_url.strip():
+        return explicit_url.rstrip("/")
     return (
         os.getenv("COMFYUI_URL")
         or f"http://127.0.0.1:{os.getenv('COMFYUI_PORT', '8188')}"
     ).rstrip("/")
 
 
-def _direct_comfyui_generate(payload: dict) -> tuple[bool, str]:
-    base_url = _resolve_comfyui_base_url()
+def _direct_comfyui_generate(payload: dict, comfyui_url: str | None = None) -> tuple[bool, str]:
+    base_url = _resolve_comfyui_base_url(comfyui_url)
 
     try:
         ckpt_resp = requests.get(
@@ -152,6 +154,8 @@ def main() -> int:
     parser.add_argument("--mufufu", action="store_true", help="ムフフモード（セクシー寄り・身体崩れ対策）")
     parser.add_argument("--lab", action="store_true", help="闇の実験室モード（ネガ最小限・表現はモデルに委ねる）")
     parser.add_argument("--jp", action="store_true", help="プロンプトを日本語として扱い、SD用英語に変換してから画像生成（Ollama要）")
+    parser.add_argument("--direct", action="store_true", help="統合APIを使わずComfyUIに直接送信")
+    parser.add_argument("--comfyui-url", default=None, help="ComfyUIのベースURL（--direct時に使用）")
     args = parser.parse_args()
 
     prompt = args.prompt
@@ -219,6 +223,14 @@ def main() -> int:
     print(f"API: {url}")
     print(f"プロンプト: {prompt[:80]}{'...' if len(prompt) > 80 else ''}{mode_label}")
 
+    if args.direct:
+        ok, detail = _direct_comfyui_generate(payload, args.comfyui_url)
+        if ok:
+            print(f"✅ ComfyUI直生成を開始しました ({detail})")
+            return 0
+        print(f"❌ ComfyUI直生成に失敗: {detail}")
+        return 1
+
     try:
         r = requests.post(url, json=payload, timeout=60)
         r.raise_for_status()
@@ -235,7 +247,7 @@ def main() -> int:
         print(f"❌ 統合APIに接続できません: {url} ({e})")
         print("   統合API (例: python unified_api_server.py) と ComfyUI (8188) が起動しているか確認してください。")
         print("↪ ComfyUI直接生成にフォールバックします...")
-        ok, detail = _direct_comfyui_generate(payload)
+        ok, detail = _direct_comfyui_generate(payload, args.comfyui_url)
         if ok:
             print(f"✅ ComfyUI直生成を開始しました ({detail})")
             return 0
@@ -255,7 +267,7 @@ def main() -> int:
             "comfyui" in body.lower() or "unavailable" in body.lower()
         ):
             print("↪ ComfyUI直接生成にフォールバックします...")
-            ok, detail = _direct_comfyui_generate(payload)
+            ok, detail = _direct_comfyui_generate(payload, args.comfyui_url)
             if ok:
                 print(f"✅ ComfyUI直生成を開始しました ({detail})")
                 return 0
