@@ -61,6 +61,7 @@
 1. 変更対象スクリプトと reason 値を列挙する。
 2. このファイルに reason の意味・適用条件を追記する。
 3. スクリプト実装を更新し、`-Json`/通常表示の両方を検証する。
+  - あわせて `pwsh -NoProfile -ExecutionPolicy Bypass -File .\lint_reason_enum.ps1 -IncludeCheckScripts` を実行し、enum整合を確認する。
 4. 運用ガイド（`PRODUCTION_OPERATIONS_GUIDE_v2.md`）の導線が維持されていることを確認する。
 
 ## 変更履歴
@@ -68,3 +69,4 @@
 - 2026-02-27: 初版作成（status/quick の reason 語彙を整理）
 - 2026-02-27: `source_missing` を欠損系の共通語彙として明記
 - 2026-02-27: 変更手順セクションを追加（監査性・再現性を強化）
+- 2026-02-27: `lint_reason_enum.ps1` 実行手順を追加（変更前チェックを標準化）

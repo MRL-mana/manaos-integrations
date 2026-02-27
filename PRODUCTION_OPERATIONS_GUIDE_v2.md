@@ -108,6 +108,11 @@ History (per-line JSON):
 Reason dictionary:
 - `latest_ok_reason` / `ok_reason` values and meanings: [REASON_ENUM.md](REASON_ENUM.md)
 
+Reason lint (recommended before commit):
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\lint_reason_enum.ps1" -IncludeCheckScripts
+```
+
 ## Troubleshooting
 
 ### OpenWebUI not responding
