@@ -28,12 +28,16 @@ $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $jobScript = Join-Path $scriptDir "check_r12_rl_ops_watch_quick.ps1"
+$statusScript = Join-Path $scriptDir "status_r12_rl_ops.ps1"
 $jsonOut = Join-Path $scriptDir "logs\r12_rl_ops_status.latest.json"
 $summaryLogPath = Join-Path $scriptDir "logs\r12_rl_ops_watch.jsonl"
 $configPath = Join-Path $scriptDir "logs\r12_rl_ops_watch_task.config.json"
 
 if (-not (Test-Path $jobScript)) {
     throw "Job script not found: $jobScript"
+}
+if (-not (Test-Path $statusScript)) {
+    throw "Status script not found: $statusScript"
 }
 if ($IntervalMinutes -lt 1 -or $IntervalMinutes -gt 1440) {
     throw "IntervalMinutes must be 1..1440"
@@ -72,7 +76,7 @@ if (-not $NotifyOnSuccess.IsPresent -and -not [string]::IsNullOrWhiteSpace($env:
 }
 
 $configObj = [ordered]@{
-    status_script = $jobScript
+    status_script = $statusScript
     json_out_file = $jsonOut
     summary_log_path = $summaryLogPath
     tail_lines = 20
