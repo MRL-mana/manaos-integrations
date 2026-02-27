@@ -279,6 +279,26 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: Image Pipeline Probe 解除→未登録確認（ワンボタン / 5分 / 推奨 v2）",
+      "dependsOn": [
+        "ManaOS: Image Pipeline Probe 解除→未登録確認（ワンボタン）"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Image Pipeline Probe 解除→未登録確認（ワンボタン / 15分 / 推奨 v2）",
+      "dependsOn": [
+        "ManaOS: Image Pipeline Probe 解除→未登録確認（ワンボタン）"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: R12 Health Watch タスク登録（5分 / 推奨）",
       "type": "shell",
       "command": "pwsh",
@@ -679,6 +699,26 @@
       "dependsOn": [
         "ManaOS: R12+RL 監視タスク解除",
         "ManaOS: R12+RL 監視タスク状態確認"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: R12+RL 監視解除→未登録確認（ワンボタン / 5分 / 劣化3回+60分 / 推奨）",
+      "dependsOn": [
+        "ManaOS: R12+RL 監視解除→未登録確認（ワンボタン / 推奨）"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: R12+RL 監視解除→未登録確認（ワンボタン / 15分 / 劣化3回+60分 / 推奨）",
+      "dependsOn": [
+        "ManaOS: R12+RL 監視解除→未登録確認（ワンボタン / 推奨）"
       ],
       "dependsOrder": "sequence",
       "problemMatcher": [],
