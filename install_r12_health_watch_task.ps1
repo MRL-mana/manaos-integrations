@@ -13,6 +13,7 @@ param(
     [switch]$KeepBatteryRestrictions,
     [switch]$NoFallbackToCurrentUser,
     [switch]$NoFallbackToLimited,
+    [string]$ConfigFile = "",
     [switch]$RunNow,
     [switch]$PrintOnly
 )
@@ -21,6 +22,9 @@ $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $jobScript = Join-Path $scriptDir "manaos-rpg\scripts\run_r12_health_watch_once.ps1"
+if ([string]::IsNullOrWhiteSpace($ConfigFile)) {
+    $ConfigFile = Join-Path $scriptDir "logs\r12_health_watch_task.config.json"
+}
 
 if (-not (Test-Path $jobScript)) {
     throw "Job script not found: $jobScript"
@@ -48,26 +52,10 @@ $taskArgs = @(
     '-EP',
     'Bypass',
     '-File',
-    "`"$jobScript`""
+    "`"$jobScript`"",
+    '-ConfigFile',
+    "`"$ConfigFile`""
 )
-
-if ($BaseUrl -ne 'http://127.0.0.1:9510') {
-    $taskArgs += @('-BaseUrl', "`"$BaseUrl`"")
-}
-
-if ($WebhookFormat -ne 'discord') {
-    $taskArgs += @('-WebhookFormat', $WebhookFormat)
-}
-
-if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
-    $taskArgs += @('-WebhookUrl', "`"$WebhookUrl`"")
-    if (-not [string]::IsNullOrWhiteSpace($WebhookMention)) {
-        $taskArgs += @('-WebhookMention', "`"$WebhookMention`"")
-    }
-}
-if ($NotifyOnSuccess.IsPresent) {
-    $taskArgs += '-NotifyOnSuccess'
-}
 
 $taskRun = "pwsh " + ($taskArgs -join ' ')
 $effectiveRunLevel = $RunLevel
@@ -126,12 +114,34 @@ Write-Host "Schedule : MINUTE /MO $IntervalMinutes" -ForegroundColor Gray
 Write-Host "RunLevel : $effectiveRunLevel" -ForegroundColor Gray
 Write-Host "Account  : $(if ($useSystemAccount) { 'SYSTEM' } else { $env:USERNAME })" -ForegroundColor Gray
 Write-Host "Script   : $jobScript" -ForegroundColor Gray
+Write-Host "Config   : $ConfigFile" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 
 if ($PrintOnly) {
     Write-Host "[INFO] PrintOnly mode: no task registration" -ForegroundColor Yellow
     exit 0
 }
+
+$configDir = Split-Path -Parent $ConfigFile
+if (-not [string]::IsNullOrWhiteSpace($configDir) -and -not (Test-Path $configDir)) {
+    New-Item -ItemType Directory -Path $configDir -Force | Out-Null
+}
+
+$configPayload = [ordered]@{
+    task_name = $TaskName
+    base_url = $BaseUrl
+    interval_minutes = $IntervalMinutes
+    webhook_format = $WebhookFormat
+    webhook_url = $WebhookUrl
+    webhook_mention = $WebhookMention
+    notify_on_success = [bool]$NotifyOnSuccess
+    log_path = (Join-Path $scriptDir 'logs\r12_health_watch_task.jsonl')
+    json_out_file = (Join-Path $scriptDir 'logs\r12_health_watch_status.latest.json')
+    max_log_age_minutes = 30
+    updated_at = [datetimeoffset]::Now.ToString('o')
+}
+($configPayload | ConvertTo-Json -Depth 6) | Set-Content -Path $ConfigFile -Encoding UTF8
+Write-Host "[OK] Config written: $ConfigFile" -ForegroundColor Green
 
 $createTask = {
     param([string]$Level)

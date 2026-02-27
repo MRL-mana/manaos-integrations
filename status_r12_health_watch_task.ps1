@@ -1,10 +1,26 @@
 param(
+    [string]$ConfigFile = "",
     [string]$TaskName = "ManaOS_R12_Health_Watch_5min",
     [string]$LogPath = ""
 )
 
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+if ([string]::IsNullOrWhiteSpace($ConfigFile)) {
+    $ConfigFile = Join-Path $scriptDir "logs\r12_health_watch_task.config.json"
+}
+
+if (Test-Path $ConfigFile) {
+    try {
+        $cfg = Get-Content -Path $ConfigFile -Raw | ConvertFrom-Json
+        if ($cfg.task_name) { $TaskName = [string]$cfg.task_name }
+        if ($cfg.log_path) { $LogPath = [string]$cfg.log_path }
+    }
+    catch {
+        Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($LogPath)) {
     $LogPath = Join-Path $scriptDir "logs\r12_health_watch_task.jsonl"
 }
