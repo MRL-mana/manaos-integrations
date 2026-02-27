@@ -302,6 +302,25 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: R12+RL 運用チェック（JSON）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_r12_rl_ops.ps1",
+        "-Json",
+        "-JsonOutFile",
+        "${workspaceFolder}/logs/r12_rl_ops_status.latest.json"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: R12+RL 運用クリーンアップ（直実行）",
       "type": "shell",
       "command": "pwsh",
