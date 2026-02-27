@@ -40,6 +40,14 @@ Write-Host "TaskName: $TaskName" -ForegroundColor Gray
 $taskInfo = schtasks /Query /TN $TaskName /V /FO LIST
 if ($LASTEXITCODE -ne 0 -or $null -eq $taskInfo) {
     Write-Host "[INFO] Task not found: $TaskName" -ForegroundColor Yellow
+    Write-Host "--- Latest Output ---" -ForegroundColor Cyan
+    Write-Host "latest_ts: N/A" -ForegroundColor Gray
+    Write-Host "latest_ok: " -ForegroundColor Gray
+    Write-Host "latest_ok_reason: ok_missing" -ForegroundColor Gray
+    Write-Host "latest_last_run: N/A" -ForegroundColor Gray
+    Write-Host "latest_last_result: " -ForegroundColor Gray
+    Write-Host "latest_state: " -ForegroundColor Gray
+    Write-Host "latest_next_run: N/A" -ForegroundColor Gray
     exit 1
 }
 
