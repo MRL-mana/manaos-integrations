@@ -82,6 +82,7 @@ $configObj = [ordered]@{
     notify_unified_degraded_cooldown_minutes = [int]$NotifyUnifiedDegradedCooldownMinutes
     notify_state_file = $NotifyStateFile
     enable_auto_recovery = [bool]$effectiveEnableAutoRecovery
+    enable_auto_recovery_on_unified_degraded = $true
     recover_after_consecutive_down = [int]$RecoverAfterConsecutiveDown
     recovery_cooldown_sec = [int]$RecoveryCooldownSec
     recovery_command = [string]$RecoveryCommand

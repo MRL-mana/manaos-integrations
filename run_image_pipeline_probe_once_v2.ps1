@@ -26,6 +26,7 @@ $notifyUnifiedDegradedAfter = 3
 $notifyUnifiedDegradedCooldownMinutes = 60
 $notifyStateFile = Join-Path $scriptDir "logs\image_pipeline_probe_notify_state.json"
 $enableAutoRecovery = $false
+$enableAutoRecoveryOnUnifiedDegraded = $true
 $recoverAfterConsecutiveDown = 3
 $recoveryCooldownSec = 300
 $recoveryCommand = ""
@@ -40,7 +41,7 @@ function Append-ProbeHistory([string]$Path,[object]$Entry){ Ensure-ParentDir -Pa
 function Send-WebhookNotification([string]$Url,[string]$Format,[string]$Status,[string]$Title,[string]$Body,[string]$Mention=''){ if([string]::IsNullOrWhiteSpace($Url)){return}; $content = if([string]::IsNullOrWhiteSpace($Mention)){"$Title`n$Body"}else{"$Mention $Title`n$Body"}; if($Format -eq 'discord'){ $payload=@{content=$content} } elseif($Format -eq 'slack'){ $payload=@{text=$content} } else { $payload=@{status=$Status;title=$Title;body=$Body;mention=$Mention} }; try { Invoke-RestMethod -Uri $Url -Method Post -ContentType 'application/json' -Body ($payload|ConvertTo-Json -Depth 8) | Out-Null } catch { Write-Host "[WARN] Webhook notify failed: $($_.Exception.Message)" -ForegroundColor Yellow } }
 function Try-RecoverUnifiedApi([string]$UnifiedApiBaseUrl,[string]$CommandText){ $outcome=[ordered]@{attempted=$true;stopped_pid=$null;started=$false;command=$CommandText;error=$null}; try { $uri=[System.Uri]$UnifiedApiBaseUrl; $port=[int]$uri.Port; $conn=Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if($conn){ $owningProcessId=[int]$conn.OwningProcess; Stop-Process -Id $owningProcessId -Force -ErrorAction SilentlyContinue; $outcome.stopped_pid=$owningProcessId; Start-Sleep -Milliseconds 500 }; Start-Process -FilePath "pwsh" -ArgumentList @("-NoProfile","-ExecutionPolicy","Bypass","-Command",$CommandText) -WindowStyle Hidden | Out-Null; $outcome.started=$true } catch { $outcome.error=$_.Exception.Message }; return [pscustomobject]$outcome }
 
-if(Test-Path $ConfigFile){ try { $cfg=Get-Content -Path $ConfigFile -Raw | ConvertFrom-Json; if($cfg.unified_api_url){$unifiedApiUrl=[string]$cfg.unified_api_url}; if($cfg.comfyui_url){$comfyUiUrl=[string]$cfg.comfyui_url}; if($cfg.log_file){$logFile=[string]$cfg.log_file}; if($cfg.history_file){$historyFile=[string]$cfg.history_file}; if($cfg.state_file){$stateFile=[string]$cfg.state_file}; if($cfg.webhook_url){$webhookUrl=[string]$cfg.webhook_url}; if($cfg.webhook_format){$webhookFormat=[string]$cfg.webhook_format}; if($cfg.webhook_mention){$webhookMention=[string]$cfg.webhook_mention}; if($null -ne $cfg.notify_on_success){$notifyOnSuccess=To-Bool $cfg.notify_on_success}; if($null -ne $cfg.notify_on_recovery){$notifyOnRecovery=To-Bool $cfg.notify_on_recovery $true}; if($null -ne $cfg.notify_on_partial){$notifyOnPartial=To-Bool $cfg.notify_on_partial $true}; if($null -ne $cfg.notify_on_down){$notifyOnDown=To-Bool $cfg.notify_on_down $true}; if($null -ne $cfg.notify_on_unified_degraded){$notifyOnUnifiedDegraded=To-Bool $cfg.notify_on_unified_degraded $true}; if($null -ne $cfg.notify_cooldown_minutes){$notifyCooldownMinutes=[int]$cfg.notify_cooldown_minutes}; if($null -ne $cfg.notify_unified_degraded_after){$notifyUnifiedDegradedAfter=[int]$cfg.notify_unified_degraded_after}; if($null -ne $cfg.notify_unified_degraded_cooldown_minutes){$notifyUnifiedDegradedCooldownMinutes=[int]$cfg.notify_unified_degraded_cooldown_minutes}; if($cfg.notify_state_file){$notifyStateFile=[string]$cfg.notify_state_file}; if($null -ne $cfg.enable_auto_recovery){$enableAutoRecovery=To-Bool $cfg.enable_auto_recovery}; if($null -ne $cfg.recover_after_consecutive_down){$recoverAfterConsecutiveDown=[int]$cfg.recover_after_consecutive_down}; if($null -ne $cfg.recovery_cooldown_sec){$recoveryCooldownSec=[int]$cfg.recovery_cooldown_sec}; if($cfg.recovery_command){$recoveryCommand=[string]$cfg.recovery_command} } catch { Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow } }
+if(Test-Path $ConfigFile){ try { $cfg=Get-Content -Path $ConfigFile -Raw | ConvertFrom-Json; if($cfg.unified_api_url){$unifiedApiUrl=[string]$cfg.unified_api_url}; if($cfg.comfyui_url){$comfyUiUrl=[string]$cfg.comfyui_url}; if($cfg.log_file){$logFile=[string]$cfg.log_file}; if($cfg.history_file){$historyFile=[string]$cfg.history_file}; if($cfg.state_file){$stateFile=[string]$cfg.state_file}; if($cfg.webhook_url){$webhookUrl=[string]$cfg.webhook_url}; if($cfg.webhook_format){$webhookFormat=[string]$cfg.webhook_format}; if($cfg.webhook_mention){$webhookMention=[string]$cfg.webhook_mention}; if($null -ne $cfg.notify_on_success){$notifyOnSuccess=To-Bool $cfg.notify_on_success}; if($null -ne $cfg.notify_on_recovery){$notifyOnRecovery=To-Bool $cfg.notify_on_recovery $true}; if($null -ne $cfg.notify_on_partial){$notifyOnPartial=To-Bool $cfg.notify_on_partial $true}; if($null -ne $cfg.notify_on_down){$notifyOnDown=To-Bool $cfg.notify_on_down $true}; if($null -ne $cfg.notify_on_unified_degraded){$notifyOnUnifiedDegraded=To-Bool $cfg.notify_on_unified_degraded $true}; if($null -ne $cfg.notify_cooldown_minutes){$notifyCooldownMinutes=[int]$cfg.notify_cooldown_minutes}; if($null -ne $cfg.notify_unified_degraded_after){$notifyUnifiedDegradedAfter=[int]$cfg.notify_unified_degraded_after}; if($null -ne $cfg.notify_unified_degraded_cooldown_minutes){$notifyUnifiedDegradedCooldownMinutes=[int]$cfg.notify_unified_degraded_cooldown_minutes}; if($cfg.notify_state_file){$notifyStateFile=[string]$cfg.notify_state_file}; if($null -ne $cfg.enable_auto_recovery){$enableAutoRecovery=To-Bool $cfg.enable_auto_recovery}; if($null -ne $cfg.enable_auto_recovery_on_unified_degraded){$enableAutoRecoveryOnUnifiedDegraded=To-Bool $cfg.enable_auto_recovery_on_unified_degraded $true}; if($null -ne $cfg.recover_after_consecutive_down){$recoverAfterConsecutiveDown=[int]$cfg.recover_after_consecutive_down}; if($null -ne $cfg.recovery_cooldown_sec){$recoveryCooldownSec=[int]$cfg.recovery_cooldown_sec}; if($cfg.recovery_command){$recoveryCommand=[string]$cfg.recovery_command} } catch { Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow } }
 if($notifyCooldownMinutes -lt 0){$notifyCooldownMinutes=0}
 if($notifyUnifiedDegradedAfter -lt 1){$notifyUnifiedDegradedAfter=1}
 if($notifyUnifiedDegradedCooldownMinutes -lt 0){$notifyUnifiedDegradedCooldownMinutes=0}
@@ -71,7 +72,25 @@ if($routeCategory -eq 'pipeline_down'){ $consecutiveDown += 1 } else { $consecut
 if(-not $unifiedReady){ $consecutiveUnifiedNotReady += 1 } else { $consecutiveUnifiedNotReady = 0 }
 
 $recoveryAttempt=$null
-if($enableAutoRecovery -and $routeCategory -eq 'pipeline_down' -and $consecutiveDown -ge $recoverAfterConsecutiveDown){ $canRecover=$true; if(-not [string]::IsNullOrWhiteSpace($lastRecoveryAt)){ try { $lastDt=[datetimeoffset]::Parse($lastRecoveryAt); if(($now-$lastDt).TotalSeconds -lt $recoveryCooldownSec){$canRecover=$false} } catch { $canRecover=$true } }; if($canRecover){ $recoveryAttempt = Try-RecoverUnifiedApi -UnifiedApiBaseUrl $unifiedApiUrl -CommandText $recoveryCommand; if($recoveryAttempt.started){ $lastRecoveryAt=$now.ToString('o'); Write-Host "[WARN] Auto recovery started for Unified API" -ForegroundColor Yellow } } }
+$shouldRecoverByDown = ($routeCategory -eq 'pipeline_down' -and $consecutiveDown -ge $recoverAfterConsecutiveDown)
+$shouldRecoverByUnifiedDegraded = ($enableAutoRecoveryOnUnifiedDegraded -and $routeCategory -eq 'direct_fallback' -and $consecutiveUnifiedNotReady -ge $notifyUnifiedDegradedAfter)
+if($enableAutoRecovery -and ($shouldRecoverByDown -or $shouldRecoverByUnifiedDegraded)){
+    $canRecover=$true
+    if(-not [string]::IsNullOrWhiteSpace($lastRecoveryAt)){
+        try {
+            $lastDt=[datetimeoffset]::Parse($lastRecoveryAt)
+            if(($now-$lastDt).TotalSeconds -lt $recoveryCooldownSec){ $canRecover=$false }
+        } catch { $canRecover=$true }
+    }
+    if($canRecover){
+        $recoveryAttempt = Try-RecoverUnifiedApi -UnifiedApiBaseUrl $unifiedApiUrl -CommandText $recoveryCommand
+        if($recoveryAttempt.started){
+            $lastRecoveryAt=$now.ToString('o')
+            $reason = if($shouldRecoverByDown){'pipeline_down'} else {'unified_degraded'}
+            Write-Host "[WARN] Auto recovery started for Unified API (reason=$reason)" -ForegroundColor Yellow
+        }
+    }
+}
 
 Append-ProbeHistory -Path $historyFile -Entry ([ordered]@{ ts=$now.ToString('o'); category=$routeCategory; unified_ready=$unifiedReady; direct_ready=$directReady; overall_ok=$overallOk; consecutive_down=$consecutiveDown; consecutive_unified_not_ready=$consecutiveUnifiedNotReady; unified_api_url=$unifiedApiUrl; comfyui_url=$comfyUiUrl; recovery=$recoveryAttempt; probe=$probe })
 

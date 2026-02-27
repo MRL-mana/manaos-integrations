@@ -52,7 +52,7 @@ function Get-TaskSnapshot {
     if ($state -and ($state -notin @("準備完了", "実行中", "Ready", "Running"))) {
         $issues.Add("Task state is not healthy: $state")
     }
-    if ($lastResult -and ($lastResult -notin @("0", "0x0", "267011"))) {
+    if ($lastResult -and ($lastResult -notin @("0", "0x0", "267009", "267011"))) {
         $issues.Add("Last result indicates failure: $lastResult")
     }
 
