@@ -1,4 +1,5 @@
 param(
+    [string]$ConfigFile = "",
     [string]$StatusScript = "",
     [string]$JsonOutFile = "",
     [string]$SummaryLogPath = "",
@@ -21,6 +22,49 @@ param(
 
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+function To-Bool {
+    param(
+        [object]$Value,
+        [bool]$Default = $false
+    )
+
+    if ($null -eq $Value) { return $Default }
+    if ($Value -is [bool]) { return [bool]$Value }
+    $text = ([string]$Value).Trim().ToLowerInvariant()
+    if ($text -in @('1','true','yes','on','enabled')) { return $true }
+    if ($text -in @('0','false','no','off','disabled')) { return $false }
+    return $Default
+}
+
+if ([string]::IsNullOrWhiteSpace($ConfigFile)) {
+    $ConfigFile = Join-Path $scriptDir "logs\r12_rl_ops_watch_task.config.json"
+}
+
+if (Test-Path $ConfigFile) {
+    try {
+        $cfg = Get-Content -Path $ConfigFile -Raw | ConvertFrom-Json
+        if ($cfg.status_script) { $StatusScript = [string]$cfg.status_script }
+        if ($cfg.json_out_file) { $JsonOutFile = [string]$cfg.json_out_file }
+        if ($cfg.summary_log_path) { $SummaryLogPath = [string]$cfg.summary_log_path }
+        if ($null -ne $cfg.tail_lines) { $TailLines = [int]$cfg.tail_lines }
+        if ($cfg.webhook_format) { $WebhookFormat = [string]$cfg.webhook_format }
+        if ($cfg.webhook_url) { $WebhookUrl = [string]$cfg.webhook_url }
+        if ($cfg.webhook_mention) { $WebhookMention = [string]$cfg.webhook_mention }
+        if ($null -ne $cfg.notify_on_success) { $NotifyOnSuccess = To-Bool $cfg.notify_on_success }
+        if ($null -ne $cfg.notify_on_degraded) { $NotifyOnDegraded = To-Bool $cfg.notify_on_degraded $true }
+        if ($null -ne $cfg.notify_degraded_after) { $NotifyDegradedAfter = [int]$cfg.notify_degraded_after }
+        if ($null -ne $cfg.notify_degraded_cooldown_minutes) { $NotifyDegradedCooldownMinutes = [int]$cfg.notify_degraded_cooldown_minutes }
+        if ($cfg.degraded_state_file) { $DegradedStateFile = [string]$cfg.degraded_state_file }
+        if ($null -ne $cfg.enable_auto_recovery) { $EnableAutoRecovery = To-Bool $cfg.enable_auto_recovery }
+        if ($null -ne $cfg.recover_after_consecutive_endpoint_down) { $RecoverAfterConsecutiveEndpointDown = [int]$cfg.recover_after_consecutive_endpoint_down }
+        if ($null -ne $cfg.recovery_cooldown_minutes) { $RecoveryCooldownMinutes = [int]$cfg.recovery_cooldown_minutes }
+        if ($cfg.recovery_command) { $RecoveryCommand = [string]$cfg.recovery_command }
+    }
+    catch {
+        Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow
+    }
+}
 
 if ([string]::IsNullOrWhiteSpace($StatusScript)) {
     $StatusScript = Join-Path $scriptDir "status_r12_rl_ops.ps1"
@@ -427,7 +471,7 @@ if ($statusOutput) {
     $statusOutput | ForEach-Object { Write-Host $_ }
 }
 
-if ($EnableAutoRecovery.IsPresent -and $isEndpointRefused -and $consecutiveEndpointRefused -ge $RecoverAfterConsecutiveEndpointDown) {
+if ([bool]$EnableAutoRecovery -and $isEndpointRefused -and $consecutiveEndpointRefused -ge $RecoverAfterConsecutiveEndpointDown) {
     $shouldRecover = $false
     if ($null -eq $lastRecoveryDt) {
         $shouldRecover = $true

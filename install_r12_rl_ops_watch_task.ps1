@@ -29,6 +29,8 @@ $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $jobScript = Join-Path $scriptDir "check_r12_rl_ops_watch_quick.ps1"
 $jsonOut = Join-Path $scriptDir "logs\r12_rl_ops_status.latest.json"
+$summaryLogPath = Join-Path $scriptDir "logs\r12_rl_ops_watch.jsonl"
+$configPath = Join-Path $scriptDir "logs\r12_rl_ops_watch_task.config.json"
 
 if (-not (Test-Path $jobScript)) {
     throw "Job script not found: $jobScript"
@@ -69,50 +71,27 @@ if (-not $NotifyOnSuccess.IsPresent -and -not [string]::IsNullOrWhiteSpace($env:
     if ($raw -in @('1','true','yes','on')) { $NotifyOnSuccess = $true }
 }
 
-$taskArgs = @(
-    '-NoP',
-    '-EP',
-    'Bypass',
-    '-File',
-    "`"$jobScript`"",
-    '-JsonOutFile',
-    "`"$jsonOut`"",
-    '-NotifyDegradedAfter',
-    "$NotifyDegradedAfter",
-    '-NotifyDegradedCooldownMinutes',
-    "$NotifyDegradedCooldownMinutes",
-    '-DegradedStateFile',
-    "`"$DegradedStateFile`"",
-    '-RecoverAfterConsecutiveEndpointDown',
-    "$RecoverAfterConsecutiveEndpointDown",
-    '-RecoveryCooldownMinutes',
-    "$RecoveryCooldownMinutes"
-)
+$configObj = [ordered]@{
+    status_script = $jobScript
+    json_out_file = $jsonOut
+    summary_log_path = $summaryLogPath
+    tail_lines = 20
+    webhook_format = $WebhookFormat
+    webhook_url = $WebhookUrl
+    webhook_mention = $WebhookMention
+    notify_on_success = [bool]$NotifyOnSuccess
+    notify_on_degraded = -not [bool]$DisableNotifyOnDegraded
+    notify_degraded_after = [int]$NotifyDegradedAfter
+    notify_degraded_cooldown_minutes = [int]$NotifyDegradedCooldownMinutes
+    degraded_state_file = $DegradedStateFile
+    enable_auto_recovery = [bool]$autoRecoveryEnabled
+    recover_after_consecutive_endpoint_down = [int]$RecoverAfterConsecutiveEndpointDown
+    recovery_cooldown_minutes = [int]$RecoveryCooldownMinutes
+    recovery_command = [string]$RecoveryCommand
+}
+$configObj | ConvertTo-Json -Depth 6 | Set-Content -Path $configPath -Encoding UTF8
 
-if ($hasCustomRecoveryCommand) {
-    $taskArgs += @('-RecoveryCommand', "`"$RecoveryCommand`"")
-}
-
-if ($WebhookFormat -ne 'discord') {
-    $taskArgs += @('-WebhookFormat', $WebhookFormat)
-}
-if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
-    $taskArgs += @('-WebhookUrl', "`"$WebhookUrl`"")
-    if (-not [string]::IsNullOrWhiteSpace($WebhookMention)) {
-        $taskArgs += @('-WebhookMention', "`"$WebhookMention`"")
-    }
-}
-if ($NotifyOnSuccess.IsPresent) {
-    $taskArgs += '-NotifyOnSuccess'
-}
-if ($DisableNotifyOnDegraded.IsPresent) {
-    $taskArgs += '-NotifyOnDegraded:$false'
-}
-if ($autoRecoveryEnabled) {
-    $taskArgs += '-EnableAutoRecovery'
-}
-
-$taskRun = "pwsh " + ($taskArgs -join ' ')
+$taskRun = "pwsh -NoP -EP Bypass -File `"$jobScript`" -ConfigFile `"$configPath`""
 $effectiveRunLevel = $RunLevel
 $useSystemAccount = $RunAsSystem.IsPresent
 if ($RunAsSystem.IsPresent -and $effectiveRunLevel -eq 'LIMITED') {
@@ -170,6 +149,7 @@ Write-Host "Schedule : MINUTE /MO $IntervalMinutes" -ForegroundColor Gray
 Write-Host "RunLevel : $effectiveRunLevel" -ForegroundColor Gray
 Write-Host "Account  : $(if ($useSystemAccount) { 'SYSTEM' } else { $env:USERNAME })" -ForegroundColor Gray
 Write-Host "Script   : $jobScript" -ForegroundColor Gray
+Write-Host "Config   : $configPath" -ForegroundColor Gray
 Write-Host "Degraded : enabled=$(if ($DisableNotifyOnDegraded.IsPresent) { 'false' } else { 'true' }), after=$NotifyDegradedAfter, cooldown=${NotifyDegradedCooldownMinutes}min" -ForegroundColor Gray
 Write-Host "Recovery : enabled=$(if ($autoRecoveryEnabled) { 'true' } else { 'false' }), after=$RecoverAfterConsecutiveEndpointDown, cooldown=${RecoveryCooldownMinutes}min" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
