@@ -99,26 +99,121 @@ $lastStatus=[string]$notifyState.last_status
 $lastCategory=[string]$notifyState.last_category
 $lastNotifiedAt=$null; if(-not [string]::IsNullOrWhiteSpace([string]$notifyState.last_notified_at)){ try{$lastNotifiedAt=[datetimeoffset]::Parse([string]$notifyState.last_notified_at)}catch{$lastNotifiedAt=$null} }
 
-if(-not $overallOk){ Write-Host "[ALERT] Image pipeline probe failed | $msg" -ForegroundColor Red; $shouldNotifyFailure=$false; $failureSuppressReason=''; if($lastStatus -ne 'failure'){$shouldNotifyFailure=$true} elseif([string]::IsNullOrWhiteSpace($lastCategory) -or $lastCategory -ne $routeCategory){$shouldNotifyFailure=$true} elseif($null -eq $lastNotifiedAt){$shouldNotifyFailure=$true} elseif((($now-$lastNotifiedAt).TotalMinutes) -ge $notifyCooldownMinutes){$shouldNotifyFailure=$true} else { $failureSuppressReason = ("cooldown active ({0:N1}/{1} min)" -f (($now-$lastNotifiedAt).TotalMinutes), $notifyCooldownMinutes) }; if($notifyOnDown -and $shouldNotifyFailure -and -not [string]::IsNullOrWhiteSpace($webhookUrl)){ Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'failure' -Title "[Image Pipeline Probe] FAILURE ($routeCategory)" -Body $msg -Mention $webhookMention; Save-NotifyState -Path $notifyStateFile -Status 'failure' -Category $routeCategory -MarkNotified; Write-Host "[INFO] Failure webhook sent (category=$routeCategory)" -ForegroundColor Yellow } else { Save-NotifyState -Path $notifyStateFile -Status 'failure' -Category $routeCategory; if($notifyOnDown -and -not [string]::IsNullOrWhiteSpace($webhookUrl) -and -not $shouldNotifyFailure){ Write-Host "[INFO] Failure webhook suppressed: $failureSuppressReason" -ForegroundColor DarkGray } }; Save-PipelineState -Path $stateFile -Category $routeCategory -ConsecutiveDown $consecutiveDown -ConsecutiveUnifiedNotReady $consecutiveUnifiedNotReady -LastRecoveryAt $lastRecoveryAt -LastUnifiedDegradedNotifiedAt $lastUnifiedDegradedNotifiedAt; Write-Host "[INFO] Image pipeline probe saved: $logFile" -ForegroundColor Yellow; Write-Host "[INFO] Image pipeline history saved: $historyFile" -ForegroundColor Yellow; exit 1 }
+if(-not $overallOk){
+    Write-Host "[ALERT] Image pipeline probe failed | $msg" -ForegroundColor Red
+
+    $shouldNotifyFailure = $false
+    $failureSuppressReason = ''
+    if($lastStatus -ne 'failure'){
+        $shouldNotifyFailure = $true
+    }
+    elseif([string]::IsNullOrWhiteSpace($lastCategory) -or $lastCategory -ne $routeCategory){
+        $shouldNotifyFailure = $true
+    }
+    elseif($null -eq $lastNotifiedAt){
+        $shouldNotifyFailure = $true
+    }
+    elseif((($now-$lastNotifiedAt).TotalMinutes) -ge $notifyCooldownMinutes){
+        $shouldNotifyFailure = $true
+    }
+    else {
+        $failureSuppressReason = ("cooldown active ({0:N1}/{1} min)" -f (($now-$lastNotifiedAt).TotalMinutes), $notifyCooldownMinutes)
+    }
+
+    if($notifyOnDown -and $shouldNotifyFailure -and -not [string]::IsNullOrWhiteSpace($webhookUrl)){
+        Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'failure' -Title "[Image Pipeline Probe] FAILURE ($routeCategory)" -Body $msg -Mention $webhookMention
+        Save-NotifyState -Path $notifyStateFile -Status 'failure' -Category $routeCategory -MarkNotified
+        Write-Host "[INFO] Failure webhook sent (category=$routeCategory)" -ForegroundColor Yellow
+    }
+    else {
+        Save-NotifyState -Path $notifyStateFile -Status 'failure' -Category $routeCategory
+        if(-not $notifyOnDown){
+            Write-Host "[INFO] Failure webhook suppressed: notify_on_down disabled" -ForegroundColor DarkGray
+        }
+        elseif([string]::IsNullOrWhiteSpace($webhookUrl)){
+            Write-Host "[INFO] Failure webhook suppressed: webhook not configured" -ForegroundColor DarkGray
+        }
+        elseif(-not $shouldNotifyFailure){
+            Write-Host "[INFO] Failure webhook suppressed: $failureSuppressReason" -ForegroundColor DarkGray
+        }
+    }
+
+    Save-PipelineState -Path $stateFile -Category $routeCategory -ConsecutiveDown $consecutiveDown -ConsecutiveUnifiedNotReady $consecutiveUnifiedNotReady -LastRecoveryAt $lastRecoveryAt -LastUnifiedDegradedNotifiedAt $lastUnifiedDegradedNotifiedAt
+    Write-Host "[INFO] Image pipeline probe saved: $logFile" -ForegroundColor Yellow
+    Write-Host "[INFO] Image pipeline history saved: $historyFile" -ForegroundColor Yellow
+    exit 1
+}
 
 Write-Host "[OK] Image pipeline probe healthy | $msg" -ForegroundColor Green
-if($notifyOnUnifiedDegraded -and $routeCategory -eq 'direct_fallback' -and $consecutiveUnifiedNotReady -ge $notifyUnifiedDegradedAfter -and -not [string]::IsNullOrWhiteSpace($webhookUrl)){
+$shouldSendDegraded = $false
+$degradedSuppressReason = ''
+if(-not $notifyOnUnifiedDegraded){
+    $degradedSuppressReason = 'notify_on_unified_degraded disabled'
+}
+elseif($routeCategory -ne 'direct_fallback'){
+    $degradedSuppressReason = "route=$routeCategory"
+}
+elseif($consecutiveUnifiedNotReady -lt $notifyUnifiedDegradedAfter){
+    $degradedSuppressReason = "below_threshold(streak=$consecutiveUnifiedNotReady threshold=$notifyUnifiedDegradedAfter)"
+}
+elseif([string]::IsNullOrWhiteSpace($webhookUrl)){
+    $degradedSuppressReason = 'webhook not configured'
+}
+else {
     $degradedLastNotifiedAt=$null
     if(-not [string]::IsNullOrWhiteSpace($lastUnifiedDegradedNotifiedAt)){
         try { $degradedLastNotifiedAt=[datetimeoffset]::Parse($lastUnifiedDegradedNotifiedAt) } catch { $degradedLastNotifiedAt=$null }
     }
-    $shouldNotifyDegraded=$false
-    if($null -eq $degradedLastNotifiedAt){ $shouldNotifyDegraded=$true }
-    elseif((($now-$degradedLastNotifiedAt).TotalMinutes) -ge $notifyUnifiedDegradedCooldownMinutes){ $shouldNotifyDegraded=$true }
-
-    if($shouldNotifyDegraded){
-        Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'warning' -Title "[Image Pipeline Probe] DEGRADED (unified_not_ready_streak)" -Body "$msg threshold=$notifyUnifiedDegradedAfter" -Mention $webhookMention
-        $lastUnifiedDegradedNotifiedAt=$now.ToString('o')
+    if($null -eq $degradedLastNotifiedAt){
+        $shouldSendDegraded=$true
+    }
+    elseif((($now-$degradedLastNotifiedAt).TotalMinutes) -ge $notifyUnifiedDegradedCooldownMinutes){
+        $shouldSendDegraded=$true
+    }
+    else {
+        $degradedSuppressReason = ("cooldown active ({0:N1}/{1} min)" -f (($now-$degradedLastNotifiedAt).TotalMinutes), $notifyUnifiedDegradedCooldownMinutes)
     }
 }
-if($notifyOnPartial -and $routeCategory -eq 'direct_fallback' -and -not [string]::IsNullOrWhiteSpace($webhookUrl) -and [string]$notifyState.last_category -ne 'direct_fallback'){ Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'warning' -Title "[Image Pipeline Probe] PARTIAL (direct_fallback)" -Body $msg -Mention $webhookMention }
-if($notifyOnRecovery -and -not [string]::IsNullOrWhiteSpace($webhookUrl) -and $routeCategory -eq 'unified_ready' -and $pipelineLastCategory -and $pipelineLastCategory -ne 'unified_ready'){ Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'success' -Title "[Image Pipeline Probe] RECOVERED (unified_ready)" -Body $msg -Mention $webhookMention }
-if($notifyOnSuccess -and -not [string]::IsNullOrWhiteSpace($webhookUrl) -and $lastStatus -eq 'failure'){ Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'success' -Title "[Image Pipeline Probe] SUCCESS ($routeCategory)" -Body $msg -Mention $webhookMention; Save-NotifyState -Path $notifyStateFile -Status 'success' -Category $routeCategory -MarkNotified } else { Save-NotifyState -Path $notifyStateFile -Status 'success' -Category $routeCategory }
+
+if($shouldSendDegraded){
+    Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'warning' -Title "[Image Pipeline Probe] DEGRADED (unified_not_ready_streak)" -Body "$msg threshold=$notifyUnifiedDegradedAfter" -Mention $webhookMention
+    $lastUnifiedDegradedNotifiedAt=$now.ToString('o')
+}
+elseif(-not [string]::IsNullOrWhiteSpace($degradedSuppressReason)){
+    Write-Host "[INFO] Degraded webhook suppressed: $degradedSuppressReason" -ForegroundColor DarkGray
+}
+
+$partialNotifySent = $false
+if($notifyOnPartial -and $routeCategory -eq 'direct_fallback' -and -not [string]::IsNullOrWhiteSpace($webhookUrl) -and [string]$notifyState.last_category -ne 'direct_fallback'){
+    Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'warning' -Title "[Image Pipeline Probe] PARTIAL (direct_fallback)" -Body $msg -Mention $webhookMention
+    $partialNotifySent = $true
+}
+elseif($notifyOnPartial -and $routeCategory -eq 'direct_fallback' -and [string]::IsNullOrWhiteSpace($webhookUrl)){
+    Write-Host "[INFO] Partial webhook suppressed: webhook not configured" -ForegroundColor DarkGray
+}
+
+$recoveryNotifySent = $false
+if($notifyOnRecovery -and -not [string]::IsNullOrWhiteSpace($webhookUrl) -and $routeCategory -eq 'unified_ready' -and $pipelineLastCategory -and $pipelineLastCategory -ne 'unified_ready'){
+    Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'success' -Title "[Image Pipeline Probe] RECOVERED (unified_ready)" -Body $msg -Mention $webhookMention
+    $recoveryNotifySent = $true
+}
+elseif($notifyOnRecovery -and $routeCategory -eq 'unified_ready' -and [string]::IsNullOrWhiteSpace($webhookUrl)){
+    Write-Host "[INFO] Recovery webhook suppressed: webhook not configured" -ForegroundColor DarkGray
+}
+
+if($notifyOnSuccess -and -not [string]::IsNullOrWhiteSpace($webhookUrl) -and $lastStatus -eq 'failure'){
+    Send-WebhookNotification -Url $webhookUrl -Format $webhookFormat -Status 'success' -Title "[Image Pipeline Probe] SUCCESS ($routeCategory)" -Body $msg -Mention $webhookMention
+    Save-NotifyState -Path $notifyStateFile -Status 'success' -Category $routeCategory -MarkNotified
+}
+else {
+    Save-NotifyState -Path $notifyStateFile -Status 'success' -Category $routeCategory
+    if($notifyOnSuccess -and [string]::IsNullOrWhiteSpace($webhookUrl) -and $lastStatus -eq 'failure'){
+        Write-Host "[INFO] Success webhook suppressed: webhook not configured" -ForegroundColor DarkGray
+    }
+}
+
+if($partialNotifySent){ Write-Host "[INFO] Partial webhook sent (category=$routeCategory)" -ForegroundColor Yellow }
+if($recoveryNotifySent){ Write-Host "[INFO] Recovery webhook sent (category=$routeCategory)" -ForegroundColor Yellow }
 Save-PipelineState -Path $stateFile -Category $routeCategory -ConsecutiveDown $consecutiveDown -ConsecutiveUnifiedNotReady $consecutiveUnifiedNotReady -LastRecoveryAt $lastRecoveryAt -LastUnifiedDegradedNotifiedAt $lastUnifiedDegradedNotifiedAt
 Write-Host "[OK] Image pipeline probe saved: $logFile" -ForegroundColor Green
 Write-Host "[OK] Image pipeline history saved: $historyFile" -ForegroundColor Green
