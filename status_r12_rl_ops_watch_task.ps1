@@ -74,8 +74,10 @@ try {
             Write-Host "latest_ts: $($latestSummary.ts)" -ForegroundColor Gray
             Write-Host "latest_ok: $($latestSummary.ok)" -ForegroundColor Gray
             Write-Host "latest_failure_category: $($latestSummary.failure_category)" -ForegroundColor Gray
+            Write-Host "latest_failure_notify_attempted: $($latestSummary.failure_notify_attempted)" -ForegroundColor Gray
             Write-Host "latest_failure_notified: $($latestSummary.failure_notified)" -ForegroundColor Gray
             Write-Host "latest_failure_notify_suppressed_reason: $($latestSummary.failure_notify_suppressed_reason)" -ForegroundColor Gray
+            Write-Host "latest_degraded_notify_attempted: $($latestSummary.degraded_notify_attempted)" -ForegroundColor Gray
             Write-Host "latest_degraded_notified: $($latestSummary.degraded_notified)" -ForegroundColor Gray
             Write-Host "latest_degraded_notify_suppressed_reason: $($latestSummary.degraded_notify_suppressed_reason)" -ForegroundColor Gray
         }
