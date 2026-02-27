@@ -214,6 +214,8 @@ function Get-OpsWatchSnapshot {
         summaryLogPath = ""
         stateFile = ""
         latestSummary = $null
+        latestOk = $null
+        latestOkReason = 'ok_missing'
         notifyState = $null
         issues = @()
     }
@@ -252,6 +254,29 @@ function Get-OpsWatchSnapshot {
             $latestSummaryLine = Get-Content -Path $summaryLogPath -Tail 1
             if (-not [string]::IsNullOrWhiteSpace($latestSummaryLine)) {
                 $result.latestSummary = $latestSummaryLine | ConvertFrom-Json
+
+                if ($null -ne $result.latestSummary.ok) {
+                    try { $result.latestOk = [bool]$result.latestSummary.ok } catch { $result.latestOk = $null }
+                    if ($null -ne $result.latestOk) { $result.latestOkReason = 'from_ok_field' }
+                }
+                elseif ($null -ne $result.latestSummary.issues) {
+                    try {
+                        $result.latestOk = (@($result.latestSummary.issues).Count -eq 0)
+                        $result.latestOkReason = 'from_issues_count'
+                    }
+                    catch { $result.latestOk = $null }
+                }
+                elseif ($null -ne $result.latestSummary.r12_latest_failed) {
+                    try {
+                        $result.latestOk = ([int]$result.latestSummary.r12_latest_failed -eq 0)
+                        $result.latestOkReason = 'from_r12_latest_failed'
+                    }
+                    catch { $result.latestOk = $null }
+                }
+                elseif (-not [string]::IsNullOrWhiteSpace([string]$result.latestSummary.failure_category)) {
+                    $result.latestOk = $false
+                    $result.latestOkReason = 'from_failure_category'
+                }
             }
             else {
                 $issues.Add("Ops watch summary log is empty: $summaryLogPath")
