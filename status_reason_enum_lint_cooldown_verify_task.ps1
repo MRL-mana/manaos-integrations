@@ -1,11 +1,31 @@
 param(
     [string]$TaskName = "ManaOS_Reason_Enum_Lint_Cooldown_Verify_Weekly",
+    [string]$ConfigFile = "",
     [string]$LatestJsonFile = "",
     [string]$NotifyStateFile = ""
 )
 
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+if ([string]::IsNullOrWhiteSpace($ConfigFile)) {
+    $ConfigFile = Join-Path $scriptDir "logs\reason_enum_lint_task.config.json"
+}
+
+if (Test-Path $ConfigFile) {
+    try {
+        $cfg = Get-Content -Path $ConfigFile -Raw | ConvertFrom-Json
+        if ([string]::IsNullOrWhiteSpace($LatestJsonFile) -and -not [string]::IsNullOrWhiteSpace([string]$cfg.latest_json_file)) {
+            $LatestJsonFile = [string]$cfg.latest_json_file
+        }
+        if ([string]::IsNullOrWhiteSpace($NotifyStateFile) -and -not [string]::IsNullOrWhiteSpace([string]$cfg.notify_state_file)) {
+            $NotifyStateFile = [string]$cfg.notify_state_file
+        }
+    }
+    catch {
+        Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow
+    }
+}
 
 if ([string]::IsNullOrWhiteSpace($LatestJsonFile)) {
     $LatestJsonFile = Join-Path $scriptDir "logs\reason_enum_lint.latest.json"
@@ -16,6 +36,7 @@ if ([string]::IsNullOrWhiteSpace($NotifyStateFile)) {
 
 Write-Host "=== Reason Enum Cooldown Verify Task Status ===" -ForegroundColor Cyan
 Write-Host "TaskName: $TaskName" -ForegroundColor Gray
+Write-Host "ConfigFile: $ConfigFile" -ForegroundColor Gray
 
 $taskInfo = schtasks /Query /TN $TaskName /V /FO LIST
 if ($LASTEXITCODE -ne 0 -or $null -eq $taskInfo) {
