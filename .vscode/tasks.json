@@ -471,6 +471,26 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: R12 Health Watch 運用チェック（JSON / 5分）",
+      "dependsOn": [
+        "ManaOS: R12 Health Watch 運用チェック（JSON）"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: R12 Health Watch 運用チェック（JSON / 15分）",
+      "dependsOn": [
+        "ManaOS: R12 Health Watch 運用チェック（JSON）"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: R12 Health Watch 運用クリーンアップ（ワンボタン）",
       "dependsOn": [
         "ManaOS: R12 Health Watch 解除→未登録確認（ワンボタン）"
@@ -570,6 +590,26 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: R12+RL 運用チェック（JSON / 5分）",
+      "dependsOn": [
+        "ManaOS: R12+RL 運用チェック（JSON）"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: R12+RL 運用チェック（JSON / 15分）",
+      "dependsOn": [
+        "ManaOS: R12+RL 運用チェック（JSON）"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: R12+RL 監視タスク登録（15分 / 劣化3回+60分 / 推奨）",
       "type": "shell",
       "command": "pwsh",
@@ -657,17 +697,6 @@
         "${workspaceFolder}/uninstall_r12_rl_ops_watch_task.ps1"
       ],
       "options": { "cwd": "${workspaceFolder}" },
-      "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
-      "group": "none"
-    },
-    {
-      "label": "ManaOS: R12+RL 監視登録→状態確認（ワンボタン / 15分 / 互換エイリアス）",
-      "dependsOn": [
-        "ManaOS: R12+RL 監視タスク登録（15分 / 劣化3回+60分 / 推奨）",
-        "ManaOS: R12+RL 監視タスク状態確認"
-      ],
-      "dependsOrder": "sequence",
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true },
       "group": "none"
