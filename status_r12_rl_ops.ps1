@@ -12,6 +12,8 @@ $r12Status = Join-Path $scriptDir "status_r12_health_watch_task.ps1"
 $rlStatus = Join-Path $scriptDir "status_rl_anything_bootstrap_task.ps1"
 $opsWatchStatus = Join-Path $scriptDir "status_r12_rl_ops_watch_task.ps1"
 $r12Log = Join-Path $scriptDir "logs\r12_health_watch_task.jsonl"
+$rlConfig = Join-Path $scriptDir "logs\rl_anything_bootstrap_task.config.json"
+$opsWatchConfig = Join-Path $scriptDir "logs\r12_rl_ops_watch_task.config.json"
 
 function Get-QueryValue {
     param(
@@ -29,9 +31,78 @@ function Get-QueryValue {
     return ""
 }
 
+function Get-TaskConfigStatus {
+    param(
+        [string]$TaskToRun,
+        [string]$DefaultConfigFile
+    )
+
+    $issues = New-Object System.Collections.Generic.List[string]
+    $configPath = ""
+    $hasConfigArg = $false
+
+    if (-not [string]::IsNullOrWhiteSpace($TaskToRun)) {
+        $match = [regex]::Match($TaskToRun, '-ConfigFile\s+(?:"([^"]+)"|''([^'']+)''|(\S+))', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if ($match.Success) {
+            $hasConfigArg = $true
+            if (-not [string]::IsNullOrWhiteSpace($match.Groups[1].Value)) {
+                $configPath = $match.Groups[1].Value
+            }
+            elseif (-not [string]::IsNullOrWhiteSpace($match.Groups[2].Value)) {
+                $configPath = $match.Groups[2].Value
+            }
+            elseif (-not [string]::IsNullOrWhiteSpace($match.Groups[3].Value)) {
+                $configPath = $match.Groups[3].Value
+            }
+        }
+    }
+
+    if (-not $hasConfigArg) {
+        $issues.Add("Task command does not include -ConfigFile")
+        $configPath = $DefaultConfigFile
+    }
+
+    if ([string]::IsNullOrWhiteSpace($configPath)) {
+        $issues.Add("Config file path is empty")
+        return @{
+            hasConfigArg = $hasConfigArg
+            configPath = $configPath
+            configExists = $false
+            configParseOk = $false
+            issues = @($issues)
+        }
+    }
+
+    $exists = Test-Path $configPath
+    if (-not $exists) {
+        $issues.Add("Config file not found: $configPath")
+    }
+
+    $parseOk = $false
+    if ($exists) {
+        try {
+            $null = Get-Content -Path $configPath -Raw | ConvertFrom-Json
+            $parseOk = $true
+        }
+        catch {
+            $issues.Add("Config file parse failed: $configPath")
+        }
+    }
+
+    return @{
+        hasConfigArg = $hasConfigArg
+        configPath = $configPath
+        configExists = $exists
+        configParseOk = $parseOk
+        issues = @($issues)
+    }
+}
+
 function Get-TaskSnapshot {
     param(
-        [string]$TaskName
+        [string]$TaskName,
+        [switch]$RequireConfigFile,
+        [string]$DefaultConfigFile = ""
     )
 
     $queryLines = schtasks /Query /TN $TaskName /V /FO LIST 2>&1
@@ -48,6 +119,7 @@ function Get-TaskSnapshot {
     $lastResult = Get-QueryValue -Names @("前回の結果", "Last Result") -Lines $queryLines
     $nextRun = Get-QueryValue -Names @("次回の実行時刻", "Next Run Time") -Lines $queryLines
     $lastRun = Get-QueryValue -Names @("前回の実行時刻", "Last Run Time") -Lines $queryLines
+    $taskToRun = Get-QueryValue -Names @("実行するタスク", "Task To Run") -Lines $queryLines
 
     $issues = New-Object System.Collections.Generic.List[string]
     if ($state -and ($state -notin @("準備完了", "実行中", "Ready", "Running"))) {
@@ -57,6 +129,14 @@ function Get-TaskSnapshot {
         $issues.Add("Last result indicates failure: $lastResult")
     }
 
+    $configStatus = $null
+    if ($RequireConfigFile.IsPresent) {
+        $configStatus = Get-TaskConfigStatus -TaskToRun $taskToRun -DefaultConfigFile $DefaultConfigFile
+        foreach ($issue in @($configStatus.issues)) {
+            $issues.Add($issue)
+        }
+    }
+
     return @{
         taskName = $TaskName
         exists = $true
@@ -64,6 +144,8 @@ function Get-TaskSnapshot {
         lastResult = $lastResult
         nextRun = $nextRun
         lastRun = $lastRun
+        taskToRun = $taskToRun
+        configStatus = $configStatus
         isHealthy = ($issues.Count -eq 0)
         issues = @($issues)
     }
@@ -121,11 +203,11 @@ function Get-R12LogSnapshot {
 
 if ($Json.IsPresent) {
     $r12Task = Get-TaskSnapshot -TaskName "ManaOS_R12_Health_Watch_5min"
-    $rlTask = Get-TaskSnapshot -TaskName "ManaOS_RLAnything_Bootstrap_Logon"
-    $opsWatchTask = Get-TaskSnapshot -TaskName "ManaOS_R12_RL_Ops_Watch_15min"
+    $rlTask = Get-TaskSnapshot -TaskName "ManaOS_RLAnything_Bootstrap_Logon" -RequireConfigFile -DefaultConfigFile $rlConfig
+    $opsWatchTask = Get-TaskSnapshot -TaskName "ManaOS_R12_RL_Ops_Watch_15min" -RequireConfigFile -DefaultConfigFile $opsWatchConfig
     $r12LogSnapshot = Get-R12LogSnapshot -LogPath $r12Log -TailCount $TailLines -MaxLogAgeMinutes $MaxR12LogAgeMinutes
 
-    $allIssues = @($r12Task.issues) + @($rlTask.issues) + @($r12LogSnapshot.issues)
+    $allIssues = @($r12Task.issues) + @($rlTask.issues) + @($opsWatchTask.issues) + @($r12LogSnapshot.issues)
     $payload = @{
         ok = ($allIssues.Count -eq 0)
         checkedAt = [datetimeoffset]::Now.ToString("o")
