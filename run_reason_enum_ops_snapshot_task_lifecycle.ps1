@@ -3,6 +3,7 @@ param(
     [int]$IntervalMinutes = 30,
     [string]$LatestJsonFile = "",
     [string]$HistoryJsonl = "",
+    [int]$MaxHistoryLines = 1000,
     [switch]$KeepInstalled
 )
 
@@ -16,6 +17,9 @@ if ([string]::IsNullOrWhiteSpace($LatestJsonFile)) {
 }
 if ([string]::IsNullOrWhiteSpace($HistoryJsonl)) {
     $HistoryJsonl = Join-Path $scriptDir "logs\reason_enum_ops_snapshot_task_lifecycle.history.jsonl"
+}
+if ($MaxHistoryLines -lt 1) {
+    throw "MaxHistoryLines must be >= 1"
 }
 
 $installScript = Join-Path $scriptDir "install_reason_enum_ops_snapshot_task.ps1"
@@ -103,6 +107,14 @@ $payload = [ordered]@{
 
 ($payload | ConvertTo-Json -Depth 10) | Set-Content -Path $LatestJsonFile -Encoding UTF8
 ($payload | ConvertTo-Json -Depth 10 -Compress) | Add-Content -Path $HistoryJsonl -Encoding UTF8
+try {
+    $historyLines = Get-Content -Path $HistoryJsonl
+    if ($historyLines.Count -gt $MaxHistoryLines) {
+        $historyLines | Select-Object -Last $MaxHistoryLines | Set-Content -Path $HistoryJsonl -Encoding UTF8
+    }
+}
+catch {
+}
 
 Write-Host "=== Reason Enum Ops Snapshot Task Lifecycle ===" -ForegroundColor Cyan
 Write-Host "ok: $ok" -ForegroundColor Gray
