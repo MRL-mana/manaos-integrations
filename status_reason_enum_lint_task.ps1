@@ -57,6 +57,19 @@ try {
     Write-Host "notify_failure_cooldown_minutes: $($cfg.notify_failure_cooldown_minutes)" -ForegroundColor Gray
     Write-Host "notify_state_file: $($cfg.notify_state_file)" -ForegroundColor Gray
 
+    $notifyStateFile = [string]$cfg.notify_state_file
+    if (-not [string]::IsNullOrWhiteSpace($notifyStateFile) -and (Test-Path $notifyStateFile)) {
+        try {
+            $notifyState = Get-Content -Path $notifyStateFile -Raw | ConvertFrom-Json
+            Write-Host "--- Notify State ---" -ForegroundColor Cyan
+            Write-Host "state_last_failure_notified_at: $($notifyState.last_failure_notified_at)" -ForegroundColor Gray
+            Write-Host "state_last_status: $($notifyState.last_status)" -ForegroundColor Gray
+        }
+        catch {
+            Write-Host "[WARN] Failed to parse notify state file: $notifyStateFile" -ForegroundColor Yellow
+        }
+    }
+
     $latestJson = [string]$cfg.latest_json_file
     if (-not [string]::IsNullOrWhiteSpace($latestJson) -and (Test-Path $latestJson)) {
         try {

@@ -109,6 +109,7 @@ Reason dictionary:
 - `latest_ok_reason` / `ok_reason` values and meanings: [REASON_ENUM.md](REASON_ENUM.md)
 - Lint (manual): `pwsh -NoProfile -ExecutionPolicy Bypass -File .\lint_reason_enum.ps1 -IncludeCheckScripts`
 - Lint task install: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install_reason_enum_lint_task.ps1 -IncludeCheckScripts -RunNow`
+- Lint task install (Webhook): `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install_reason_enum_lint_task.ps1 -IncludeCheckScripts -WebhookUrl "YOUR_WEBHOOK_URL" -WebhookFormat discord -WebhookMention "@ops" -NotifyFailureCooldownMinutes 60 -RunNow`
 - Lint task status: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_lint_task.ps1`
 
 Reason lint (recommended before commit):
