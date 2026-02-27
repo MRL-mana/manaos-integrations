@@ -1212,6 +1212,38 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: Reason Enum Cooldown Verify Task Uninstall",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/uninstall_reason_enum_lint_cooldown_verify_task.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Reason Enum Cooldown Verify Uninstall→Status",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "& \"${workspaceFolder}/uninstall_reason_enum_lint_cooldown_verify_task.ps1\"; & \"${workspaceFolder}/status_reason_enum_lint_cooldown_verify_task.ps1\"; if ($LASTEXITCODE -ne 0) { Write-Host \"[OK] Cooldown verify task not found expected after uninstall\"; exit 0 }"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: Reason Enum Cooldown Verify Full",
       "dependsOn": [
         "ManaOS: Reason Enum Cooldown Verify Task Install (Weekly)",

@@ -120,6 +120,8 @@ Reason lint notify diagnostics:
 - cooldown実地検証（Scheduler経由・自動復帰込み）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\verify_reason_enum_lint_cooldown.ps1`
 - cooldown自己診断タスク登録（週次）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install_reason_enum_lint_cooldown_verify_task.ps1 -Day SUN -StartTime 03:30`
 - cooldown自己診断タスク状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_reason_enum_lint_cooldown_verify_task.ps1`
+- cooldown自己診断タスク解除: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\uninstall_reason_enum_lint_cooldown_verify_task.ps1`
+- cooldown自己診断タスク解除→未登録確認: `pwsh -NoProfile -ExecutionPolicy Bypass -Command "& '.\uninstall_reason_enum_lint_cooldown_verify_task.ps1'; & '.\status_reason_enum_lint_cooldown_verify_task.ps1'; if ($LASTEXITCODE -ne 0) { Write-Host '[OK] Cooldown verify task not found expected after uninstall'; exit 0 }"`
 - 補足: status出力の `task_last_result_meaning` で Scheduler の前回結果コードを即時解釈可能
 - 通知フロー一括テスト: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\test_reason_enum_lint_notify_flow.ps1 -IncludeCheckScripts`
 - フルチェーン一括テスト（通知 + クールダウン）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\test_reason_enum_lint_full_chain.ps1 -IncludeCheckScripts`
