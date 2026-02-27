@@ -26,6 +26,21 @@ function Get-SchtasksLastResultMeaning {
     }
 }
 
+function Get-TaskDerivedLatestOkReason {
+    param([int]$Code)
+
+    switch ($Code) {
+        0 { return 'lint_passed' }
+        267010 { return 'task_disabled' }
+        267011 { return 'task_not_run_yet' }
+        267013 { return 'task_not_scheduled' }
+        default { return 'task_last_result_error' }
+    }
+}
+
+$taskDerivedLatestOkReason = ''
+$taskDerivedLatestOk = $false
+
 if ([string]::IsNullOrWhiteSpace($ConfigFile)) {
     $ConfigFile = Join-Path $scriptDir "logs\reason_enum_lint_task.config.json"
 }
@@ -82,9 +97,13 @@ if (-not [string]::IsNullOrWhiteSpace($taskLastResultLine)) {
     if ([int]::TryParse($taskLastResultRaw, [ref]$taskLastResultCode)) {
         $taskLastResultHex = ('0x{0:X8}' -f [uint32]$taskLastResultCode)
         $taskLastResultMeaning = Get-SchtasksLastResultMeaning -Code $taskLastResultCode
+        $taskDerivedLatestOkReason = Get-TaskDerivedLatestOkReason -Code $taskLastResultCode
+        $taskDerivedLatestOk = ($taskLastResultCode -eq 0)
         Write-Host "task_last_result_code: $taskLastResultCode" -ForegroundColor Gray
         Write-Host "task_last_result_hex: $taskLastResultHex" -ForegroundColor Gray
         Write-Host "task_last_result_meaning: $taskLastResultMeaning" -ForegroundColor Gray
+        Write-Host "task_last_result_latest_ok: $taskDerivedLatestOk" -ForegroundColor Gray
+        Write-Host "task_last_result_latest_ok_reason: $taskDerivedLatestOkReason" -ForegroundColor Gray
     }
     else {
         Write-Host "task_last_result_raw: $taskLastResultRaw" -ForegroundColor Gray
@@ -104,6 +123,9 @@ if (Test-Path $LatestJsonFile) {
         Write-Host "latest_ts: $latestTs" -ForegroundColor Gray
         Write-Host "latest_ok: $latestOk" -ForegroundColor Gray
         Write-Host "latest_ok_reason: $latestOkReason" -ForegroundColor Gray
+        if ($latestOkReason -eq 'source_missing' -and -not [string]::IsNullOrWhiteSpace($taskDerivedLatestOkReason)) {
+            Write-Host "latest_ok_reason_bridge: $taskDerivedLatestOkReason" -ForegroundColor Gray
+        }
         Write-Host "latest_failure_category: $($latest.failure_category)" -ForegroundColor Gray
         Write-Host "latest_failure_notify_attempted: $($latest.failure_notify_attempted)" -ForegroundColor Gray
         Write-Host "latest_failure_notified: $($latest.failure_notified)" -ForegroundColor Gray
@@ -115,6 +137,9 @@ if (Test-Path $LatestJsonFile) {
         Write-Host "latest_ts: N/A" -ForegroundColor Gray
         Write-Host "latest_ok: False" -ForegroundColor Gray
         Write-Host "latest_ok_reason: source_missing" -ForegroundColor Gray
+        if (-not [string]::IsNullOrWhiteSpace($taskDerivedLatestOkReason)) {
+            Write-Host "latest_ok_reason_bridge: $taskDerivedLatestOkReason" -ForegroundColor Gray
+        }
         Write-Host "latest_failure_notify_suppressed_reason: source_missing" -ForegroundColor Gray
     }
 }
@@ -124,6 +149,9 @@ else {
     Write-Host "latest_ts: N/A" -ForegroundColor Gray
     Write-Host "latest_ok: False" -ForegroundColor Gray
     Write-Host "latest_ok_reason: source_missing" -ForegroundColor Gray
+    if (-not [string]::IsNullOrWhiteSpace($taskDerivedLatestOkReason)) {
+        Write-Host "latest_ok_reason_bridge: $taskDerivedLatestOkReason" -ForegroundColor Gray
+    }
     Write-Host "latest_failure_notify_suppressed_reason: source_missing" -ForegroundColor Gray
 }
 

@@ -1256,6 +1256,20 @@
       "group": "test"
     },
     {
+      "label": "ManaOS: Reason Enum Cooldown Verify Lifecycle",
+      "dependsOn": [
+        "ManaOS: Reason Enum Cooldown Verify Uninstall→Status",
+        "ManaOS: Reason Enum Cooldown Verify Task Install (Weekly)",
+        "ManaOS: Reason Enum Cooldown Verify Task Status",
+        "ManaOS: Reason Enum Cooldown Verify Run Once",
+        "ManaOS: Reason Enum Cooldown Verify Uninstall→Status"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
       "label": "ManaOS: Reason Enum Lint Full",
       "dependsOn": [
         "ManaOS: Reason Enum Lint Task Install",
