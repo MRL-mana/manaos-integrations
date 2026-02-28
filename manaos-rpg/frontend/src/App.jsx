@@ -22,13 +22,14 @@ import HealthStrip from './components/HealthStrip.jsx'
 const RLView = lazy(() => import('./components/RLView.jsx'))
 const SkillsView = lazy(() => import('./components/SkillsView.jsx'))
 
+const TAB_IDS = ['status','party','bestiary','skills','quests','logs','map','items','rl','systems']
+
 export default function App() {
   const [state, setState] = useState(null)
   const [events, setEvents] = useState([])
   const [active, setActive] = useState(() => {
     const hash = window.location.hash.replace('#', '')
-    const valid = ['status','party','bestiary','skills','quests','logs','map','items','rl','systems']
-    return valid.includes(hash) ? hash : 'status'
+    return TAB_IDS.includes(hash) ? hash : 'status'
   })
   const [err, setErr] = useState('')
   const [actionResult, setActionResult] = useState(null)
@@ -146,8 +147,7 @@ export default function App() {
   useEffect(() => {
     function onHashChange() {
       const h = window.location.hash.replace('#', '')
-      const valid = ['status','party','bestiary','skills','quests','logs','map','items','rl','systems']
-      if (valid.includes(h)) setActive(h)
+      if (TAB_IDS.includes(h)) setActive(h)
     }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
@@ -160,19 +160,24 @@ export default function App() {
 
   useEffect(() => {
     function handleKey(e) {
+      /* Ctrl+K: ヘルプが開いていたら閉じる */
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        setShowHelp(false)
+        return // GlobalSearch側で処理
+      }
+
       const tag = e.target?.tagName?.toLowerCase()
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return
 
-      const tabIds = ['status', 'party', 'bestiary', 'skills', 'quests', 'logs', 'map', 'items', 'rl', 'systems']
       if (e.key === '0') {
         e.preventDefault()
-        setActive(tabIds[9])
+        setActive(TAB_IDS[9])
         return
       }
       const num = parseInt(e.key, 10)
       if (num >= 1 && num <= 9) {
         e.preventDefault()
-        setActive(tabIds[num - 1])
+        setActive(TAB_IDS[num - 1])
         return
       }
       if (e.key === 'r' || e.key === 'R') {
@@ -190,7 +195,7 @@ export default function App() {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [refreshSnapshot])
 
   const menu = Array.isArray(state?.menu) ? state.menu : FALLBACK_MENU
 
@@ -382,8 +387,8 @@ export default function App() {
 
     {/* ショートカットヘルプ */}
     {showHelp && (
-      <div className="helpOverlay" onClick={() => setShowHelp(false)}>
-        <div className="helpModal" onClick={e => e.stopPropagation()}>
+      <div className="helpOverlay" onClick={() => setShowHelp(false)} role="dialog" aria-modal="true" aria-label="キーボードショートカット">
+        <div className="helpModal" onClick={e => e.stopPropagation()} onKeyDown={e => { if (e.key === 'Tab') { const focusable = e.currentTarget.querySelectorAll('button'); const first = focusable[0]; const last = focusable[focusable.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus() } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus() } } }}>
           <div className="helpTitle">⌨ キーボードショートカット</div>
           <div className="helpGrid">
             <kbd>1</kbd><span>ステータス</span>

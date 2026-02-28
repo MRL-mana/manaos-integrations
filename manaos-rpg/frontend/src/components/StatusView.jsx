@@ -1,13 +1,13 @@
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { fmtBytes, dangerRank } from '../utils.js'
 import Box from './Box.jsx'
 import OutputBlock from './OutputBlock.jsx'
 
-function GaugeBar({ label, pct }) {
+const GaugeBar = memo(function GaugeBar({ label, pct }) {
   const p = Math.max(0, Math.min(100, Number(pct || 0)))
   const cls = p >= 90 ? 'gaugeDanger' : p >= 70 ? 'gaugeCaution' : 'gaugeOk'
   return (
-    <div className="gaugeWrap">
+    <div className="gaugeWrap" role="progressbar" aria-valuenow={p} aria-valuemin={0} aria-valuemax={100} aria-label={label}>
       <div className="gaugeTrack">
         <div className={`gaugeFill ${cls}`} style={{ width: `${p}%` }} />
       </div>
@@ -17,7 +17,7 @@ function GaugeBar({ label, pct }) {
       </div>
     </div>
   )
-}
+})
 
 export default function StatusView({ host, services, models, devices, skills, danger, rlAnything, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction }) {
   const cpu = host?.cpu?.percent
