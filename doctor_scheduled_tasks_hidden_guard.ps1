@@ -17,23 +17,54 @@ if (-not (Test-Path $RepoRoot)) {
     throw "RepoRoot not found: $RepoRoot"
 }
 
-$hiddenPattern = '(?im)(-windowstyle\s+hidden|-w\s+hidden)'
+$hiddenPattern = '(?im)(-windowstyle\s+hidden|-w\s+hidden|\s/B\b)'
 $shellPattern = '(?im)(pwsh|powershell(?:\.exe)?)'
 
 $scriptOffenders = New-Object System.Collections.Generic.List[object]
-$installerScripts = @(Get-ChildItem -Path $RepoRoot -Filter 'install_*task*.ps1' -File)
+$scriptPatterns = @(
+    'install_*task*.ps1',
+    'register_*task*.ps1',
+    'register_schedule_tasks.ps1',
+    'register_moltbot_schedule_tasks.ps1',
+    'register_openwebui_daily_health.ps1',
+    'schedule_*.ps1',
+    'setup_*autostart*.ps1',
+    'setup_autostart*.ps1',
+    'setup_all_systems.ps1',
+    'setup_always_running_services.ps1',
+    'setup_mrl_memory_autostart*.ps1',
+    'setup_tool_server_auto_start.ps1',
+    'start_openwebui_tailscale.ps1'
+)
+
+$scriptMap = @{}
+foreach ($pattern in $scriptPatterns) {
+    foreach ($item in @(Get-ChildItem -Path $RepoRoot -Filter $pattern -File -ErrorAction SilentlyContinue)) {
+        $scriptMap[$item.FullName] = $item
+    }
+}
+$installerScripts = @($scriptMap.Values | Sort-Object FullName)
 $managedTaskNames = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
 foreach ($script in $installerScripts) {
     $raw = Get-Content -Path $script.FullName -Raw
-    $taskNameMatch = [regex]::Match($raw, '(?im)^\s*\[string\]\s*\$TaskName\s*=\s*"([^"]+)"')
-    if ($taskNameMatch.Success) {
-        $null = $managedTaskNames.Add($taskNameMatch.Groups[1].Value)
+
+    $taskNameMatches = [regex]::Matches($raw, '(?im)^\s*\[string\]\s*\$TaskName\s*=\s*"([^"]+)"')
+    foreach ($match in $taskNameMatches) {
+        $null = $managedTaskNames.Add($match.Groups[1].Value)
+    }
+    $taskNameMatches = [regex]::Matches($raw, '(?im)\b-TaskName\s+"([^"]+)"')
+    foreach ($match in $taskNameMatches) {
+        $null = $managedTaskNames.Add($match.Groups[1].Value)
+    }
+    $taskNameMatches = [regex]::Matches($raw, '(?im)\b/TN\s+"([^"]+)"')
+    foreach ($match in $taskNameMatches) {
+        $null = $managedTaskNames.Add($match.Groups[1].Value)
     }
 
-    $hasSchtasks = ($raw -match '(?im)\bschtasks\b')
-    $hasShell = ($raw -match $shellPattern)
+    $hasPowerShellTaskAction = ($raw -match '(?is)New-ScheduledTaskAction[^\r\n]*-Execute\s+"?powershell(?:\.exe)?"?')
+    $hasPowerShellTaskRun = ($raw -match '(?im)\bschtasks\b[^\r\n]*/Create[^\r\n]*/TR\s+[^\r\n]*(pwsh|powershell(?:\.exe)?)')
     $hasHidden = ($raw -match $hiddenPattern)
-    if ($hasSchtasks -and $hasShell -and -not $hasHidden) {
+    if (($hasPowerShellTaskAction -or $hasPowerShellTaskRun) -and -not $hasHidden) {
         $scriptOffenders.Add([pscustomobject]@{
             path = $script.FullName
             reason = 'scheduled task command appears to lack hidden window switch'
