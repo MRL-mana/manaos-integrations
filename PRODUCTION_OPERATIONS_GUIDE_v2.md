@@ -183,8 +183,15 @@ RPG operations quick runbook:
 - RPGフルヘルスチェーン定期タスク登録（30分）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install_rpg_full_health_chain_task.ps1 -IntervalMinutes 30 -RunNow`
 - RPGフルヘルスチェーン定期タスク状態（RequirePass）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_rpg_full_health_chain_task.ps1 -RequirePass`
 - RPGフルヘルスチェーン定期タスク解除: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\uninstall_rpg_full_health_chain_task.ps1`
+- RPGフルヘルスチェーン定期タスク ライフサイクル（登録→状態→解除）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_rpg_full_health_chain_task_lifecycle.ps1`
+- RPGフルヘルスチェーン定期タスク ライフサイクル（登録維持）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_rpg_full_health_chain_task_lifecycle.ps1 -KeepInstalled`
+- RPGフルヘルスチェーン定期タスク ライフサイクル状態: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_rpg_full_health_chain_task_lifecycle.ps1`
+- RPGフルヘルスチェーン定期タスク ライフサイクル状態（JSON）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_rpg_full_health_chain_task_lifecycle.ps1 -AsJson`
+- RPGフルヘルスチェーン定期タスク ライフサイクル状態（RequirePass）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_rpg_full_health_chain_task_lifecycle.ps1 -RequirePass`
 - RPGフルヘルスチェーン最新: `logs/rpg_full_health_chain.latest.json`
 - RPGフルヘルスチェーン履歴: `logs/rpg_full_health_chain.history.jsonl`
+- RPGフルヘルスチェーン ライフサイクル最新: `logs/rpg_full_health_chain_task_lifecycle.latest.json`
+- RPGフルヘルスチェーン ライフサイクル履歴: `logs/rpg_full_health_chain_task_lifecycle.history.jsonl`
 
 Reason lint (recommended before commit):
 ```powershell
@@ -237,6 +244,12 @@ VS Code task:
 - `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Status (RequirePass)`
 - `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Uninstall`
 - `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Install + Check`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Lifecycle Run`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Lifecycle Run (KeepInstalled)`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Lifecycle Status`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Lifecycle Status (JSON)`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Lifecycle Status (RequirePass)`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Lifecycle Full`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Status (RequirePass)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status (JSON)`
