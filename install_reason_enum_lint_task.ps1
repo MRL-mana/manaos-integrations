@@ -61,7 +61,7 @@ $configObj = [ordered]@{
 }
 $configObj | ConvertTo-Json -Depth 6 | Set-Content -Path $configPath -Encoding UTF8
 
-$taskRun = "pwsh -NoP -EP Bypass -File `"$jobScript`" -ConfigFile `"$configPath`""
+$taskRun = "pwsh -NoP -WindowStyle Hidden -EP Bypass -File `"$jobScript`" -ConfigFile `"$configPath`""
 $effectiveRunLevel = $RunLevel
 $useSystemAccount = $RunAsSystem.IsPresent
 if ($RunAsSystem.IsPresent -and $effectiveRunLevel -eq 'LIMITED') {

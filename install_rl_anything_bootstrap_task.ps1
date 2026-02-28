@@ -50,7 +50,7 @@ $taskArgs = @(
     "`"$configPath`""
 )
 
-$taskRun = "pwsh " + ($taskArgs -join ' ')
+$taskRun = "pwsh -WindowStyle Hidden " + ($taskArgs -join ' ')
 
 Write-Host "=== Register RLAnything Bootstrap Task ===" -ForegroundColor Cyan
 Write-Host "TaskName : $TaskName" -ForegroundColor Gray

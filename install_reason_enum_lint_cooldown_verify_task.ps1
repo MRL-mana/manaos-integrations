@@ -30,7 +30,7 @@ if ($WaitAfterRunSeconds -lt 2) {
     throw "WaitAfterRunSeconds must be >= 2"
 }
 
-$taskRun = "pwsh -NoP -EP Bypass -File `"$jobScript`" -NotifyFailureCooldownMinutes $NotifyFailureCooldownMinutes -WaitAfterRunSeconds $WaitAfterRunSeconds"
+$taskRun = "pwsh -NoP -WindowStyle Hidden -EP Bypass -File `"$jobScript`" -NotifyFailureCooldownMinutes $NotifyFailureCooldownMinutes -WaitAfterRunSeconds $WaitAfterRunSeconds"
 $effectiveRunLevel = $RunLevel
 $useSystemAccount = $RunAsSystem.IsPresent
 if ($RunAsSystem.IsPresent -and $effectiveRunLevel -eq 'LIMITED') {

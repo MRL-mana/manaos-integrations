@@ -57,7 +57,7 @@ $taskArgs = @(
     "`"$ConfigFile`""
 )
 
-$taskRun = "pwsh " + ($taskArgs -join ' ')
+$taskRun = "pwsh -WindowStyle Hidden " + ($taskArgs -join ' ')
 $effectiveRunLevel = $RunLevel
 $useSystemAccount = $RunAsSystem.IsPresent
 if ($RunAsSystem.IsPresent -and $effectiveRunLevel -eq 'LIMITED') {
