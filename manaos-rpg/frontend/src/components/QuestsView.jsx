@@ -94,7 +94,7 @@ export default function QuestsView({ quests, onRunAction, actionResult, runningA
           const isCollapsed = collapsed.has(tag)
           return (
             <div key={tag} className="sectionBlock">
-              <div className="sectionHead" style={{ cursor: 'pointer' }} onClick={() => toggleGroup(tag)}>
+              <div className="sectionHead" role="button" aria-expanded={!isCollapsed} style={{ cursor: 'pointer' }} onClick={() => toggleGroup(tag)}>
                 <span className="mono">{String(tag).toUpperCase()}</span>
                 <span className="small">{items.length}件</span>
                 <span style={{ fontSize: 12, opacity: 0.5 }}>{isCollapsed ? '▼' : '▲'}</span>

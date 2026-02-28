@@ -1,0 +1,113 @@
+param(
+    [string]$RepoRoot = "",
+    [switch]$SkipRegisteredTaskAudit,
+    [switch]$AsJson,
+    [switch]$RequirePass
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
+    $RepoRoot = $scriptDir
+}
+
+if (-not (Test-Path $RepoRoot)) {
+    throw "RepoRoot not found: $RepoRoot"
+}
+
+$hiddenPattern = '(?im)(-windowstyle\s+hidden|-w\s+hidden)'
+$shellPattern = '(?im)(pwsh|powershell(?:\.exe)?)'
+
+$scriptOffenders = New-Object System.Collections.Generic.List[object]
+$installerScripts = @(Get-ChildItem -Path $RepoRoot -Filter 'install_*task*.ps1' -File)
+$managedTaskNames = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+foreach ($script in $installerScripts) {
+    $raw = Get-Content -Path $script.FullName -Raw
+    $taskNameMatch = [regex]::Match($raw, '(?im)^\s*\[string\]\s*\$TaskName\s*=\s*"([^"]+)"')
+    if ($taskNameMatch.Success) {
+        $null = $managedTaskNames.Add($taskNameMatch.Groups[1].Value)
+    }
+
+    $hasSchtasks = ($raw -match '(?im)\bschtasks\b')
+    $hasShell = ($raw -match $shellPattern)
+    $hasHidden = ($raw -match $hiddenPattern)
+    if ($hasSchtasks -and $hasShell -and -not $hasHidden) {
+        $scriptOffenders.Add([pscustomobject]@{
+            path = $script.FullName
+            reason = 'scheduled task command appears to lack hidden window switch'
+        })
+    }
+}
+
+$registeredOffenders = New-Object System.Collections.Generic.List[object]
+if (-not $SkipRegisteredTaskAudit) {
+    $queryOutput = @(& schtasks /Query /FO LIST /V 2>&1 | ForEach-Object { [string]$_ })
+    $currentTaskName = $null
+
+    foreach ($line in $queryOutput) {
+        if ($line -match '^(TaskName|タスク名):\s*(.+)$') {
+            $currentTaskName = $Matches[2].Trim()
+            continue
+        }
+        if ($line -match '^(Task To Run|実行するタスク):\s*(.+)$') {
+            $taskRun = $Matches[2].Trim()
+            $normalizedTaskName = $currentTaskName
+            if (-not [string]::IsNullOrWhiteSpace($normalizedTaskName)) {
+                $normalizedTaskName = $normalizedTaskName.TrimStart('\\')
+            }
+            if ($managedTaskNames.Contains($normalizedTaskName) -and $taskRun -match $shellPattern -and -not ($taskRun -match $hiddenPattern)) {
+                $registeredOffenders.Add([pscustomobject]@{
+                    task_name = $currentTaskName
+                    task_to_run = $taskRun
+                    reason = 'registered task command uses PowerShell without hidden window switch'
+                })
+            }
+        }
+    }
+}
+
+$installerOffendersArray = @($scriptOffenders.ToArray())
+$registeredOffendersArray = @($registeredOffenders.ToArray())
+
+$payload = @{
+    repo_root = $RepoRoot
+    installer_script_count = $installerScripts.Count
+    managed_task_name_count = $managedTaskNames.Count
+    installer_offender_count = $scriptOffenders.Count
+    installer_offenders = $installerOffendersArray
+    registered_task_audit_enabled = (-not $SkipRegisteredTaskAudit)
+    registered_offender_count = $registeredOffenders.Count
+    registered_offenders = $registeredOffendersArray
+    ok = ($scriptOffenders.Count -eq 0 -and $registeredOffenders.Count -eq 0)
+}
+
+Write-Host "=== Scheduled Tasks Hidden Guard Doctor ===" -ForegroundColor Cyan
+Write-Host "repo_root: $RepoRoot" -ForegroundColor Gray
+Write-Host "installer_script_count: $($payload.installer_script_count)" -ForegroundColor Gray
+Write-Host "managed_task_name_count: $($payload.managed_task_name_count)" -ForegroundColor Gray
+Write-Host "installer_offender_count: $($payload.installer_offender_count)" -ForegroundColor Gray
+Write-Host "registered_task_audit_enabled: $($payload.registered_task_audit_enabled)" -ForegroundColor Gray
+Write-Host "registered_offender_count: $($payload.registered_offender_count)" -ForegroundColor Gray
+
+if ($payload.installer_offender_count -gt 0) {
+    Write-Host "--- installer_offenders ---" -ForegroundColor Yellow
+    $payload.installer_offenders | ForEach-Object { Write-Host $_.path -ForegroundColor Yellow }
+}
+if ($payload.registered_offender_count -gt 0) {
+    Write-Host "--- registered_offenders ---" -ForegroundColor Yellow
+    $payload.registered_offenders | ForEach-Object {
+        Write-Host ("{0} => {1}" -f $_.task_name, $_.task_to_run) -ForegroundColor Yellow
+    }
+}
+
+if ($AsJson) {
+    Write-Output ($payload | ConvertTo-Json -Depth 8)
+}
+
+if ($payload.ok) {
+    exit 0
+}
+
+exit 1

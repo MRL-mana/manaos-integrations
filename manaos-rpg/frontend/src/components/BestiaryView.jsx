@@ -92,7 +92,7 @@ export default function BestiaryView({ models }) {
         const isCollapsed = collapsed.has(t)
         return (
           <div key={t} className="sectionBlock">
-            <div className="sectionHead" style={{ cursor: 'pointer' }} onClick={() => toggleGroup(t)}>
+            <div className="sectionHead" role="button" aria-expanded={!isCollapsed} style={{ cursor: 'pointer' }} onClick={() => toggleGroup(t)}>
               <span>{TYPE_ICONS[t] || '❓'}</span>
               <span className="mono">{t.toUpperCase()}</span>
               <span className="small">{items.length}件</span>

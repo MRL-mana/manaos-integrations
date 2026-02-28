@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, memo } from 'react'
 
 /** タグの優先表示順 */
 const TAG_ORDER = [
@@ -35,7 +35,7 @@ const RECOVERY_HINTS = {
   unified_api_server: 'cd unified_api && python -m server',
 }
 
-function ServiceRow({ s }) {
+const ServiceRow = memo(function ServiceRow({ s }) {
   const hint = !s.alive && RECOVERY_HINTS[s.id]
   return (
     <div className={`partyRow${s.alive ? '' : ' partyRowDead'}`}>
@@ -67,7 +67,7 @@ function ServiceRow({ s }) {
       </div>
     </div>
   )
-}
+})
 
 export default function PartyView({ services }) {
   const list = useMemo(() => (Array.isArray(services) ? services : []), [services])
@@ -163,7 +163,7 @@ export default function PartyView({ services }) {
             const isCollapsed = collapsed.has(tag)
             return (
               <div key={tag} className="sectionBlock">
-                <div className="sectionHead" style={{ cursor: 'pointer' }} onClick={() => toggleGroup(tag)}>
+                <div className="sectionHead" role="button" aria-expanded={!isCollapsed} style={{ cursor: 'pointer' }} onClick={() => toggleGroup(tag)}>
                   <span className="mono">{tag.toUpperCase()}</span>
                   <span>
                     <span className="ok">{groupAlive}</span>

@@ -2249,7 +2249,40 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "never", "panel": "shared", "echo": false },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: Scheduled Task Hidden Guard Doctor",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/doctor_scheduled_tasks_hidden_guard.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "never", "panel": "shared", "echo": false },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: Scheduled Task Hidden Guard Doctor (RequirePass)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/doctor_scheduled_tasks_hidden_guard.ps1",
+        "-RequirePass"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "never", "panel": "shared", "echo": false },
       "group": "test"
     },
     {
@@ -2265,7 +2298,7 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "never", "panel": "shared", "echo": false },
       "group": "test"
     },
     {
@@ -2282,7 +2315,7 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "never", "panel": "shared", "echo": false },
       "group": "test"
     },
     {

@@ -25,13 +25,18 @@ const SkillsView = lazy(() => import('./components/SkillsView.jsx'))
 export default function App() {
   const [state, setState] = useState(null)
   const [events, setEvents] = useState([])
-  const [active, setActive] = useState('status')
+  const [active, setActive] = useState(() => {
+    const hash = window.location.hash.replace('#', '')
+    const valid = ['status','party','bestiary','skills','quests','logs','map','items','rl','systems']
+    return valid.includes(hash) ? hash : 'status'
+  })
   const [err, setErr] = useState('')
   const [actionResult, setActionResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [autoRefresh, setAutoRefresh] = useState(false)
   const [lastRefreshTs, setLastRefreshTs] = useState(null)
   const [tick, setTick] = useState(0)
+  const [showHelp, setShowHelp] = useState(false)
   const panelRef = useRef(null)
   const refreshingRef = useRef(false)
   const stateRef = useRef(null)
@@ -134,7 +139,19 @@ export default function App() {
   useEffect(() => {
     if (active === 'logs') refreshEvents()
     panelRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    window.location.hash = active
   }, [active, refreshEvents])
+
+  /* hashchangeで戻る・進むに対応 */
+  useEffect(() => {
+    function onHashChange() {
+      const h = window.location.hash.replace('#', '')
+      const valid = ['status','party','bestiary','skills','quests','logs','map','items','rl','systems']
+      if (valid.includes(h)) setActive(h)
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
 
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), TICK_INTERVAL_MS)
@@ -162,8 +179,13 @@ export default function App() {
         e.preventDefault()
         refreshSnapshot()
       }
+      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+        e.preventDefault()
+        setShowHelp(prev => !prev)
+      }
       if (e.key === 'Escape') {
         setErr('')
+        setShowHelp(false)
       }
     }
     window.addEventListener('keydown', handleKey)
@@ -357,6 +379,32 @@ export default function App() {
       </main>
     </div>
     <GlobalSearch state={state} onNavigate={(tab) => setActive(tab)} />
+
+    {/* ショートカットヘルプ */}
+    {showHelp && (
+      <div className="helpOverlay" onClick={() => setShowHelp(false)}>
+        <div className="helpModal" onClick={e => e.stopPropagation()}>
+          <div className="helpTitle">⌨ キーボードショートカット</div>
+          <div className="helpGrid">
+            <kbd>1</kbd><span>ステータス</span>
+            <kbd>2</kbd><span>パーティ</span>
+            <kbd>3</kbd><span>図鑑</span>
+            <kbd>4</kbd><span>魔法</span>
+            <kbd>5</kbd><span>クエスト</span>
+            <kbd>6</kbd><span>ログ</span>
+            <kbd>7</kbd><span>マップ</span>
+            <kbd>8</kbd><span>アイテム</span>
+            <kbd>9</kbd><span>RL</span>
+            <kbd>0</kbd><span>システム</span>
+            <kbd>R</kbd><span>スナップショット更新</span>
+            <kbd>Ctrl+K</kbd><span>グローバル検索</span>
+            <kbd>?</kbd><span>このヘルプ</span>
+            <kbd>Esc</kbd><span>閉じる</span>
+          </div>
+          <button className="helpClose" onClick={() => setShowHelp(false)}>閉じる</button>
+        </div>
+      </div>
+    )}
     </ErrorBoundary>
   )
 }

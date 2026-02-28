@@ -26,7 +26,7 @@ if ($Day -lt 1 -or $Day -gt 31) {
     throw "Day must be 1..31"
 }
 
-$taskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$jobScript`""
+$taskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$jobScript`""
 $effectiveRunLevel = $RunLevel
 $useSystemAccount = $RunAsSystem.IsPresent
 if ($RunAsSystem.IsPresent -and $effectiveRunLevel -eq 'LIMITED') {

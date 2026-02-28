@@ -1,7 +1,23 @@
 import { useMemo } from 'react'
-import { bar, fmtBytes, dangerRank } from '../utils.js'
+import { fmtBytes, dangerRank } from '../utils.js'
 import Box from './Box.jsx'
 import OutputBlock from './OutputBlock.jsx'
+
+function GaugeBar({ label, pct }) {
+  const p = Math.max(0, Math.min(100, Number(pct || 0)))
+  const cls = p >= 90 ? 'gaugeDanger' : p >= 70 ? 'gaugeCaution' : 'gaugeOk'
+  return (
+    <div className="gaugeWrap">
+      <div className="gaugeTrack">
+        <div className={`gaugeFill ${cls}`} style={{ width: `${p}%` }} />
+      </div>
+      <div className="gaugeLabel">
+        <span>{label}</span>
+        <span className={`mono ${cls === 'gaugeDanger' ? 'danger' : cls === 'gaugeCaution' ? 'caution' : ''}`}>{p.toFixed(0)}%</span>
+      </div>
+    </div>
+  )
+}
 
 export default function StatusView({ host, services, models, devices, skills, danger, rlAnything, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction }) {
   const cpu = host?.cpu?.percent
@@ -39,16 +55,20 @@ export default function StatusView({ host, services, models, devices, skills, da
       <Box title="母艦ステータス">
         <div className="kv"><span>HOST</span><span>{hostname || '—'}</span></div>
         <div className="kv"><span>OS</span><span className="mono">{os || '—'}</span></div>
-        <div className="kv"><span>DISK</span><span>{diskRoot || '—'} / free {diskFree ?? '—'}GB / total {diskTotal ?? '—'}GB</span></div>
       </Box>
 
       <Box title="CPU">
-        <div className="mono">{bar(cpu)}</div>
+        <GaugeBar label="CPU" pct={cpu} />
       </Box>
 
       <Box title="RAM">
-        <div className="mono">{bar(mem)}</div>
-        <div className="small">{host?.mem?.used_gb ?? '—'}GB / {host?.mem?.total_gb ?? '—'}GB</div>
+        <GaugeBar label="RAM" pct={mem} />
+        <div className="small" style={{ marginTop: 4 }}>{host?.mem?.used_gb ?? '—'}GB / {host?.mem?.total_gb ?? '—'}GB</div>
+      </Box>
+
+      <Box title="DISK">
+        <GaugeBar label={diskRoot || 'C:'} pct={diskTotal > 0 ? ((diskTotal - (diskFree ?? 0)) / diskTotal) * 100 : 0} />
+        <div className="small" style={{ marginTop: 4 }}>free {diskFree ?? '—'}GB / total {diskTotal ?? '—'}GB</div>
       </Box>
 
       <Box title="GPU (NVIDIA)">
@@ -59,12 +79,15 @@ export default function StatusView({ host, services, models, devices, skills, da
             <div key={i} className="gpuRow">
               <div className="mono">{g.name}</div>
               {typeof g.utilization_gpu === 'number' ? (
-                <div className="mono gpuDetail">UTIL {bar(g.utilization_gpu)}</div>
+                <GaugeBar label="UTIL" pct={g.utilization_gpu} />
               ) : (
                 <div className="small gpuDetail">UTIL —</div>
               )}
               {typeof g.mem_used_mb === 'number' && typeof g.mem_total_mb === 'number' && g.mem_total_mb > 0 ? (
-                <div className="mono gpuDetail">VRAM {bar((g.mem_used_mb / g.mem_total_mb) * 100)} ({g.mem_used_mb}MB / {g.mem_total_mb}MB)</div>
+                <div>
+                  <GaugeBar label="VRAM" pct={(g.mem_used_mb / g.mem_total_mb) * 100} />
+                  <div className="small" style={{ marginTop: 2 }}>{g.mem_used_mb}MB / {g.mem_total_mb}MB</div>
+                </div>
               ) : (
                 <div className="small gpuDetail">VRAM {g.mem_used_mb ?? '—'}MB / {g.mem_total_mb ?? '—'}MB</div>
               )}

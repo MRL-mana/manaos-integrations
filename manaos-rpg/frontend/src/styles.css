@@ -1333,3 +1333,89 @@ select:focus-visible, textarea:focus-visible, input:focus-visible {
   color: var(--dim);
 }
 .gsCount { margin-left: auto; font-family: var(--mono); }
+
+/* ====== GaugeBar ====== */
+.gaugeWrap { margin: 4px 0; }
+.gaugeTrack {
+  width: 100%;
+  height: 10px;
+  background: var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.gaugeFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width .4s ease;
+}
+.gaugeOk   { background: var(--ok); }
+.gaugeCaution { background: var(--caution); }
+.gaugeDanger  { background: var(--danger); }
+.gaugeLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-top: 2px;
+  color: var(--dim);
+}
+.gaugeLabel .mono { font-family: var(--mono); }
+
+/* ====== Help Modal ====== */
+.helpOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.65);
+  backdrop-filter: blur(4px);
+}
+.helpModal {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 24px 32px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+}
+.helpTitle {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.helpGrid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.helpGrid span { font-size: 13px; }
+kbd {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--line);
+  color: var(--fg);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 4px;
+  padding: 2px 8px;
+  text-align: center;
+  min-width: 28px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.3);
+}
+.helpClose {
+  display: block;
+  margin: 0 auto;
+  padding: 6px 24px;
+  background: var(--line);
+  color: var(--fg);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.helpClose:hover { background: var(--accent); }

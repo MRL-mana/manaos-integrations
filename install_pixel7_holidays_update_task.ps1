@@ -29,7 +29,7 @@ if ($monthUpper -notin $validMonths) {
     throw "Month must be JAN..DEC"
 }
 
-$taskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$jobScript`" -IncludeNextYear"
+$taskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$jobScript`" -IncludeNextYear"
 $useSystemAccount = $RunAsSystem.IsPresent
 
 function Set-TaskBatteryPolicy {

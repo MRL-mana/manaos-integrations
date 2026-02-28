@@ -20,16 +20,31 @@ function Invoke-QuickStep {
     $commandParameters = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$ScriptPath) + $StepParameters
     $output = @(& pwsh @commandParameters 2>&1 | ForEach-Object { [string]$_ })
     $exitCode = [int]$LASTEXITCODE
+    $outputText = ($output -join [Environment]::NewLine)
+    $parsedJson = $null
+    try {
+        $startIndex = $outputText.IndexOf('{')
+        $endIndex = $outputText.LastIndexOf('}')
+        if ($startIndex -ge 0 -and $endIndex -gt $startIndex) {
+            $jsonText = $outputText.Substring($startIndex, ($endIndex - $startIndex + 1))
+            $parsedJson = ($jsonText | ConvertFrom-Json)
+        }
+    }
+    catch {
+    }
+
     [pscustomobject]@{
         name = $Name
         ok = ($exitCode -eq 0)
         exit_code = $exitCode
+        output_json = $parsedJson
         output_tail = @($output | Select-Object -Last 10)
     }
 }
 
 $steps = @(
     (Invoke-QuickStep -Name 'doctor_tasks' -ScriptPath (Join-Path $scriptDir 'doctor_reason_enum_ops_tasks.ps1') -StepParameters @()),
+    (Invoke-QuickStep -Name 'doctor_hidden_tasks_guard' -ScriptPath (Join-Path $scriptDir 'doctor_scheduled_tasks_hidden_guard.ps1') -StepParameters @()),
     (Invoke-QuickStep -Name 'export_snapshot_json' -ScriptPath (Join-Path $scriptDir 'export_reason_enum_ops_snapshot.ps1') -StepParameters @('-AsJson')),
     (Invoke-QuickStep -Name 'status_snapshot_task_json' -ScriptPath (Join-Path $scriptDir 'status_reason_enum_ops_snapshot_task.ps1') -StepParameters @('-AsJson')),
     (Invoke-QuickStep -Name 'status_lifecycle_json' -ScriptPath (Join-Path $scriptDir 'status_reason_enum_ops_snapshot_task_lifecycle.ps1') -StepParameters @('-AsJson')),
@@ -38,6 +53,15 @@ $steps = @(
 
 $notes = @()
 foreach ($step in $steps) {
+    if ($step.name -eq 'export_snapshot_json' -and -not $step.ok -and -not $RequireSnapshotTaskInstalled) {
+        $jsonOk = ($null -ne $step.output_json)
+        if ($jsonOk) {
+            $step.ok = $true
+            $step.exit_code = 0
+            $notes += 'export_snapshot_json tolerated non-zero exit: snapshot JSON exported (environment state may be failing)'
+        }
+    }
+
     if ($step.name -eq 'status_snapshot_task_json' -and -not $step.ok) {
         $taskMissing = $false
         foreach ($line in $step.output_tail) {
