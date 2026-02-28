@@ -3,7 +3,7 @@ import { bar, fmtBytes } from '../utils.js'
 import Box from './Box.jsx'
 import OutputBlock from './OutputBlock.jsx'
 
-export default function StatusView({ host, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction }) {
+export default function StatusView({ host, services, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction }) {
   const cpu = host?.cpu?.percent
   const mem = host?.mem?.percent
   const diskFree = host?.disk?.free_gb
@@ -17,6 +17,10 @@ export default function StatusView({ host, nextActions, nextActionHints, onRunAc
 
   const hints = useMemo(() => (Array.isArray(nextActionHints) ? nextActionHints : []), [nextActionHints])
   const actions = useMemo(() => (Array.isArray(nextActions) ? nextActions : []), [nextActions])
+
+  const svcList = useMemo(() => (Array.isArray(services) ? services : []), [services])
+  const svcAlive = useMemo(() => svcList.filter(s => s.alive).length, [svcList])
+  const svcDown = svcList.length - svcAlive
 
   const filteredNextActions = useMemo(() => {
     const suppressRules = []
@@ -92,6 +96,19 @@ export default function StatusView({ host, nextActions, nextActionHints, onRunAc
       <Box title="NETWORK">
         <div className="kv"><span>TX</span><span>{fmtBytes(host?.net?.bytes_sent)}</span></div>
         <div className="kv"><span>RX</span><span>{fmtBytes(host?.net?.bytes_recv)}</span></div>
+      </Box>
+
+      <Box title={`サービス稼働 ${svcAlive}/${svcList.length}`}>
+        <div className="kv"><span>ALIVE</span><span className="ok">{svcAlive}</span></div>
+        <div className="kv"><span>DOWN</span><span className={svcDown > 0 ? 'danger' : 'small'}>{svcDown}</span></div>
+        <div className="healthMini">
+          {svcList.map(s => (
+            <div key={s.id}
+                 className={`healthMiniDot ${s.alive ? 'healthMiniDotAlive' : 'healthMiniDotDead'}`}
+                 title={`${s.name}: ${s.alive ? 'ALIVE' : 'DOWN'}`}
+            />
+          ))}
+        </div>
       </Box>
 
       <Box title="次の一手" className="fullSpan">

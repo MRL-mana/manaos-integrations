@@ -11,13 +11,13 @@ if ($listeners.Count -eq 0) {
 }
 
 $pids = @($listeners | Select-Object -ExpandProperty OwningProcess -Unique)
-foreach ($pid in $pids) {
+foreach ($processId in $pids) {
     try {
-        Stop-Process -Id $pid -Force -ErrorAction Stop
-        Write-Host "[OK] Stopped process pid=$pid on port $Port" -ForegroundColor Green
+        Stop-Process -Id $processId -Force -ErrorAction Stop
+        Write-Host "[OK] Stopped process pid=$processId on port $Port" -ForegroundColor Green
     }
     catch {
-        Write-Host "[WARN] Failed to stop pid=${pid}: $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-Host "[WARN] Failed to stop pid=${processId}: $($_.Exception.Message)" -ForegroundColor Yellow
     }
 }
 

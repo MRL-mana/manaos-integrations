@@ -277,6 +277,7 @@ export default function App() {
           {state && active === 'status' ? (
             <StatusView
               host={state?.host}
+              services={state?.services}
               nextActions={state?.next_actions}
               nextActionHints={state?.next_action_hints}
               onRunAction={runAction}
