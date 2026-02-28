@@ -421,6 +421,133 @@
       "group": "test"
     },
     {
+      "label": "ManaOS: RPG Full Health Chain Run Once",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/run_rpg_full_health_chain_once.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: RPG Full Health Chain Task Install (PrintOnly)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/install_rpg_full_health_chain_task.ps1",
+        "-PrintOnly"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: RPG Full Health Chain Task Install",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/install_rpg_full_health_chain_task.ps1",
+        "-RunNow"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "build"
+    },
+    {
+      "label": "ManaOS: RPG Full Health Chain Task Status",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_rpg_full_health_chain_task.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: RPG Full Health Chain Task Status (JSON)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_rpg_full_health_chain_task.ps1",
+        "-AsJson"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: RPG Full Health Chain Task Status (RequirePass)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/status_rpg_full_health_chain_task.ps1",
+        "-RequirePass"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: RPG Full Health Chain Task Uninstall",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/uninstall_rpg_full_health_chain_task.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: RPG Full Health Chain Task Install + Check",
+      "dependsOn": [
+        "ManaOS: RPG Full Health Chain Task Install",
+        "ManaOS: RPG Full Health Chain Task Status (RequirePass)"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
       "label": "ManaOS: Generate Image (Mufufu)",
       "type": "shell",
       "command": "python",
