@@ -15,6 +15,8 @@ import LogsView from './components/LogsView.jsx'
 import MapView from './components/MapView.jsx'
 import ItemsView from './components/ItemsView.jsx'
 import SystemsView from './components/SystemsView.jsx'
+import GlobalSearch from './components/GlobalSearch.jsx'
+import HealthStrip from './components/HealthStrip.jsx'
 
 /* React.lazy で大型コンポーネントを遅延読み込み (code-split) */
 const RLView = lazy(() => import('./components/RLView.jsx'))
@@ -205,8 +207,9 @@ export default function App() {
           <span>API: {apiBase}</span>
           <span>サービス: {aliveCount}/{totalCount} alive</span>
           <span>更新: {fmtTs(state?.ts)}{lastRefreshTs ? ` (${fmtAgo(lastRefreshTs, tick)})` : ''}</span>
-          <span title="1-9,0: タブ切替 / R: 更新 / Esc: エラー閉じる">⌨ ショートカット有</span>
+          <span title="1-9,0: タブ切替 / R: 更新 / Esc: エラー閉じる / Ctrl+K: 検索">⌨ ショートカット有</span>
         </div>
+        <HealthStrip services={state?.services} />
         <div className="actions">
           <button onClick={refreshSnapshot} disabled={loading}>更新（/api/snapshot）</button>
           <button onClick={refreshState} disabled={loading}>読込（/api/state）</button>
@@ -353,6 +356,7 @@ export default function App() {
         </section>
       </main>
     </div>
+    <GlobalSearch state={state} onNavigate={(tab) => setActive(tab)} />
     </ErrorBoundary>
   )
 }

@@ -1188,3 +1188,148 @@ select:focus-visible, textarea:focus-visible, input:focus-visible {
 @media (max-width: 700px) {
   .sysOverview { grid-template-columns: 1fr; }
 }
+
+/* ═══ HealthStrip (Header) ═══ */
+.healthStrip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+.healthStripBar {
+  display: flex;
+  flex: 1;
+  height: 6px;
+  gap: 1px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+}
+.healthStripSeg {
+  min-width: 2px;
+  transition: opacity 0.3s, background 0.3s;
+}
+.healthStripLabel {
+  font-size: 11px;
+  font-family: var(--mono);
+  display: flex;
+  gap: 2px;
+  white-space: nowrap;
+}
+.healthStripLabel .dim { color: var(--dim); opacity: 0.7; }
+
+/* ═══ Party Recovery Hint ═══ */
+.partyHint {
+  font-size: 10px;
+  color: var(--caution);
+  margin-top: 2px;
+  opacity: 0.85;
+}
+
+/* ═══ Global Search (Ctrl+K) ═══ */
+.gsOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.60);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 12vh;
+  backdrop-filter: blur(4px);
+}
+.gsDialog {
+  width: 100%;
+  max-width: 560px;
+  background: #181828;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  overflow: hidden;
+  animation: gsSlide 0.15s ease-out;
+}
+@keyframes gsSlide {
+  from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+.gsInputRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.gsIcon { font-size: 18px; opacity: 0.5; }
+.gsInput {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--fg);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+}
+.gsInput::placeholder { color: var(--dim); opacity: 0.5; }
+.gsKbd {
+  font-size: 10px;
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--dim);
+  font-family: var(--mono);
+}
+.gsResults {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.gsEmpty {
+  padding: 20px;
+  text-align: center;
+  color: var(--dim);
+  font-size: 13px;
+}
+.gsResult {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+.gsResult:last-child { border-bottom: none; }
+.gsResult:hover, .gsResultSel {
+  background: rgba(255,255,255,0.05);
+}
+.gsResultIcon { font-size: 16px; flex-shrink: 0; }
+.gsResultBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.gsResultLabel { font-weight: 700; }
+.gsResultSub {
+  font-size: 11px;
+  color: var(--dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gsResultStatus { font-size: 14px; flex-shrink: 0; }
+.gsFooter {
+  display: flex;
+  gap: 12px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 10px;
+  color: var(--dim);
+}
+.gsCount { margin-left: auto; font-family: var(--mono); }

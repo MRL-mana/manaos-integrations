@@ -19,7 +19,24 @@ function primaryTag(tags) {
   return sorted[0]
 }
 
+/** 復旧ヒント（always_on で DOWN の時に表示） */
+const RECOVERY_HINTS = {
+  docker_desktop: 'Docker Desktop を起動',
+  open_webui: 'Docker → open-webui コンテナ確認',
+  grafana: 'Docker → grafana コンテナ確認',
+  prometheus: 'Docker → prometheus コンテナ確認',
+  cadvisor: 'Docker → cadvisor コンテナ確認',
+  mrl_memory: 'Docker → mrl-memory コンテナ確認',
+  tool_server: 'Docker → tool-server コンテナ確認',
+  ollama: 'ollama serve を起動',
+  n8n: 'n8n を起動',
+  rpg_backend: 'cd manaos-rpg && python -m backend',
+  rpg_frontend: 'cd manaos-rpg/frontend && npm run dev',
+  unified_api_server: 'cd unified_api && python -m server',
+}
+
 function ServiceRow({ s }) {
+  const hint = !s.alive && RECOVERY_HINTS[s.id]
   return (
     <div className={`partyRow${s.alive ? '' : ' partyRowDead'}`}>
       <div className="partyStatus">
@@ -32,6 +49,7 @@ function ServiceRow({ s }) {
           <span className="mono">{s.kind}</span>
           {s.port ? <span className="mono">:{s.port}</span> : null}
         </div>
+        {hint && <div className="partyHint">💡 {hint}</div>}
       </div>
       <div className="partyDetail">
         <span className="mono small">{s.alive_by || '—'}</span>
