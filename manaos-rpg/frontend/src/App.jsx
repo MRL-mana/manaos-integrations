@@ -278,6 +278,11 @@ export default function App() {
             <StatusView
               host={state?.host}
               services={state?.services}
+              models={state?.models}
+              devices={state?.devices}
+              skills={state?.skills}
+              danger={state?.danger}
+              rlAnything={state?.rl_anything}
               nextActions={state?.next_actions}
               nextActionHints={state?.next_action_hints}
               onRunAction={runAction}

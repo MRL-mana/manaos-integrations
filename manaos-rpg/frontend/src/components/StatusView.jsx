@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
-import { bar, fmtBytes } from '../utils.js'
+import { bar, fmtBytes, dangerRank } from '../utils.js'
 import Box from './Box.jsx'
 import OutputBlock from './OutputBlock.jsx'
 
-export default function StatusView({ host, services, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction }) {
+export default function StatusView({ host, services, models, devices, skills, danger, rlAnything, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction }) {
   const cpu = host?.cpu?.percent
   const mem = host?.mem?.percent
   const diskFree = host?.disk?.free_gb
@@ -109,6 +109,34 @@ export default function StatusView({ host, services, nextActions, nextActionHint
             />
           ))}
         </div>
+      </Box>
+
+      {/* ─── ダッシュボード統計 ─── */}
+      <Box title="全体統計">
+        <div className="dashStats">
+          <div className="dashStat">
+            <div className="dashStatValue">{Array.isArray(models) ? models.length : 0}</div>
+            <div className="dashStatLabel">📚 モデル</div>
+          </div>
+          <div className="dashStat">
+            <div className="dashStatValue">{Array.isArray(devices) ? devices.length : 0}</div>
+            <div className="dashStatLabel">🧭 デバイス</div>
+          </div>
+          <div className="dashStat">
+            <div className="dashStatValue">{Array.isArray(skills) ? skills.length : 0}</div>
+            <div className="dashStatLabel">✨ スキル</div>
+          </div>
+          <div className="dashStat">
+            <div className={`dashStatValue ${dangerRank(danger).cls}`}>{danger ?? 0}</div>
+            <div className="dashStatLabel">⚠️ 危険度</div>
+          </div>
+        </div>
+        {rlAnything?.enabled ? (
+          <div className="kv" style={{ marginTop: 8 }}>
+            <span>🧠 RL Cycle</span>
+            <span className="mono">{rlAnything.cycle_count ?? 0} / {rlAnything.current_difficulty ?? '—'}</span>
+          </div>
+        ) : null}
       </Box>
 
       <Box title="次の一手" className="fullSpan">
