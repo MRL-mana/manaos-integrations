@@ -750,3 +750,200 @@ select:focus-visible, textarea:focus-visible, input:focus-visible {
 }
 .healthMiniDotAlive { background: var(--ok); }
 .healthMiniDotDead  { background: var(--danger); opacity: 0.5; }
+
+/* ═══ BestiaryView (Model Cards) ═══ */
+.bestiarySummary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.bestiarySummaryChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--dim);
+}
+.bestiarySummaryChip strong { color: var(--fg); }
+.bestiaryCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+  padding: 6px 0;
+}
+.bestiaryCard {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: rgba(255,255,255, 0.02);
+  transition: border-color 0.2s;
+}
+.bestiaryCard:hover { border-color: var(--dim); }
+.bestiaryCardLoaded { border-color: var(--ok); box-shadow: 0 0 8px rgba(124,255,107,0.15); }
+.bestiaryCardHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.bestiaryCardName { font-weight: 700; font-size: 13px; }
+.runtimeBadge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.badgeOllama { background: #1a3a2a; color: var(--ok); border: 1px solid rgba(124,255,107,0.3); }
+.badgeComfy  { background: #2a2a1a; color: var(--caution); border: 1px solid rgba(255,230,107,0.3); }
+.badgeOther  { background: #1a1a2a; color: var(--dim); border: 1px solid var(--line); }
+.bestiaryLoadedBadge {
+  font-size: 10px; font-weight: 700; color: var(--ok);
+}
+.bestiaryIdleBadge {
+  font-size: 10px; color: var(--dim);
+}
+.bestiaryCardBody { display: flex; flex-direction: column; gap: 4px; }
+.bestiaryCardMeta { display: flex; gap: 8px; flex-wrap: wrap; }
+.bestiaryTags { display: flex; gap: 4px; flex-wrap: wrap; }
+.bestiaryTag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  color: var(--dim);
+}
+
+/* VRAM bar */
+.vramBarWrap {
+  position: relative;
+  height: 14px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 80px;
+}
+.vramBarFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.vramBarOk      { background: var(--ok); opacity: 0.5; }
+.vramBarCaution { background: var(--caution); opacity: 0.5; }
+.vramBarDanger  { background: var(--danger); opacity: 0.5; }
+.vramBarLabel {
+  position: absolute;
+  top: 0; left: 4px;
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--fg);
+  font-weight: 700;
+  text-shadow: 0 0 3px rgba(0,0,0,0.8);
+}
+
+/* ═══ QuestsView ═══ */
+.questSummary {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.questRow {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  transition: background 0.1s;
+}
+.questRow:last-child { border-bottom: none; }
+.questRow:hover { background: rgba(255,255,255,0.03); }
+.questKindIcon { font-size: 16px; text-align: center; }
+.questInfo { min-width: 0; }
+.questLabel { font-weight: 700; font-size: 13px; }
+.questMeta { display: flex; gap: 8px; margin-top: 2px; color: var(--dim); }
+.questAction { white-space: nowrap; }
+.questBtn {
+  background: rgba(124,255,107,0.1);
+  color: var(--ok);
+  border: 1px solid rgba(124,255,107,0.3);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.questBtn:hover { background: rgba(124,255,107,0.2); }
+.questBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.questBtnAction {
+  background: rgba(255,230,107,0.1);
+  color: var(--caution);
+  border-color: rgba(255,230,107,0.3);
+}
+.questBtnAction:hover { background: rgba(255,230,107,0.2); }
+.questResultBox {
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.questResultOk { background: rgba(124,255,107,0.06); border: 1px solid rgba(124,255,107,0.2); }
+.questResultNg { background: rgba(255,107,107,0.06); border: 1px solid rgba(255,107,107,0.2); }
+.questResultHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* ═══ LogsView Enhanced ═══ */
+.logTypeSummary {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.logTypeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.logTypeChip:hover { background: rgba(255,255,255,0.05); }
+.logTypeChip.danger { color: var(--danger); border-color: rgba(255,107,107,0.3); }
+.logTypeChip.ok     { color: var(--ok);     border-color: rgba(124,255,107,0.3); }
+.logTypeChip.caution { color: var(--caution); border-color: rgba(255,230,107,0.3); }
+.logTypeChipActive { background: rgba(255,255,255,0.08) !important; font-weight: 700; }
+.logTypeChip strong { color: inherit; margin-left: 2px; }
+.logLineDanger { background: rgba(255,107,107,0.04); }
+.logLineOk    { background: rgba(124,255,107,0.03); }
+.logTimestamp {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.2;
+}
+.logAgo {
+  font-size: 10px;
+  color: var(--dim);
+  opacity: 0.7;
+}
+.logTypeBadge {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.logMsg { word-break: break-word; }
