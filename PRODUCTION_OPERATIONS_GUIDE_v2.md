@@ -176,6 +176,16 @@ Reason lint notify diagnostics:
 - 補足: status出力の `task_last_result_meaning` で Scheduler の前回結果コードを即時解釈可能
 - 補足: `latest_ok_reason: source_missing` のときは `latest_ok_reason_bridge` にタスク結果由来の推定理由を表示
 
+RPG operations quick runbook:
+- バックエンド回復（RequirePass）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\recover_manaos_rpg_backend.ps1 -RequirePass`
+- フロントエンド回復（RequirePass）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\recover_manaos_rpg_frontend.ps1 -RequirePass`
+- RPGフルヘルスチェーン単発実行: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_rpg_full_health_chain_once.ps1`
+- RPGフルヘルスチェーン定期タスク登録（30分）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\install_rpg_full_health_chain_task.ps1 -IntervalMinutes 30 -RunNow`
+- RPGフルヘルスチェーン定期タスク状態（RequirePass）: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\status_rpg_full_health_chain_task.ps1 -RequirePass`
+- RPGフルヘルスチェーン定期タスク解除: `pwsh -NoProfile -ExecutionPolicy Bypass -File .\uninstall_rpg_full_health_chain_task.ps1`
+- RPGフルヘルスチェーン最新: `logs/rpg_full_health_chain.latest.json`
+- RPGフルヘルスチェーン履歴: `logs/rpg_full_health_chain.history.jsonl`
+
 Reason lint (recommended before commit):
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File ".\lint_reason_enum.ps1" -IncludeCheckScripts
@@ -218,6 +228,15 @@ VS Code task:
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Run (KeepInstalled)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Status`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Status (JSON)`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Run Once`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Install (PrintOnly)`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Install`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Status`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Status (JSON)`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Status (RequirePass)`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Uninstall`
+- `Tasks: Run Task` → `ManaOS: RPG Full Health Chain Task Install + Check`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Quick Verify Gate Task Lifecycle Status (RequirePass)`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status`
 - `Tasks: Run Task` → `ManaOS: Reason Enum Ops Snapshot Status (JSON)`

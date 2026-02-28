@@ -35,10 +35,12 @@ $payload = [ordered]@{
     task_found = $false
     task_to_run = ""
     task_last_result = ""
+    task_last_result_meaning = "unknown"
     latest_found = $false
     latest_ts = 'N/A'
     latest_ok = $false
     latest_ok_reason = 'source_missing'
+    latest_ok_reason_bridge = 'source_missing'
 }
 
 $taskInfo = schtasks /Query /TN $TaskName /V /FO LIST 2>$null
@@ -62,6 +64,23 @@ $payload.task_found = $true
 $payload.task_to_run = Get-SchtasksListValue -Lines $taskInfo -Pattern '^(Task To Run|実行するタスク):\s*'
 $payload.task_last_result = Get-SchtasksListValue -Lines $taskInfo -Pattern '^(Last Result|前回の結果):\s*'
 
+$normalizedLastResult = ([string]$payload.task_last_result).Trim()
+if ($normalizedLastResult -match '^0(\s|$)' -or $normalizedLastResult -eq '0x0') {
+    $payload.task_last_result_meaning = 'last_run_ok'
+}
+elseif ($normalizedLastResult -eq '267009') {
+    $payload.task_last_result_meaning = 'task_running'
+}
+elseif ($normalizedLastResult -eq '267011') {
+    $payload.task_last_result_meaning = 'task_not_yet_run'
+}
+elseif ([string]::IsNullOrWhiteSpace($normalizedLastResult)) {
+    $payload.task_last_result_meaning = 'unknown'
+}
+else {
+    $payload.task_last_result_meaning = 'last_run_nonzero'
+}
+
 if (Test-Path $LatestJsonFile) {
     try {
         $latest = Get-Content -Path $LatestJsonFile -Raw | ConvertFrom-Json
@@ -76,7 +95,21 @@ if (Test-Path $LatestJsonFile) {
     }
 }
 
-$pass = ($payload.task_found -and $payload.latest_found -and ($payload.latest_ok -eq $true))
+if ($payload.latest_found -and ($payload.latest_ok -eq $true)) {
+    $payload.latest_ok_reason_bridge = [string]$payload.latest_ok_reason
+}
+else {
+    switch ([string]$payload.task_last_result_meaning) {
+        'last_run_ok' { $payload.latest_ok_reason_bridge = 'scheduler_last_run_ok' }
+        'task_running' { $payload.latest_ok_reason_bridge = 'scheduler_task_running' }
+        'task_not_yet_run' { $payload.latest_ok_reason_bridge = 'scheduler_task_not_yet_run' }
+        'last_run_nonzero' { $payload.latest_ok_reason_bridge = 'scheduler_last_run_nonzero' }
+        default { $payload.latest_ok_reason_bridge = 'source_missing' }
+    }
+}
+
+$schedulerBridgePass = ($payload.task_last_result_meaning -in @('last_run_ok', 'task_running', 'task_not_yet_run'))
+$pass = ($payload.task_found -and (($payload.latest_found -and ($payload.latest_ok -eq $true)) -or ((-not $payload.latest_found) -and $schedulerBridgePass)))
 
 if ($AsJson) {
     $payload.require_pass = [bool]$RequirePass
@@ -100,6 +133,8 @@ Write-Host "latest_found: $($payload.latest_found)" -ForegroundColor Gray
 Write-Host "latest_ts: $($payload.latest_ts)" -ForegroundColor Gray
 Write-Host "latest_ok: $($payload.latest_ok)" -ForegroundColor Gray
 Write-Host "latest_ok_reason: $($payload.latest_ok_reason)" -ForegroundColor Gray
+Write-Host "task_last_result_meaning: $($payload.task_last_result_meaning)" -ForegroundColor Gray
+Write-Host "latest_ok_reason_bridge: $($payload.latest_ok_reason_bridge)" -ForegroundColor Gray
 Write-Host "pass: $pass" -ForegroundColor Gray
 
 if ($RequirePass.IsPresent -and -not $pass) {

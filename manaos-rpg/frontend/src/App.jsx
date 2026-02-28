@@ -252,21 +252,43 @@ export default function App() {
           }}
         >
           <div className="menuTitle">コマンド</div>
-          {menu.map((m) => (
-            <button
-              key={m.id}
-              data-tab={m.id}
-              role="tab"
-              aria-selected={m.id === active}
-              aria-controls={`panel-${m.id}`}
-              tabIndex={m.id === active ? 0 : -1}
-              className={m.id === active ? 'menuItem active' : 'menuItem'}
-              onClick={() => setActive(m.id)}
-            >
-              <span className="icon">{m.icon}</span>
-              <span className="label">{m.label}</span>
-            </button>
-          ))}
+          {menu.map((m) => {
+            /* メニューバッジ計算 */
+            let badge = null
+            if (m.id === 'party' && Array.isArray(state?.services)) {
+              const alive = state.services.filter(s => s.alive).length
+              badge = <span className={`menuBadge ${alive === 0 ? 'menuBadgeDanger' : ''}`}>{alive}/{state.services.length}</span>
+            } else if (m.id === 'bestiary' && Array.isArray(state?.models)) {
+              const loaded = state.models.filter(x => x.loaded).length
+              badge = loaded > 0
+                ? <span className="menuBadge menuBadgeOk">{loaded}</span>
+                : <span className="menuBadge">{state.models.length}</span>
+            } else if (m.id === 'map' && Array.isArray(state?.devices)) {
+              const online = state.devices.filter(d => d.alive).length
+              badge = <span className={`menuBadge ${online === state.devices.length ? 'menuBadgeOk' : 'menuBadgeDanger'}`}>{online}/{state.devices.length}</span>
+            } else if (m.id === 'logs' && Array.isArray(events)) {
+              badge = events.length > 0 ? <span className="menuBadge">{events.length > 99 ? '99+' : events.length}</span> : null
+            } else if (m.id === 'systems') {
+              const d = Number(state?.danger || 0)
+              if (d > 0) badge = <span className="menuBadge menuBadgeDanger">⚠{d}</span>
+            }
+            return (
+              <button
+                key={m.id}
+                data-tab={m.id}
+                role="tab"
+                aria-selected={m.id === active}
+                aria-controls={`panel-${m.id}`}
+                tabIndex={m.id === active ? 0 : -1}
+                className={m.id === active ? 'menuItem active' : 'menuItem'}
+                onClick={() => setActive(m.id)}
+              >
+                <span className="icon">{m.icon}</span>
+                <span className="label">{m.label}</span>
+                {badge}
+              </button>
+            )
+          })}
         </nav>
 
         <section className="panel" ref={panelRef} role="tabpanel" id={`panel-${active}`} aria-labelledby={`tab-${active}`} tabIndex={0}>
