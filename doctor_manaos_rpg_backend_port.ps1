@@ -90,17 +90,20 @@ if ($listenerCount -eq 0) {
 elseif ($existingCount -lt $listenerCount) {
     $okReason = "listener_pid_stale"
 }
-elseif ($listenerCount -gt 1) {
-    $okReason = "multiple_listeners"
-}
 elseif ($healthCode -ne "200") {
     $okReason = "health_not_ok"
+}
+elseif ($listenerCount -gt 1 -and $backendLikeCount -ge 1) {
+    $okReason = "healthy_with_extra_listener"
+}
+elseif ($listenerCount -gt 1) {
+    $okReason = "multiple_listeners"
 }
 elseif ($backendLikeCount -eq 0) {
     $okReason = "healthy_listener_unclassified"
 }
 
-$pass = @("ok", "healthy_listener_unclassified") -contains $okReason
+$pass = @("ok", "healthy_listener_unclassified", "healthy_with_extra_listener") -contains $okReason
 
 $payload = [ordered]@{
     host = $BindAddress

@@ -29,8 +29,15 @@ function Invoke-Step {
 
     $commandValues = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $ScriptPath) + $StepValues
     $output = @(& pwsh @commandValues 2>&1 | ForEach-Object { [string]$_ })
+    $outputText = ($output -join "`n")
     $exitCode = [int]$LASTEXITCODE
     $ok = ($ExpectedExitCodes -contains $exitCode)
+    $outputJson = $null
+    try {
+        $outputJson = ($outputText | ConvertFrom-Json)
+    }
+    catch {
+    }
 
     [pscustomobject]@{
         name = $Name
@@ -38,6 +45,7 @@ function Invoke-Step {
         values = $StepValues
         exit_code = $exitCode
         ok = $ok
+        output_json = $outputJson
         output_tail = @($output | Select-Object -Last 20)
     }
 }
@@ -47,13 +55,13 @@ $steps.Add((Invoke-Step -Name 'doctor_before' -ScriptPath $doctorScript -StepVal
 
 $doctorBeforeJson = $null
 try {
-    $doctorBeforeJson = (($steps[0].output_tail -join "`n") | ConvertFrom-Json)
+    $doctorBeforeJson = $steps[0].output_json
 }
 catch {
 }
 
 $needsRecovery = $true
-if ($null -ne $doctorBeforeJson -and (@('ok', 'healthy_listener_unclassified') -contains [string]$doctorBeforeJson.ok_reason)) {
+if ($null -ne $doctorBeforeJson -and (@('ok', 'healthy_listener_unclassified', 'healthy_with_extra_listener') -contains [string]$doctorBeforeJson.ok_reason)) {
     $needsRecovery = $false
 }
 

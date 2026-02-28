@@ -8,9 +8,13 @@ param(
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $backendDir = Join-Path $scriptDir "manaos-rpg\backend"
+$stopScript = Join-Path $scriptDir "stop_manaos_rpg_backend.ps1"
 
 if (-not (Test-Path $backendDir)) {
     throw "Backend directory not found: $backendDir"
+}
+if (-not (Test-Path $stopScript)) {
+    throw "Stop script not found: $stopScript"
 }
 
 function Resolve-PythonExe {
@@ -57,8 +61,9 @@ if ($null -ne $listener) {
         Write-Host "[OK] Backend already running on ${ListenHost}:${Port} (pid=$($listener.OwningProcess))" -ForegroundColor Green
         exit 0
     }
-    Write-Host "[WARN] Port $Port is in use but /health is not 200 (code=$healthCode)" -ForegroundColor Yellow
-    exit 1
+    Write-Host "[WARN] Port $Port is in use but /health is not 200 (code=$healthCode), trying recovery stop/start" -ForegroundColor Yellow
+    & pwsh -NoProfile -ExecutionPolicy Bypass -File $stopScript -Port $Port -ForceAllListeners
+    Start-Sleep -Milliseconds 600
 }
 
 $resolvedPython = Resolve-PythonExe -ScriptRoot $scriptDir -Provided $PythonExe
