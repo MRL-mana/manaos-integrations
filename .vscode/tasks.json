@@ -114,6 +114,106 @@
       "group": "test"
     },
     {
+      "label": "ManaOS: RPG Backend Port Doctor",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/doctor_manaos_rpg_backend_port.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: RPG Backend Port Doctor (JSON)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/doctor_manaos_rpg_backend_port.ps1",
+        "-AsJson"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: RPG Backend Port Doctor (RequirePass)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/doctor_manaos_rpg_backend_port.ps1",
+        "-RequirePass"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: RPG Backend Recover",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/recover_manaos_rpg_backend.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: RPG Backend Recover (JSON)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/recover_manaos_rpg_backend.ps1",
+        "-AsJson"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: RPG Backend Recover (RequirePass)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/recover_manaos_rpg_backend.ps1",
+        "-RequirePass"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
       "label": "ManaOS: RPG Frontend Start (5173)",
       "type": "shell",
       "command": "pwsh",
@@ -200,6 +300,19 @@
       "dependsOn": [
         "ManaOS: RPG Frontend Stop (5173)",
         "ManaOS: RPG Frontend Start (5173)",
+        "ManaOS: RPG Frontend Status (RequirePass)"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: RPG Full Health Chain",
+      "dependsOn": [
+        "ManaOS: RPG Backend Recover (RequirePass)",
+        "ManaOS: RPG Backend Status (RequirePass)",
+        "ManaOS: RPG Frontend Restart + Health",
         "ManaOS: RPG Frontend Status (RequirePass)"
       ],
       "dependsOrder": "sequence",
