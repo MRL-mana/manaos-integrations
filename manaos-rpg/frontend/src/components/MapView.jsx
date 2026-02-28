@@ -1,63 +1,101 @@
 import { useMemo, useState } from 'react'
 
-function DeviceCard({ d }) {
-  const [open, setOpen] = useState(false)
+const KIND_EMOJI = { desktop: '🖥️', laptop: '💻', mobile: '📱', server: '🗄️' }
+const KIND_COLOR = { desktop: '#7CFF6B', laptop: '#6BB5FF', mobile: '#FFE66B', server: '#FF6B6B' }
+
+function SpecBar({ label, value, max, unit }) {
+  if (!value) return null
+  const num = parseFloat(value)
+  if (isNaN(num)) return (
+    <div className="mapSpecRow">
+      <span className="mapSpecLabel">{label}</span>
+      <span className="mono small">{value}</span>
+    </div>
+  )
+  const pct = Math.min(100, (num / max) * 100)
+  return (
+    <div className="mapSpecRow">
+      <span className="mapSpecLabel">{label}</span>
+      <div className="mapSpecBarWrap">
+        <div className="mapSpecBarFill" style={{ width: `${pct}%` }} />
+        <span className="mapSpecBarText">{value}{unit || ''}</span>
+      </div>
+    </div>
+  )
+}
+
+function DeviceCard({ d, isPrimary }) {
+  const [open, setOpen] = useState(isPrimary)
   const specs = d.specs || {}
   const features = Array.isArray(d.features) ? d.features : []
   const health = Array.isArray(d.health) ? d.health : []
-  const kindEmoji = d.kind === 'desktop' ? '🖥️' : d.kind === 'laptop' ? '💻' : d.kind === 'mobile' ? '📱' : '🔧'
+  const network = d.network || {}
+  const kindEmoji = KIND_EMOJI[d.kind] || '🔧'
+  const accentColor = KIND_COLOR[d.kind] || 'var(--dim)'
 
   return (
-    <div className={`deviceCard${typeof d.alive === 'boolean' && !d.alive ? ' trDanger' : ''}`}
-         style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '12px 16px', marginBottom: 10, background: 'var(--bg-card, #1a1a2e)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-           onClick={() => setOpen(!open)}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 24 }}>{kindEmoji}</span>
+    <div className={`mapDeviceCard${typeof d.alive === 'boolean' && !d.alive ? ' mapDeviceOffline' : ''}`}
+         style={{ borderLeftColor: accentColor }}>
+      <div className="mapDeviceHeader" onClick={() => setOpen(!open)}>
+        <div className="mapDeviceTitle">
+          <span className="mapDeviceEmoji">{kindEmoji}</span>
           <div>
-            <div style={{ fontWeight: 'bold', fontSize: 16 }}>{d.name}</div>
-            <div className="small mono" style={{ opacity: 0.7 }}>{d.id} · {d.os || d.kind} · {d.role || '—'}</div>
+            <div className="mapDeviceName">{d.name}</div>
+            <div className="mapDeviceSub">{d.id} · {d.os || d.kind}</div>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="mapDeviceStatus">
           {typeof d.alive === 'boolean' ? (
-            <span className={d.alive ? 'ok' : 'danger'} style={{ fontWeight: 'bold' }}>
+            <span className={d.alive ? 'mapOnlineBadge' : 'mapOfflineBadge'}>
               {d.alive ? '● ONLINE' : '○ OFFLINE'}
             </span>
           ) : <span className="small">—</span>}
-          <span style={{ fontSize: 12, opacity: 0.5 }}>{open ? '▲' : '▼'}</span>
+          <span className="mapChevron">{open ? '▲' : '▼'}</span>
         </div>
       </div>
 
-      {open && (
-        <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
-          {/* Tags */}
-          <div style={{ marginBottom: 8 }}>
-            {Array.isArray(d.tags) && d.tags.map(t => (
-              <span key={t} style={{ display: 'inline-block', background: 'var(--accent, #333)', borderRadius: 4, padding: '2px 8px', marginRight: 4, marginBottom: 4, fontSize: 11 }}>{t}</span>
-            ))}
-          </div>
+      {/* Role */}
+      {d.role && <div className="mapDeviceRole">{d.role}</div>}
 
-          {/* Specs */}
+      {open && (
+        <div className="mapDeviceBody">
+          {/* Tags */}
+          {Array.isArray(d.tags) && d.tags.length > 0 && (
+            <div className="mapTagRow">
+              {d.tags.map(t => <span key={t} className="bestiaryTag">{t}</span>)}
+            </div>
+          )}
+
+          {/* Specs - visual bars */}
           {Object.keys(specs).length > 0 && (
-            <div style={{ marginBottom: 8 }}>
-              <div style={{ fontWeight: 'bold', fontSize: 12, marginBottom: 4 }}>📊 スペック</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '2px 12px', fontSize: 13 }}>
-                {specs.cpu && <><span className="small">CPU</span><span className="mono">{specs.cpu}</span></>}
-                {specs.gpu && <><span className="small">GPU</span><span className="mono">{specs.gpu}</span></>}
-                {specs.ram && <><span className="small">RAM</span><span className="mono">{specs.ram}</span></>}
-                {specs.storage && <><span className="small">Storage</span><span className="mono">{specs.storage}</span></>}
-              </div>
+            <div className="mapSection">
+              <div className="mapSectionTitle">📊 スペック</div>
+              {specs.cpu && <div className="mapSpecRow"><span className="mapSpecLabel">CPU</span><span className="mono small">{specs.cpu}</span></div>}
+              {specs.gpu && <div className="mapSpecRow"><span className="mapSpecLabel">GPU</span><span className="mono small">{specs.gpu}</span></div>}
+              {specs.ram && <SpecBar label="RAM" value={specs.ram} max="128GB" unit="" />}
+              {specs.storage && <div className="mapSpecRow"><span className="mapSpecLabel">Storage</span><span className="mono small">{specs.storage}</span></div>}
+            </div>
+          )}
+
+          {/* Network */}
+          {Object.keys(network).length > 0 && (
+            <div className="mapSection">
+              <div className="mapSectionTitle">🌐 ネットワーク</div>
+              {network.tailscale_ip && <div className="mapSpecRow"><span className="mapSpecLabel">Tailscale</span><span className="mono small">{network.tailscale_ip}</span></div>}
+              {network.local_ip && <div className="mapSpecRow"><span className="mapSpecLabel">Local</span><span className="mono small">{network.local_ip}</span></div>}
+              {network.usb_ip && <div className="mapSpecRow"><span className="mapSpecLabel">USB</span><span className="mono small">{network.usb_ip}</span></div>}
             </div>
           )}
 
           {/* Health checks */}
           {health.length > 0 && (
-            <div style={{ marginBottom: 8 }}>
-              <div style={{ fontWeight: 'bold', fontSize: 12, marginBottom: 4 }}>🩺 ヘルスチェック</div>
+            <div className="mapSection">
+              <div className="mapSectionTitle">🩺 ヘルスチェック</div>
               {health.map((h, i) => (
-                <div key={i} className="small mono" style={{ marginLeft: 8 }}>
-                  [{h.type}] {h.label}: {h.url || h.host || h.serial || '—'}
+                <div key={i} className="mapHealthRow">
+                  <span className={`mapHealthDot ${h.type === 'http' ? 'mapHealthHttp' : 'mapHealthOther'}`} />
+                  <span className="small">{h.label}</span>
+                  <span className="mono small">{h.url || h.host || h.serial || '—'}</span>
                 </div>
               ))}
             </div>
@@ -65,12 +103,10 @@ function DeviceCard({ d }) {
 
           {/* Features */}
           {features.length > 0 && (
-            <div>
-              <div style={{ fontWeight: 'bold', fontSize: 12, marginBottom: 4 }}>⚡ 機能</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                {features.map((f, i) => (
-                  <span key={i} style={{ display: 'inline-block', background: '#2a2a4a', borderRadius: 4, padding: '2px 8px', fontSize: 11 }}>{f}</span>
-                ))}
+            <div className="mapSection">
+              <div className="mapSectionTitle">⚡ 機能</div>
+              <div className="mapFeatures">
+                {features.map((f, i) => <span key={i} className="mapFeatureChip">{f}</span>)}
               </div>
             </div>
           )}
@@ -80,18 +116,54 @@ function DeviceCard({ d }) {
   )
 }
 
+function TopologyLine({ from, to }) {
+  return (
+    <div className="mapTopoLine">
+      <span className="mapTopoNode">{from}</span>
+      <span className="mapTopoArrow">⟷</span>
+      <span className="mapTopoNode">{to}</span>
+    </div>
+  )
+}
+
 export default function MapView({ devices }) {
   const list = useMemo(() => (Array.isArray(devices) ? devices : []), [devices])
-  const aliveDevices = useMemo(() => list.filter((d) => d.alive), [list])
+  const aliveCount = useMemo(() => list.filter(d => d.alive).length, [list])
+  const primary = list.find(d => d.kind === 'desktop')
+
   return (
     <div>
-      <div className="panelTitle">マップ（デバイス） <span className="small">{list.length}件{list.length > 0 ? ` / ${aliveDevices.length} online` : ''}</span></div>
+      <div className="panelTitle">マップ（デバイス） <span className="small">{list.length}件 / {aliveCount} online</span></div>
+
       {list.length === 0 ? (
         <div className="small">デバイスが未登録です（registry/devices.yaml を追加）</div>
       ) : (
-        <div>
-          {list.map((d) => <DeviceCard key={d.id} d={d} />)}
-        </div>
+        <>
+          {/* Topology overview */}
+          {list.length > 1 && (
+            <div className="mapTopology">
+              <div className="mapTopoTitle">🗺️ ネットワークトポロジー</div>
+              <div className="mapTopoGraph">
+                {list.map((d, i) => (
+                  <div key={d.id} className="mapTopoDevice">
+                    <span className="mapTopoEmoji">{KIND_EMOJI[d.kind] || '🔧'}</span>
+                    <span className={`mapTopoName ${d.alive === false ? 'danger' : ''}`}>{d.name?.split('（')[0] || d.id}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mapTopoLines">
+                {list.length >= 2 && primary && list.filter(d => d.id !== primary.id).map(d => (
+                  <TopologyLine key={d.id} from={primary.name?.split('（')[0] || primary.id} to={d.name?.split('（')[0] || d.id} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Device cards */}
+          <div className="mapDeviceGrid">
+            {list.map(d => <DeviceCard key={d.id} d={d} isPrimary={d.id === primary?.id} />)}
+          </div>
+        </>
       )}
     </div>
   )

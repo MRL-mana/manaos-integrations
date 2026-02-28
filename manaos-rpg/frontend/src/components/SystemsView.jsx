@@ -25,14 +25,44 @@ export default function SystemsView({ unified, onRunAction, actionResult, action
     }))
   }, [data])
 
+  const availCount = useMemo(() => rows.filter(r => r.available).length, [rows])
+
   return (
     <div>
       <div className="panelTitle">システム（統合）</div>
-      <div className="small">Unified API: <span className="mono">{base || '—'}</span></div>
-      <div className="small">integrations/status: {ok ? <span className="ok">OK</span> : <span className="danger">NG</span>} / auth_configured={String(Boolean(r?.auth_configured))}</div>
-      {!ok ? (
-        <div className="err">{String(r?.error || 'unavailable')}</div>
-      ) : null}
+
+      {/* システムサマリーカード */}
+      <div className="sysOverview">
+        <div className="sysOverviewCard">
+          <div className="sysOverviewIcon">🌐</div>
+          <div>
+            <div className="sysOverviewLabel">Unified API</div>
+            <div className="mono small">{base || '—'}</div>
+            <div className={ok ? 'ok' : 'danger'}>{ok ? '● Connected' : '○ Disconnected'}</div>
+          </div>
+        </div>
+        <div className="sysOverviewCard">
+          <div className="sysOverviewIcon">🧠</div>
+          <div>
+            <div className="sysOverviewLabel">MRL Memory</div>
+            <div className="mono small">{mrlBase || '—'}</div>
+            <div className={mrlOk ? 'ok' : 'danger'}>{mrlOk ? '● Healthy' : '○ Down'}</div>
+          </div>
+        </div>
+        <div className="sysOverviewCard">
+          <div className="sysOverviewIcon">🔌</div>
+          <div>
+            <div className="sysOverviewLabel">Integrations</div>
+            <div className="small">{availCount}/{rows.length} available</div>
+            <div className="sysIntegMini">
+              {rows.map(r => (
+                <span key={r.key} className={`healthMiniDot ${r.available ? 'healthMiniDotAlive' : 'healthMiniDotDead'}`}
+                      title={`${r.key}: ${r.available ? 'OK' : r.reason || 'NG'}`} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {health || openapi ? (
         <div className="sectionBlock mt10">
