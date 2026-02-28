@@ -13,6 +13,11 @@ if ($listeners.Count -eq 0) {
 $pids = @($listeners | Select-Object -ExpandProperty OwningProcess -Unique)
 foreach ($processId in $pids) {
     try {
+        $proc = Get-Process -Id $processId -ErrorAction SilentlyContinue
+        if ($null -eq $proc) {
+            Write-Host "[INFO] pid=$processId already exited" -ForegroundColor DarkYellow
+            continue
+        }
         Stop-Process -Id $processId -Force -ErrorAction Stop
         Write-Host "[OK] Stopped process pid=$processId on port $Port" -ForegroundColor Green
     }
