@@ -1,11 +1,82 @@
 version: 1
 devices:
-  - id: host
-    name: 母艦
-    kind: windows
-    tags: [core]
+  - id: mothership
+    name: 母艦（メイン Desktop）
+    kind: desktop
+    os: Windows 11 Pro
+    specs:
+      cpu: "Intel Core i9-13900K (24C/32T)"
+      gpu: "NVIDIA RTX 4090 24GB GDDR6X"
+      ram: "64GB DDR5-5600"
+      storage: "2TB NVMe (OS/AI) + 4TB HDD (Data)"
+    role: "全AI推論・学習・生成の中心。Docker/Ollama/ComfyUI/全サービス稼働"
+    health:
+      - label: Ollama
+        url: http://127.0.0.1:11434/api/tags
+      - label: Open WebUI
+        url: http://127.0.0.1:3001/
+      - label: Grafana
+        url: http://127.0.0.1:3000/
+      - label: Unified API
+        url: http://127.0.0.1:9502/health
+      - label: RPG Backend
+        url: http://127.0.0.1:9510/health
+    features:
+      - "RTX 4090 で 72B モデルを Q4 量子化で実行可能"
+      - "Docker で 60+ コンテナ オーケストレーション"
+      - "ComfyUI + FLUX + SDXL 画像生成パイプライン"
+      - "Wan 2.2 / LTX2 Infinity 動画生成"
+      - "Grafana + Prometheus + cAdvisor 監視"
+      - "castle_ex LoRA 学習実行中"
+    tags: [core, gpu, always_on]
+
+  - id: x280
+    name: ThinkPad X280（サブノート）
+    kind: laptop
+    os: Windows 11 Home
+    specs:
+      cpu: "Intel Core i5-8250U (4C/8T)"
+      gpu: "Intel UHD Graphics 620"
+      ram: "8GB DDR4-2400"
+      storage: "256GB NVMe SSD"
+    role: "サブ端末。Tailscale経由で母艦に接続。Open WebUI / RDP フロントエンド"
+    network:
+      tailscale: true
+      rdp: true
+    features:
+      - "Tailscale で母艦 Ollama にリモートアクセス"
+      - "Open WebUI リモート フロントエンド"
+      - "RDP で母艦 Desktop 操作"
+      - "持ち運び用AI入口"
+    tags: [sub, remote, laptop]
 
   - id: pixel7
-    name: Pixel 7
-    kind: android
-    tags: [device]
+    name: Pixel 7（モバイル）
+    kind: mobile
+    os: Android 15
+    specs:
+      cpu: "Google Tensor G2"
+      gpu: "Mali-G710 MP7"
+      ram: "8GB LPDDR5"
+      storage: "128GB UFS 3.1"
+    role: "モバイル端末。ADB/HTTP Gateway でリモコン操作。Termux で HTTPサーバ稼働"
+    network:
+      tailscale: true
+      adb_wifi: true
+      http_gateway: true
+    health:
+      - label: ADB
+        check: "adb devices (USB/WiFi)"
+      - label: HTTP Gateway
+        url: http://pixel7:8080/health
+    features:
+      - "ADB リモコン（Home/Back/Recents/Power/Volume）"
+      - "HTTP Gateway（Termux/HTTP Shortcuts）"
+      - "scrcpy 画面ミラーリング（有線/無線/縦長）"
+      - "スクリーンショット取得（ADB pull）"
+      - "画面録画（10秒/30秒/手動停止）"
+      - "カメラ起動 & Vision 質問（Ollama LLaVA）"
+      - "外出モード（Tailscale + keepalive + scrcpy watch）"
+      - "再起動ログ監視（reboot watch）"
+      - "ダッシュボード（状態/ログまとめ）"
+    tags: [device, mobile, adb, remote]
