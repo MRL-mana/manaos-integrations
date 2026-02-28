@@ -1,44 +1,168 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+
+/** タグの優先表示順 */
+const TAG_ORDER = [
+  'always_on', 'core', 'ai', 'chat', 'monitoring', 'automation', 'mcp',
+  'secretary', 'slack', 'blueprint', 'docker', 'infra', 'training',
+  'generation', 'searxng', 'video', 'voice', 'image'
+]
+
+function tagPriority(tag) {
+  const i = TAG_ORDER.indexOf(tag)
+  return i >= 0 ? i : 999
+}
+
+/** 最優先タグでグループ化（複合タグの場合は先頭タグ） */
+function primaryTag(tags) {
+  if (!Array.isArray(tags) || tags.length === 0) return 'other'
+  const sorted = [...tags].sort((a, b) => tagPriority(a) - tagPriority(b))
+  return sorted[0]
+}
+
+function ServiceRow({ s }) {
+  return (
+    <div className={`partyRow${s.alive ? '' : ' partyRowDead'}`}>
+      <div className="partyStatus">
+        <span className={s.alive ? 'partyDot partyDotAlive' : 'partyDot partyDotDead'} />
+      </div>
+      <div className="partyMain">
+        <div className="partyName">{s.name}</div>
+        <div className="partyMeta">
+          <span className="mono">{s.id}</span>
+          <span className="mono">{s.kind}</span>
+          {s.port ? <span className="mono">:{s.port}</span> : null}
+        </div>
+      </div>
+      <div className="partyDetail">
+        <span className="mono small">{s.alive_by || '—'}</span>
+        {typeof s.http_status === 'number' ? <span className="mono small"> {s.http_status}</span> : null}
+        {typeof s.docker_health === 'string' ? (
+          <span className={s.docker_health === 'unhealthy' ? 'danger small' : 'small'}> {s.docker_health}</span>
+        ) : null}
+        {typeof s.restart_count === 'number' && s.restart_count > 0 ? (
+          <span className={s.restart_count >= 5 ? 'danger small' : 'caution small'}> ↻{s.restart_count}</span>
+        ) : null}
+        {Array.isArray(s.deps_down) && s.deps_down.length > 0 ? (
+          <span className="danger small"> deps↓{s.deps_down.length}</span>
+        ) : null}
+        {s.degraded ? <span className="caution small"> DEGRADED</span> : null}
+      </div>
+    </div>
+  )
+}
 
 export default function PartyView({ services }) {
-  const list = useMemo(() => {
-    const raw = Array.isArray(services) ? services : []
-    return raw.slice().sort((a, b) => {
-      if (a.alive === b.alive) return 0
-      return a.alive ? 1 : -1
+  const list = useMemo(() => (Array.isArray(services) ? services : []), [services])
+  const [filterText, setFilterText] = useState('')
+  const [showMode, setShowMode] = useState('all') // 'all' | 'alive' | 'down'
+  const [collapsed, setCollapsed] = useState(() => new Set())
+
+  const aliveCount = useMemo(() => list.filter(s => s.alive).length, [list])
+  const downCount = list.length - aliveCount
+  const alivePercent = list.length > 0 ? Math.round((aliveCount / list.length) * 100) : 0
+
+  /** フィルター適用 */
+  const filtered = useMemo(() => {
+    let result = list
+    if (showMode === 'alive') result = result.filter(s => s.alive)
+    if (showMode === 'down') result = result.filter(s => !s.alive)
+    if (filterText.trim()) {
+      const q = filterText.trim().toLowerCase()
+      result = result.filter(s => {
+        const hay = [s.id, s.name, s.kind, ...(Array.isArray(s.tags) ? s.tags : [])].join(' ').toLowerCase()
+        return hay.includes(q)
+      })
+    }
+    return result
+  }, [list, filterText, showMode])
+
+  /** タグ別グループ化 */
+  const { groups, groupOrder } = useMemo(() => {
+    const map = new Map()
+    for (const s of filtered) {
+      const tag = primaryTag(s.tags)
+      if (!map.has(tag)) map.set(tag, [])
+      map.get(tag).push(s)
+    }
+    // 各グループ内: dead first, then alive
+    for (const arr of map.values()) {
+      arr.sort((a, b) => {
+        if (a.alive === b.alive) return (a.name || '').localeCompare(b.name || '')
+        return a.alive ? 1 : -1
+      })
+    }
+    const order = Array.from(map.keys()).sort((a, b) => tagPriority(a) - tagPriority(b))
+    return { groups: map, groupOrder: order }
+  }, [filtered])
+
+  const toggleGroup = (tag) => {
+    setCollapsed(prev => {
+      const next = new Set(prev)
+      next.has(tag) ? next.delete(tag) : next.add(tag)
+      return next
     })
-  }, [services])
+  }
+
   return (
     <div>
-      <div className="panelTitle">パーティ（サービス） <span className="small">{list.length}件</span></div>
+      <div className="panelTitle">パーティ（サービス） <span className="small">{filtered.length}/{list.length}件</span></div>
+
+      {/* ─── サマリーバー ─── */}
+      <div className="partySummary">
+        <div className="partySummaryBar">
+          <div className="partySummaryAlive" style={{ width: `${alivePercent}%` }} />
+        </div>
+        <div className="partySummaryText">
+          <span className="ok">{aliveCount} alive</span>
+          <span className="danger">{downCount} down</span>
+          <span className="small">{alivePercent}%</span>
+        </div>
+      </div>
+
+      {/* ─── フィルターバー ─── */}
+      <div className="filterBar">
+        <input
+          className="input filterInput inputFlush"
+          value={filterText}
+          onChange={e => setFilterText(e.target.value)}
+          placeholder="フィルター（ID/名前/タグ）"
+          aria-label="サービスフィルター"
+        />
+        <button className={`link${showMode === 'all' ? ' partyFilterActive' : ''}`} onClick={() => setShowMode('all')}>ALL</button>
+        <button className={`link${showMode === 'alive' ? ' partyFilterActive' : ''}`} onClick={() => setShowMode('alive')}>ALIVE</button>
+        <button className={`link${showMode === 'down' ? ' partyFilterActive' : ''}`} onClick={() => setShowMode('down')}>DOWN</button>
+      </div>
+
       {list.length === 0 ? (
         <div className="small">サービスが未登録です（registry/services.yaml を追加）</div>
+      ) : filtered.length === 0 ? (
+        <div className="small">条件に一致するサービスがありません</div>
       ) : (
-      <div className="table">
-        <div className="tr th">
-          <div>ID</div><div>NAME</div><div>KIND</div><div>PORT</div><div>STATUS</div><div>DETAIL</div>
+        <div>
+          {groupOrder.map(tag => {
+            const items = groups.get(tag) || []
+            const groupAlive = items.filter(s => s.alive).length
+            const isCollapsed = collapsed.has(tag)
+            return (
+              <div key={tag} className="sectionBlock">
+                <div className="sectionHead" style={{ cursor: 'pointer' }} onClick={() => toggleGroup(tag)}>
+                  <span className="mono">{tag.toUpperCase()}</span>
+                  <span>
+                    <span className="ok">{groupAlive}</span>
+                    <span className="small"> / </span>
+                    <span className={items.length - groupAlive > 0 ? 'danger' : 'small'}>{items.length}</span>
+                  </span>
+                  <span style={{ fontSize: 12, opacity: 0.5 }}>{isCollapsed ? '▼' : '▲'}</span>
+                </div>
+                {!isCollapsed && (
+                  <div className="partyGroup">
+                    {items.map(s => <ServiceRow key={s.id} s={s} />)}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
-        {list.map((s) => (
-          <div key={s.id} className={s.alive ? 'tr' : 'tr trDanger'}>
-            <div className="mono">{s.id}</div>
-            <div>{s.name}</div>
-            <div className="mono">{s.kind}</div>
-            <div className="mono">{s.port ?? '—'}</div>
-            <div className={s.alive ? 'ok' : 'danger'}>{s.alive ? 'ALIVE' : 'DOWN'}</div>
-            <div className="small">
-              <span className="mono">by={s.alive_by || '—'}</span>
-              {typeof s.http_status === 'number' ? <span className="mono"> / http={s.http_status}</span> : null}
-              {typeof s.docker_health === 'string' ? <span className={s.docker_health === 'unhealthy' ? 'danger' : 'small'}> / health={s.docker_health}</span> : null}
-              {typeof s.docker_status === 'string' ? <span className="small"> / docker={s.docker_status}</span> : null}
-              {typeof s.pm2_status === 'string' ? <span className={s.pm2_status === 'online' ? 'ok' : 'danger'}> / pm2={s.pm2_status}</span> : null}
-              {typeof s.restart_count === 'number' ? <span className={s.restart_count >= 5 ? 'danger' : 'small'}> / restarts={s.restart_count}</span> : null}
-              {Array.isArray(s.deps_down) && s.deps_down.length > 0 ? (
-                <span className="danger"> / deps_down={s.deps_down.join(', ')}</span>
-              ) : null}
-            </div>
-          </div>
-        ))}
-      </div>
       )}
     </div>
   )
