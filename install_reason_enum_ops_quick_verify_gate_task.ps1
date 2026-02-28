@@ -25,6 +25,7 @@ if (-not (Test-Path $jobScript)) {
 }
 
 $taskRun = "pwsh -NoP -EP Bypass -File `"$jobScript`" -RequireSnapshotTaskInstalled"
+$taskRun = "pwsh -NoP -WindowStyle Hidden -EP Bypass -File `"$jobScript`" -RequireSnapshotTaskInstalled"
 $effectiveRunLevel = $RunLevel
 $useSystemAccount = $RunAsSystem.IsPresent
 if ($RunAsSystem.IsPresent -and $effectiveRunLevel -eq 'LIMITED') {

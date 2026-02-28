@@ -24,6 +24,7 @@ if (-not (Test-Path $jobScript)) {
 }
 
 $taskRun = "pwsh -NoP -EP Bypass -File `"$jobScript`""
+$taskRun = "pwsh -NoP -WindowStyle Hidden -EP Bypass -File `"$jobScript`""
 $effectiveRunLevel = $RunLevel
 $useSystemAccount = $RunAsSystem.IsPresent
 if ($RunAsSystem.IsPresent -and $effectiveRunLevel -eq 'LIMITED') {
