@@ -76,7 +76,8 @@ jobs:
             --api-key ${CI_API_KEY} \
             --require-path /api/llm/health \
             --require-path /api/voice/health \
-            --require-path /api/devices/status
+            --require-path /api/devices/status \
+            --require-path /api/llm/models
 
       - name: Show Unified API logs (on failure)
         if: failure()
