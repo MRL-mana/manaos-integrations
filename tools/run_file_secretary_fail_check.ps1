@@ -43,19 +43,61 @@ if ($last -match "fail_streak=(\d+)") {
     $failStreak = [int]$Matches[1]
 }
 
-$sessionWebhook = $env:SLACK_WEBHOOK_URL
-$userWebhook = [Environment]::GetEnvironmentVariable("SLACK_WEBHOOK_URL", "User")
-$hasSessionWebhook = -not [string]::IsNullOrWhiteSpace($sessionWebhook)
-$hasUserWebhook = -not [string]::IsNullOrWhiteSpace($userWebhook)
+$sessionSlackWebhook = $env:SLACK_WEBHOOK_URL
+$userSlackWebhook = [Environment]::GetEnvironmentVariable("SLACK_WEBHOOK_URL", "User")
+$sessionManaosWebhook = $env:MANAOS_WEBHOOK_URL
+$userManaosWebhook = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_URL", "User")
 
-$webhookUrl = $sessionWebhook
-$webhookSource = "session"
-if ([string]::IsNullOrWhiteSpace($webhookUrl)) {
-    $webhookUrl = $userWebhook
-    $webhookSource = "user"
+$hasSessionSlackWebhook = -not [string]::IsNullOrWhiteSpace($sessionSlackWebhook)
+$hasUserSlackWebhook = -not [string]::IsNullOrWhiteSpace($userSlackWebhook)
+$hasSessionManaosWebhook = -not [string]::IsNullOrWhiteSpace($sessionManaosWebhook)
+$hasUserManaosWebhook = -not [string]::IsNullOrWhiteSpace($userManaosWebhook)
+
+$webhookUrl = ""
+$webhookSource = "none"
+
+if ($hasSessionSlackWebhook) {
+    $webhookUrl = $sessionSlackWebhook
+    $webhookSource = "slack_session"
 }
-if ([string]::IsNullOrWhiteSpace($webhookUrl)) {
-    $webhookSource = "none"
+elseif ($hasUserSlackWebhook) {
+    $webhookUrl = $userSlackWebhook
+    $webhookSource = "slack_user"
+}
+elseif ($hasSessionManaosWebhook) {
+    $webhookUrl = $sessionManaosWebhook
+    $webhookSource = "manaos_session"
+}
+elseif ($hasUserManaosWebhook) {
+    $webhookUrl = $userManaosWebhook
+    $webhookSource = "manaos_user"
+}
+
+$webhookFormat = "slack"
+$webhookMention = ""
+
+$sessionFormat = $env:MANAOS_WEBHOOK_FORMAT
+$userFormat = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_FORMAT", "User")
+if (-not [string]::IsNullOrWhiteSpace($sessionFormat)) {
+    $fmt = $sessionFormat.Trim().ToLowerInvariant()
+    if ($fmt -in @("generic", "slack", "discord")) {
+        $webhookFormat = $fmt
+    }
+}
+elseif (-not [string]::IsNullOrWhiteSpace($userFormat)) {
+    $fmt = $userFormat.Trim().ToLowerInvariant()
+    if ($fmt -in @("generic", "slack", "discord")) {
+        $webhookFormat = $fmt
+    }
+}
+
+$sessionMention = $env:MANAOS_WEBHOOK_MENTION
+$userMention = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_MENTION", "User")
+if (-not [string]::IsNullOrWhiteSpace($sessionMention)) {
+    $webhookMention = $sessionMention
+}
+elseif (-not [string]::IsNullOrWhiteSpace($userMention)) {
+    $webhookMention = $userMention
 }
 
 $now = Get-Date
@@ -88,7 +130,7 @@ if (-not [string]::IsNullOrWhiteSpace($webhookUrl) -and (Test-Path $notifyScript
 
         if ($cooldownOk) {
             $message = "🚨 File Secretary FAIL streak detected`nfail_streak=$failStreak threshold=$FailThreshold`n$last`nlog=$outLog"
-            & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $webhookUrl -Text $message | Out-Null
+            & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $webhookUrl -Text $message -Format $webhookFormat -Mention $webhookMention | Out-Null
             if ($LASTEXITCODE -eq 0) {
                 $notify = "notify=sent"
                 @{
@@ -107,7 +149,7 @@ if (-not [string]::IsNullOrWhiteSpace($webhookUrl) -and (Test-Path $notifyScript
     }
     elseif ($status -eq "OK" -and $inAlert) {
         $message = "✅ File Secretary recovered`n$last`nlog=$outLog"
-        & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $webhookUrl -Text $message | Out-Null
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $webhookUrl -Text $message -Format $webhookFormat -Mention $webhookMention | Out-Null
         if ($LASTEXITCODE -eq 0) {
             $notify = "notify=recovered_sent"
             @{
@@ -127,6 +169,6 @@ else {
     }
 }
 
-Add-Content -Path $outLog -Value ("{0} exit={1} {2} {3} webhook_session={4} webhook_user={5} webhook_source={6}" -f $ts, $exitCode, $last, $notify, $hasSessionWebhook, $hasUserWebhook, $webhookSource)
+Add-Content -Path $outLog -Value ("{0} exit={1} {2} {3} slack_session={4} slack_user={5} manaos_session={6} manaos_user={7} webhook_source={8} webhook_format={9}" -f $ts, $exitCode, $last, $notify, $hasSessionSlackWebhook, $hasUserSlackWebhook, $hasSessionManaosWebhook, $hasUserManaosWebhook, $webhookSource, $webhookFormat)
 
 exit $exitCode
