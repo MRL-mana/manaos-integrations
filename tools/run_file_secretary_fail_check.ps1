@@ -16,6 +16,7 @@ $outLog = Join-Path $logDir "file_secretary_fail_check.log"
 $stateFile = Join-Path $logDir "file_secretary_fail_notify_state.json"
 $notifyScript = Join-Path $repo "tools\notify_slack_webhook.ps1"
 $secretsPath = Join-Path $repo "config\secrets.local.ps1"
+$dotenvPath = Join-Path $repo ".env"
 $ts = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
 
 if (Test-Path $secretsPath) {
@@ -24,6 +25,28 @@ if (Test-Path $secretsPath) {
     }
     catch {
     }
+}
+
+function Get-DotEnvValue {
+    param(
+        [string]$Path,
+        [string]$Key
+    )
+
+    if (-not (Test-Path $Path)) {
+        return ""
+    }
+
+    $line = Get-Content -Path $Path | Where-Object { $_ -match "^\s*$Key\s*=" } | Select-Object -First 1
+    if (-not $line) {
+        return ""
+    }
+
+    $value = ($line -replace "^\s*$Key\s*=\s*", "").Trim()
+    if (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'"))) {
+        $value = $value.Substring(1, $value.Length - 2)
+    }
+    return $value
 }
 
 $output = & powershell -NoProfile -ExecutionPolicy Bypass -File ".\tools\check_file_secretary_fail_streak.ps1" -TailLines $TailLines -FailThreshold $FailThreshold -Strict 2>&1
@@ -73,6 +96,19 @@ elseif ($hasUserManaosWebhook) {
     $webhookSource = "manaos_user"
 }
 
+if ([string]::IsNullOrWhiteSpace($webhookUrl)) {
+    $dotenvSlackWebhook = Get-DotEnvValue -Path $dotenvPath -Key "SLACK_WEBHOOK_URL"
+    $dotenvManaosWebhook = Get-DotEnvValue -Path $dotenvPath -Key "MANAOS_WEBHOOK_URL"
+    if (-not [string]::IsNullOrWhiteSpace($dotenvSlackWebhook)) {
+        $webhookUrl = $dotenvSlackWebhook
+        $webhookSource = "dotenv_slack"
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($dotenvManaosWebhook)) {
+        $webhookUrl = $dotenvManaosWebhook
+        $webhookSource = "dotenv_manaos"
+    }
+}
+
 $webhookFormat = "slack"
 $webhookMention = ""
 
@@ -91,6 +127,16 @@ elseif (-not [string]::IsNullOrWhiteSpace($userFormat)) {
     }
 }
 
+if ($webhookSource -like "dotenv_*") {
+    $dotenvFormat = Get-DotEnvValue -Path $dotenvPath -Key "MANAOS_WEBHOOK_FORMAT"
+    if (-not [string]::IsNullOrWhiteSpace($dotenvFormat)) {
+        $fmt = $dotenvFormat.Trim().ToLowerInvariant()
+        if ($fmt -in @("generic", "slack", "discord")) {
+            $webhookFormat = $fmt
+        }
+    }
+}
+
 $sessionMention = $env:MANAOS_WEBHOOK_MENTION
 $userMention = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_MENTION", "User")
 if (-not [string]::IsNullOrWhiteSpace($sessionMention)) {
@@ -98,6 +144,13 @@ if (-not [string]::IsNullOrWhiteSpace($sessionMention)) {
 }
 elseif (-not [string]::IsNullOrWhiteSpace($userMention)) {
     $webhookMention = $userMention
+}
+
+if ($webhookSource -like "dotenv_*" -and [string]::IsNullOrWhiteSpace($webhookMention)) {
+    $dotenvMention = Get-DotEnvValue -Path $dotenvPath -Key "MANAOS_WEBHOOK_MENTION"
+    if (-not [string]::IsNullOrWhiteSpace($dotenvMention)) {
+        $webhookMention = $dotenvMention
+    }
 }
 
 $now = Get-Date
