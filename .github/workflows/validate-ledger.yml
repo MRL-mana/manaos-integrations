@@ -94,7 +94,8 @@ jobs:
             --require-path /api/voice/health \
             --require-path /api/devices/status \
             --require-path /api/llm/models \
-            --require-path /api/llm/models-enhanced
+            --require-path /api/llm/models-enhanced \
+            --require-path /api/mothership/resources
 
       - name: Show Unified API logs (on failure)
         if: failure()
