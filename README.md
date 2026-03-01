@@ -291,4 +291,5 @@ Pixel7 最小CLI（health/status/open-url）は `scripts/pixel7/manaos_pixel7_cl
 schtasks /Run /TN "ManaOS_Dashboard_Update"
 schtasks /Run /TN "ManaOS_Dashboard_Alert"
 Get-Content .\logs\dashboard_alert.log -Tail 50
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\check_file_secretary_fail_streak.ps1 -FailThreshold 3 -Strict
 ```
