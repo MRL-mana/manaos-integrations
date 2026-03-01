@@ -107,6 +107,8 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
 - 「ManaOS: Pixel7 Termux バックグラウンド許可（ADB）」
 - 「ManaOS: Pixel7 Termux+HTTP Shortcuts バックグラウンド許可（ADB）」
 - 「ManaOS: Pixel7 HTTP スモークテスト（health/status/fallback）」
+- 「ManaOS: Pixel7 HTTP スモークテスト（health/statusのみ）」
+  - ADB未接続時は `-SkipFallbackActions` 付きのこのタスクでHTTP疎通だけ先に確認
 - 「ManaOS: Pixel7 HTTP 監視開始（バックグラウンド）」
 - 「ManaOS: Pixel7 外出モード HTTP 監視開始（Tailscaleのみ/バックグラウンド）」
 - 「ManaOS: Pixel7 HTTP 監視停止」

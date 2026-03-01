@@ -1,4 +1,4 @@
-param(
+﻿param(
     [ValidateSet('any','core','full')]
     [string]$Require = 'any',
     [string]$BaseUrl = '',
@@ -7,6 +7,33 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+function Get-Pixel7IpDefault {
+    if ($env:PIXEL7_API_HOST) { return $env:PIXEL7_API_HOST }
+    if ($env:PIXEL7_TAILSCALE_IP) { return $env:PIXEL7_TAILSCALE_IP }
+    if ($env:PIXEL7_IP) { return $env:PIXEL7_IP }
+
+    $cfg = Join-Path $PSScriptRoot 'adb_automation_config.json'
+    if (-not (Test-Path $cfg)) {
+        $cfg = Join-Path (Split-Path $PSScriptRoot -Parent) 'manaos_integrations\adb_automation_config.json'
+    }
+    if (Test-Path $cfg) {
+        try {
+            $obj = Get-Content -Raw -Encoding UTF8 $cfg | ConvertFrom-Json
+            if ($obj.device_ip) { return [string]$obj.device_ip }
+        } catch {}
+    }
+
+    return '100.84.2.125'
+}
+
+function Get-ApiPortDefault {
+    if ($env:PIXEL7_API_PORT) {
+        $portNum = 0
+        if ([int]::TryParse($env:PIXEL7_API_PORT, [ref]$portNum) -and $portNum -gt 0) { return $portNum }
+    }
+    return 5122
+}
 
 function Resolve-BaseUrl {
     param([string]$Value)
@@ -19,8 +46,8 @@ function Resolve-BaseUrl {
         return $env:PIXEL7_API_BASE.TrimEnd('/')
     }
 
-    $pixelHost = if ($env:PIXEL7_API_HOST) { $env:PIXEL7_API_HOST } elseif ($env:PIXEL7_TAILSCALE_IP) { $env:PIXEL7_TAILSCALE_IP } else { '127.0.0.1' }
-    $port = if ($env:PIXEL7_API_PORT) { $env:PIXEL7_API_PORT } else { '5122' }
+    $pixelHost = Get-Pixel7IpDefault
+    $port = Get-ApiPortDefault
     return ("http://{0}:{1}" -f $pixelHost, $port)
 }
 
@@ -47,9 +74,9 @@ $result = [ordered]@{
 if ([string]::IsNullOrWhiteSpace($profile)) {
     if ($Require -ne 'any') {
         $result.ok = $false
-        $result.reason = 'api_profile missing from root response'
+        $result.reason = 'api_profile missing from root response (old gateway? re-deploy/start latest gateway)'
     } else {
-        $result.reason = 'api_profile missing (old gateway?)'
+        $result.reason = 'api_profile missing (old gateway?) -> re-deploy/start latest gateway to enable core/full profile checks'
     }
 } elseif ($Require -ne 'any' -and $profile -ne $Require) {
     $result.ok = $false

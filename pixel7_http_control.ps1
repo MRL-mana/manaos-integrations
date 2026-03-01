@@ -145,7 +145,7 @@ function Assert-Pixel7FullProfile([string]$forAction) {
     $root = Invoke-Pixel7Api 'GET' '/' $null $false
     $profile = [string]$root.api_profile
     if ([string]::IsNullOrWhiteSpace($profile)) {
-        Write-Host "WARN: api_profile が取得できません（旧Gatewayの可能性）。そのまま実行します。" -ForegroundColor Yellow
+        Write-Host "WARN: api_profile が取得できません（旧Gatewayの可能性）。最新Gatewayを再配置/再起動すると core/full 判定が有効になります。" -ForegroundColor Yellow
         return
     }
 

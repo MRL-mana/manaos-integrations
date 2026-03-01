@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$MacroCmd = "Home",
     [string]$ExtrasJson = "{}",
     [ValidateSet('HTTPOnly','HTTPFirst')]

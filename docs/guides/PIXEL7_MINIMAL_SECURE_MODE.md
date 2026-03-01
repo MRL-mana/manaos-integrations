@@ -76,6 +76,11 @@ VS Code タスクも追加済み:
 - `ManaOS: Pixel7 API Guard (Require core)`
 - `ManaOS: Pixel7 API Guard (Require full)`
 
+ADB未接続時の疎通確認は、HTTP専用スモークを使えます:
+
+- `ManaOS: Pixel7 HTTP スモークテスト（health/statusのみ）`
+- または `pixel7_http_smoketest.ps1 -SkipFallbackActions`
+
 ## 5. 秘密情報の扱い
 
 - Git管理対象に以下を入れない:
