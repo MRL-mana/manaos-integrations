@@ -13,6 +13,9 @@ services:
       MANAOS_NO_MONITOR: "1"
       MANAOS_STRICT_STARTUP: "0"
       PYTHONUNBUFFERED: "1"
+      MANAOS_INTEGRATION_READONLY_API_KEY: ${CI_API_KEY:-ci-readonly-key}
+      MANAOS_CONFIRM_TOKEN: ""
+      MANAOS_CONFIRM_TOKEN_SECRET: ""
     volumes:
       - ../..:/workspace
     ports:

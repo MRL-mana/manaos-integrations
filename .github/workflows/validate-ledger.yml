@@ -28,6 +28,8 @@ jobs:
   validate-openapi:
     runs-on: ubuntu-latest
     needs: validate
+    env:
+      CI_API_KEY: ci-readonly-key
     steps:
       - uses: actions/checkout@v4
 
@@ -55,7 +57,7 @@ jobs:
 
       - name: Fetch OpenAPI and print paths count
         run: |
-          curl -fsS "http://127.0.0.1:9502/openapi.json" -o /tmp/openapi.json
+          curl -fsS -H "X-API-Key: ${CI_API_KEY}" "http://127.0.0.1:9502/openapi.json" -o /tmp/openapi.json
           python - <<'PY'
           import json
           with open('/tmp/openapi.json', 'r', encoding='utf-8') as f:
@@ -71,6 +73,7 @@ jobs:
             --readme README.md \
             --check-openapi \
             --openapi-url http://127.0.0.1:9502/openapi.json \
+            --api-key ${CI_API_KEY} \
             --require-path /api/llm/health \
             --require-path /api/voice/health \
             --require-path /api/devices/status

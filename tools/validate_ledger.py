@@ -118,11 +118,16 @@ def validate_basic(services: Dict[str, ServiceRef]) -> List[str]:
     return errors
 
 
-def fetch_openapi(openapi_url: str, timeout: float = 3.0) -> Dict[str, Any] | None:
+def fetch_openapi(
+    openapi_url: str,
+    timeout: float = 3.0,
+    api_key: str | None = None,
+) -> Dict[str, Any] | None:
     if requests is None:
         return None
     try:
-        response = requests.get(openapi_url, timeout=timeout)
+        headers = {"X-API-Key": api_key} if api_key else None
+        response = requests.get(openapi_url, timeout=timeout, headers=headers)
         response.raise_for_status()
         return response.json()
     except Exception as exception:
@@ -173,6 +178,7 @@ def main() -> int:
     parser.add_argument("--readme", default="README.md")
     parser.add_argument("--check-openapi", action="store_true")
     parser.add_argument("--openapi-url", default=None)
+    parser.add_argument("--api-key", default=None)
     parser.add_argument("--require-path", action="append", default=[])
     args = parser.parse_args()
 
@@ -199,7 +205,7 @@ def main() -> int:
         if not openapi_url:
             errors.append("OpenAPI check requested but openapi-url could not be determined")
         else:
-            openapi = fetch_openapi(openapi_url)
+            openapi = fetch_openapi(openapi_url, api_key=args.api_key)
             if openapi is None:
                 errors.append(f"Failed to fetch OpenAPI from {openapi_url}")
             else:
