@@ -72,7 +72,8 @@ jobs:
             --check-openapi \
             --openapi-url http://127.0.0.1:9502/openapi.json \
             --require-path /api/llm/health \
-            --require-path /api/voice/health
+            --require-path /api/voice/health \
+            --require-path /api/devices/status
 
       - name: Show Unified API logs (on failure)
         if: failure()
