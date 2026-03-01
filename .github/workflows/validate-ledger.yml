@@ -85,7 +85,7 @@ jobs:
           print(f"OpenAPI paths count: {len(paths)}")
           PY
 
-      - name: Validate ledger with OpenAPI (Stage 1: read-only contract)
+      - name: "Validate ledger with OpenAPI (Stage 1: read-only contract)"
         run: |
           # -------------------------------
           # STAGE1_REQUIRED_PATHS (DO NOT EDIT CASUALLY)
