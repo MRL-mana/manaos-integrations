@@ -82,8 +82,13 @@ jobs:
           print(f"OpenAPI paths count: {len(paths)}")
           PY
 
-      - name: Validate ledger with OpenAPI
+      - name: Validate ledger with OpenAPI (Stage 1: read-only contract)
         run: |
+          # -------------------------------
+          # STAGE1_REQUIRED_PATHS (DO NOT EDIT CASUALLY)
+          # Stage1 = core-ish, read-only, low-dependency GET endpoints.
+          # Add/remove only via PR with rationale + CI proof.
+          # -------------------------------
           python tools/validate_ledger.py \
             --ledger config/services_ledger.yaml \
             --readme README.md \
