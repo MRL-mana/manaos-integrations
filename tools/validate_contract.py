@@ -75,23 +75,25 @@ def main() -> int:
 
     checks: list[dict[str, Any]] = [
         {
-            "name": "LLM models list",
-            "path": "/api/llm/models",
-            "expect_status": 200,
-            "expect_type": list,
-        },
-        {
-            "name": "Mothership resources",
-            "path": "/api/mothership/resources",
-            "expect_status": 200,
-            "expect_type": (dict, list),
-        },
-        {
-            "name": "File secretary inbox status",
-            "path": "/api/file-secretary/inbox/status",
+            "name": "Unified health",
+            "path": "/health",
             "expect_status": 200,
             "expect_type": dict,
             "expect_keys": ["status"],
+        },
+        {
+            "name": "Unified status",
+            "path": "/status",
+            "expect_status": 200,
+            "expect_type": dict,
+            "expect_keys": ["check_summary"],
+        },
+        {
+            "name": "OpenAPI document",
+            "path": "/openapi.json",
+            "expect_status": 200,
+            "expect_type": dict,
+            "expect_keys": ["paths"],
         },
     ]
 
