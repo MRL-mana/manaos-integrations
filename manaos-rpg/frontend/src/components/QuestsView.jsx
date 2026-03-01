@@ -7,9 +7,15 @@ import OutputBlock from './OutputBlock.jsx'
 const KIND_ICONS = { api: '🌐', action: '⚡', manual: '📝' }
 
 export default function QuestsView({ quests, onRunAction, actionResult, runningAction }) {
-    // 仮: 履歴データ（本来はAPI/propsから取得）
-    const questHistory = Array.isArray(quests) ? quests.map(q => ({ ok: Math.random() > 0.2, label: q.label, ts: new Date().toISOString().slice(0,16).replace('T',' ') })) : []
   const list = useMemo(() => (Array.isArray(quests) ? quests : []), [quests])
+  const questHistory = useMemo(
+    () => list.map((q) => ({
+      ok: Boolean(q?.last_ok),
+      label: q?.label || q?.id || 'unknown',
+      ts: q?.last_run_at || '—'
+    })),
+    [list]
+  )
   const [questLoading, setQuestLoading] = useState('')
   const [questResult, setQuestResult] = useState(null)
   const [filterText, setFilterText] = useState('')

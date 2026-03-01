@@ -6,7 +6,6 @@ export default function DeviceDetail({ device }) {
       <div>ID: <span className="mono">{device.id}</span></div>
       <div>Type: <span className="mono">{device.type}</span></div>
       <div>Status: <span className={device.alive ? 'ok' : 'danger'}>{device.alive ? 'ALIVE' : 'DOWN'}</span></div>
-      {/* 詳細/スペック/履歴など追加可 */}
     </div>
   )
 }

@@ -1,4 +1,3 @@
-// 仮: クエスト履歴・統計表示
 export default function QuestStats({ history }) {
   if (!Array.isArray(history) || history.length === 0) return <div>履歴なし</div>
   const success = history.filter(h => h.ok).length
