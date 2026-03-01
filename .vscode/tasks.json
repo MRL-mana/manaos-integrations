@@ -8,6 +8,12 @@
       "default": "a beautiful landscape"
     }
   ],
+  "presentation": {
+    "reveal": "never",
+    "focus": false,
+    "panel": "dedicated",
+    "showReuseMessage": false
+  },
   "tasks": [
     {
       "label": "ManaOS: Generate Image",
@@ -1531,7 +1537,7 @@
       ],
       "dependsOrder": "sequence",
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "never", "panel": "dedicated", "echo": true, "focus": false, "showReuseMessage": false },
       "group": "none"
     },
     {
@@ -1547,7 +1553,7 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "never", "panel": "dedicated", "echo": true, "focus": false, "showReuseMessage": false },
       "group": "none"
     },
     {
@@ -1565,7 +1571,7 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "never", "panel": "dedicated", "echo": true, "focus": false, "showReuseMessage": false },
       "group": "none"
     },
     {
@@ -1581,7 +1587,7 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "never", "panel": "dedicated", "echo": true, "focus": false, "showReuseMessage": false },
       "group": "none"
     },
     {
@@ -1597,7 +1603,7 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "never", "panel": "dedicated", "echo": true, "focus": false, "showReuseMessage": false },
       "group": "none"
     },
     {
@@ -1613,7 +1619,7 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "never", "panel": "dedicated", "echo": true, "focus": false, "showReuseMessage": false },
       "group": "none"
     },
     {
@@ -1629,7 +1635,7 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "never", "panel": "dedicated", "echo": true, "focus": false, "showReuseMessage": false },
       "group": "none"
     },
     {
@@ -1645,7 +1651,7 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "never", "panel": "dedicated", "echo": true, "focus": false, "showReuseMessage": false },
       "group": "none"
     },
     {
@@ -1662,7 +1668,7 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "never", "panel": "dedicated", "echo": true, "focus": false, "showReuseMessage": false },
       "group": "none"
     },
     {
@@ -1678,7 +1684,7 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "never", "panel": "dedicated", "echo": true, "focus": false, "showReuseMessage": false },
       "group": "none"
     },
     {
@@ -1694,7 +1700,7 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "never", "panel": "dedicated", "echo": true, "focus": false, "showReuseMessage": false },
       "group": "none"
     },
     {
@@ -2678,4 +2684,6 @@
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true },
       "group": "test"
-    },
+    }
+  ]
+}
