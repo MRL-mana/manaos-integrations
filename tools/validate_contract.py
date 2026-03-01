@@ -68,9 +68,10 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    headers: dict[str, str] = (
-        {"X-API-Key": args.api_key} if args.api_key else {}
-    )
+    headers: dict[str, str] = {}
+    if args.api_key:
+        headers["X-API-Key"] = args.api_key
+        headers["Authorization"] = f"Bearer {args.api_key}"
 
     checks: list[dict[str, Any]] = [
         {
