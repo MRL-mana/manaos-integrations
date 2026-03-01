@@ -139,6 +139,35 @@ python -m pytest tests/ --cov=. --cov-report=term-missing
 
 ---
 
+## CI Gates
+
+### CI Contract Gate (Stage2)
+
+This repo enforces **Stage2 Contract Checks** as a required CI gate.
+
+**What it checks**
+
+- `tools/validate_contract.py --strict` verifies a small set of **stable, read-only** endpoints and their minimal JSON contract.
+
+**When CI fails**
+
+- A failure usually means an API contract changed (response shape / auth requirement / endpoint behavior).
+- Do **not** weaken the gate. Update the contract intentionally.
+
+**How to update the contract (1 PR rule)**
+
+1. Update the API implementation (or routing) as needed.
+2. Update `tools/validate_contract.py` to match the intended new contract.
+3. Ensure CI passes with `--strict` in the same PR.
+4. In the PR description, write a one-line rationale: `contract update: <why>`.
+
+**Notes**
+
+- Stage2 is designed to stay **read-only and low-dependency**.
+- If an endpoint requires elevated privileges (ops/admin) or external dependencies, keep it out of Stage2 and create a separate optional gate.
+
+---
+
 ## 📝 ロギング
 
 全コアモジュールは `manaos_logger.get_logger(__name__)` で統一されたロガーを使用:
