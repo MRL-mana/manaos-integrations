@@ -19,6 +19,19 @@
 Set-Location "c:\Users\mana4\Desktop\manaos_integrations"
 ```
 
+### ワンコマンド実行（推奨）
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\daily_health_smoke.ps1" -Distro "Ubuntu-22.04" -Recover
+```
+
+- 既定モード: readonly APIは警告扱い（全体判定は継続）
+- 厳格モード: readonly APIも失敗判定
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\daily_health_smoke.ps1" -Distro "Ubuntu-22.04" -Recover -StrictApi
+```
+
 ---
 
 ## 2) WSL / Docker ヘルス
