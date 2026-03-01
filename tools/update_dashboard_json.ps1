@@ -10,6 +10,44 @@ $logDir = Join-Path $repo "logs"
 $log = Join-Path $logDir "dashboard_update.log"
 $lock = Join-Path $logDir "dashboard_update.lock"
 
+function Get-NotifySummary {
+    param(
+        [string]$Path,
+        [int]$TailLines = 400,
+        [int]$LastItems = 10
+    )
+
+    $result = [ordered]@{
+        log_exists = $false
+        count = 0
+        last_status = "none"
+        last_entry = $null
+        recent = @()
+    }
+
+    if (-not (Test-Path $Path)) {
+        return [pscustomobject]$result
+    }
+
+    $result.log_exists = $true
+
+    $matches = Get-Content -Path $Path -Tail $TailLines | Where-Object { $_ -match "notify=" }
+    if (-not $matches -or $matches.Count -eq 0) {
+        return [pscustomobject]$result
+    }
+
+    $result.count = $matches.Count
+    $result.last_entry = $matches[-1]
+
+    $statusMatch = [regex]::Match($matches[-1], "notify=([^\s]+)")
+    if ($statusMatch.Success) {
+        $result.last_status = $statusMatch.Groups[1].Value
+    }
+
+    $result.recent = @($matches | Select-Object -Last $LastItems)
+    return [pscustomobject]$result
+}
+
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 
@@ -59,6 +97,16 @@ try {
     if (-not (Test-Path $tmp)) {
         throw "temporary json not generated: $tmp"
     }
+
+    $dashboard = Get-Content -Path $tmp -Raw | ConvertFrom-Json
+    $notifySummary = [ordered]@{
+        generated_at = (Get-Date).ToString("s")
+        file_secretary_fail_check = Get-NotifySummary -Path (Join-Path $logDir "file_secretary_fail_check.log")
+        dashboard_alert = Get-NotifySummary -Path (Join-Path $logDir "dashboard_alert.log")
+    }
+
+    $dashboard | Add-Member -MemberType NoteProperty -Name "notify" -Value $notifySummary -Force
+    $dashboard | ConvertTo-Json -Depth 20 | Set-Content -Path $tmp -Encoding utf8
 
     Move-Item -Force $tmp $dst
     Add-Content -Path $log -Value "$ts OK"

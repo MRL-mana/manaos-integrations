@@ -302,4 +302,5 @@ Copy-Item .\config\secrets.local.example.ps1 .\config\secrets.local.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\bootstrap_file_secretary_alert_webhook.ps1 -WebhookUrl "https://hooks.slack.com/services/XXX/YYY/ZZZ" -WebhookFormat slack -FailThreshold 3 -CooldownMinutes 30
 # 通知結果を2ログ横断で確認
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\show_notify_status.ps1 -TailLines 200
+# dashboard.json にも notify 要約を格納（例: notify.file_secretary_fail_check.last_status / notify.dashboard_alert.last_status）
 ```
