@@ -8,6 +8,7 @@ on:
       - '.github/compose/openapi-check.compose.yml'
       - 'tools/validate_ledger.py'
       - 'tools/validate_contract.py'
+      - 'tools/stage3_e2e_smoke.py'
       - 'config/services_ledger.yaml'
       - 'README.md'
   push:
@@ -17,6 +18,7 @@ on:
       - '.github/compose/openapi-check.compose.yml'
       - 'tools/validate_ledger.py'
       - 'tools/validate_contract.py'
+      - 'tools/stage3_e2e_smoke.py'
       - 'config/services_ledger.yaml'
       - 'README.md'
 
@@ -113,6 +115,13 @@ jobs:
             --base-url http://127.0.0.1:9502 \
             --api-key ${CI_API_KEY} \
             --strict
+
+      - name: Stage3 lightweight E2E smoke (non-blocking)
+        continue-on-error: true
+        run: |
+          python tools/stage3_e2e_smoke.py \
+            --base-url http://127.0.0.1:9502 \
+            --api-key ${CI_API_KEY}
 
       - name: Show Unified API logs (on failure)
         if: failure()
