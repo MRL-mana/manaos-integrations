@@ -70,6 +70,8 @@ $sessionSlackWebhook = $env:SLACK_WEBHOOK_URL
 $userSlackWebhook = [Environment]::GetEnvironmentVariable("SLACK_WEBHOOK_URL", "User")
 $sessionManaosWebhook = $env:MANAOS_WEBHOOK_URL
 $userManaosWebhook = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_URL", "User")
+$dotenvSlackWebhook = ""
+$dotenvManaosWebhook = ""
 
 $hasSessionSlackWebhook = -not [string]::IsNullOrWhiteSpace($sessionSlackWebhook)
 $hasUserSlackWebhook = -not [string]::IsNullOrWhiteSpace($userSlackWebhook)
@@ -106,6 +108,23 @@ if ([string]::IsNullOrWhiteSpace($webhookUrl)) {
     elseif (-not [string]::IsNullOrWhiteSpace($dotenvManaosWebhook)) {
         $webhookUrl = $dotenvManaosWebhook
         $webhookSource = "dotenv_manaos"
+    }
+}
+
+$fallbackWebhookUrl = ""
+$fallbackWebhookSource = "none"
+if ($webhookSource -like "*slack*") {
+    if (-not [string]::IsNullOrWhiteSpace($sessionManaosWebhook)) {
+        $fallbackWebhookUrl = $sessionManaosWebhook
+        $fallbackWebhookSource = "manaos_session"
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($userManaosWebhook)) {
+        $fallbackWebhookUrl = $userManaosWebhook
+        $fallbackWebhookSource = "manaos_user"
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($dotenvManaosWebhook)) {
+        $fallbackWebhookUrl = $dotenvManaosWebhook
+        $fallbackWebhookSource = "dotenv_manaos"
     }
 }
 
@@ -193,7 +212,24 @@ if (-not [string]::IsNullOrWhiteSpace($webhookUrl) -and (Test-Path $notifyScript
                 } | ConvertTo-Json | Set-Content -Path $stateFile -Encoding UTF8
             }
             else {
-                $notify = "notify=error"
+                if (-not [string]::IsNullOrWhiteSpace($fallbackWebhookUrl)) {
+                    & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $fallbackWebhookUrl -Text $message -Format $webhookFormat -Mention $webhookMention | Out-Null
+                    if ($LASTEXITCODE -eq 0) {
+                        $notify = "notify=sent_fallback"
+                        $webhookSource = $fallbackWebhookSource
+                        @{
+                            in_alert = $true
+                            last_alert = $now.ToString("o")
+                            last_recovery = $null
+                        } | ConvertTo-Json | Set-Content -Path $stateFile -Encoding UTF8
+                    }
+                    else {
+                        $notify = "notify=error"
+                    }
+                }
+                else {
+                    $notify = "notify=error"
+                }
             }
         }
         else {
@@ -212,7 +248,24 @@ if (-not [string]::IsNullOrWhiteSpace($webhookUrl) -and (Test-Path $notifyScript
             } | ConvertTo-Json | Set-Content -Path $stateFile -Encoding UTF8
         }
         else {
-            $notify = "notify=error"
+            if (-not [string]::IsNullOrWhiteSpace($fallbackWebhookUrl)) {
+                & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $fallbackWebhookUrl -Text $message -Format $webhookFormat -Mention $webhookMention | Out-Null
+                if ($LASTEXITCODE -eq 0) {
+                    $notify = "notify=recovered_sent_fallback"
+                    $webhookSource = $fallbackWebhookSource
+                    @{
+                        in_alert = $false
+                        last_alert = if ($lastAlert) { $lastAlert.ToString("o") } else { $null }
+                        last_recovery = $now.ToString("o")
+                    } | ConvertTo-Json | Set-Content -Path $stateFile -Encoding UTF8
+                }
+                else {
+                    $notify = "notify=error"
+                }
+            }
+            else {
+                $notify = "notify=error"
+            }
         }
     }
 }
