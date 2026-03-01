@@ -294,4 +294,7 @@ Get-Content .\logs\dashboard_alert.log -Tail 50
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\check_file_secretary_fail_streak.ps1 -FailThreshold 3 -Strict
 $env:SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/xxx/yyy/zzz"
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\run_file_secretary_fail_check.ps1 -FailThreshold 3 -CooldownMinutes 30
+# タスク環境で確実に使う場合（推奨）
+Copy-Item .\config\secrets.local.example.ps1 .\config\secrets.local.ps1
+# config\secrets.local.ps1 内の SLACK_WEBHOOK_URL を実値へ置換
 ```

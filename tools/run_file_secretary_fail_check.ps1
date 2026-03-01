@@ -15,7 +15,16 @@ New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 $outLog = Join-Path $logDir "file_secretary_fail_check.log"
 $stateFile = Join-Path $logDir "file_secretary_fail_notify_state.json"
 $notifyScript = Join-Path $repo "tools\notify_slack_webhook.ps1"
+$secretsPath = Join-Path $repo "config\secrets.local.ps1"
 $ts = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+
+if (Test-Path $secretsPath) {
+    try {
+        . $secretsPath
+    }
+    catch {
+    }
+}
 
 $output = & powershell -NoProfile -ExecutionPolicy Bypass -File ".\tools\check_file_secretary_fail_streak.ps1" -TailLines $TailLines -FailThreshold $FailThreshold -Strict 2>&1
 $exitCode = $LASTEXITCODE
@@ -34,9 +43,19 @@ if ($last -match "fail_streak=(\d+)") {
     $failStreak = [int]$Matches[1]
 }
 
-$webhookUrl = $env:SLACK_WEBHOOK_URL
+$sessionWebhook = $env:SLACK_WEBHOOK_URL
+$userWebhook = [Environment]::GetEnvironmentVariable("SLACK_WEBHOOK_URL", "User")
+$hasSessionWebhook = -not [string]::IsNullOrWhiteSpace($sessionWebhook)
+$hasUserWebhook = -not [string]::IsNullOrWhiteSpace($userWebhook)
+
+$webhookUrl = $sessionWebhook
+$webhookSource = "session"
 if ([string]::IsNullOrWhiteSpace($webhookUrl)) {
-    $webhookUrl = [Environment]::GetEnvironmentVariable("SLACK_WEBHOOK_URL", "User")
+    $webhookUrl = $userWebhook
+    $webhookSource = "user"
+}
+if ([string]::IsNullOrWhiteSpace($webhookUrl)) {
+    $webhookSource = "none"
 }
 
 $now = Get-Date
@@ -90,7 +109,7 @@ if (-not [string]::IsNullOrWhiteSpace($webhookUrl) -and (Test-Path $notifyScript
         $message = "✅ File Secretary recovered`n$last`nlog=$outLog"
         & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $webhookUrl -Text $message | Out-Null
         if ($LASTEXITCODE -eq 0) {
-            $notify = "notify=recovered"
+            $notify = "notify=recovered_sent"
             @{
                 in_alert = $false
                 last_alert = if ($lastAlert) { $lastAlert.ToString("o") } else { $null }
@@ -108,6 +127,6 @@ else {
     }
 }
 
-Add-Content -Path $outLog -Value ("{0} exit={1} {2} {3}" -f $ts, $exitCode, $last, $notify)
+Add-Content -Path $outLog -Value ("{0} exit={1} {2} {3} webhook_session={4} webhook_user={5} webhook_source={6}" -f $ts, $exitCode, $last, $notify, $hasSessionWebhook, $hasUserWebhook, $webhookSource)
 
 exit $exitCode

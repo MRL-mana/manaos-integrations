@@ -54,6 +54,7 @@ screenshots/
 .env.*
 !.env.example
 !.env.template
+config/secrets.local.ps1
 
 # Database
 *.db
