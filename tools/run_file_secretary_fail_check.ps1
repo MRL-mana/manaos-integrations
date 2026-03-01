@@ -52,6 +52,90 @@ function Get-DotEnvValue {
     return $value
 }
 
+function Resolve-IntSetting {
+    param(
+        [string[]]$EnvKeys,
+        [string[]]$DotEnvKeys,
+        [int]$DefaultValue,
+        [int]$MinValue,
+        [int]$MaxValue
+    )
+
+    foreach ($k in $EnvKeys) {
+        $v = [Environment]::GetEnvironmentVariable($k, "Process")
+        if (-not [string]::IsNullOrWhiteSpace($v)) {
+            $n = 0
+            if ([int]::TryParse($v, [ref]$n) -and $n -ge $MinValue -and $n -le $MaxValue) {
+                return $n
+            }
+        }
+
+        $userV = [Environment]::GetEnvironmentVariable($k, "User")
+        if (-not [string]::IsNullOrWhiteSpace($userV)) {
+            $n = 0
+            if ([int]::TryParse($userV, [ref]$n) -and $n -ge $MinValue -and $n -le $MaxValue) {
+                return $n
+            }
+        }
+    }
+
+    foreach ($k in $DotEnvKeys) {
+        $dotV = Get-DotEnvValue -Path $dotenvPath -Key $k
+        if (-not [string]::IsNullOrWhiteSpace($dotV)) {
+            $n = 0
+            if ([int]::TryParse($dotV, [ref]$n) -and $n -ge $MinValue -and $n -le $MaxValue) {
+                return $n
+            }
+        }
+    }
+
+    return $DefaultValue
+}
+
+function Resolve-DoubleSetting {
+    param(
+        [string[]]$EnvKeys,
+        [string[]]$DotEnvKeys,
+        [double]$DefaultValue,
+        [double]$MinValue,
+        [double]$MaxValue
+    )
+
+    foreach ($k in $EnvKeys) {
+        $v = [Environment]::GetEnvironmentVariable($k, "Process")
+        if (-not [string]::IsNullOrWhiteSpace($v)) {
+            $n = 0.0
+            if ([double]::TryParse($v, [ref]$n) -and $n -ge $MinValue -and $n -le $MaxValue) {
+                return $n
+            }
+        }
+
+        $userV = [Environment]::GetEnvironmentVariable($k, "User")
+        if (-not [string]::IsNullOrWhiteSpace($userV)) {
+            $n = 0.0
+            if ([double]::TryParse($userV, [ref]$n) -and $n -ge $MinValue -and $n -le $MaxValue) {
+                return $n
+            }
+        }
+    }
+
+    foreach ($k in $DotEnvKeys) {
+        $dotV = Get-DotEnvValue -Path $dotenvPath -Key $k
+        if (-not [string]::IsNullOrWhiteSpace($dotV)) {
+            $n = 0.0
+            if ([double]::TryParse($dotV, [ref]$n) -and $n -ge $MinValue -and $n -le $MaxValue) {
+                return $n
+            }
+        }
+    }
+
+    return $DefaultValue
+}
+
+$NotifyRetryCount = Resolve-IntSetting -EnvKeys @('FILE_SECRETARY_NOTIFY_RETRY_COUNT', 'MANAOS_WEBHOOK_RETRY_COUNT') -DotEnvKeys @('FILE_SECRETARY_NOTIFY_RETRY_COUNT', 'MANAOS_WEBHOOK_RETRY_COUNT') -DefaultValue $NotifyRetryCount -MinValue 1 -MaxValue 10
+$NotifyRetryInitialDelaySec = Resolve-IntSetting -EnvKeys @('FILE_SECRETARY_NOTIFY_RETRY_INITIAL_DELAY_SEC', 'MANAOS_WEBHOOK_RETRY_INITIAL_DELAY_SEC') -DotEnvKeys @('FILE_SECRETARY_NOTIFY_RETRY_INITIAL_DELAY_SEC', 'MANAOS_WEBHOOK_RETRY_INITIAL_DELAY_SEC') -DefaultValue $NotifyRetryInitialDelaySec -MinValue 0 -MaxValue 60
+$NotifyRetryBackoffFactor = Resolve-DoubleSetting -EnvKeys @('FILE_SECRETARY_NOTIFY_RETRY_BACKOFF_FACTOR', 'MANAOS_WEBHOOK_RETRY_BACKOFF_FACTOR') -DotEnvKeys @('FILE_SECRETARY_NOTIFY_RETRY_BACKOFF_FACTOR', 'MANAOS_WEBHOOK_RETRY_BACKOFF_FACTOR') -DefaultValue $NotifyRetryBackoffFactor -MinValue 1.0 -MaxValue 5.0
+
 $output = & powershell -NoProfile -ExecutionPolicy Bypass -File ".\tools\check_file_secretary_fail_streak.ps1" -TailLines $TailLines -FailThreshold $FailThreshold -Strict 2>&1
 $exitCode = $LASTEXITCODE
 $last = ($output | Select-Object -Last 1)
@@ -278,6 +362,6 @@ else {
     }
 }
 
-Add-Content -Path $outLog -Value ("{0} exit={1} {2} {3} slack_session={4} slack_user={5} manaos_session={6} manaos_user={7} webhook_source={8} webhook_format={9}" -f $ts, $exitCode, $last, $notify, $hasSessionSlackWebhook, $hasUserSlackWebhook, $hasSessionManaosWebhook, $hasUserManaosWebhook, $webhookSource, $webhookFormat)
+Add-Content -Path $outLog -Value ("{0} exit={1} {2} {3} slack_session={4} slack_user={5} manaos_session={6} manaos_user={7} webhook_source={8} webhook_format={9} retry_count={10} retry_initial_delay_sec={11} retry_backoff_factor={12}" -f $ts, $exitCode, $last, $notify, $hasSessionSlackWebhook, $hasUserSlackWebhook, $hasSessionManaosWebhook, $hasUserManaosWebhook, $webhookSource, $webhookFormat, $NotifyRetryCount, $NotifyRetryInitialDelaySec, $NotifyRetryBackoffFactor)
 
 exit $exitCode
