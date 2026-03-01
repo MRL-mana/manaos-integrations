@@ -297,4 +297,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\run_file_secretary_f
 # タスク環境で確実に使う場合（推奨）
 Copy-Item .\config\secrets.local.example.ps1 .\config\secrets.local.ps1
 # config\secrets.local.ps1 内の SLACK_WEBHOOK_URL を実値へ置換
+# 既存MANAOS_WEBHOOK運用に合わせて一発検証
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\bootstrap_file_secretary_alert_webhook.ps1 -WebhookUrl "https://hooks.slack.com/services/XXX/YYY/ZZZ" -WebhookFormat slack -FailThreshold 3 -CooldownMinutes 30
 ```
