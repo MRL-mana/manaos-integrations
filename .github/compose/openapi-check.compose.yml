@@ -1,0 +1,19 @@
+services:
+  unified_api:
+    image: python:3.11-slim
+    container_name: manaos-unified-api-ci
+    working_dir: /workspace
+    command: >
+      /bin/sh -lc "
+      pip install --no-cache-dir flask flask-cors requests &&
+      python unified_api/unified_api_server.py
+      "
+    environment:
+      PORT: "9502"
+      MANAOS_NO_MONITOR: "1"
+      MANAOS_STRICT_STARTUP: "0"
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ../..:/workspace
+    ports:
+      - "9502:9502"
