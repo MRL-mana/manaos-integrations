@@ -2,7 +2,8 @@ param(
     [string]$TaskName = "ManaOS_File_Secretary_FailCheck",
     [int]$IntervalMinutes = 5,
     [int]$FailThreshold = 3,
-    [int]$TailLines = 200
+    [int]$TailLines = 200,
+    [int]$CooldownMinutes = 30
 )
 
 $ErrorActionPreference = "Stop"
@@ -26,7 +27,7 @@ $escapedScript = $scriptPath.Replace('"', '""')
 
 $launcherContent = @(
     "@echo off",
-    "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$escapedScript`" -FailThreshold $FailThreshold -TailLines $TailLines"
+    "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$escapedScript`" -FailThreshold $FailThreshold -TailLines $TailLines -CooldownMinutes $CooldownMinutes"
 ) -join "`r`n"
 Set-Content -Path $launcherPath -Value $launcherContent -Encoding Ascii
 

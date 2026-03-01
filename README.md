@@ -292,4 +292,6 @@ schtasks /Run /TN "ManaOS_Dashboard_Update"
 schtasks /Run /TN "ManaOS_Dashboard_Alert"
 Get-Content .\logs\dashboard_alert.log -Tail 50
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\check_file_secretary_fail_streak.ps1 -FailThreshold 3 -Strict
+$env:SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/xxx/yyy/zzz"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\run_file_secretary_fail_check.ps1 -FailThreshold 3 -CooldownMinutes 30
 ```
