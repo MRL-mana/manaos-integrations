@@ -2684,6 +2684,84 @@
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true },
       "group": "test"
+    },
+    {
+      "label": "ManaOS: Daily Health Smoke (Default)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/daily_health_smoke.ps1",
+        "-Distro",
+        "Ubuntu-22.04",
+        "-Recover"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: Daily Health Smoke (StrictApi)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/daily_health_smoke.ps1",
+        "-Distro",
+        "Ubuntu-22.04",
+        "-Recover",
+        "-StrictApi"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: Daily Health Smoke Task Install (09:10)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/register_daily_health_smoke_task.ps1",
+        "-TaskName",
+        "ManaOS_Daily_Health_Smoke",
+        "-DailyTime",
+        "09:10",
+        "-Distro",
+        "Ubuntu-22.04",
+        "-Recover"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Daily Health Smoke Task Status",
+      "type": "shell",
+      "command": "schtasks",
+      "args": [
+        "/Query",
+        "/TN",
+        "ManaOS_Daily_Health_Smoke",
+        "/FO",
+        "LIST"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
     }
   ]
 }

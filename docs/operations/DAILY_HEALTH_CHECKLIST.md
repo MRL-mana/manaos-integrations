@@ -32,6 +32,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ".\daily_health_smoke.ps1" -
 powershell -NoProfile -ExecutionPolicy Bypass -File ".\daily_health_smoke.ps1" -Distro "Ubuntu-22.04" -Recover -StrictApi
 ```
 
+### 定期実行登録（1日1回）
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\register_daily_health_smoke_task.ps1" -TaskName "ManaOS_Daily_Health_Smoke" -DailyTime "09:10" -Distro "Ubuntu-22.04" -Recover
+```
+
+状態確認:
+
+```powershell
+schtasks /Query /TN "ManaOS_Daily_Health_Smoke" /FO LIST
+```
+
 ---
 
 ## 2) WSL / Docker ヘルス
