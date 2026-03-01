@@ -106,13 +106,13 @@ jobs:
             --require-path /api/mothership/resources \
             --require-path /api/file-secretary/inbox/status
 
-      - name: Stage2 contract checks (non-blocking)
-        continue-on-error: true
+      - name: Stage2 contract checks
         run: |
           python -c "import os; k=os.getenv('CI_API_KEY',''); print('CI_API_KEY len=', len(k))"
           python tools/validate_contract.py \
             --base-url http://127.0.0.1:9502 \
-            --api-key ${CI_API_KEY}
+            --api-key ${CI_API_KEY} \
+            --strict
 
       - name: Show Unified API logs (on failure)
         if: failure()
