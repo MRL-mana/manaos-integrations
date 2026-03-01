@@ -1,11 +1,13 @@
 name: Validate Ledger
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - '.github/workflows/validate-ledger.yml'
       - '.github/compose/openapi-check.compose.yml'
       - 'tools/validate_ledger.py'
+      - 'tools/validate_contract.py'
       - 'config/services_ledger.yaml'
       - 'README.md'
   push:
@@ -14,6 +16,7 @@ on:
       - '.github/workflows/validate-ledger.yml'
       - '.github/compose/openapi-check.compose.yml'
       - 'tools/validate_ledger.py'
+      - 'tools/validate_contract.py'
       - 'config/services_ledger.yaml'
       - 'README.md'
 
