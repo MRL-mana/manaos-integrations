@@ -10,6 +10,7 @@ import json
 import os
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import requests
@@ -327,6 +328,68 @@ def print_ci(ci_data: dict[str, Any], use_color: bool) -> None:
     print()
 
 
+def load_file_secretary_summary(audit_log: str) -> dict[str, Any]:
+    path = Path(audit_log)
+    if not path.exists():
+        return {
+            "last_run": None,
+            "processed": 0,
+            "errors": 0,
+            "total": 0,
+        }
+
+    processed = 0
+    errors = 0
+    total = 0
+    last_run: str | None = None
+
+    with path.open("r", encoding="utf-8") as file:
+        for line in file:
+            text = line.strip()
+            if not text:
+                continue
+            total += 1
+            try:
+                record = json.loads(text)
+            except ValueError:
+                errors += 1
+                continue
+
+            timestamp = record.get("timestamp")
+            if isinstance(timestamp, str):
+                if last_run is None or timestamp > last_run:
+                    last_run = timestamp
+
+            result = str(record.get("result") or "")
+            if result == "OK":
+                processed += 1
+            if result.startswith("FAIL"):
+                errors += 1
+
+    return {
+        "last_run": last_run,
+        "processed": processed,
+        "errors": errors,
+        "total": total,
+    }
+
+
+def print_file_secretary(summary: dict[str, Any], use_color: bool) -> None:
+    print("FILE SECRETARY")
+    line = (
+        "last_run={last_run} processed={processed} "
+        "errors={errors} total={total}"
+    ).format(
+        last_run=summary.get("last_run") or "-",
+        processed=summary.get("processed", 0),
+        errors=summary.get("errors", 0),
+        total=summary.get("total", 0),
+    )
+    tone = "ok" if int(summary.get("errors", 0)) == 0 else "warn"
+    print(colorize(line, tone, use_color))
+    print()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -350,6 +413,10 @@ def main() -> int:
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--timeout", type=float, default=2.5)
     parser.add_argument("--no-color", action="store_true")
+    parser.add_argument(
+        "--file-secretary-audit",
+        default="logs/file_secretary_audit.jsonl",
+    )
     args = parser.parse_args()
 
     try:
@@ -375,12 +442,17 @@ def main() -> int:
             except (requests.RequestException, ValueError) as exception:
                 ci_data = {"status": "ERROR", "reason": str(exception)}
 
+    file_secretary_summary = load_file_secretary_summary(
+        args.file_secretary_audit
+    )
+
     payload = {
         "timestamp": dt.datetime.now().isoformat(timespec="seconds"),
         "ledger_version": ledger.get("version"),
         "rows": [row.__dict__ for row in rows],
         "dependency_alerts": alerts,
         "ci": ci_data,
+        "file_secretary": file_secretary_summary,
     }
 
     if args.json:
@@ -401,6 +473,8 @@ def main() -> int:
 
     if args.ci:
         print_ci(ci_data, use_color)
+
+    print_file_secretary(file_secretary_summary, use_color)
 
     return 0
 
