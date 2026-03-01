@@ -1,4 +1,6 @@
 import { useMemo, useState, memo } from 'react'
+import DetailModal from './DetailModal.jsx'
+import ServiceDetail from './ServiceDetail.jsx'
 
 /** タグの優先表示順 */
 const TAG_ORDER = [
@@ -74,6 +76,7 @@ export default function PartyView({ services }) {
   const [filterText, setFilterText] = useState('')
   const [showMode, setShowMode] = useState('all') // 'all' | 'alive' | 'down'
   const [collapsed, setCollapsed] = useState(() => new Set())
+  const [selected, setSelected] = useState(null)
 
   const aliveCount = useMemo(() => list.filter(s => s.alive).length, [list])
   const downCount = list.length - aliveCount
@@ -174,7 +177,7 @@ export default function PartyView({ services }) {
                 </div>
                 {!isCollapsed && (
                   <div className="partyGroup">
-                    {items.map(s => <ServiceRow key={s.id} s={s} />)}
+                    {items.map(s => <div key={s.id} onClick={() => setSelected(s)} style={{ cursor: 'pointer' }}><ServiceRow s={s} /></div>)}
                   </div>
                 )}
               </div>
@@ -182,6 +185,11 @@ export default function PartyView({ services }) {
           })}
         </div>
       )}
-    </div>
+    {/* 詳細モーダル */}
+    <DetailModal open={!!selected} onClose={() => setSelected(null)}>
+      <ServiceDetail service={selected} />
+    </DetailModal>
+    {/* ここでdiv閉じ忘れ修正 */}
+  </div>
   )
 }

@@ -7,6 +7,7 @@ import {
 } from './utils.js'
 
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import SettingsView from './components/SettingsView.jsx'
 import StatusView from './components/StatusView.jsx'
 import PartyView from './components/PartyView.jsx'
 import BestiaryView from './components/BestiaryView.jsx'
@@ -38,6 +39,8 @@ export default function App() {
   const [lastRefreshTs, setLastRefreshTs] = useState(null)
   const [tick, setTick] = useState(0)
   const [showHelp, setShowHelp] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [settings, setSettings] = useState({ apiKey: '', refreshMs: 30000, theme: 'default' })
   const panelRef = useRef(null)
   const refreshingRef = useRef(false)
   const stateRef = useRef(null)
@@ -238,6 +241,7 @@ export default function App() {
         </div>
         <HealthStrip services={state?.services} />
         <div className="actions">
+          <button className="settingsBtn" onClick={() => setShowSettings(true)} title="設定">⚙</button>
           <button onClick={refreshSnapshot} disabled={loading}>更新（/api/snapshot）</button>
           <button onClick={refreshState} disabled={loading}>読込（/api/state）</button>
           <label className="autoRefresh">
@@ -384,6 +388,9 @@ export default function App() {
       </main>
     </div>
     <GlobalSearch state={state} onNavigate={(tab) => setActive(tab)} />
+
+    {/* 設定モーダル */}
+    <SettingsView open={showSettings} config={settings} onSave={cfg => { setSettings(cfg); setShowSettings(false); }} onClose={() => setShowSettings(false)} />
 
     {/* ショートカットヘルプ */}
     {showHelp && (

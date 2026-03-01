@@ -9,7 +9,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: './src/test/setup.js'
+    setupFiles: './src/test/setup.js',
+    maxWorkers: process.env.CI ? 1 : undefined
   },
   build: {
     rollupOptions: {

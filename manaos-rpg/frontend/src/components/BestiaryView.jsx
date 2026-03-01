@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react'
+import DetailModal from './DetailModal.jsx'
+import ModelDetail from './ModelDetail.jsx'
 
 const TYPE_ORDER = ['llm', 'vision', 'image', 'video', 'voice', 'embedding', 'reranker', 'lora', 'other']
 const TYPE_ICONS = { llm: '🧠', vision: '👁', image: '🎨', video: '🎬', voice: '🔊', embedding: '📐', reranker: '🔀', lora: '🧬', other: '❓' }
@@ -26,6 +28,7 @@ export default function BestiaryView({ models }) {
   const list = useMemo(() => (Array.isArray(models) ? models : []), [models])
   const [filterText, setFilterText] = useState('')
   const [collapsed, setCollapsed] = useState(() => new Set())
+  const [selected, setSelected] = useState(null)
 
   const filtered = useMemo(() => {
     if (!filterText.trim()) return list
@@ -101,7 +104,7 @@ export default function BestiaryView({ models }) {
             {!isCollapsed && (
               <div className="bestiaryCards">
                 {items.map((m) => (
-                  <div key={m.id} className={`bestiaryCard${m.loaded ? ' bestiaryCardLoaded' : ''}`}>
+                  <div key={m.id} className={`bestiaryCard${m.loaded ? ' bestiaryCardLoaded' : ''}`} onClick={() => setSelected(m)} style={{ cursor: 'pointer' }}>
                     <div className="bestiaryCardHead">
                       <span className="bestiaryCardName">{m.name}</span>
                       <RuntimeBadge runtime={m.runtime} />
@@ -131,6 +134,10 @@ export default function BestiaryView({ models }) {
           </div>
         )
       })}
+    {/* 詳細モーダル */}
+    <DetailModal open={!!selected} onClose={() => setSelected(null)}>
+      <ModelDetail model={selected} />
+    </DetailModal>
     </div>
   )
 }

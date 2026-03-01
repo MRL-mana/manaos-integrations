@@ -1,7 +1,8 @@
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { fmtBytes, dangerRank } from '../utils.js'
 import Box from './Box.jsx'
 import OutputBlock from './OutputBlock.jsx'
+import DashboardConfig from './DashboardConfig.jsx'
 
 const GaugeBar = memo(function GaugeBar({ label, pct }) {
   const p = Math.max(0, Math.min(100, Number(pct || 0)))
@@ -20,6 +21,7 @@ const GaugeBar = memo(function GaugeBar({ label, pct }) {
 })
 
 export default function StatusView({ host, services, models, devices, skills, danger, rlAnything, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction }) {
+  const [showConfig, setShowConfig] = useState(false)
   const cpu = host?.cpu?.percent
   const mem = host?.mem?.percent
   const diskFree = host?.disk?.free_gb
@@ -51,7 +53,14 @@ export default function StatusView({ host, services, models, devices, skills, da
   }, [hints, actions])
 
   return (
-    <div className="grid">
+    <div className="grid" style={{ position: 'relative' }}>
+      {/* カスタマイズボタン */}
+      <button
+        className="settingsBtn"
+        style={{ position: 'absolute', top: 8, right: 16, zIndex: 10 }}
+        aria-label="ダッシュボードカスタマイズ"
+        onClick={() => setShowConfig(true)}
+      >🛠️ カスタマイズ</button>
       <Box title="母艦ステータス">
         <div className="kv"><span>HOST</span><span>{hostname || '—'}</span></div>
         <div className="kv"><span>OS</span><span className="mono">{os || '—'}</span></div>
@@ -214,6 +223,10 @@ export default function StatusView({ host, services, models, devices, skills, da
           </div>
         ) : null}
       </Box>
+      {/* DashboardConfig モーダル */}
+      {showConfig && (
+        <DashboardConfig onClose={() => setShowConfig(false)} />
+      )}
     </div>
   )
 }

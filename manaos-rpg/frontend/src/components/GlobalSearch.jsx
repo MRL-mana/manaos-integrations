@@ -84,8 +84,6 @@ export default function GlobalSearch({ state, onNavigate }) {
 
   const [sel, setSel] = useState(0)
 
-  useEffect(() => { setSel(0) }, [results])
-
   const close = useCallback(() => {
     setOpen(false)
     setQuery('')
@@ -136,7 +134,10 @@ export default function GlobalSearch({ state, onNavigate }) {
             ref={inputRef}
             className="gsInput"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value)
+              setSel(0)
+            }}
             placeholder="サービス / モデル / デバイス / スキル を検索…  (Esc で閉じる)"
             spellCheck={false}
           />

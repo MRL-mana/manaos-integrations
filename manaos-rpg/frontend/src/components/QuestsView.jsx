@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import QuestStats from './QuestStats.jsx'
 import { truncateOutput } from '../utils.js'
 import { fetchJson } from '../api.js'
 import OutputBlock from './OutputBlock.jsx'
@@ -6,6 +7,8 @@ import OutputBlock from './OutputBlock.jsx'
 const KIND_ICONS = { api: '🌐', action: '⚡', manual: '📝' }
 
 export default function QuestsView({ quests, onRunAction, actionResult, runningAction }) {
+    // 仮: 履歴データ（本来はAPI/propsから取得）
+    const questHistory = Array.isArray(quests) ? quests.map(q => ({ ok: Math.random() > 0.2, label: q.label, ts: new Date().toISOString().slice(0,16).replace('T',' ') })) : []
   const list = useMemo(() => (Array.isArray(quests) ? quests : []), [quests])
   const [questLoading, setQuestLoading] = useState('')
   const [questResult, setQuestResult] = useState(null)
@@ -135,6 +138,8 @@ export default function QuestsView({ quests, onRunAction, actionResult, runningA
           <OutputBlock text={questResult.text} onClear={() => setQuestResult(null)} />
         </div>
       ) : null}
+      {/* 履歴・統計 */}
+      <QuestStats history={questHistory} />
     </div>
   )
 }

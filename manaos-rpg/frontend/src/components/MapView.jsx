@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import DetailModal from './DetailModal.jsx'
+import DeviceDetail from './DeviceDetail.jsx'
 
 const KIND_EMOJI = { desktop: '🖥️', laptop: '💻', mobile: '📱', server: '🗄️' }
 const KIND_COLOR = { desktop: '#7CFF6B', laptop: '#6BB5FF', mobile: '#FFE66B', server: '#FF6B6B' }
@@ -26,6 +28,7 @@ function SpecBar({ label, value, max, unit }) {
 
 function DeviceCard({ d, isPrimary }) {
   const [open, setOpen] = useState(isPrimary)
+  const [selected, setSelected] = useState(null)
   const specs = d.specs || {}
   const features = Array.isArray(d.features) ? d.features : []
   const health = Array.isArray(d.health) ? d.health : []
@@ -36,7 +39,7 @@ function DeviceCard({ d, isPrimary }) {
   return (
     <div className={`mapDeviceCard${typeof d.alive === 'boolean' && !d.alive ? ' mapDeviceOffline' : ''}`}
          style={{ borderLeftColor: accentColor }}>
-      <div className="mapDeviceHeader" onClick={() => setOpen(!open)}>
+      <div className="mapDeviceHeader" onClick={() => setOpen(!open)} onDoubleClick={() => setSelected(d)} style={{ cursor: 'pointer' }}>
         <div className="mapDeviceTitle">
           <span className="mapDeviceEmoji">{kindEmoji}</span>
           <div>
@@ -112,6 +115,10 @@ function DeviceCard({ d, isPrimary }) {
           )}
         </div>
       )}
+    {/* 詳細モーダル */}
+    <DetailModal open={!!selected} onClose={() => setSelected(null)}>
+      <DeviceDetail device={selected} />
+    </DetailModal>
     </div>
   )
 }
@@ -144,7 +151,7 @@ export default function MapView({ devices }) {
             <div className="mapTopology">
               <div className="mapTopoTitle">🗺️ ネットワークトポロジー</div>
               <div className="mapTopoGraph">
-                {list.map((d, i) => (
+                {list.map((d) => (
                   <div key={d.id} className="mapTopoDevice">
                     <span className="mapTopoEmoji">{KIND_EMOJI[d.kind] || '🔧'}</span>
                     <span className={`mapTopoName ${d.alive === false ? 'danger' : ''}`}>{d.name?.split('（')[0] || d.id}</span>

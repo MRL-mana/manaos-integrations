@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
+import DependencyGraph from './DependencyGraph.jsx'
 
 export default function SystemsView({ unified, onRunAction, actionResult, actionsEnabled, runningAction }) {
+    const services = unified?.services || []
   const base = unified?.base
   const r = unified?.integrations
   const ok = Boolean(r?.ok)
@@ -30,6 +32,7 @@ export default function SystemsView({ unified, onRunAction, actionResult, action
   return (
     <div>
       <div className="panelTitle">システム（統合）</div>
+      <DependencyGraph services={services} />
 
       {/* システムサマリーカード */}
       <div className="sysOverview">

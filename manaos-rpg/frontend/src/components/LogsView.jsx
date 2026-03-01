@@ -12,6 +12,7 @@ export default function LogsView({ events, onRefresh }) {
   const list = useMemo(() => (Array.isArray(events) ? events : []), [events])
   const [logFilter, setLogFilter] = useState('')
   const [logTypeFilter, setLogTypeFilter] = useState('')
+  const [dateFilter, setDateFilter] = useState('')
 
   const logTypes = useMemo(() => {
     const s = new Set()
@@ -38,8 +39,16 @@ export default function LogsView({ events, onRefresh }) {
       const q = logFilter.trim().toLowerCase()
       out = out.filter((e) => String(e?.message || '').toLowerCase().includes(q) || String(e?.type || '').toLowerCase().includes(q))
     }
+    if (dateFilter) {
+      const dt = new Date(dateFilter)
+      out = out.filter((e) => {
+        if (!e?.ts) return false
+        const et = new Date(e.ts)
+        return et >= dt
+      })
+    }
     return out
-  }, [list, logFilter, logTypeFilter])
+  }, [list, logFilter, logTypeFilter, dateFilter])
 
   const reversed = useMemo(() => filtered.slice().reverse(), [filtered])
 
@@ -49,6 +58,10 @@ export default function LogsView({ events, onRefresh }) {
         <span>戦闘ログ</span>
         <button className="link" onClick={onRefresh}>再読込</button>
         <span className="small">{filtered.length}/{list.length}件</span>
+      </div>
+      <div className="logFilterBar">
+        <input className="input logSearchInput" value={logFilter} onChange={e => setLogFilter(e.target.value)} placeholder="メッセージ/種別検索" aria-label="ログ検索" />
+        <input className="input logDateInput" type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)} aria-label="日付フィルタ" />
       </div>
 
       {/* タイプ別サマリー */}
