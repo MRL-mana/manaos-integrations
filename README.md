@@ -152,6 +152,7 @@ python -m pytest tests/ --cov=. --cov-report=term-missing
 
 ### 基本ガイド
 - **[クイックリファレンス](QUICKREF.md)** - 1ページのチートシート
+- **[Pixel7 5分セキュア導線](docs/guides/PIXEL7_MINIMAL_SECURE_MODE.md)** - 安全デフォルトでの起動・確認・CLI運用
 - **[VSCodeセットアップ](VSCODE_SETUP_GUIDE.md)** - VSCode完全セットアップガイド
 - **[VSCode vs Cursor](VSCODE_VS_CURSOR.md)** - どっちを使うべき?比較ガイド
 - **[VSCodeチェックリスト](VSCODE_CHECKLIST.md)** - 対応状況とクイックガイド
@@ -246,3 +247,5 @@ start_unified_api_server_prod.bat
 ```bash
 python scripts/catalog_scripts.py > scripts/CATALOG.md
 ```
+
+Pixel7 最小CLI（health/status/open-url）は `scripts/pixel7/manaos_pixel7_cli.py` を使用します。

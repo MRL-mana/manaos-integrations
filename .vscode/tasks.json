@@ -6,6 +6,12 @@
       "type": "promptString",
       "description": "画像生成プロンプト（英語推奨）",
       "default": "a beautiful landscape"
+    },
+    {
+      "id": "manaosDailyHealthWebhookUrl",
+      "type": "promptString",
+      "description": "Daily Health通知先Webhook URL",
+      "default": ""
     }
   ],
   "presentation": {
@@ -2725,6 +2731,26 @@
       "group": "test"
     },
     {
+      "label": "ManaOS: Daily Health Smoke (NotifyOnSuccess)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/daily_health_smoke.ps1",
+        "-Distro",
+        "Ubuntu-22.04",
+        "-Recover",
+        "-NotifyOnSuccess"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
       "label": "ManaOS: Daily Health Smoke Task Install (09:10)",
       "type": "shell",
       "command": "pwsh",
@@ -2748,6 +2774,30 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: Daily Health Smoke Task Install (09:10 + NotifyOnSuccess)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/register_daily_health_smoke_task.ps1",
+        "-TaskName",
+        "ManaOS_Daily_Health_Smoke",
+        "-DailyTime",
+        "09:10",
+        "-Distro",
+        "Ubuntu-22.04",
+        "-Recover",
+        "-NotifyOnSuccess"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: Daily Health Smoke Task Status",
       "type": "shell",
       "command": "schtasks",
@@ -2762,6 +2812,149 @@
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true },
       "group": "none"
+    },
+    {
+      "label": "ManaOS: Daily Health Smoke Latest Report (JSON)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "Get-Content -Path '${workspaceFolder}/logs/daily_health_smoke_latest.json' -Raw"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Daily Health Notify Env Set",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/set_daily_health_notify_env.ps1",
+        "-WebhookUrl",
+        "${input:manaosDailyHealthWebhookUrl}",
+        "-WebhookFormat",
+        "discord",
+        "-NotifyOnSuccess"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Daily Health Notify Env Clear",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/set_daily_health_notify_env.ps1",
+        "-Clear"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
+      "label": "ManaOS: Daily Health Notify Setup Verify",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/verify_daily_health_notify_setup.ps1",
+        "-AsJson"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: Daily Health Notify Setup Verify (RequireWebhook)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/verify_daily_health_notify_setup.ps1",
+        "-RequireWebhook",
+        "-AsJson"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: Pixel7 API Profile Check",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/pixel7_check_api_profile.ps1",
+        "-Require",
+        "any"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: Pixel7 API Guard (Require core)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/pixel7_check_api_profile.ps1",
+        "-Require",
+        "core"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: Pixel7 API Guard (Require full)",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/pixel7_check_api_profile.ps1",
+        "-Require",
+        "full"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
     }
   ]
 }

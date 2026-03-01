@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Parameter(Mandatory = $true)]
     [ValidateSet(
         'Health',
@@ -31,7 +31,9 @@ param(
 
     [string]$ExtrasJson = "",
 
-    [int]$TimeoutSec = 5
+    [int]$TimeoutSec = 5,
+
+    [switch]$SkipProfileCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -124,7 +126,7 @@ function Invoke-Pixel7Api([string]$method, [string]$path, $body = $null, [bool]$
 }
 
 function Get-CompactApiError([string]$stderr) {
-    $text = [string]($stderr ?? '')
+    $text = if ($null -eq $stderr) { '' } else { [string]$stderr }
     if ([string]::IsNullOrWhiteSpace($text)) { return 'unknown error' }
 
     $flat = ($text -replace "`r", ' ' -replace "`n", ' ' -replace '\s+', ' ').Trim()
@@ -135,6 +137,21 @@ function Get-CompactApiError([string]$stderr) {
         return ($flat.Substring(0, 180) + '...')
     }
     return $flat
+}
+
+function Assert-Pixel7FullProfile([string]$forAction) {
+    if ($SkipProfileCheck) { return }
+
+    $root = Invoke-Pixel7Api 'GET' '/' $null $false
+    $profile = [string]$root.api_profile
+    if ([string]::IsNullOrWhiteSpace($profile)) {
+        Write-Host "WARN: api_profile が取得できません（旧Gatewayの可能性）。そのまま実行します。" -ForegroundColor Yellow
+        return
+    }
+
+    if ($profile -ne 'full') {
+        throw ("{0} requires PIXEL7_API_PROFILE=full (current: {1}). On Pixel7/Termux: export PIXEL7_API_PROFILE=full" -f $forAction, $profile)
+    }
 }
 
 Write-Host ("=== Pixel7 HTTP Control: {0} ===" -f $Action) -ForegroundColor Cyan
@@ -159,18 +176,21 @@ switch ($Action) {
     }
     'OpenUrl' {
         if ([string]::IsNullOrWhiteSpace($Url)) { throw "-Url is required" }
+        Assert-Pixel7FullProfile 'OpenUrl'
         $r = Invoke-Pixel7Api 'POST' '/api/open/url' @{ url = $Url }
         if ($null -ne $r.ok -and -not $r.ok) { throw ("OpenUrl failed: {0}" -f (Get-CompactApiError $r.stderr)) }
         $r | ConvertTo-Json -Depth 8
     }
     'OpenOpenWebUI' {
         $u = Get-OpenWebUiUrl
+        Assert-Pixel7FullProfile 'OpenOpenWebUI'
         $r = Invoke-Pixel7Api 'POST' '/api/open/url' @{ url = $u }
         if ($null -ne $r.ok -and -not $r.ok) { throw ("OpenOpenWebUI failed: {0}" -f (Get-CompactApiError $r.stderr)) }
         $r | ConvertTo-Json -Depth 8
     }
     'OpenApp' {
         if ([string]::IsNullOrWhiteSpace($Package)) { throw "-Package is required" }
+        Assert-Pixel7FullProfile 'OpenApp'
         $payload = @{ package = $Package }
         if (-not [string]::IsNullOrWhiteSpace($Activity)) { $payload.activity = $Activity }
         $r = Invoke-Pixel7Api 'POST' '/api/open/app' $payload
@@ -179,6 +199,7 @@ switch ($Action) {
     }
     'BroadcastMacro' {
         if ([string]::IsNullOrWhiteSpace($MacroCmd)) { throw "-MacroCmd is required" }
+        Assert-Pixel7FullProfile 'BroadcastMacro'
         $payload = @{ cmd = $MacroCmd }
         if (-not [string]::IsNullOrWhiteSpace($MacroAction)) { $payload.action = $MacroAction }
         if (-not [string]::IsNullOrWhiteSpace($ExtrasJson)) {

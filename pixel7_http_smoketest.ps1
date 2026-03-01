@@ -7,6 +7,7 @@ $ErrorActionPreference = 'Stop'
 
 $httpCtl = Join-Path $PSScriptRoot 'pixel7_http_control.ps1'
 $autoCtl = Join-Path $PSScriptRoot 'pixel7_control_auto.ps1'
+$profileCheck = Join-Path $PSScriptRoot 'pixel7_check_api_profile.ps1'
 
 $scrcpyDir = Join-Path $env:USERPROFILE 'Desktop\scrcpy\scrcpy-win64-v3.3.4'
 $adbExe = Join-Path $scrcpyDir 'adb.exe'
@@ -83,6 +84,21 @@ if (-not $healthOk) {
     $allOk = $false
 }
 
+Write-Host '\n[1b] api profile (/)' -ForegroundColor Gray
+if (Test-Path $profileCheck) {
+    try {
+        if ($useLocal) {
+            & $profileCheck -Require any -BaseUrl 'http://127.0.0.1:5122' -TimeoutSec $TimeoutSec | Out-Host
+        } else {
+            & $profileCheck -Require any -TimeoutSec $TimeoutSec | Out-Host
+        }
+    } catch {
+        Write-Host ("WARN: profile check failed: {0}" -f $_.Exception.Message) -ForegroundColor Yellow
+    }
+} else {
+    Write-Host 'SKIP: pixel7_check_api_profile.ps1 not found' -ForegroundColor Yellow
+}
+
 Write-Host '\n[2] status (/api/status) requires PIXEL7_API_TOKEN' -ForegroundColor Gray
 $tokenFile = Join-Path $PSScriptRoot '.pixel7_api_token.txt'
 if (-not $env:PIXEL7_API_TOKEN -and -not (Test-Path $tokenFile)) {
@@ -116,6 +132,10 @@ Write-Host '\n[3] HTTP→ADB fallback action (OpenHttpShortcuts)' -ForegroundCol
 if (Test-Path $autoCtl) {
     try {
         & $autoCtl -Action OpenHttpShortcuts -Mode HTTPFirst -TimeoutSec $TimeoutSec | Out-Host
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host ("NG: fallback action exit code: {0}" -f $LASTEXITCODE) -ForegroundColor Red
+            $allOk = $false
+        }
     } catch {
         Write-Host ("NG: fallback action failed: {0}" -f $_.Exception.Message) -ForegroundColor Red
         $allOk = $false
@@ -129,6 +149,10 @@ if ($TryOpenOpenWebUI) {
     if (Test-Path $autoCtl) {
         try {
             & $autoCtl -Action OpenOpenWebUI -Mode HTTPFirst -TimeoutSec $TimeoutSec | Out-Host
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host ("NG: OpenOpenWebUI exit code: {0}" -f $LASTEXITCODE) -ForegroundColor Red
+                $allOk = $false
+            }
         } catch {
             Write-Host ("NG: OpenOpenWebUI failed: {0}" -f $_.Exception.Message) -ForegroundColor Red
             $allOk = $false

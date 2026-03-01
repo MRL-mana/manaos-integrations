@@ -2,6 +2,11 @@ param(
     [string]$Distro = "Ubuntu-22.04",
     [string]$ApiBaseUrl = "http://127.0.0.1:9502",
     [string]$ReadonlyApiKey = "ci-readonly-key",
+    [ValidateSet('generic','slack','discord')]
+    [string]$WebhookFormat = "discord",
+    [string]$WebhookUrl = "",
+    [string]$WebhookMention = "",
+    [switch]$NotifyOnSuccess,
     [int]$RecoveryTimeoutSec = 120,
     [switch]$Recover,
     [switch]$StrictApi,
@@ -62,6 +67,36 @@ function Add-WarnResult {
     Write-Host "[WARN] $Name - $Detail" -ForegroundColor Yellow
 }
 
+function Send-WebhookMessage {
+    param(
+        [string]$Url,
+        [string]$Format,
+        [string]$Message,
+        [string]$Mention
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Url)) {
+        return $false
+    }
+
+    $text = if ([string]::IsNullOrWhiteSpace($Mention)) { $Message } else { "$Mention`n$Message" }
+    $fmt = if ([string]::IsNullOrWhiteSpace($Format)) { 'discord' } else { $Format.Trim().ToLowerInvariant() }
+    $payload = switch ($fmt) {
+        'slack' { @{ text = $text } }
+        'generic' { @{ text = $text } }
+        default { @{ content = $text } }
+    }
+
+    try {
+        Invoke-RestMethod -Uri $Url -Method Post -ContentType 'application/json' -Body ($payload | ConvertTo-Json -Depth 6) | Out-Null
+        return $true
+    }
+    catch {
+        Write-Host "[WARN] Failed to send webhook: $($_.Exception.Message)" -ForegroundColor Yellow
+        return $false
+    }
+}
+
 function Get-LatestCompletedRun {
     param([string]$WorkflowName)
 
@@ -81,12 +116,31 @@ function Get-LatestCompletedRun {
     }
 }
 
+if ([string]::IsNullOrWhiteSpace($WebhookUrl) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_URL)) {
+    $WebhookUrl = $env:MANAOS_WEBHOOK_URL
+}
+if ([string]::IsNullOrWhiteSpace($WebhookMention) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_MENTION)) {
+    $WebhookMention = $env:MANAOS_WEBHOOK_MENTION
+}
+if (-not $PSBoundParameters.ContainsKey('WebhookFormat') -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_FORMAT)) {
+    $envFormat = $env:MANAOS_WEBHOOK_FORMAT.Trim().ToLowerInvariant()
+    if ($envFormat -in @('generic', 'slack', 'discord')) {
+        $WebhookFormat = $envFormat
+    }
+}
+if (-not $NotifyOnSuccess -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_NOTIFY_ON_SUCCESS)) {
+    $notifyRaw = $env:MANAOS_NOTIFY_ON_SUCCESS.Trim().ToLowerInvariant()
+    if ($notifyRaw -in @('1', 'true', 'yes', 'on', 'enabled')) {
+        $NotifyOnSuccess = $true
+    }
+}
+
 Write-Host "=== Daily Health Smoke ===" -ForegroundColor Cyan
 
 if (-not $SkipWslDockerCheck) {
     $wslTaskName = "ManaOS_WSL_Docker_Health"
     try {
-        $query = schtasks /Query /TN $wslTaskName /FO LIST 2>&1 | Out-String
+        schtasks /Query /TN $wslTaskName /FO LIST 2>&1 | Out-Null
         if ($LASTEXITCODE -eq 0) {
             Add-CheckResult -Name "wsl_task_registered" -Ok $true -Detail "$wslTaskName exists"
         }
@@ -104,12 +158,12 @@ if (-not $SkipWslDockerCheck) {
             throw "script missing: $wslScript"
         }
 
-        $args = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $wslScript, "-Distro", $Distro, "-TimeoutSec", "$RecoveryTimeoutSec")
+        $psArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $wslScript, "-Distro", $Distro, "-TimeoutSec", "$RecoveryTimeoutSec")
         if ($Recover) {
-            $args += "-Recover"
+            $psArgs += "-Recover"
         }
 
-        & powershell @args | Out-Null
+        & powershell @psArgs | Out-Null
         $exitCode = $LASTEXITCODE
         Add-CheckResult -Name "wsl_docker_health_script" -Ok ($exitCode -eq 0) -Detail "exit=$exitCode"
     }
@@ -181,9 +235,44 @@ foreach ($checkName in $results.checks.Keys) {
     }
 }
 
+$results.notify = [ordered]@{
+    webhook_enabled = (-not [string]::IsNullOrWhiteSpace($WebhookUrl))
+    webhook_format = $WebhookFormat
+    notify_on_success = [bool]$NotifyOnSuccess
+}
+
 $results.overall_ok = $allOk
 $results | ConvertTo-Json -Depth 8 | Set-Content -Path $reportPath -Encoding UTF8
 $results | ConvertTo-Json -Depth 8 | Set-Content -Path $latestPath -Encoding UTF8
+
+$shouldNotify = (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) -and ((-not $allOk) -or [bool]$NotifyOnSuccess)
+if ($shouldNotify) {
+    $failedChecks = @($results.checks.Keys | Where-Object { -not $results.checks[$_].ok })
+    $warnChecks = @($results.checks.Keys | Where-Object {
+        ($results.checks[$_].PSObject.Properties.Name -contains 'warning') -and [bool]$results.checks[$_].warning
+    })
+
+    $statusText = if ($allOk) { 'OK' } else { 'NG' }
+    $messageLines = @(
+        "ManaOS Daily Health Smoke: $statusText",
+        "time: $($results.timestamp)",
+        "distro: $Distro",
+        "strict_api: $([bool]$StrictApi)",
+        "recover: $([bool]$Recover)",
+        "report: $reportPath"
+    )
+    if ($failedChecks.Count -gt 0) {
+        $messageLines += ("failed: " + ($failedChecks -join ', '))
+    }
+    if ($warnChecks.Count -gt 0) {
+        $messageLines += ("warnings: " + ($warnChecks -join ', '))
+    }
+
+    $webhookSent = Send-WebhookMessage -Url $WebhookUrl -Format $WebhookFormat -Message ($messageLines -join "`n") -Mention $WebhookMention
+    $results.notify.sent = [bool]$webhookSent
+    $results | ConvertTo-Json -Depth 8 | Set-Content -Path $reportPath -Encoding UTF8
+    $results | ConvertTo-Json -Depth 8 | Set-Content -Path $latestPath -Encoding UTF8
+}
 
 Write-Host ""
 if ($allOk) {
