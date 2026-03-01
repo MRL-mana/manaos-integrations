@@ -93,7 +93,7 @@ def file_matches(rule: Rule, file_path: Path) -> bool:
             max_size_int = int(max_size)
         except (TypeError, ValueError):
             return False
-        if file_path.stat().st_size > max_size_int:
+        if file_path.stat().st_size <= max_size_int:
             return False
 
     return True
@@ -233,7 +233,7 @@ def main() -> int:
             result = f"FAIL: {exception}"
 
         timestamp = (
-            dt.datetime.now(dt.UTC)
+            dt.datetime.now(dt.timezone.utc)
             .replace(microsecond=0)
             .isoformat()
             .replace("+00:00", "Z")
@@ -259,6 +259,8 @@ def main() -> int:
         print(json.dumps(record, ensure_ascii=False))
 
     print(json.dumps({"summary": summary}, ensure_ascii=False))
+    if summary["errors"] > 0:
+        return 1
     return 0
 
 
