@@ -164,6 +164,7 @@
       <div id="notifyControls" style="margin-top: 6px;">
         <button class="mini-btn active" id="notifyRecentLast10">latest 10</button>
         <button class="mini-btn" id="notifyRecentAll">all</button>
+        <button class="mini-btn" id="notifyRecentCopy">copy</button>
       </div>
       <div id="notifyRecent"></div>
     </div>
@@ -355,6 +356,19 @@
     });
     byId('notifyRecentLast10').addEventListener('click', () => setNotifyRecentMode('last10'));
     byId('notifyRecentAll').addEventListener('click', () => setNotifyRecentMode('all'));
+    byId('notifyRecentCopy').addEventListener('click', async () => {
+      const text = byId('notifyRecent').textContent || '';
+      if (!text.trim()) {
+        byId('notifyHint').textContent = 'nothing to copy';
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        byId('notifyHint').textContent = 'copied notify details to clipboard';
+      } catch (err) {
+        byId('notifyHint').textContent = 'copy failed (clipboard permission denied)';
+      }
+    });
     loadOnce();
     setInterval(loadOnce, 10000);
   </script>
