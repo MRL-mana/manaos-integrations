@@ -1,6 +1,6 @@
 # ManaOS Integrations
 
-**v2.6.0** — ManaOS統合サービスシステム
+**v2.6.2** — ManaOS統合サービスシステム
 
 VSCode/Cursorに接続するメモリベースAIアシスタント。ManaOS と外部サービス（ComfyUI / Google Drive / CivitAI / n8n / Slack / Voice など）をつなぐ統合リポジトリ。
 
