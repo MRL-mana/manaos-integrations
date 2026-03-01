@@ -95,7 +95,8 @@ jobs:
             --require-path /api/devices/status \
             --require-path /api/llm/models \
             --require-path /api/llm/models-enhanced \
-            --require-path /api/mothership/resources
+            --require-path /api/mothership/resources \
+            --require-path /api/file-secretary/inbox/status
 
       - name: Show Unified API logs (on failure)
         if: failure()
