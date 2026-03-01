@@ -18,6 +18,7 @@ New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 $outLog = Join-Path $logDir "file_secretary_fail_check.log"
 $stateFile = Join-Path $logDir "file_secretary_fail_notify_state.json"
 $notifyScript = Join-Path $repo "tools\notify_slack_webhook.ps1"
+$resolverPath = Join-Path $repo "tools\resolve_existing_webhook.ps1"
 $secretsPath = Join-Path $repo "config\secrets.local.ps1"
 $dotenvPath = Join-Path $repo ".env"
 $ts = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
@@ -50,6 +51,56 @@ function Get-DotEnvValue {
         $value = $value.Substring(1, $value.Length - 2)
     }
     return $value
+}
+
+function Resolve-WebhookNow {
+    param(
+        [string]$ResolverScript,
+        [bool]$AlreadyAttempted
+    )
+
+    if ($AlreadyAttempted) {
+        return $null
+    }
+
+    if (-not (Test-Path $ResolverScript)) {
+        return $null
+    }
+
+    try {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $ResolverScript -Apply | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            return $null
+        }
+
+        $url = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_URL", "User")
+        if ([string]::IsNullOrWhiteSpace($url)) {
+            return $null
+        }
+
+        $fmt = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_FORMAT", "User")
+        if ([string]::IsNullOrWhiteSpace($fmt)) {
+            $fmt = "slack"
+        }
+        else {
+            $fmt = $fmt.Trim().ToLowerInvariant()
+            if ($fmt -notin @("generic", "slack", "discord")) {
+                $fmt = "slack"
+            }
+        }
+
+        $mention = [Environment]::GetEnvironmentVariable("MANAOS_WEBHOOK_MENTION", "User")
+
+        return [pscustomobject]@{
+            url = $url
+            format = $fmt
+            mention = $mention
+            source = "resolver_manaos_user"
+        }
+    }
+    catch {
+        return $null
+    }
 }
 
 function Resolve-IntSetting {
@@ -263,6 +314,7 @@ $now = Get-Date
 $notify = "notify=none"
 $inAlert = $false
 $lastAlert = $null
+$resolverAttempted = $false
 
 if (Test-Path $stateFile) {
     try {
@@ -311,11 +363,51 @@ if (-not [string]::IsNullOrWhiteSpace($webhookUrl) -and (Test-Path $notifyScript
                         } | ConvertTo-Json | Set-Content -Path $stateFile -Encoding UTF8
                     }
                     else {
-                        $notify = "notify=error"
+                        $resolved = Resolve-WebhookNow -ResolverScript $resolverPath -AlreadyAttempted $resolverAttempted
+                        $resolverAttempted = $true
+                        if ($resolved) {
+                            & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $resolved.url -Text $message -Format $resolved.format -Mention $resolved.mention -RetryCount $NotifyRetryCount -InitialDelaySec $NotifyRetryInitialDelaySec -BackoffFactor $NotifyRetryBackoffFactor | Out-Null
+                            if ($LASTEXITCODE -eq 0) {
+                                $notify = "notify=sent_resolved"
+                                $webhookSource = $resolved.source
+                                $webhookFormat = $resolved.format
+                                @{
+                                    in_alert = $true
+                                    last_alert = $now.ToString("o")
+                                    last_recovery = $null
+                                } | ConvertTo-Json | Set-Content -Path $stateFile -Encoding UTF8
+                            }
+                            else {
+                                $notify = "notify=error"
+                            }
+                        }
+                        else {
+                            $notify = "notify=error"
+                        }
                     }
                 }
                 else {
-                    $notify = "notify=error"
+                    $resolved = Resolve-WebhookNow -ResolverScript $resolverPath -AlreadyAttempted $resolverAttempted
+                    $resolverAttempted = $true
+                    if ($resolved) {
+                        & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $resolved.url -Text $message -Format $resolved.format -Mention $resolved.mention -RetryCount $NotifyRetryCount -InitialDelaySec $NotifyRetryInitialDelaySec -BackoffFactor $NotifyRetryBackoffFactor | Out-Null
+                        if ($LASTEXITCODE -eq 0) {
+                            $notify = "notify=sent_resolved"
+                            $webhookSource = $resolved.source
+                            $webhookFormat = $resolved.format
+                            @{
+                                in_alert = $true
+                                last_alert = $now.ToString("o")
+                                last_recovery = $null
+                            } | ConvertTo-Json | Set-Content -Path $stateFile -Encoding UTF8
+                        }
+                        else {
+                            $notify = "notify=error"
+                        }
+                    }
+                    else {
+                        $notify = "notify=error"
+                    }
                 }
             }
         }
@@ -347,18 +439,79 @@ if (-not [string]::IsNullOrWhiteSpace($webhookUrl) -and (Test-Path $notifyScript
                     } | ConvertTo-Json | Set-Content -Path $stateFile -Encoding UTF8
                 }
                 else {
-                    $notify = "notify=error"
+                    $resolved = Resolve-WebhookNow -ResolverScript $resolverPath -AlreadyAttempted $resolverAttempted
+                    $resolverAttempted = $true
+                    if ($resolved) {
+                        & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $resolved.url -Text $message -Format $resolved.format -Mention $resolved.mention -RetryCount $NotifyRetryCount -InitialDelaySec $NotifyRetryInitialDelaySec -BackoffFactor $NotifyRetryBackoffFactor | Out-Null
+                        if ($LASTEXITCODE -eq 0) {
+                            $notify = "notify=recovered_sent_resolved"
+                            $webhookSource = $resolved.source
+                            $webhookFormat = $resolved.format
+                            @{
+                                in_alert = $false
+                                last_alert = if ($lastAlert) { $lastAlert.ToString("o") } else { $null }
+                                last_recovery = $now.ToString("o")
+                            } | ConvertTo-Json | Set-Content -Path $stateFile -Encoding UTF8
+                        }
+                        else {
+                            $notify = "notify=error"
+                        }
+                    }
+                    else {
+                        $notify = "notify=error"
+                    }
                 }
             }
             else {
-                $notify = "notify=error"
+                $resolved = Resolve-WebhookNow -ResolverScript $resolverPath -AlreadyAttempted $resolverAttempted
+                $resolverAttempted = $true
+                if ($resolved) {
+                    & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $resolved.url -Text $message -Format $resolved.format -Mention $resolved.mention -RetryCount $NotifyRetryCount -InitialDelaySec $NotifyRetryInitialDelaySec -BackoffFactor $NotifyRetryBackoffFactor | Out-Null
+                    if ($LASTEXITCODE -eq 0) {
+                        $notify = "notify=recovered_sent_resolved"
+                        $webhookSource = $resolved.source
+                        $webhookFormat = $resolved.format
+                        @{
+                            in_alert = $false
+                            last_alert = if ($lastAlert) { $lastAlert.ToString("o") } else { $null }
+                            last_recovery = $now.ToString("o")
+                        } | ConvertTo-Json | Set-Content -Path $stateFile -Encoding UTF8
+                    }
+                    else {
+                        $notify = "notify=error"
+                    }
+                }
+                else {
+                    $notify = "notify=error"
+                }
             }
         }
     }
 }
 else {
     if ($status -eq "FAIL" -and $failStreak -ge $FailThreshold) {
-        $notify = "notify=skipped_webhook_missing"
+        $resolved = Resolve-WebhookNow -ResolverScript $resolverPath -AlreadyAttempted $resolverAttempted
+        $resolverAttempted = $true
+        if ($resolved) {
+            $message = "🚨 File Secretary FAIL streak detected`nfail_streak=$failStreak threshold=$FailThreshold`n$last`nlog=$outLog"
+            & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $resolved.url -Text $message -Format $resolved.format -Mention $resolved.mention -RetryCount $NotifyRetryCount -InitialDelaySec $NotifyRetryInitialDelaySec -BackoffFactor $NotifyRetryBackoffFactor | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                $notify = "notify=sent_resolved"
+                $webhookSource = $resolved.source
+                $webhookFormat = $resolved.format
+                @{
+                    in_alert = $true
+                    last_alert = $now.ToString("o")
+                    last_recovery = $null
+                } | ConvertTo-Json | Set-Content -Path $stateFile -Encoding UTF8
+            }
+            else {
+                $notify = "notify=error"
+            }
+        }
+        else {
+            $notify = "notify=skipped_webhook_missing"
+        }
     }
 }
 
