@@ -2,8 +2,24 @@ name: Validate Ledger
 
 on:
   pull_request:
+    paths:
+      - '.github/workflows/validate-ledger.yml'
+      - '.github/compose/openapi-check.compose.yml'
+      - 'tools/validate_ledger.py'
+      - 'config/services_ledger.yaml'
+      - 'README.md'
   push:
     branches: [main, master]
+    paths:
+      - '.github/workflows/validate-ledger.yml'
+      - '.github/compose/openapi-check.compose.yml'
+      - 'tools/validate_ledger.py'
+      - 'config/services_ledger.yaml'
+      - 'README.md'
+
+concurrency:
+  group: validate-ledger-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
