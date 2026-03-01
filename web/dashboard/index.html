@@ -127,6 +127,8 @@
       <strong>CI (latest)</strong>
       <div class="badges" id="ci"></div>
       <div class="muted" id="ciUrl"></div>
+      <div class="badges" id="notifySummary"></div>
+      <div class="muted" id="notifyMeta"></div>
     </div>
 
     <div class="panel">
@@ -161,6 +163,19 @@
     function badge(text) {
       const tone = toneOf(text);
       return `<span class="badge ${tone}">${text}</span>`;
+    }
+
+    function badgeWithTone(text, tone) {
+      return `<span class="badge ${tone}">${text}</span>`;
+    }
+
+    function toneOfNotifyStatus(text) {
+      const t = String(text || '').toLowerCase();
+      if (!t || t === 'none') return 'ok';
+      if (t.startsWith('recovered')) return 'ok';
+      if (t.includes('error') || t.includes('skipped') || t.includes('missing')) return 'fail';
+      if (t.startsWith('sent')) return 'warn';
+      return 'warn';
     }
 
     function rowStatus(text) {
@@ -216,6 +231,22 @@
       ].join('');
       byId('ci').innerHTML = ciHtml;
       byId('ciUrl').innerHTML = ci.url ? `<a href="${ci.url}" target="_blank" rel="noopener noreferrer">${ci.url}</a>` : 'CI URL: -';
+
+      const notify = data.notify || {};
+      const fs = notify.file_secretary_fail_check || {};
+      const da = notify.dashboard_alert || {};
+      const fsStatus = fs.last_status || 'none';
+      const daStatus = da.last_status || 'none';
+
+      byId('notifySummary').innerHTML = [
+        badgeWithTone(`notify:file_secretary ${fsStatus}`, toneOfNotifyStatus(fsStatus)),
+        badgeWithTone(`notify:dashboard_alert ${daStatus}`, toneOfNotifyStatus(daStatus)),
+      ].join('');
+
+      const generatedAt = notify.generated_at || '-';
+      const fsCount = fs.count ?? 0;
+      const daCount = da.count ?? 0;
+      byId('notifyMeta').textContent = `notify generated_at: ${generatedAt} | file_secretary entries: ${fsCount} | dashboard_alert entries: ${daCount}`;
 
       const rows = Array.isArray(data.rows) ? data.rows : [];
       const core = rows.filter((r) => r.section === 'core');
