@@ -65,12 +65,10 @@ if (-not $pythonExe) {
 $now = Get-Date
 $ts = $now.ToString("yyyy-MM-dd HH:mm:ss")
 
-Add-Content -Path $runLog -Value "$ts INFO python=$pythonExe inbox=$inboxPath rules=$rulesPath"
-
 if (Test-Path $lock) {
     $age = $now - (Get-Item $lock).LastWriteTime
     if ($age.TotalMinutes -lt 5) {
-        Add-Content -Path $runLog -Value "$ts SKIP(lock)"
+        Add-Content -Path $runLog -Value "$ts STATUS=SKIP processed=0 errors=0 skipped=0 duration_ms=0"
         exit 0
     }
     Remove-Item $lock -Force
@@ -79,6 +77,11 @@ if (Test-Path $lock) {
 New-Item -ItemType File -Force -Path $lock | Out-Null
 
 try {
+    $start = Get-Date
+    $processed = 0
+    $errors = 0
+    $skipped = 0
+
     if (-not (Test-Path $inboxPath)) {
         throw "inbox not found: $inboxPath"
     }
@@ -89,18 +92,24 @@ try {
     $output = & $pythonExe "tools/file_secretary_engine.py" --inbox $inboxPath --rules $rulesPath --audit-log $auditPath 2>&1
     $exitCode = $LASTEXITCODE
 
+    foreach ($line in $output) {
+        if ($line -match '"processed"\s*:\s*(\d+)') { $processed = [int]$Matches[1] }
+        if ($line -match '"errors"\s*:\s*(\d+)') { $errors = [int]$Matches[1] }
+        if ($line -match '"skipped"\s*:\s*(\d+)') { $skipped = [int]$Matches[1] }
+    }
+
+    $durationMs = [int]((Get-Date) - $start).TotalMilliseconds
+
     if ($exitCode -ne 0) {
-        $snippet = ($output | Select-Object -Last 12) -join " | "
-        Add-Content -Path $runLog -Value "$ts FAIL(exit=$exitCode) $snippet"
+        Add-Content -Path $runLog -Value "$ts STATUS=FAIL processed=$processed errors=$errors skipped=$skipped duration_ms=$durationMs"
         exit 1
     }
 
-    $tail = ($output | Select-Object -Last 1)
-    Add-Content -Path $runLog -Value "$ts OK $tail"
+    Add-Content -Path $runLog -Value "$ts STATUS=OK processed=$processed errors=$errors skipped=$skipped duration_ms=$durationMs"
     exit 0
 }
 catch {
-    Add-Content -Path $runLog -Value "$ts FAIL $($_.Exception.Message)"
+    Add-Content -Path $runLog -Value "$ts STATUS=FAIL processed=0 errors=1 skipped=0 duration_ms=0"
     exit 1
 }
 finally {
