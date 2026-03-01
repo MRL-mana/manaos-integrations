@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ManaOS Dashboard (Read-only)</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f172a;
+      --panel: #111827;
+      --line: #1f2937;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --fail: #ef4444;
+    }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+    .title {
+      font-size: 20px;
+      margin: 0;
+    }
+    .muted {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .badge {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+    .ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); }
+    .warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); }
+    .fail { color: var(--fail); border-color: color-mix(in srgb, var(--fail) 40%, var(--line)); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-weight: 600; }
+    tr:last-child td { border-bottom: none; }
+    .row-status {
+      display: inline-block;
+      min-width: 56px;
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    button {
+      background: #1f2937;
+      color: var(--text);
+      border: 1px solid #374151;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .error {
+      color: var(--fail);
+      white-space: pre-wrap;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    ul { margin: 8px 0 0; padding-left: 20px; }
+    code { color: #93c5fd; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1 class="title">ManaOS Dashboard (Read-only)</h1>
+        <div class="muted" id="meta">loading...</div>
+      </div>
+      <div class="controls">
+        <button id="refresh">Refresh</button>
+        <span class="muted">auto: 10s</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <strong>CI (latest)</strong>
+      <div class="badges" id="ci"></div>
+      <div class="muted" id="ciUrl"></div>
+    </div>
+
+    <div class="panel">
+      <strong>CORE</strong>
+      <div id="coreTable"></div>
+    </div>
+
+    <div class="panel">
+      <strong>OPTIONAL (enabled only)</strong>
+      <div id="optionalTable"></div>
+    </div>
+
+    <div class="panel">
+      <strong>DEPENDENCY ALERTS</strong>
+      <div id="alerts"></div>
+    </div>
+
+    <div class="error" id="error"></div>
+    <div class="muted" style="margin-top: 10px;">Data source: <code>./dashboard.json</code></div>
+  </div>
+
+  <script>
+    const byId = (id) => document.getElementById(id);
+
+    function toneOf(text) {
+      const t = String(text || '').toUpperCase();
+      if (['OK', 'SUCCESS', 'PASS', 'COMPLETED'].includes(t)) return 'ok';
+      if (['DOWN', 'TIMEOUT', 'FAIL', 'FAILED', 'ERROR'].includes(t)) return 'fail';
+      return 'warn';
+    }
+
+    function badge(text) {
+      const tone = toneOf(text);
+      return `<span class="badge ${tone}">${text}</span>`;
+    }
+
+    function rowStatus(text) {
+      const tone = toneOf(text);
+      return `<span class="row-status ${tone}">${text}</span>`;
+    }
+
+    function renderTable(rows) {
+      if (!rows.length) return '<div class="muted">(none)</div>';
+      const body = rows.map((r) => {
+        const deps = (r.depends_on || []).join(', ') || '-';
+        return `
+          <tr>
+            <td>${r.name}</td>
+            <td>${r.enabled ? 'true' : 'false'}</td>
+            <td>${r.port ?? '-'}</td>
+            <td>${r.url || '-'}</td>
+            <td>${deps}</td>
+            <td>${rowStatus(r.health || 'UNKNOWN')}</td>
+            <td>${rowStatus(r.status || 'UNKNOWN')}</td>
+            <td>${rowStatus(r.summary || 'UNKNOWN')}</td>
+          </tr>`;
+      }).join('');
+      return `
+        <table>
+          <thead>
+            <tr>
+              <th>service</th>
+              <th>enabled</th>
+              <th>port</th>
+              <th>url</th>
+              <th>depends_on</th>
+              <th>health</th>
+              <th>status</th>
+              <th>summary</th>
+            </tr>
+          </thead>
+          <tbody>${body}</tbody>
+        </table>`;
+    }
+
+    function render(data) {
+      const ts = data.timestamp || '-';
+      const v = data.ledger_version ?? '-';
+      byId('meta').textContent = `timestamp: ${ts} | ledger_version: ${v}`;
+
+      const ci = data.ci || {};
+      const ciHtml = [
+        badge(`Validate Ledger: ${ci.status || 'SKIP'}`),
+        badge(`Stage2: ${ci.stage2 || 'UNKNOWN'}`),
+        badge(`Stage3: ${ci.stage3 || 'UNKNOWN'}`),
+        badge(`sha: ${ci.sha || '-'}`),
+      ].join('');
+      byId('ci').innerHTML = ciHtml;
+      byId('ciUrl').innerHTML = ci.url ? `<a href="${ci.url}" target="_blank" rel="noopener noreferrer">${ci.url}</a>` : 'CI URL: -';
+
+      const rows = Array.isArray(data.rows) ? data.rows : [];
+      const core = rows.filter((r) => r.section === 'core');
+      const optional = rows.filter((r) => r.section === 'optional' && r.enabled);
+      byId('coreTable').innerHTML = renderTable(core);
+      byId('optionalTable').innerHTML = renderTable(optional);
+
+      const alerts = Array.isArray(data.dependency_alerts) ? data.dependency_alerts : [];
+      if (!alerts.length) {
+        byId('alerts').innerHTML = '<div class="muted">(none)</div>';
+      } else {
+        byId('alerts').innerHTML = `<ul>${alerts.map((a) => `<li>${a}</li>`).join('')}</ul>`;
+      }
+    }
+
+    async function loadOnce() {
+      byId('error').textContent = '';
+      try {
+        const res = await fetch('./dashboard.json?ts=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        render(data);
+      } catch (err) {
+        byId('error').textContent = `Failed to load dashboard.json: ${err}`;
+      }
+    }
+
+    byId('refresh').addEventListener('click', loadOnce);
+    loadOnce();
+    setInterval(loadOnce, 10000);
+  </script>
+</body>
+</html>

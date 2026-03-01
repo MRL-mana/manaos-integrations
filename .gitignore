@@ -114,6 +114,7 @@ output/
 outputs/
 temp_downloaded_*.pdf
 temp_page_*.png
+web/dashboard/dashboard.json
 
 # Pixel7 runtime files (local)
 .pixel7_*.pid
