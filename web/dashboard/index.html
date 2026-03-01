@@ -124,6 +124,19 @@
       white-space: pre-wrap;
       word-break: break-word;
     }
+    .mini-btn {
+      background: #111827;
+      color: var(--muted);
+      border: 1px solid #374151;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .mini-btn.active {
+      color: var(--text);
+      border-color: #6b7280;
+    }
     ul { margin: 8px 0 0; padding-left: 20px; }
     code { color: #93c5fd; }
   </style>
@@ -148,6 +161,10 @@
       <div class="badges" id="notifySummary"></div>
       <div class="muted" id="notifyMeta"></div>
       <div class="muted" id="notifyHint">click notify badge to show recent entries</div>
+      <div id="notifyControls" style="margin-top: 6px;">
+        <button class="mini-btn active" id="notifyRecentLast10">latest 10</button>
+        <button class="mini-btn" id="notifyRecentAll">all</button>
+      </div>
       <div id="notifyRecent"></div>
     </div>
 
@@ -173,6 +190,8 @@
   <script>
     const byId = (id) => document.getElementById(id);
     let lastNotifyData = { fileSecretaryRecent: [], dashboardAlertRecent: [] };
+    let notifyRecentMode = 'last10';
+    let notifyRecentKind = null;
 
     function toneOf(text) {
       const t = String(text || '').toUpperCase();
@@ -293,15 +312,26 @@
     }
 
     function showNotifyRecent(kind) {
-      const lines = kind === 'file_secretary'
+      notifyRecentKind = kind;
+      const rawLines = kind === 'file_secretary'
         ? lastNotifyData.fileSecretaryRecent
         : lastNotifyData.dashboardAlertRecent;
+      const lines = notifyRecentMode === 'all' ? rawLines : rawLines.slice(-10);
       const title = kind === 'file_secretary' ? 'file_secretary recent notify' : 'dashboard_alert recent notify';
       if (!lines.length) {
         byId('notifyRecent').textContent = `${title}: (no recent notify entries)`;
         return;
       }
-      byId('notifyRecent').textContent = `${title}:\n` + lines.join('\n');
+      byId('notifyRecent').textContent = `${title} [${notifyRecentMode}]:\n` + lines.join('\n');
+    }
+
+    function setNotifyRecentMode(mode) {
+      notifyRecentMode = mode;
+      byId('notifyRecentLast10').classList.toggle('active', mode === 'last10');
+      byId('notifyRecentAll').classList.toggle('active', mode === 'all');
+      if (notifyRecentKind) {
+        showNotifyRecent(notifyRecentKind);
+      }
     }
 
     async function loadOnce() {
@@ -323,6 +353,8 @@
       const kind = button.getAttribute('data-notify-id');
       showNotifyRecent(kind);
     });
+    byId('notifyRecentLast10').addEventListener('click', () => setNotifyRecentMode('last10'));
+    byId('notifyRecentAll').addEventListener('click', () => setNotifyRecentMode('all'));
     loadOnce();
     setInterval(loadOnce, 10000);
   </script>
