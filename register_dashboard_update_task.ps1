@@ -19,11 +19,6 @@ if (-not (Test-Path $scriptPath)) {
 $escapedScript = $scriptPath.Replace('"', '""')
 $tr = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$escapedScript`""
 
-schtasks /Create /
-    TN $TaskName /
-    SC MINUTE /
-    MO $IntervalMinutes /
-    TR $tr /
-    F | Out-Null
+schtasks /Create /TN $TaskName /SC MINUTE /MO $IntervalMinutes /TR $tr /F | Out-Null
 
 schtasks /Query /TN $TaskName /FO LIST
