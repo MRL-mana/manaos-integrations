@@ -1,7 +1,10 @@
 param(
     [int]$FailThreshold = 3,
     [int]$TailLines = 200,
-    [int]$CooldownMinutes = 30
+    [int]$CooldownMinutes = 30,
+    [int]$NotifyRetryCount = 3,
+    [int]$NotifyRetryInitialDelaySec = 1,
+    [double]$NotifyRetryBackoffFactor = 2.0
 )
 
 $ErrorActionPreference = "Stop"
@@ -202,7 +205,7 @@ if (-not [string]::IsNullOrWhiteSpace($webhookUrl) -and (Test-Path $notifyScript
 
         if ($cooldownOk) {
             $message = "🚨 File Secretary FAIL streak detected`nfail_streak=$failStreak threshold=$FailThreshold`n$last`nlog=$outLog"
-            & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $webhookUrl -Text $message -Format $webhookFormat -Mention $webhookMention | Out-Null
+            & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $webhookUrl -Text $message -Format $webhookFormat -Mention $webhookMention -RetryCount $NotifyRetryCount -InitialDelaySec $NotifyRetryInitialDelaySec -BackoffFactor $NotifyRetryBackoffFactor | Out-Null
             if ($LASTEXITCODE -eq 0) {
                 $notify = "notify=sent"
                 @{
@@ -213,7 +216,7 @@ if (-not [string]::IsNullOrWhiteSpace($webhookUrl) -and (Test-Path $notifyScript
             }
             else {
                 if (-not [string]::IsNullOrWhiteSpace($fallbackWebhookUrl)) {
-                    & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $fallbackWebhookUrl -Text $message -Format $webhookFormat -Mention $webhookMention | Out-Null
+                    & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $fallbackWebhookUrl -Text $message -Format $webhookFormat -Mention $webhookMention -RetryCount $NotifyRetryCount -InitialDelaySec $NotifyRetryInitialDelaySec -BackoffFactor $NotifyRetryBackoffFactor | Out-Null
                     if ($LASTEXITCODE -eq 0) {
                         $notify = "notify=sent_fallback"
                         $webhookSource = $fallbackWebhookSource
@@ -238,7 +241,7 @@ if (-not [string]::IsNullOrWhiteSpace($webhookUrl) -and (Test-Path $notifyScript
     }
     elseif ($status -eq "OK" -and $inAlert) {
         $message = "✅ File Secretary recovered`n$last`nlog=$outLog"
-        & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $webhookUrl -Text $message -Format $webhookFormat -Mention $webhookMention | Out-Null
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $webhookUrl -Text $message -Format $webhookFormat -Mention $webhookMention -RetryCount $NotifyRetryCount -InitialDelaySec $NotifyRetryInitialDelaySec -BackoffFactor $NotifyRetryBackoffFactor | Out-Null
         if ($LASTEXITCODE -eq 0) {
             $notify = "notify=recovered_sent"
             @{
@@ -249,7 +252,7 @@ if (-not [string]::IsNullOrWhiteSpace($webhookUrl) -and (Test-Path $notifyScript
         }
         else {
             if (-not [string]::IsNullOrWhiteSpace($fallbackWebhookUrl)) {
-                & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $fallbackWebhookUrl -Text $message -Format $webhookFormat -Mention $webhookMention | Out-Null
+                & powershell -NoProfile -ExecutionPolicy Bypass -File $notifyScript -WebhookUrl $fallbackWebhookUrl -Text $message -Format $webhookFormat -Mention $webhookMention -RetryCount $NotifyRetryCount -InitialDelaySec $NotifyRetryInitialDelaySec -BackoffFactor $NotifyRetryBackoffFactor | Out-Null
                 if ($LASTEXITCODE -eq 0) {
                     $notify = "notify=recovered_sent_fallback"
                     $webhookSource = $fallbackWebhookSource
