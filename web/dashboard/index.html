@@ -106,6 +106,24 @@
       font-size: 13px;
       margin-top: 8px;
     }
+    .notify-btn {
+      background: transparent;
+      color: inherit;
+      border: none;
+      border-radius: 999px;
+      padding: 0;
+      cursor: pointer;
+    }
+    .notify-btn .badge {
+      margin: 0;
+    }
+    #notifyRecent {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
     ul { margin: 8px 0 0; padding-left: 20px; }
     code { color: #93c5fd; }
   </style>
@@ -129,6 +147,8 @@
       <div class="muted" id="ciUrl"></div>
       <div class="badges" id="notifySummary"></div>
       <div class="muted" id="notifyMeta"></div>
+      <div class="muted" id="notifyHint">click notify badge to show recent entries</div>
+      <div id="notifyRecent"></div>
     </div>
 
     <div class="panel">
@@ -152,6 +172,7 @@
 
   <script>
     const byId = (id) => document.getElementById(id);
+    let lastNotifyData = { fileSecretaryRecent: [], dashboardAlertRecent: [] };
 
     function toneOf(text) {
       const t = String(text || '').toUpperCase();
@@ -167,6 +188,10 @@
 
     function badgeWithTone(text, tone) {
       return `<span class="badge ${tone}">${text}</span>`;
+    }
+
+    function notifyBadgeButton(id, text, tone) {
+      return `<button class="notify-btn" data-notify-id="${id}" title="show recent notify logs">${badgeWithTone(text, tone)}</button>`;
     }
 
     function toneOfNotifyStatus(text) {
@@ -239,14 +264,19 @@
       const daStatus = da.last_status || 'none';
 
       byId('notifySummary').innerHTML = [
-        badgeWithTone(`notify:file_secretary ${fsStatus}`, toneOfNotifyStatus(fsStatus)),
-        badgeWithTone(`notify:dashboard_alert ${daStatus}`, toneOfNotifyStatus(daStatus)),
+        notifyBadgeButton('file_secretary', `notify:file_secretary ${fsStatus}`, toneOfNotifyStatus(fsStatus)),
+        notifyBadgeButton('dashboard_alert', `notify:dashboard_alert ${daStatus}`, toneOfNotifyStatus(daStatus)),
       ].join('');
 
       const generatedAt = notify.generated_at || '-';
       const fsCount = fs.count ?? 0;
       const daCount = da.count ?? 0;
       byId('notifyMeta').textContent = `notify generated_at: ${generatedAt} | file_secretary entries: ${fsCount} | dashboard_alert entries: ${daCount}`;
+      lastNotifyData = {
+        fileSecretaryRecent: Array.isArray(fs.recent) ? fs.recent : [],
+        dashboardAlertRecent: Array.isArray(da.recent) ? da.recent : [],
+      };
+      byId('notifyRecent').textContent = '';
 
       const rows = Array.isArray(data.rows) ? data.rows : [];
       const core = rows.filter((r) => r.section === 'core');
@@ -262,6 +292,18 @@
       }
     }
 
+    function showNotifyRecent(kind) {
+      const lines = kind === 'file_secretary'
+        ? lastNotifyData.fileSecretaryRecent
+        : lastNotifyData.dashboardAlertRecent;
+      const title = kind === 'file_secretary' ? 'file_secretary recent notify' : 'dashboard_alert recent notify';
+      if (!lines.length) {
+        byId('notifyRecent').textContent = `${title}: (no recent notify entries)`;
+        return;
+      }
+      byId('notifyRecent').textContent = `${title}:\n` + lines.join('\n');
+    }
+
     async function loadOnce() {
       byId('error').textContent = '';
       try {
@@ -275,6 +317,12 @@
     }
 
     byId('refresh').addEventListener('click', loadOnce);
+    byId('notifySummary').addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-notify-id]');
+      if (!button) return;
+      const kind = button.getAttribute('data-notify-id');
+      showNotifyRecent(kind);
+    });
     loadOnce();
     setInterval(loadOnce, 10000);
   </script>
