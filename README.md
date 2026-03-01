@@ -284,6 +284,7 @@ Pixel7 最小CLI（health/status/open-url）は `scripts/pixel7/manaos_pixel7_cl
 - 監視の証跡は `logs/dashboard_alert.log`（通知は補助）
 - 更新タスク: `\ManaOS_Dashboard_Update`
 - アラートタスク: `\ManaOS_Dashboard_Alert`
+- 通知設定は `MANAOS_WEBHOOK_URL` / `MANAOS_WEBHOOK_FORMAT` / `MANAOS_WEBHOOK_MENTION` を使用
 
 疎通確認（手動Run → ログ確認）:
 
