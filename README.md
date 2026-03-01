@@ -278,3 +278,17 @@ python scripts/catalog_scripts.py > scripts/CATALOG.md
 ```
 
 Pixel7 最小CLI（health/status/open-url）は `scripts/pixel7/manaos_pixel7_cli.py` を使用します。
+
+## Dashboard監視運用メモ
+
+- 監視の証跡は `logs/dashboard_alert.log`（通知は補助）
+- 更新タスク: `\ManaOS_Dashboard_Update`
+- アラートタスク: `\ManaOS_Dashboard_Alert`
+
+疎通確認（手動Run → ログ確認）:
+
+```powershell
+schtasks /Run /TN "ManaOS_Dashboard_Update"
+schtasks /Run /TN "ManaOS_Dashboard_Alert"
+Get-Content .\logs\dashboard_alert.log -Tail 50
+```
