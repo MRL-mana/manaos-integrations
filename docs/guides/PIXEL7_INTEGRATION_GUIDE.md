@@ -68,9 +68,13 @@ Pixel 7 を USB で接続した状態で、母艦で以下を実行すると **l
    Termux 側: `cp /sdcard/Download/pixel7_api_gateway.py ~/ && cd ~`
 4. **5122 で起動**（Tailscale オンにした状態で）
    ```bash
+   export PIXEL7_API_PROFILE=core
    python pixel7_api_gateway.py
    ```
    （デフォルトで `0.0.0.0:5122` で待ち受け。バックグラウンド: `nohup python pixel7_api_gateway.py > /dev/null 2>&1 &`）
+
+> `PIXEL7_API_PROFILE=core` は安全デフォルトです（読み取り系中心）。
+> 端末操作系（`/api/open/*`, `/api/macro/broadcast`, `/api/execute`）を使う時だけ `full` に切り替えてください。
 
 起動後、母艦から `http://100.84.2.125:5122/health` にアクセスできればオーケストレーターに「Pixel 7 オンライン」と表示されます。
 
@@ -84,6 +88,8 @@ Pixel 7 を USB で接続した状態で、母艦で以下を実行すると **l
 - **全デバイス接続確認**: `.\scripts\check_devices_online.ps1`。他デバイスの起動手順は [DEVICES_ONLINE_SETUP.md](./DEVICES_ONLINE_SETUP.md) を参照。
 - **MCP ツール**: Cursor から `pixel7_execute`（コマンド実行）・`pixel7_get_resources`（リソース取得）・`pixel7_screenshot`（スクリーンショット）・`pixel7_get_apps`（アプリ一覧）が利用可能です。
 - **クイック起動**: `quick_start_devices.bat` で Pixel 7 ブリッジを起動できます。
+- **最小CLI**: `python scripts/pixel7/manaos_pixel7_cli.py health|status|open-url <url>`
+- **5分セキュア導線**: [PIXEL7_MINIMAL_SECURE_MODE.md](./PIXEL7_MINIMAL_SECURE_MODE.md)
 
 ### ManaOS への取り込み（統合API・意図分類）
 

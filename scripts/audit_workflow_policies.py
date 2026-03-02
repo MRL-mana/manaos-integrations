@@ -9,6 +9,14 @@ YAMLError = cast(type[BaseException], getattr(yaml, 'YAMLError', ValueError))
 
 WORKFLOW_DIR = Path('.github/workflows')
 REPORT_PATH = Path('artifacts/workflow-policy-audit.md')
+ALLOW_MISSING_PR_PATHS = {
+    'actionlint.yml',
+    'dependency-review.yml',
+    'lint.yml',
+    'tests.yml',
+    'validate-ledger.yml',
+    'workflow-policy-audit.yml',
+}
 
 
 def load_workflow(path: Path):
@@ -67,6 +75,7 @@ def audit_file(path: Path):
             issues.append('`on.push.paths` が未定義です')
         if (
             'pull_request' in triggers
+            and path.name not in ALLOW_MISSING_PR_PATHS
             and not has_paths(triggers.get('pull_request'))
         ):
             issues.append('`on.pull_request.paths` が未定義です')

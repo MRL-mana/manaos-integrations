@@ -1,0 +1,253 @@
+# Daily Health Checklist
+
+最終更新: 2026-03-01
+
+このチェックは「母艦の運用開始前」または「朝の定例」で実施します。
+対象は以下です。
+
+- WSL / Docker 基盤
+- ManaOS 主要API（ローカル）
+- CI（Validate Ledger / Workflow Policy Audit）
+
+---
+
+## 1) 前提
+
+- カレントディレクトリを `manaos_integrations` にする。
+- PowerShell で実行する。
+
+```powershell
+Set-Location "c:\Users\mana4\Desktop\manaos_integrations"
+```
+
+### ワンコマンド実行（推奨）
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\daily_health_smoke.ps1" -Distro "Ubuntu-22.04" -Recover
+```
+
+- 既定モード: readonly APIは警告扱い（全体判定は継続）
+- 厳格モード: readonly APIも失敗判定
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\daily_health_smoke.ps1" -Distro "Ubuntu-22.04" -Recover -StrictApi
+```
+
+### 失敗時Webhook通知（任意）
+
+`MANAOS_WEBHOOK_URL` を設定しておくと、`daily_health_smoke.ps1` は失敗時に通知します。
+成功時も通知したい場合は `-NotifyOnSuccess` を付与します。
+
+```powershell
+$env:MANAOS_WEBHOOK_URL = "https://example.com/webhook"
+$env:MANAOS_WEBHOOK_FORMAT = "discord"   # generic / slack / discord
+$env:MANAOS_WEBHOOK_MENTION = "@here"
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\daily_health_smoke.ps1" -Distro "Ubuntu-22.04" -Recover
+```
+
+### 定期実行登録（1日1回）
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\register_daily_health_smoke_task.ps1" -TaskName "ManaOS_Daily_Health_Smoke" -DailyTime "09:10" -Distro "Ubuntu-22.04" -Recover
+```
+
+通知付きで登録する例:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\register_daily_health_smoke_task.ps1" -TaskName "ManaOS_Daily_Health_Smoke" -DailyTime "09:10" -Distro "Ubuntu-22.04" -Recover -WebhookUrl "https://example.com/webhook" -WebhookFormat "discord"
+```
+
+状態確認:
+
+```powershell
+schtasks /Query /TN "ManaOS_Daily_Health_Smoke" /FO LIST
+```
+
+### VS Code タスク（通知付き）
+
+- `ManaOS: Daily Health Smoke (NotifyOnSuccess)`
+- `ManaOS: Daily Health Smoke Task Install (09:10 + NotifyOnSuccess)`
+- `ManaOS: Daily Health Smoke Latest Report (JSON)`
+- `ManaOS: Daily Health Notify Env Set`
+- `ManaOS: Daily Health Notify Env Clear`
+- `ManaOS: Daily Health Notify Setup Verify`
+- `ManaOS: Daily Health Notify Setup Verify (RequireWebhook)`
+
+※ `MANAOS_WEBHOOK_URL` 等の環境変数が未設定の場合、通知は送信されません。
+
+通知環境変数を直接設定する場合:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\set_daily_health_notify_env.ps1" -WebhookUrl "https://example.com/webhook" -WebhookFormat "discord" -NotifyOnSuccess
+```
+
+解除:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\set_daily_health_notify_env.ps1" -Clear
+```
+
+通知セットアップの最終確認（タスク同等）:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\verify_daily_health_notify_setup.ps1" -AsJson
+```
+
+Webhook必須で確認したい場合:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\verify_daily_health_notify_setup.ps1" -RequireWebhook -AsJson
+```
+
+検証ログは以下に保存されます:
+
+- `logs/daily_health_notify_verify_latest.json`
+- `logs/daily_health_notify_verify_yyyyMMdd_HHmmss.json`
+- `logs/daily_health_notify_verify_history.jsonl`
+
+---
+
+## 2) WSL / Docker ヘルス
+
+### 2-1. 定期タスク登録状態
+
+```powershell
+schtasks /Query /TN "ManaOS_WSL_Docker_Health" /FO LIST
+```
+
+期待値:
+
+- タスクが存在する
+- `スケジュールされたタスクの状態: 有効`
+
+### 2-2. 手動ヘルス実行
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\check_wsl_docker_health.ps1" -Distro "Ubuntu-22.04" -Recover -TimeoutSec 120
+$LASTEXITCODE
+```
+
+期待値:
+
+- `0`
+- ログに `Healthy` が出る
+
+### 2-3. 実体確認
+
+```powershell
+wsl -l -v
+docker version --format '{{.Server.Version}}'
+```
+
+期待値:
+
+- `Ubuntu-22.04` が `Running`
+- Docker Server Version が返る
+
+---
+
+## 3) ManaOS API ヘルス
+
+### 3-1. Unified API 基本確認
+
+```powershell
+python -c "import requests; print(requests.get('http://127.0.0.1:9502/health',timeout=5).status_code)"
+```
+
+期待値:
+
+- `200`
+
+### 3-2. 読み取りAPI（readonlyキー）
+
+```powershell
+python -c "import requests; base='http://127.0.0.1:9502'; h={'X-API-Key':'ci-readonly-key'}; cands=['/api/mothership/resources','/api/file-secretary/inbox/status','/api/pixel7/resources','/api/x280/resources','/api/devices/status'];
+for p in cands:
+  try:
+    r=requests.get(base+p,headers=h,timeout=10)
+    print(p, r.status_code)
+  except Exception as e:
+    print(p,'ERR',e)"
+```
+
+期待値:
+
+- 対象エンドポイントが `200`（または仕様上許可された正常コード）
+
+---
+
+## 4) CI ヘルス
+
+### 4-1. Validate Ledger
+
+```powershell
+$env:GITHUB_TOKEN=$null
+$env:GH_PAGER='cat'
+gh run list --workflow "Validate Ledger" --limit 3 --json databaseId,displayTitle,status,conclusion,url
+```
+
+期待値:
+
+- 最新 `completed` の `conclusion` が `success`
+
+### 4-2. Workflow Policy Audit
+
+```powershell
+$env:GITHUB_TOKEN=$null
+$env:GH_PAGER='cat'
+gh run list --workflow "Workflow Policy Audit" --limit 3 --json databaseId,displayTitle,status,conclusion,url
+```
+
+期待値:
+
+- 最新 `completed` の `conclusion` が `success`
+
+---
+
+## 5) 異常時の最短復旧
+
+1. `check_wsl_docker_health.ps1 -Recover` を再実行
+2. `start_vscode_cursor_services.py` を no-monitor で再起動
+
+```powershell
+$env:MANAOS_NO_MONITOR='1'
+$env:MANAOS_STRICT_STARTUP='0'
+python .\scripts\lifecycle\start_vscode_cursor_services.py
+```
+
+1. APIヘルス (`/health`) を再確認
+2. CI失敗時は `gh run view <run_id> --log-failed` で原因取得
+
+---
+
+## 6) 完了判定
+
+以下をすべて満たしたら日次チェック完了:
+
+- WSL/Docker ヘルス `exit 0`
+- Unified API `/health` が `200`
+- 主要 readonly API が応答
+- Validate Ledger 最新 completed が success
+- Workflow Policy Audit 最新 completed が success
+
+---
+
+## 7) 仕上げ（通知機能だけ先に確定）
+
+通知関連だけを先に確認する場合:
+
+```powershell
+git diff -- daily_health_smoke.ps1 register_daily_health_smoke_task.ps1 set_daily_health_notify_env.ps1 verify_daily_health_notify_setup.ps1 .vscode/tasks.json docs/operations/DAILY_HEALTH_CHECKLIST.md
+```
+
+最終検証（JSON）:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\verify_daily_health_notify_setup.ps1" -AsJson
+```
+
+Webhook必須ポリシーで確認:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\verify_daily_health_notify_setup.ps1" -RequireWebhook -AsJson
+```

@@ -107,6 +107,8 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
 - 「ManaOS: Pixel7 Termux バックグラウンド許可（ADB）」
 - 「ManaOS: Pixel7 Termux+HTTP Shortcuts バックグラウンド許可（ADB）」
 - 「ManaOS: Pixel7 HTTP スモークテスト（health/status/fallback）」
+- 「ManaOS: Pixel7 HTTP スモークテスト（health/statusのみ）」
+  - ADB未接続時は `-SkipFallbackActions` 付きのこのタスクでHTTP疎通だけ先に確認
 - 「ManaOS: Pixel7 HTTP 監視開始（バックグラウンド）」
 - 「ManaOS: Pixel7 外出モード HTTP 監視開始（Tailscaleのみ/バックグラウンド）」
 - 「ManaOS: Pixel7 HTTP 監視停止」
@@ -149,6 +151,80 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
   - `-RebootRecoveryMode NightWeekendOnly` 指定時は「夜かつ休日」の場合のみ再起動復旧を有効化
   - `-EnableHolidayAsWeekend -HolidayDateFile config/pixel7_holidays_jp.txt` で、祝日を休日扱いにできる
   - 祝日ファイルは `config/pixel7_holidays_jp.txt`（`yyyy-MM-dd` を1行1件）
+  - 祝日ファイル更新は `update_pixel7_holidays_jp.ps1` で実行
+    - 例: `pwsh -File .\update_pixel7_holidays_jp.ps1 -IncludeNextYear`
+    - タスク: 「ManaOS: Pixel7 祝日ファイル更新（今年+来年）」
+  - 年次自動更新（年末実行）
+    - 登録: `install_pixel7_holidays_update_task.ps1`
+    - 状態: `status_pixel7_holidays_update_task.ps1`
+    - 解除: `uninstall_pixel7_holidays_update_task.ps1`
+    - タスク: 「ManaOS: Pixel7 祝日更新タスク登録（年次）」 / 「ManaOS: Pixel7 祝日更新タスク状態確認」 / 「ManaOS: Pixel7 祝日更新タスク解除」
+    - ワンボタン: 「ManaOS: Pixel7 祝日更新タスク登録→状態確認（ワンボタン）」 / 「ManaOS: Pixel7 祝日更新タスク解除→未登録確認（ワンボタン）」
+  - 再登録保険（ガード: 月次）
+    - 登録: `install_pixel7_holidays_update_guard_task.ps1`
+    - 状態: `status_pixel7_holidays_update_guard_task.ps1`
+    - 解除: `uninstall_pixel7_holidays_update_guard_task.ps1`
+    - タスク: 「ManaOS: Pixel7 祝日ガード タスク登録」 / 「ManaOS: Pixel7 祝日ガード タスク状態確認」 / 「ManaOS: Pixel7 祝日ガード タスク解除」
+    - ワンボタン: 「ManaOS: Pixel7 祝日更新ガード登録→状態確認（ワンボタン）」 / 「ManaOS: Pixel7 祝日更新ガード解除→未登録確認（ワンボタン）」
+    - 権限不足で `HIGHEST` 登録に失敗した場合は、自動で `LIMITED` へフォールバックして登録
+    - 無人運用が必要な場合は `-RunAsSystem` を付与（ログオン有無に依存しない実行）
+      - 権限不足で `SYSTEM` 登録に失敗した場合は、既定で現在ユーザーに自動フォールバック
+      - `SYSTEM` 固定で失敗時に止めたい場合は `-NoFallbackToCurrentUser` を付与
+    - 既定はバッテリでも実行継続（旧挙動に戻す場合は `-KeepBatteryRestrictions`）
+  - 統合ワンボタン（運用開始/終了）
+    - 開始: 「ManaOS: Pixel7 祝日運用セットアップ（年次+ガード）」
+    - 終了: 「ManaOS: Pixel7 祝日運用クリーンアップ（年次+ガード）」
+  - OpenWebUI/Tailscale 入口監視（5分/15分）
+    - 登録/状態/解除: `install_openwebui_tailscale_watch_task.ps1` / `status_openwebui_tailscale_watch_task.ps1` / `uninstall_openwebui_tailscale_watch_task.ps1`
+    - 単発実行: `run_openwebui_tailscale_watch_once.ps1`
+    - VS Code タスク:
+      - 「ManaOS: OpenWebUI Tailscale Watch タスク登録（5分 / 推奨）」
+      - 「ManaOS: OpenWebUI Tailscale Watch タスク登録（15分 / 推奨）」
+      - 「ManaOS: OpenWebUI Tailscale Watch タスク状態確認」
+      - 「ManaOS: OpenWebUI Tailscale Watch 単発実行（推奨）」
+      - 「ManaOS: OpenWebUI Tailscale Watch タスク解除」
+      - ワンボタン: 「ManaOS: OpenWebUI Tailscale Watch 登録→状態確認（ワンボタン / 推奨）」 / 「ManaOS: OpenWebUI Tailscale Watch 解除→未登録確認（ワンボタン / 推奨）」
+      - 5分/15分派生: 「...（ワンボタン / 5分 / 推奨）」 / 「...（ワンボタン / 15分 / 推奨）」
+    - 出力: `logs/openwebui_tailscale_watch_check.latest.json` / `logs/openwebui_tailscale_watch_task.jsonl`
+  - R12健全性監視（5分間隔）
+    - 登録: `install_r12_health_watch_task.ps1`
+    - 状態: `status_r12_health_watch_task.ps1`
+    - 解除: `uninstall_r12_health_watch_task.ps1`
+    - タスク: 「ManaOS: R12 Health Watch タスク登録（5分 / 推奨）」 / 「ManaOS: R12 Health Watch タスク登録（15分 / 推奨）」 / 「ManaOS: R12 Health Watch タスク状態確認」 / 「ManaOS: R12 Health Watch 単発実行（推奨）」 / 「ManaOS: R12 Health Watch タスク解除」
+      - ワンボタン: 「ManaOS: R12 Health Watch 登録→状態確認（ワンボタン / 推奨）」 / 「ManaOS: R12 Health Watch 解除→未登録確認（ワンボタン）」
+      - 統合ワンボタン: 「ManaOS: R12 Health Watch 運用セットアップ（ワンボタン / 推奨）」 / 「ManaOS: R12 Health Watch 運用クリーンアップ（ワンボタン）」
+      - 運用チェック: 「ManaOS: R12 Health Watch 運用チェック（状態+ログ末尾）」
+      - JSONチェック: 「ManaOS: R12 Health Watch 運用チェック（JSON）」
+        - 出力: `logs/r12_health_watch_check.latest.json`
+        - 正常時は1行要約のみ、異常時のみ赤字要約 + タスク生ログ + ログ末尾20件を表示
+    - 実体: `manaos-rpg/scripts/run_r12_health_watch.ps1`（タスクからは `run_r12_health_watch_once.ps1` を呼び出し）
+    - ログ: `logs/r12_health_watch_task.jsonl`
+      - ローテーション: `-MaxJsonLogSizeMB`（既定20MB）/ `-MaxJsonLogFiles`（既定5世代）
+    - 例: `pwsh -File .\install_r12_health_watch_task.ps1 -RunNow`
+      - 無人運用: `pwsh -File .\install_r12_health_watch_task.ps1 -RunAsSystem -RunNow`
+        - 権限不足で `SYSTEM` 登録に失敗した場合は、既定で現在ユーザーに自動フォールバック
+        - `SYSTEM` 固定で失敗時に止めたい場合は `-NoFallbackToCurrentUser` を付与
+    - 監視補助タスク: 「ManaOS: Scheduled Tasks 健全性チェック」 / 「ManaOS: Scheduled Tasks 健全性チェック（JSON）」
+    - 通知（任意）: `MANAOS_WEBHOOK_URL` / `MANAOS_WEBHOOK_FORMAT` (`generic|slack|discord`) / `MANAOS_WEBHOOK_MENTION` / `MANAOS_NOTIFY_ON_SUCCESS`
+      - 既定は「失敗時のみ通知」。成功通知も欲しい場合は `MANAOS_NOTIFY_ON_SUCCESS=1`
+  - R12+RL 統合監視（5分/15分 / 異常時通知）
+    - クイックチェック実体: `check_r12_rl_ops_watch_quick.ps1`
+      - `status_r12_rl_ops.ps1 -Json` を実行し、1行サマリー + JSON (`logs/r12_rl_ops_status.latest.json`) を更新
+      - 失敗時は `MANAOS_WEBHOOK_URL` 系設定を使って通知（`-NotifyOnSuccess` で成功通知も可）
+      - 履歴: `logs/r12_rl_ops_watch.jsonl`
+    - 監視タスク登録/状態/解除: `install_r12_rl_ops_watch_task.ps1` / `status_r12_rl_ops_watch_task.ps1` / `uninstall_r12_rl_ops_watch_task.ps1`
+      - 運用推奨例: `pwsh -File .\install_r12_rl_ops_watch_task.ps1 -RunNow -IntervalMinutes 15`
+    - VS Code タスク: 「ManaOS: R12+RL 監視タスク登録（15分 / 劣化3回+60分 / 推奨）」 / 「ManaOS: R12+RL 監視タスク登録（5分 / 劣化3回+60分 / 推奨）」 / 「ManaOS: R12+RL 監視タスク状態確認」 / 「ManaOS: R12+RL 監視クイックチェック（通知付き / しきい値対応 / 推奨）」 / 「ManaOS: R12+RL 監視タスク解除」
+      - ワンボタン: 「ManaOS: R12+RL 監視登録→状態確認（ワンボタン / 推奨）」 / 「ManaOS: R12+RL 監視登録→状態確認（ワンボタン / 5分 / 劣化3回+60分 / 推奨）」 / 「ManaOS: R12+RL 監視登録→状態確認（ワンボタン / 15分 / 劣化3回+60分 / 推奨）」 / 「ManaOS: R12+RL 監視解除→未登録確認（ワンボタン / 推奨）」
+  - Image Pipeline Probe（5分間隔 / 劣化連続通知）
+    - 実体: `run_image_pipeline_probe_once_v2.ps1`
+    - 登録/状態/解除: `install_image_pipeline_probe_task_v2.ps1` / `status_image_pipeline_probe_task.ps1` / `uninstall_image_pipeline_probe_task.ps1`
+    - 劣化連続通知（`unified_ready=false` が継続）
+      - しきい値: `-NotifyUnifiedDegradedAfter`（既定: `3`）
+      - 再通知クールダウン: `-NotifyUnifiedDegradedCooldownMinutes`（既定: `60`）
+      - 状態ファイル: `logs/image_pipeline_probe.state.json`（`consecutive_unified_not_ready` / `last_unified_degraded_notified_at`）
+    - 運用推奨例: `pwsh -File .\install_image_pipeline_probe_task_v2.ps1 -RunNow -NotifyUnifiedDegradedAfter 3 -NotifyUnifiedDegradedCooldownMinutes 60 -EnableAutoRecovery -RecoverAfterConsecutiveDown 3 -RecoveryCooldownSec 300`
+    - VS Code タスク: 「ManaOS: Image Pipeline Probe タスク登録（5分+自動復旧 / 推奨 v2 / 劣化3回+60分）」 / 「ManaOS: Image Pipeline Probe タスク状態確認」 / 「ManaOS: Image Pipeline Probe 単発実行（推奨 v2: 履歴/通知/復旧）」
 - 「ManaOS: Pixel7 外出モード 半自律監視開始（自動切替+週次しきい値）」
   - 上記に `-RemoteOnly` を付与した外出モード
 - 「ManaOS: Pixel7 半自律監視（自動切替+週次）ワンボタン」
