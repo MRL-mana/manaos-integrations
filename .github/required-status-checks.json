@@ -1,0 +1,12 @@
+{
+  "contexts": [
+    "lint",
+    "actionlint",
+    "dependency-review",
+    "validate",
+    "validate-openapi",
+    "audit",
+    "test (3.10)",
+    "test (3.11)"
+  ]
+}
