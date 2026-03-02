@@ -203,7 +203,7 @@ pyjwt[crypto]==2.10.1
     # via
     #   -r requirements.in
     #   mcp
-pylint==4.0.4
+pylint==4.0.5
     # via -r requirements.in
 pytest==9.0.2
     # via
