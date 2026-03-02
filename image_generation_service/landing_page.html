@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ManaOS Image Generation API</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface2: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #22d3ee;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 80px 0 60px;
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 50%, #0c1220 100%);
+        }
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(to right, var(--accent), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+        .hero p { font-size: 1.25rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 32px; }
+        .hero-badge {
+            display: inline-block;
+            background: var(--surface);
+            border: 1px solid var(--surface2);
+            border-radius: 9999px;
+            padding: 6px 16px;
+            font-size: 0.875rem;
+            color: var(--accent);
+            margin-bottom: 24px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn-secondary { background: var(--surface2); color: var(--text); margin-left: 12px; }
+        .btn-secondary:hover { background: #475569; }
+
+        /* Features */
+        .features { padding: 80px 0; }
+        .features h2 { text-align: center; font-size: 2rem; margin-bottom: 48px; }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+        .feature-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid var(--surface2);
+            transition: border-color 0.2s;
+        }
+        .feature-card:hover { border-color: var(--primary); }
+        .feature-icon { font-size: 2rem; margin-bottom: 16px; }
+        .feature-card h3 { font-size: 1.25rem; margin-bottom: 8px; }
+        .feature-card p { color: var(--text-muted); font-size: 0.95rem; }
+
+        /* Pricing */
+        .pricing { padding: 80px 0; }
+        .pricing h2 { text-align: center; font-size: 2rem; margin-bottom: 48px; }
+        .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+        .price-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid var(--surface2);
+            text-align: center;
+        }
+        .price-card.featured { border-color: var(--primary); position: relative; }
+        .price-card.featured::before {
+            content: 'POPULAR';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 16px;
+            border-radius: 9999px;
+        }
+        .price-name { font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; }
+        .price-amount { font-size: 2.5rem; font-weight: 800; margin: 16px 0; }
+        .price-amount span { font-size: 1rem; color: var(--text-muted); }
+        .price-features { list-style: none; text-align: left; margin: 24px 0; }
+        .price-features li { padding: 8px 0; color: var(--text-muted); font-size: 0.95rem; }
+        .price-features li::before { content: '✓ '; color: var(--success); font-weight: 700; }
+
+        /* Demo */
+        .demo { padding: 80px 0; }
+        .demo h2 { text-align: center; font-size: 2rem; margin-bottom: 16px; }
+        .demo > p { text-align: center; color: var(--text-muted); margin-bottom: 32px; }
+        .demo-box {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid var(--surface2);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .demo-box textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--surface2);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 12px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 80px;
+            margin-bottom: 16px;
+        }
+        .demo-controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+        .demo-controls select, .demo-controls input {
+            background: var(--bg);
+            border: 1px solid var(--surface2);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+        #demo-result {
+            margin-top: 16px;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            color: var(--accent);
+            display: none;
+        }
+
+        /* API Docs */
+        .api-docs { padding: 80px 0; }
+        .api-docs h2 { text-align: center; font-size: 2rem; margin-bottom: 48px; }
+        .endpoint {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border: 1px solid var(--surface2);
+        }
+        .endpoint-method {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-right: 12px;
+        }
+        .method-post { background: #065f46; color: #6ee7b7; }
+        .method-get { background: #1e3a5f; color: #7dd3fc; }
+        .endpoint-path { font-family: 'Fira Code', monospace; font-size: 0.95rem; }
+        .endpoint-desc { color: var(--text-muted); margin-top: 8px; font-size: 0.9rem; }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            border-top: 1px solid var(--surface2);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-badge">🚀 RTX 5080 Powered</div>
+        <h1>ManaOS Image API</h1>
+        <p>プロンプトを送るだけで高品質AI画像を生成。品質自動評価・改善ループ内蔵。</p>
+        <a href="/docs" class="btn btn-primary">API Docs (Swagger)</a>
+        <a href="#demo" class="btn btn-secondary">Try Demo</a>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="features">
+    <div class="container">
+        <h2>特徴</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>高速生成</h3>
+                <p>RTX 5080 による高速推論。512x512 → 約5秒、1024x1024 → 約15秒。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>品質自動評価</h3>
+                <p>CLIP・美的・技術・破綻・商用の5指標で自動スコアリング。閾値以下は自動改善。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h3>12スタイルプリセット</h3>
+                <p>anime, photorealistic, cyberpunk, fantasy など12種のプリセットスタイル。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🌐</div>
+                <h3>日本語対応</h3>
+                <p>日本語プロンプトを自動翻訳。思いついたまま入力するだけ。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>使用量ダッシュボード</h3>
+                <p>API利用量、品質スコア推移、コスト、収益をリアルタイム可視化。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔄</div>
+                <h3>自律改善ループ</h3>
+                <p>RLAnything統合。生成→評価→改善→再生成の自動サイクルで品質が向上し続ける。</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing -->
+<section class="pricing">
+    <div class="container">
+        <h2>料金プラン</h2>
+        <div class="price-grid">
+            <div class="price-card">
+                <div class="price-name">Free</div>
+                <div class="price-amount">¥0<span>/月</span></div>
+                <ul class="price-features">
+                    <li>10枚/日</li>
+                    <li>最大 512x512</li>
+                    <li>標準品質モード</li>
+                    <li>5リクエスト/分</li>
+                </ul>
+                <button class="btn btn-secondary" style="width:100%">始める</button>
+            </div>
+            <div class="price-card featured">
+                <div class="price-name">Pro</div>
+                <div class="price-amount">¥2,980<span>/月</span></div>
+                <ul class="price-features">
+                    <li>100枚/日</li>
+                    <li>最大 1024x1024</li>
+                    <li>自動品質改善</li>
+                    <li>30リクエスト/分</li>
+                    <li>優先生成キュー</li>
+                </ul>
+                <button class="btn btn-primary" style="width:100%">Pro を選択</button>
+            </div>
+            <div class="price-card">
+                <div class="price-name">Enterprise</div>
+                <div class="price-amount">¥9,800<span>/月</span></div>
+                <ul class="price-features">
+                    <li>無制限生成</li>
+                    <li>最大 2048x2048</li>
+                    <li>バッチ生成 (N枚→ベスト選択)</li>
+                    <li>120リクエスト/分</li>
+                    <li>最優先キュー</li>
+                    <li>SLA 99.9%</li>
+                </ul>
+                <button class="btn btn-secondary" style="width:100%">お問い合わせ</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Demo -->
+<section class="demo" id="demo">
+    <div class="container">
+        <h2>デモ</h2>
+        <p>プロンプトを入力して生成リクエストを体験</p>
+        <div class="demo-box">
+            <textarea id="demo-prompt" placeholder="例: 夕暮れの海岸に立つ少女、アニメスタイル">a beautiful sunset over the ocean, photorealistic, 8k</textarea>
+            <div class="demo-controls">
+                <select id="demo-style">
+                    <option value="">スタイル (なし)</option>
+                    <option value="anime">Anime</option>
+                    <option value="photorealistic" selected>Photorealistic</option>
+                    <option value="illustration">Illustration</option>
+                    <option value="cyberpunk">Cyberpunk</option>
+                    <option value="fantasy">Fantasy</option>
+                    <option value="watercolor">Watercolor</option>
+                    <option value="oil_painting">Oil Painting</option>
+                    <option value="minimalist">Minimalist</option>
+                </select>
+                <select id="demo-quality">
+                    <option value="fast">Fast</option>
+                    <option value="standard" selected>Standard</option>
+                    <option value="best">Best</option>
+                </select>
+                <button class="btn btn-primary" onclick="runDemo()">Generate</button>
+            </div>
+            <div id="demo-result"></div>
+        </div>
+    </div>
+</section>
+
+<!-- API Docs Summary -->
+<section class="api-docs">
+    <div class="container">
+        <h2>API エンドポイント</h2>
+        <div class="endpoint">
+            <span class="endpoint-method method-post">POST</span>
+            <span class="endpoint-path">/api/v1/images/generate</span>
+            <div class="endpoint-desc">画像生成リクエスト。job_id を返すのでポーリングで結果取得。</div>
+        </div>
+        <div class="endpoint">
+            <span class="endpoint-method method-get">GET</span>
+            <span class="endpoint-path">/api/v1/images/{job_id}</span>
+            <div class="endpoint-desc">ジョブステータス確認 (queued → processing → scoring → completed)</div>
+        </div>
+        <div class="endpoint">
+            <span class="endpoint-method method-get">GET</span>
+            <span class="endpoint-path">/api/v1/images/{job_id}/result</span>
+            <div class="endpoint-desc">完了済みジョブの生成結果（画像URL、品質スコア、コスト）</div>
+        </div>
+        <div class="endpoint">
+            <span class="endpoint-method method-post">POST</span>
+            <span class="endpoint-path">/api/v1/images/enhance-preview</span>
+            <div class="endpoint-desc">プロンプト強化のプレビュー（実際の生成は行わない）</div>
+        </div>
+        <div class="endpoint">
+            <span class="endpoint-method method-get">GET</span>
+            <span class="endpoint-path">/api/v1/images/dashboard</span>
+            <div class="endpoint-desc">生成統計、品質スコア分布、RLAnythingダッシュボード</div>
+        </div>
+        <div class="endpoint">
+            <span class="endpoint-method method-get">GET</span>
+            <span class="endpoint-path">/api/v1/images/billing</span>
+            <div class="endpoint-desc">課金情報、残りクォータ、プラン詳細</div>
+        </div>
+        <div class="endpoint">
+            <span class="endpoint-method method-get">GET</span>
+            <span class="endpoint-path">/metrics</span>
+            <div class="endpoint-desc">Prometheus テキストフォーマットのメトリクス</div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <p>ManaOS Image Generation API v0.4.0 — Powered by RTX 5080 + ComfyUI + RLAnything</p>
+        <p style="margin-top:8px">© 2026 ManaOS Project</p>
+    </div>
+</footer>
+
+<script>
+async function runDemo() {
+    const prompt = document.getElementById('demo-prompt').value.trim();
+    const style = document.getElementById('demo-style').value;
+    const quality = document.getElementById('demo-quality').value;
+    const resultEl = document.getElementById('demo-result');
+    
+    if (!prompt) { alert('プロンプトを入力してください'); return; }
+    
+    resultEl.style.display = 'block';
+    resultEl.textContent = '⏳ Generating...';
+    
+    const payload = { prompt, quality_mode: quality };
+    if (style) payload.style = style;
+    
+    try {
+        const resp = await fetch('/api/v1/images/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        resultEl.textContent = JSON.stringify(data, null, 2);
+    } catch (e) {
+        resultEl.textContent = '❌ Error: ' + e.message + '\n\n(API サーバーが起動していることを確認してください)';
+    }
+}
+</script>
+</body>
+</html>
