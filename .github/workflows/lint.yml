@@ -12,13 +12,6 @@ on:
       - ".github/workflows/lint.yml"
   pull_request:
     branches: [ master, main, develop ]
-    paths:
-      - "manaos_integrations/**/*.py"
-      - "requirements*.txt"
-      - ".flake8"
-      - ".pylintrc"
-      - "pyproject.toml"
-      - ".github/workflows/lint.yml"
   workflow_dispatch:
 
 concurrency:
@@ -32,7 +25,7 @@ permissions:
 jobs:
   lint:
     runs-on: windows-latest
-    continue-on-error: true
+    continue-on-error: false
     
     steps:
     - name: Checkout code
@@ -73,28 +66,28 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       shell: pwsh
-      continue-on-error: true
+      continue-on-error: false
     
     - name: Run pylint
       if: github.event_name == 'workflow_dispatch' || steps.lintfilter.outputs.code == 'true' || steps.lintfilter.outputs.workflow == 'true'
       run: |
         pylint --errors-only --rcfile=.pylintrc $(Get-ChildItem -Path . -Filter *.py -Recurse | Select-Object -ExpandProperty FullName)
       shell: pwsh
-      continue-on-error: true
+      continue-on-error: false
     
     - name: Check code formatting with black
       if: github.event_name == 'workflow_dispatch' || steps.lintfilter.outputs.code == 'true' || steps.lintfilter.outputs.workflow == 'true'
       run: |
         black --check --diff .
       shell: pwsh
-      continue-on-error: true
+      continue-on-error: false
     
     - name: Run mypy type checking
       if: github.event_name == 'workflow_dispatch' || steps.lintfilter.outputs.code == 'true' || steps.lintfilter.outputs.workflow == 'true'
       run: |
         mypy --ignore-missing-imports --python-version 3.10 .
       shell: pwsh
-      continue-on-error: true
+      continue-on-error: false
     
     - name: Summary
       if: always()
