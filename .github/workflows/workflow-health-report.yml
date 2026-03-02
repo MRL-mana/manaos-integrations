@@ -19,6 +19,16 @@ jobs:
     env:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
+      - name: Check Slack webhook configuration
+        run: |
+          if [ -z "${SLACK_WEBHOOK_URL}" ]; then
+            echo "::warning::SLACK_WEBHOOK_URL is not configured; health summary notifications are disabled."
+            echo "- ⚠️ SLACK_WEBHOOK_URL is not configured (health summary notifications disabled)" >> "$GITHUB_STEP_SUMMARY"
+            echo "- ℹ️ setup: gh secret set SLACK_WEBHOOK_URL --body '<https://hooks.slack.com/services/...>'" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- ✅ SLACK_WEBHOOK_URL is configured" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Generate workflow health summary
         uses: actions/github-script@v7
         with:
