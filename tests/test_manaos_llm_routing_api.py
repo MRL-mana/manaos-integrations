@@ -3,6 +3,12 @@ from pathlib import Path
 
 
 repo_root = str(Path(__file__).resolve().parents[1])
+misc_root = str(Path(__file__).resolve().parents[1] / "scripts" / "misc")
+llm_root = str(Path(__file__).resolve().parents[1] / "llm")
+if misc_root not in sys.path:
+    sys.path.insert(0, misc_root)
+if llm_root not in sys.path:
+    sys.path.insert(0, llm_root)
 if repo_root not in sys.path:
     sys.path.insert(0, repo_root)
 

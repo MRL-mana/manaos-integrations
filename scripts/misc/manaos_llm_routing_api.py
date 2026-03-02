@@ -10,9 +10,23 @@ import json
 import time
 import uuid
 import re
+import sys
+from pathlib import Path
 from manaos_logger import get_logger, get_service_logger
 from typing import Dict, Any, Optional, List
-from llm_router_enhanced import EnhancedLLMRouter
+
+_CURRENT_DIR = Path(__file__).resolve().parent
+_REPO_ROOT = _CURRENT_DIR.parents[1]
+_LLM_DIR = _REPO_ROOT / "llm"
+for _path in (_REPO_ROOT, _LLM_DIR):
+    _path_str = str(_path)
+    if _path_str not in sys.path:
+        sys.path.insert(0, _path_str)
+
+try:
+    from llm.llm_router_enhanced import EnhancedLLMRouter
+except ModuleNotFoundError:
+    from llm_router_enhanced import EnhancedLLMRouter
 
 logger = get_service_logger("manaos-llm-routing-api")
 app = Flask(__name__)
