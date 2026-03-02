@@ -1,0 +1,386 @@
+openapi: "3.1.0"
+info:
+  title: ManaOS Image Generation API
+  version: "0.1.0"
+  description: |
+    AI画像生成 API。プロンプトから高品質画像を非同期生成し、
+    品質評価スコア付きで配信する。
+    
+    ## フロー
+    1. `POST /api/v1/images/generate` → job_id を取得
+    2. `GET /api/v1/images/{job_id}` → ステータス確認（ポーリング）
+    3. `GET /api/v1/images/{job_id}/result` → 完成画像を取得
+    
+    ## 品質モード
+    - `fast`: 最速生成（スコアなし）
+    - `standard`: 標準品質（スコア付き）
+    - `best`: 最高品質（自動改善ループあり）
+  contact:
+    name: ManaOS
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:5560
+    description: ローカル開発
+  - url: http://localhost:9502
+    description: Unified API (互換プロキシ)
+
+paths:
+  /api/v1/images/generate:
+    post:
+      operationId: generateImage
+      summary: 画像生成リクエスト
+      description: |
+        プロンプトから画像を非同期生成。
+        job_id を返すので `/images/{job_id}` でポーリング。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImageGenerateRequest"
+            examples:
+              simple:
+                summary: シンプルな生成
+                value:
+                  prompt: "1girl, white dress, garden, sunlight, masterpiece"
+                  quality_mode: "standard"
+              advanced:
+                summary: 詳細パラメータ指定
+                value:
+                  prompt: "cyberpunk city, night, neon lights, rain"
+                  negative_prompt: "blurry, low quality"
+                  width: 1024
+                  height: 1024
+                  steps: 30
+                  cfg_scale: 7.5
+                  style: "cyberpunk"
+                  quality_mode: "best"
+                  auto_improve: true
+              mufufu:
+                summary: ムフフモード 🔥
+                value:
+                  prompt: "beautiful woman, elegant pose"
+                  mufufu_mode: true
+                  quality_mode: "best"
+      responses:
+        "200":
+          description: ジョブ受付成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageGenerateResponse"
+        "400":
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: レート制限超過
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: "rate_limit_exceeded"
+                message: "Daily quota exhausted. Upgrade to Pro for 100/day."
+        "503":
+          description: ComfyUI 利用不可
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/images/{job_id}:
+    get:
+      operationId: getJobStatus
+      summary: ジョブステータス確認
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ジョブ情報
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatusResponse"
+        "404":
+          description: ジョブが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/images/{job_id}/result:
+    get:
+      operationId: getJobResult
+      summary: 生成結果取得
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 生成完了 — 画像データ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageGenerateResponse"
+        "202":
+          description: まだ処理中
+          content:
+            application/json:
+              example:
+                job_id: "abc-123"
+                status: "processing"
+                message: "Still processing"
+        "404":
+          description: ジョブが見つからない
+
+  /api/v1/images:
+    get:
+      operationId: listRecentJobs
+      summary: 最近の生成履歴
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 50
+      responses:
+        "200":
+          description: ジョブ一覧
+
+components:
+  schemas:
+    ImageGenerateRequest:
+      type: object
+      required:
+        - prompt
+      properties:
+        prompt:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: 生成プロンプト（英語推奨）
+        negative_prompt:
+          type: string
+          maxLength: 2000
+          default: ""
+        width:
+          type: integer
+          default: 512
+          minimum: 256
+          maximum: 2048
+        height:
+          type: integer
+          default: 512
+          minimum: 256
+          maximum: 2048
+        steps:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+        cfg_scale:
+          type: number
+          default: 7.0
+          minimum: 1.0
+          maximum: 30.0
+        sampler:
+          type: string
+          default: "euler_ancestral"
+        scheduler:
+          type: string
+          default: "karras"
+        seed:
+          type: integer
+          default: -1
+          description: "-1 = ランダム"
+        model:
+          type: string
+          default: ""
+          description: チェックポイント名
+        loras:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              weight:
+                type: number
+          nullable: true
+        style:
+          type: string
+          enum:
+            - anime
+            - photorealistic
+            - illustration
+            - watercolor
+            - oil_painting
+            - cyberpunk
+            - fantasy
+            - minimalist
+            - retro
+            - abstract
+            - mufufu
+            - lab
+          nullable: true
+        quality_mode:
+          type: string
+          enum: [fast, standard, best]
+          default: "standard"
+        batch_size:
+          type: integer
+          default: 1
+          minimum: 1
+          maximum: 4
+        auto_improve:
+          type: boolean
+          default: false
+        mufufu_mode:
+          type: boolean
+          default: false
+        lab_mode:
+          type: boolean
+          default: false
+
+    ImageGenerateResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/JobStatus"
+        message:
+          type: string
+        prompt:
+          type: string
+        seed:
+          type: integer
+        comfyui_prompt_id:
+          type: string
+          nullable: true
+        image_url:
+          type: string
+          nullable: true
+        thumbnail_url:
+          type: string
+          nullable: true
+        quality_score:
+          $ref: "#/components/schemas/QualityScore"
+        generation_time_ms:
+          type: integer
+          nullable: true
+        cost_estimate_yen:
+          type: number
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    JobStatus:
+      type: string
+      enum:
+        - queued
+        - processing
+        - scoring
+        - improving
+        - completed
+        - failed
+
+    JobStatusResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+        status:
+          $ref: "#/components/schemas/JobStatus"
+        progress:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 100
+        result:
+          $ref: "#/components/schemas/ImageGenerateResponse"
+
+    QualityScore:
+      type: object
+      description: 品質評価5指標
+      properties:
+        clip_score:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: プロンプト一致度 (CLIP)
+        aesthetic_score:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 10
+          description: 美的品質
+        technical_score:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 10
+          description: 技術品質
+        anatomy_score:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 10
+          description: 破綻検出（指・顔・身体）
+        commercial_score:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 10
+          description: 商用レベル判定
+        overall:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 10
+          description: 総合スコア
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        detail:
+          type: object
+          nullable: true
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []

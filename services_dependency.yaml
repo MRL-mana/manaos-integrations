@@ -52,6 +52,19 @@ core_services:
     health_check: /health
     startup_time: 10
 
+  # Image Generation Service（画像生成API）
+  image_generation:
+    port: 5560
+    depends_on:
+      - comfyui
+      - unified_api
+      - gallery_api
+    optional_deps:
+      - mrl_memory
+      - ollama
+    health_check: /health
+    startup_time: 10
+
 # ===== インフラサービス =====
 infrastructure:
   # Ollama（ローカルLLM）
@@ -156,6 +169,7 @@ profiles:
     - learning_system
     - video_pipeline
     - unified_api
+    - image_generation
     - pico_hid
     - ollama
     - gallery_api
