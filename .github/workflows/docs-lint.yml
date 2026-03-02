@@ -25,6 +25,7 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   markdownlint:
@@ -48,13 +49,33 @@ jobs:
 
       - name: Run markdownlint-cli2 on changed markdown files
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
           : > /tmp/changed_files
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            git fetch origin "${{ github.base_ref }}" --depth=1
-            git diff --name-only -z "origin/${{ github.base_ref }}...HEAD" > /tmp/changed_files
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            PAGE=1
+            while :; do
+              RESP="$(curl -fsSL \
+                -H "Authorization: Bearer ${GH_TOKEN}" \
+                -H "Accept: application/vnd.github+json" \
+                "https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}/files?per_page=100&page=${PAGE}")"
+
+              COUNT="$(echo "${RESP}" | jq 'length')"
+              if [[ "${COUNT}" == "0" ]]; then
+                break
+              fi
+
+              echo "${RESP}" | jq -r '.[].filename' | tr '\n' '\0' >> /tmp/changed_files
+
+              if [[ "${COUNT}" -lt "100" ]]; then
+                break
+              fi
+              PAGE=$((PAGE + 1))
+            done
           elif [[ "${{ github.event_name }}" == "push" ]]; then
             BEFORE="${{ github.event.before }}"
             if [[ -z "$BEFORE" || "$BEFORE" =~ ^0+$ ]]; then
