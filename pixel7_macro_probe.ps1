@@ -1,8 +1,8 @@
-param(
+﻿param(
     [string]$MacroCmd = "Home",
     [string]$ExtrasJson = "{}",
     [ValidateSet('HTTPOnly','HTTPFirst')]
-    [string]$Mode = 'HTTPOnly',
+    [string]$Mode = 'HTTPFirst',
     [int]$TimeoutSec = 5
 )
 
@@ -10,11 +10,21 @@ $ErrorActionPreference = 'Stop'
 
 $httpCtl = Join-Path $PSScriptRoot 'pixel7_http_control.ps1'
 $macroSendAutoPath = Join-Path $PSScriptRoot 'pixel7_macro_send_auto.ps1'
+$profileCheckPath = Join-Path $PSScriptRoot 'pixel7_check_api_profile.ps1'
 
 if (-not (Test-Path $httpCtl)) { throw "not found: $httpCtl" }
 if (-not (Test-Path $macroSendAutoPath)) { throw "not found: $macroSendAutoPath" }
 
 Write-Host '=== Pixel7 MacroDroid Probe ===' -ForegroundColor Cyan
+
+if (Test-Path $profileCheckPath) {
+    Write-Host "\n[0] api profile" -ForegroundColor Gray
+    try {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $profileCheckPath -Require any -TimeoutSec $TimeoutSec | Out-Host
+    } catch {
+        Write-Host ("WARN: profile check failed: {0}" -f $_.Exception.Message) -ForegroundColor Yellow
+    }
+}
 
 Write-Host "\n[1] macro commands" -ForegroundColor Gray
 try {

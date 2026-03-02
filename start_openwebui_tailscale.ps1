@@ -91,7 +91,7 @@ function Ensure-StartupScheduledTask {
     }
 
     $quotedScript = '"' + $ScriptPath + '"'
-    $args = "-NoProfile -ExecutionPolicy Bypass -File $quotedScript -ServeTimeoutSec $TimeoutSec -InvocationSource $Source"
+    $args = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $quotedScript -ServeTimeoutSec $TimeoutSec -InvocationSource $Source"
 
     $action = New-ScheduledTaskAction -Execute $psExe -Argument $args
     $trigger = New-ScheduledTaskTrigger -AtLogOn
@@ -117,7 +117,7 @@ function Ensure-StartupRunEntry {
         $psExe = "powershell.exe"
     }
 
-    $cmd = '"' + $psExe + '" -NoProfile -ExecutionPolicy Bypass -File "' + $ScriptPath + '" -ServeTimeoutSec ' + $TimeoutSec + ' -InvocationSource ' + $Source
+    $cmd = '"' + $psExe + '" -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + $ScriptPath + '" -ServeTimeoutSec ' + $TimeoutSec + ' -InvocationSource ' + $Source
     if (-not (Test-Path $runKey)) {
         New-Item -Path $runKey -Force | Out-Null
     }

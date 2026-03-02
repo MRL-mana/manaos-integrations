@@ -1,17 +1,29 @@
 version: 1
 items:
-  # Desktop直下の生成物（多くのスクリプトがここに出す）
+  # ═══════ Desktop 直下 ═══════
   - id: desktop_gallery
     label: Desktop Gallery
     path: "%USERPROFILE%/Desktop/gallery_images"
     max_files: 200
 
-  - id: desktop_outputs
-    label: Desktop Outputs
-    path: "%USERPROFILE%/Desktop/outputs"
-    max_files: 120
+  - id: screenshots
+    label: スクリーンショット
+    path: "%USERPROFILE%/Desktop/screenshots"
+    max_files: 100
 
-  # manaos_integrations 直下を基準に相対解決します（manaos-rpgからの相対ではありません）
+  - id: ai_data
+    label: AI Data
+    path: "%USERPROFILE%/Desktop/AI_Data"
+    max_files: 200
+
+  # ═══════ ComfyUI ═══════
+  - id: comfyui_output
+    label: ComfyUI Output
+    path: "C:/ComfyUI/output"
+    max_files: 500
+    note: "8000+ 画像/動画。生成パイプラインのメイン出力先"
+
+  # ═══════ manaos_integrations 配下 ═══════
   - id: gallery
     label: Gallery Images
     path: gallery_images
@@ -26,3 +38,25 @@ items:
     label: Outputs
     path: outputs
     max_files: 80
+
+  - id: svi_outputs
+    label: SVI (Wan 2.2) Outputs
+    path: svi_outputs
+    max_files: 80
+
+  - id: lora_output
+    label: LoRA Output (castle_ex)
+    path: "lora_output_mana_favorite_japanese_clear_gal (1)"
+    max_files: 100
+
+  - id: snapshots
+    label: Snapshots
+    path: snapshots
+    max_files: 200
+    note: "RPGスナップショット（626ファイル）"
+
+  - id: artifacts
+    label: Artifacts
+    path: artifacts
+    max_files: 100
+    note: "ビルド/デプロイ成果物"

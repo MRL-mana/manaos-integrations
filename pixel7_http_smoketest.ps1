@@ -1,12 +1,16 @@
-param(
+﻿param(
     [int]$TimeoutSec = 5,
-    [switch]$TryOpenOpenWebUI
+    [switch]$TryOpenOpenWebUI,
+    [switch]$SkipFallbackActions,
+    [bool]$AutoRecoverAdb = $true
 )
 
 $ErrorActionPreference = 'Stop'
 
 $httpCtl = Join-Path $PSScriptRoot 'pixel7_http_control.ps1'
 $autoCtl = Join-Path $PSScriptRoot 'pixel7_control_auto.ps1'
+$profileCheck = Join-Path $PSScriptRoot 'pixel7_check_api_profile.ps1'
+$adbRecover = Join-Path $PSScriptRoot 'pixel7_adb_recover_wireless.ps1'
 
 $scrcpyDir = Join-Path $env:USERPROFILE 'Desktop\scrcpy\scrcpy-win64-v3.3.4'
 $adbExe = Join-Path $scrcpyDir 'adb.exe'
@@ -17,6 +21,25 @@ Write-Host '=== Pixel7 HTTP Smoke Test ===' -ForegroundColor Cyan
 
 $useLocal = $false
 $allOk = $true
+
+function Get-RemoteBaseUrl {
+    if ($env:PIXEL7_API_BASE) {
+        return $env:PIXEL7_API_BASE.TrimEnd('/')
+    }
+
+    $apiHost = if ($env:PIXEL7_API_HOST) {
+        $env:PIXEL7_API_HOST
+    } elseif ($env:PIXEL7_TAILSCALE_IP) {
+        $env:PIXEL7_TAILSCALE_IP
+    } elseif ($env:PIXEL7_IP) {
+        $env:PIXEL7_IP
+    } else {
+        '100.84.2.125'
+    }
+
+    $port = if ($env:PIXEL7_API_PORT) { $env:PIXEL7_API_PORT } else { '5122' }
+    return ("http://{0}:{1}" -f $apiHost, $port)
+}
 
 function Get-DevicesText {
     if (-not (Test-Path $adbExe)) { return '' }
@@ -83,6 +106,21 @@ if (-not $healthOk) {
     $allOk = $false
 }
 
+Write-Host '\n[1b] api profile (/)' -ForegroundColor Gray
+if (Test-Path $profileCheck) {
+    try {
+        if ($useLocal) {
+            & $profileCheck -Require any -BaseUrl 'http://127.0.0.1:5122' -TimeoutSec $TimeoutSec | Out-Host
+        } else {
+            & $profileCheck -Require any -BaseUrl (Get-RemoteBaseUrl) -TimeoutSec $TimeoutSec | Out-Host
+        }
+    } catch {
+        Write-Host ("WARN: profile check failed: {0}" -f $_.Exception.Message) -ForegroundColor Yellow
+    }
+} else {
+    Write-Host 'SKIP: pixel7_check_api_profile.ps1 not found' -ForegroundColor Yellow
+}
+
 Write-Host '\n[2] status (/api/status) requires PIXEL7_API_TOKEN' -ForegroundColor Gray
 $tokenFile = Join-Path $PSScriptRoot '.pixel7_api_token.txt'
 if (-not $env:PIXEL7_API_TOKEN -and -not (Test-Path $tokenFile)) {
@@ -112,26 +150,51 @@ if (-not $env:PIXEL7_API_TOKEN -and -not (Test-Path $tokenFile)) {
     }
 }
 
-Write-Host '\n[3] HTTP→ADB fallback action (OpenHttpShortcuts)' -ForegroundColor Gray
-if (Test-Path $autoCtl) {
-    try {
-        & $autoCtl -Action OpenHttpShortcuts -Mode HTTPFirst -TimeoutSec $TimeoutSec | Out-Host
-    } catch {
-        Write-Host ("NG: fallback action failed: {0}" -f $_.Exception.Message) -ForegroundColor Red
-        $allOk = $false
-    }
+if ($SkipFallbackActions) {
+    Write-Host '\n[3] fallback actions' -ForegroundColor Gray
+    Write-Host 'SKIP: fallback actions disabled by -SkipFallbackActions' -ForegroundColor Yellow
 } else {
-    Write-Host 'SKIP: pixel7_control_auto.ps1 not found' -ForegroundColor Yellow
-}
+    if ($AutoRecoverAdb -and (Test-Path $adbRecover)) {
+        $serialBefore = Get-DefaultSerial
+        if ([string]::IsNullOrWhiteSpace($serialBefore)) {
+            Write-Host '\n[2c] adb recovery (one-shot)' -ForegroundColor Gray
+            try {
+                & $adbRecover -RestartAdb -RemoteOnly | Out-Host
+            } catch {
+                Write-Host ("WARN: adb recover failed: {0}" -f $_.Exception.Message) -ForegroundColor Yellow
+            }
+        }
+    }
 
-if ($TryOpenOpenWebUI) {
-    Write-Host '\n[4] HTTP→ADB fallback action (OpenOpenWebUI)' -ForegroundColor Gray
+    Write-Host '\n[3] HTTP→ADB fallback action (OpenHttpShortcuts)' -ForegroundColor Gray
     if (Test-Path $autoCtl) {
         try {
-            & $autoCtl -Action OpenOpenWebUI -Mode HTTPFirst -TimeoutSec $TimeoutSec | Out-Host
+            & $autoCtl -Action OpenHttpShortcuts -Mode HTTPFirst -TimeoutSec $TimeoutSec | Out-Host
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host ("NG: fallback action exit code: {0}" -f $LASTEXITCODE) -ForegroundColor Red
+                $allOk = $false
+            }
         } catch {
-            Write-Host ("NG: OpenOpenWebUI failed: {0}" -f $_.Exception.Message) -ForegroundColor Red
+            Write-Host ("NG: fallback action failed: {0}" -f $_.Exception.Message) -ForegroundColor Red
             $allOk = $false
+        }
+    } else {
+        Write-Host 'SKIP: pixel7_control_auto.ps1 not found' -ForegroundColor Yellow
+    }
+
+    if ($TryOpenOpenWebUI) {
+        Write-Host '\n[4] HTTP→ADB fallback action (OpenOpenWebUI)' -ForegroundColor Gray
+        if (Test-Path $autoCtl) {
+            try {
+                & $autoCtl -Action OpenOpenWebUI -Mode HTTPFirst -TimeoutSec $TimeoutSec | Out-Host
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host ("NG: OpenOpenWebUI exit code: {0}" -f $LASTEXITCODE) -ForegroundColor Red
+                    $allOk = $false
+                }
+            } catch {
+                Write-Host ("NG: OpenOpenWebUI failed: {0}" -f $_.Exception.Message) -ForegroundColor Red
+                $allOk = $false
+            }
         }
     }
 }

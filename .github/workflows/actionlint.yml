@@ -28,7 +28,7 @@ jobs:
 
       - name: Run actionlint
         id: lint
-        uses: rhysd/actionlint@v1
+        uses: rhysd/actionlint@v1.7.11
         with:
           reporter: ''
 

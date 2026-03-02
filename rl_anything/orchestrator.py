@@ -58,6 +58,9 @@ from .safety_constraint import SafetyConstraintManager
 from .model_based_planner import ModelBasedPlanner
 from .distributional_reward import DistributionalReward
 from .communication_protocol import CommunicationProtocol
+from .temporal_abstraction import TemporalAbstraction
+from .adversarial_robustness import AdversarialRobustness
+from .causal_reasoning import CausalReasoning
 
 _DIR = Path(__file__).parent
 _STATE_DIR = _DIR.parent / "logs" / "rl_anything"
@@ -192,6 +195,18 @@ class RLAnythingOrchestrator:
         self.comms = CommunicationProtocol(persist_path=cp_persist, config=cfg)
         self._init_comms_agents()
 
+        # Temporal Abstraction (Round 11)
+        ta_persist = state_dir / "temporal_abstraction.json"
+        self.temporal = TemporalAbstraction(persist_path=ta_persist, config=cfg)
+
+        # Adversarial Robustness (Round 11)
+        ar_persist = state_dir / "adversarial_robustness.json"
+        self.adversarial = AdversarialRobustness(persist_path=ar_persist, config=cfg)
+
+        # Causal Reasoning (Round 11)
+        cr_persist = state_dir / "causal_reasoning.json"
+        self.causal = CausalReasoning(persist_path=cr_persist, config=cfg)
+
     # ═══════════════════════════════════════════════════════
     # Prometheus メトリクス初期化
     # ═══════════════════════════════════════════════════════
@@ -225,6 +240,16 @@ class RLAnythingOrchestrator:
         self.prom.register("rl_reward_cvar", "gauge", "Distributional reward CVaR")
         self.prom.register("rl_risk_checks", "counter", "Distributional risk checks")
         self.prom.register("rl_messages_sent", "counter", "Communication protocol messages sent")
+        # Round 11 metrics
+        self.prom.register("rl_temporal_momentum", "gauge", "Temporal trend momentum")
+        self.prom.register("rl_temporal_sessions", "gauge", "Total temporal sessions")
+        self.prom.register("rl_robustness_score", "gauge", "Adversarial robustness score")
+        self.prom.register("rl_robustness_tests", "counter", "Adversarial robustness tests")
+        self.prom.register("rl_causal_observations", "counter", "Causal reasoning observations")
+        self.prom.register("rl_causal_tools", "gauge", "Unique causal tools tracked")
+        # Round 12 metrics
+        self.prom.register("rl_r12_health_score", "gauge", "Integrated health score from temporal/adversarial/causal")
+        self.prom.register("rl_r12_risk_level", "gauge", "Integrated risk level from temporal/adversarial/causal")
 
     # ═══════════════════════════════════════════════════════
     # タスクライフサイクル
@@ -636,6 +661,78 @@ class RLAnythingOrchestrator:
         except Exception as e:
             _log.warning("communication protocol error: %s", e)
 
+        # ──── Temporal Abstraction (Round 11) ────
+        try:
+            diff_name = self.evolution.current_difficulty.value
+            t_event = self.temporal.record_event(score, diff_name)
+            trend = self.temporal.get_trend()
+            self.prom.set("rl_temporal_momentum", trend.momentum)
+            self.prom.set("rl_temporal_sessions", self.temporal._session_counter)
+            result["temporal"] = {
+                "session_id": t_event.session_id,
+                "trend": trend.direction,
+                "momentum": trend.momentum,
+                "short_avg": trend.short_avg,
+            }
+        except Exception as e:
+            _log.warning("temporal abstraction error: %s", e)
+
+        # ──── Adversarial Robustness (Round 11) ────
+        try:
+            diff_val = self.evolution.current_difficulty.value
+            state_id = f"{diff_val}|c{self._cycle_count}"
+            action = result.get("planner", {}).get("best_action", "stay")
+            rob_result = self.adversarial.test_robustness(state_id, action, score)
+            self.prom.set("rl_robustness_score", rob_result.stability)
+            self.prom.inc("rl_robustness_tests")
+            result["adversarial"] = {
+                "stability": rob_result.stability,
+                "worst_deviation": rob_result.worst_deviation,
+                "mean_deviation": rob_result.mean_deviation,
+            }
+        except Exception as e:
+            _log.warning("adversarial robustness error: %s", e)
+
+        # ──── Causal Reasoning (Round 11) ────
+        try:
+            actions = record.actions if hasattr(record, "actions") else []
+            tools_used = []
+            for action in actions:
+                if hasattr(action, "tool_name"):
+                    tools_used.append(getattr(action, "tool_name") or "unknown")
+                elif isinstance(action, dict):
+                    tools_used.append(action.get("tool_name") or action.get("tool") or "unknown")
+                else:
+                    tools_used.append("unknown")
+            self.causal.record_observation(task_id, tools_used, score)
+            self.prom.inc("rl_causal_observations")
+            self.prom.set("rl_causal_tools", len(self.causal._tool_count))
+            if tools_used:
+                top_attr = self.causal.get_attributions(top_k=3)
+                result["causal"] = {
+                    "tools_used": len(tools_used),
+                    "unique_tools_tracked": len(self.causal._tool_count),
+                    "top_attributions": [a.to_dict() for a in top_attr[:3]],
+                }
+            else:
+                result["causal"] = {"tools_used": 0}
+        except Exception as e:
+            _log.warning("causal reasoning error: %s", e)
+
+        # ──── Integrated Insight Layer (Round 12) ────
+        try:
+            summary = self.get_r12_summary()
+            self.prom.set("rl_r12_health_score", float(summary.get("health_score", 0.0)))
+            self.prom.set("rl_r12_risk_level", float(summary.get("risk_level", 1.0)))
+            result["r12_insight"] = {
+                "health_score": summary.get("health_score", 0.0),
+                "risk_level": summary.get("risk_level", 1.0),
+                "primary_driver": summary.get("primary_driver", "unknown"),
+                "confidence": summary.get("confidence", 0.0),
+            }
+        except Exception as e:
+            _log.warning("round12 insight error: %s", e)
+
         return result
 
     # ═══════════════════════════════════════════════════════
@@ -913,11 +1010,132 @@ class RLAnythingOrchestrator:
             ("safety", "safety_constraint", ["monitoring", "violations"]),
             ("planner", "model_based_planner", ["planning", "world_model"]),
             ("distributional", "distributional_reward", ["risk", "reward"]),
+            ("temporal", "temporal_abstraction", ["time", "trend"]),
+            ("adversarial", "adversarial_robustness", ["robustness", "testing"]),
+            ("causal", "causal_reasoning", ["causality", "attribution"]),
+            ("insight", "integrated_insight", ["fusion", "recommendation"]),
         ]
         for agent_id, agent_type, caps in components:
             self.comms.register_agent(agent_id, agent_type, caps)
             self.comms.subscribe(agent_id, "cycle_complete")
             self.comms.subscribe(agent_id, "knowledge.policy_update")
+
+    # ═══════════════════════════════════════════════════════
+    # Round 11: Temporal / Adversarial / Causal
+    # ═══════════════════════════════════════════════════════
+    def get_temporal_stats(self) -> Dict[str, Any]:
+        """時間認識の統計"""
+        stats = self.temporal.get_stats()
+        trend = self.temporal.get_trend()
+        return {**stats, "trend": trend.to_dict()}
+
+    def get_temporal_trend(self) -> Dict[str, Any]:
+        """現在のトレンド情報"""
+        return self.temporal.get_trend().to_dict()
+
+    def get_temporal_patterns(self) -> Dict[str, Any]:
+        """周期パターン"""
+        return self.temporal.get_periodic_pattern().to_dict()
+
+    def get_temporal_sessions(self, limit: int = 20) -> Dict[str, Any]:
+        """セッション一覧"""
+        sessions = self.temporal.get_sessions(limit=limit)
+        return {"sessions": sessions, "total": self.temporal._session_counter}
+
+    def get_temporal_td_values(self) -> Dict[str, Any]:
+        """TD学習の価値マップ"""
+        return self.temporal.get_td_values()
+
+    def get_adversarial_stats(self) -> Dict[str, Any]:
+        """敵対的ロバストネス統計"""
+        return self.adversarial.get_stats()
+
+    def get_adversarial_report(self) -> Dict[str, Any]:
+        """ロバストネスレポート生成"""
+        report = self.adversarial.generate_report()
+        return report.to_dict()
+
+    def get_adversarial_vulnerable(self, limit: int = 20) -> Dict[str, Any]:
+        """脆弱状態一覧"""
+        vulns = self.adversarial.get_vulnerable_states(limit=limit)
+        return {"vulnerable_states": vulns, "total": len(self.adversarial._vulnerable_states)}
+
+    def get_causal_stats(self) -> Dict[str, Any]:
+        """因果推論統計"""
+        return self.causal.get_stats()
+
+    def get_causal_attributions(self, top_k: int = 10) -> Dict[str, Any]:
+        """因果寄与帰属"""
+        attrs = self.causal.get_attributions(top_k=top_k)
+        return {"attributions": [a.to_dict() for a in attrs]}
+
+    def get_causal_graph(self) -> Dict[str, Any]:
+        """因果グラフ"""
+        return self.causal.get_causal_graph()
+
+    def causal_counterfactual(self, task_id: str,
+                              remove_tools: List[str]) -> Dict[str, Any]:
+        """反事実分析"""
+        result = self.causal.counterfactual(task_id, remove_tools)
+        return result.to_dict()
+
+    # ═══════════════════════════════════════════════════════
+    # Round 12: Integrated Insight Layer
+    # ═══════════════════════════════════════════════════════
+    def get_r12_summary(self) -> Dict[str, Any]:
+        """Temporal / Adversarial / Causal を統合した健全性サマリー"""
+        trend = self.temporal.get_trend()
+        adv_stats = self.adversarial.get_stats()
+        attrs = self.causal.get_attributions(top_k=1)
+
+        direction = trend.direction
+        trend_risk = 1.0 if direction == "falling" else (0.5 if direction == "stable" else 0.0)
+
+        total_tests = max(1, int(adv_stats.get("total_tests", 0) or 0))
+        vulnerable_count = int(adv_stats.get("vulnerable_count", 0) or 0)
+        robustness_score = float(adv_stats.get("overall_robustness", 1.0) or 1.0)
+        vulnerable_ratio = vulnerable_count / total_tests
+
+        top_tool = attrs[0].tool if attrs else "unknown"
+        primary_driver = top_tool if top_tool != "unknown" else f"trend:{direction}"
+
+        base_health = (robustness_score * 0.6) + ((1.0 - vulnerable_ratio) * 0.4)
+        health_score = max(0.0, min(1.0, base_health - (trend_risk * 0.2)))
+        risk_level = max(0.0, min(1.0, 1.0 - health_score))
+
+        obs_count = int(self.causal.get_stats().get("total_observations", 0) or 0)
+        confidence = max(0.0, min(1.0, min(total_tests, obs_count, int(self.temporal.get_stats().get("total_events", 0) or 0)) / 10.0))
+
+        return {
+            "health_score": round(health_score, 4),
+            "risk_level": round(risk_level, 4),
+            "confidence": round(confidence, 4),
+            "trend_direction": direction,
+            "robustness_score": round(robustness_score, 4),
+            "vulnerable_ratio": round(vulnerable_ratio, 4),
+            "top_causal_tool": top_tool,
+            "primary_driver": primary_driver,
+        }
+
+    def get_r12_recommendations(self) -> Dict[str, Any]:
+        """統合サマリーから次アクションを提案"""
+        summary = self.get_r12_summary()
+        recs: List[str] = []
+
+        if summary["trend_direction"] == "falling":
+            recs.append("recent task templatesを見直し、difficultyを1段階下げて再学習")
+        if summary["vulnerable_ratio"] >= 0.3:
+            recs.append("adversarial vulnerable states上位を固定で再テスト")
+        if summary["top_causal_tool"] not in ("unknown", ""):
+            recs.append(f"{summary['top_causal_tool']} の使用条件を明示化し成功パスへ組み込む")
+        if not recs:
+            recs.append("現状方針を維持し、探索率を微増して性能上限を探索")
+
+        return {
+            "summary": summary,
+            "recommendations": recs,
+            "count": len(recs),
+        }
 
     # ═══════════════════════════════════════════════════════
     # 自動スコアリング

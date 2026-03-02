@@ -60,9 +60,28 @@ export default function RLView({ rl, apiBase }) {
   const [plannerTransitions, setPlannerTransitions] = useState(null)
   const [distribData, setDistribData] = useState(null)
   const [riskProfile, setRiskProfile] = useState(null)
-  const [quantileData, setQuantileData] = useState(null)
+  const [, setQuantileData] = useState(null)
   const [commsData, setCommsData] = useState(null)
   const [commsHistory, setCommsHistory] = useState(null)
+
+  // Round 11 state
+  const [temporalData, setTemporalData] = useState(null)
+  const [temporalTrend, setTemporalTrend] = useState(null)
+  const [temporalPatterns, setTemporalPatterns] = useState(null)
+  const [temporalSessions, setTemporalSessions] = useState(null)
+  const [adversarialData, setAdversarialData] = useState(null)
+  const [adversarialReport, setAdversarialReport] = useState(null)
+  const [adversarialVuln, setAdversarialVuln] = useState(null)
+  const [causalData, setCausalData] = useState(null)
+  const [causalAttrs, setCausalAttrs] = useState(null)
+  const [causalGraph, setCausalGraph] = useState(null)
+  const [counterfactualTaskId, setCounterfactualTaskId] = useState('')
+  const [counterfactualTools, setCounterfactualTools] = useState('read_file')
+  const [counterfactualOut, setCounterfactualOut] = useState('')
+
+  // Round 12 state
+  const [r12Summary, setR12Summary] = useState(null)
+  const [r12Recommendations, setR12Recommendations] = useState(null)
 
   async function fetchLiveDashboard() {
     if (busyOp) return
@@ -544,7 +563,93 @@ export default function RLView({ rl, apiBase }) {
     finally { setBusyOp('') }
   }
 
-  const display = liveData || rl
+  // Round 11 fetchers
+  async function fetchTemporalStats() {
+    if (busyOp) return; setBusyOp('temporal')
+    try { const r = await fetchJson('/api/rl/temporal/stats'); if (r?.ok) setTemporalData(r) }
+    catch (e) { console.warn('fetchTemporal:', e) } finally { setBusyOp('') }
+  }
+  async function fetchTemporalTrend() {
+    if (busyOp) return; setBusyOp('temporalTrend')
+    try { const r = await fetchJson('/api/rl/temporal/trend'); if (r?.ok) setTemporalTrend(r) }
+    catch (e) { console.warn('fetchTemporalTrend:', e) } finally { setBusyOp('') }
+  }
+  async function fetchTemporalPatterns() {
+    if (busyOp) return; setBusyOp('temporalPat')
+    try { const r = await fetchJson('/api/rl/temporal/patterns'); if (r?.ok) setTemporalPatterns(r) }
+    catch (e) { console.warn('fetchTemporalPatterns:', e) } finally { setBusyOp('') }
+  }
+  async function fetchTemporalSessions() {
+    if (busyOp) return; setBusyOp('temporalSess')
+    try { const r = await fetchJson('/api/rl/temporal/sessions'); if (r?.ok) setTemporalSessions(r) }
+    catch (e) { console.warn('fetchTemporalSessions:', e) } finally { setBusyOp('') }
+  }
+  async function fetchAdversarialStats() {
+    if (busyOp) return; setBusyOp('adversarial')
+    try { const r = await fetchJson('/api/rl/adversarial/stats'); if (r?.ok) setAdversarialData(r) }
+    catch (e) { console.warn('fetchAdversarial:', e) } finally { setBusyOp('') }
+  }
+  async function fetchAdversarialReport() {
+    if (busyOp) return; setBusyOp('advReport')
+    try { const r = await fetchJson('/api/rl/adversarial/report'); if (r?.ok) setAdversarialReport(r) }
+    catch (e) { console.warn('fetchAdvReport:', e) } finally { setBusyOp('') }
+  }
+  async function fetchAdversarialVuln() {
+    if (busyOp) return; setBusyOp('advVuln')
+    try { const r = await fetchJson('/api/rl/adversarial/vulnerable'); if (r?.ok) setAdversarialVuln(r) }
+    catch (e) { console.warn('fetchAdvVuln:', e) } finally { setBusyOp('') }
+  }
+  async function fetchCausalStats() {
+    if (busyOp) return; setBusyOp('causal')
+    try { const r = await fetchJson('/api/rl/causal/stats'); if (r?.ok) setCausalData(r) }
+    catch (e) { console.warn('fetchCausal:', e) } finally { setBusyOp('') }
+  }
+  async function fetchCausalAttrs() {
+    if (busyOp) return; setBusyOp('causalAttr')
+    try { const r = await fetchJson('/api/rl/causal/attributions'); if (r?.ok) setCausalAttrs(r) }
+    catch (e) { console.warn('fetchCausalAttrs:', e) } finally { setBusyOp('') }
+  }
+  async function fetchCausalGraph() {
+    if (busyOp) return; setBusyOp('causalGraph')
+    try { const r = await fetchJson('/api/rl/causal/graph'); if (r?.ok) setCausalGraph(r) }
+    catch (e) { console.warn('fetchCausalGraph:', e) } finally { setBusyOp('') }
+  }
+  async function runCausalCounterfactual() {
+    if (busyOp) return
+    setBusyOp('causalCf')
+    try {
+      const taskId = counterfactualTaskId.trim()
+      if (!taskId) {
+        setCounterfactualOut('ERR: task_id が必要です')
+        return
+      }
+      const removeTools = counterfactualTools
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+      const res = await fetch(`${apiBase}/api/rl/causal/counterfactual`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_id: taskId, remove_tools: removeTools })
+      })
+      const data = await res.json().catch(() => ({}))
+      setCounterfactualOut(JSON.stringify(data, null, 2))
+    } catch (e) {
+      setCounterfactualOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+  async function fetchR12Summary() {
+    if (busyOp) return; setBusyOp('r12summary')
+    try { const r = await fetchJson('/api/rl/r12/summary'); if (r?.ok) setR12Summary(r) }
+    catch (e) { console.warn('fetchR12Summary:', e) } finally { setBusyOp('') }
+  }
+  async function fetchR12Recommendations() {
+    if (busyOp) return; setBusyOp('r12recs')
+    try { const r = await fetchJson('/api/rl/r12/recommendations'); if (r?.ok) setR12Recommendations(r) }
+    catch (e) { console.warn('fetchR12Recommendations:', e) } finally { setBusyOp('') }
+  }
 
   return (
     <div>
@@ -1689,6 +1794,220 @@ export default function RLView({ rl, apiBase }) {
                   ))}
                 </tbody>
               </table>
+            </div>
+          ) : null}
+        </Box>
+      </div>
+
+      {/* ══════════ Round 11: Temporal Abstraction ══════════ */}
+      <div className="mt12">
+        <Box title="Temporal Abstraction (R11)" collapsible>
+          <div className="btnRow">
+            <button disabled={!!busyOp} onClick={fetchTemporalStats}>{busyOp === 'temporal' ? '…' : 'Stats'}</button>
+            <button disabled={!!busyOp} onClick={fetchTemporalTrend}>{busyOp === 'temporalTrend' ? '…' : 'Trend'}</button>
+            <button disabled={!!busyOp} onClick={fetchTemporalPatterns}>{busyOp === 'temporalPat' ? '…' : 'Patterns'}</button>
+            <button disabled={!!busyOp} onClick={fetchTemporalSessions}>{busyOp === 'temporalSess' ? '…' : 'Sessions'}</button>
+          </div>
+          {temporalData ? (
+            <div className="mt4">
+              <div className="kv"><span>Total Events</span><span className="mono">{temporalData.total_events ?? 0}</span></div>
+              <div className="kv"><span>Sessions</span><span className="mono">{temporalData.sessions ?? 0}</span></div>
+              <div className="kv"><span>TD States</span><span className="mono">{temporalData.td_states ?? 0}</span></div>
+              <div className="kv"><span>Score Mean</span><span className="mono">{temporalData.score_mean ?? '—'}</span></div>
+              {temporalData.trend ? (
+                <div className="mt4">
+                  <div className="kv"><span>Trend</span><span className="mono">{temporalData.trend.direction}</span></div>
+                  <div className="kv"><span>Momentum</span><span className="mono">{temporalData.trend.momentum}</span></div>
+                  <div className="kv"><span>Short Avg</span><span className="mono">{temporalData.trend.short_avg}</span></div>
+                  <div className="kv"><span>Long Avg</span><span className="mono">{temporalData.trend.long_avg}</span></div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {temporalTrend ? (
+            <div className="mt4">
+              <div className="small mb4">Current Trend</div>
+              <div className="kv"><span>Direction</span><span className="mono">{temporalTrend.direction}</span></div>
+              <div className="kv"><span>Slope</span><span className="mono">{temporalTrend.slope}</span></div>
+              <div className="kv"><span>Confidence</span><span className="mono">{temporalTrend.confidence}</span></div>
+            </div>
+          ) : null}
+          {temporalPatterns ? (
+            <div className="mt4">
+              <div className="small mb4">Periodic Patterns</div>
+              <div className="kv"><span>Best Hour</span><span className="mono">{temporalPatterns.best_hour}h</span></div>
+              <div className="kv"><span>Worst Hour</span><span className="mono">{temporalPatterns.worst_hour}h</span></div>
+              <div className="kv"><span>Best Weekday</span><span className="mono">{temporalPatterns.best_weekday}</span></div>
+              <div className="kv"><span>Peak Performance</span><span className="mono">{temporalPatterns.peak_performance}</span></div>
+            </div>
+          ) : null}
+          {temporalSessions?.sessions?.length > 0 ? (
+            <div className="mt4">
+              <div className="small mb4">Sessions ({temporalSessions.total})</div>
+              <table className="statsTable">
+                <thead><tr><th>ID</th><th>Events</th><th>Avg Score</th><th>Trend</th></tr></thead>
+                <tbody>
+                  {temporalSessions.sessions.slice(0, 10).map((s, i) => (
+                    <tr key={i}>
+                      <td className="mono">{s.session_id}</td>
+                      <td className="mono">{s.event_count}</td>
+                      <td className="mono">{s.avg_score}</td>
+                      <td className="mono">{s.trend}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </Box>
+      </div>
+
+      {/* ══════════ Round 11: Adversarial Robustness ══════════ */}
+      <div className="mt12">
+        <Box title="Adversarial Robustness (R11)" collapsible>
+          <div className="btnRow">
+            <button disabled={!!busyOp} onClick={fetchAdversarialStats}>{busyOp === 'adversarial' ? '…' : 'Stats'}</button>
+            <button disabled={!!busyOp} onClick={fetchAdversarialReport}>{busyOp === 'advReport' ? '…' : 'Report'}</button>
+            <button disabled={!!busyOp} onClick={fetchAdversarialVuln}>{busyOp === 'advVuln' ? '…' : 'Vulnerable'}</button>
+          </div>
+          {adversarialData ? (
+            <div className="mt4">
+              <div className="kv"><span>Total Tests</span><span className="mono">{adversarialData.total_tests ?? 0}</span></div>
+              <div className="kv"><span>Robustness</span><span className="mono">{adversarialData.overall_robustness ?? '—'}</span></div>
+              <div className="kv"><span>Vulnerable</span><span className="mono">{adversarialData.vulnerable_count ?? 0}</span></div>
+              <div className="kv"><span>Worst Stability</span><span className="mono">{adversarialData.worst_stability ?? '—'}</span></div>
+              <div className="kv"><span>Avg Deviation</span><span className="mono">{adversarialData.avg_deviation ?? '—'}</span></div>
+              <div className="kv"><span>Epsilon</span><span className="mono">{adversarialData.epsilon ?? '—'}</span></div>
+            </div>
+          ) : null}
+          {adversarialReport ? (
+            <div className="mt4">
+              <div className="small mb4">Robustness Report</div>
+              <div className="kv"><span>Overall</span><span className="mono">{adversarialReport.overall_robustness}</span></div>
+              <div className="kv"><span>Tests</span><span className="mono">{adversarialReport.tests_conducted}</span></div>
+              <div className="kv"><span>Stable</span><span className="mono">{adversarialReport.stable_states}</span></div>
+              <div className="kv"><span>Vulnerable</span><span className="mono">{adversarialReport.vulnerable_states}</span></div>
+            </div>
+          ) : null}
+          {adversarialVuln?.vulnerable_states?.length > 0 ? (
+            <div className="mt4">
+              <div className="small mb4">Vulnerable States ({adversarialVuln.total})</div>
+              <table className="statsTable">
+                <thead><tr><th>State</th><th>Stability</th><th>Worst Dev</th><th>Tests</th></tr></thead>
+                <tbody>
+                  {adversarialVuln.vulnerable_states.slice(0, 10).map((v, i) => (
+                    <tr key={i}>
+                      <td className="mono small">{v.state_id}</td>
+                      <td className="mono">{v.stability}</td>
+                      <td className="mono">{v.worst_deviation}</td>
+                      <td className="mono">{v.test_count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </Box>
+      </div>
+
+      {/* ══════════ Round 11: Causal Reasoning ══════════ */}
+      <div className="mt12">
+        <Box title="Causal Reasoning (R11)" collapsible>
+          <div className="btnRow">
+            <button disabled={!!busyOp} onClick={fetchCausalStats}>{busyOp === 'causal' ? '…' : 'Stats'}</button>
+            <button disabled={!!busyOp} onClick={fetchCausalAttrs}>{busyOp === 'causalAttr' ? '…' : 'Attributions'}</button>
+            <button disabled={!!busyOp} onClick={fetchCausalGraph}>{busyOp === 'causalGraph' ? '…' : 'Graph'}</button>
+          </div>
+          {causalData ? (
+            <div className="mt4">
+              <div className="kv"><span>Observations</span><span className="mono">{causalData.total_observations ?? 0}</span></div>
+              <div className="kv"><span>Unique Tools</span><span className="mono">{causalData.unique_tools ?? 0}</span></div>
+              <div className="kv"><span>Total Uses</span><span className="mono">{causalData.total_tool_uses ?? 0}</span></div>
+              <div className="kv"><span>Co-occur Pairs</span><span className="mono">{causalData.cooccurrence_pairs ?? 0}</span></div>
+            </div>
+          ) : null}
+          {causalAttrs?.attributions?.length > 0 ? (
+            <div className="mt4">
+              <div className="small mb4">Top Attributions</div>
+              <table className="statsTable">
+                <thead><tr><th>Tool</th><th>Attribution</th><th>Freq</th><th>Avg w/</th><th>Avg w/o</th></tr></thead>
+                <tbody>
+                  {causalAttrs.attributions.slice(0, 10).map((a, i) => (
+                    <tr key={i}>
+                      <td className="mono small">{a.tool}</td>
+                      <td className="mono">{a.attribution_score}</td>
+                      <td className="mono">{a.frequency}</td>
+                      <td className="mono">{a.avg_score_with}</td>
+                      <td className="mono">{a.avg_score_without}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+          {causalGraph ? (
+            <div className="mt4">
+              <div className="small mb4">Causal Graph</div>
+              <div className="kv"><span>Nodes</span><span className="mono">{causalGraph.total_tools ?? 0}</span></div>
+              <div className="kv"><span>Edges</span><span className="mono">{causalGraph.total_edges ?? 0}</span></div>
+              {causalGraph.edges?.length > 0 ? (
+                <table className="statsTable">
+                  <thead><tr><th>Source</th><th>Target</th><th>Weight</th></tr></thead>
+                  <tbody>
+                    {causalGraph.edges.slice(0, 10).map((e, i) => (
+                      <tr key={i}>
+                        <td className="mono small">{e.source}</td>
+                        <td className="mono small">{e.target}</td>
+                        <td className="mono">{e.weight}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="mt8">
+            <div className="small mb4">Counterfactual</div>
+            <div className="kv"><span>TASK ID</span>
+              <span><input className="input inputFlush" value={counterfactualTaskId} onChange={(e) => setCounterfactualTaskId(e.target.value)} placeholder="r11-0" aria-label="counterfactual task id" /></span>
+            </div>
+            <div className="kv"><span>REMOVE TOOLS</span>
+              <span><input className="input inputFlush" value={counterfactualTools} onChange={(e) => setCounterfactualTools(e.target.value)} placeholder="read_file,create_file" aria-label="counterfactual remove tools" /></span>
+            </div>
+            <div className="btnRow">
+              <button disabled={!!busyOp} onClick={runCausalCounterfactual}>{busyOp === 'causalCf' ? '…' : 'Run Counterfactual'}</button>
+              {counterfactualOut ? <button disabled={!!busyOp} onClick={() => setCounterfactualOut('')}>Clear</button> : null}
+            </div>
+            {counterfactualOut ? <OutputBlock text={counterfactualOut} onClear={() => setCounterfactualOut('')} /> : null}
+          </div>
+        </Box>
+      </div>
+
+      <div className="mt12">
+        <Box title="Integrated Insight Layer (R12)" collapsible>
+          <div className="btnRow">
+            <button disabled={!!busyOp} onClick={fetchR12Summary}>{busyOp === 'r12summary' ? '…' : 'Summary'}</button>
+            <button disabled={!!busyOp} onClick={fetchR12Recommendations}>{busyOp === 'r12recs' ? '…' : 'Recommendations'}</button>
+          </div>
+          {r12Summary ? (
+            <div className="mt4">
+              <div className="kv"><span>Health Score</span><span className="mono">{r12Summary.health_score ?? '—'}</span></div>
+              <div className="kv"><span>Risk Level</span><span className="mono">{r12Summary.risk_level ?? '—'}</span></div>
+              <div className="kv"><span>Confidence</span><span className="mono">{r12Summary.confidence ?? '—'}</span></div>
+              <div className="kv"><span>Trend</span><span className="mono">{r12Summary.trend_direction ?? '—'}</span></div>
+              <div className="kv"><span>Top Tool</span><span className="mono">{r12Summary.top_causal_tool ?? '—'}</span></div>
+              <div className="kv"><span>Driver</span><span className="mono">{r12Summary.primary_driver ?? '—'}</span></div>
+            </div>
+          ) : null}
+          {r12Recommendations?.recommendations?.length > 0 ? (
+            <div className="mt4">
+              <div className="small mb4">Action Recommendations ({r12Recommendations.count})</div>
+              <ul className="small" style={{ margin: 0, paddingLeft: 16 }}>
+                {r12Recommendations.recommendations.map((rec, i) => (
+                  <li key={i}>{rec}</li>
+                ))}
+              </ul>
             </div>
           ) : null}
         </Box>
