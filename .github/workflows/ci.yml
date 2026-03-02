@@ -303,4 +303,4 @@ jobs:
                     empty-lines: disable
                   EOF
                   yamllint -c .yamllint-ci.yml .github/workflows/*.yml
-                  continue-on-error: true
+                    continue-on-error: true
