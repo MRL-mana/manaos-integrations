@@ -6,9 +6,10 @@ import os
 import secrets
 import hashlib
 import time
+from collections import deque
 from functools import wraps
-from typing import Callable, Optional, Dict, Set
-from flask import Request, jsonify, request
+from typing import Callable, Optional, Dict, Set, Deque
+from flask import g, jsonify, request
 
 
 class APIAuthManager:
@@ -27,18 +28,73 @@ class APIAuthManager:
         
         # レート制限設定
         self.rate_limit_enabled = self.config.get("rate_limit_enabled", True)
-        self.rate_limit_requests = int(self.config.get("rate_limit_requests", 100))
-        self.rate_limit_window = int(self.config.get("rate_limit_window", 60))  # 秒
+        self.rate_limit_requests = int(
+            self.config.get("rate_limit_requests", 100)
+        )
+        self.rate_limit_window = int(
+            self.config.get("rate_limit_window", 60)
+        )  # 秒
+
+        self.rate_limit_max_clients = int(
+            self.config.get("rate_limit_max_clients", 10000)
+        )
+        if self.rate_limit_max_clients < 100:
+            self.rate_limit_max_clients = 100
+
+        self.rate_limit_client_ttl = int(
+            self.config.get(
+                "rate_limit_client_ttl", self.rate_limit_window * 3
+            )
+        )
+        if self.rate_limit_client_ttl < self.rate_limit_window:
+            self.rate_limit_client_ttl = self.rate_limit_window
+
+        self.rate_limit_cleanup_interval = int(
+            self.config.get("rate_limit_cleanup_interval", 200)
+        )
+        if self.rate_limit_cleanup_interval < 1:
+            self.rate_limit_cleanup_interval = 1
         
         # リクエスト履歴（レート制限用）
-        self.request_history: Dict[str, list] = {}
+        self.request_history: Dict[str, Deque[float]] = {}
+        self.client_last_seen: Dict[str, float] = {}
+        self._check_counter = 0
+
+    def _cleanup_rate_limit_state(self, current_time: float):
+        """古いクライアントのレート制限状態を削除"""
+        cutoff = current_time - self.rate_limit_client_ttl
+
+        stale_clients = [
+            client_id for client_id, last_seen in self.client_last_seen.items()
+            if last_seen < cutoff
+        ]
+
+        for client_id in stale_clients:
+            self.client_last_seen.pop(client_id, None)
+            self.request_history.pop(client_id, None)
+
+    def _trim_client_count_if_needed(self):
+        """クライアント数上限超過時に古いエントリを削除"""
+        if len(self.client_last_seen) <= self.rate_limit_max_clients:
+            return
+
+        overflow = len(self.client_last_seen) - self.rate_limit_max_clients
+        oldest_clients = sorted(
+            self.client_last_seen.items(), key=lambda x: x[1]
+        )[:overflow]
+
+        for client_id, _ in oldest_clients:
+            self.client_last_seen.pop(client_id, None)
+            self.request_history.pop(client_id, None)
     
     def _load_api_keys(self):
         """環境変数からAPIキーを読み込み"""
         # 環境変数 MANAOS_API_KEYS（カンマ区切り）
         api_keys_str = os.getenv("MANAOS_API_KEYS", "")
         if api_keys_str:
-            self.api_keys = set(key.strip() for key in api_keys_str.split(",") if key.strip())
+            self.api_keys = set(
+                key.strip() for key in api_keys_str.split(",") if key.strip()
+            )
         
         # NOTE: 開発環境でも明示的な MANAOS_API_KEYS 設定を必須とする
         # デフォルトキーは廃止（セキュリティリスクのため）
@@ -105,24 +161,31 @@ class APIAuthManager:
             return True
         
         current_time = time.time()
+
+        self._check_counter += 1
+        if self._check_counter % self.rate_limit_cleanup_interval == 0:
+            self._cleanup_rate_limit_state(current_time)
         
         # クライアントのリクエスト履歴を取得
         if client_id not in self.request_history:
-            self.request_history[client_id] = []
+            self.request_history[client_id] = deque()
+            self.client_last_seen[client_id] = current_time
+            self._trim_client_count_if_needed()
+        else:
+            self.client_last_seen[client_id] = current_time
         
         # 古いリクエストを削除
         window_start = current_time - self.rate_limit_window
-        self.request_history[client_id] = [
-            req_time for req_time in self.request_history[client_id]
-            if req_time > window_start
-        ]
+        history = self.request_history[client_id]
+        while history and history[0] <= window_start:
+            history.popleft()
         
         # レート制限チェック
-        if len(self.request_history[client_id]) >= self.rate_limit_requests:
+        if len(history) >= self.rate_limit_requests:
             return False
         
         # 新しいリクエストを記録
-        self.request_history[client_id].append(current_time)
+        history.append(current_time)
         return True
     
     def require_api_key(self, func: Callable):
@@ -138,7 +201,10 @@ class APIAuthManager:
         @wraps(func)
         def wrapper(*args, **kwargs):
             # APIキーを取得（ヘッダーまたはクエリパラメータ）
-            api_key = request.headers.get("X-API-Key") or request.args.get("api_key")
+            api_key = (
+                request.headers.get("X-API-Key")
+                or request.args.get("api_key")
+            )
             
             # APIキー検証
             if not self.validate_api_key(api_key):
@@ -148,11 +214,14 @@ class APIAuthManager:
                 }), 401
             
             # レート制限チェック
-            client_id = api_key or request.remote_addr
+            client_id = api_key or request.remote_addr or "unknown-client"
             if not self.check_rate_limit(client_id):
                 return jsonify({
                     "error": "Rate limit exceeded",
-                    "message": f"Maximum {self.rate_limit_requests} requests per {self.rate_limit_window} seconds"
+                    "message": (
+                        f"Maximum {self.rate_limit_requests} requests "
+                        f"per {self.rate_limit_window} seconds"
+                    ),
                 }), 429
             
             return func(*args, **kwargs)
@@ -168,18 +237,21 @@ class APIAuthManager:
             @app.route("/public")
             @auth_manager.optional_api_key
             def public_endpoint():
-                # request.api_key_validated でAPIキーの有無を確認可能
+                # g.api_key_validated でAPIキーの有無を確認可能
                 return jsonify({"message": "Success"})
         """
         @wraps(func)
         def wrapper(*args, **kwargs):
-            api_key = request.headers.get("X-API-Key") or request.args.get("api_key")
+            api_key = (
+                request.headers.get("X-API-Key")
+                or request.args.get("api_key")
+            )
             
             # APIキーがある場合は検証
             if api_key:
-                request.api_key_validated = self.validate_api_key(api_key)
+                g.api_key_validated = self.validate_api_key(api_key)
             else:
-                request.api_key_validated = False
+                g.api_key_validated = False
             
             return func(*args, **kwargs)
         
@@ -187,7 +259,7 @@ class APIAuthManager:
 
 
 # グローバルインスタンス（各サービスで使用可能）
-_global_auth_manager: Optional[APIAuthManager] = None
+_auth_state: Dict[str, Optional[APIAuthManager]] = {"manager": None}
 
 
 def get_auth_manager() -> APIAuthManager:
@@ -197,10 +269,11 @@ def get_auth_manager() -> APIAuthManager:
     Returns:
         APIAuthManager インスタンス
     """
-    global _global_auth_manager
-    if _global_auth_manager is None:
-        _global_auth_manager = APIAuthManager()
-    return _global_auth_manager
+    manager = _auth_state["manager"]
+    if manager is None:
+        manager = APIAuthManager()
+        _auth_state["manager"] = manager
+    return manager
 
 
 def init_auth(config: Optional[Dict] = None):
@@ -210,8 +283,7 @@ def init_auth(config: Optional[Dict] = None):
     Args:
         config: 認証設定
     """
-    global _global_auth_manager
-    _global_auth_manager = APIAuthManager(config)
+    _auth_state["manager"] = APIAuthManager(config)
 
 
 # FastAPI用のデコレーター
@@ -221,8 +293,8 @@ def require_api_key_fastapi():
         from fastapi import Header, HTTPException
         
         def verify_api_key(x_api_key: Optional[str] = Header(None)):
-            auth_manager = get_auth_manager()
-            if not auth_manager.validate_api_key(x_api_key):
+            manager = get_auth_manager()
+            if not manager.validate_api_key(x_api_key):
                 raise HTTPException(
                     status_code=401,
                     detail="Invalid or missing API key"
@@ -237,12 +309,12 @@ def require_api_key_fastapi():
 
 if __name__ == "__main__":
     # 使用例
-    auth_manager = APIAuthManager()
+    demo_auth_manager = APIAuthManager()
     
     # 新しいAPIキーを生成
-    new_key = auth_manager.generate_api_key()
+    new_key = demo_auth_manager.generate_api_key()
     print(f"Generated API Key: {new_key}")
     
     # APIキーをハッシュ化
-    hashed = auth_manager.hash_api_key(new_key)
+    hashed = demo_auth_manager.hash_api_key(new_key)
     print(f"Hashed: {hashed}")

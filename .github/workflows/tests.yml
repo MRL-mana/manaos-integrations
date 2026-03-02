@@ -74,6 +74,12 @@ jobs:
       run: |
         pytest tests/integration/ -v --tb=short --timeout=60 -k "not (api_key_auth or external)"
       continue-on-error: false
+
+    - name: Run API auth rate-limit regression test
+      if: matrix.python-version == '3.11'
+      run: |
+        pytest -q tests/test_api_auth_rate_limit_state.py --timeout=30
+      continue-on-error: false
     
     - name: Generate coverage report
       if: matrix.python-version == '3.11' && steps.testdirs.outputs.has_unit == 'true'
