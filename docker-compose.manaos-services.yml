@@ -139,6 +139,59 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  # Image Generation Service
+  image-generation:
+    build:
+      context: .
+      dockerfile: image_generation_service/Dockerfile
+    container_name: image-generation-service
+    restart: unless-stopped
+    ports:
+      - "5560:5560"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - COMFYUI_URL=${COMFYUI_URL:-http://host.docker.internal:8188}
+      - UNIFIED_API_URL=${MANAOS_API_URL:-http://host.docker.internal:9502}
+      - GALLERY_API_URL=http://gallery-api:5559
+      - IMAGE_SERVICE_PORT=5560
+    volumes:
+      - ./image_generation_service:/app/image_generation_service:ro
+      - ./rl_anything:/app/rl_anything:ro
+      - ./revenue_api_server.py:/app/revenue_api_server.py:ro
+      - ./manaos_logger.py:/app/manaos_logger.py:ro
+      - ./manaos_error_handler.py:/app/manaos_error_handler.py:ro
+      - ./manaos_timeout_config.py:/app/manaos_timeout_config.py:ro
+      - ./logs:/app/logs
+      - ./data:/app/data
+    networks:
+      - manaos-network
+    depends_on:
+      - unified-api
+      - gallery-api
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5560/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   # System Status API
   system-status-api:
     build:
