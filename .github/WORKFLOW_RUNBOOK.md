@@ -43,6 +43,15 @@ Do not update branch protection required contexts out-of-band without a matching
 - No secret set: workflow behavior is unchanged (no notification).
 - Secret set: failure alert includes failed audit step(s), required-check drift summary, and run URL.
 
+## Scheduled governance checks
+
+The following workflows are expected to run on schedule for baseline governance health:
+
+- `workflow-policy-audit.yml` (weekly)
+- `actionlint.yml` (weekly)
+- `scorecard.yml` (weekly)
+- `ci.yml` (daily security-focused schedule path)
+
 ## Required checks audit token
 
 `workflow-policy-audit.yml` fetches branch protection required contexts via GitHub API.
