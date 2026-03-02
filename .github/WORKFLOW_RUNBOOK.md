@@ -43,6 +43,14 @@ Do not update branch protection required contexts out-of-band without a matching
 - No secret set: workflow behavior is unchanged (no notification).
 - Secret set: failure alert includes failed audit step(s), required-check drift summary, and run URL.
 
+## Required checks audit token
+
+`workflow-policy-audit.yml` fetches branch protection required contexts via GitHub API.
+
+- Preferred: set repository secret `BRANCH_PROTECTION_TOKEN` with permission to read branch protection settings.
+- Fallback: `GITHUB_TOKEN` is used when `BRANCH_PROTECTION_TOKEN` is absent.
+- If API access is denied (HTTP 403), the required-checks API verification is marked as skipped and workflow summary includes setup guidance.
+
 ## PR validation checklist
 
 - PR labels are assigned automatically (`pr-auto-label.yml`)
