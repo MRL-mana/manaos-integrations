@@ -38,6 +38,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyyaml requests
 
+      - name: Check Slack webhook configuration
+        run: |
+          if [ -z "${SLACK_WEBHOOK_URL}" ]; then
+            echo "::warning::SLACK_WEBHOOK_URL is not configured; failure alerts will not be sent."
+            echo "- ⚠️ SLACK_WEBHOOK_URL is not configured (failure alerts disabled)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- ✅ SLACK_WEBHOOK_URL is configured" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Run workflow policy audit
         id: policy_audit
         run: python scripts/audit_workflow_policies.py
