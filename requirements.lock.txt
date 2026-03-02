@@ -150,7 +150,7 @@ numpy==2.2.6
     # via
     #   -r requirements.in
     #   pandas
-openai==2.15.0
+openai==2.24.0
     # via -r requirements.in
 packaging==25.0
     # via
