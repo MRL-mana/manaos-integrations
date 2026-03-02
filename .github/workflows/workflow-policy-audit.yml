@@ -26,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      BRANCH_PROTECTION_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,7 +41,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyyaml requests
 
-      - name: Check Slack webhook configuration
+      - name: Check integrations configuration
         run: |
           if [ -z "${SLACK_WEBHOOK_URL}" ]; then
             echo "::warning::SLACK_WEBHOOK_URL is not configured; failure alerts will not be sent."
@@ -48,6 +49,14 @@ jobs:
             echo "- ℹ️ setup: gh secret set SLACK_WEBHOOK_URL --body '<https://hooks.slack.com/services/...>'" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "- ✅ SLACK_WEBHOOK_URL is configured" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ -z "${BRANCH_PROTECTION_TOKEN}" ]; then
+            echo "::warning::BRANCH_PROTECTION_TOKEN is not configured; required-checks protection audit may be skipped."
+            echo "- ⚠️ BRANCH_PROTECTION_TOKEN is not configured (branch-protection drift audit may be partial)" >> "$GITHUB_STEP_SUMMARY"
+            echo "- ℹ️ setup: gh secret set BRANCH_PROTECTION_TOKEN --body '<token-with-repo-admin-or-equivalent>'" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- ✅ BRANCH_PROTECTION_TOKEN is configured" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Run workflow policy audit
@@ -59,6 +68,7 @@ jobs:
         run: python scripts/audit_required_status_checks.py
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_PROTECTION_TOKEN: ${{ env.BRANCH_PROTECTION_TOKEN }}
 
       - name: Upload audit report
         if: always()

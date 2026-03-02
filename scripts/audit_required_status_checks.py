@@ -98,14 +98,14 @@ def collect_available_contexts() -> tuple[set[str], list[str]]:
 
 def fetch_required_contexts() -> tuple[list[str], str | None]:
     repo = os.getenv('GITHUB_REPOSITORY')
-    token = os.getenv('GITHUB_TOKEN')
+    token = os.getenv('BRANCH_PROTECTION_TOKEN') or os.getenv('GITHUB_TOKEN')
     api_url = os.getenv('GITHUB_API_URL', 'https://api.github.com')
     base_ref = os.getenv('GITHUB_BASE_REF') or os.getenv('GITHUB_REF_NAME') or 'master'
 
     if not repo:
         return [], 'GITHUB_REPOSITORY is not set'
     if not token:
-        return [], 'GITHUB_TOKEN is not set'
+        return [], 'BRANCH_PROTECTION_TOKEN or GITHUB_TOKEN is not set'
 
     url = f"{api_url}/repos/{repo}/branches/{base_ref}/protection/required_status_checks"
     headers = {
@@ -115,6 +115,11 @@ def fetch_required_contexts() -> tuple[list[str], str | None]:
 
     response = requests.get(url, headers=headers, timeout=20)
     if response.status_code >= 300:
+        if response.status_code == 403:
+            return [], (
+                f'failed to fetch required checks: HTTP 403 {response.text} '
+                '(configure BRANCH_PROTECTION_TOKEN with branch protection API access)'
+            )
         return [], f'failed to fetch required checks: HTTP {response.status_code} {response.text}'
 
     payload = response.json()
@@ -167,7 +172,7 @@ def main() -> int:
 
     if error:
         lines.append(f'- Result: ⚠️ skipped ({error})')
-        lines.append('- Note: This audit requires branch protection API access via GITHUB_TOKEN.')
+        lines.append('- Note: This audit requires branch protection API access via BRANCH_PROTECTION_TOKEN (preferred) or GITHUB_TOKEN.')
         lines.append(f'- Expected contexts: {len(expected_contexts)}')
         lines.append(f'- Missing expected mappings in workflows: {len(expected_missing_in_workflows)}')
         if expected_missing_in_workflows:
