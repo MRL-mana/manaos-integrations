@@ -11,7 +11,9 @@ set PYTHONIOENCODING=utf-8
 set PYTHONLEGACYWINDOWSSTDIO=1
 set PYTHONUTF8=1
 cd C:\ComfyUI
-start "ComfyUI" python main.py
+set COMFY_PYTHON=python
+if exist C:\ComfyUI\.venv\Scripts\python.exe set COMFY_PYTHON=C:\ComfyUI\.venv\Scripts\python.exe
+start "ComfyUI" "%COMFY_PYTHON%" main.py --port 8188
 echo.
 echo ComfyUIを起動しました。
 echo 数秒待ってから画像生成を再試行してください。

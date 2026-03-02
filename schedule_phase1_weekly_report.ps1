@@ -64,7 +64,7 @@ Set-Location -LiteralPath '$ScriptDir'
 "@
 $runnerContent | Out-File -FilePath $runnerScript -Encoding UTF8
 
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -File `"$runnerScript`"" -WorkingDirectory $ScriptDir
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$runnerScript`"" -WorkingDirectory $ScriptDir
 $trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek $ScheduleDay -At $ScheduleTime
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
 

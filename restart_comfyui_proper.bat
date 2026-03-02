@@ -26,11 +26,15 @@ if not exist main.py (
     pause
     exit /b 1
 )
+set COMFY_PYTHON=python
+if exist C:\ComfyUI\.venv\Scripts\python.exe (
+    set COMFY_PYTHON=C:\ComfyUI\.venv\Scripts\python.exe
+)
 echo    完了
 echo.
 
 echo [4/4] ComfyUIを起動中...
-start "ComfyUI" cmd /c "chcp 65001 >nul && set PYTHONIOENCODING=utf-8 && set PYTHONLEGACYWINDOWSSTDIO=1 && set PYTHONUTF8=1 && python main.py"
+start "ComfyUI" cmd /c "chcp 65001 >nul && set PYTHONIOENCODING=utf-8 && set PYTHONLEGACYWINDOWSSTDIO=1 && set PYTHONUTF8=1 && \"%COMFY_PYTHON%\" main.py --port 8188"
 echo    完了
 echo.
 

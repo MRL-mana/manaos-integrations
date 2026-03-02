@@ -93,7 +93,7 @@ function Ensure-DailyTask {
     $psExe = "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe"
     if (-not (Test-Path $psExe)) { $psExe = "powershell.exe" }
 
-    $args = '-NoProfile -ExecutionPolicy Bypass -File "' + $CheckScript + '" -MaxAgeMinutes ' + $AgeMinutes
+    $args = '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + $CheckScript + '" -MaxAgeMinutes ' + $AgeMinutes
     if ($RequireSource) {
         $args += ' -RequireStartupSource'
     }

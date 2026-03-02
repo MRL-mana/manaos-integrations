@@ -61,7 +61,7 @@ Write-Host "Weekly tasks completed" -ForegroundColor Green
 $weeklyScriptContent | Out-File -FilePath $weeklyScript -Encoding UTF8
 
 # Create task action
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -File `"$weeklyScript`"" -WorkingDirectory $ScriptDir
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$weeklyScript`"" -WorkingDirectory $ScriptDir
 
 # Create trigger (weekly on Sunday)
 $trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At $ScheduleTime

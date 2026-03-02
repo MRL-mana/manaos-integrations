@@ -105,7 +105,7 @@ foreach ($task in $tasks) {
     # アクション設定
     $action = New-ScheduledTaskAction `
         -Execute "powershell.exe" `
-        -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`"" `
+        -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$scriptPath`"" `
         -WorkingDirectory $WorkspacePath
     
     # 設定

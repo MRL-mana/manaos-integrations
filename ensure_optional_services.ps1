@@ -129,7 +129,13 @@ function Ensure-GalleryApi {
 
     if (-not (Test-ProcessCommandContains -Needle "gallery_api_server.py")) {
         Write-Host "[INFO] Starting Gallery API..." -ForegroundColor Cyan
-        Start-Process -FilePath "python" -ArgumentList "gallery_api_server.py" -WorkingDirectory $scriptDir -RedirectStandardOutput $stdout -RedirectStandardError $stderr | Out-Null
+        $galleryScript = Join-Path $scriptDir "scripts\misc\gallery_api_server.py"
+        if (-not (Test-Path $galleryScript)) {
+            throw "Gallery API script not found: $galleryScript"
+        }
+
+        $cmdLine = "set PYTHONPATH=$scriptDir&& python `"$galleryScript`""
+        Start-Process -FilePath "cmd.exe" -ArgumentList @("/c", $cmdLine) -WorkingDirectory $scriptDir -RedirectStandardOutput $stdout -RedirectStandardError $stderr | Out-Null
     }
     else {
         Write-Host "[INFO] Gallery API process exists; waiting for health..." -ForegroundColor Gray

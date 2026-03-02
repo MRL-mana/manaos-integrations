@@ -1,0 +1,127 @@
+name: Validate Ledger
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+    paths:
+      - '.github/workflows/validate-ledger.yml'
+      - '.github/compose/openapi-check.compose.yml'
+      - 'tools/validate_ledger.py'
+      - 'tools/validate_contract.py'
+      - 'tools/stage3_e2e_smoke.py'
+      - 'config/services_ledger.yaml'
+      - 'README.md'
+
+concurrency:
+  group: validate-ledger-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml requests
+
+      - name: Validate ledger (basic + README)
+        run: |
+          python tools/validate_ledger.py --ledger config/services_ledger.yaml --readme README.md
+
+  validate-openapi:
+    runs-on: ubuntu-latest
+    needs: validate
+    env:
+      CI_API_KEY: ci-readonly-key
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml requests
+
+      - name: Start Unified API (docker compose)
+        run: |
+          docker compose -f .github/compose/openapi-check.compose.yml up -d
+          for i in $(seq 1 90); do
+            if curl -fsS "http://127.0.0.1:9502/health" > /dev/null; then
+              echo "Unified API is up"
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS "http://127.0.0.1:9502/health" > /dev/null
+
+      - name: Fetch OpenAPI and print paths count
+        run: |
+          curl -fsS -H "X-API-Key: ${CI_API_KEY}" "http://127.0.0.1:9502/openapi.json" -o /tmp/openapi.json
+          python - <<'PY'
+          import json
+          with open('/tmp/openapi.json', 'r', encoding='utf-8') as f:
+              data = json.load(f)
+          paths = data.get('paths', {}) or {}
+          print(f"OpenAPI paths count: {len(paths)}")
+          PY
+
+      - name: "Validate ledger with OpenAPI (Stage 1: read-only contract)"
+        run: |
+          # -------------------------------
+          # STAGE1_REQUIRED_PATHS (DO NOT EDIT CASUALLY)
+          # Stage1 = core-ish, read-only, low-dependency GET endpoints.
+          # Add/remove only via PR with rationale + CI proof.
+          # -------------------------------
+          python tools/validate_ledger.py \
+            --ledger config/services_ledger.yaml \
+            --readme README.md \
+            --check-openapi \
+            --openapi-url http://127.0.0.1:9502/openapi.json \
+            --api-key ${CI_API_KEY} \
+            --require-path /api/llm/health \
+            --require-path /api/voice/health \
+            --require-path /api/devices/status \
+            --require-path /api/llm/models \
+            --require-path /api/llm/models-enhanced \
+            --require-path /api/mothership/resources \
+            --require-path /api/file-secretary/inbox/status
+
+      - name: Stage2 contract checks
+        run: |
+          python -c "import os; k=os.getenv('CI_API_KEY',''); print('CI_API_KEY len=', len(k))"
+          python tools/validate_contract.py \
+            --base-url http://127.0.0.1:9502 \
+            --api-key ${CI_API_KEY} \
+            --strict
+
+      - name: Stage3 lightweight E2E smoke (non-blocking)
+        continue-on-error: false
+        run: |
+          python tools/stage3_e2e_smoke.py \
+            --base-url http://127.0.0.1:9502 \
+            --api-key ${CI_API_KEY}
+
+      - name: Show Unified API logs (on failure)
+        if: failure()
+        run: |
+          docker compose -f .github/compose/openapi-check.compose.yml logs unified_api
+
+      - name: Shutdown
+        if: always()
+        run: |
+          docker compose -f .github/compose/openapi-check.compose.yml down -v
