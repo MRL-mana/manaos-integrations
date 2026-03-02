@@ -18,7 +18,7 @@ jobs:
     continue-on-error: true
     steps:
       - name: Auto label PR by changed files
-        uses: actions/labeler@v5
+        uses: actions/labeler@v6
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           configuration-path: .github/labeler.yml
