@@ -309,6 +309,32 @@ class BillingManager:
 
     # ─── Dashboard ────────────────────────────────────
 
+    # 決済APIスタブ
+    def create_stripe_payment(self, user_id: str, plan: str) -> dict:
+        """
+        Stripe決済スタブ（本番はStripe API連携）
+        """
+        # 実際はstripe.PaymentIntent.create()等
+        return {
+            "provider": "stripe",
+            "plan": plan,
+            "user_id": user_id,
+            "payment_url": f"https://checkout.stripe.com/pay/test_{plan}_{user_id}",
+            "status": "stub",
+        }
+
+    def create_komoju_payment(self, user_id: str, plan: str) -> dict:
+        """
+        KOMOJU決済スタブ（本番はKOMOJU API連携）
+        """
+        return {
+            "provider": "komoju",
+            "plan": plan,
+            "user_id": user_id,
+            "payment_url": f"https://checkout.komoju.com/pay/test_{plan}_{user_id}",
+            "status": "stub",
+        }
+
     async def get_billing_dashboard(self, api_key: str) -> Dict[str, Any]:
         """課金ダッシュボード"""
         plan = await self.get_plan(api_key)
