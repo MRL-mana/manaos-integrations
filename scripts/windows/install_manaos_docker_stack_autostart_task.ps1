@@ -103,24 +103,21 @@ if (-not (Test-Path $psExe)) {
   $psExe = "powershell.exe"
 }
 
-$args = @(
+$taskArgs = @(
   "-NoProfile",
-  "-ExecutionPolicy", "Bypass"
+  "-ExecutionPolicy", "Bypass",
+  "-WindowStyle", "Hidden"
 )
-if ($NoWindow) {
-  $args += "-WindowStyle"
-  $args += "Hidden"
-}
-$args += @(
+$taskArgs += @(
   "-File", ('"' + $Runner + '"'),
   "-WorkingDir", ('"' + $WorkingDirArg + '"'),
   "-ComposeFile", ('"' + $ComposeFile + '"')
 )
 if ($RemoveOrphans) {
-  $args += "-RemoveOrphans"
+  $taskArgs += "-RemoveOrphans"
 }
 
-$action = New-ScheduledTaskAction -Execute $psExe -Argument ($args -join ' ') -WorkingDirectory $WorkingDirArg
+$action = New-ScheduledTaskAction -Execute $psExe -Argument ($taskArgs -join ' ') -WorkingDirectory $WorkingDirArg
 
 $triggerObj = if ($Trigger -eq "Startup") {
   New-ScheduledTaskTrigger -AtStartup
@@ -129,7 +126,7 @@ $triggerObj = if ($Trigger -eq "Startup") {
 }
 
 $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel $RunLevel
-$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew -AllowStartIfOnBatteries
+$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -Hidden
 
 try {
   Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $triggerObj -Principal $principal -Settings $settings -Description "Auto-start ManaOS docker-compose stack" -Force | Out-Null

@@ -53,7 +53,7 @@ if (-not (Test-Path $startScript)) {
 }
 
 # Create task action
-$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File `"$startScript`"" -WorkingDirectory $scriptDir
+$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$startScript`"" -WorkingDirectory $scriptDir
 
 # Create trigger (at startup)
 $trigger = New-ScheduledTaskTrigger -AtStartup

@@ -1,29 +1,12 @@
 version: 1
 services:
+  # ═══════ Core Infrastructure ═══════
   - id: unified_api_server
     name: Unified API Server
     kind: port
     port: 9502
     health_url: http://127.0.0.1:9502/health
     tags: [core, always_on]
-    depends_on: []
-
-  - id: open_webui
-    name: Open WebUI
-    kind: docker
-    container: open-webui
-    port: 3000
-    health_url: http://127.0.0.1:3000/
-    tags: [ui, chat]
-    depends_on: []
-
-  - id: n8n
-    name: n8n
-    kind: docker
-    container: n8n
-    port: 5678
-    health_url: http://127.0.0.1:5678/
-    tags: [automation]
     depends_on: []
 
   - id: ollama
@@ -34,6 +17,80 @@ services:
     tags: [ai, llm, always_on]
     depends_on: []
 
+  - id: mrl_memory
+    name: MRL Memory
+    kind: docker
+    container: manaos-mrl-memory
+    port: 9507
+    health_url: http://127.0.0.1:9507/health
+    tags: [memory, always_on]
+    depends_on: []
+
+  - id: tool_server
+    name: Tool Server
+    kind: docker
+    container: tool-server
+    port: 9503
+    health_url: http://127.0.0.1:9503/health
+    tags: [core, always_on]
+    depends_on: []
+
+  # ═══════ Chat / UI ═══════
+  - id: open_webui
+    name: Open WebUI
+    kind: docker
+    container: open-webui
+    port: 3001
+    health_url: http://127.0.0.1:3001/
+    tags: [ui, chat, always_on]
+    depends_on: [ollama]
+
+  # ═══════ Monitoring / Observability ═══════
+  - id: grafana
+    name: Grafana
+    kind: docker
+    container: manaos-grafana
+    port: 3000
+    health_url: http://127.0.0.1:3000/
+    tags: [monitoring, always_on]
+    depends_on: []
+
+  - id: prometheus
+    name: Prometheus
+    kind: docker
+    container: manaos-prometheus
+    port: 9090
+    health_url: http://127.0.0.1:9090/
+    tags: [monitoring, always_on]
+    depends_on: []
+
+  - id: cadvisor
+    name: cAdvisor
+    kind: docker
+    container: manaos-cadvisor
+    port: 8080
+    health_url: http://127.0.0.1:8080/
+    tags: [monitoring, always_on]
+    depends_on: []
+
+  - id: monitoring_dashboard
+    name: Monitoring Dashboard
+    kind: docker
+    container: monitoring-dashboard
+    port: 5005
+    health_url: http://127.0.0.1:5005/
+    tags: [monitoring]
+    depends_on: []
+
+  - id: desktop_perf_monitor
+    name: Desktop Performance Monitor
+    kind: docker
+    container: desktop-performance-monitor
+    port: 9425
+    tags: [monitoring]
+    depends_on: []
+
+  # ═══════ AI / Generation ═══════
   - id: lm_studio
     name: LM Studio (OpenAI API)
     kind: http
@@ -49,14 +106,81 @@ services:
     tags: [ai, image]
     depends_on: []
 
-  - id: ltx2_infinity
-    name: LTX2 Infinity
-    kind: http
-    port: 9502
-    health_url: http://127.0.0.1:9502/health
-    tags: [ai, video]
-    depends_on: [unified_api_server]
+  - id: voicevox
+    name: VOICEVOX
+    kind: docker
+    container: voicevox
+    port: 50021
+    tags: [ai, voice]
+    depends_on: []
 
+  - id: whisper_api
+    name: Whisper API (STT)
+    kind: docker
+    container: whisper-api
+    port: 5011
+    tags: [ai, voice, stt]
+    depends_on: []
+
+  - id: ocr_vision_api
+    name: OCR/Vision API
+    kind: docker
+    container: ocr-vision-api
+    port: 5012
+    tags: [ai, vision]
+    depends_on: []
+
+  - id: gpu_api
+    name: GPU API
+    kind: docker
+    container: gpu-api
+    port: 5013
+    tags: [ai, infra]
+    depends_on: []
+
+  # ═══════ Automation / Integration ═══════
+  - id: n8n
+    name: n8n
+    kind: docker
+    container: n8n
+    port: 5678
+    health_url: http://127.0.0.1:5678/
+    tags: [automation]
+    depends_on: []
+
+  - id: rpg_backend
+    name: ManaOS RPG Backend
+    kind: port
+    port: 9510
+    health_url: http://127.0.0.1:9510/health
+    tags: [core, always_on]
+    depends_on: [unified_api_server, ollama]
+
+  - id: rpg_frontend
+    name: ManaOS RPG Frontend (Vite)
+    kind: port
+    port: 5173
+    health_url: http://127.0.0.1:5173/
+    tags: [ui]
+    depends_on: [rpg_backend]
+
+  - id: moltbot_gateway
+    name: Moltbot Gateway (LLM Routing)
+    kind: port
+    port: 8088
+    health_url: http://127.0.0.1:8088/health
+    tags: [ai, llm, routing]
+    depends_on: [ollama]
+
+  - id: learning_system
+    name: Learning System
+    kind: docker
+    container: manaos-learning-system
+    port: 9508
+    tags: [ai, learning]
+    depends_on: []
+
+  # ═══════ Secretary / File ═══════
   - id: file_secretary
     name: File Secretary
     kind: http
@@ -72,3 +196,404 @@ services:
     health_url: http://127.0.0.1:5125/health
     tags: [secretary]
     depends_on: []
+
+  - id: secretary_api_docker
+    name: Secretary API (Docker)
+    kind: docker
+    container: secretary-api
+    port: 5003
+    tags: [secretary]
+    depends_on: []
+
+  # ═══════ Slack / Communication ═══════
+  - id: slack_bot
+    name: Slack Bot
+    kind: docker
+    container: desktop-slack-bot
+    port: 5301
+    tags: [communication]
+    depends_on: []
+
+  - id: slack_bot_main
+    name: Slack Bot Main
+    kind: docker
+    container: desktop-slack-bot-main
+    port: 5300
+    tags: [communication]
+    depends_on: []
+
+  # ═══════ MCP Servers ═══════
+  - id: gallery_api_mcp
+    name: Gallery API MCP Server
+    kind: process
+    tags: [mcp, image]
+    depends_on: []
+
+  - id: video_pipeline_mcp
+    name: Video Pipeline MCP Server
+    kind: process
+    tags: [mcp, video]
+    depends_on: []
+
+  - id: pico_hid_mcp
+    name: Pico HID MCP Server
+    kind: process
+    tags: [mcp, device]
+    depends_on: []
+
+  - id: llm_routing_mcp
+    name: LLM Routing MCP Server
+    kind: docker
+    container: llm-routing-mcp
+    tags: [mcp, llm]
+    depends_on: []
+
+  - id: mcp_api_server
+    name: MCP API Server
+    kind: docker
+    container: mcp-api
+    tags: [mcp, core]
+    depends_on: []
+
+  - id: slack_integration_mcp
+    name: Slack Integration MCP
+    kind: docker
+    container: slack-integration-mcp
+    tags: [mcp, communication]
+    depends_on: []
+
+  - id: service_monitor_mcp
+    name: Service Monitor MCP
+    kind: docker
+    container: service-monitor-mcp
+    tags: [mcp, monitoring]
+    depends_on: []
+
+  - id: ssot_mcp
+    name: SSOT MCP Server
+    kind: docker
+    container: ssot-mcp
+    tags: [mcp, data]
+    depends_on: []
+
+  - id: system_status_mcp
+    name: System Status MCP
+    kind: docker
+    container: system-status-mcp
+    tags: [mcp, monitoring]
+    depends_on: []
+
+  - id: step_deep_research_mcp
+    name: Step Deep Research MCP
+    kind: docker
+    container: step-deep-research-mcp
+    tags: [mcp, research]
+    depends_on: []
+
+  - id: unified_api_mcp
+    name: Unified API MCP Server
+    kind: process
+    tags: [mcp, core]
+    depends_on: [unified_api_server]
+
+  - id: portal_voice_mcp
+    name: Portal Voice MCP
+    kind: docker
+    container: portal-voice-integration-mcp
+    tags: [mcp, voice]
+    depends_on: []
+
+  - id: web_voice_mcp
+    name: Web Voice MCP
+    kind: docker
+    container: web-voice-mcp
+    tags: [mcp, voice]
+    depends_on: []
+
+  - id: stitch_mcp
+    name: Stitch MCP
+    kind: docker
+    container: stitch-mcp
+    tags: [mcp]
+    depends_on: []
+
+  - id: chatgpt_mcp
+    name: ChatGPT MCP
+    kind: docker
+    container: chatgpt-mcp
+    tags: [mcp]
+    depends_on: []
+
+  # ═══════ Blueprint / BaaS ═══════
+  - id: bp_reverse_proxy
+    name: Blueprint Reverse Proxy
+    kind: docker
+    container: manaos-bp-reverse-proxy
+    port: 80
+    tags: [infra]
+    depends_on: []
+
+  - id: bp_code_server
+    name: Blueprint Code Server
+    kind: docker
+    container: manaos-bp-code-server
+    tags: [dev]
+    depends_on: []
+
+  - id: bp_qdrant
+    name: Blueprint Qdrant (Vector DB)
+    kind: docker
+    container: manaos-bp-qdrant
+    tags: [memory, vector]
+    depends_on: []
+
+  - id: bp_runner
+    name: Blueprint Runner
+    kind: docker
+    container: manaos-bp-runner
+    tags: [infra]
+    depends_on: []
+
+  - id: bp_memory_postgres
+    name: Blueprint Postgres (Memory)
+    kind: docker
+    container: manaos-bp-memory-postgres
+    tags: [db]
+    depends_on: []
+
+  - id: bp_ops_redis
+    name: Blueprint Redis (Ops)
+    kind: docker
+    container: manaos-bp-ops-redis
+    tags: [db]
+    depends_on: []
+
+  # ═══════ docker-compose.manaos-services ═══════
+  - id: gallery_api
+    name: Gallery API
+    kind: docker
+    container: gallery-api
+    tags: [api, image]
+    depends_on: []
+
+  - id: portal_integration
+    name: Portal Integration
+    kind: docker
+    container: portal-integration
+    tags: [integration]
+    depends_on: []
+
+  - id: portal_voice_integration
+    name: Portal Voice Integration
+    kind: docker
+    container: portal-voice-integration
+    tags: [voice, integration]
+    depends_on: []
+
+  - id: service_monitor
+    name: Service Monitor
+    kind: docker
+    container: service-monitor
+    tags: [monitoring]
+    depends_on: []
+
+  - id: slack_integration
+    name: Slack Integration
+    kind: docker
+    container: slack-integration
+    tags: [communication]
+    depends_on: []
+
+  - id: ssot_api
+    name: SSOT API
+    kind: docker
+    container: ssot-api
+    tags: [data, api]
+    depends_on: []
+
+  - id: step_deep_research
+    name: Step Deep Research
+    kind: docker
+    container: step-deep-research
+    tags: [ai, research]
+    depends_on: []
+
+  - id: system_status_api
+    name: System Status API
+    kind: docker
+    container: system-status-api
+    tags: [monitoring, api]
+    depends_on: []
+
+  - id: web_voice
+    name: Web Voice Interface
+    kind: docker
+    container: web-voice
+    tags: [voice, ui]
+    depends_on: []
+
+  # ═══════ docker-compose.ai-services ═══════
+  - id: free_assistant
+    name: Free Assistant
+    kind: docker
+    container: free-assistant
+    tags: [ai, chat]
+    depends_on: []
+
+  - id: sara_ai
+    name: Sara AI
+    kind: docker
+    container: sara-ai
+    tags: [ai, chat]
+    depends_on: []
+
+  - id: sd_webui
+    name: Stable Diffusion WebUI
+    kind: docker
+    container: sd-webui
+    tags: [ai, image]
+    depends_on: []
+
+  - id: ltx2_infinity
+    name: LTX2 Infinity
+    kind: docker
+    container: ltx2-infinity
+    tags: [ai, video]
+    depends_on: [unified_api_server]
+
+  # ═══════ docker-compose.searxng ═══════
+  - id: searxng
+    name: SearXNG (Web検索)
+    kind: docker
+    container: searxng
+    tags: [search, web]
+    depends_on: []
+
+  # ═══════ docker-compose.always-ready-llm (追加) ═══════
+  - id: traefik
+    name: Traefik (Reverse Proxy)
+    kind: docker
+    container: traefik
+    tags: [infra, proxy]
+    depends_on: []
+
+  - id: local_remi_api
+    name: Local Remi API
+    kind: docker
+    container: local-remi-api
+    tags: [ai]
+    depends_on: []
+
+  # ═══════ Misc Docker ═══════
+  - id: ai_workspace
+    name: AI Workspace Integration
+    kind: docker
+    container: ai-workspace-integration
+    port: 5014
+    tags: [ai, workspace]
+    depends_on: []
+
+  - id: autocomplete_api
+    name: Autocomplete API
+    kind: docker
+    container: autocomplete-api
+    port: 5010
+    tags: [ai]
+    depends_on: []
+
+  - id: command_hub
+    name: Command Hub
+    kind: docker
+    container: command-hub
+    port: 5004
+    tags: [infra]
+    depends_on: []
+
+  - id: task_executor
+    name: Task Executor
+    kind: docker
+    container: task-executor
+    port: 5176
+    tags: [automation]
+    depends_on: []
+
+  - id: unified_ui
+    name: Unified UI
+    kind: docker
+    container: unified-ui
+    port: 5009
+    tags: [ui]
+    depends_on: [unified_api_server]
+
+  - id: enhanced_api
+    name: Enhanced API
+    kind: docker
+    container: enhanced-api
+    port: 5008
+    tags: [api]
+    depends_on: []
+
+  - id: n8n_integration
+    name: n8n Integration
+    kind: docker
+    container: n8n-integration
+    port: 5006
+    tags: [automation]
+    depends_on: [n8n]
+
+  - id: video_pipeline
+    name: Video Pipeline
+    kind: docker
+    container: video-pipeline
+    tags: [ai, video]
+    depends_on: []
+
+  - id: llm_routing_docker
+    name: LLM Routing (Docker)
+    kind: docker
+    container: llm-routing
+    tags: [ai, llm]
+    depends_on: []
+
+  - id: manaos_api
+    name: ManaOS API
+    kind: docker
+    container: manaos-api
+    port: 5000
+    tags: [core]
+    depends_on: []
+
+  - id: unified_api_main
+    name: Unified API Main
+    kind: docker
+    container: unified-api-main
+    port: 5001
+    tags: [core]
+    depends_on: []
+
+  # ═══════ Infrastructure ═══════
+  - id: docker_desktop
+    name: Docker Desktop
+    kind: process
+    tags: [infra, always_on]
+    depends_on: []
+
+  - id: tailscale
+    name: Tailscale (VPN)
+    kind: process
+    tags: [network, vpn]
+    depends_on: []
+
+  - id: adb_server
+    name: ADB Server
+    kind: port
+    port: 5037
+    tags: [device, adb]
+    depends_on: []
+
+  # ═══════ Training (実行中) ═══════
+  - id: castle_ex_training
+    name: castle_ex LoRA Training
+    kind: process
+    tags: [ai, training, lora]
+    depends_on: [ollama]

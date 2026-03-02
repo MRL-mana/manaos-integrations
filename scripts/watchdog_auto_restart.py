@@ -13,9 +13,84 @@ import subprocess
 import sys
 import time
 import logging
+import os
+import atexit
 from pathlib import Path
 import requests
 import schedule
+
+
+def _resolve_port(service_name: str, default: int, category: str) -> int:
+    env_map = {
+        "unified_api": "UNIFIED_API_PORT",
+        "mrl_memory": "MRL_MEMORY_PORT",
+    }
+    env_key = env_map.get(service_name)
+    if env_key:
+        env_value = os.getenv(env_key)
+        if env_value:
+            try:
+                return int(env_value)
+            except ValueError:
+                pass
+
+    repo_root = Path(__file__).resolve().parents[1]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
+    try:
+        from config_loader import get_port
+
+        return int(get_port(service_name, category))
+    except Exception:
+        return default
+
+
+def _is_pid_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
+def _acquire_singleton_lock(lock_file: Path) -> bool:
+    lock_file.parent.mkdir(parents=True, exist_ok=True)
+
+    while True:
+        try:
+            fd = os.open(str(lock_file), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            with os.fdopen(fd, 'w', encoding='utf-8') as handle:
+                handle.write(str(os.getpid()))
+            break
+        except FileExistsError:
+            try:
+                existing_pid = int(lock_file.read_text(encoding='utf-8').strip() or '0')
+            except Exception:
+                existing_pid = 0
+
+            if _is_pid_alive(existing_pid):
+                print(f"[SKIP] watchdog already running (PID: {existing_pid})")
+                return False
+
+            try:
+                lock_file.unlink()
+            except OSError:
+                time.sleep(0.1)
+
+    def _cleanup_lock() -> None:
+        try:
+            if lock_file.exists():
+                pid_text = lock_file.read_text(encoding='utf-8').strip()
+                if pid_text == str(os.getpid()):
+                    lock_file.unlink()
+        except OSError:
+            pass
+
+    atexit.register(_cleanup_lock)
+    return True
 
 
 class ServiceWatchdog:
@@ -29,16 +104,22 @@ class ServiceWatchdog:
             check_interval: チェック間隔（秒）
         """
         self.check_interval = check_interval
+        self.repo_root = Path(__file__).resolve().parents[1]
+        self.python_cmd = sys.executable or "python"
+
+        mrl_memory_port = _resolve_port("mrl_memory", 5105, "manaos_services")
+        unified_api_port = _resolve_port("unified_api", 9502, "integration_services")
+
         self.services = {
             'MRL Memory': {
-                'url': 'http://localhost:5110/health',
-                'port': 5110,
-                'startup_cmd': ['python', '-m', 'mrl_memory_integration'],
+                'url': f'http://localhost:{mrl_memory_port}/health',
+                'port': mrl_memory_port,
+                'startup_cmd': [self.python_cmd, str(self.repo_root / 'mrl_memory_integration.py')],
             },
             'Unified API': {
-                'url': 'http://localhost:9502/health',
-                'port': 9502,
-                'startup_cmd': ['python', 'unified_api_server.py'],
+                'url': f'http://localhost:{unified_api_port}/health',
+                'port': unified_api_port,
+                'startup_cmd': [self.python_cmd, str(self.repo_root / 'unified_api' / 'unified_api_server.py')],
             },
         }
         
@@ -177,6 +258,11 @@ class ServiceWatchdog:
 
 def main():
     """メイン関数"""
+    repo_root = Path(__file__).resolve().parents[1]
+    lock_file = repo_root / 'logs' / 'watchdog.pid'
+    if not _acquire_singleton_lock(lock_file):
+        return
+
     watchdog = ServiceWatchdog(check_interval=60)
     
     # システム起動時チェック

@@ -18,6 +18,13 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 import threading
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SCRIPTS_MISC_DIR = REPO_ROOT / "scripts" / "misc"
+for _sys_path in (REPO_ROOT, SCRIPTS_MISC_DIR):
+    _path_str = str(_sys_path)
+    if _sys_path.exists() and _path_str not in sys.path:
+        sys.path.insert(0, _path_str)
+
 try:
     from werkzeug.exceptions import HTTPException
 except Exception:  # pragma: no cover
@@ -343,7 +350,155 @@ try:
 
     COMFYUI_AVAILABLE = True
 except ImportError:
-    logger.warning("ComfyUI統合モジュールが見つかりません")
+    try:
+        from scripts.misc.comfyui_integration import ComfyUIIntegration
+
+        COMFYUI_AVAILABLE = True
+        logger.info("ComfyUI統合モジュールを scripts.misc から読み込みました")
+    except ImportError:
+        logger.warning("ComfyUI統合モジュールが見つかりません。軽量フォールバックを使用します")
+
+        class ComfyUIIntegration:
+            def __init__(self, base_url: str = "http://127.0.0.1:8188"):
+                self.base_url = (base_url or "http://127.0.0.1:8188").rstrip("/")
+
+            def is_available(self) -> bool:
+                if not REQUESTS_AVAILABLE:
+                    return False
+                try:
+                    response = requests.get(f"{self.base_url}/system_stats", timeout=5)
+                    return response.status_code == 200
+                except Exception:
+                    return False
+
+            def _list_checkpoints(self) -> List[str]:
+                if not REQUESTS_AVAILABLE:
+                    return []
+                try:
+                    response = requests.get(
+                        f"{self.base_url}/object_info/CheckpointLoaderSimple",
+                        timeout=10,
+                    )
+                    response.raise_for_status()
+                    data = response.json() or {}
+                    ckpts = (
+                        data.get("CheckpointLoaderSimple", {})
+                        .get("input", {})
+                        .get("required", {})
+                        .get("ckpt_name", [[[]]])[0]
+                    )
+                    return list(ckpts) if ckpts else []
+                except Exception:
+                    return []
+
+            def generate_image(
+                self,
+                prompt: str,
+                negative_prompt: str = "",
+                width: int = 512,
+                height: int = 512,
+                model: str = "",
+                loras: Optional[List[tuple]] = None,
+                steps: int = 20,
+                guidance_scale: float = 7.0,
+                sampler: str = "euler_ancestral",
+                scheduler: str = "karras",
+                seed: int = -1,
+            ) -> Optional[str]:
+                if not REQUESTS_AVAILABLE:
+                    return None
+                ckpts = self._list_checkpoints()
+                resolved_model = (model or "").strip()
+                if ckpts:
+                    if not resolved_model or resolved_model not in ckpts:
+                        resolved_model = ckpts[0]
+
+                if seed is None or int(seed) < 0:
+                    seed = int(time.time() * 1000) % (2**32)
+
+                workflow = {
+                    "1": {
+                        "inputs": {"ckpt_name": resolved_model},
+                        "class_type": "CheckpointLoaderSimple",
+                    },
+                    "2": {
+                        "inputs": {"text": prompt, "clip": ["1", 1]},
+                        "class_type": "CLIPTextEncode",
+                    },
+                    "3": {
+                        "inputs": {"text": negative_prompt or "", "clip": ["1", 1]},
+                        "class_type": "CLIPTextEncode",
+                    },
+                    "4": {
+                        "inputs": {
+                            "seed": int(seed),
+                            "steps": int(steps or 20),
+                            "cfg": float(guidance_scale or 7.0),
+                            "sampler_name": sampler or "euler_ancestral",
+                            "scheduler": scheduler or "karras",
+                            "denoise": 1.0,
+                            "model": ["1", 0],
+                            "positive": ["2", 0],
+                            "negative": ["3", 0],
+                            "latent_image": ["5", 0],
+                        },
+                        "class_type": "KSampler",
+                    },
+                    "5": {
+                        "inputs": {
+                            "width": int(width or 512),
+                            "height": int(height or 512),
+                            "batch_size": 1,
+                        },
+                        "class_type": "EmptyLatentImage",
+                    },
+                    "6": {
+                        "inputs": {"samples": ["4", 0], "vae": ["1", 2]},
+                        "class_type": "VAEDecode",
+                    },
+                    "7": {
+                        "inputs": {"filename_prefix": "manaos_txt2img", "images": ["6", 0]},
+                        "class_type": "SaveImage",
+                    },
+                }
+                try:
+                    response = requests.post(
+                        f"{self.base_url}/prompt",
+                        json={"prompt": workflow, "client_id": "manaos-unified-api"},
+                        timeout=30,
+                    )
+                    response.raise_for_status()
+                    return (response.json() or {}).get("prompt_id")
+                except Exception:
+                    return None
+
+            def get_queue_status(self) -> Dict[str, Any]:
+                if not REQUESTS_AVAILABLE:
+                    return {"error": "requests_unavailable"}
+                try:
+                    response = requests.get(f"{self.base_url}/queue", timeout=10)
+                    response.raise_for_status()
+                    return response.json() or {}
+                except Exception as e:
+                    return {"error": str(e)}
+
+            def get_history(self, max_items: int = 10) -> List[Dict[str, Any]]:
+                if not REQUESTS_AVAILABLE:
+                    return []
+                try:
+                    response = requests.get(f"{self.base_url}/history", timeout=10)
+                    response.raise_for_status()
+                    payload = response.json() or {}
+                    if isinstance(payload, dict):
+                        values = list(payload.values())
+                        return values[: max(1, min(int(max_items or 10), 50))]
+                    if isinstance(payload, list):
+                        return payload[: max(1, min(int(max_items or 10), 50))]
+                    return []
+                except Exception:
+                    return []
+
+        COMFYUI_AVAILABLE = REQUESTS_AVAILABLE
 
 # SVI × Wan 2.2動画生成統合（オプション）
 try:
@@ -1714,7 +1869,7 @@ def api_comfyui_generate():
     if not prompt:
         return _json_error("prompt is required", 400, error="bad_request", namespace="comfyui")
 
-    comfyui = integrations.get("comfyui")
+    comfyui = _get_or_init_comfyui()
     if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
         return _json_error("comfyui_unavailable", 503, error="unavailable", namespace="comfyui")
 
@@ -2381,6 +2536,18 @@ def _lazy_integration(key: str, factory):
         return None
 
 
+def _get_or_init_comfyui():
+    comfyui = integrations.get("comfyui")
+    if comfyui is not None:
+        return comfyui
+    if not COMFYUI_AVAILABLE:
+        return None
+    return _lazy_integration(
+        "comfyui",
+        lambda: ComfyUIIntegration(base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")),
+    )
+
+
 @app.route("/api/ltx2/generate", methods=["POST"])
 def api_ltx2_generate():
     """LTX-2 動画生成（ComfyUIへワークフロー送信して待機）"""
@@ -2910,7 +3077,7 @@ def api_vision_evaluate_url():
 @auth_manager.require_api_key
 def api_comfyui_queue():
     """ComfyUIキュー状態（要認証）"""
-    comfyui = integrations.get("comfyui")
+    comfyui = _get_or_init_comfyui()
     if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
         return _json_error("comfyui_unavailable", 503, error="unavailable", namespace="comfyui")
     try:
@@ -2924,7 +3091,7 @@ def api_comfyui_queue():
 @auth_manager.require_api_key
 def api_comfyui_history():
     """ComfyUI履歴"""
-    comfyui = integrations.get("comfyui")
+    comfyui = _get_or_init_comfyui()
     if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
         return _json_error("comfyui_unavailable", 503, error="unavailable", namespace="comfyui")
     try:

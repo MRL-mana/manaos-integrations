@@ -8,7 +8,7 @@ skills:
         label: Open WebUI
         tags: [ui, chat]
         notes: "UIから会話/管理"
-        url: http://127.0.0.1:3000/
+        url: http://127.0.0.1:3001/
       - id: unified_api_chat
         label: Unified API Server 経由
         tags: [api]
@@ -48,6 +48,11 @@ skills:
         notes: "ルーティング実行（POST）"
         url: http://127.0.0.1:9502/api/llm/route-enhanced
         integration_key: llm_routing
+      - id: moltbot_gateway
+        label: Moltbot Gateway
+        tags: [routing]
+        notes: "LLMルーティングゲートウェイ（ポート8088）"
+        url: http://127.0.0.1:8088/health
 
   - id: image_gen
     label: 画像生成
@@ -90,6 +95,29 @@ skills:
         tags: [flux, image]
         notes: "ベース生成（ComfyUIワークフロー内で使用）"
 
+  - id: image_eval
+    label: 画像評価（Vision）
+    tags: [ai, vision, eval]
+    items:
+      - id: llava_eval
+        label: LLaVA 34B 評価
+        tags: [vision, eval]
+        notes: "画像を LLaVA 34B で評価・説明・スコアリング"
+        url: http://127.0.0.1:11434/api/generate
+      - id: qwen3_vl_eval
+        label: Qwen3-VL 30B 評価
+        tags: [vision, eval]
+        notes: "最新 Vision モデルで画像評価"
+        url: http://127.0.0.1:11434/api/generate
+      - id: pixel7_vision
+        label: Pixel7 カメラ Vision
+        tags: [vision, device]
+        notes: "Pixel7 カメラ撮影 → Ollama Vision で質問"
+      - id: auto_eval_pipeline
+        label: 自動評価パイプライン
+        tags: [pipeline, eval]
+        notes: "生成画像を自動でVisionモデルにスコアリング"
+
   - id: video_gen_wan
     label: 動画生成（Wan 2.2 / SVI）
     tags: [ai, video]
@@ -126,7 +154,7 @@ skills:
         integration_key: svi_wan22
 
   - id: video_gen
-    label: 動画生成
+    label: 動画生成（LTX2）
     tags: [ai, video]
     items:
       - id: ltx2
@@ -161,7 +189,11 @@ skills:
       - id: voicevox
         label: VOICEVOX
         tags: [tts]
-        notes: "TTS/読み上げ"
+        notes: "TTS/読み上げ（ポート50021）"
+      - id: whisper_stt
+        label: Whisper（STT / 文字起こし）
+        tags: [stt]
+        notes: "音声→テキスト変換（ポート5011）"
       - id: voice_api
         label: Voice（統合API）
         tags: [api, voice]
@@ -178,6 +210,10 @@ skills:
         notes: "gallery_images をスキャン（生成物の見つけやすさ優先）"
         url: http://127.0.0.1:9502/api/images/recent
         integration_key: image_stock
+      - id: comfyui_output
+        label: ComfyUI output（8000+枚）
+        tags: [image, comfyui]
+        notes: "C:/ComfyUI/output のメイン出力"
 
   - id: secretary
     label: 秘書（リマインダ/日報）
@@ -230,3 +266,125 @@ skills:
         tags: [memory, rag]
         notes: "蓄積・検索・関連付け"
         integration_key: memory_unified
+      - id: bp_qdrant
+        label: Qdrant (Vector DB)
+        tags: [vector, memory]
+        notes: "Blueprint ベクトルデータベース"
+
+  - id: monitoring
+    label: 監視/ダッシュボード
+    tags: [monitoring, ops]
+    items:
+      - id: grafana
+        label: Grafana
+        tags: [dashboard]
+        notes: "メトリクスダッシュボード"
+        url: http://127.0.0.1:3000/
+      - id: prometheus
+        label: Prometheus
+        tags: [metrics]
+        notes: "メトリクス収集"
+        url: http://127.0.0.1:9090/
+      - id: cadvisor
+        label: cAdvisor
+        tags: [container]
+        notes: "コンテナリソース監視"
+        url: http://127.0.0.1:8080/
+      - id: rpg_dashboard
+        label: RPG ダッシュボード
+        tags: [ui, dashboard]
+        notes: "このページ！全体俯瞰"
+        url: http://127.0.0.1:5173/
+
+  - id: device_control
+    label: デバイス操作
+    tags: [device, remote]
+    items:
+      - id: pixel7_remote
+        label: Pixel7 リモコン（ADB）
+        tags: [adb, remote]
+        notes: "Home/Back/Recents/Power/Volume/スワイプ解除"
+      - id: pixel7_scrcpy
+        label: Pixel7 画面ミラー（scrcpy）
+        tags: [mirror]
+        notes: "有線/無線/縦長/自動復帰scrcpy"
+      - id: pixel7_screenshot
+        label: Pixel7 スクリーンショット
+        tags: [capture]
+        notes: "ADB経由でスクショ取得"
+      - id: pixel7_screenrecord
+        label: Pixel7 画面録画
+        tags: [capture]
+        notes: "10秒/30秒/手動停止モード"
+      - id: pixel7_http
+        label: Pixel7 HTTP Gateway
+        tags: [http, gateway]
+        notes: "Termux HTTPサーバ（セットアップ/起動/停止/スモークテスト）"
+      - id: pixel7_keepalive
+        label: Pixel7 ADB keepalive
+        tags: [adb]
+        notes: "バックグラウンド接続維持"
+      - id: pixel7_outing
+        label: Pixel7 外出モード
+        tags: [tailscale, remote]
+        notes: "keepalive + scrcpy watch + reboot watch ワンボタン"
+      - id: x280_setup
+        label: X280 リモートセットアップ
+        tags: [remote, rdp]
+        notes: "母艦→X280 入口準備"
+
+  - id: web_search
+    label: Web検索
+    tags: [search, web]
+    items:
+      - id: searxng
+        label: SearXNG
+        tags: [search]
+        notes: "プライバシー重視メタ検索エンジン"
+      - id: brave_search
+        label: Brave Search (MCP)
+        tags: [search, mcp]
+        notes: "MCP経由Brave検索"
+
+  - id: lora_training
+    label: LoRA学習
+    tags: [ai, training, lora]
+    items:
+      - id: castle_ex
+        label: castle_ex LoRA 学習
+        tags: [training, active]
+        notes: "現在学習実行中！"
+      - id: lora_manager
+        label: LoRA/ControlNet マネージャー
+        tags: [lora, management]
+        notes: "LoRA選択・適用管理"
+
+  - id: deep_research
+    label: ディープリサーチ
+    tags: [ai, research]
+    items:
+      - id: step_deep_research
+        label: Step Deep Research
+        tags: [research]
+        notes: "段階的深堀りリサーチ"
+      - id: stitch_mcp
+        label: Stitch MCP
+        tags: [mcp]
+        notes: "コンテキスト統合"
+
+  - id: integrations
+    label: 外部連携
+    tags: [integration]
+    items:
+      - id: google_drive
+        label: Google Drive
+        tags: [cloud, storage]
+        notes: "ファイル同期/バックアップ"
+      - id: obsidian
+        label: Obsidian
+        tags: [notes, knowledge]
+        notes: "ナレッジベース連携"
+      - id: slack
+        label: Slack
+        tags: [communication]
+        notes: "通知/ボット/統合"

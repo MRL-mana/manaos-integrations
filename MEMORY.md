@@ -21,29 +21,29 @@ Policy（行動）・Reward（採点）・Environment（難易度）を同時最
 <!-- rl_anything:start -->
 ## RLAnything 自己進化メモ
 
-更新日時: 2026-02-26 14:50
+更新日時: 2026-02-26 20:40
 現在の難易度: **standard**
 蓄積スキル: 5 件
 
 ### 学習済みスキル (成功パターン)
 
-1. **段階的実装** (成功率: 100%, n=2)
-   - 3-10 ステップの適度な粒度でタスクを分割して実行
-   - タグ: incremental, stepwise
-
-2. **ツール連携: read_file → run_test** (成功率: 100%, n=2)
-   - 「read_file → run_test」の順でツールを使用するパターン (n=2)
-   - タグ: tool-chain
-
-3. **ツール連携: run_test → create_file** (成功率: 100%, n=2)
-   - 「run_test → create_file」の順でツールを使用するパターン (n=2)
-   - タグ: tool-chain
-
-4. **事前調査パターン** (成功率: 75%, n=4)
+1. **事前調査パターン** (成功率: 100%, n=3)
    - コード変更前にファイル読み込み/検索で十分なコンテキストを取得
    - タグ: research, context-gathering
 
-5. **ツール連携: read_file → create_file** (成功率: 50%, n=2)
+2. **段階的実装** (成功率: 100%, n=2)
+   - 3-10 ステップの適度な粒度でタスクを分割して実行
+   - タグ: incremental, stepwise
+
+3. **ツール連携: read_file → run_test** (成功率: 100%, n=2)
+   - 「read_file → run_test」の順でツールを使用するパターン (n=2)
+   - タグ: tool-chain
+
+4. **ツール連携: run_test → create_file** (成功率: 100%, n=2)
+   - 「run_test → create_file」の順でツールを使用するパターン (n=2)
+   - タグ: tool-chain
+
+5. **ツール連携: read_file → create_file** (成功率: 100%, n=3)
    - 「read_file → create_file」の順でツールを使用するパターン (n=2)
    - タグ: tool-chain
 

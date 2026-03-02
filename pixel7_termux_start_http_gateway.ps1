@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$DeviceSerial = "",
     [string]$DestDir = '$HOME',
     [int]$EnterCount = 1,
@@ -84,7 +84,7 @@ Write-Host ("Dest  : {0}" -f $DestDir) -ForegroundColor Gray
 Write-Host ("Port  : {0}" -f $ApiPort) -ForegroundColor Gray
 
 function Resolve-LogPath([string]$p) {
-    $p = [string]($p ?? '')
+    $p = if ($null -eq $p) { '' } else { [string]$p }
     if ([string]::IsNullOrWhiteSpace($p)) { return '' }
 
     # /sdcard is a symlink; on some devices/shell contexts it can be missing/broken.
@@ -99,7 +99,7 @@ function Resolve-LogPath([string]$p) {
 }
 
 function Get-PosixDirName([string]$p) {
-    $p = [string]($p ?? '')
+    $p = if ($null -eq $p) { '' } else { [string]$p }
     if ([string]::IsNullOrWhiteSpace($p)) { return '' }
 
     # Normalize any accidental backslashes (Windows path semantics) to '/'
