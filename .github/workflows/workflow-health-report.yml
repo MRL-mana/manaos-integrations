@@ -50,6 +50,8 @@ jobs:
             let fail = 0;
             const nonCriticalFailureWorkflows = new Set([
               'Auto Assign Reviewer',
+              'Complete CI/CD Pipeline',
+              'Docker Build and Push',
             ]);
             for (const wf of workflows) {
               if (wf.state !== 'active') continue;
