@@ -16,6 +16,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Auto assign reviewer
+        id: auto_assign
         uses: kentaro-m/auto-assign-action@v2.0.0
+        continue-on-error: true
         with:
           configuration-path: .github/auto_assign.yml
+
+      - name: Auto assign status summary
+        if: steps.auto_assign.outcome != 'success'
+        run: |
+          echo "::warning::Auto assign reviewer was skipped/failed due to integration permission constraints."
+          echo "- ⚠️ Auto Assign Reviewer skipped/failed (non-blocking)" >> "$GITHUB_STEP_SUMMARY"
