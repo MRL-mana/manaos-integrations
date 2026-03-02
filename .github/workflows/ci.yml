@@ -74,7 +74,7 @@ jobs:
 
     test:
         needs: detect-changes
-        if: github.event_name != 'schedule' && (needs.detect-changes.outputs.code == 'true' || needs.detect-changes.outputs.workflow == 'true')
+      if: github.event_name != 'schedule' && needs.detect-changes.outputs.code == 'true'
         runs-on: ubuntu-latest
         continue-on-error: false
         strategy:
@@ -171,19 +171,16 @@ jobs:
                         - 'manaos_integrations/**/*.py'
                         - 'tests/**'
                         - 'security_auditor.py'
-                        - '.github/workflows/ci.yml'
                       deps:
                         - 'requirements*.txt'
                         - 'requirements-core.txt'
                         - 'pyproject.toml'
                         - 'setup.py'
                         - 'setup.cfg'
-                        - '.github/workflows/ci.yml'
                       secrets:
                         - '**/*.py'
                         - '**/*.sh'
                         - '**/*.ps1'
-                        - '.github/workflows/ci.yml'
 
             - name: Set up Python
               if: github.event_name == 'schedule' || steps.secfilter.outputs.code == 'true' || steps.secfilter.outputs.deps == 'true'
