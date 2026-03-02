@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  image_generation_api:
+    build:
+      context: ../image_generation_service
+      dockerfile: Dockerfile
+    container_name: manaos-image-generation-api
+    restart: unless-stopped
+    environment:
+      - BILLING_DB_PATH=/data/billing.db
+    volumes:
+      - ./data:/data
+    expose:
+      - "5560"
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: manaos-image-generation-nginx
+    restart: unless-stopped
+    depends_on:
+      - image_generation_api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.image_generation.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro

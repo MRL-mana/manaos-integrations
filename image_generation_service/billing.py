@@ -20,6 +20,7 @@ import enum
 import json
 import logging
 import os
+import secrets
 import sqlite3
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -122,6 +123,17 @@ def _init_db():
             CREATE INDEX IF NOT EXISTS idx_usage_log_key_date
             ON usage_log (api_key, created_at)
         """)
+        # ユーザー登録情報
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS user_signups (
+                email       TEXT PRIMARY KEY,
+                api_key     TEXT NOT NULL,
+                plan        TEXT NOT NULL DEFAULT 'free',
+                label       TEXT,
+                created_at  TEXT NOT NULL,
+                active      INTEGER NOT NULL DEFAULT 1
+            )
+        """)
 
         # デフォルト API Key 作成 (まだなければ)
         existing = conn.execute(
@@ -163,6 +175,65 @@ class BillingManager:
         except sqlite3.IntegrityError:
             _log.warning("API key already exists: %s", api_key[:8])
             return False
+
+    async def register_user(
+        self,
+        email: str,
+        plan: Plan = Plan.free,
+        label: str = "",
+    ) -> Dict[str, Any]:
+        """ユーザー登録してAPIキーを発行（既存ユーザーは再利用）"""
+        with _get_db() as conn:
+            existing = conn.execute(
+                "SELECT email, api_key, plan, active FROM user_signups WHERE email = ?",
+                (email,),
+            ).fetchone()
+
+        if existing and existing["active"] == 1:
+            return {
+                "email": existing["email"],
+                "api_key": existing["api_key"],
+                "plan": existing["plan"],
+                "newly_created": False,
+            }
+
+        api_key = "img_" + secrets.token_urlsafe(24)
+        created = await self.create_api_key(
+            api_key=api_key,
+            plan=plan,
+            label=label or email,
+        )
+        if not created:
+            # 衝突時はもう1回だけ再生成
+            api_key = "img_" + secrets.token_urlsafe(24)
+            created = await self.create_api_key(
+                api_key=api_key,
+                plan=plan,
+                label=label or email,
+            )
+
+        if not created:
+            raise RuntimeError("Failed to create API key")
+
+        now = datetime.now().isoformat()
+        with _get_db() as conn:
+            conn.execute(
+                """INSERT INTO user_signups (email, api_key, plan, label, created_at, active)
+                   VALUES (?, ?, ?, ?, ?, 1)
+                   ON CONFLICT(email) DO UPDATE SET
+                       api_key = excluded.api_key,
+                       plan = excluded.plan,
+                       label = excluded.label,
+                       active = 1""",
+                (email, api_key, plan.value, label or email, now),
+            )
+
+        return {
+            "email": email,
+            "api_key": api_key,
+            "plan": plan.value,
+            "newly_created": True,
+        }
 
     async def deactivate_api_key(self, api_key: str) -> bool:
         """API Key を無効化"""
@@ -336,7 +407,7 @@ class BillingManager:
         }
 
     async def get_billing_dashboard(self, api_key: str) -> Dict[str, Any]:
-        """課金ダッシュボード"""
+        """課金ダッシュボード（MRR, 日次売上, アクティブユーザー含む）"""
         plan = await self.get_plan(api_key)
         limits = PLAN_LIMITS[plan]
         remaining = await self.get_remaining_quota(api_key)
@@ -363,6 +434,32 @@ class BillingManager:
                 "SELECT COUNT(*) FROM api_keys WHERE active = 1"
             ).fetchone()[0]
 
+            # MRR（有料プラン月額合計）
+            mrr_row = conn.execute(
+                """SELECT SUM(CASE plan
+                       WHEN 'pro' THEN 2980
+                       WHEN 'enterprise' THEN 9800
+                       ELSE 0 END) AS mrr
+                   FROM api_keys
+                   WHERE active = 1"""
+            ).fetchone()
+
+            # 日次売上（当日全ユーザーの推定コスト合計）
+            daily_sales_row = conn.execute(
+                """SELECT SUM(total_cost) AS daily_sales
+                   FROM usage_daily
+                   WHERE usage_date = ?""",
+                (today,),
+            ).fetchone()
+
+            # 過去30日で生成したユニークAPIキー数
+            active_users_row = conn.execute(
+                """SELECT COUNT(DISTINCT api_key) AS active_users
+                   FROM usage_daily
+                   WHERE usage_date >= date(?, '-30 days')""",
+                (today,),
+            ).fetchone()
+
         return {
             "api_key": api_key[:8] + "..." if len(api_key) > 8 else api_key,
             "plan": plan.value,
@@ -384,4 +481,7 @@ class BillingManager:
                 "total_cost_yen": round(thirty_days["cost"] or 0, 4),
             },
             "active_keys": key_count,
+            "mrr_yen": int(mrr_row["mrr"] or 0),
+            "daily_sales_yen": round(daily_sales_row["daily_sales"] or 0, 4),
+            "active_users_30d": int(active_users_row["active_users"] or 0),
         }
