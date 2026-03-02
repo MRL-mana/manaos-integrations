@@ -22,12 +22,14 @@ FastAPI Router — /api/v1/images/*
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 
 from .models import (
     ErrorResponse,
@@ -39,7 +41,7 @@ from .models import (
 from .prompt_enhancer import PromptEnhancer
 from .service import ImageGenerationService
 from .api_auth import AuthContext, require_auth, optional_auth
-from .billing import BillingManager
+from .billing import BillingManager, Plan
 from .queue import JobQueue
 from .feedback import FeedbackManager
 from .batch_generator import BatchGenerator
@@ -78,17 +80,6 @@ def get_billing() -> BillingManager:
 
 
 def get_queue() -> JobQueue:
-    # 決済API: Stripe
-    @router.post("/payment/stripe", summary="Stripe決済スタブ", response_model=dict)
-    def payment_stripe(plan: str, user_id: str):
-        billing = get_billing()
-        return billing.create_stripe_payment(user_id=user_id, plan=plan)
-
-    # 決済API: KOMOJU
-    @router.post("/payment/komoju", summary="KOMOJU決済スタブ", response_model=dict)
-    def payment_komoju(plan: str, user_id: str):
-        billing = get_billing()
-        return billing.create_komoju_payment(user_id=user_id, plan=plan)
     global _queue
     if _queue is None:
         _queue = JobQueue()
@@ -111,6 +102,51 @@ def get_batch_generator() -> BatchGenerator:
     if _batch is None:
         _batch = BatchGenerator(get_service())
     return _batch
+
+
+class SignupRequest(BaseModel):
+    email: str = Field(..., min_length=5, max_length=255)
+    plan: str = Field("free", description="free/pro/enterprise")
+    label: str = Field("", max_length=120)
+
+
+# ─── Payment & Signup Endpoints ─────────────────────
+
+@router.post("/payment/stripe", summary="Stripe決済スタブ", response_model=dict)
+def payment_stripe(plan: str, user_id: str):
+    billing = get_billing()
+    return billing.create_stripe_payment(user_id=user_id, plan=plan)
+
+
+@router.post("/payment/komoju", summary="KOMOJU決済スタブ", response_model=dict)
+def payment_komoju(plan: str, user_id: str):
+    billing = get_billing()
+    return billing.create_komoju_payment(user_id=user_id, plan=plan)
+
+
+@router.post("/signup", summary="ユーザー登録とAPIキー発行", response_model=dict)
+async def signup(
+    req: SignupRequest,
+    billing: BillingManager = Depends(get_billing),
+):
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", req.email):
+        raise HTTPException(status_code=400, detail="Invalid email format")
+
+    try:
+        plan = Plan(req.plan)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid plan (free/pro/enterprise)")
+
+    result = await billing.register_user(
+        email=req.email.strip().lower(),
+        plan=plan,
+        label=req.label.strip(),
+    )
+    return {
+        "status": "ok",
+        "message": "signup completed",
+        **result,
+    }
 
 
 # ─── Endpoints ────────────────────────────────────────
@@ -234,13 +270,14 @@ async def enhance_preview(
 @router.get(
     "/dashboard",
     summary="ダッシュボード統計",
-    description="生成統計、品質スコア分布、RL状態を含むダッシュボード情報",
+    description="収益・使用量・MRR・日次売上・アクティブユーザー数を含むダッシュボード情報",
 )
 async def dashboard(
-    svc: ImageGenerationService = Depends(get_service),
+    auth: AuthContext = Depends(require_auth),
+    billing: BillingManager = Depends(get_billing),
 ):
-    """サービスダッシュボード"""
-    return await svc.get_dashboard()
+    """収益ダッシュボード（MRR等含む）"""
+    return await billing.get_billing_dashboard(auth.api_key)
 
 
 @router.get(
