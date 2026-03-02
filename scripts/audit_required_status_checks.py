@@ -80,6 +80,19 @@ def collect_available_contexts() -> tuple[set[str], list[str]]:
             contexts.add(job_name)
             contexts.add(f'{workflow_name} / {job_name}')
 
+            if isinstance(job_def, dict):
+                strategy = job_def.get('strategy')
+                matrix = strategy.get('matrix') if isinstance(strategy, dict) else None
+                if isinstance(matrix, dict):
+                    keys = [k for k, v in matrix.items() if isinstance(v, list) and all(not isinstance(i, (dict, list)) for i in v)]
+                    if len(keys) == 1:
+                        key = keys[0]
+                        values = cast(list[Any], matrix.get(key) or [])
+                        for value in values:
+                            expanded = f'{job_name} ({value})'
+                            contexts.add(expanded)
+                            contexts.add(f'{workflow_name} / {expanded}')
+
     return contexts, warnings
 
 
