@@ -39,9 +39,11 @@ jobs:
           pip install pyyaml requests
 
       - name: Run workflow policy audit
+        id: policy_audit
         run: python scripts/audit_workflow_policies.py
 
       - name: Run required status checks audit
+        id: required_checks_audit
         run: python scripts/audit_required_status_checks.py
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -64,10 +66,13 @@ jobs:
           RUN_ID: ${{ github.run_id }}
           WORKFLOW: ${{ github.workflow }}
           SERVER_URL: ${{ github.server_url }}
+          POLICY_AUDIT_OUTCOME: ${{ steps.policy_audit.outcome }}
+          REQUIRED_CHECKS_AUDIT_OUTCOME: ${{ steps.required_checks_audit.outcome }}
         run: |
           python - <<'PY'
           import json
           import os
+          from pathlib import Path
           import urllib.request
 
           repo = os.environ.get('REPO', '')
@@ -78,8 +83,25 @@ jobs:
           webhook = os.environ.get('SLACK_WEBHOOK_URL', '')
           run_url = f"{server_url}/{repo}/actions/runs/{run_id}"
 
+          outcomes = {
+              'workflow_policy_audit': os.environ.get('POLICY_AUDIT_OUTCOME', ''),
+              'required_checks_audit': os.environ.get('REQUIRED_CHECKS_AUDIT_OUTCOME', ''),
+          }
+          failed_steps = [name for name, outcome in outcomes.items() if outcome and outcome != 'success']
+
+          summary_lines = []
+          report_path = Path('artifacts/required-checks-audit.md')
+          if report_path.exists():
+              for line in report_path.read_text(encoding='utf-8').splitlines():
+                  normalized = line.strip()
+                  if normalized.startswith('- Missing mappings:') or normalized.startswith('- Expected-but-missing in protection:') or normalized.startswith('- Unexpected in protection:'):
+                      summary_lines.append(normalized)
+          summary_text = '\n'.join(summary_lines) if summary_lines else 'no required-checks summary'
+
+          failed_text = ', '.join(failed_steps) if failed_steps else 'unknown'
+
           payload = {
-              'text': f":rotating_light: {workflow} failed\nrepo={repo}\nref={ref_name}\nrun={run_url}"
+              'text': f":rotating_light: {workflow} failed\nrepo={repo}\nref={ref_name}\nfailed_steps={failed_text}\n{summary_text}\nrun={run_url}"
           }
 
           req = urllib.request.Request(
