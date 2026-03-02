@@ -1,6 +1,8 @@
 name: Workflow Policy Audit
 
 on:
+  schedule:
+    - cron: '0 18 * * 0'
   push:
     branches: [master, main, develop]
     paths:
@@ -43,6 +45,7 @@ jobs:
           if [ -z "${SLACK_WEBHOOK_URL}" ]; then
             echo "::warning::SLACK_WEBHOOK_URL is not configured; failure alerts will not be sent."
             echo "- ⚠️ SLACK_WEBHOOK_URL is not configured (failure alerts disabled)" >> "$GITHUB_STEP_SUMMARY"
+            echo "- ℹ️ setup: gh secret set SLACK_WEBHOOK_URL --body '<https://hooks.slack.com/services/...>'" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "- ✅ SLACK_WEBHOOK_URL is configured" >> "$GITHUB_STEP_SUMMARY"
           fi
