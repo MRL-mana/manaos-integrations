@@ -78,6 +78,17 @@ def get_billing() -> BillingManager:
 
 
 def get_queue() -> JobQueue:
+    # 決済API: Stripe
+    @router.post("/payment/stripe", summary="Stripe決済スタブ", response_model=dict)
+    def payment_stripe(plan: str, user_id: str):
+        billing = get_billing()
+        return billing.create_stripe_payment(user_id=user_id, plan=plan)
+
+    # 決済API: KOMOJU
+    @router.post("/payment/komoju", summary="KOMOJU決済スタブ", response_model=dict)
+    def payment_komoju(plan: str, user_id: str):
+        billing = get_billing()
+        return billing.create_komoju_payment(user_id=user_id, plan=plan)
     global _queue
     if _queue is None:
         _queue = JobQueue()
