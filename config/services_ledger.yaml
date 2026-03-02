@@ -1,0 +1,65 @@
+version: 1
+updated_at: "2026-03-01"
+
+core:
+  memory:
+    port: 5105
+    url: "http://127.0.0.1:5105"
+    enabled: true
+    depends_on: []
+
+  learning:
+    port: 5126
+    url: "http://127.0.0.1:5126"
+    enabled: true
+    depends_on:
+      - memory
+
+  llm_routing:
+    port: 5111
+    url: "http://127.0.0.1:5111"
+    enabled: true
+    depends_on: []
+
+  unified_api:
+    port: 9502
+    url: "http://127.0.0.1:9502"
+    enabled: true
+    depends_on:
+      - memory
+      - learning
+      - llm_routing
+
+optional:
+  windows_automation:
+    port: 5115
+    url: "http://127.0.0.1:5115"
+    enabled: false
+    depends_on:
+      - unified_api
+
+  pico_hid:
+    port: 5136
+    url: "http://127.0.0.1:5136"
+    enabled: false
+    depends_on:
+      - unified_api
+
+  moltbot:
+    port: 8088
+    url: "http://127.0.0.1:8088"
+    enabled: false
+    depends_on:
+      - unified_api
+
+  comfyui:
+    port: 8188
+    url: "http://127.0.0.1:8188"
+    enabled: false
+    depends_on: []
+
+  gallery:
+    port: 5559
+    url: "http://127.0.0.1:5559"
+    enabled: false
+    depends_on: []

@@ -42,6 +42,9 @@ from rl_anything.safety_constraint import SafetyConstraintManager, SafetyConstra
 from rl_anything.model_based_planner import ModelBasedPlanner, WorldModel, Transition, PlanResult, PlanningStats
 from rl_anything.distributional_reward import DistributionalReward, RewardDistribution, RiskProfile, RiskAdjustedScore
 from rl_anything.communication_protocol import CommunicationProtocol, Message, AgentInfo, ChannelStats
+from rl_anything.temporal_abstraction import TemporalAbstraction, TemporalEvent, TrendInfo, PeriodicPattern
+from rl_anything.adversarial_robustness import AdversarialRobustness, PerturbationResult, RobustnessReport
+from rl_anything.causal_reasoning import CausalReasoning, CausalObservation, CausalEffect, CounterfactualResult, Attribution
 
 
 def test_types():
@@ -1847,6 +1850,213 @@ def test_orchestrator_with_r10_components():
         print("  [PASS] orchestrator_with_r10_components")
 
 
+def test_temporal_abstraction():
+    """TemporalAbstraction 単体テスト"""
+    import time as _time
+    with tempfile.TemporaryDirectory() as td:
+        p = Path(td) / "ta.json"
+        ta = TemporalAbstraction(persist_path=p)
+
+        # イベント記録
+        base_ts = _time.time()
+        for i in range(10):
+            ta.record_event(0.5 + i * 0.05, "standard", timestamp=base_ts + i * 60)
+
+        # 統計
+        stats = ta.get_stats()
+        assert stats["total_events"] == 10
+        assert stats["sessions"] >= 1
+
+        # トレンド
+        trend = ta.get_trend()
+        assert isinstance(trend, TrendInfo)
+        assert trend.direction in ("rising", "falling", "stable")
+
+        # 周期パターン
+        pattern = ta.get_periodic_pattern()
+        assert isinstance(pattern, PeriodicPattern)
+
+        # セッション
+        sessions = ta.get_sessions()
+        assert len(sessions) >= 1
+
+        # TD価値
+        td_vals = ta.get_td_values()
+        assert td_vals["total_updates"] == 10
+
+        # 永続化復元
+        ta2 = TemporalAbstraction(persist_path=p)
+        assert ta2.get_stats()["total_events"] == 10
+
+        print("  [PASS] temporal_abstraction")
+
+
+def test_adversarial_robustness():
+    """AdversarialRobustness 単体テスト"""
+    with tempfile.TemporaryDirectory() as td:
+        p = Path(td) / "ar.json"
+        ar = AdversarialRobustness(persist_path=p)
+
+        # ロバストネステスト
+        for i in range(5):
+            result = ar.test_robustness(f"state_{i}", "stay", 0.7 + i * 0.03)
+            assert isinstance(result, PerturbationResult)
+            assert 0 <= result.stability <= 1.0
+
+        # 統計
+        stats = ar.get_stats()
+        assert stats["total_tests"] == 5
+
+        # レポート
+        report = ar.generate_report()
+        assert isinstance(report, RobustnessReport)
+        assert report.tests_conducted == 5
+
+        # 脆弱状態
+        vulns = ar.get_vulnerable_states()
+        assert isinstance(vulns, list)
+
+        # 履歴
+        history = ar.get_robustness_history()
+        assert len(history) >= 1
+
+        # 永続化復元
+        ar2 = AdversarialRobustness(persist_path=p)
+        assert ar2.get_stats()["total_tests"] == 5
+
+        print("  [PASS] adversarial_robustness")
+
+
+def test_causal_reasoning():
+    """CausalReasoning 単体テスト"""
+    with tempfile.TemporaryDirectory() as td:
+        p = Path(td) / "cr.json"
+        cr = CausalReasoning(persist_path=p)
+
+        # 観測記録
+        cr.record_observation("t1", ["read_file", "create_file"], 0.9)
+        cr.record_observation("t2", ["read_file"], 0.7)
+        cr.record_observation("t3", ["create_file", "run_cmd"], 0.8)
+        cr.record_observation("t4", ["read_file", "run_cmd"], 0.6)
+        cr.record_observation("t5", [], 0.4)
+
+        # 統計
+        stats = cr.get_stats()
+        assert stats["total_observations"] == 5
+        assert stats["unique_tools"] == 3
+
+        # 因果効果
+        effect = cr.estimate_causal_effect("read_file")
+        assert isinstance(effect, CausalEffect)
+        assert effect.n_treatment > 0
+
+        # 反事実
+        cf = cr.counterfactual("t1", ["create_file"])
+        assert isinstance(cf, CounterfactualResult)
+
+        # 寄与帰属
+        attrs = cr.get_attributions()
+        assert isinstance(attrs, list)
+        assert len(attrs) > 0
+        assert isinstance(attrs[0], Attribution)
+
+        # 因果グラフ
+        graph = cr.get_causal_graph()
+        assert graph["total_tools"] == 3
+        assert graph["total_edges"] > 0
+
+        # 介入効果
+        ie = cr.intervention_effect("read_file")
+        assert "effect" in ie
+
+        # 永続化復元
+        cr2 = CausalReasoning(persist_path=p)
+        assert cr2.get_stats()["total_observations"] == 5
+
+        print("  [PASS] causal_reasoning")
+
+
+def test_orchestrator_with_r11_components():
+    """R11 コンポーネント統合テスト"""
+    rl = RLAnythingOrchestrator()
+
+    for i in range(3):
+        rl.begin_task(f"r11-{i}", f"R11 integration test {i}")
+        rl.log_tool("read_file", {"path": f"file_{i}.py"}, result="ok")
+        rl.log_tool("create_file", {"path": f"test_{i}.py"}, result="ok")
+        result = rl.end_task(f"r11-{i}", outcome="success", score=0.7 + i * 0.1)
+        assert "temporal" in result
+        assert "adversarial" in result
+        assert "causal" in result
+        assert "r12_insight" in result
+
+    # Temporal Stats
+    ts = rl.get_temporal_stats()
+    assert ts["total_events"] >= 3
+    assert "trend" in ts
+
+    # Temporal Trend
+    tt = rl.get_temporal_trend()
+    assert "direction" in tt
+
+    # Temporal Patterns
+    tp = rl.get_temporal_patterns()
+    assert isinstance(tp, dict)
+
+    # Temporal Sessions
+    tss = rl.get_temporal_sessions()
+    assert "sessions" in tss
+
+    # TD Values
+    tdv = rl.get_temporal_td_values()
+    assert "values" in tdv
+
+    # Adversarial Stats
+    advs = rl.get_adversarial_stats()
+    assert advs["total_tests"] >= 3
+
+    # Adversarial Report
+    advr = rl.get_adversarial_report()
+    assert "overall_robustness" in advr
+
+    # Adversarial Vulnerable
+    advv = rl.get_adversarial_vulnerable()
+    assert "vulnerable_states" in advv
+
+    # Causal Stats
+    cs = rl.get_causal_stats()
+    assert cs["total_observations"] >= 3
+
+    # Causal Attributions
+    ca = rl.get_causal_attributions()
+    assert "attributions" in ca
+
+    # Causal Graph
+    cg = rl.get_causal_graph()
+    assert "nodes" in cg
+
+    # Causal Counterfactual
+    cc = rl.causal_counterfactual("r11-0", ["read_file"])
+    assert "counterfactual_score" in cc
+
+    # Round 12 Summary
+    r12s = rl.get_r12_summary()
+    assert "health_score" in r12s
+    assert "risk_level" in r12s
+    assert "primary_driver" in r12s
+
+    # Round 12 Recommendations
+    r12r = rl.get_r12_recommendations()
+    assert "recommendations" in r12r
+    assert isinstance(r12r["recommendations"], list)
+
+    # Comms: 9 agents now (6 from R10 + 3 from R11)
+    comms_stats = rl.get_comms_stats()
+    assert comms_stats["registered_agents"] >= 9
+
+    print("  [PASS] orchestrator_with_r11_components")
+
+
 def main():
     print("=" * 60)
     print("RLAnything テストスイート")
@@ -1887,6 +2097,10 @@ def main():
         ("distributional_reward", test_distributional_reward),
         ("communication_protocol", test_communication_protocol),
         ("orchestrator_with_r10_components", test_orchestrator_with_r10_components),
+        ("temporal_abstraction", test_temporal_abstraction),
+        ("adversarial_robustness", test_adversarial_robustness),
+        ("causal_reasoning", test_causal_reasoning),
+        ("orchestrator_with_r11_components", test_orchestrator_with_r11_components),
     ]
 
     passed = 0

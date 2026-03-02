@@ -139,6 +139,28 @@ function Invoke-StepAttempt([scriptblock]$fn) {
     }
 }
 
+function Resolve-HttpBaseUrl {
+    if ($useLocalHttp) {
+        return 'http://127.0.0.1:5122'
+    }
+    if ($env:PIXEL7_API_BASE) {
+        return $env:PIXEL7_API_BASE.TrimEnd('/')
+    }
+    $host = if ($env:PIXEL7_API_HOST) { $env:PIXEL7_API_HOST } elseif ($env:PIXEL7_TAILSCALE_IP) { $env:PIXEL7_TAILSCALE_IP } elseif ($env:PIXEL7_IP) { $env:PIXEL7_IP } else { '100.84.2.125' }
+    $port = if ($env:PIXEL7_API_PORT) { $env:PIXEL7_API_PORT } else { '5122' }
+    return ("http://{0}:{1}" -f $host, $port)
+}
+
+function Get-Pixel7ApiProfile {
+    try {
+        $base = Resolve-HttpBaseUrl
+        $root = Invoke-RestMethod -UseBasicParsing -TimeoutSec 2 ($base + '/')
+        return [string]$root.api_profile
+    } catch {
+        return ''
+    }
+}
+
 Write-Host ("=== Pixel7 Control (HTTP→ADB): {0} mode={1} ===" -f $Action, $Mode) -ForegroundColor Cyan
 if ($useLocalHttp) {
     Write-Host 'HTTP: using localhost (adb forward) http://127.0.0.1:5122' -ForegroundColor DarkGray
@@ -147,6 +169,14 @@ if ($useLocalHttp) {
 $adbFirst = $Mode -in @('ADBFirst','ADBOnly')
 $httpAllowed = $Mode -notin @('ADBOnly')
 $adbAllowed = $Mode -notin @('HTTPOnly')
+
+if ($Mode -eq 'HTTPFirst') {
+    $profile = Get-Pixel7ApiProfile
+    if ($profile -and $profile -ne 'full') {
+        Write-Host ("[INFO] HTTP skipped: PIXEL7_API_PROFILE={0}. switching to ADB-first fallback." -f $profile) -ForegroundColor Yellow
+        $adbFirst = $true
+    }
+}
 
 $httpPlan = @()
 $adbPlan = @()

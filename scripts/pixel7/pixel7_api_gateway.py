@@ -48,6 +48,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+_API_PROFILE = (os.getenv("PIXEL7_API_PROFILE", "core") or "core").strip().lower()
+if _API_PROFILE not in {"core", "full"}:
+    _API_PROFILE = "core"
+
 
 class CommandRequest(BaseModel):
     command: str
@@ -111,6 +115,14 @@ def require_auth(
         raise HTTPException(status_code=403, detail="Invalid token")
 
 
+def require_full_profile() -> None:
+    if _API_PROFILE != "full":
+        raise HTTPException(
+            status_code=403,
+            detail="This endpoint requires PIXEL7_API_PROFILE=full",
+        )
+
+
 async def execute_android_command(
     command: Union[str, List[str]],
     timeout: int = 60,
@@ -168,6 +180,7 @@ async def root():
     return {
         "service": "Pixel7 API Gateway",
         "version": "1.0.0",
+        "api_profile": _API_PROFILE,
         "status": "online",
         "platform": "Android",
         "timestamp": datetime.now().isoformat()
@@ -175,7 +188,11 @@ async def root():
 
 
 @app.post("/api/execute")
-async def execute_command(request: CommandRequest, _: None = Depends(require_auth)):
+async def execute_command(
+    request: CommandRequest,
+    _: None = Depends(require_auth),
+    __: None = Depends(require_full_profile),
+):
     """Android shellコマンドを実行（危険: デフォルト無効）"""
     if os.getenv("PIXEL7_API_ALLOW_EXEC", "0").strip() != "1":
         raise HTTPException(status_code=403, detail="/api/execute is disabled (set PIXEL7_API_ALLOW_EXEC=1)")
@@ -356,7 +373,11 @@ async def status_bundle(_: None = Depends(require_auth)):
 
 
 @app.post("/api/open/url")
-async def open_url(request: OpenUrlRequest, _: None = Depends(require_auth)):
+async def open_url(
+    request: OpenUrlRequest,
+    _: None = Depends(require_auth),
+    __: None = Depends(require_full_profile),
+):
     url = (request.url or "").strip()
     if not url:
         raise HTTPException(status_code=400, detail="url is required")
@@ -378,7 +399,11 @@ async def open_url(request: OpenUrlRequest, _: None = Depends(require_auth)):
 
 
 @app.post("/api/open/app")
-async def open_app(request: OpenAppRequest, _: None = Depends(require_auth)):
+async def open_app(
+    request: OpenAppRequest,
+    _: None = Depends(require_auth),
+    __: None = Depends(require_full_profile),
+):
     pkg = (request.package or "").strip()
     if not pkg:
         raise HTTPException(status_code=400, detail="package is required")
@@ -403,7 +428,11 @@ async def open_app(request: OpenAppRequest, _: None = Depends(require_auth)):
 
 
 @app.post("/api/macro/broadcast")
-async def macro_broadcast(request: MacroBroadcastRequest, _: None = Depends(require_auth)):
+async def macro_broadcast(
+    request: MacroBroadcastRequest,
+    _: None = Depends(require_auth),
+    __: None = Depends(require_full_profile),
+):
     """MacroDroid向けにIntentを投げる（MacroDroid側で 'Intent Received' トリガを作る）"""
     action = (
         request.action

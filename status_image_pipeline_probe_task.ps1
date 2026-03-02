@@ -1,0 +1,200 @@
+param(
+    [string]$TaskName = "ManaOS_Image_Pipeline_Probe_5min",
+    [string]$ConfigFile = ""
+)
+
+$ErrorActionPreference = "Stop"
+
+function Write-LatestOutput {
+    param(
+        [string]$Ts,
+        [object]$Ok,
+        [string]$OkReason,
+        [string]$FailureCategory,
+        [object]$FailureNotifyAttempted,
+        [object]$FailureNotified,
+        [string]$FailureSuppressedReason,
+        [string]$RouteCategory,
+        [object]$OverallOk,
+        [string]$SourceSchema
+    )
+
+    Write-Host "--- Latest Output ---" -ForegroundColor Cyan
+    Write-Host "latest_ts: $Ts" -ForegroundColor Gray
+    Write-Host "latest_ok: $Ok" -ForegroundColor Gray
+    Write-Host "latest_ok_reason: $OkReason" -ForegroundColor Gray
+    Write-Host "latest_failure_category: $FailureCategory" -ForegroundColor Gray
+    Write-Host "latest_failure_notify_attempted: $FailureNotifyAttempted" -ForegroundColor Gray
+    Write-Host "latest_failure_notified: $FailureNotified" -ForegroundColor Gray
+    Write-Host "latest_failure_notify_suppressed_reason: $FailureSuppressedReason" -ForegroundColor Gray
+    Write-Host "latest_route_category: $RouteCategory" -ForegroundColor Gray
+    Write-Host "latest_overall_ok: $OverallOk" -ForegroundColor Gray
+    Write-Host "latest_source_schema: $SourceSchema" -ForegroundColor Gray
+}
+
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+if ([string]::IsNullOrWhiteSpace($ConfigFile)) {
+    $ConfigFile = Join-Path $scriptDir "logs\image_pipeline_probe_task.config.json"
+}
+
+Write-Host "=== Image Pipeline Probe Task Status ===" -ForegroundColor Cyan
+Write-Host "TaskName: $TaskName" -ForegroundColor Gray
+
+$taskInfo = schtasks /Query /TN $TaskName /V /FO LIST
+if ($LASTEXITCODE -ne 0 -or $null -eq $taskInfo) {
+    Write-Host "[INFO] Task not found: $TaskName" -ForegroundColor Yellow
+    Write-LatestOutput -Ts 'N/A' -Ok $false -OkReason 'task_not_found' -FailureCategory 'task_not_found' -FailureNotifyAttempted $false -FailureNotified $false -FailureSuppressedReason 'task_not_found' -RouteCategory 'task_not_found' -OverallOk $false -SourceSchema 'missing'
+    exit 1
+}
+
+$taskInfo | ForEach-Object { Write-Host $_ }
+
+$taskToRunLine = $taskInfo | Where-Object { $_ -match '^(Task To Run|実行するタスク):\s*' } | Select-Object -First 1
+if (-not [string]::IsNullOrWhiteSpace($taskToRunLine)) {
+    Write-Host "---" -ForegroundColor DarkGray
+    Write-Host "TaskToRun: $taskToRunLine" -ForegroundColor Gray
+    if ($taskToRunLine -notmatch '-ConfigFile') {
+        Write-Host "[WARN] Task command does not include -ConfigFile. Runtime defaults will be used." -ForegroundColor Yellow
+    }
+}
+
+Write-Host "ConfigFile: $ConfigFile" -ForegroundColor Gray
+if (-not (Test-Path $ConfigFile)) {
+    Write-Host "[WARN] Config file not found: $ConfigFile" -ForegroundColor Yellow
+    Write-LatestOutput -Ts 'N/A' -Ok $false -OkReason 'source_missing' -FailureCategory 'source_missing' -FailureNotifyAttempted $false -FailureNotified $false -FailureSuppressedReason 'source_missing' -RouteCategory 'source_missing' -OverallOk $false -SourceSchema 'missing'
+    exit 0
+}
+
+try {
+    $cfg = Get-Content -Path $ConfigFile -Raw | ConvertFrom-Json
+    Write-Host "--- Config Summary ---" -ForegroundColor Cyan
+    Write-Host "unified_api_url: $($cfg.unified_api_url)" -ForegroundColor Gray
+    Write-Host "comfyui_url: $($cfg.comfyui_url)" -ForegroundColor Gray
+    Write-Host "history_file: $($cfg.history_file)" -ForegroundColor Gray
+    Write-Host "state_file: $($cfg.state_file)" -ForegroundColor Gray
+    Write-Host "enable_auto_recovery: $($cfg.enable_auto_recovery)" -ForegroundColor Gray
+    Write-Host "enable_auto_recovery_on_unified_degraded: $($cfg.enable_auto_recovery_on_unified_degraded)" -ForegroundColor Gray
+    Write-Host "notify_cooldown_minutes: $($cfg.notify_cooldown_minutes)" -ForegroundColor Gray
+    Write-Host "notify_unified_degraded_after: $($cfg.notify_unified_degraded_after)" -ForegroundColor Gray
+    Write-Host "notify_unified_degraded_cooldown_minutes: $($cfg.notify_unified_degraded_cooldown_minutes)" -ForegroundColor Gray
+    Write-Host "notify_state_file: $($cfg.notify_state_file)" -ForegroundColor Gray
+
+    $stateFile = [string]$cfg.notify_state_file
+    if (-not [string]::IsNullOrWhiteSpace($stateFile) -and (Test-Path $stateFile)) {
+        try {
+            $state = Get-Content -Path $stateFile -Raw | ConvertFrom-Json
+            Write-Host "--- Notify State ---" -ForegroundColor Cyan
+            Write-Host "state_last_failure_category: $($state.last_category)" -ForegroundColor Gray
+            Write-Host "state_last_failure_notified_at: $($state.last_notified_at)" -ForegroundColor Gray
+            Write-Host "state_last_status: $($state.last_status)" -ForegroundColor Gray
+        }
+        catch {
+            Write-Host "[WARN] Failed to parse notify state file: $stateFile" -ForegroundColor Yellow
+        }
+    }
+
+    $latestFailureCategory = ''
+    $latestFailureNotifyAttempted = $null
+    $latestFailureNotified = $null
+    $latestFailureSuppressedReason = ''
+    $historyFile = [string]$cfg.history_file
+    if (-not [string]::IsNullOrWhiteSpace($historyFile) -and (Test-Path $historyFile)) {
+        try {
+            $historyLast = Get-Content -Path $historyFile -Tail 1 | ConvertFrom-Json
+            $latestFailureCategory = [string]$historyLast.failure_category
+            $latestFailureNotifyAttempted = $historyLast.failure_notify_attempted
+            $latestFailureNotified = $historyLast.failure_notified
+            $latestFailureSuppressedReason = [string]$historyLast.failure_notify_suppressed_reason
+        }
+        catch {
+            Write-Host "[WARN] Failed to parse history tail: $historyFile" -ForegroundColor Yellow
+        }
+    }
+
+    $latestFile = [string]$cfg.log_file
+    if (-not [string]::IsNullOrWhiteSpace($latestFile) -and (Test-Path $latestFile)) {
+        try {
+            $latest = Get-Content -Path $latestFile -Raw | ConvertFrom-Json
+
+            $hasLegacyFields = (-not [string]::IsNullOrWhiteSpace([string]$latest.generated_at)) -or ($null -ne $latest.route) -or ($null -ne $latest.overall)
+            $hasCurrentFields = (-not [string]::IsNullOrWhiteSpace([string]$latest.ts)) -or ($null -ne $latest.unified_api) -or ($null -ne $latest.comfyui)
+            $latestSourceSchema = 'unknown'
+            if ($hasLegacyFields -and $hasCurrentFields) {
+                $latestSourceSchema = 'mixed'
+            }
+            elseif ($hasLegacyFields) {
+                $latestSourceSchema = 'legacy'
+            }
+            elseif ($hasCurrentFields) {
+                $latestSourceSchema = 'current'
+            }
+
+            $latestTs = [string]$latest.generated_at
+            if ([string]::IsNullOrWhiteSpace($latestTs)) {
+                $latestTs = [string]$latest.ts
+            }
+            if ([string]::IsNullOrWhiteSpace($latestTs)) {
+                $latestTs = 'N/A'
+            }
+
+            $latestRouteCategory = [string]$latest.route.category
+            if ([string]::IsNullOrWhiteSpace($latestRouteCategory)) {
+                $latestUnifiedReady = $false
+                $latestDirectReady = $false
+                if ($null -ne $latest.unified_api -and $null -ne $latest.unified_api.ready) {
+                    try { $latestUnifiedReady = [bool]$latest.unified_api.ready } catch { $latestUnifiedReady = $false }
+                }
+                if ($null -ne $latest.comfyui -and $null -ne $latest.comfyui.ready) {
+                    try { $latestDirectReady = [bool]$latest.comfyui.ready } catch { $latestDirectReady = $false }
+                }
+
+                if ($latestUnifiedReady) {
+                    $latestRouteCategory = 'unified_ready'
+                }
+                elseif ($latestDirectReady) {
+                    $latestRouteCategory = 'direct_fallback'
+                }
+                else {
+                    $latestRouteCategory = 'pipeline_down'
+                }
+            }
+
+            $latestOverallOk = $null
+            $latestOkReason = 'ok_missing'
+            if ($null -ne $latest.overall -and $null -ne $latest.overall.ok) {
+                try { $latestOverallOk = [bool]$latest.overall.ok } catch { $latestOverallOk = $null }
+                if ($null -ne $latestOverallOk) { $latestOkReason = 'from_ok_field' }
+            }
+            elseif ($null -ne $latest.unified_api -or $null -ne $latest.comfyui) {
+                $latestUnifiedReadyForOk = $false
+                $latestDirectReadyForOk = $false
+                if ($null -ne $latest.unified_api -and $null -ne $latest.unified_api.ready) {
+                    try { $latestUnifiedReadyForOk = [bool]$latest.unified_api.ready } catch { $latestUnifiedReadyForOk = $false }
+                }
+                if ($null -ne $latest.comfyui -and $null -ne $latest.comfyui.ready) {
+                    try { $latestDirectReadyForOk = [bool]$latest.comfyui.ready } catch { $latestDirectReadyForOk = $false }
+                }
+                $latestOverallOk = ($latestUnifiedReadyForOk -or $latestDirectReadyForOk)
+                $latestOkReason = 'from_component_fields'
+            }
+
+            Write-LatestOutput -Ts $latestTs -Ok $latestOverallOk -OkReason $latestOkReason -FailureCategory $latestFailureCategory -FailureNotifyAttempted $latestFailureNotifyAttempted -FailureNotified $latestFailureNotified -FailureSuppressedReason $latestFailureSuppressedReason -RouteCategory $latestRouteCategory -OverallOk $latestOverallOk -SourceSchema $latestSourceSchema
+        }
+        catch {
+            Write-Host "[WARN] Failed to parse latest output file: $latestFile" -ForegroundColor Yellow
+            Write-LatestOutput -Ts 'N/A' -Ok $false -OkReason 'source_missing' -FailureCategory 'source_missing' -FailureNotifyAttempted $latestFailureNotifyAttempted -FailureNotified $latestFailureNotified -FailureSuppressedReason 'source_missing' -RouteCategory 'source_missing' -OverallOk $false -SourceSchema 'missing'
+        }
+    }
+    else {
+        Write-LatestOutput -Ts 'N/A' -Ok $false -OkReason 'source_missing' -FailureCategory 'source_missing' -FailureNotifyAttempted $latestFailureNotifyAttempted -FailureNotified $latestFailureNotified -FailureSuppressedReason 'source_missing' -RouteCategory 'source_missing' -OverallOk $false -SourceSchema 'missing'
+        if (-not [string]::IsNullOrWhiteSpace($latestFile)) {
+            Write-Host "[WARN] Latest output file not found: $latestFile" -ForegroundColor Yellow
+        }
+    }
+}
+catch {
+    Write-Host "[WARN] Failed to parse config file: $ConfigFile" -ForegroundColor Yellow
+    Write-LatestOutput -Ts 'N/A' -Ok $false -OkReason 'source_missing' -FailureCategory 'source_missing' -FailureNotifyAttempted $false -FailureNotified $false -FailureSuppressedReason 'source_missing' -RouteCategory 'source_missing' -OverallOk $false -SourceSchema 'missing'
+}
+
+exit 0

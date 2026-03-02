@@ -20,39 +20,50 @@ function Get-ProcessCommandLine([int]$ProcessId) {
 }
 
 function Stop-ListenerOnPort([int]$PortToStop, [switch]$ForceKillListener) {
-	$c = Get-NetTCPConnection -LocalPort $PortToStop -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
-	if (-not $c) { return }
-
-	$listenerPid = [int]$c.OwningProcess
-	$cmd = (Get-ProcessCommandLine -ProcessId $listenerPid)
-	$cmdLower = $cmd.ToLowerInvariant()
-
-	$looksLikeUvicorn = $cmdLower.Contains('uvicorn')
-	$looksLikeManaosRpg = $cmdLower.Contains('manaos-rpg') -or $cmdLower.Contains('app:app')
-	$safeToKill = $looksLikeUvicorn -and $looksLikeManaosRpg
-
-	if (-not $safeToKill -and -not $ForceKillListener) {
-		Write-Host "[manaos-rpg] Port $PortToStop is already LISTEN by pid=$listenerPid" -ForegroundColor Yellow
-		if ($cmd) {
-			Write-Host "[manaos-rpg] Listener cmdline: $cmd" -ForegroundColor DarkYellow
-		}
-		Write-Host "[manaos-rpg] Refusing to kill unknown listener. Re-run with -ForceKill or set env MANAOS_RPG_FORCE_KILL_PORT=1." -ForegroundColor Yellow
-		throw "Port $PortToStop is in use."
-	}
-
-	Write-Host "[manaos-rpg] Port $PortToStop busy; stopping pid=$listenerPid" -ForegroundColor Yellow
-	if ($cmd) {
-		Write-Host "[manaos-rpg] Killing listener cmdline: $cmd" -ForegroundColor DarkYellow
-	}
-	Stop-Process -Id $listenerPid -Force -ErrorAction Stop
-
-	$deadline = (Get-Date).AddSeconds(3)
+	$deadline = (Get-Date).AddSeconds(6)
 	while ((Get-Date) -lt $deadline) {
-		Start-Sleep -Milliseconds 150
-		$still = Get-NetTCPConnection -LocalPort $PortToStop -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
-		if (-not $still) { return }
+		$listeners = @(Get-NetTCPConnection -LocalPort $PortToStop -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique)
+		if ($listeners.Count -eq 0) { return $true }
+
+		foreach ($listenerPid in $listeners) {
+			$pidInt = [int]$listenerPid
+			$cmd = (Get-ProcessCommandLine -ProcessId $pidInt)
+			$cmdLower = $cmd.ToLowerInvariant()
+			$procName = ''
+			$procPath = ''
+			try {
+				$p = Get-Process -Id $pidInt -ErrorAction Stop
+				$procName = [string]$p.ProcessName
+				$procPath = [string]$p.Path
+			} catch {}
+
+			$looksLikeUvicorn = $cmdLower.Contains('uvicorn')
+			$looksLikeManaosRpg = $cmdLower.Contains('manaos-rpg') -or $cmdLower.Contains('app:app')
+			$looksLikeBackendPython = ($procName -ieq 'python') -and ($procPath.ToLowerInvariant().Contains('.venv\scripts\python.exe'))
+			$safeToKill = ($looksLikeUvicorn -and $looksLikeManaosRpg) -or ($looksLikeBackendPython -and [string]::IsNullOrWhiteSpace($cmd))
+
+			if (-not $safeToKill -and -not $ForceKillListener) {
+				Write-Host "[manaos-rpg] Port $PortToStop is already LISTEN by pid=$pidInt" -ForegroundColor Yellow
+				if ($cmd) {
+					Write-Host "[manaos-rpg] Listener cmdline: $cmd" -ForegroundColor DarkYellow
+				}
+				Write-Host "[manaos-rpg] Keeping existing listener as-is. Re-run with -ForceKill (or env MANAOS_RPG_FORCE_KILL_PORT=1) to replace it." -ForegroundColor Yellow
+				return $false
+			}
+
+			Write-Host "[manaos-rpg] Port $PortToStop busy; stopping pid=$pidInt" -ForegroundColor Yellow
+			if ($cmd) {
+				Write-Host "[manaos-rpg] Killing listener cmdline: $cmd" -ForegroundColor DarkYellow
+			}
+			Stop-Process -Id $pidInt -Force -ErrorAction SilentlyContinue
+		}
+
+		Start-Sleep -Milliseconds 250
 	}
-	throw "Port $PortToStop did not release after killing pid=$listenerPid."
+
+	$remaining = @(Get-NetTCPConnection -LocalPort $PortToStop -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique)
+	if ($remaining.Count -eq 0) { return $true }
+	throw "Port $PortToStop did not release after killing listeners."
 }
 
 $forceEnvRaw = $env:MANAOS_RPG_FORCE_KILL_PORT
@@ -63,7 +74,11 @@ $effectiveForceKill = $ForceKill.IsPresent -or $forceByEnv
 $root = Split-Path -Parent $PSScriptRoot
 $backend = Join-Path $root 'backend'
 
-Stop-ListenerOnPort -PortToStop $Port -ForceKillListener:$effectiveForceKill
+$portReleased = Stop-ListenerOnPort -PortToStop $Port -ForceKillListener:$effectiveForceKill
+if (-not $portReleased) {
+	Write-Host "[manaos-rpg] Existing backend listener detected on port $Port; skip starting a new instance." -ForegroundColor Green
+	exit 0
+}
 
 Set-Location $backend
 

@@ -54,6 +54,7 @@ screenshots/
 .env.*
 !.env.example
 !.env.template
+config/secrets.local.ps1
 
 # Database
 *.db
@@ -114,6 +115,7 @@ output/
 outputs/
 temp_downloaded_*.pdf
 temp_page_*.png
+web/dashboard/dashboard.json
 
 # Pixel7 runtime files (local)
 .pixel7_*.pid
@@ -210,6 +212,14 @@ setup_*.sh
 setup_*.bat
 
 # Workspace-local helper scripts (not portable)
+tools/update_tasks_pixel7_http.py
+
+# Re-include operational tooling under tools/ even when globally ignored
+!tools/
+!tools/*.ps1
+!tools/*.py
+
+# Keep machine-specific helper ignored
 tools/update_tasks_pixel7_http.py
 
 # Crash snapshots
