@@ -10,13 +10,38 @@ Use this order when validating production readiness after major changes:
 
 1. `Sync Repository Labels` (`sync-labels.yml`)
 2. `Actionlint` (`actionlint.yml`)
-3. `Workflow Health Report` (`workflow-health-report.yml`)
-4. `Dependency Review` (`dependency-review.yml`) via PR check
-5. `CodeQL` (`codeql.yml`)
-6. `OpenSSF Scorecard` (`scorecard.yml`)
-7. `CI/CD Pipeline` (`ci.yml`)
-8. `Tests` (`tests.yml`)
-9. `Release Drafter` (`release-drafter.yml`)
+3. `Workflow Policy Audit` (`workflow-policy-audit.yml`)
+4. `Workflow Health Report` (`workflow-health-report.yml`)
+5. `Dependency Review` (`dependency-review.yml`) via PR check
+6. `CodeQL` (`codeql.yml`)
+7. `OpenSSF Scorecard` (`scorecard.yml`)
+8. `CI/CD Pipeline` (`ci.yml`)
+9. `Tests` (`tests.yml`)
+10. `Release Drafter` (`release-drafter.yml`)
+
+## Required checks governance
+
+Required status checks are managed by these sources of truth:
+
+- Branch protection required contexts (GitHub settings/API)
+- `.github/required-status-checks.json`
+- PR workflow job names
+
+Whenever you add/remove/rename required checks:
+
+1. Update `.github/required-status-checks.json` in the same PR.
+2. Ensure corresponding PR workflow job names exist.
+3. Run `workflow-policy-audit.yml` and verify `Run required status checks audit` passes.
+4. After merge, confirm branch protection contexts remain aligned.
+
+Do not update branch protection required contexts out-of-band without a matching PR update to the manifest.
+
+## Slack alerting
+
+`workflow-policy-audit.yml` sends failure notifications only when `SLACK_WEBHOOK_URL` repository secret is configured.
+
+- No secret set: workflow behavior is unchanged (no notification).
+- Secret set: failure alert includes failed audit step(s), required-check drift summary, and run URL.
 
 ## PR validation checklist
 
