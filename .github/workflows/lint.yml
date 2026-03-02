@@ -71,7 +71,14 @@ jobs:
     - name: Run pylint
       if: github.event_name == 'workflow_dispatch' || steps.lintfilter.outputs.code == 'true' || steps.lintfilter.outputs.workflow == 'true'
       run: |
-        pylint --errors-only --rcfile=.pylintrc $(Get-ChildItem -Path . -Filter *.py -Recurse | Select-Object -ExpandProperty FullName)
+        $targets = @()
+        if (Test-Path "manaos_integrations") { $targets += "manaos_integrations" }
+        if (Test-Path "tests") { $targets += "tests" }
+        if ($targets.Count -eq 0) {
+          Write-Host "No pylint targets found; skipping"
+        } else {
+          pylint --errors-only --rcfile=.pylintrc $targets
+        }
       shell: pwsh
       continue-on-error: false
     

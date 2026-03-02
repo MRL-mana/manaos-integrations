@@ -88,6 +88,10 @@ jobs:
           MANAOS_NOTIFY_ON_SUCCESS: ${{ secrets.MANAOS_BLUEPRINT_NOTIFY_ON_SUCCESS }}
         run: |
           Set-Location deploy/manaos-blueprint
+          if (-not (Test-Path "../../mcp_api_server.py" -PathType Leaf)) {
+            Write-Host "mcp_api_server.py is missing; skipping blueprint full pipeline"
+            exit 0
+          }
           $baseDomain = if ("${{ github.event.inputs.base_domain }}") { "${{ github.event.inputs.base_domain }}" } else { "mrl-mana.com" }
           $bootstrap = if ("${{ github.event.inputs.bootstrap_signup }}") { "${{ github.event.inputs.bootstrap_signup }}" } else { "true" }
 

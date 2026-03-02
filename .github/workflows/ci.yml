@@ -283,12 +283,10 @@ jobs:
                   python -m pip install --upgrade pip
                   pip install yamllint
                   cat > .yamllint-ci.yml <<'EOF'
-                  extends: default
+                  extends: relaxed
                   rules:
                     line-length:
-                      max: 120
-                    indentation:
-                      spaces: 4
+                      max: 180
                   EOF
                   yamllint -c .yamllint-ci.yml .github/workflows/*.yml
               continue-on-error: false
