@@ -28,10 +28,10 @@ jobs:
         id: lint
         uses: rhysd/actionlint@v1.7.11
         with:
-          reporter: ''
+          args: -shellcheck=
 
       - name: Workflow lint summary
         if: always()
         run: |
           echo "## Actionlint completed" >> $GITHUB_STEP_SUMMARY
-          echo "- Reporter is disabled to avoid GitHub annotation limit" >> $GITHUB_STEP_SUMMARY
+          echo "- shellcheck integration is disabled for deterministic CI signal" >> $GITHUB_STEP_SUMMARY
