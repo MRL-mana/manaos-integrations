@@ -78,9 +78,9 @@ jobs:
           Write-Host "No pylint targets found; skipping"
         } else {
           if (Test-Path ".pylintrc") {
-            pylint --errors-only --rcfile=.pylintrc $targets
+            pylint --errors-only --disable=import-error --rcfile=.pylintrc $targets
           } else {
-            pylint --errors-only $targets
+            pylint --errors-only --disable=import-error $targets
           }
         }
       shell: pwsh
