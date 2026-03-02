@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import json
 import os
 import sys
 from pathlib import Path
 from typing import Any, cast
 import importlib
+import json
 
 import requests
 
@@ -15,6 +15,7 @@ YAMLError = cast(type[BaseException], getattr(yaml, "YAMLError", ValueError))
 
 WORKFLOW_DIR = Path('.github/workflows')
 REPORT_PATH = Path('artifacts/required-checks-audit.md')
+EXPECTED_CONTEXTS_PATH = Path('.github/required-status-checks.json')
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
@@ -79,6 +80,19 @@ def collect_available_contexts() -> tuple[set[str], list[str]]:
             contexts.add(job_name)
             contexts.add(f'{workflow_name} / {job_name}')
 
+            if isinstance(job_def, dict):
+                strategy = job_def.get('strategy')
+                matrix = strategy.get('matrix') if isinstance(strategy, dict) else None
+                if isinstance(matrix, dict):
+                    keys = [k for k, v in matrix.items() if isinstance(v, list) and all(not isinstance(i, (dict, list)) for i in v)]
+                    if len(keys) == 1:
+                        key = keys[0]
+                        values = cast(list[Any], matrix.get(key) or [])
+                        for value in values:
+                            expanded = f'{job_name} ({value})'
+                            contexts.add(expanded)
+                            contexts.add(f'{workflow_name} / {expanded}')
+
     return contexts, warnings
 
 
@@ -116,15 +130,51 @@ def write_report(lines: list[str]) -> None:
     REPORT_PATH.write_text('\n'.join(lines) + '\n', encoding='utf-8')
 
 
+def load_expected_contexts() -> tuple[list[str], str | None]:
+    if not EXPECTED_CONTEXTS_PATH.exists():
+        return [], f'manifest missing: {EXPECTED_CONTEXTS_PATH.as_posix()}'
+
+    try:
+        payload = json.loads(EXPECTED_CONTEXTS_PATH.read_text(encoding='utf-8'))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        return [], f'failed to parse manifest: {exc}'
+
+    contexts = payload.get('contexts') if isinstance(payload, dict) else None
+    if not isinstance(contexts, list):
+        return [], 'manifest must include a list field: contexts'
+
+    normalized = [str(item) for item in contexts if str(item).strip()]
+    if not normalized:
+        return [], 'manifest contexts list is empty'
+
+    return normalized, None
+
+
 def main() -> int:
     available_contexts, warnings = collect_available_contexts()
+    expected_contexts, expected_error = load_expected_contexts()
     required_contexts, error = fetch_required_contexts()
 
     lines = ['# Required Status Checks Audit', '']
 
+    if expected_error:
+        lines.append(f'- Result: ❌ failed ({expected_error})')
+        write_report(lines)
+        print(REPORT_PATH.as_posix())
+        return 1
+
+    expected_missing_in_workflows = sorted([ctx for ctx in expected_contexts if ctx not in available_contexts])
+
     if error:
         lines.append(f'- Result: ⚠️ skipped ({error})')
         lines.append('- Note: This audit requires branch protection API access via GITHUB_TOKEN.')
+        lines.append(f'- Expected contexts: {len(expected_contexts)}')
+        lines.append(f'- Missing expected mappings in workflows: {len(expected_missing_in_workflows)}')
+        if expected_missing_in_workflows:
+            lines.append('')
+            lines.append('## Missing expected contexts in workflow definitions')
+            for item in expected_missing_in_workflows:
+                lines.append(f'- {item}')
         if warnings:
             lines.append('')
             lines.append('## Local warnings')
@@ -132,22 +182,42 @@ def main() -> int:
                 lines.append(f'- {w}')
         write_report(lines)
         print(REPORT_PATH.as_posix())
-        return 0
+        return 1 if expected_missing_in_workflows else 0
 
     missing = sorted([ctx for ctx in required_contexts if ctx not in available_contexts])
+    expected_missing_in_protection = sorted([ctx for ctx in expected_contexts if ctx not in required_contexts])
+    unexpected_in_protection = sorted([ctx for ctx in required_contexts if ctx not in expected_contexts])
 
+    lines.append(f'- Expected contexts (manifest): {len(expected_contexts)}')
     lines.append(f'- Required contexts: {len(required_contexts)}')
     lines.append(f'- Available contexts (derived): {len(available_contexts)}')
     lines.append(f'- Missing mappings: {len(missing)}')
+    lines.append(f'- Expected-but-missing in protection: {len(expected_missing_in_protection)}')
+    lines.append(f'- Unexpected in protection: {len(unexpected_in_protection)}')
     lines.append('')
 
-    if missing:
+    if missing or expected_missing_in_protection or unexpected_in_protection or expected_missing_in_workflows:
         lines.append('## Missing required contexts in workflow definitions')
         for item in missing:
             lines.append(f'- {item}')
+        if expected_missing_in_workflows:
+            lines.append('')
+            lines.append('## Missing expected contexts in workflow definitions')
+            for item in expected_missing_in_workflows:
+                lines.append(f'- {item}')
+        if expected_missing_in_protection:
+            lines.append('')
+            lines.append('## Missing expected contexts in branch protection')
+            for item in expected_missing_in_protection:
+                lines.append(f'- {item}')
+        if unexpected_in_protection:
+            lines.append('')
+            lines.append('## Unexpected contexts in branch protection')
+            for item in unexpected_in_protection:
+                lines.append(f'- {item}')
     else:
         lines.append('## Result')
-        lines.append('- ✅ All required status contexts are represented in PR workflow job names')
+        lines.append('- ✅ Branch protection contexts match manifest and PR workflow job names')
 
     if warnings:
         lines.append('')
@@ -158,7 +228,7 @@ def main() -> int:
     write_report(lines)
     print(REPORT_PATH.as_posix())
 
-    return 1 if missing else 0
+    return 1 if (missing or expected_missing_in_protection or unexpected_in_protection or expected_missing_in_workflows) else 0
 
 
 if __name__ == '__main__':
