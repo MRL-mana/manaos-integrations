@@ -20,7 +20,8 @@ import threading
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_MISC_DIR = REPO_ROOT / "scripts" / "misc"
-for _sys_path in (REPO_ROOT, SCRIPTS_MISC_DIR):
+LLM_DIR = REPO_ROOT / "llm"
+for _sys_path in (REPO_ROOT, SCRIPTS_MISC_DIR, LLM_DIR):
     _path_str = str(_sys_path)
     if _sys_path.exists() and _path_str not in sys.path:
         sys.path.insert(0, _path_str)
@@ -616,7 +617,10 @@ IMAGE_STOCK_AVAILABLE = False
 
 # LLMルーティング統合（オプション）
 try:
-    from llm_routing import LLMRouter
+    try:
+        from llm.llm_routing import LLMRouter
+    except ImportError:
+        from llm_routing import LLMRouter
 
     LLM_ROUTING_AVAILABLE = True
 except ImportError:
@@ -625,7 +629,10 @@ except ImportError:
 # 拡張LLMルーティング統合（難易度判定対応）
 ENHANCED_LLM_ROUTING_AVAILABLE = False
 try:
-    from llm_router_enhanced import EnhancedLLMRouter
+    try:
+        from llm.llm_router_enhanced import EnhancedLLMRouter
+    except ImportError:
+        from llm_router_enhanced import EnhancedLLMRouter
 
     ENHANCED_LLM_ROUTING_AVAILABLE = True
 except ImportError:
@@ -670,6 +677,20 @@ try:
 except ImportError:
     PHASE2_MEMO_AVAILABLE = False
     get_memo_context_for_messages = None
+
+try:
+    from core5_identity_guard import (
+        evaluate_identity_guard,
+        get_identity_policy_config,
+        identity_guard_to_dict,
+    )
+
+    IDENTITY_GUARD_AVAILABLE = True
+except ImportError:
+    IDENTITY_GUARD_AVAILABLE = False
+    evaluate_identity_guard = None
+    get_identity_policy_config = None
+    identity_guard_to_dict = None
 
 # 通知ハブ統合（オプション）
 try:
@@ -1973,6 +1994,84 @@ def api_comfyui_generate():
     return jsonify({"error": "画像生成に失敗しました"}), 500
 
 
+# ─── Image Generation Service Proxy (→ :5560) ────────
+
+_IMAGE_GEN_BASE = os.getenv("IMAGE_GENERATION_URL", "http://127.0.0.1:5560")
+
+
+def _proxy_image_gen(subpath: str, method: str = "GET"):
+    """画像生成サービスへのプロキシ転送"""
+    url = f"{_IMAGE_GEN_BASE}{subpath}"
+    headers = {k: v for k, v in request.headers if k.lower() not in ("host", "content-length")}
+    try:
+        if method == "GET":
+            resp = requests.get(url, params=request.args, headers=headers, timeout=30)
+        else:
+            resp = requests.request(
+                method, url,
+                json=request.get_json(silent=True),
+                params=request.args,
+                headers=headers,
+                timeout=60,
+            )
+        return resp.content, resp.status_code, {"Content-Type": resp.headers.get("Content-Type", "application/json")}
+    except requests.exceptions.ConnectionError:
+        return _json_error("image_generation_service_unavailable", 503, error="unavailable", namespace="image_gen")
+    except requests.exceptions.Timeout:
+        return _json_error("image_generation_service_timeout", 504, error="timeout", namespace="image_gen")
+    except Exception as e:
+        logger.warning(f"Image Gen proxy error: {e}")
+        return _json_error("image_generation_proxy_error", 502, error="proxy_error", namespace="image_gen")
+
+
+@app.route("/api/v1/images/generate", methods=["POST"])
+def api_v1_images_generate():
+    """画像生成API (→ image_generation_service)"""
+    return _proxy_image_gen("/api/v1/generate", "POST")
+
+
+@app.route("/api/v1/images/status/<job_id>", methods=["GET"])
+def api_v1_images_status(job_id):
+    """ジョブ状態 (→ image_generation_service)"""
+    return _proxy_image_gen(f"/api/v1/status/{job_id}")
+
+
+@app.route("/api/v1/images/result/<job_id>", methods=["GET"])
+def api_v1_images_result(job_id):
+    """生成結果取得 (→ image_generation_service)"""
+    return _proxy_image_gen(f"/api/v1/result/{job_id}")
+
+
+@app.route("/api/v1/images/history", methods=["GET"])
+def api_v1_images_history():
+    """生成履歴 (→ image_generation_service)"""
+    return _proxy_image_gen("/api/v1/history")
+
+
+@app.route("/api/v1/images/dashboard", methods=["GET"])
+def api_v1_images_dashboard():
+    """ダッシュボード (→ image_generation_service)"""
+    return _proxy_image_gen("/api/v1/dashboard")
+
+
+@app.route("/api/v1/images/billing", methods=["GET"])
+def api_v1_images_billing():
+    """課金状態 (→ image_generation_service)"""
+    return _proxy_image_gen("/api/v1/billing")
+
+
+@app.route("/api/v1/images/enhance-preview", methods=["POST"])
+def api_v1_images_enhance_preview():
+    """プロンプト強化プレビュー (→ image_generation_service)"""
+    return _proxy_image_gen("/api/v1/enhance-preview", "POST")
+
+
+@app.route("/api/v1/images/health", methods=["GET"])
+def api_v1_images_health():
+    """画像生成サービスヘルスチェック (→ image_generation_service)"""
+    return _proxy_image_gen("/health")
+
+
 @app.route("/api/svi/capabilities", methods=["GET"])
 def api_svi_capabilities():
     """ComfyUI の /object_info から SVI の必要ノード有無を返す（事前診断用）"""
@@ -3124,6 +3223,55 @@ def _get_or_init_enhanced_llm_router() -> Optional["EnhancedLLMRouter"]:
         return None
 
 
+def _env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _identity_guard_fail_closed_enabled() -> bool:
+    return _env_flag("MANAOS_IDENTITY_GUARD_FAIL_CLOSED", default=False)
+
+
+def _identity_guard_fail_closed_policy(reason: str) -> Dict[str, Any]:
+    return {
+        "checked": False,
+        "blocked": True,
+        "fail_closed": True,
+        "block_reason": reason,
+        "policy_version": "core5-identity-guard-v1",
+    }
+
+
+def _evaluate_identity_guard_or_fail_closed(
+    prompt: str,
+    context: Dict[str, Any],
+    preferences: Dict[str, Any],
+    endpoint: str,
+):
+    if not IDENTITY_GUARD_AVAILABLE or evaluate_identity_guard is None:
+        if _identity_guard_fail_closed_enabled():
+            logger.error(
+                "Identity guard unavailable and fail-closed active: endpoint=%s",
+                endpoint,
+            )
+            return None, _identity_guard_fail_closed_policy("identity_guard_unavailable")
+        return None, None
+
+    try:
+        return evaluate_identity_guard(prompt, context=context, preferences=preferences), None
+    except Exception as e:
+        logger.error(
+            "Identity guard evaluation error: endpoint=%s error=%s",
+            endpoint,
+            e,
+        )
+        if _identity_guard_fail_closed_enabled():
+            return None, _identity_guard_fail_closed_policy("identity_guard_evaluation_failed")
+        return None, None
+
+
 @app.route("/api/llm/health", methods=["GET"])
 def api_llm_health():
     """LLMルーティングのヘルス（利用可能モデル数など）"""
@@ -3164,6 +3312,86 @@ def api_llm_models():
         return _json_error("llm_models_failed", 500, error="internal_error", namespace="llm")
 
 
+@app.route("/api/llm/policy/status", methods=["GET"])
+def api_llm_policy_status():
+    """CORE5 Identityポリシー設定の状態を返す"""
+    if not IDENTITY_GUARD_AVAILABLE or get_identity_policy_config is None:
+        return jsonify(
+            {
+                "identity_guard": {
+                    "available": False,
+                    "fail_closed": _identity_guard_fail_closed_enabled(),
+                }
+            }
+        ), 200
+
+    try:
+        config = get_identity_policy_config()
+        return (
+            jsonify(
+                {
+                    "identity_guard": {
+                        "available": True,
+                        "fail_closed": _identity_guard_fail_closed_enabled(),
+                        **config,
+                    }
+                }
+            ),
+            200,
+        )
+    except Exception as e:
+        logger.warning(f"LLM policy status error: {e}")
+        return _json_error("llm_policy_status_failed", 500, error="internal_error", namespace="llm")
+
+
+@app.route("/api/llm/policy/evaluate", methods=["POST"])
+def api_llm_policy_evaluate():
+    """CORE5 Identityポリシーで入力を事前評価する（実行はしない）"""
+    data = request.get_json(silent=True) or {}
+    prompt = (data.get("prompt") or "").strip()
+    if not prompt:
+        return _json_error("prompt is required", 400, error="bad_request", namespace="llm")
+
+    context = data.get("context") or {}
+    if not isinstance(context, dict):
+        context = {}
+
+    preferences = data.get("preferences") or {}
+    if not isinstance(preferences, dict):
+        preferences = {}
+
+    include_normalized_prompt = bool(data.get("include_normalized_prompt", False))
+
+    if not IDENTITY_GUARD_AVAILABLE or evaluate_identity_guard is None or identity_guard_to_dict is None:
+        identity_payload: Dict[str, Any] = {
+            "checked": False,
+            "available": False,
+            "fail_closed": _identity_guard_fail_closed_enabled(),
+        }
+        if _identity_guard_fail_closed_enabled():
+            identity_payload.update(
+                {
+                    "blocked": True,
+                    "block_reason": "identity_guard_unavailable",
+                }
+            )
+        return jsonify({"identity_guard": identity_payload}), 200
+
+    try:
+        guard = evaluate_identity_guard(prompt, context=context, preferences=preferences)
+        return jsonify(
+            {
+                "identity_guard": identity_guard_to_dict(
+                    guard,
+                    include_normalized_prompt=include_normalized_prompt,
+                )
+            }
+        ), 200
+    except Exception as e:
+        logger.warning(f"LLM policy evaluate error: {e}")
+        return _json_error("llm_policy_evaluate_failed", 500, error="internal_error", namespace="llm")
+
+
 @app.route("/api/llm/analyze", methods=["POST"])
 def api_llm_analyze():
     """プロンプト難易度を分析（LLM呼び出しなし）"""
@@ -3194,12 +3422,47 @@ def api_llm_analyze():
         level = str(analyzer.get_difficulty_level(score))
         recommended = str(analyzer.get_recommended_model(score))
 
+        identity_payload: Dict[str, Any] = {
+            "checked": False,
+            "blocked": False,
+            "risk_score": 0.0,
+            "reasons": [],
+        }
+        guard, fail_closed_policy = _evaluate_identity_guard_or_fail_closed(
+            prompt,
+            context=context,
+            preferences={},
+            endpoint="/api/llm/analyze",
+        )
+        if fail_closed_policy is not None:
+            return (
+                jsonify(
+                    {
+                        "error": "identity_guard_unavailable_fail_closed",
+                        "policy_blocked": True,
+                        "identity_guard": fail_closed_policy,
+                    }
+                ),
+                503,
+            )
+
+        if guard is not None:
+            identity_payload = {
+                "checked": True,
+                "blocked": bool(guard.blocked),
+                "risk_score": float(guard.risk_score),
+                "reasons": list(guard.reasons),
+                "has_explicit_approval": bool(guard.has_explicit_approval),
+                "policy_version": guard.policy_version,
+            }
+
         return (
             jsonify(
                 {
                     "difficulty_score": score,
                     "difficulty_level": level,
                     "recommended_model": recommended,
+                    "identity_guard": identity_payload,
                 }
             ),
             200,
@@ -3236,7 +3499,68 @@ def api_llm_route():
         return _json_error("llm_routing_not_initialized", 503, error="unavailable", namespace="llm")
 
     try:
-        result = router.route(prompt=prompt, context=context, preferences=preferences)
+        normalized_prompt = prompt
+        guard, fail_closed_policy = _evaluate_identity_guard_or_fail_closed(
+            prompt,
+            context=context,
+            preferences=preferences,
+            endpoint="/api/llm/route",
+        )
+        if fail_closed_policy is not None:
+            return (
+                jsonify(
+                    {
+                        "success": True,
+                        "model": "manaos-policy-identity",
+                        "response": "安全ポリシーにより現在リクエストを処理できません。時間をおいて再試行してください。",
+                        "policy_blocked": True,
+                        "policy": {"identity": fail_closed_policy},
+                    }
+                ),
+                200,
+            )
+
+        if guard is not None:
+            if guard.blocked:
+                return (
+                    jsonify(
+                        {
+                            "success": True,
+                            "model": "manaos-policy-identity",
+                            "response": guard.fallback_response,
+                            "policy_blocked": True,
+                            "policy": {
+                                "identity": {
+                                    "checked": True,
+                                    "blocked": True,
+                                    "risk_score": float(guard.risk_score),
+                                    "reasons": list(guard.reasons),
+                                    "has_explicit_approval": bool(guard.has_explicit_approval),
+                                    "policy_version": guard.policy_version,
+                                }
+                            },
+                        }
+                    ),
+                    200,
+                )
+            normalized_prompt = guard.normalized_prompt
+
+        result = router.route(prompt=normalized_prompt, context=context, preferences=preferences)
+        if isinstance(result, dict):
+            identity_meta = {"checked": bool(guard is not None)}
+            if guard is not None:
+                identity_meta.update(
+                    {
+                        "blocked": False,
+                        "risk_score": float(guard.risk_score),
+                        "reasons": list(guard.reasons),
+                        "has_explicit_approval": bool(guard.has_explicit_approval),
+                        "policy_version": guard.policy_version,
+                    }
+                )
+            policy_meta = result.get("policy") if isinstance(result.get("policy"), dict) else {}
+            policy_meta["identity"] = identity_meta
+            result["policy"] = policy_meta
         return jsonify(result), 200
     except Exception as e:
         logger.warning(f"LLM route error: {e}")

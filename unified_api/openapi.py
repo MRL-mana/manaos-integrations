@@ -124,6 +124,39 @@ def build_openapi_spec() -> Dict[str, Any]:
                     "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}, "503": {"description": "未初期化/利用不可"}},
                 }
             },
+            "/api/llm/policy/status": {
+                "get": {
+                    "summary": "Identityポリシー状態",
+                    "description": "CORE5 Identity Guard の有効状態・閾値・fail-close設定を返します",
+                    "operationId": "getLlmPolicyStatus",
+                    "responses": {"200": {"description": "成功"}, "500": {"description": "内部エラー"}},
+                }
+            },
+            "/api/llm/policy/evaluate": {
+                "post": {
+                    "summary": "Identityポリシー評価",
+                    "description": "入力プロンプトをCORE5 Identity Guardで事前評価します（実行しない）",
+                    "operationId": "postLlmPolicyEvaluate",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prompt": {"type": "string"},
+                                        "context": {"type": "object"},
+                                        "preferences": {"type": "object"},
+                                        "include_normalized_prompt": {"type": "boolean", "default": False},
+                                    },
+                                    "required": ["prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}, "500": {"description": "内部エラー"}},
+                }
+            },
             "/api/comfyui/generate": {
                 "post": {
                     "summary": "ComfyUIで画像を生成",
