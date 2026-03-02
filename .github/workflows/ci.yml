@@ -76,7 +76,7 @@ jobs:
         needs: detect-changes
         if: github.event_name != 'schedule' && (needs.detect-changes.outputs.code == 'true' || needs.detect-changes.outputs.workflow == 'true')
         runs-on: ubuntu-latest
-        continue-on-error: true
+        continue-on-error: false
         strategy:
             matrix:
                 python-version: ["3.11", "3.12", "3.13"]
@@ -123,7 +123,7 @@ jobs:
               run: |
                   pip install flake8
                   flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --config .flake8
-              continue-on-error: true
+              continue-on-error: false
 
             - name: Run unit tests
               if: steps.testdirs.outputs.has_unit == 'true'
@@ -135,20 +135,20 @@ jobs:
               if: matrix.python-version == '3.11' && steps.testdirs.outputs.has_integration == 'true'
               run: |
                   pytest tests/integration/ -v --cov-append --cov=. --cov-report=xml --timeout=60
-              continue-on-error: true
+              continue-on-error: false
 
             - name: Upload coverage to Codecov
               if: matrix.python-version == '3.11' && steps.testdirs.outputs.has_unit == 'true'
               uses: codecov/codecov-action@v4
               with:
-                  file: ./coverage.xml
+                  files: ./coverage.xml
                   flags: unittests
                   name: codecov-umbrella
-              continue-on-error: true
+              continue-on-error: false
 
     security:
         runs-on: ubuntu-latest
-        continue-on-error: true
+        continue-on-error: false
 
         steps:
             - uses: actions/checkout@v4
@@ -201,24 +201,24 @@ jobs:
             - name: Gitleaks secret scan
               if: github.event_name == 'schedule' || steps.secfilter.outputs.secrets == 'true'
               run: |
-                  docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect --source /repo --no-banner || true
-              continue-on-error: true
+                  docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect --source /repo --no-banner
+              continue-on-error: false
 
             - name: Run ManaOS Security Auditor
               if: github.event_name == 'schedule' || steps.secfilter.outputs.code == 'true'
               run: |
-                  python security_auditor.py --dir . || true
-              continue-on-error: true
+                  python security_auditor.py --dir .
+              continue-on-error: false
 
             - name: Run Bandit security scan
               if: github.event_name == 'schedule' || steps.secfilter.outputs.code == 'true'
               run: |
-                  bandit -r . -f json -o bandit-report.json --exclude .venv,venv,tests || true
+                  bandit -r . -f json -o bandit-report.json --exclude .venv,venv,tests
 
             - name: Run Safety dependency check
               if: github.event_name == 'schedule' || steps.secfilter.outputs.deps == 'true'
               run: |
-                  safety check --json --output safety-report.json || true
+                  safety check --json --output safety-report.json
 
             - name: Upload security reports
               if: always() && (github.event_name == 'schedule' || steps.secfilter.outputs.code == 'true' || steps.secfilter.outputs.deps == 'true')
@@ -233,7 +233,7 @@ jobs:
     config-validation:
         if: github.event_name != 'schedule'
         runs-on: ubuntu-latest
-        continue-on-error: true
+        continue-on-error: false
 
         steps:
             - uses: actions/checkout@v4
@@ -256,13 +256,13 @@ jobs:
 
             - name: Check port conflicts
               run: |
-                  python config_loader.py || echo "⚠️ Port conflict check failed"
+                  python config_loader.py
 
     lint-yaml:
         needs: detect-changes
         if: github.event_name != 'schedule'
         runs-on: ubuntu-latest
-        continue-on-error: true
+        continue-on-error: false
 
         steps:
             - uses: actions/checkout@v4
@@ -290,5 +290,5 @@ jobs:
                     indentation:
                       spaces: 4
                   EOF
-                  yamllint -c .yamllint-ci.yml .github/workflows/*.yml || true
-              continue-on-error: true
+                  yamllint -c .yamllint-ci.yml .github/workflows/*.yml
+              continue-on-error: false
