@@ -4,6 +4,14 @@
 
 VSCode/Cursorに接続するメモリベースAIアシスタント。ManaOS と外部サービス（ComfyUI / Google Drive / CivitAI / n8n / Slack / Voice など）をつなぐ統合リポジトリ。
 
+## ✅ 最新反映（2026-03-03）
+
+- PR #55: 画像生成サービス統合（`image-generation` サービス、OpenAPI拡張、LLM import path強化）
+- PR #56: 決済スタブAPI追加（`POST /payment/stripe`, `POST /payment/komoju`）
+- 画像生成基盤 v0.4.0（batch/feedback/GPU/memory/Slack/landing）を `master` に統合済み
+
+運用入口は引き続き Unified API（9502）です。
+
 ---
 
 ## 🚀 公式ルート（最小構成）
