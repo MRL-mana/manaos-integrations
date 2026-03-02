@@ -35,11 +35,11 @@ class EnhancedLLMRouter:
             "heavy": "Qwen2.5-Coder-32B-Instruct"
         }
         
-        # モデル設定（Ollama用） - 規制なしモデル優先
+        # モデル設定（Ollama用） - 利用可能なモデルを優先
         self.ollama_models = {
-            "light": "llama3-uncensored:latest",  # デフォルトで規制なし
-            "medium": "gurubot/llama3-guru-uncensored:latest",  # 中規模も規制なし
-            "heavy": "llama3.1:70b"  # 大規模モデル（規制ありだが高性能）
+            "light": "dolphin-llama3:8b",  # 軽量
+            "medium": "dolphin-mistral:7b",  # 中規模
+            "heavy": "qwen2.5:7b"  # 高性能
         }
         
         # 使用するLLMサーバー（"lm_studio" or "ollama"）
@@ -205,11 +205,11 @@ class EnhancedLLMRouter:
             モデル名
         """
         if self.llm_server == "ollama":
-            # フォールバック候補 - 規制なしモデルを優先
+            # フォールバック候補 - 利用可能なモデルから選択
             model_candidates = {
-                "light": ["llama3-uncensored:latest", "llama3:8b", "qwen2.5:7b", "llama3.2:3b"],
-                "medium": ["gurubot/llama3-guru-uncensored:latest", "llama3.1:8b", "qwen2.5:14b", "mistral:7b"],
-                "heavy": ["llama3.1:70b", "qwen2.5:32b", "llama3.1:8b"],
+                "light": ["dolphin-llama3:8b", "qwen2.5:7b", "llava:latest"],
+                "medium": ["dolphin-mistral:7b", "qwen2.5:7b", "dolphin-llama3:8b"],
+                "heavy": ["qwen2.5:7b", "dolphin-mistral:7b", "dolphin-llama3:8b"],
             }
             preferred = self.ollama_models.get(model_key, self.ollama_models["light"])
             candidates = model_candidates.get(model_key, model_candidates["light"])
