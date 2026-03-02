@@ -77,7 +77,11 @@ jobs:
         if ($targets.Count -eq 0) {
           Write-Host "No pylint targets found; skipping"
         } else {
-          pylint --errors-only --rcfile=.pylintrc $targets
+          if (Test-Path ".pylintrc") {
+            pylint --errors-only --rcfile=.pylintrc $targets
+          } else {
+            pylint --errors-only $targets
+          }
         }
       shell: pwsh
       continue-on-error: false
