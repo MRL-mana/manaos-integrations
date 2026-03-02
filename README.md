@@ -1,87 +1,112 @@
 # ManaOS Integrations
 
-**v2.6.0** — ManaOS統合サービスシステム
+**v2.6.2** — ManaOS統合サービスシステム
 
 VSCode/Cursorに接続するメモリベースAIアシスタント。ManaOS と外部サービス（ComfyUI / Google Drive / CivitAI / n8n / Slack / Voice など）をつなぐ統合リポジトリ。
 
 ---
 
-## 📋 クイックスタート
+## 🚀 公式ルート（最小構成）
 
-### 1分で起動（VSCode/Cursor統合）
+ManaOSは「Unified APIを入口とする統合基盤」です。  
+まずは以下の4サービスのみを起動してください。
+
+### 必須（コア）
+
+- Memory
+- Learning
+- LLM Routing
+- Unified API（統合入口）
+
+この4つが動けば、ManaOSは成立します。
+
+---
+
+## ➕ 任意追加（必要時のみ有効化）
+
+以下は用途が発生した場合のみ有効化します。
+
+- Windows Automation
+- Pico HID
+- Moltbot
+- ComfyUI
+- Gallery
+
+常時起動は推奨しません。
+
+---
+
+## 🏭 本番推奨構成
+
+- Waitress運用
+- 3段階キー（Admin / Ops / Read-only）
+- IP allow/block
+- Rate limit
+- 監査ログ有効化
+
+---
+
+## 🛣 最短起動手順（一本道）
+
+### Step 1
+
+必須4サービスを起動
+
+### Step 2
+
+Unified APIヘルス確認
+
+### Step 3
+
+サンプル1リクエスト実行
+
+### Step 4
+
+失敗時は「[トラブルシューティング](TROUBLESHOOTING.md)」へ
+
+一本道以外から始めないこと。
+
+最短起動（VSCode/Cursor）:
 
 ```
 Ctrl+Shift+P → "Tasks: Run Task" → "ManaOS: すべてのサービスを起動"
 ```
 
-**自動実行される内容:**
-- ✅ 4つのコアサービス起動（MRL Memory, Learning System, LLM Routing, Unified API）
-- ✅ ヘルスチェック実行（8サービス / 3グループ: コア・インフラ・オプショナル）
-- ✅ 自律監視システム起動（System3）
-
-### ヘルスチェック
+ヘルスチェック:
 
 ```
 Ctrl+Shift+P → "Tasks: Run Task" → "ManaOS: サービスヘルスチェック"
 ```
 
-### 環境変数設定
+---
 
-サービスの URL やポートを変更したい場合は、環境変数で設定できます。  
-📖 詳細: [環境変数設定ガイド](ENVIRONMENT_VARIABLES.md)
+## 📘 Single Source of Truth
 
-```powershell
-# 例: Ollama を別のマシンから使用
-$env:OLLAMA_URL = "http://192.168.1.100:11434"
-```
+- ポート番号
+- サービスURL
+- 依存関係
+- 有効/無効フラグ
+
+これらは **`config/services_ledger.yaml` のみを正** とします。  
+READMEには重複記載しません。
 
 ---
 
-## 🏗 アーキテクチャ
+## 📂 ディレクトリ運用ルール
 
-### コアサービス
+| ディレクトリ | 用途 |
+|---|---|
+| active | 現行運用中 |
+| experiments | 検証中 |
+| archive | 過去資産（読取専用） |
 
-| サービス | ポート | 説明 |
-|---|---|---|
-| MRL Memory | 5105 | 3層メモリ（Scratchpad → Working → Long-term/Obsidian） |
-| Learning System | 5126 | 学習パターン記録・自動最適化フィードバック |
-| LLM Routing | 5111 | モデル選択・負荷分散 |
-| Unified API | 9502 | 統合エントリポイント |
+---
 
-### PC操作・HID
+## 🏗 アーキテクチャ概要
 
-| サービス | ポート | 説明 |
-|---|---|---|
-| Windows Automation | 5115 | システム情報・スクリーンショット・プロセス/ウィンドウ管理・winget |
-| Pico HID | 5136 | マウス/キーボード操作（Pico USB HID or pynput フォールバック） |
+サービス間の役割・接続・依存は `config/services_ledger.yaml` を参照してください。
 
-### インフラ
-
-| サービス | ポート | 説明 |
-|---|---|---|
-| Ollama | 11434 | ローカルLLM推論 |
-| Gallery API | 5559 | 画像管理 |
-
-### オプショナル
-
-| サービス | ポート | 説明 |
-|---|---|---|
-| ComfyUI | 8188 | 画像生成パイプライン |
-| Moltbot Gateway | 8088 | チャット連携 |
-
-### MCPサーバー（8サーバー）
-
-| MCPサーバー | 方式 | ツール数 |
-|---|---|---|
-| manaos-memory | stdio (Flask bridge :5105) | 4 |
-| manaos-learning | stdio (Flask bridge :5126) | 6 |
-| manaos-unified-api | stdio (:9502) | 多数 |
-| manaos-llm-routing | stdio (:5111) | 3 |
-| manaos-video-pipeline | stdio (:5112) | 3 |
-| manaos-windows-automation | stdio (直接) | 16 |
-| manaos-pico-hid | stdio (直接) | 12 |
-
-### メモリアーキテクチャ
+メモリアーキテクチャ:
 
 ```
 ユーザー入力
@@ -114,6 +139,35 @@ python -m pytest tests/ --cov=. --cov-report=term-missing
 
 ---
 
+## CI Gates
+
+### CI Contract Gate (Stage2)
+
+This repo enforces **Stage2 Contract Checks** as a required CI gate.
+
+**What it checks**
+
+- `tools/validate_contract.py --strict` verifies a small set of **stable, read-only** endpoints and their minimal JSON contract.
+
+**When CI fails**
+
+- A failure usually means an API contract changed (response shape / auth requirement / endpoint behavior).
+- Do **not** weaken the gate. Update the contract intentionally.
+
+**How to update the contract (1 PR rule)**
+
+1. Update the API implementation (or routing) as needed.
+2. Update `tools/validate_contract.py` to match the intended new contract.
+3. Ensure CI passes with `--strict` in the same PR.
+4. In the PR description, write a one-line rationale: `contract update: <why>`.
+
+**Notes**
+
+- Stage2 is designed to stay **read-only and low-dependency**.
+- If an endpoint requires elevated privileges (ops/admin) or external dependencies, keep it out of Stage2 and create a separate optional gate.
+
+---
+
 ## 📝 ロギング
 
 全コアモジュールは `manaos_logger.get_logger(__name__)` で統一されたロガーを使用:
@@ -127,6 +181,7 @@ python -m pytest tests/ --cov=. --cov-report=term-missing
 
 ### 基本ガイド
 - **[クイックリファレンス](QUICKREF.md)** - 1ページのチートシート
+- **[Pixel7 5分セキュア導線](docs/guides/PIXEL7_MINIMAL_SECURE_MODE.md)** - 安全デフォルトでの起動・確認・CLI運用
 - **[VSCodeセットアップ](VSCODE_SETUP_GUIDE.md)** - VSCode完全セットアップガイド
 - **[VSCode vs Cursor](VSCODE_VS_CURSOR.md)** - どっちを使うべき?比較ガイド
 - **[VSCodeチェックリスト](VSCODE_CHECKLIST.md)** - 対応状況とクイックガイド
@@ -169,7 +224,7 @@ python -m pytest tests/ --cov=. --cov-report=term-missing
 
 ## 重要（セキュリティ）
 
-- **統合APIサーバー**: `unified_api_server.py`
+- **統合APIサーバー**: `run_unified_api_server_prod.py`（本番）
 - **最小ハードニング手順**: `docs/guides/SECURITY_HARDENING.md`
   - 3段階キー（Admin / Ops / Read-only）
   - IP allow/block、CORS制御
@@ -191,7 +246,7 @@ start_unified_api_and_moltbot.bat
 ### 開発（ローカル）
 
 ```bash
-python unified_api_server.py
+Ctrl+Shift+P → "Tasks: Run Task" → "ManaOS: すべてのサービスを起動"
 ```
 
 ### 本番（推奨: Waitress）
@@ -220,4 +275,32 @@ start_unified_api_server_prod.bat
 
 ```bash
 python scripts/catalog_scripts.py > scripts/CATALOG.md
+```
+
+Pixel7 最小CLI（health/status/open-url）は `scripts/pixel7/manaos_pixel7_cli.py` を使用します。
+
+## Dashboard監視運用メモ
+
+- 監視の証跡は `logs/dashboard_alert.log`（通知は補助）
+- 更新タスク: `\ManaOS_Dashboard_Update`
+- アラートタスク: `\ManaOS_Dashboard_Alert`
+- 通知設定は `MANAOS_WEBHOOK_URL` / `MANAOS_WEBHOOK_FORMAT` / `MANAOS_WEBHOOK_MENTION` を使用
+
+疎通確認（手動Run → ログ確認）:
+
+```powershell
+schtasks /Run /TN "ManaOS_Dashboard_Update"
+schtasks /Run /TN "ManaOS_Dashboard_Alert"
+Get-Content .\logs\dashboard_alert.log -Tail 50
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\check_file_secretary_fail_streak.ps1 -FailThreshold 3 -Strict
+$env:SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/xxx/yyy/zzz"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\run_file_secretary_fail_check.ps1 -FailThreshold 3 -CooldownMinutes 30
+# タスク環境で確実に使う場合（推奨）
+Copy-Item .\config\secrets.local.example.ps1 .\config\secrets.local.ps1
+# config\secrets.local.ps1 内の SLACK_WEBHOOK_URL を実値へ置換
+# 既存MANAOS_WEBHOOK運用に合わせて一発検証
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\bootstrap_file_secretary_alert_webhook.ps1 -WebhookUrl "https://hooks.slack.com/services/XXX/YYY/ZZZ" -WebhookFormat slack -FailThreshold 3 -CooldownMinutes 30
+# 通知結果を2ログ横断で確認
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\show_notify_status.ps1 -TailLines 200
+# dashboard.json にも notify 要約を格納（例: notify.file_secretary_fail_check.last_status / notify.dashboard_alert.last_status）
 ```

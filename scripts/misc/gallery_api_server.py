@@ -30,6 +30,33 @@ except ImportError:
     try:
         from manaos_logger import get_service_logger
         logger = get_service_logger("gallery")
+        class ManaOSErrorHandler:
+            def __init__(self, *_args, **_kwargs):
+                pass
+
+            def handle_exception(self, *_args, **_kwargs):
+                pass
+
+        class _FallbackErrorCategory:
+            EXTERNAL_SERVICE = "external_service"
+            SYSTEM = "system"
+
+        class _FallbackErrorSeverity:
+            HIGH = "high"
+            CRITICAL = "critical"
+
+        ErrorCategory = _FallbackErrorCategory
+        ErrorSeverity = _FallbackErrorSeverity
+
+        def get_timeout_config():
+            return {"api_call": 30.0, "workflow_execution": 300.0}
+
+        class DummyAuthManager:
+            def require_api_key(self, func):
+                return func
+
+        def get_auth_manager():
+            return DummyAuthManager()
     except ImportError:
         import logging
         logger = logging.getLogger(__name__)

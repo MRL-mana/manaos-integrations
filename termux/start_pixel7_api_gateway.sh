@@ -3,6 +3,7 @@ set -euo pipefail
 
 : "${PIXEL7_API_PORT:=5122}"
 : "${PIXEL7_API_TAILSCALE_ONLY:=1}"
+: "${PIXEL7_API_PROFILE:=core}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -34,5 +35,5 @@ python -c 'import fastapi, uvicorn, pydantic; import sys; sys.exit(0 if int(pyda
   exit 3
 }
 
-echo "Starting Pixel7 API Gateway on :${PIXEL7_API_PORT} (tailscale_only=${PIXEL7_API_TAILSCALE_ONLY})"
+echo "Starting Pixel7 API Gateway on :${PIXEL7_API_PORT} (tailscale_only=${PIXEL7_API_TAILSCALE_ONLY}, profile=${PIXEL7_API_PROFILE})"
 python "$SCRIPT_DIR/pixel7_api_gateway.py"

@@ -129,7 +129,7 @@ if ($RemoteOnly) {
     exit 2
 }
 
-# USB縺後≠繧後・ tcpip 5555 繧貞・譛牙柑蛹悶＠縺ｦ蜀崎ｩｦ陦・
+# USB接続がある場合は tcpip を再有効化して再接続を試行
 $usb = Get-UsbConnectedDevice
 if (-not $usb) {
     if (-not [string]::IsNullOrWhiteSpace($UsbSerial) -and (Test-DeviceOnline $UsbSerial)) {

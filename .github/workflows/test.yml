@@ -10,7 +10,7 @@ concurrency:
 jobs:
   test:
     runs-on: windows-latest
-    continue-on-error: true
+    continue-on-error: false
     
     strategy:
       matrix:
@@ -26,7 +26,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     
     - name: Cache pip packages
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~\AppData\Local\pip\Cache
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -48,7 +48,7 @@ jobs:
           python -m py_compile $_.FullName
         }
       shell: pwsh
-      continue-on-error: true
+      continue-on-error: false
     
     - name: Run environment variable tests
       run: |
@@ -68,14 +68,14 @@ jobs:
       run: |
         python test_service_health_checks.py
       shell: pwsh
-      continue-on-error: true
+      continue-on-error: false
     
     - name: Check code quality
       run: |
         pip install pylint
         pylint --errors-only *.py
       shell: pwsh
-      continue-on-error: true
+      continue-on-error: false
     
     - name: Generate test report
       if: always()

@@ -45,7 +45,7 @@
 - cmd一覧を見る:
   - VS Codeタスク: 「ManaOS: Pixel7 MacroDroid cmd一覧（HTTP）」
 - まとめて疎通確認（Intent送信）:
-  - VS Codeタスク: 「ManaOS: Pixel7 MacroDroid 疎通プローブ（HTTP）」
+  - VS Codeタスク: 「ManaOS: Pixel7 MacroDroid 疎通プローブ（HTTP→ADB）」
 - MacroDroid未設定/HTTP不調時でも動くブリッジ:
   - VS Codeタスク: 「ManaOS: Pixel7 MacroDroid cmd送信（HTTP→ADB）」
 

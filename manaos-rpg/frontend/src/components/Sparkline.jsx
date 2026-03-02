@@ -1,5 +1,3 @@
-import React from 'react'
-
 /** SVG スパークライン — values 配列をインライン折れ線チャートで描画 */
 export default function Sparkline({ values = [], width = 300, height = 40, color = '#4ade80', strokeWidth = 1.5 }) {
   if (!values || values.length < 2) return null

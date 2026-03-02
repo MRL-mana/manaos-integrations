@@ -23,8 +23,8 @@ if ($LightIntervalMinutes -lt 1 -or $LightIntervalMinutes -gt 1439) {
     throw "LightIntervalMinutes must be between 1 and 1439"
 }
 
-$taskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$jobScript`""
-$lightTaskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$lightJobScript`""
+$taskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$jobScript`""
+$lightTaskRun = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$lightJobScript`""
 
 Write-Host "=== Register OpenWebUI Acceptance Daily Task ===" -ForegroundColor Cyan
 Write-Host "TaskName : $TaskName" -ForegroundColor Gray
