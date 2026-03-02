@@ -144,6 +144,12 @@ jobs:
                   pytest tests/integration/ -v --cov-append --cov=. --cov-report=xml --timeout=60
               continue-on-error: false
 
+            - name: Run API auth rate-limit regression test
+              if: matrix.python-version == '3.11'
+              run: |
+                  pytest -q tests/test_api_auth_rate_limit_state.py --timeout=30
+              continue-on-error: false
+
             - name: Upload coverage to Codecov
               if: matrix.python-version == '3.11' && steps.testdirs.outputs.has_unit == 'true'
               uses: codecov/codecov-action@v5
