@@ -53,6 +53,10 @@ jobs:
               'Complete CI/CD Pipeline',
               'Docker Build and Push',
             ]);
+            const nonActionableWarnWorkflows = new Set([
+              'Auto Commit',
+              'Workflow Health Report',
+            ]);
             for (const wf of workflows) {
               if (wf.state !== 'active') continue;
               const run = latestRunByWorkflow.get(wf.id);
@@ -65,15 +69,18 @@ jobs:
                 ok += 1;
               } else if (status.includes('completed/failure') || status.includes('completed/cancelled')) {
                 if (nonCriticalFailureWorkflows.has(wf.name)) {
-                  icon = '🟡';
-                  warn += 1;
+                  icon = '⚪';
                 } else {
                   icon = '❌';
                   fail += 1;
                 }
               } else {
-                icon = '🟡';
-                warn += 1;
+                if (nonActionableWarnWorkflows.has(wf.name)) {
+                  icon = '⚪';
+                } else {
+                  icon = '🟡';
+                  warn += 1;
+                }
               }
               rows.push(`| ${icon} ${wf.name} | ${status} | ${branch} | ${updated} | ${wf.path} |`);
             }
