@@ -51,24 +51,30 @@ jobs:
         run: |
           set -euo pipefail
 
+          : > /tmp/changed_files
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             git fetch origin "${{ github.base_ref }}" --depth=1
-            git diff --name-only -z "origin/${{ github.base_ref }}...HEAD" -- 'docs/**/*.md' '.github/**/*.md' 'README*.md' > /tmp/md_files
+            git diff --name-only -z "origin/${{ github.base_ref }}...HEAD" > /tmp/changed_files
           elif [[ "${{ github.event_name }}" == "push" ]]; then
             BEFORE="${{ github.event.before }}"
             if [[ -z "$BEFORE" || "$BEFORE" =~ ^0+$ ]]; then
               if git rev-parse HEAD~1 >/dev/null 2>&1; then
-                git diff --name-only -z "HEAD~1...HEAD" -- 'docs/**/*.md' '.github/**/*.md' 'README*.md' > /tmp/md_files
+                git diff --name-only -z "HEAD~1...HEAD" > /tmp/changed_files
               else
-                : > /tmp/md_files
+                : > /tmp/changed_files
               fi
             else
-              git diff --name-only -z "$BEFORE...HEAD" -- 'docs/**/*.md' '.github/**/*.md' 'README*.md' > /tmp/md_files
+              git diff --name-only -z "$BEFORE...HEAD" > /tmp/changed_files
             fi
           else
             echo "workflow_dispatch detected; skipping full legacy docs scan"
-            : > /tmp/md_files
+            : > /tmp/changed_files
           fi
+
+          # 対象を Markdown のみへ絞り込み（docs/.github/README*）
+          tr '\0' '\n' < /tmp/changed_files \
+            | grep -E '^(docs/.*\.md|\.github/.*\.md|README.*\.md)$' \
+            | tr '\n' '\0' > /tmp/md_files || true
 
           if [[ ! -s /tmp/md_files ]]; then
             echo "No changed markdown files to lint."
