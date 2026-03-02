@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/*.yml'
       - 'scripts/audit_workflow_policies.py'
+      - 'scripts/audit_required_status_checks.py'
   pull_request:
     branches: [master, main, develop]
   workflow_dispatch:
@@ -32,15 +33,22 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyyaml
+          pip install pyyaml requests
 
       - name: Run workflow policy audit
         run: python scripts/audit_workflow_policies.py
+
+      - name: Run required status checks audit
+        run: python scripts/audit_required_status_checks.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload audit report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: workflow-policy-audit
-          path: artifacts/workflow-policy-audit.md
+          path: |
+            artifacts/workflow-policy-audit.md
+            artifacts/required-checks-audit.md
           retention-days: 14
