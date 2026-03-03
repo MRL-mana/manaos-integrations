@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -49,6 +50,84 @@ from services.unified_doctor import (
     _load_unified_proxy_rules,
     _maybe_refresh_unified_doctor_cache,
 )
+
+
+def _read_json_file(path: Path) -> dict[str, Any] | None:
+    try:
+        if not path.exists():
+            return None
+        raw = path.read_text(encoding="utf-8", errors="replace")
+        data = json.loads(raw)
+        return data if isinstance(data, dict) else None
+    except Exception:
+        return None
+
+
+def _age_seconds_from_iso(ts_value: Any) -> int | None:
+    if not isinstance(ts_value, str) or not ts_value.strip():
+        return None
+    try:
+        dt = datetime.fromisoformat(ts_value)
+        now = datetime.now(dt.tzinfo) if dt.tzinfo else datetime.now()
+        return max(0, int((now - dt).total_seconds()))
+    except Exception:
+        return None
+
+
+def _build_autonomy_status() -> dict[str, Any]:
+    logs_dir = REPO_ROOT / "logs"
+    chain_latest_path = logs_dir / "rpg_full_health_chain.latest.json"
+    lifecycle_latest_path = logs_dir / "rpg_full_health_chain_task_lifecycle.latest.json"
+
+    chain_latest = _read_json_file(chain_latest_path) or {}
+    lifecycle_latest = _read_json_file(lifecycle_latest_path) or {}
+
+    llm_health = _http_json_get(f"{DEFAULT_UNIFIED_API_BASE}/api/llm/health", timeout_s=3.5)
+    policy_status = _http_json_get(f"{DEFAULT_UNIFIED_API_BASE}/api/llm/policy/status", timeout_s=3.5)
+
+    llm_data = llm_health.get("data") if isinstance(llm_health.get("data"), dict) else {}
+    policy_data = policy_status.get("data") if isinstance(policy_status.get("data"), dict) else {}
+    models = llm_data.get("models") if isinstance(llm_data.get("models"), list) else []
+
+    return {
+        "rpg_health_chain": {
+            "found": bool(chain_latest),
+            "path": str(chain_latest_path),
+            "ok": bool(chain_latest.get("ok")),
+            "ok_reason": chain_latest.get("ok_reason"),
+            "last_ts": chain_latest.get("ts"),
+            "age_sec": _age_seconds_from_iso(chain_latest.get("ts")),
+            "failed_step_count": int(chain_latest.get("failed_step_count") or 0),
+            "failed_steps": chain_latest.get("failed_steps") if isinstance(chain_latest.get("failed_steps"), list) else [],
+        },
+        "scheduler": {
+            "found": bool(lifecycle_latest),
+            "path": str(lifecycle_latest_path),
+            "ok": bool(lifecycle_latest.get("ok")),
+            "ok_reason": lifecycle_latest.get("ok_reason"),
+            "task_name": lifecycle_latest.get("task_name"),
+            "interval_minutes": lifecycle_latest.get("interval_minutes"),
+            "last_ts": lifecycle_latest.get("ts"),
+            "age_sec": _age_seconds_from_iso(lifecycle_latest.get("ts")),
+        },
+        "unified_llm": {
+            "ok": bool(llm_health.get("ok")),
+            "status": llm_health.get("status"),
+            "error": llm_health.get("error"),
+            "llm_server": llm_data.get("llm_server"),
+            "available_models": llm_data.get("available_models"),
+            "models": models,
+            "policy_ok": bool(policy_status.get("ok")),
+            "policy_status": policy_status.get("status"),
+            "policy_error": policy_status.get("error"),
+            "policy_fail_closed": policy_data.get("fail_closed"),
+            "policy_guard_enabled": policy_data.get("guard_enabled"),
+        },
+    }
+
+
+def autonomy_status() -> dict[str, Any]:
+    return _build_autonomy_status()
 
 
 def compute_danger(host: dict, services: list[dict]) -> int:
@@ -481,6 +560,8 @@ def snapshot() -> dict[str, Any]:
     if recovered:
         append_event(EVENTS_FILE, "service_recovered", "always_on が復旧しました", {"services": recovered})
 
+    autonomy = _build_autonomy_status()
+
     return {
         "ts": int(time.time()),
         "menu": menu,
@@ -513,4 +594,5 @@ def snapshot() -> dict[str, Any]:
         "next_action_hints": next_action_hints,
         "always_on_down": down_now,
         "rl_anything": _get_rl_dashboard(),
+        "autonomy": autonomy,
     }

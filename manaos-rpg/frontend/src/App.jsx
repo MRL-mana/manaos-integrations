@@ -65,19 +65,36 @@ export default function App() {
     }
   }, [])
 
+  const refreshAutonomy = useCallback(async function refreshAutonomy() {
+    try {
+      const autonomy = await fetchJson('/api/autonomy')
+      setState((prev) => {
+        if (!prev || typeof prev !== 'object') return prev
+        return { ...prev, autonomy }
+      })
+    } catch {
+    }
+  }, [])
+
   const refreshState = useCallback(async function refreshState() {
     setErr('')
     setLoading(true)
     try {
       const st = await fetchJson('/api/state')
       setState(st)
+      refreshAutonomy()
       setLastRefreshTs(Date.now())
     } catch (e) {
-      setErr(String(e?.message || e))
+      try {
+        const snap = await refreshSnapshot()
+        if (!snap) setErr(String(e?.message || e))
+      } catch {
+        setErr(String(e?.message || e))
+      }
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [refreshAutonomy, refreshSnapshot])
 
   const [runningAction, setRunningAction] = useState('')
 
@@ -113,7 +130,7 @@ export default function App() {
   }, [apiBase, refreshSnapshot])
 
   useEffect(() => {
-    refreshSnapshot()
+    refreshState()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -132,7 +149,7 @@ export default function App() {
   useEffect(() => {
     if (!autoRefresh) return
     const id = setInterval(() => {
-      refreshSnapshot().then(() => {
+      refreshState().then(() => {
         if (active === 'logs') refreshEvents()
       })
     }, AUTO_REFRESH_MS)

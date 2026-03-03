@@ -9,6 +9,7 @@ from fastapi import APIRouter
 from core.config import EVENTS_FILE, STATE_FILE
 from collectors.events import tail_events
 from services.snapshot import snapshot as _snapshot
+from services.snapshot import autonomy_status as _autonomy_status
 
 router = APIRouter()
 
@@ -25,10 +26,19 @@ def api_snapshot() -> dict[str, Any]:
     return data
 
 
+@router.get("/api/autonomy")
+def api_autonomy() -> dict[str, Any]:
+    return _autonomy_status()
+
+
 @router.get("/api/state")
 def api_state() -> dict[str, Any]:
     if STATE_FILE.exists():
-        return json.loads(STATE_FILE.read_text(encoding="utf-8"))
+        data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            data["autonomy"] = _autonomy_status()
+            return data
+        return {"autonomy": _autonomy_status()}
     return {"error": "no state yet. call /api/snapshot first."}
 
 
