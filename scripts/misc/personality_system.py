@@ -14,6 +14,11 @@ from enum import Enum
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+try:
+    import yaml
+except ImportError:
+    yaml = None
+
 # 統一モジュールのインポート
 from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
@@ -119,6 +124,60 @@ class PersonalitySystem:
             "enable_personality": True,
             "persona_storage_path": "persona_profiles.json"
         }
+
+    def _load_persona_from_yaml(self) -> Optional[PersonalityProfile]:
+        """persona_config.yaml を優先読み込みして人格プロフィール化する"""
+        if yaml is None:
+            return None
+
+        candidate_paths = [
+            Path(__file__).resolve().parents[2] / "persona_config.yaml",
+            Path(__file__).resolve().parents[1] / "persona_config.yaml",
+            Path(__file__).resolve().parent / "persona_config.yaml",
+        ]
+
+        for persona_path in candidate_paths:
+            if not persona_path.exists():
+                continue
+
+            try:
+                with open(persona_path, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f) or {}
+
+                persona = data.get("persona") if isinstance(data, dict) else None
+                if not isinstance(persona, dict):
+                    continue
+
+                conversation_style = persona.get("conversation_style") or {}
+                tone = str(conversation_style.get("tone") or "清楚でフレンドリー、でもカジュアル")
+                system_prompt = str(persona.get("system_prompt") or "")
+
+                created_at = datetime.now().isoformat()
+                profile = PersonalityProfile(
+                    name=str(persona.get("active_style_preset") or persona.get("name") or "pure_gal"),
+                    traits=[PersonalityTrait.PURE, PersonalityTrait.FRIENDLY, PersonalityTrait.CASUAL],
+                    tone=tone,
+                    response_style="報告時は事実のみを淡々と伝える。会話・雑談では普通に話す。",
+                    greeting_patterns=[
+                        "こんにちは！",
+                        "おはよう！",
+                        "お疲れさま！",
+                    ],
+                    conversation_starters=[
+                        "今日は何する？",
+                        "調子どう？",
+                        "何か手伝えることある？",
+                    ],
+                    personality_prompt=system_prompt or self._create_default_persona().personality_prompt,
+                    created_at=created_at,
+                    updated_at=created_at,
+                )
+                logger.info(f"✅ persona_config.yaml を適用: {persona_path}")
+                return profile
+            except Exception as e:
+                logger.warning(f"persona_config.yaml 読み込み失敗: {persona_path} ({e})")
+
+        return None
     
     def _create_default_persona(self) -> PersonalityProfile:
         """デフォルト人格プロフィールを作成（清楚系ギャル）"""
@@ -160,6 +219,10 @@ class PersonalitySystem:
     
     def _load_persona(self) -> Optional[PersonalityProfile]:
         """人格プロフィールを読み込む"""
+        persona_from_yaml = self._load_persona_from_yaml()
+        if persona_from_yaml is not None:
+            return persona_from_yaml
+
         storage_path = Path(self.config.get("persona_storage_path", "persona_profiles.json"))
         if storage_path.exists():
             try:
