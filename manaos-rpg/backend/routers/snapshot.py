@@ -4,14 +4,58 @@ import json
 import time
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
 
-from core.config import EVENTS_FILE, STATE_FILE
+from core.config import EVENTS_FILE, STATE_FILE, STORE
 from collectors.events import tail_events
 from services.snapshot import snapshot as _snapshot
 from services.snapshot import autonomy_status as _autonomy_status
 
 router = APIRouter()
+
+MANUAL_CHECK_FILE = STORE / "manual_personality_check.latest.json"
+MANUAL_CHECK_ITEMS = [
+    {"id": "M1", "title": "人格モードの適正（safe固定）"},
+    {"id": "M2", "title": "権限の逸脱チェック（最小権限）"},
+    {"id": "M3", "title": "RPG UI危険操作ガード（fail-closed）"},
+    {"id": "M4", "title": "監査ログの読める状態維持（可観測性）"},
+    {"id": "M5", "title": "再現性の劣化チェック"},
+    {"id": "M6", "title": "周辺機能の常時ON化なし"},
+    {"id": "M7", "title": "人間最終責任の確認"},
+]
+
+
+def _default_manual_check() -> dict[str, Any]:
+    return {
+        "date": time.strftime("%Y-%m-%d"),
+        "operator": "",
+        "mode_expected": "safe",
+        "run_id": "",
+        "checks": [{"id": i["id"], "title": i["title"], "checked": False} for i in MANUAL_CHECK_ITEMS],
+        "notes": "",
+        "updated_at": int(time.time()),
+        "completed": {"count": 0, "total": len(MANUAL_CHECK_ITEMS), "ok": False},
+    }
+
+
+def _normalize_manual_check(payload: dict[str, Any]) -> dict[str, Any]:
+    base = _default_manual_check()
+    base["date"] = str(payload.get("date") or base["date"])
+    base["operator"] = str(payload.get("operator") or "")
+    base["mode_expected"] = str(payload.get("mode_expected") or "safe")
+    base["run_id"] = str(payload.get("run_id") or "")
+    base["notes"] = str(payload.get("notes") or "")
+
+    checks_by_id = {str(c.get("id")): bool(c.get("checked")) for c in (payload.get("checks") or []) if isinstance(c, dict)}
+    base["checks"] = [
+        {"id": i["id"], "title": i["title"], "checked": checks_by_id.get(i["id"], False)}
+        for i in MANUAL_CHECK_ITEMS
+    ]
+    count = sum(1 for c in base["checks"] if c["checked"])
+    total = len(base["checks"])
+    base["completed"] = {"count": count, "total": total, "ok": count == total}
+    base["updated_at"] = int(time.time())
+    return base
 
 
 @router.get("/health")
@@ -46,3 +90,22 @@ def api_state() -> dict[str, Any]:
 def api_events(limit: int = 100) -> dict[str, Any]:
     limit = max(1, min(int(limit), 1000))
     return {"events": tail_events(EVENTS_FILE, limit=limit)}
+
+
+@router.get("/api/manual-check")
+def api_manual_check() -> dict[str, Any]:
+    if MANUAL_CHECK_FILE.exists():
+        try:
+            data = json.loads(MANUAL_CHECK_FILE.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                return _normalize_manual_check(data)
+        except Exception:
+            pass
+    return _default_manual_check()
+
+
+@router.post("/api/manual-check")
+def api_manual_check_save(payload: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+    data = _normalize_manual_check(payload or {})
+    MANUAL_CHECK_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {"ok": True, "manual_check": data}
