@@ -3134,6 +3134,23 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: v114 waiting alert+自動復旧 タスク登録",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/install_v114_waiting_alert_task.ps1",
+        "-EnableAutoRecovery"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: v114 waiting alert タスク状態確認",
       "type": "shell",
       "command": "pwsh",

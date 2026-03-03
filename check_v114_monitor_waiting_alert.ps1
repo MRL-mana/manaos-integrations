@@ -4,6 +4,10 @@ param(
     [int]$Checkpoint = 4500,
     [int]$WaitingAlertMinutes = 30,
     [int]$NotifyCooldownMinutes = 60,
+    [switch]$EnableAutoRecovery,
+    [int]$RecoverAfterConsecutiveAlerts = 3,
+    [int]$RecoveryCooldownMinutes = 120,
+    [string]$RecoveryCommand = "",
     [string]$StateFile = "",
     [ValidateSet('generic','slack','discord')]
     [string]$WebhookFormat = "discord",
@@ -27,6 +31,10 @@ if (Test-Path $ConfigFile) {
         if ($cfg.checkpoint) { $Checkpoint = [int]$cfg.checkpoint }
         if ($cfg.waiting_alert_minutes) { $WaitingAlertMinutes = [int]$cfg.waiting_alert_minutes }
         if ($cfg.notify_cooldown_minutes -or $cfg.notify_cooldown_minutes -eq 0) { $NotifyCooldownMinutes = [int]$cfg.notify_cooldown_minutes }
+        if ($null -ne $cfg.enable_auto_recovery) { $EnableAutoRecovery = [bool]$cfg.enable_auto_recovery }
+        if ($cfg.recover_after_consecutive_alerts) { $RecoverAfterConsecutiveAlerts = [int]$cfg.recover_after_consecutive_alerts }
+        if ($cfg.recovery_cooldown_minutes -or $cfg.recovery_cooldown_minutes -eq 0) { $RecoveryCooldownMinutes = [int]$cfg.recovery_cooldown_minutes }
+        if ($cfg.recovery_command) { $RecoveryCommand = [string]$cfg.recovery_command }
         if ($cfg.state_file) { $StateFile = [string]$cfg.state_file }
         if ($cfg.webhook_format) { $WebhookFormat = [string]$cfg.webhook_format }
         if ($cfg.webhook_url) { $WebhookUrl = [string]$cfg.webhook_url }
@@ -45,6 +53,11 @@ if ([string]::IsNullOrWhiteSpace($StateFile)) {
 }
 if ($WaitingAlertMinutes -lt 1) { $WaitingAlertMinutes = 1 }
 if ($NotifyCooldownMinutes -lt 0) { $NotifyCooldownMinutes = 0 }
+if ($RecoverAfterConsecutiveAlerts -lt 1) { $RecoverAfterConsecutiveAlerts = 1 }
+if ($RecoveryCooldownMinutes -lt 0) { $RecoveryCooldownMinutes = 0 }
+if ([string]::IsNullOrWhiteSpace($RecoveryCommand)) {
+    $RecoveryCommand = "Set-Location '$scriptDir'; powershell -ExecutionPolicy Bypass -File '.\\run_v114_onebutton.ps1' -SkipDataGen"
+}
 
 function Resolve-NotifySettings {
     param(
@@ -128,6 +141,10 @@ function Load-State {
             last_alert_at = ''
             last_status = ''
             last_alerted_age_sec = $null
+            consecutive_waiting_alerts = 0
+            last_recovery_at = ''
+            last_recovery_started = $false
+            last_recovery_error = ''
             updated_at = ''
         }
     }
@@ -140,6 +157,10 @@ function Load-State {
             last_alert_at = ''
             last_status = ''
             last_alerted_age_sec = $null
+            consecutive_waiting_alerts = 0
+            last_recovery_at = ''
+            last_recovery_started = $false
+            last_recovery_error = ''
             updated_at = ''
         }
     }
@@ -150,7 +171,11 @@ function Save-State {
         [string]$Path,
         [string]$LastAlertAt,
         [string]$LastStatus,
-        [object]$LastAlertedAgeSec
+        [object]$LastAlertedAgeSec,
+        [int]$ConsecutiveWaitingAlerts,
+        [string]$LastRecoveryAt,
+        [bool]$LastRecoveryStarted,
+        [string]$LastRecoveryError
     )
 
     $dir = Split-Path -Parent $Path
@@ -162,9 +187,32 @@ function Save-State {
         last_alert_at = $LastAlertAt
         last_status = $LastStatus
         last_alerted_age_sec = $LastAlertedAgeSec
+        consecutive_waiting_alerts = $ConsecutiveWaitingAlerts
+        last_recovery_at = $LastRecoveryAt
+        last_recovery_started = $LastRecoveryStarted
+        last_recovery_error = $LastRecoveryError
         updated_at = [datetimeoffset]::Now.ToString('o')
     }
     ($obj | ConvertTo-Json -Depth 6) | Set-Content -Path $Path -Encoding UTF8
+}
+
+function Invoke-AutoRecovery {
+    param([string]$CommandText)
+
+    $started = $false
+    $error = ''
+    try {
+        Start-Process -FilePath 'powershell' -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', $CommandText) -WindowStyle Hidden | Out-Null
+        $started = $true
+    }
+    catch {
+        $error = $_.Exception.Message
+    }
+
+    return [pscustomobject]@{
+        started = $started
+        error = $error
+    }
 }
 
 if ($RefreshSummary) {
@@ -196,10 +244,24 @@ $lastAlertAt = $null
 if (-not [string]::IsNullOrWhiteSpace([string]$state.last_alert_at)) {
     try { $lastAlertAt = [datetimeoffset]::Parse([string]$state.last_alert_at) } catch { $lastAlertAt = $null }
 }
+$lastRecoveryAt = $null
+if (-not [string]::IsNullOrWhiteSpace([string]$state.last_recovery_at)) {
+    try { $lastRecoveryAt = [datetimeoffset]::Parse([string]$state.last_recovery_at) } catch { $lastRecoveryAt = $null }
+}
 
 $ageSec = if ($null -ne $cp.age_sec) { [int]$cp.age_sec } else { 0 }
 $status = [string]$cp.status
 $shouldAlert = ($status -eq 'waiting' -and $ageSec -ge ($WaitingAlertMinutes * 60))
+$consecutiveWaitingAlerts = 0
+if ($null -ne $state.consecutive_waiting_alerts) {
+    $consecutiveWaitingAlerts = [int]$state.consecutive_waiting_alerts
+}
+if ($shouldAlert) {
+    $consecutiveWaitingAlerts += 1
+}
+else {
+    $consecutiveWaitingAlerts = 0
+}
 
 $cooldownRemainingSec = 0
 $canNotify = $true
@@ -213,17 +275,49 @@ if ($shouldAlert -and $NotifyCooldownMinutes -gt 0 -and $null -ne $lastAlertAt) 
 
 $notified = $false
 $notificationAttempted = $false
+$recoveryAttempted = $false
+$recoveryStarted = $false
+$recoveryError = [string]$state.last_recovery_error
+$recoveryCooldownRemainingSec = 0
+$recoveryCanRun = $true
+if ($EnableAutoRecovery -and $RecoveryCooldownMinutes -gt 0 -and $null -ne $lastRecoveryAt) {
+    $recoveryElapsed = ($now - $lastRecoveryAt).TotalSeconds
+    if ($recoveryElapsed -lt ($RecoveryCooldownMinutes * 60)) {
+        $recoveryCanRun = $false
+        $recoveryCooldownRemainingSec = [int][Math]::Ceiling(($RecoveryCooldownMinutes * 60) - $recoveryElapsed)
+    }
+}
+
 if ($shouldAlert -and $canNotify) {
     $notificationAttempted = $true
     $title = "[v114] ck$Checkpoint waiting alert"
     $body = "status=$status age_sec=$ageSec threshold_sec=$($WaitingAlertMinutes * 60) overall=$($summary.overall)"
     $notified = Send-WebhookNotification -Url $WebhookUrl -Format $WebhookFormat -Status 'degraded' -Title $title -Body $body -Mention $WebhookMention
+}
 
-    Save-State -Path $StateFile -LastAlertAt $now.ToString('o') -LastStatus $status -LastAlertedAgeSec $ageSec
+if ($EnableAutoRecovery -and $shouldAlert -and $consecutiveWaitingAlerts -ge $RecoverAfterConsecutiveAlerts -and $recoveryCanRun) {
+    $recoveryAttempted = $true
+    $recovery = Invoke-AutoRecovery -CommandText $RecoveryCommand
+    $recoveryStarted = [bool]$recovery.started
+    $recoveryError = [string]$recovery.error
+    $lastRecoveryAt = $now
 }
-else {
-    Save-State -Path $StateFile -LastAlertAt ([string]$state.last_alert_at) -LastStatus $status -LastAlertedAgeSec $state.last_alerted_age_sec
+
+$effectiveLastAlertAt = [string]$state.last_alert_at
+$effectiveLastAlertedAgeSec = $state.last_alerted_age_sec
+if ($shouldAlert -and $canNotify) {
+    $effectiveLastAlertAt = $now.ToString('o')
+    $effectiveLastAlertedAgeSec = $ageSec
 }
+
+Save-State -Path $StateFile `
+    -LastAlertAt $effectiveLastAlertAt `
+    -LastStatus $status `
+    -LastAlertedAgeSec $effectiveLastAlertedAgeSec `
+    -ConsecutiveWaitingAlerts $consecutiveWaitingAlerts `
+    -LastRecoveryAt $(if ($null -ne $lastRecoveryAt) { $lastRecoveryAt.ToString('o') } else { [string]$state.last_recovery_at }) `
+    -LastRecoveryStarted $recoveryStarted `
+    -LastRecoveryError $recoveryError
 
 $result = [ordered]@{
     ts = $now.ToString('o')
@@ -236,6 +330,13 @@ $result = [ordered]@{
     cooldown_remaining_sec = [int]$cooldownRemainingSec
     notification_attempted = [bool]$notificationAttempted
     notified = [bool]$notified
+    consecutive_waiting_alerts = [int]$consecutiveWaitingAlerts
+    auto_recovery_enabled = [bool]$EnableAutoRecovery
+    auto_recovery_threshold = [int]$RecoverAfterConsecutiveAlerts
+    recovery_attempted = [bool]$recoveryAttempted
+    recovery_started = [bool]$recoveryStarted
+    recovery_cooldown_remaining_sec = [int]$recoveryCooldownRemainingSec
+    recovery_error = [string]$recoveryError
     summary_file = $SummaryFile
     state_file = $StateFile
     webhook_format = $WebhookFormat
@@ -256,5 +357,6 @@ Write-Host "threshold  : $($WaitingAlertMinutes * 60)s" -ForegroundColor Gray
 Write-Host "shouldAlert: $shouldAlert" -ForegroundColor Gray
 Write-Host "canNotify  : $canNotify" -ForegroundColor Gray
 Write-Host "notified   : $notified" -ForegroundColor Gray
+Write-Host "autoRecover: enabled=$EnableAutoRecovery attempted=$recoveryAttempted started=$recoveryStarted" -ForegroundColor Gray
 
 exit 0
