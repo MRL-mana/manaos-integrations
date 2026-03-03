@@ -3098,6 +3098,37 @@
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true },
       "group": "none"
+    },
+    {
+      "label": "ManaOS: 人格思想セルフチェック（RPG+9502）",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "${workspaceFolder}/tools/personality_self_check.py",
+        "--config",
+        "config/personality_principles.yaml",
+        "--output",
+        "logs/personality_self_check.latest.json",
+        "--strict"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
+    },
+    {
+      "label": "ManaOS: 口調プリセット適用（清楚系ギャル）",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "${workspaceFolder}/tools/apply_dialog_style_preset.py",
+        "--preset",
+        "seiso_gal_feminine"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
     }
   ]
 }
