@@ -2955,6 +2955,18 @@
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true },
       "group": "test"
+    },
+    {
+      "label": "ManaOS: Image Generation 商用スモーク",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "${workspaceFolder}/smoke_image_generation_commercial.py"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "test"
     }
   ]
 }
