@@ -75,7 +75,6 @@ def _age_seconds_from_iso(ts_value: Any) -> int | None:
 
 
 def _build_chain_history_stats(history_path: Path, recent_n: int = 20) -> dict[str, Any]:
-    now = datetime.now()
     day_seconds = 24 * 60 * 60
     total_24h = 0
     ok_24h = 0
@@ -125,6 +124,29 @@ def _build_chain_history_stats(history_path: Path, recent_n: int = 20) -> dict[s
     }
 
 
+def _overall_level(chain_ok: bool, scheduler_ok: bool, llm_ok: bool, history_stats: dict[str, Any]) -> tuple[str, str]:
+    rate_recent = history_stats.get("rateRecent")
+    rate_24h = history_stats.get("rate24h")
+
+    if not chain_ok or not scheduler_ok or not llm_ok:
+        return "ALERT", "component_down"
+
+    rates: list[float] = []
+    for value in (rate_recent, rate_24h):
+        if isinstance(value, (int, float)):
+            rates.append(float(value))
+
+    if not rates:
+        return "WATCH", "no_history_data"
+
+    min_rate = min(rates)
+    if min_rate >= 95.0:
+        return "OK", "all_green"
+    if min_rate >= 80.0:
+        return "WATCH", "success_rate_caution"
+    return "ALERT", "success_rate_low"
+
+
 def _build_autonomy_status() -> dict[str, Any]:
     logs_dir = REPO_ROOT / "logs"
     chain_latest_path = logs_dir / "rpg_full_health_chain.latest.json"
@@ -152,6 +174,7 @@ def _build_autonomy_status() -> dict[str, Any]:
         f" / llm={'ONLINE' if llm_ok else 'OFFLINE'}"
     )
     history_stats = _build_chain_history_stats(chain_history_path, recent_n=20)
+    overall_level, overall_reason = _overall_level(chain_ok, scheduler_ok, llm_ok, history_stats)
 
     return {
         "rpg_health_chain": {
@@ -190,6 +213,8 @@ def _build_autonomy_status() -> dict[str, Any]:
         },
         "overall": {
             "ok": overall_ok,
+            "level": overall_level,
+            "reason": overall_reason,
             "summary": summary_text,
         },
         "history_stats": history_stats,
