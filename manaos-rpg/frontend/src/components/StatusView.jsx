@@ -12,6 +12,14 @@ function fmtAgeSec(v) {
   return `${Math.floor(n / 3600)}時間前`
 }
 
+function successRateClass(rate) {
+  const n = Number(rate)
+  if (!Number.isFinite(n)) return 'mono'
+  if (n >= 95) return 'ok'
+  if (n >= 80) return 'caution'
+  return 'danger'
+}
+
 const GaugeBar = memo(function GaugeBar({ label, pct }) {
   const p = Math.max(0, Math.min(100, Number(pct || 0)))
   const cls = p >= 90 ? 'gaugeDanger' : p >= 70 ? 'gaugeCaution' : 'gaugeOk'
@@ -193,8 +201,8 @@ export default function StatusView({ host, services, models, devices, skills, da
         <div className="kv"><span>最終実行</span><span className="mono">{fmtAgeSec(chain.age_sec)}</span></div>
         <div className="kv"><span>失敗ステップ</span><span className={Number(chain.failed_step_count || 0) > 0 ? 'danger' : 'ok'}>{Number(chain.failed_step_count || 0)}</span></div>
         <div className="kv"><span>判定理由</span><span className="mono">{chain.ok_reason || '—'}</span></div>
-        <div className="kv"><span>24h成功率</span><span className="mono">{typeof historyStats.rate24h === 'number' ? `${historyStats.rate24h}% (${historyStats.ok24h}/${historyStats.count24h})` : '—'}</span></div>
-        <div className="kv"><span>直近{historyStats.recent_window ?? 20}回成功率</span><span className="mono">{typeof historyStats.rateRecent === 'number' ? `${historyStats.rateRecent}% (${historyStats.okRecent}/${historyStats.countRecent})` : '—'}</span></div>
+        <div className="kv"><span>24h成功率</span><span className={`${successRateClass(historyStats.rate24h)} mono`}>{typeof historyStats.rate24h === 'number' ? `${historyStats.rate24h}% (${historyStats.ok24h}/${historyStats.count24h})` : '—'}</span></div>
+        <div className="kv"><span>直近{historyStats.recent_window ?? 20}回成功率</span><span className={`${successRateClass(historyStats.rateRecent)} mono`}>{typeof historyStats.rateRecent === 'number' ? `${historyStats.rateRecent}% (${historyStats.okRecent}/${historyStats.countRecent})` : '—'}</span></div>
 
         <div className="kv" style={{ marginTop: 8 }}><span>スケジューラ</span><span className={scheduler.ok ? 'ok' : 'danger'}>{scheduler.found ? (scheduler.ok ? 'OK' : 'NG') : '未設定'}</span></div>
         <div className="kv"><span>タスク名</span><span className="mono">{scheduler.task_name || '—'}</span></div>
