@@ -27,6 +27,15 @@ function overallLevelClass(level) {
   return 'mono'
 }
 
+function overallReasonLabel(reason) {
+  if (reason === 'all_green') return '全系統正常（成功率しきい値クリア）'
+  if (reason === 'component_down') return '構成要素のいずれかが異常'
+  if (reason === 'no_history_data') return '履歴データ不足（判定保留）'
+  if (reason === 'success_rate_caution') return '成功率が注意域（80%以上95%未満）'
+  if (reason === 'success_rate_low') return '成功率が警戒域（80%未満）'
+  return reason || '—'
+}
+
 const GaugeBar = memo(function GaugeBar({ label, pct }) {
   const p = Math.max(0, Math.min(100, Number(pct || 0)))
   const cls = p >= 90 ? 'gaugeDanger' : p >= 70 ? 'gaugeCaution' : 'gaugeOk'
@@ -68,6 +77,7 @@ export default function StatusView({ host, services, models, devices, skills, da
   const unifiedLlm = autonomy?.unified_llm || {}
   const overall = autonomy?.overall || {}
   const overallLevel = overall.level || (overall.ok ? 'OK' : 'ALERT')
+  const overallReason = overall.reason
   const historyStats = autonomy?.history_stats || {}
 
   const filteredNextActions = useMemo(() => {
@@ -204,6 +214,7 @@ export default function StatusView({ host, services, models, devices, skills, da
       <Box title="自動運用モニタ">
         <div className="kv"><span>総合判定</span><span className={overallLevelClass(overallLevel)}>{overallLevel}</span></div>
         <div className="small mono" style={{ marginBottom: 6 }}>{overall.summary || 'status unavailable'}</div>
+        <div className="kv"><span>総合理由</span><span className="mono">{overallReasonLabel(overallReason)}</span></div>
 
         <div className="kv"><span>RPGヘルスチェーン</span><span className={chain.ok ? 'ok' : 'danger'}>{chain.found ? (chain.ok ? 'PASS' : 'FAIL') : 'N/A'}</span></div>
         <div className="kv"><span>最終実行</span><span className="mono">{fmtAgeSec(chain.age_sec)}</span></div>
