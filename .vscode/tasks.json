@@ -1846,6 +1846,20 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: 口調プリセット適用（清楚系ギャル）",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "${workspaceFolder}/tools/apply_dialog_style_preset.py",
+        "--preset",
+        "seiso_gal_feminine"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: Reason Enum Cooldown Verify Task Status (JSON)",
       "type": "shell",
       "command": "pwsh",
