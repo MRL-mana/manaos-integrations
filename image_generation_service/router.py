@@ -188,49 +188,6 @@ async def generate_image(
 
 
 @router.get(
-    "/{job_id}",
-    response_model=JobStatusResponse,
-    responses={404: {"model": ErrorResponse}},
-    summary="ジョブステータス確認",
-)
-async def get_job_status(
-    job_id: str,
-    svc: ImageGenerationService = Depends(get_service),
-) -> JobStatusResponse:
-    """ジョブの進捗と結果を取得"""
-    result = await svc.get_status(job_id)
-    if result is None:
-        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
-    return result
-
-
-@router.get(
-    "/{job_id}/result",
-    response_model=ImageGenerateResponse,
-    responses={
-        404: {"model": ErrorResponse},
-        202: {"description": "Still processing"},
-    },
-    summary="生成結果取得",
-)
-async def get_job_result(
-    job_id: str,
-    svc: ImageGenerationService = Depends(get_service),
-) -> ImageGenerateResponse:
-    """完了済みジョブの結果を取得。未完了なら 202。"""
-    result = await svc.get_result(job_id)
-    if result is None:
-        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
-    if result.status != JobStatus.completed:
-        return JSONResponse(
-            status_code=202,
-            content={"job_id": job_id, "status": result.status.value,
-                     "message": "Still processing"},
-        )
-    return result
-
-
-@router.get(
     "",
     summary="最近の生成履歴",
     description="指定件数の最近のジョブ一覧を返す",
@@ -418,6 +375,51 @@ async def gpu_status():
 async def gpu_history():
     monitor = get_gpu_monitor()
     return monitor.get_history_stats()
+
+
+# ─── Job Endpoints (dynamic pathは末尾に配置) ───────────
+
+@router.get(
+    "/{job_id}",
+    response_model=JobStatusResponse,
+    responses={404: {"model": ErrorResponse}},
+    summary="ジョブステータス確認",
+)
+async def get_job_status(
+    job_id: str,
+    svc: ImageGenerationService = Depends(get_service),
+) -> JobStatusResponse:
+    """ジョブの進捗と結果を取得"""
+    result = await svc.get_status(job_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    return result
+
+
+@router.get(
+    "/{job_id}/result",
+    response_model=ImageGenerateResponse,
+    responses={
+        404: {"model": ErrorResponse},
+        202: {"description": "Still processing"},
+    },
+    summary="生成結果取得",
+)
+async def get_job_result(
+    job_id: str,
+    svc: ImageGenerationService = Depends(get_service),
+) -> ImageGenerateResponse:
+    """完了済みジョブの結果を取得。未完了なら 202。"""
+    result = await svc.get_result(job_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    if result.status != JobStatus.completed:
+        return JSONResponse(
+            status_code=202,
+            content={"job_id": job_id, "status": result.status.value,
+                     "message": "Still processing"},
+        )
+    return result
 
 
 # ─── App Factory ─────────────────────────────────────
