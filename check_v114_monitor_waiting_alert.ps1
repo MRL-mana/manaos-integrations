@@ -8,6 +8,7 @@ param(
     [int]$RecoverAfterConsecutiveAlerts = 3,
     [int]$RecoveryCooldownMinutes = 120,
     [string]$RecoveryCommand = "",
+    [string]$RecoveryHistoryPath = "",
     [string]$StateFile = "",
     [ValidateSet('generic','slack','discord')]
     [string]$WebhookFormat = "discord",
@@ -27,19 +28,20 @@ if ([string]::IsNullOrWhiteSpace($ConfigFile)) {
 if (Test-Path $ConfigFile) {
     try {
         $cfg = Get-Content -Path $ConfigFile -Raw | ConvertFrom-Json
-        if ($cfg.summary_file) { $SummaryFile = [string]$cfg.summary_file }
-        if ($cfg.checkpoint) { $Checkpoint = [int]$cfg.checkpoint }
-        if ($cfg.waiting_alert_minutes) { $WaitingAlertMinutes = [int]$cfg.waiting_alert_minutes }
-        if ($cfg.notify_cooldown_minutes -or $cfg.notify_cooldown_minutes -eq 0) { $NotifyCooldownMinutes = [int]$cfg.notify_cooldown_minutes }
-        if ($null -ne $cfg.enable_auto_recovery) { $EnableAutoRecovery = [bool]$cfg.enable_auto_recovery }
-        if ($cfg.recover_after_consecutive_alerts) { $RecoverAfterConsecutiveAlerts = [int]$cfg.recover_after_consecutive_alerts }
-        if ($cfg.recovery_cooldown_minutes -or $cfg.recovery_cooldown_minutes -eq 0) { $RecoveryCooldownMinutes = [int]$cfg.recovery_cooldown_minutes }
-        if ($cfg.recovery_command) { $RecoveryCommand = [string]$cfg.recovery_command }
-        if ($cfg.state_file) { $StateFile = [string]$cfg.state_file }
-        if ($cfg.webhook_format) { $WebhookFormat = [string]$cfg.webhook_format }
-        if ($cfg.webhook_url) { $WebhookUrl = [string]$cfg.webhook_url }
-        if ($cfg.webhook_mention) { $WebhookMention = [string]$cfg.webhook_mention }
-        if ($null -ne $cfg.refresh_summary) { $RefreshSummary = [bool]$cfg.refresh_summary }
+        if ($cfg.summary_file -and -not $PSBoundParameters.ContainsKey('SummaryFile')) { $SummaryFile = [string]$cfg.summary_file }
+        if ($cfg.checkpoint -and -not $PSBoundParameters.ContainsKey('Checkpoint')) { $Checkpoint = [int]$cfg.checkpoint }
+        if ($cfg.waiting_alert_minutes -and -not $PSBoundParameters.ContainsKey('WaitingAlertMinutes')) { $WaitingAlertMinutes = [int]$cfg.waiting_alert_minutes }
+        if (($cfg.notify_cooldown_minutes -or $cfg.notify_cooldown_minutes -eq 0) -and -not $PSBoundParameters.ContainsKey('NotifyCooldownMinutes')) { $NotifyCooldownMinutes = [int]$cfg.notify_cooldown_minutes }
+        if ($null -ne $cfg.enable_auto_recovery -and -not $PSBoundParameters.ContainsKey('EnableAutoRecovery')) { $EnableAutoRecovery = [bool]$cfg.enable_auto_recovery }
+        if ($cfg.recover_after_consecutive_alerts -and -not $PSBoundParameters.ContainsKey('RecoverAfterConsecutiveAlerts')) { $RecoverAfterConsecutiveAlerts = [int]$cfg.recover_after_consecutive_alerts }
+        if (($cfg.recovery_cooldown_minutes -or $cfg.recovery_cooldown_minutes -eq 0) -and -not $PSBoundParameters.ContainsKey('RecoveryCooldownMinutes')) { $RecoveryCooldownMinutes = [int]$cfg.recovery_cooldown_minutes }
+        if ($cfg.recovery_command -and -not $PSBoundParameters.ContainsKey('RecoveryCommand')) { $RecoveryCommand = [string]$cfg.recovery_command }
+        if ($cfg.recovery_history_path -and -not $PSBoundParameters.ContainsKey('RecoveryHistoryPath')) { $RecoveryHistoryPath = [string]$cfg.recovery_history_path }
+        if ($cfg.state_file -and -not $PSBoundParameters.ContainsKey('StateFile')) { $StateFile = [string]$cfg.state_file }
+        if ($cfg.webhook_format -and -not $PSBoundParameters.ContainsKey('WebhookFormat')) { $WebhookFormat = [string]$cfg.webhook_format }
+        if ($cfg.webhook_url -and -not $PSBoundParameters.ContainsKey('WebhookUrl')) { $WebhookUrl = [string]$cfg.webhook_url }
+        if ($cfg.webhook_mention -and -not $PSBoundParameters.ContainsKey('WebhookMention')) { $WebhookMention = [string]$cfg.webhook_mention }
+        if ($null -ne $cfg.refresh_summary -and -not $PSBoundParameters.ContainsKey('RefreshSummary')) { $RefreshSummary = [bool]$cfg.refresh_summary }
     }
     catch {
     }
@@ -57,6 +59,9 @@ if ($RecoverAfterConsecutiveAlerts -lt 1) { $RecoverAfterConsecutiveAlerts = 1 }
 if ($RecoveryCooldownMinutes -lt 0) { $RecoveryCooldownMinutes = 0 }
 if ([string]::IsNullOrWhiteSpace($RecoveryCommand)) {
     $RecoveryCommand = "Set-Location '$scriptDir'; powershell -ExecutionPolicy Bypass -File '.\\run_v114_onebutton.ps1' -SkipDataGen"
+}
+if ([string]::IsNullOrWhiteSpace($RecoveryHistoryPath)) {
+    $RecoveryHistoryPath = Join-Path $scriptDir 'logs\v114_waiting_recovery_history.jsonl'
 }
 
 function Resolve-NotifySettings {
@@ -215,6 +220,20 @@ function Invoke-AutoRecovery {
     }
 }
 
+function Append-RecoveryHistory {
+    param(
+        [string]$Path,
+        [hashtable]$Entry
+    )
+
+    $dir = Split-Path -Parent $Path
+    if ($dir -and -not (Test-Path $dir)) {
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+    }
+
+    ($Entry | ConvertTo-Json -Depth 8 -Compress) | Add-Content -Path $Path -Encoding UTF8
+}
+
 if ($RefreshSummary) {
     $summaryScript = Join-Path $scriptDir 'summarize_v114_monitor_logs.ps1'
     if (Test-Path $summaryScript) {
@@ -280,6 +299,7 @@ $recoveryStarted = $false
 $recoveryError = [string]$state.last_recovery_error
 $recoveryCooldownRemainingSec = 0
 $recoveryCanRun = $true
+$recoveryHistoryWritten = $false
 if ($EnableAutoRecovery -and $RecoveryCooldownMinutes -gt 0 -and $null -ne $lastRecoveryAt) {
     $recoveryElapsed = ($now - $lastRecoveryAt).TotalSeconds
     if ($recoveryElapsed -lt ($RecoveryCooldownMinutes * 60)) {
@@ -301,6 +321,22 @@ if ($EnableAutoRecovery -and $shouldAlert -and $consecutiveWaitingAlerts -ge $Re
     $recoveryStarted = [bool]$recovery.started
     $recoveryError = [string]$recovery.error
     $lastRecoveryAt = $now
+
+    $historyEntry = [ordered]@{
+        ts = $now.ToString('o')
+        checkpoint = [int]$Checkpoint
+        status = $status
+        age_sec = $ageSec
+        waiting_alert_minutes = [int]$WaitingAlertMinutes
+        consecutive_waiting_alerts = [int]$consecutiveWaitingAlerts
+        auto_recovery_threshold = [int]$RecoverAfterConsecutiveAlerts
+        recovery_started = [bool]$recoveryStarted
+        recovery_error = [string]$recoveryError
+        recovery_command = [string]$RecoveryCommand
+        summary_overall = [string]$summary.overall
+    }
+    Append-RecoveryHistory -Path $RecoveryHistoryPath -Entry $historyEntry
+    $recoveryHistoryWritten = $true
 }
 
 $effectiveLastAlertAt = [string]$state.last_alert_at
@@ -337,6 +373,8 @@ $result = [ordered]@{
     recovery_started = [bool]$recoveryStarted
     recovery_cooldown_remaining_sec = [int]$recoveryCooldownRemainingSec
     recovery_error = [string]$recoveryError
+    recovery_history_path = [string]$RecoveryHistoryPath
+    recovery_history_written = [bool]$recoveryHistoryWritten
     summary_file = $SummaryFile
     state_file = $StateFile
     webhook_format = $WebhookFormat

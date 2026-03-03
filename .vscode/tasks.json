@@ -3198,6 +3198,22 @@
       "group": "none"
     },
     {
+      "label": "ManaOS: v114 waiting alert 復旧履歴（最新20）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$p='${workspaceFolder}/logs/v114_waiting_recovery_history.jsonl'; if (Test-Path $p) { Get-Content $p -Tail 20 } else { Write-Host 'NO_RECOVERY_HISTORY' }"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "group": "none"
+    },
+    {
       "label": "ManaOS: v114 waiting alert タスク解除",
       "type": "shell",
       "command": "pwsh",

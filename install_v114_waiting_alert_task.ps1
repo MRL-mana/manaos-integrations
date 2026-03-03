@@ -7,6 +7,7 @@ param(
     [int]$RecoverAfterConsecutiveAlerts = 3,
     [int]$RecoveryCooldownMinutes = 120,
     [string]$RecoveryCommand = '',
+    [string]$RecoveryHistoryPath = '',
     [ValidateSet('generic','slack','discord')]
     [string]$WebhookFormat = 'discord',
     [string]$WebhookUrl = '',
@@ -41,6 +42,9 @@ if ($RecoverAfterConsecutiveAlerts -lt 1) {
 if ($RecoveryCooldownMinutes -lt 0) {
     throw 'RecoveryCooldownMinutes must be >= 0'
 }
+if ([string]::IsNullOrWhiteSpace($RecoveryHistoryPath)) {
+    $RecoveryHistoryPath = Join-Path $scriptDir 'logs\v114_waiting_recovery_history.jsonl'
+}
 
 if ([string]::IsNullOrWhiteSpace($WebhookUrl) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_URL)) {
     $WebhookUrl = $env:MANAOS_WEBHOOK_URL
@@ -58,6 +62,7 @@ $configObj = [ordered]@{
     recover_after_consecutive_alerts = [int]$RecoverAfterConsecutiveAlerts
     recovery_cooldown_minutes = [int]$RecoveryCooldownMinutes
     recovery_command = [string]$RecoveryCommand
+    recovery_history_path = [string]$RecoveryHistoryPath
     state_file = Join-Path $scriptDir 'logs\v114_waiting_alert_state.json'
     webhook_format = [string]$WebhookFormat
     webhook_url = [string]$WebhookUrl
@@ -76,6 +81,7 @@ Write-Host "Account  : $(if ($useSystemAccount) { 'SYSTEM' } else { $env:USERNAM
 Write-Host "Script   : $jobScript" -ForegroundColor Gray
 Write-Host "Config   : $configPath" -ForegroundColor Gray
 Write-Host "Recovery : enabled=$($EnableAutoRecovery.IsPresent) after=$RecoverAfterConsecutiveAlerts cooldown=${RecoveryCooldownMinutes}min" -ForegroundColor Gray
+Write-Host "History  : $RecoveryHistoryPath" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 
 if ($PrintOnly) {
