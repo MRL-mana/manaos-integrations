@@ -15,6 +15,7 @@ from services.snapshot import autonomy_status as _autonomy_status
 router = APIRouter()
 
 MANUAL_CHECK_FILE = STORE / "manual_personality_check.latest.json"
+MANUAL_STAMP_HISTORY_FILE = STORE / "manual_personality_check.stamps.json"
 MANUAL_CHECK_ITEMS = [
     {"id": "M1", "title": "人格モードの適正（safe固定）"},
     {"id": "M2", "title": "権限の逸脱チェック（最小権限）"},
@@ -74,6 +75,37 @@ def _normalize_manual_check(payload: dict[str, Any]) -> dict[str, Any]:
     return base
 
 
+def _load_manual_stamps() -> list[dict[str, Any]]:
+    if MANUAL_STAMP_HISTORY_FILE.exists():
+        try:
+            data = json.loads(MANUAL_STAMP_HISTORY_FILE.read_text(encoding="utf-8"))
+            if isinstance(data, list):
+                return [x for x in data if isinstance(x, dict)]
+        except Exception:
+            return []
+    return []
+
+
+def _save_manual_stamps(stamps: list[dict[str, Any]]) -> None:
+    MANUAL_STAMP_HISTORY_FILE.write_text(
+        json.dumps(stamps[:200], ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def _to_stamp(data: dict[str, Any]) -> dict[str, Any]:
+    ts = int(time.time())
+    return {
+        "stamp_id": f"manual7-{ts}",
+        "ts": ts,
+        "date": data.get("date", ""),
+        "operator": data.get("operator", ""),
+        "run_id": data.get("run_id", ""),
+        "mode_expected": data.get("mode_expected", "safe"),
+        "completed": data.get("completed", {}),
+    }
+
+
 @router.get("/health")
 def health() -> dict[str, Any]:
     return {"ok": True, "ts": int(time.time())}
@@ -117,19 +149,37 @@ def api_manual_check() -> dict[str, Any]:
         try:
             data = json.loads(MANUAL_CHECK_FILE.read_text(encoding="utf-8"))
             if isinstance(data, dict):
-                return _normalize_manual_check(data)
+                normalized = _normalize_manual_check(data)
+                normalized["stamps_recent"] = _load_manual_stamps()[:10]
+                return normalized
         except (JSONDecodeError, OSError, TypeError, ValueError):
             pass
-    return _default_manual_check()
+    data = _default_manual_check()
+    data["stamps_recent"] = _load_manual_stamps()[:10]
+    return data
+
+
+@router.get("/api/manual-check/stamps")
+def api_manual_check_stamps(limit: int = 20) -> dict[str, Any]:
+    limit = max(1, min(int(limit), 100))
+    stamps = _load_manual_stamps()
+    return {"stamps": stamps[:limit]}
 
 
 @router.post("/api/manual-check")
-def api_manual_check_save(
-    payload: dict[str, Any] = Body(default={}),
-) -> dict[str, Any]:
+def api_manual_check_save(payload: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+    prev = api_manual_check()
     data = _normalize_manual_check(payload or {})
-    MANUAL_CHECK_FILE.write_text(
-        json.dumps(data, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
-    return {"ok": True, "manual_check": data}
+    MANUAL_CHECK_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    stamp = None
+    prev_ok = bool((prev.get("completed") or {}).get("ok")) if isinstance(prev, dict) else False
+    should_stamp = bool(data.get("completed", {}).get("ok")) and (not prev_ok or prev.get("date") != data.get("date"))
+    stamps = _load_manual_stamps()
+    if should_stamp:
+        stamp = _to_stamp(data)
+        stamps = [stamp] + stamps
+        _save_manual_stamps(stamps)
+
+    data["stamps_recent"] = stamps[:10]
+    return {"ok": True, "manual_check": data, "stamp": stamp}

@@ -146,6 +146,11 @@ export default function StatusView({ host, services, models, devices, skills, da
     setManualCheck(next)
   }
 
+  function setManualField(key, value) {
+    if (!manualCheck) return
+    setManualCheck({ ...manualCheck, [key]: value })
+  }
+
   return (
     <div className="grid" style={{ position: 'relative' }}>
       {/* カスタマイズボタン */}
@@ -294,6 +299,29 @@ export default function StatusView({ host, services, models, devices, skills, da
         <div className="kv"><span>完了</span><span className={(manualCheck?.completed?.ok ? 'ok' : 'caution') + ' mono'}>{manualCheck?.completed?.count ?? 0}/{manualCheck?.completed?.total ?? 7}</span></div>
 
         <div style={{ marginTop: 8, display: 'grid', gap: 6 }}>
+          <label className="small" style={{ display: 'grid', gap: 4 }}>
+            <span className="mono">operator</span>
+            <input
+              type="text"
+              value={manualCheck?.operator || ''}
+              onChange={(e) => setManualField('operator', e.target.value)}
+              disabled={manualSaving}
+              placeholder="operator name"
+            />
+          </label>
+          <label className="small" style={{ display: 'grid', gap: 4 }}>
+            <span className="mono">run_id (optional)</span>
+            <input
+              type="text"
+              value={manualCheck?.run_id || ''}
+              onChange={(e) => setManualField('run_id', e.target.value)}
+              disabled={manualSaving}
+              placeholder="run id"
+            />
+          </label>
+        </div>
+
+        <div style={{ marginTop: 8, display: 'grid', gap: 6 }}>
           {(manualCheck?.checks || []).map((item) => (
             <label key={item.id} className="small" style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer' }}>
               <input
@@ -314,6 +342,16 @@ export default function StatusView({ host, services, models, devices, skills, da
           </button>
           {manualCheck?.completed?.ok ? <span className="ok small">運用OKスタンプ: READY</span> : <span className="caution small">未完了項目あり</span>}
         </div>
+        {Array.isArray(manualCheck?.stamps_recent) && manualCheck.stamps_recent.length > 0 ? (
+          <div style={{ marginTop: 10 }}>
+            <div className="small mono" style={{ marginBottom: 4 }}>最近の完了スタンプ</div>
+            {manualCheck.stamps_recent.slice(0, 5).map((stamp, idx) => (
+              <div key={`${stamp?.stamp_id || 'stamp'}-${idx}`} className="small mono">
+                - {stamp?.date || '—'} / {stamp?.operator || 'unknown'} / {stamp?.run_id || 'no-run-id'} / {stamp?.stamp_id || '—'}
+              </div>
+            ))}
+          </div>
+        ) : null}
         {manualMsg ? <div className="small mono" style={{ marginTop: 6 }}>{manualMsg}</div> : null}
       </Box>
 
