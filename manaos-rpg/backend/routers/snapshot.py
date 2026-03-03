@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import time
+from json import JSONDecodeError
 from typing import Any
 
 from fastapi import APIRouter, Body
@@ -31,10 +32,17 @@ def _default_manual_check() -> dict[str, Any]:
         "operator": "",
         "mode_expected": "safe",
         "run_id": "",
-        "checks": [{"id": i["id"], "title": i["title"], "checked": False} for i in MANUAL_CHECK_ITEMS],
+        "checks": [
+            {"id": item["id"], "title": item["title"], "checked": False}
+            for item in MANUAL_CHECK_ITEMS
+        ],
         "notes": "",
         "updated_at": int(time.time()),
-        "completed": {"count": 0, "total": len(MANUAL_CHECK_ITEMS), "ok": False},
+        "completed": {
+            "count": 0,
+            "total": len(MANUAL_CHECK_ITEMS),
+            "ok": False,
+        },
     }
 
 
@@ -46,10 +54,18 @@ def _normalize_manual_check(payload: dict[str, Any]) -> dict[str, Any]:
     base["run_id"] = str(payload.get("run_id") or "")
     base["notes"] = str(payload.get("notes") or "")
 
-    checks_by_id = {str(c.get("id")): bool(c.get("checked")) for c in (payload.get("checks") or []) if isinstance(c, dict)}
+    checks_by_id = {
+        str(check.get("id")): bool(check.get("checked"))
+        for check in (payload.get("checks") or [])
+        if isinstance(check, dict)
+    }
     base["checks"] = [
-        {"id": i["id"], "title": i["title"], "checked": checks_by_id.get(i["id"], False)}
-        for i in MANUAL_CHECK_ITEMS
+        {
+            "id": item["id"],
+            "title": item["title"],
+            "checked": checks_by_id.get(item["id"], False),
+        }
+        for item in MANUAL_CHECK_ITEMS
     ]
     count = sum(1 for c in base["checks"] if c["checked"])
     total = len(base["checks"])
@@ -66,7 +82,10 @@ def health() -> dict[str, Any]:
 @router.get("/api/snapshot")
 def api_snapshot() -> dict[str, Any]:
     data = _snapshot()
-    STATE_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    STATE_FILE.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     return data
 
 
@@ -99,13 +118,18 @@ def api_manual_check() -> dict[str, Any]:
             data = json.loads(MANUAL_CHECK_FILE.read_text(encoding="utf-8"))
             if isinstance(data, dict):
                 return _normalize_manual_check(data)
-        except Exception:
+        except (JSONDecodeError, OSError, TypeError, ValueError):
             pass
     return _default_manual_check()
 
 
 @router.post("/api/manual-check")
-def api_manual_check_save(payload: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+def api_manual_check_save(
+    payload: dict[str, Any] = Body(default={}),
+) -> dict[str, Any]:
     data = _normalize_manual_check(payload or {})
-    MANUAL_CHECK_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    MANUAL_CHECK_FILE.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     return {"ok": True, "manual_check": data}
