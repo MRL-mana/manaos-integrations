@@ -611,6 +611,30 @@ def _send_loop_health_slack(health: dict, alerts: list) -> bool:
         return False
 
 
+# ─── Revenue Anomaly Detection ───────────────────────
+
+@router.get(
+    "/revenue/anomaly",
+    summary="収益異常検知",
+    description="日次収益データをAnomalyDetectorで分析し、急落・停滞・異常を検出",
+)
+async def revenue_anomaly(
+    days: int = 30,
+    auth: AuthContext = Depends(require_auth),
+):
+    """RLAnything AnomalyDetector × 収益データ"""
+    from .revenue_anomaly import analyze_revenue_anomalies
+
+    writer = RevenueWriter()
+    history = writer.get_daily_history(days)
+    daily_data = history.get("days", [])
+
+    result = analyze_revenue_anomalies(daily_data)
+    result["period_days"] = days
+    result["data_source"] = "revenue_tracker.db"
+    return result
+
+
 # ─── GPU Monitoring ──────────────────────────────────
 
 @router.get(

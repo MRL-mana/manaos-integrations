@@ -13,6 +13,7 @@ export default function RevenueView() {
   const [kpi, setKpi] = useState(null)
   const [history, setHistory] = useState(null)
   const [alerts, setAlerts] = useState(null)
+  const [anomaly, setAnomaly] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -20,14 +21,16 @@ export default function RevenueView() {
     setLoading(true)
     setError('')
     try {
-      const [kpiData, histData, alertData] = await Promise.all([
+      const [kpiData, histData, alertData, anomalyData] = await Promise.all([
         fetchJson('/api/revenue/kpi'),
         fetchJson('/api/revenue/history?days=30'),
         fetchJson('/api/revenue/alert-check'),
+        fetchJson('/api/revenue/anomaly?days=30'),
       ])
       setKpi(kpiData)
       setHistory(histData)
       setAlerts(alertData)
+      setAnomaly(anomalyData)
     } catch (e) {
       setError(String(e?.message || e))
     } finally {
@@ -278,6 +281,100 @@ export default function RevenueView() {
           <div style={{ color: '#22c55e', textAlign: 'center' }}>
             全次元が正常範囲内です
           </div>
+        </Box>
+      )}
+
+      {/* Anomaly Detection Panel */}
+      {anomaly && (
+        <Box title="🔍 異常検知（AnomalyDetector）">
+          {/* Trend Indicator */}
+          {anomaly.trend && (
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '1rem',
+              padding: '0.5rem',
+              borderRadius: '6px',
+              background: anomaly.trend.direction === 'up' ? '#0a2e1a'
+                : anomaly.trend.direction === 'down' ? '#2e0a0a'
+                : '#1a1a2e',
+            }}>
+              <span style={{ fontSize: '1.5rem' }}>
+                {anomaly.trend.direction === 'up' ? '📈' : anomaly.trend.direction === 'down' ? '📉' : '➡️'}
+              </span>
+              <span style={{
+                fontSize: '1.2rem',
+                fontWeight: 'bold',
+                marginLeft: '0.5rem',
+                color: anomaly.trend.direction === 'up' ? '#22c55e'
+                  : anomaly.trend.direction === 'down' ? '#ef4444'
+                  : '#888',
+              }}>
+                {anomaly.trend.direction === 'up' ? '上昇トレンド'
+                  : anomaly.trend.direction === 'down' ? '下降トレンド'
+                  : anomaly.trend.direction === 'stable' ? '安定'
+                  : '不明'}
+              </span>
+              <span style={{ marginLeft: '0.5rem', fontSize: '0.9rem', color: '#888' }}>
+                ({anomaly.trend.change_pct > 0 ? '+' : ''}{anomaly.trend.change_pct?.toFixed(1)}%)
+              </span>
+            </div>
+          )}
+
+          {/* Anomaly Stats */}
+          {anomaly.stats && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '0.5rem',
+              marginBottom: '1rem',
+            }}>
+              <KpiCard
+                label="検査データ点"
+                value={anomaly.stats.data_points ?? 0}
+                sub="日数"
+              />
+              <KpiCard
+                label="異常検出"
+                value={anomaly.alert_count ?? 0}
+                sub={anomaly.alert_count > 0 ? '要確認' : '正常'}
+              />
+              <KpiCard
+                label="検出手法"
+                value={anomaly.stats.detectors_used ?? 0}
+                sub="アクティブ"
+              />
+            </div>
+          )}
+
+          {/* Anomaly Alerts */}
+          {anomaly.alerts && anomaly.alerts.length > 0 ? (
+            anomaly.alerts.map((a, i) => (
+              <div key={i} style={{
+                padding: '0.5rem',
+                marginBottom: '0.5rem',
+                borderRadius: '4px',
+                background: '#2e1a2e',
+                borderLeft: '3px solid #a855f7',
+              }}>
+                <span style={{ fontWeight: 'bold', color: '#a855f7' }}>
+                  🔮 {a.type || 'anomaly'}
+                </span>
+                <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>
+                  {a.message || a.description || JSON.stringify(a)}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div style={{ color: '#22c55e', textAlign: 'center', padding: '0.5rem' }}>
+              異常なし — 収益パターンは正常範囲内です
+            </div>
+          )}
+
+          {anomaly.status === 'degraded' && (
+            <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '0.5rem' }}>
+              ⚠ AnomalyDetector利用不可: {anomaly.error}
+            </div>
+          )}
         </Box>
       )}
     </div>

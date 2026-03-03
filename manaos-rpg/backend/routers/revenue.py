@@ -92,3 +92,18 @@ async def revenue_alert_check() -> Dict[str, Any]:
             "error": data.get("detail", "image_gen unreachable"),
         }
     return data
+
+
+@router.get("/anomaly")
+async def revenue_anomaly(days: int = 30) -> Dict[str, Any]:
+    """収益異常検知 — image_gen の AnomalyDetector を中継"""
+    data = await _fetch_image_gen(f"/api/v1/images/revenue/anomaly?days={days}")
+    if data.get("status") == "error":
+        return {
+            "status": "degraded",
+            "alerts": [],
+            "alert_count": 0,
+            "trend": {"direction": "unknown", "change_pct": 0},
+            "error": data.get("detail", "image_gen unreachable"),
+        }
+    return data
