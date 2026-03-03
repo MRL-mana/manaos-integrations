@@ -3,6 +3,10 @@ param(
     [int]$IntervalMinutes = 10,
     [int]$WaitingAlertMinutes = 30,
     [int]$NotifyCooldownMinutes = 60,
+    [switch]$EnableAutoRecovery,
+    [int]$RecoverAfterConsecutiveAlerts = 3,
+    [int]$RecoveryCooldownMinutes = 120,
+    [string]$RecoveryCommand = '',
     [ValidateSet('generic','slack','discord')]
     [string]$WebhookFormat = 'discord',
     [string]$WebhookUrl = '',
@@ -31,6 +35,12 @@ if ($WaitingAlertMinutes -lt 1) {
 if ($NotifyCooldownMinutes -lt 0) {
     throw 'NotifyCooldownMinutes must be >= 0'
 }
+if ($RecoverAfterConsecutiveAlerts -lt 1) {
+    throw 'RecoverAfterConsecutiveAlerts must be >= 1'
+}
+if ($RecoveryCooldownMinutes -lt 0) {
+    throw 'RecoveryCooldownMinutes must be >= 0'
+}
 
 if ([string]::IsNullOrWhiteSpace($WebhookUrl) -and -not [string]::IsNullOrWhiteSpace($env:MANAOS_WEBHOOK_URL)) {
     $WebhookUrl = $env:MANAOS_WEBHOOK_URL
@@ -44,6 +54,10 @@ $configObj = [ordered]@{
     checkpoint = 4500
     waiting_alert_minutes = [int]$WaitingAlertMinutes
     notify_cooldown_minutes = [int]$NotifyCooldownMinutes
+    enable_auto_recovery = [bool]$EnableAutoRecovery
+    recover_after_consecutive_alerts = [int]$RecoverAfterConsecutiveAlerts
+    recovery_cooldown_minutes = [int]$RecoveryCooldownMinutes
+    recovery_command = [string]$RecoveryCommand
     state_file = Join-Path $scriptDir 'logs\v114_waiting_alert_state.json'
     webhook_format = [string]$WebhookFormat
     webhook_url = [string]$WebhookUrl
@@ -61,6 +75,7 @@ Write-Host "Schedule : MINUTE /MO $IntervalMinutes" -ForegroundColor Gray
 Write-Host "Account  : $(if ($useSystemAccount) { 'SYSTEM' } else { $env:USERNAME })" -ForegroundColor Gray
 Write-Host "Script   : $jobScript" -ForegroundColor Gray
 Write-Host "Config   : $configPath" -ForegroundColor Gray
+Write-Host "Recovery : enabled=$($EnableAutoRecovery.IsPresent) after=$RecoverAfterConsecutiveAlerts cooldown=${RecoveryCooldownMinutes}min" -ForegroundColor Gray
 Write-Host "Command  : $taskRun" -ForegroundColor DarkGray
 
 if ($PrintOnly) {
