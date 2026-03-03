@@ -23,8 +23,8 @@ _IMAGE_GEN_BASE = os.getenv("IMAGE_GEN_API_BASE", "http://127.0.0.1:5560")
 _DEFAULT_API_KEY = os.getenv("IMAGE_GEN_API_KEY", "default")
 
 
-async def _fetch_image_gen(path: str) -> dict:
-    """image_generation_service に GET リクエスト"""
+async def _fetch_image_gen(path: str, method: str = "GET") -> dict:
+    """image_generation_service にリクエスト (GET/POST)"""
     import urllib.request
     import json
     try:
@@ -32,7 +32,7 @@ async def _fetch_image_gen(path: str) -> dict:
         req = urllib.request.Request(
             url,
             headers={"X-API-Key": _DEFAULT_API_KEY},
-            method="GET",
+            method=method,
         )
         with urllib.request.urlopen(req, timeout=10) as resp:
             return json.loads(resp.read())
@@ -104,6 +104,26 @@ async def revenue_anomaly(days: int = 30) -> Dict[str, Any]:
             "alerts": [],
             "alert_count": 0,
             "trend": {"direction": "unknown", "change_pct": 0},
+            "error": data.get("detail", "image_gen unreachable"),
+        }
+    return data
+
+
+@router.post("/auto-tune")
+async def revenue_auto_tune(days: int = 30, apply: bool = False) -> Dict[str, Any]:
+    """収益駆動自動チューニング — image_gen の AutoTuner を中継"""
+    data = await _fetch_image_gen(
+        f"/api/v1/images/revenue/auto-tune?days={days}&apply={str(apply).lower()}",
+        method="POST",
+    )
+    if data.get("status") == "error":
+        return {
+            "status": "degraded",
+            "strategy": "unknown",
+            "actions": [],
+            "action_count": 0,
+            "applied": None,
+            "loop_health": {"before": 0, "estimated_after": 0},
             "error": data.get("detail", "image_gen unreachable"),
         }
     return data

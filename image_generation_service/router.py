@@ -635,6 +635,105 @@ async def revenue_anomaly(
     return result
 
 
+# ─── Revenue Auto-Tuning ────────────────────────────
+
+def _get_current_rl_params() -> dict:
+    """RLAnything Orchestrator から現在のパラメータスナップショットを取得"""
+    try:
+        from .rl_bridge import _get_orchestrator
+        rl = _get_orchestrator()
+        if rl is None:
+            return {}
+        params = {}
+        if hasattr(rl, "policy_gradient"):
+            pg = rl.policy_gradient
+            params["learning_rate"] = getattr(pg, "lr", 0.01)
+            params["temperature"] = getattr(pg, "temperature", 1.0)
+        if hasattr(rl, "curriculum"):
+            cur = rl.curriculum
+            params["curriculum_up_threshold"] = getattr(cur, "up_threshold", 0.75)
+            params["curriculum_down_threshold"] = getattr(cur, "down_threshold", 0.30)
+        if hasattr(rl, "anomaly_detector"):
+            ad = rl.anomaly_detector
+            params["anomaly_z_threshold"] = getattr(ad, "z_threshold", 2.0)
+        return params
+    except Exception:
+        return {}
+
+
+@router.post(
+    "/revenue/auto-tune",
+    summary="収益駆動自動チューニング",
+    description="収益トレンド×異常検知→RL最適パラメータを提案(apply=trueで即時適用)",
+)
+async def revenue_auto_tune(
+    days: int = 30,
+    apply: bool = False,
+    auth: AuthContext = Depends(require_auth),
+    billing: BillingManager = Depends(get_billing),
+    fb: FeedbackManager = Depends(get_feedback),
+):
+    """
+    収益データ → AnomalyDetector → AutoTuner → (optional) MetaController 適用
+    """
+    from .revenue_anomaly import analyze_revenue_anomalies
+    from .revenue_autotuner import auto_tune, apply_tune_to_orchestrator
+    from . import rl_bridge
+
+    # 1) 収益データ取得
+    writer = RevenueWriter()
+    history = writer.get_daily_history(days)
+    daily_data = history.get("days", [])
+
+    # 2) 異常検知
+    anomaly_result = analyze_revenue_anomalies(daily_data)
+    alerts = anomaly_result.get("alerts", [])
+    trend = anomaly_result.get("trend", {"direction": "unknown", "change_pct": 0})
+
+    # 3) ループ健全度 (既存の _compute_loop_health を再利用)
+    bill_data = await billing.get_billing_dashboard(auth.api_key)
+    fb_stats = await fb.get_aggregate_stats(7)
+    rl_data = rl_bridge.get_rl_dashboard() or {}
+    health_dict = _compute_loop_health(bill_data, fb_stats, rl_data)
+    loop_health = float(health_dict.get("score", 0))
+
+    # 4) 現在のRLパラメータ
+    current_params = _get_current_rl_params()
+
+    # 5) Auto-Tune 実行
+    report = auto_tune(
+        revenue_trend=trend,
+        anomaly_alerts=alerts,
+        loop_health_score=loop_health,
+        current_rl_params=current_params,
+    )
+
+    # 6) 適用 (オプション)
+    apply_result = None
+    if apply and report.actions:
+        apply_result = apply_tune_to_orchestrator(report)
+
+    return {
+        "strategy": report.strategy,
+        "actions": [a.to_dict() for a in report.actions],
+        "action_count": len(report.actions),
+        "applied": apply_result is not None,
+        "apply_result": apply_result,
+        "loop_health": {
+            "before": round(loop_health, 2),
+            "estimated_after": report.health_score,
+        },
+        "anomaly_summary": {
+            "alert_count": len(alerts),
+            "trend_direction": trend.get("direction", "unknown"),
+            "change_pct": trend.get("change_pct", 0),
+        },
+        "rl_params": current_params,
+        "revenue_signal": report.revenue_signal,
+        "timestamp": report.timestamp,
+    }
+
+
 # ─── GPU Monitoring ──────────────────────────────────
 
 @router.get(

@@ -13,9 +13,9 @@ export function getApiBase() {
   return import.meta.env.VITE_API_BASE || getDefaultBase()
 }
 
-export async function fetchJson(path) {
+export async function fetchJson(path, opts = {}) {
   const base = getApiBase()
-  const res = await fetch(`${base}${path}`, { cache: 'no-store' })
+  const res = await fetch(`${base}${path}`, { cache: 'no-store', ...opts })
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} for ${path}`)
   }

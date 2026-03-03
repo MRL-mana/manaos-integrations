@@ -14,6 +14,8 @@ export default function RevenueView() {
   const [history, setHistory] = useState(null)
   const [alerts, setAlerts] = useState(null)
   const [anomaly, setAnomaly] = useState(null)
+  const [tuneResult, setTuneResult] = useState(null)
+  const [tuning, setTuning] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -35,6 +37,25 @@ export default function RevenueView() {
       setError(String(e?.message || e))
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function runAutoTune(apply = false) {
+    setTuning(true)
+    try {
+      const data = await fetchJson(
+        `/api/revenue/auto-tune?days=30&apply=${apply}`,
+        { method: 'POST' },
+      )
+      setTuneResult(data)
+      if (apply && !data.error) {
+        // 適用後は全データを再取得
+        await fetchAll()
+      }
+    } catch (e) {
+      setTuneResult({ status: 'error', error: String(e?.message || e) })
+    } finally {
+      setTuning(false)
     }
   }
 
@@ -377,6 +398,174 @@ export default function RevenueView() {
           )}
         </Box>
       )}
+
+      {/* Auto-Tune Control Panel */}
+      <Box title="🎛️ 自動チューニング（AutoTuner）">
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+          <button onClick={() => runAutoTune(false)} disabled={tuning}>
+            {tuning ? '分析中…' : '🔍 分析のみ (Dry Run)'}
+          </button>
+          <button
+            onClick={() => runAutoTune(true)}
+            disabled={tuning}
+            style={{
+              background: '#a855f7',
+              color: '#fff',
+              border: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '4px',
+              cursor: tuning ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {tuning ? '適用中…' : '⚡ 分析 & 適用'}
+          </button>
+        </div>
+
+        {tuneResult && !tuneResult.error && (
+          <>
+            {/* Strategy Badge */}
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '1rem',
+              padding: '0.75rem',
+              borderRadius: '6px',
+              background: {
+                explore: '#1a2e1a',
+                exploit: '#1a1a2e',
+                stabilize: '#2e2a1a',
+                plateau_break: '#2e1a2e',
+                maintain: '#1a2e2e',
+              }[tuneResult.strategy] || '#1a1a1a',
+            }}>
+              <span style={{ fontSize: '1.5rem' }}>
+                {{ explore: '🔍', exploit: '🎯', stabilize: '⚖️', plateau_break: '🔓', maintain: '✅' }[tuneResult.strategy] || '❓'}
+              </span>
+              <span style={{
+                fontSize: '1.2rem',
+                fontWeight: 'bold',
+                marginLeft: '0.5rem',
+                textTransform: 'uppercase',
+              }}>
+                {tuneResult.strategy}
+              </span>
+              {tuneResult.applied && (
+                <span style={{
+                  marginLeft: '0.75rem',
+                  padding: '0.15rem 0.5rem',
+                  borderRadius: '4px',
+                  background: '#22c55e',
+                  color: '#000',
+                  fontSize: '0.75rem',
+                  fontWeight: 'bold',
+                }}>
+                  APPLIED
+                </span>
+              )}
+            </div>
+
+            {/* Loop Health Estimate */}
+            {tuneResult.loop_health && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '0.5rem',
+                marginBottom: '1rem',
+                fontSize: '0.9rem',
+              }}>
+                <span>健全度:</span>
+                <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                  {tuneResult.loop_health.before}
+                </span>
+                <span style={{ color: '#a855f7' }}>→</span>
+                <span style={{
+                  fontFamily: 'monospace',
+                  fontWeight: 'bold',
+                  color: tuneResult.loop_health.estimated_after > tuneResult.loop_health.before
+                    ? '#22c55e' : '#888',
+                }}>
+                  {tuneResult.loop_health.estimated_after}
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#888' }}>
+                  ({tuneResult.loop_health.estimated_after > tuneResult.loop_health.before
+                    ? `+${(tuneResult.loop_health.estimated_after - tuneResult.loop_health.before).toFixed(1)}`
+                    : '±0'})
+                </span>
+              </div>
+            )}
+
+            {/* Anomaly Summary */}
+            {tuneResult.anomaly_summary && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '0.5rem',
+                marginBottom: '1rem',
+              }}>
+                <KpiCard
+                  label="トレンド"
+                  value={{ rising: '📈 上昇', falling: '📉 下降', stable: '➡️ 安定' }[tuneResult.anomaly_summary.trend_direction] || '❓'}
+                  sub={`${tuneResult.anomaly_summary.change_pct?.toFixed(1) ?? 0}%`}
+                />
+                <KpiCard
+                  label="異常数"
+                  value={tuneResult.anomaly_summary.alert_count ?? 0}
+                  sub="検出済み"
+                />
+                <KpiCard
+                  label="アクション"
+                  value={tuneResult.action_count ?? 0}
+                  sub="提案数"
+                />
+              </div>
+            )}
+
+            {/* Action List */}
+            {tuneResult.actions && tuneResult.actions.length > 0 ? (
+              tuneResult.actions.map((a, i) => (
+                <div key={i} style={{
+                  padding: '0.5rem',
+                  marginBottom: '0.5rem',
+                  borderRadius: '4px',
+                  background: '#1a1a2e',
+                  borderLeft: '3px solid #a855f7',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 'bold', color: '#a855f7' }}>
+                      {a.param}
+                    </span>
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                      {a.old_value?.toFixed(4)} → <span style={{ color: '#22c55e' }}>{a.new_value?.toFixed(4)}</span>
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '0.25rem' }}>
+                    {a.reason}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.15rem' }}>
+                    信頼度: {((a.confidence ?? 0) * 100).toFixed(0)}%
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div style={{ color: '#22c55e', textAlign: 'center', padding: '0.5rem' }}>
+                調整不要 — 現在のパラメータは最適です
+              </div>
+            )}
+          </>
+        )}
+
+        {tuneResult?.error && (
+          <div style={{ color: '#ef4444', padding: '0.5rem' }}>
+            ⚠ エラー: {tuneResult.error}
+          </div>
+        )}
+
+        {tuneResult?.status === 'degraded' && (
+          <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '0.5rem' }}>
+            ⚠ AutoTuner利用不可: {tuneResult.error}
+          </div>
+        )}
+      </Box>
     </div>
   )
 }
