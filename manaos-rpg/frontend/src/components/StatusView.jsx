@@ -20,6 +20,13 @@ function successRateClass(rate) {
   return 'danger'
 }
 
+function overallLevelClass(level) {
+  if (level === 'OK') return 'ok'
+  if (level === 'WATCH') return 'caution'
+  if (level === 'ALERT') return 'danger'
+  return 'mono'
+}
+
 const GaugeBar = memo(function GaugeBar({ label, pct }) {
   const p = Math.max(0, Math.min(100, Number(pct || 0)))
   const cls = p >= 90 ? 'gaugeDanger' : p >= 70 ? 'gaugeCaution' : 'gaugeOk'
@@ -60,6 +67,7 @@ export default function StatusView({ host, services, models, devices, skills, da
   const scheduler = autonomy?.scheduler || {}
   const unifiedLlm = autonomy?.unified_llm || {}
   const overall = autonomy?.overall || {}
+  const overallLevel = overall.level || (overall.ok ? 'OK' : 'ALERT')
   const historyStats = autonomy?.history_stats || {}
 
   const filteredNextActions = useMemo(() => {
@@ -194,7 +202,7 @@ export default function StatusView({ host, services, models, devices, skills, da
       </Box>
 
       <Box title="自動運用モニタ">
-        <div className="kv"><span>総合判定</span><span className={overall.ok ? 'ok' : 'danger'}>{overall.ok ? 'OK' : 'CHECK'}</span></div>
+        <div className="kv"><span>総合判定</span><span className={overallLevelClass(overallLevel)}>{overallLevel}</span></div>
         <div className="small mono" style={{ marginBottom: 6 }}>{overall.summary || 'status unavailable'}</div>
 
         <div className="kv"><span>RPGヘルスチェーン</span><span className={chain.ok ? 'ok' : 'danger'}>{chain.found ? (chain.ok ? 'PASS' : 'FAIL') : 'N/A'}</span></div>
