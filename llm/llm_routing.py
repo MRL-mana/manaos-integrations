@@ -194,16 +194,20 @@ class LLMRouter:
 
     def _load_persona_config(self) -> Dict[str, Any]:
         """人格設定を読み込む"""
-        persona_path = Path(__file__).parent / "persona_config.yaml"
+        candidate_paths = [
+            Path(__file__).parent / "persona_config.yaml",
+            Path(__file__).resolve().parent.parent / "persona_config.yaml",
+        ]
         try:
-            if persona_path.exists():
-                with open(persona_path, 'r', encoding='utf-8') as f:
-                    config = yaml.safe_load(f)
-                    logger.info("人格設定を読み込みました")
-                    return config
-            else:
-                logger.debug("人格設定ファイルが見つかりません（デフォルト設定を使用）")
-                return {}
+            for persona_path in candidate_paths:
+                if persona_path.exists():
+                    with open(persona_path, 'r', encoding='utf-8') as f:
+                        config = yaml.safe_load(f)
+                        logger.info(f"人格設定を読み込みました: {persona_path}")
+                        return config or {}
+
+            logger.debug("人格設定ファイルが見つかりません（デフォルト設定を使用）")
+            return {}
         except Exception as e:
             logger.warning(f"人格設定の読み込みエラー: {e}")
             return {}
