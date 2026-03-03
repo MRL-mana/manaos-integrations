@@ -4,6 +4,14 @@ import Box from './Box.jsx'
 import OutputBlock from './OutputBlock.jsx'
 import DashboardConfig from './DashboardConfig.jsx'
 
+function fmtAgeSec(v) {
+  const n = Number(v)
+  if (!Number.isFinite(n) || n < 0) return '—'
+  if (n < 60) return `${Math.floor(n)}秒前`
+  if (n < 3600) return `${Math.floor(n / 60)}分前`
+  return `${Math.floor(n / 3600)}時間前`
+}
+
 const GaugeBar = memo(function GaugeBar({ label, pct }) {
   const p = Math.max(0, Math.min(100, Number(pct || 0)))
   const cls = p >= 90 ? 'gaugeDanger' : p >= 70 ? 'gaugeCaution' : 'gaugeOk'
@@ -20,7 +28,7 @@ const GaugeBar = memo(function GaugeBar({ label, pct }) {
   )
 })
 
-export default function StatusView({ host, services, models, devices, skills, danger, rlAnything, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction }) {
+export default function StatusView({ host, services, models, devices, skills, danger, rlAnything, autonomy, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction }) {
   const [showConfig, setShowConfig] = useState(false)
   const cpu = host?.cpu?.percent
   const mem = host?.mem?.percent
@@ -39,6 +47,11 @@ export default function StatusView({ host, services, models, devices, skills, da
   const svcList = useMemo(() => (Array.isArray(services) ? services : []), [services])
   const svcAlive = useMemo(() => svcList.filter(s => s.alive).length, [svcList])
   const svcDown = svcList.length - svcAlive
+
+  const chain = autonomy?.rpg_health_chain || {}
+  const scheduler = autonomy?.scheduler || {}
+  const unifiedLlm = autonomy?.unified_llm || {}
+  const overall = autonomy?.overall || {}
 
   const filteredNextActions = useMemo(() => {
     const suppressRules = []
@@ -169,6 +182,26 @@ export default function StatusView({ host, services, models, devices, skills, da
             <span className="mono">{rlAnything.cycle_count ?? 0} / {rlAnything.current_difficulty ?? '—'}</span>
           </div>
         ) : null}
+      </Box>
+
+      <Box title="自動運用モニタ">
+        <div className="kv"><span>総合判定</span><span className={overall.ok ? 'ok' : 'danger'}>{overall.ok ? 'OK' : 'CHECK'}</span></div>
+        <div className="small mono" style={{ marginBottom: 6 }}>{overall.summary || 'status unavailable'}</div>
+
+        <div className="kv"><span>RPGヘルスチェーン</span><span className={chain.ok ? 'ok' : 'danger'}>{chain.found ? (chain.ok ? 'PASS' : 'FAIL') : 'N/A'}</span></div>
+        <div className="kv"><span>最終実行</span><span className="mono">{fmtAgeSec(chain.age_sec)}</span></div>
+        <div className="kv"><span>失敗ステップ</span><span className={Number(chain.failed_step_count || 0) > 0 ? 'danger' : 'ok'}>{Number(chain.failed_step_count || 0)}</span></div>
+        <div className="kv"><span>判定理由</span><span className="mono">{chain.ok_reason || '—'}</span></div>
+
+        <div className="kv" style={{ marginTop: 8 }}><span>スケジューラ</span><span className={scheduler.ok ? 'ok' : 'danger'}>{scheduler.found ? (scheduler.ok ? 'OK' : 'NG') : '未設定'}</span></div>
+        <div className="kv"><span>タスク名</span><span className="mono">{scheduler.task_name || '—'}</span></div>
+        <div className="kv"><span>間隔</span><span className="mono">{scheduler.interval_minutes ? `${scheduler.interval_minutes}分` : '—'}</span></div>
+        <div className="small mono" style={{ marginBottom: 6 }}>{Array.isArray(scheduler.status_summary) && scheduler.status_summary.length > 0 ? scheduler.status_summary.join(' / ') : 'status_summary: —'}</div>
+
+        <div className="kv" style={{ marginTop: 8 }}><span>Unified LLM</span><span className={unifiedLlm.ok ? 'ok' : 'danger'}>{unifiedLlm.ok ? 'ONLINE' : 'OFFLINE'}</span></div>
+        <div className="kv"><span>Backend</span><span className="mono">{unifiedLlm.llm_server || '—'}</span></div>
+        <div className="kv"><span>モデル数</span><span className="mono">{unifiedLlm.available_models ?? '—'}</span></div>
+        <div className="kv"><span>Policy fail_closed</span><span className={typeof unifiedLlm.policy_fail_closed === 'boolean' ? (unifiedLlm.policy_fail_closed ? 'ok' : 'danger') : 'mono'}>{typeof unifiedLlm.policy_fail_closed === 'boolean' ? String(unifiedLlm.policy_fail_closed) : 'unknown'}</span></div>
       </Box>
 
       <Box title="次の一手" className="fullSpan">

@@ -356,6 +356,7 @@ export default function App() {
               skills={state?.skills}
               danger={state?.danger}
               rlAnything={state?.rl_anything}
+              autonomy={state?.autonomy}
               nextActions={state?.next_actions}
               nextActionHints={state?.next_action_hints}
               onRunAction={runAction}

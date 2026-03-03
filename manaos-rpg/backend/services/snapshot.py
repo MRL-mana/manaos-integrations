@@ -88,6 +88,17 @@ def _build_autonomy_status() -> dict[str, Any]:
     llm_data = llm_health.get("data") if isinstance(llm_health.get("data"), dict) else {}
     policy_data = policy_status.get("data") if isinstance(policy_status.get("data"), dict) else {}
     models = llm_data.get("models") if isinstance(llm_data.get("models"), list) else []
+    status_summary = lifecycle_latest.get("status_summary") if isinstance(lifecycle_latest.get("status_summary"), list) else []
+
+    chain_ok = bool(chain_latest.get("ok"))
+    scheduler_ok = bool(lifecycle_latest.get("ok"))
+    llm_ok = bool(llm_health.get("ok"))
+    overall_ok = chain_ok and scheduler_ok and llm_ok
+    summary_text = (
+        f"chain={'PASS' if chain_ok else 'FAIL'}"
+        f" / scheduler={'OK' if scheduler_ok else 'NG'}"
+        f" / llm={'ONLINE' if llm_ok else 'OFFLINE'}"
+    )
 
     return {
         "rpg_health_chain": {
@@ -109,6 +120,7 @@ def _build_autonomy_status() -> dict[str, Any]:
             "interval_minutes": lifecycle_latest.get("interval_minutes"),
             "last_ts": lifecycle_latest.get("ts"),
             "age_sec": _age_seconds_from_iso(lifecycle_latest.get("ts")),
+            "status_summary": status_summary,
         },
         "unified_llm": {
             "ok": bool(llm_health.get("ok")),
@@ -122,6 +134,10 @@ def _build_autonomy_status() -> dict[str, Any]:
             "policy_error": policy_status.get("error"),
             "policy_fail_closed": policy_data.get("fail_closed"),
             "policy_guard_enabled": policy_data.get("guard_enabled"),
+        },
+        "overall": {
+            "ok": overall_ok,
+            "summary": summary_text,
         },
     }
 
