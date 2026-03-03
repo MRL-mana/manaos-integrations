@@ -1,6 +1,7 @@
 param(
     [switch]$SkipDataGen,
     [switch]$DryRun,
+    [switch]$ForceRestart,
     [int]$MaxSteps = 4500,
     [int]$SaveSteps = 500,
     [int]$EvalSteps = 500,
@@ -67,7 +68,30 @@ $alreadyRunning = Get-CimInstance Win32_Process -Filter "Name='python.exe'" |
 if ($alreadyRunning) {
     Write-Host "[INFO] v1.1.4 stylefix training already running."
     $alreadyRunning | Select-Object ProcessId, CommandLine | Format-Table -AutoSize
-    exit 0
+
+    if (-not $ForceRestart) {
+        Write-Host "[INFO] Use -ForceRestart to stop current process and relaunch."
+        exit 0
+    }
+
+    $pids = @($alreadyRunning | Select-Object -ExpandProperty ProcessId)
+    if ($DryRun) {
+        Write-Host "[DRY-RUN] would stop existing PID(s): $($pids -join ', ')"
+        Write-Host "[DRY-RUN] then relaunch training with current arguments."
+        exit 0
+    }
+
+    foreach ($pid in $pids) {
+        try {
+            Stop-Process -Id $pid -Force -ErrorAction Stop
+            Write-Host "[INFO] stopped pid=$pid"
+        }
+        catch {
+            throw "failed to stop existing training pid=${pid}: $($_.Exception.Message)"
+        }
+    }
+
+    Start-Sleep -Seconds 2
 }
 
 $env:HF_HUB_DISABLE_PROGRESS_BARS = "1"
