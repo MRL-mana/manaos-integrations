@@ -1,6 +1,8 @@
 param(
     [int[]]$Checkpoints = @(1500, 4500),
     [int]$StaleMinutes = 20,
+    [ValidateSet('latest-wins', 'strict')]
+    [string]$StalePolicy = 'latest-wins',
     [switch]$AsJson,
     [string]$OutputPath = '',
     [switch]$NoWrite
@@ -150,10 +152,37 @@ foreach ($checkpoint in $Checkpoints) {
 }
 
 $overall = 'healthy'
+$ignoredStaleCheckpoints = @()
+$activeCheckpoint = $null
+
+$latestResult = $results |
+    Sort-Object { [int]$_.checkpoint } -Descending |
+    Select-Object -First 1
+
+$latestHealthyStatuses = @('waiting', 'triggered', 'eval_launched', 'started')
+$latestIsHealthy = $false
+if ($latestResult) {
+    $activeCheckpoint = [int]$latestResult.checkpoint
+    $latestIsHealthy = ($latestResult.status -in $latestHealthyStatuses) -and (-not [bool]$latestResult.stale)
+}
+
+$effectiveStaleResults = @($results | Where-Object { $_.status -eq 'stale' })
+if ($StalePolicy -eq 'latest-wins' -and $latestIsHealthy) {
+    $effectiveStaleResults = @(
+        $effectiveStaleResults |
+            Where-Object { [int]$_.checkpoint -ge [int]$activeCheckpoint }
+    )
+    $ignoredStaleCheckpoints = @(
+        $results |
+            Where-Object { $_.status -eq 'stale' -and [int]$_.checkpoint -lt [int]$activeCheckpoint } |
+            ForEach-Object { [int]$_.checkpoint }
+    )
+}
+
 if (($results | Where-Object { $_.status -eq 'missing' }).Count -gt 0) {
     $overall = 'degraded'
 }
-elseif (($results | Where-Object { $_.status -eq 'stale' }).Count -gt 0) {
+elseif ($effectiveStaleResults.Count -gt 0) {
     $overall = 'stale'
 }
 elseif (($results | Where-Object { $_.status -eq 'unknown' }).Count -gt 0) {
@@ -163,6 +192,9 @@ elseif (($results | Where-Object { $_.status -eq 'unknown' }).Count -gt 0) {
 $summary = [ordered]@{
     generated_at = (Get-Date).ToString('o')
     overall = $overall
+    stale_policy = $StalePolicy
+    active_checkpoint = $activeCheckpoint
+    ignored_stale_checkpoints = @($ignoredStaleCheckpoints)
     checkpoints = @($results)
 }
 
