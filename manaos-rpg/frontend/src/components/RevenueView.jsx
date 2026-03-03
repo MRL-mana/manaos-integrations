@@ -11,15 +11,23 @@ import Sparkline from './Sparkline.jsx'
  */
 export default function RevenueView() {
   const [kpi, setKpi] = useState(null)
+  const [history, setHistory] = useState(null)
+  const [alerts, setAlerts] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  async function fetchKpi() {
+  async function fetchAll() {
     setLoading(true)
     setError('')
     try {
-      const data = await fetchJson('/api/revenue/kpi')
-      setKpi(data)
+      const [kpiData, histData, alertData] = await Promise.all([
+        fetchJson('/api/revenue/kpi'),
+        fetchJson('/api/revenue/history?days=30'),
+        fetchJson('/api/revenue/alert-check'),
+      ])
+      setKpi(kpiData)
+      setHistory(histData)
+      setAlerts(alertData)
     } catch (e) {
       setError(String(e?.message || e))
     } finally {
@@ -51,8 +59,8 @@ export default function RevenueView() {
     <div>
       <h2>💰 収益 KPI ダッシュボード</h2>
       <div style={{ marginBottom: '1rem' }}>
-        <button onClick={fetchKpi} disabled={loading}>
-          {loading ? '読み込み中…' : 'KPI 取得'}
+        <button onClick={fetchAll} disabled={loading}>
+          {loading ? '読み込み中…' : '📊 全データ取得'}
         </button>
       </div>
 
@@ -176,6 +184,101 @@ export default function RevenueView() {
             </div>
           )}
         </>
+      )}
+
+      {/* Revenue Trend Chart */}
+      {history && history.days && history.days.length > 0 && (
+        <Box title="📈 収益推移（日次）">
+          <div style={{ marginBottom: '0.5rem' }}>
+            <Sparkline
+              data={history.days.map(d => d.revenue)}
+              width={400}
+              height={80}
+              color="#22c55e"
+              label="収益"
+            />
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #444' }}>
+                <th style={{ textAlign: 'left', padding: '4px' }}>日付</th>
+                <th style={{ textAlign: 'right', padding: '4px' }}>収益</th>
+                <th style={{ textAlign: 'right', padding: '4px' }}>コスト</th>
+                <th style={{ textAlign: 'right', padding: '4px' }}>利益</th>
+                <th style={{ textAlign: 'right', padding: '4px' }}>生成数</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.days.slice(-7).reverse().map(d => (
+                <tr key={d.date} style={{ borderBottom: '1px solid #333' }}>
+                  <td style={{ padding: '4px' }}>{d.date}</td>
+                  <td style={{ textAlign: 'right', padding: '4px', color: '#22c55e' }}>
+                    ¥{d.revenue.toLocaleString()}
+                  </td>
+                  <td style={{ textAlign: 'right', padding: '4px', color: '#ef4444' }}>
+                    ¥{d.cost.toFixed(2)}
+                  </td>
+                  <td style={{ textAlign: 'right', padding: '4px',
+                    color: d.profit >= 0 ? '#22c55e' : '#ef4444' }}>
+                    ¥{d.profit.toLocaleString()}
+                  </td>
+                  <td style={{ textAlign: 'right', padding: '4px' }}>{d.products}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {history.summary && (
+            <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#888' }}>
+              {history.summary.period_days}日合計: 収益 ¥{(history.summary.total_revenue ?? 0).toLocaleString()}
+              {' / '}コスト ¥{(history.summary.total_cost ?? 0).toFixed(2)}
+              {' / '}利益率 {history.summary.margin_pct ?? 0}%
+            </div>
+          )}
+        </Box>
+      )}
+
+      {history && history.days && history.days.length === 0 && (
+        <Box title="📈 収益推移">
+          <div style={{ color: '#888', textAlign: 'center', padding: '1rem' }}>
+            まだデータがありません。画像生成が行われると自動的に記録されます。
+          </div>
+        </Box>
+      )}
+
+      {/* Alerts Panel */}
+      {alerts && alerts.alerts && alerts.alerts.length > 0 && (
+        <Box title="🚨 アラート">
+          {alerts.alerts.map((a, i) => (
+            <div key={i} style={{
+              padding: '0.5rem',
+              marginBottom: '0.5rem',
+              borderRadius: '4px',
+              background: a.severity === 'critical' ? '#4a1a1a' : '#4a3a1a',
+              borderLeft: `3px solid ${a.severity === 'critical' ? '#ef4444' : '#f59e0b'}`,
+            }}>
+              <span style={{ fontWeight: 'bold' }}>
+                {a.severity === 'critical' ? '🔴' : '🟡'} {a.dimension}
+              </span>
+              <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>{a.message}</span>
+              <div style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.25rem' }}>
+                値: {(a.value ?? 0).toFixed(1)} / 閾値: {a.threshold}
+              </div>
+            </div>
+          ))}
+          {alerts.slack_notified && (
+            <div style={{ fontSize: '0.75rem', color: '#06b6d4', marginTop: '0.5rem' }}>
+              ✅ Slack通知を送信しました
+            </div>
+          )}
+        </Box>
+      )}
+
+      {alerts && alerts.alerts && alerts.alerts.length === 0 && (
+        <Box title="✅ アラート">
+          <div style={{ color: '#22c55e', textAlign: 'center' }}>
+            全次元が正常範囲内です
+          </div>
+        </Box>
       )}
     </div>
   )
