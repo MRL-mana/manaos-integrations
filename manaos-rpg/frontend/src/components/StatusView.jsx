@@ -1,5 +1,6 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { fmtBytes, dangerRank } from '../utils.js'
+import { fetchJson } from '../api.js'
 import Box from './Box.jsx'
 import OutputBlock from './OutputBlock.jsx'
 import DashboardConfig from './DashboardConfig.jsx'
@@ -54,6 +55,9 @@ const GaugeBar = memo(function GaugeBar({ label, pct }) {
 
 export default function StatusView({ host, services, models, devices, skills, danger, rlAnything, autonomy, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction }) {
   const [showConfig, setShowConfig] = useState(false)
+  const [manualCheck, setManualCheck] = useState(null)
+  const [manualSaving, setManualSaving] = useState(false)
+  const [manualMsg, setManualMsg] = useState('')
   const cpu = host?.cpu?.percent
   const mem = host?.mem?.percent
   const diskFree = host?.disk?.free_gb
@@ -91,6 +95,56 @@ export default function StatusView({ host, services, models, devices, skills, da
     if (suppressRules.length === 0) return actions
     return actions.filter((x) => !suppressRules.some((re) => re.test(String(x || ''))))
   }, [hints, actions])
+
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const data = await fetchJson('/api/manual-check')
+        if (mounted) {
+          setManualCheck(data)
+          setManualMsg('')
+        }
+      } catch (e) {
+        if (mounted) setManualMsg(`manual-check 読み込み失敗: ${e?.message || e}`)
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
+
+  async function saveManualCheck(nextData) {
+    setManualSaving(true)
+    try {
+      const res = await fetchJson('/api/manual-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nextData || manualCheck || {}),
+      })
+      const saved = res?.manual_check || nextData
+      setManualCheck(saved)
+      setManualMsg(`保存済み (${saved?.completed?.count ?? 0}/${saved?.completed?.total ?? 7})`)
+    } catch (e) {
+      setManualMsg(`manual-check 保存失敗: ${e?.message || e}`)
+    } finally {
+      setManualSaving(false)
+    }
+  }
+
+  function toggleManualItem(id) {
+    if (!manualCheck?.checks) return
+    const nextChecks = manualCheck.checks.map((item) => item.id === id ? { ...item, checked: !item.checked } : item)
+    const count = nextChecks.filter((item) => item.checked).length
+    const next = {
+      ...manualCheck,
+      checks: nextChecks,
+      completed: {
+        count,
+        total: nextChecks.length,
+        ok: count === nextChecks.length,
+      },
+    }
+    setManualCheck(next)
+  }
 
   return (
     <div className="grid" style={{ position: 'relative' }}>
@@ -232,6 +286,35 @@ export default function StatusView({ host, services, models, devices, skills, da
         <div className="kv"><span>Backend</span><span className="mono">{unifiedLlm.llm_server || '—'}</span></div>
         <div className="kv"><span>モデル数</span><span className="mono">{unifiedLlm.available_models ?? '—'}</span></div>
         <div className="kv"><span>Policy fail_closed</span><span className={typeof unifiedLlm.policy_fail_closed === 'boolean' ? (unifiedLlm.policy_fail_closed ? 'ok' : 'danger') : 'mono'}>{typeof unifiedLlm.policy_fail_closed === 'boolean' ? String(unifiedLlm.policy_fail_closed) : 'unknown'}</span></div>
+      </Box>
+
+      <Box title="manual=7 日次チェック">
+        <div className="kv"><span>date</span><span className="mono">{manualCheck?.date || '—'}</span></div>
+        <div className="kv"><span>mode</span><span className={manualCheck?.mode_expected === 'safe' ? 'ok' : 'caution'}>{manualCheck?.mode_expected || 'safe'}</span></div>
+        <div className="kv"><span>完了</span><span className={(manualCheck?.completed?.ok ? 'ok' : 'caution') + ' mono'}>{manualCheck?.completed?.count ?? 0}/{manualCheck?.completed?.total ?? 7}</span></div>
+
+        <div style={{ marginTop: 8, display: 'grid', gap: 6 }}>
+          {(manualCheck?.checks || []).map((item) => (
+            <label key={item.id} className="small" style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={!!item.checked}
+                onChange={() => toggleManualItem(item.id)}
+                disabled={manualSaving}
+              />
+              <span className="mono" style={{ minWidth: 28 }}>{item.id}</span>
+              <span>{item.title}</span>
+            </label>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button onClick={() => saveManualCheck(manualCheck)} disabled={manualSaving || !manualCheck}>
+            {manualSaving ? '保存中…' : '保存'}
+          </button>
+          {manualCheck?.completed?.ok ? <span className="ok small">運用OKスタンプ: READY</span> : <span className="caution small">未完了項目あり</span>}
+        </div>
+        {manualMsg ? <div className="small mono" style={{ marginTop: 6 }}>{manualMsg}</div> : null}
       </Box>
 
       <Box title="次の一手" className="fullSpan">
