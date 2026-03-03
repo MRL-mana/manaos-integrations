@@ -74,9 +74,61 @@ def _age_seconds_from_iso(ts_value: Any) -> int | None:
         return None
 
 
+def _build_chain_history_stats(history_path: Path, recent_n: int = 20) -> dict[str, Any]:
+    now = datetime.now()
+    day_seconds = 24 * 60 * 60
+    total_24h = 0
+    ok_24h = 0
+    recent_flags: list[bool] = []
+
+    try:
+        if history_path.exists():
+            lines = history_path.read_text(encoding="utf-8", errors="replace").splitlines()
+            for raw in reversed(lines):
+                line = raw.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except Exception:
+                    continue
+                if not isinstance(obj, dict):
+                    continue
+                ok_flag = bool(obj.get("ok"))
+                if len(recent_flags) < recent_n:
+                    recent_flags.append(ok_flag)
+
+                ts_value = obj.get("ts")
+                age_sec = _age_seconds_from_iso(ts_value)
+                if age_sec is not None and age_sec <= day_seconds:
+                    total_24h += 1
+                    if ok_flag:
+                        ok_24h += 1
+    except Exception:
+        pass
+
+    recent_total = len(recent_flags)
+    recent_ok = sum(1 for value in recent_flags if value)
+
+    rate_24h = (ok_24h / total_24h * 100.0) if total_24h > 0 else None
+    rate_recent = (recent_ok / recent_total * 100.0) if recent_total > 0 else None
+
+    return {
+        "window_hours": 24,
+        "recent_window": recent_n,
+        "count24h": total_24h,
+        "ok24h": ok_24h,
+        "rate24h": round(rate_24h, 1) if rate_24h is not None else None,
+        "countRecent": recent_total,
+        "okRecent": recent_ok,
+        "rateRecent": round(rate_recent, 1) if rate_recent is not None else None,
+    }
+
+
 def _build_autonomy_status() -> dict[str, Any]:
     logs_dir = REPO_ROOT / "logs"
     chain_latest_path = logs_dir / "rpg_full_health_chain.latest.json"
+    chain_history_path = logs_dir / "rpg_full_health_chain.history.jsonl"
     lifecycle_latest_path = logs_dir / "rpg_full_health_chain_task_lifecycle.latest.json"
 
     chain_latest = _read_json_file(chain_latest_path) or {}
@@ -99,6 +151,7 @@ def _build_autonomy_status() -> dict[str, Any]:
         f" / scheduler={'OK' if scheduler_ok else 'NG'}"
         f" / llm={'ONLINE' if llm_ok else 'OFFLINE'}"
     )
+    history_stats = _build_chain_history_stats(chain_history_path, recent_n=20)
 
     return {
         "rpg_health_chain": {
@@ -139,6 +192,7 @@ def _build_autonomy_status() -> dict[str, Any]:
             "ok": overall_ok,
             "summary": summary_text,
         },
+        "history_stats": history_stats,
     }
 
 
