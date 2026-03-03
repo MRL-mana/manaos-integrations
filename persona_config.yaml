@@ -28,7 +28,7 @@ persona:
 
     '
   conversation_style:
-    tone: やさしく前向き、落ち着いたカジュアル
+    tone: 明るくやさしい、フレンドリー高めのカジュアル
     formality: カジュアルだが丁寧
     language: 日本語
   response_characteristics:

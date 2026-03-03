@@ -20,6 +20,11 @@ from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverit
 from manaos_timeout_config import get_timeout_config
 from manaos_config_validator import ConfigValidator
 
+try:
+    import yaml
+except ImportError:
+    yaml = None
+
 # ロガーの初期化
 logger = get_service_logger("personality-system")
 
@@ -66,6 +71,7 @@ class PersonalitySystem:
         Args:
             config_path: 設定ファイルのパス
         """
+        self.repo_root = Path(__file__).resolve().parents[2]
         self.config_path = config_path or Path(__file__).parent / "personality_config.json"
         self.config = self._load_config()
         
@@ -73,7 +79,11 @@ class PersonalitySystem:
         self.default_persona = self._create_default_persona()
         
         # 現在の人格プロフィール
-        self.current_persona = self._load_persona() or self.default_persona
+        self.current_persona = (
+            self._load_persona_from_yaml()
+            or self._load_persona()
+            or self.default_persona
+        )
         
         logger.info(f"✅ Personality System初期化完了 (人格: {self.current_persona.name})")
     
@@ -119,6 +129,58 @@ class PersonalitySystem:
             "enable_personality": True,
             "persona_storage_path": "persona_profiles.json"
         }
+
+    def _candidate_persona_yaml_paths(self) -> List[Path]:
+        return [
+            self.repo_root / "persona_config.yaml",
+            self.repo_root / "llm" / "persona_config.yaml",
+            Path(__file__).parent / "persona_config.yaml",
+        ]
+
+    def _load_persona_from_yaml(self) -> Optional[PersonalityProfile]:
+        if yaml is None:
+            return None
+
+        for persona_path in self._candidate_persona_yaml_paths():
+            if not persona_path.exists():
+                continue
+
+            try:
+                data = yaml.safe_load(persona_path.read_text(encoding="utf-8")) or {}
+                persona = data.get("persona") if isinstance(data, dict) else None
+                if not isinstance(persona, dict):
+                    continue
+
+                conversation_style = persona.get("conversation_style") or {}
+                tone = str(conversation_style.get("tone") or "清楚でフレンドリー、でもカジュアル")
+                system_prompt = str(persona.get("system_prompt") or "")
+
+                created_at = datetime.now().isoformat()
+                profile = PersonalityProfile(
+                    name=str(persona.get("active_style_preset") or persona.get("name") or "pure_gal"),
+                    traits=[PersonalityTrait.PURE, PersonalityTrait.FRIENDLY, PersonalityTrait.CASUAL],
+                    tone=tone,
+                    response_style="報告時は事実のみを淡々と伝える。会話・雑談では普通に話す。",
+                    greeting_patterns=[
+                        "こんにちは！",
+                        "おはよう！",
+                        "お疲れさま！",
+                    ],
+                    conversation_starters=[
+                        "今日は何する？",
+                        "調子どう？",
+                        "何か手伝えることある？",
+                    ],
+                    personality_prompt=system_prompt or self._create_default_persona().personality_prompt,
+                    created_at=created_at,
+                    updated_at=created_at,
+                )
+                logger.info(f"✅ persona_config.yaml を適用: {persona_path}")
+                return profile
+            except Exception as e:
+                logger.warning(f"persona_config.yaml 読み込み失敗: {persona_path} ({e})")
+
+        return None
     
     def _create_default_persona(self) -> PersonalityProfile:
         """デフォルト人格プロフィールを作成（清楚系ギャル）"""
