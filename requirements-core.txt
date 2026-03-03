@@ -5,6 +5,7 @@
 flask>=2.3.0
 flask-cors>=4.0.0
 waitress>=2.1.2
+fastapi>=0.100.0
 
 # HTTPリクエスト
 requests>=2.31.0
