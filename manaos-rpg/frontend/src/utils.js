@@ -22,6 +22,7 @@ export const FALLBACK_MENU = [
   { id: 'map', label: 'マップ（デバイス）', icon: '🧭' },
   { id: 'items', label: 'アイテム（生成物）', icon: '🎒' },
   { id: 'rl', label: '強化学習(RL)', icon: '🧠' },
+  { id: 'revenue', label: '収益（KPI）', icon: '💰' },
   { id: 'systems', label: 'システム（統合）', icon: '⚙️' }
 ]
 
