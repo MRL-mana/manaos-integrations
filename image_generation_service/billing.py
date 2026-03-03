@@ -380,30 +380,175 @@ class BillingManager:
 
     # ─── Dashboard ────────────────────────────────────
 
-    # 決済APIスタブ
+    # ─── Payment Integration ──────────────────────────
+
     def create_stripe_payment(self, user_id: str, plan: str) -> dict:
         """
-        Stripe決済スタブ（本番はStripe API連携）
+        Stripe Checkout Session を作成。
+        STRIPE_SECRET_KEY 未設定時はスタブ応答を返す。
         """
-        # 実際はstripe.PaymentIntent.create()等
-        return {
-            "provider": "stripe",
-            "plan": plan,
-            "user_id": user_id,
-            "payment_url": f"https://checkout.stripe.com/pay/test_{plan}_{user_id}",
-            "status": "stub",
-        }
+        secret_key = os.getenv("STRIPE_SECRET_KEY", "")
+        success_url = os.getenv(
+            "STRIPE_SUCCESS_URL",
+            "http://localhost:5560/api/v1/images/payment/callback?session_id={CHECKOUT_SESSION_ID}",
+        )
+        cancel_url = os.getenv(
+            "STRIPE_CANCEL_URL", "http://localhost:5560/"
+        )
+
+        if not secret_key or secret_key.startswith("sk_test_placeholder"):
+            return {
+                "provider": "stripe",
+                "plan": plan,
+                "user_id": user_id,
+                "payment_url": f"https://checkout.stripe.com/pay/test_{plan}_{user_id}",
+                "status": "stub",
+                "hint": "Set STRIPE_SECRET_KEY to enable real payments",
+            }
+
+        try:
+            import stripe
+            stripe.api_key = secret_key
+
+            price_map = {
+                "pro": os.getenv("STRIPE_PRICE_PRO", ""),
+                "enterprise": os.getenv("STRIPE_PRICE_ENTERPRISE", ""),
+            }
+            price_id = price_map.get(plan, "")
+            if not price_id:
+                return {"provider": "stripe", "status": "error",
+                        "detail": f"No Stripe Price ID for plan '{plan}'"}
+
+            session = stripe.checkout.Session.create(
+                mode="subscription",
+                line_items=[{"price": price_id, "quantity": 1}],
+                client_reference_id=user_id,
+                metadata={"plan": plan, "user_id": user_id},
+                success_url=success_url,
+                cancel_url=cancel_url,
+            )
+            _log.info("Stripe session created: %s plan=%s", session.id, plan)
+            return {
+                "provider": "stripe",
+                "plan": plan,
+                "user_id": user_id,
+                "session_id": session.id,
+                "payment_url": session.url,
+                "status": "created",
+            }
+        except ImportError:
+            return {"provider": "stripe", "status": "error",
+                    "detail": "stripe package not installed (pip install stripe)"}
+        except Exception as e:
+            _log.error("Stripe session creation failed: %s", e)
+            return {"provider": "stripe", "status": "error", "detail": str(e)}
 
     def create_komoju_payment(self, user_id: str, plan: str) -> dict:
         """
-        KOMOJU決済スタブ（本番はKOMOJU API連携）
+        KOMOJU Session を作成 (日本国内決済: コンビニ/銀行振込対応)。
+        KOMOJU_SECRET_KEY 未設定時はスタブ応答を返す。
         """
+        secret_key = os.getenv("KOMOJU_SECRET_KEY", "")
+        return_url = os.getenv(
+            "KOMOJU_RETURN_URL",
+            "http://localhost:5560/api/v1/images/payment/callback",
+        )
+
+        price_yen = {"pro": 2980, "enterprise": 9800}.get(plan)
+        if price_yen is None:
+            return {"provider": "komoju", "status": "error",
+                    "detail": f"Unknown plan '{plan}'"}
+
+        if not secret_key or secret_key.startswith("sk_placeholder"):
+            return {
+                "provider": "komoju",
+                "plan": plan,
+                "user_id": user_id,
+                "payment_url": f"https://checkout.komoju.com/pay/test_{plan}_{user_id}",
+                "status": "stub",
+                "hint": "Set KOMOJU_SECRET_KEY to enable real payments",
+            }
+
+        try:
+            import urllib.request, json as _json
+            payload = _json.dumps({
+                "amount": price_yen,
+                "currency": "JPY",
+                "default_locale": "ja",
+                "payment_types": ["credit_card", "konbini", "bank_transfer"],
+                "metadata": {"plan": plan, "user_id": user_id},
+                "return_url": return_url,
+            }).encode()
+            req = urllib.request.Request(
+                "https://komoju.com/api/v1/sessions",
+                data=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Basic {__import__('base64').b64encode(f'{secret_key}:'.encode()).decode()}",
+                },
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                data = _json.loads(resp.read())
+            _log.info("KOMOJU session created: %s plan=%s", data.get("id"), plan)
+            return {
+                "provider": "komoju",
+                "plan": plan,
+                "user_id": user_id,
+                "session_id": data.get("id", ""),
+                "payment_url": data.get("session_url", ""),
+                "status": "created",
+            }
+        except Exception as e:
+            _log.error("KOMOJU session creation failed: %s", e)
+            return {"provider": "komoju", "status": "error", "detail": str(e)}
+
+    async def activate_subscription(self, user_id: str, plan: str,
+                                    session_id: str = "") -> dict:
+        """
+        決済成功後にプランをアクティベート。
+        Webhook / callback で呼び出す想定。
+        """
+        try:
+            target_plan = Plan(plan)
+        except ValueError:
+            return {"ok": False, "detail": f"Invalid plan: {plan}"}
+
+        with _get_db() as conn:
+            row = conn.execute(
+                "SELECT api_key FROM user_signups WHERE email = ? AND active = 1",
+                (user_id,),
+            ).fetchone()
+            if not row:
+                # email ではなく api_key で検索
+                row = conn.execute(
+                    "SELECT api_key FROM api_keys WHERE api_key = ? AND active = 1",
+                    (user_id,),
+                ).fetchone()
+
+            if not row:
+                return {"ok": False, "detail": f"User not found: {user_id}"}
+
+            api_key = row["api_key"]
+            conn.execute(
+                "UPDATE api_keys SET plan = ? WHERE api_key = ?",
+                (target_plan.value, api_key),
+            )
+            conn.execute(
+                "UPDATE user_signups SET plan = ? WHERE api_key = ?",
+                (target_plan.value, api_key),
+            )
+
+        _log.info(
+            "Subscription activated: %s → %s (session=%s)",
+            user_id, target_plan.value, session_id,
+        )
         return {
-            "provider": "komoju",
-            "plan": plan,
+            "ok": True,
             "user_id": user_id,
-            "payment_url": f"https://checkout.komoju.com/pay/test_{plan}_{user_id}",
-            "status": "stub",
+            "api_key": api_key[:8] + "...",
+            "plan": target_plan.value,
+            "session_id": session_id,
         }
 
     async def get_billing_dashboard(self, api_key: str) -> Dict[str, Any]:

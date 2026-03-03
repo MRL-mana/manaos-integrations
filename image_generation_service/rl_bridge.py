@@ -98,6 +98,7 @@ def end_image_task(
     quality_overall: Optional[float] = None,
     generation_time_ms: Optional[int] = None,
     cost_yen: Optional[float] = None,
+    revenue_yen: Optional[float] = None,
     metadata: Optional[Dict[str, Any]] = None,
 ) -> Optional[Dict[str, Any]]:
     """
@@ -116,6 +117,7 @@ def end_image_task(
         quality_overall: 品質スコア (0-10、None で自動計算)
         generation_time_ms: 生成時間 (ms)
         cost_yen: コスト (円)
+        revenue_yen: 収益 (円) — 品質→収益ループ指標
         metadata: 追加データ
 
     Returns:
@@ -134,6 +136,11 @@ def end_image_task(
             meta["generation_time_ms"] = generation_time_ms
         if cost_yen is not None:
             meta["cost_yen"] = cost_yen
+        if revenue_yen is not None:
+            meta["revenue_yen"] = revenue_yen
+            # ROI = (収益 - コスト) / コスト — RLの reward shaping に使用
+            if cost_yen and cost_yen > 0:
+                meta["roi"] = round((revenue_yen - cost_yen) / cost_yen, 4)
 
         result = rl.end_task(
             task_id=job_id,
@@ -142,8 +149,9 @@ def end_image_task(
             metadata=meta,
         )
         _log.info(
-            "RL end_task: %s outcome=%s score=%.3f cycle=%d",
+            "RL end_task: %s outcome=%s score=%.3f cycle=%d revenue=¥%.2f",
             job_id, outcome, score or 0, result.get("cycle", 0),
+            revenue_yen or 0,
         )
         return result
     except Exception as e:

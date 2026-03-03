@@ -102,6 +102,7 @@ class ImageGenerationService:
 
         # パイプライン実行
         attempt = 0
+        revenue_amount = 0.0
         try:
             response.status = JobStatus.processing
             start = time.monotonic()
@@ -193,11 +194,13 @@ class ImageGenerationService:
             )
 
             # 課金記録 (有料プランの場合)
+            revenue_amount = 0.0
             plan = await self._billing.get_plan(api_key)
             if plan.value != "free":
+                revenue_amount = response.cost_estimate_yen * 10
                 self._revenue.record_revenue(
                     job_id=response.job_id,
-                    amount_yen=response.cost_estimate_yen * 10,
+                    amount_yen=revenue_amount,
                     source=f"plan_{plan.value}",
                 )
 
@@ -250,6 +253,7 @@ class ImageGenerationService:
                 quality_overall=quality_score,
                 generation_time_ms=response.generation_time_ms,
                 cost_yen=response.cost_estimate_yen,
+                revenue_yen=revenue_amount,
             )
 
         return response

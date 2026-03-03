@@ -22,8 +22,9 @@ import HealthStrip from './components/HealthStrip.jsx'
 /* React.lazy で大型コンポーネントを遅延読み込み (code-split) */
 const RLView = lazy(() => import('./components/RLView.jsx'))
 const SkillsView = lazy(() => import('./components/SkillsView.jsx'))
+const RevenueView = lazy(() => import('./components/RevenueView.jsx'))
 
-const TAB_IDS = ['status','party','bestiary','skills','quests','logs','map','items','rl','systems']
+const TAB_IDS = ['status','party','bestiary','skills','quests','logs','map','items','rl','revenue','systems']
 
 export default function App() {
   const [state, setState] = useState(null)
@@ -390,6 +391,11 @@ export default function App() {
           {state && active === 'rl' ? (
             <Suspense fallback={lazyFallback}>
               <RLView rl={state?.rl_anything} apiBase={apiBase} />
+            </Suspense>
+          ) : null}
+          {state && active === 'revenue' ? (
+            <Suspense fallback={lazyFallback}>
+              <RevenueView />
             </Suspense>
           ) : null}
           {state && active === 'systems' ? (
