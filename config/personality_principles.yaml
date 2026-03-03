@@ -1,0 +1,116 @@
+version: 1
+profile: rpg_9502_unified_ops
+updated_at: "2026-03-03"
+
+principles:
+  - id: safety_fail_closed
+    title: 安全優先（fail-closed）
+    checks:
+      - id: unified_health_200
+        title: 9502 health が 200
+        automated: true
+        required: true
+        type: http_status
+        url: http://127.0.0.1:9502/health
+        expect_status: 200
+      - id: policy_fail_closed_true
+        title: LLM policy fail_closed が true
+        automated: true
+        required: true
+        type: http_json_equals
+        url: http://127.0.0.1:9502/api/llm/policy/status
+        key: identity_guard.fail_closed
+        expect: true
+      - id: timeout_retry_limited
+        title: タイムアウト・リトライ制限が設計済み
+        automated: false
+
+  - id: least_privilege
+    title: 最小権限
+    checks:
+      - id: role_keys_separated
+        title: Admin/Ops/Read-only の責務分離
+        automated: false
+      - id: admin_not_in_automation
+        title: 自動実行で Admin 権限を使わない
+        automated: false
+
+  - id: observability
+    title: 可観測性
+    checks:
+      - id: unified_status_200
+        title: 9502 status が 200
+        automated: true
+        required: true
+        type: http_status
+        url: http://127.0.0.1:9502/status
+        expect_status: 200
+      - id: status_has_check_summary
+        title: status に check_summary がある
+        automated: true
+        required: true
+        type: http_json_key_exists
+        url: http://127.0.0.1:9502/status
+        key: check_summary
+      - id: request_id_in_logs
+        title: request_id / duration / error がログ追跡可能
+        automated: false
+
+  - id: reproducibility
+    title: 再現性
+    checks:
+      - id: contract_guard_exists
+        title: API契約検証スクリプトが存在
+        automated: true
+        required: true
+        type: file_exists
+        path: tools/validate_contract.py
+      - id: ledger_exists
+        title: SSOT の services_ledger.yaml が存在
+        automated: true
+        required: true
+        type: file_exists
+        path: config/services_ledger.yaml
+      - id: deterministic_seed_option
+        title: seed固定など再現オプションが運用に定義済み
+        automated: false
+
+  - id: extensibility_core_minimal
+    title: 拡張性（コア最小）
+    checks:
+      - id: core_services_defined
+        title: core に memory/learning/llm_routing/unified_api が定義
+        automated: true
+        required: true
+        type: yaml_keys_present
+        path: config/services_ledger.yaml
+        keys:
+          - core.memory
+          - core.learning
+          - core.llm_routing
+          - core.unified_api
+      - id: optional_services_disabled_by_default
+        title: optional の enabled が既定で false
+        automated: true
+        required: true
+        type: yaml_optional_all_disabled
+        path: config/services_ledger.yaml
+
+  - id: human_final_responsibility
+    title: 人間最終責任
+    checks:
+      - id: high_risk_manual_approval
+        title: delete/rewrite/overwrite は手動承認必須
+        automated: false
+      - id: auto_recovery_limit
+        title: 自動復旧の回数上限と人間通知が設計済み
+        automated: false
+
+modes:
+  default: safe
+  allowed:
+    - safe
+    - experimental
+    - lab
+    - mufufu
+  require_explicit_for_non_safe: true
