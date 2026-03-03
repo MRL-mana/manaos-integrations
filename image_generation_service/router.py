@@ -21,7 +21,9 @@ FastAPI Router — /api/v1/images/*
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 import re
 from datetime import datetime
 from typing import Optional
@@ -503,6 +505,110 @@ def _compute_loop_health(bill: dict, fb, rl: dict) -> dict:
             "rl_learning": round(scores[4], 1),
         },
     }
+
+
+@router.get(
+    "/revenue/history",
+    summary="日次収益推移",
+    description="過去N日間の日次収益・コスト・利益・生成数を返す",
+)
+async def revenue_history(
+    days: int = 30,
+    auth: AuthContext = Depends(require_auth),
+):
+    """Revenue Tracker DB から日次推移を取得"""
+    writer = RevenueWriter()
+    history = writer.get_daily_history(days)
+    summary = writer.get_summary(days)
+    return {**history, "summary": summary}
+
+
+@router.get(
+    "/revenue/alert-check",
+    summary="ループヘルス アラートチェック",
+    description="loop_health が閾値を下回った場合に警告レベルを返す",
+)
+async def revenue_alert_check(
+    auth: AuthContext = Depends(require_auth),
+    billing: BillingManager = Depends(get_billing),
+    fb: FeedbackManager = Depends(get_feedback),
+):
+    """ループヘルスの閾値チェック + 自動アラート発火"""
+    from . import rl_bridge
+
+    bill_data = await billing.get_billing_dashboard(auth.api_key)
+    fb_stats = await fb.get_aggregate_stats(7)
+    rl_data = rl_bridge.get_rl_dashboard() or {}
+    health = _compute_loop_health(bill_data, fb_stats, rl_data)
+
+    alerts = []
+    bd = health["breakdown"]
+
+    # 全次元の閾値チェック (各20点中)
+    thresholds = {
+        "revenue": (5, "収益が低下しています — MRR < ¥2,500"),
+        "users": (5, "アクティブユーザー不足 — 30日間 < 2人"),
+        "feedback": (5, "フィードバック不足 — 直近7日 < 3件"),
+        "rl_success": (5, "RL成功率低下 — < 25%"),
+        "rl_learning": (5, "RL学習停滞 — サイクル < 25 or スキル不足"),
+    }
+    for dim, (thr, msg) in thresholds.items():
+        if bd.get(dim, 0) < thr:
+            alerts.append({
+                "dimension": dim,
+                "value": bd.get(dim, 0),
+                "threshold": thr,
+                "severity": "critical" if bd.get(dim, 0) == 0 else "warning",
+                "message": msg,
+            })
+
+    # Slack 通知 (critical アラートがある場合)
+    critical_alerts = [a for a in alerts if a["severity"] == "critical"]
+    slack_sent = False
+    if critical_alerts:
+        slack_sent = _send_loop_health_slack(health, critical_alerts)
+
+    return {
+        "status": "ok",
+        "health": health,
+        "alerts": alerts,
+        "alert_count": len(alerts),
+        "slack_notified": slack_sent,
+    }
+
+
+def _send_loop_health_slack(health: dict, alerts: list) -> bool:
+    """ループヘルス低下時に Slack 通知を送信"""
+    try:
+        import urllib.request
+        webhook_url = os.environ.get("SLACK_WEBHOOK_URL", "")
+        if not webhook_url:
+            _log.debug("SLACK_WEBHOOK_URL not set — skipping alert")
+            return False
+
+        lines = [
+            f"🚨 *Loop Health Alert* — スコア: {health['score']}/100 ({health['level']})",
+            "",
+        ]
+        for a in alerts:
+            emoji = "🔴" if a["severity"] == "critical" else "🟡"
+            lines.append(f"{emoji} {a['dimension']}: {a['message']}")
+        lines.append(f"\n_自動検知 by ManaOS revenue-loop_")
+
+        payload = json.dumps({"text": "\n".join(lines)}).encode("utf-8")
+        req = urllib.request.Request(
+            webhook_url,
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=10):
+            pass
+        _log.info("Slack loop health alert sent")
+        return True
+    except Exception as e:
+        _log.warning("Slack alert failed: %s", e)
+        return False
 
 
 # ─── GPU Monitoring ──────────────────────────────────

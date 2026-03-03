@@ -64,11 +64,31 @@ async def revenue_kpi() -> Dict[str, Any]:
 
 
 @router.get("/history")
-async def revenue_history() -> Dict[str, Any]:
-    """日次収益推移 — billing DB から直接取得（将来実装）"""
-    # TODO: billing DB の usage_daily テーブルから日次推移を取得
-    return {
-        "status": "ok",
-        "days": [],
-        "hint": "Revenue history will be populated as transactions accumulate",
-    }
+async def revenue_history(days: int = 30) -> Dict[str, Any]:
+    """日次収益推移 — image_gen の /revenue/history を中継"""
+    data = await _fetch_image_gen(f"/api/v1/images/revenue/history?days={days}")
+    if data.get("status") == "error":
+        return {
+            "status": "degraded",
+            "days": [],
+            "summary": {"total_revenue": 0, "total_cost": 0, "profit": 0,
+                        "margin_pct": 0, "products": 0, "period_days": days},
+            "error": data.get("detail", "image_gen unreachable"),
+        }
+    return data
+
+
+@router.get("/alert-check")
+async def revenue_alert_check() -> Dict[str, Any]:
+    """ループヘルス アラートチェック — image_gen を中継"""
+    data = await _fetch_image_gen("/api/v1/images/revenue/alert-check")
+    if data.get("status") == "error":
+        return {
+            "status": "degraded",
+            "health": {"score": 0, "level": "critical", "breakdown": {}},
+            "alerts": [],
+            "alert_count": 0,
+            "slack_notified": False,
+            "error": data.get("detail", "image_gen unreachable"),
+        }
+    return data

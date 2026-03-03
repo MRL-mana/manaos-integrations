@@ -187,3 +187,89 @@ class RevenueWriter:
         except Exception as e:
             _log.error("Failed to record revenue: %s", e)
             return False
+
+    # ─── 読み取り (集計) ──────────────────────────────
+
+    def get_daily_history(self, days: int = 30) -> dict:
+        """日次収益・コスト・利益の推移を取得
+
+        Returns:
+            {"days": [{"date": "2026-03-01", "revenue": 120.5,
+                       "cost": 0.3, "profit": 120.2, "products": 5}, ...]}
+        """
+        try:
+            with _get_db() as conn:
+                rows_rev = conn.execute(
+                    "SELECT DATE(created_at) AS d, SUM(amount) AS total "
+                    "FROM revenue WHERE created_at >= DATE('now', ?) "
+                    "GROUP BY d ORDER BY d",
+                    (f"-{days} days",),
+                ).fetchall()
+
+                rows_cost = conn.execute(
+                    "SELECT DATE(created_at) AS d, SUM(amount) AS total "
+                    "FROM costs WHERE created_at >= DATE('now', ?) "
+                    "GROUP BY d ORDER BY d",
+                    (f"-{days} days",),
+                ).fetchall()
+
+                rows_prod = conn.execute(
+                    "SELECT DATE(created_at) AS d, COUNT(*) AS cnt "
+                    "FROM products WHERE created_at >= DATE('now', ?) "
+                    "GROUP BY d ORDER BY d",
+                    (f"-{days} days",),
+                ).fetchall()
+
+            rev_map = {r["d"]: r["total"] for r in rows_rev}
+            cost_map = {r["d"]: r["total"] for r in rows_cost}
+            prod_map = {r["d"]: r["cnt"] for r in rows_prod}
+
+            all_dates = sorted(set(rev_map) | set(cost_map) | set(prod_map))
+            result = []
+            for d in all_dates:
+                rev = rev_map.get(d, 0.0)
+                cost = cost_map.get(d, 0.0)
+                result.append({
+                    "date": d,
+                    "revenue": round(rev, 2),
+                    "cost": round(cost, 4),
+                    "profit": round(rev - cost, 2),
+                    "products": prod_map.get(d, 0),
+                })
+            return {"status": "ok", "days": result, "period": days}
+        except Exception as e:
+            _log.error("Failed to get daily history: %s", e)
+            return {"status": "error", "days": [], "error": str(e)}
+
+    def get_summary(self, days: int = 30) -> dict:
+        """期間サマリ (合計収益/コスト/利益率)"""
+        try:
+            with _get_db() as conn:
+                rev = conn.execute(
+                    "SELECT COALESCE(SUM(amount), 0) FROM revenue "
+                    "WHERE created_at >= DATE('now', ?)",
+                    (f"-{days} days",),
+                ).fetchone()[0]
+                cost = conn.execute(
+                    "SELECT COALESCE(SUM(amount), 0) FROM costs "
+                    "WHERE created_at >= DATE('now', ?)",
+                    (f"-{days} days",),
+                ).fetchone()[0]
+                prod = conn.execute(
+                    "SELECT COUNT(*) FROM products "
+                    "WHERE created_at >= DATE('now', ?)",
+                    (f"-{days} days",),
+                ).fetchone()[0]
+            margin = round((rev - cost) / rev * 100, 1) if rev > 0 else 0.0
+            return {
+                "total_revenue": round(rev, 2),
+                "total_cost": round(cost, 4),
+                "profit": round(rev - cost, 2),
+                "margin_pct": margin,
+                "products": prod,
+                "period_days": days,
+            }
+        except Exception as e:
+            _log.error("Failed to get summary: %s", e)
+            return {"total_revenue": 0, "total_cost": 0, "profit": 0,
+                    "margin_pct": 0, "products": 0, "period_days": days}
