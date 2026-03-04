@@ -1,0 +1,956 @@
+from __future__ import annotations
+
+import os
+from typing import Any, Dict
+
+
+def build_openapi_spec() -> Dict[str, Any]:
+    """
+    OpenAPI仕様（Open WebUI External Tools向け）。
+
+    NOTE: 互換のため、URLは従来どおり host.docker.internal をデフォルトにする。
+    """
+    base_url = os.getenv("MANAOS_OPENAPI_SERVER_URL", "http://host.docker.internal:9502").rstrip(
+        "/"
+    )
+
+    return {
+        "openapi": "3.0.0",
+        "info": {
+            "title": "manaOS統合API",
+            "description": "manaOS統合システムへのアクセス（画像生成、ファイル管理、ノート作成など）",
+            "version": "1.0.0",
+        },
+        "servers": [{"url": base_url, "description": "ローカルサーバー"}],
+        "paths": {
+            "/api/llm/health": {
+                "get": {
+                    "summary": "LLMルーティング ヘルス",
+                    "description": "LLMルーティング（難易度ルーティング）の稼働確認と利用可能モデル数を返します",
+                    "operationId": "getLlmRoutingHealth",
+                    "responses": {
+                        "200": {"description": "成功"},
+                        "503": {"description": "未初期化/利用不可"},
+                    },
+                }
+            },
+            "/api/llm/models": {
+                "get": {
+                    "summary": "利用可能モデル一覧",
+                    "description": "LLMルーティングで利用可能なモデル一覧を返します",
+                    "operationId": "getLlmModels",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "未初期化/利用不可"}},
+                }
+            },
+            "/api/llm/models-enhanced": {
+                "get": {
+                    "summary": "利用可能モデル一覧（拡張）",
+                    "description": "互換のため /api/llm/models と同等のレスポンスを返します",
+                    "operationId": "getLlmModelsEnhanced",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "未初期化/利用不可"}},
+                }
+            },
+            "/api/llm/analyze": {
+                "post": {
+                    "summary": "難易度分析",
+                    "description": "プロンプトの難易度を分析し、推奨モデルを返します（LLM呼び出しなし）",
+                    "operationId": "postLlmAnalyze",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prompt": {"type": "string"},
+                                        "context": {"type": "object"},
+                                        "code_context": {"type": "string"},
+                                    },
+                                    "required": ["prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}, "503": {"description": "未初期化/利用不可"}},
+                }
+            },
+            "/api/llm/route": {
+                "post": {
+                    "summary": "LLMルーティング実行",
+                    "description": "難易度に応じてモデルを選択し、LLMを実行します",
+                    "operationId": "postLlmRoute",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prompt": {"type": "string"},
+                                        "context": {"type": "object"},
+                                        "preferences": {"type": "object"},
+                                        "code_context": {"type": "string"},
+                                    },
+                                    "required": ["prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}, "503": {"description": "未初期化/利用不可"}},
+                }
+            },
+            "/api/llm/route-enhanced": {
+                "post": {
+                    "summary": "LLMルーティング実行（拡張）",
+                    "description": "互換のため /api/llm/route と同等の動作をします",
+                    "operationId": "postLlmRouteEnhanced",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prompt": {"type": "string"},
+                                        "context": {"type": "object"},
+                                        "preferences": {"type": "object"},
+                                        "code_context": {"type": "string"},
+                                    },
+                                    "required": ["prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}, "503": {"description": "未初期化/利用不可"}},
+                }
+            },
+            "/api/llm/policy/status": {
+                "get": {
+                    "summary": "Identityポリシー状態",
+                    "description": "CORE5 Identity Guard の有効状態・閾値・fail-close設定を返します",
+                    "operationId": "getLlmPolicyStatus",
+                    "responses": {"200": {"description": "成功"}, "500": {"description": "内部エラー"}},
+                }
+            },
+            "/api/llm/policy/evaluate": {
+                "post": {
+                    "summary": "Identityポリシー評価",
+                    "description": "入力プロンプトをCORE5 Identity Guardで事前評価します（実行しない）",
+                    "operationId": "postLlmPolicyEvaluate",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prompt": {"type": "string"},
+                                        "context": {"type": "object"},
+                                        "preferences": {"type": "object"},
+                                        "include_normalized_prompt": {"type": "boolean", "default": False},
+                                    },
+                                    "required": ["prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}, "500": {"description": "内部エラー"}},
+                }
+            },
+            "/api/comfyui/generate": {
+                "post": {
+                    "summary": "ComfyUIで画像を生成",
+                    "description": "ComfyUIを使って画像を生成します",
+                    "operationId": "generateImageComfyUI",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prompt": {
+                                            "type": "string",
+                                            "description": "画像生成のプロンプト",
+                                        },
+                                        "width": {
+                                            "type": "integer",
+                                            "description": "画像の幅（デフォルト: 512）",
+                                            "default": 512,
+                                        },
+                                        "height": {
+                                            "type": "integer",
+                                            "description": "画像の高さ（デフォルト: 512）",
+                                            "default": 512,
+                                        },
+                                        "steps": {
+                                            "type": "integer",
+                                            "description": "生成ステップ数（デフォルト: 20）",
+                                            "default": 20,
+                                        },
+                                    },
+                                    "required": ["prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "成功",
+                            "content": {"application/json": {"schema": {"type": "object"}}},
+                        }
+                    },
+                }
+            },
+            "/api/svi/generate": {
+                "post": {
+                    "summary": "SVI × Wan 2.2 で動画生成",
+                    "description": "開始画像とプロンプトから動画生成を開始し、prompt_id を返します（ComfyUI経由）",
+                    "operationId": "sviGenerate",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "start_image_path": {"type": "string", "description": "開始画像のパス"},
+                                        "prompt": {"type": "string", "description": "動画生成プロンプト"},
+                                        "video_length_seconds": {"type": "integer", "default": 5},
+                                        "steps": {"type": "integer", "default": 6},
+                                        "motion_strength": {"type": "number", "default": 1.3},
+                                        "quality": {"type": "string", "default": "balanced", "description": "fast / balanced / quality"},
+                                        "sage_attention": {"type": "boolean", "default": True},
+                                        "extend_enabled": {"type": "boolean", "default": False},
+                                    },
+                                    "required": ["start_image_path", "prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}, "503": {"description": "利用不可"}},
+                }
+            },
+            "/api/svi/capabilities": {
+                "get": {
+                    "summary": "SVI 事前診断（必要ノード）",
+                    "description": "ComfyUI の /object_info から、SVI × Wan 2.2 に必要なノードが導入済みかを返します",
+                    "operationId": "sviCapabilities",
+                    "responses": {
+                        "200": {"description": "成功"},
+                        "502": {"description": "ComfyUI疎通失敗"},
+                        "503": {"description": "requests等未導入"},
+                    },
+                }
+            },
+            "/api/svi/extend": {
+                "post": {
+                    "summary": "SVI × Wan 2.2 で動画延長",
+                    "description": "既存動画とプロンプトから延長を開始し、prompt_id を返します",
+                    "operationId": "sviExtend",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "previous_video_path": {"type": "string", "description": "前の動画パス"},
+                                        "prompt": {"type": "string", "description": "延長プロンプト"},
+                                        "extend_seconds": {"type": "integer", "default": 5},
+                                        "steps": {"type": "integer", "default": 6},
+                                        "motion_strength": {"type": "number", "default": 1.3},
+                                        "quality": {"type": "string", "default": "balanced", "description": "fast / balanced / quality"},
+                                    },
+                                    "required": ["previous_video_path", "prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/svi/queue": {
+                "get": {
+                    "summary": "ComfyUI キュー状態",
+                    "description": "実行中/待機中の prompt_id を返します",
+                    "operationId": "sviQueue",
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/svi/history": {
+                "get": {
+                    "summary": "ComfyUI 履歴（prompt_id）",
+                    "description": "prompt_id の履歴を要約して返します",
+                    "operationId": "sviHistory",
+                    "parameters": [
+                        {"name": "prompt_id", "in": "query", "required": True, "schema": {"type": "string"}},
+                    ],
+                    "responses": {"200": {"description": "成功"}, "404": {"description": "未検出"}},
+                }
+            },
+            "/api/ltx2/generate": {
+                "post": {
+                    "summary": "LTX-2 で動画生成",
+                    "description": "ComfyUIにLTX-2ワークフローを送信して動画生成を実行します（環境依存：workflowはExport(API)推奨）",
+                    "operationId": "ltx2Generate",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prompt": {"type": "string", "description": "動画生成プロンプト"},
+                                        "workflow": {"type": "string", "description": "ワークフローJSONパス（任意）"},
+                                        "workflow_path": {"type": "string", "description": "workflowの別名"},
+                                        "image": {"type": "string", "description": "開始画像（ComfyUI input内のファイル名）"},
+                                        "timeout": {"type": "number", "default": 600},
+                                    },
+                                    "required": ["prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "利用不可"}},
+                }
+            },
+            "/api/ltx2/queue": {
+                "get": {
+                    "summary": "LTX-2 キュー状態",
+                    "description": "ComfyUIのqueueを返します（LTX-2用）",
+                    "operationId": "ltx2Queue",
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/ltx2/history": {
+                "get": {
+                    "summary": "LTX-2 履歴（prompt_id）",
+                    "description": "ComfyUIのhistory/{prompt_id}を返します（LTX-2用）",
+                    "operationId": "ltx2History",
+                    "parameters": [
+                        {"name": "prompt_id", "in": "query", "required": True, "schema": {"type": "string"}},
+                    ],
+                    "responses": {"200": {"description": "成功"}, "404": {"description": "未検出"}},
+                }
+            },
+            "/api/ltx2-infinity/generate": {
+                "post": {
+                    "summary": "LTX-2 Infinity（セグメント反復生成）",
+                    "description": "segments回だけLTX-2生成を反復します（最小Infinity実装）",
+                    "operationId": "ltx2InfinityGenerate",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "prompt": {"type": "string"},
+                                        "segments": {"type": "integer", "default": 1},
+                                        "workflow": {"type": "string"},
+                                        "workflow_path": {"type": "string"},
+                                        "image": {"type": "string"},
+                                        "timeout_per_segment": {"type": "number", "default": 600},
+                                        "positive_suffix": {"type": "string"},
+                                        "negative_suffix": {"type": "string"},
+                                    },
+                                    "required": ["prompt"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "利用不可"}},
+                }
+            },
+            "/api/ltx2-infinity/templates": {
+                "get": {
+                    "summary": "LTX-2 Infinity テンプレート一覧",
+                    "description": "ltx2_templates 配下のテンプレートJSON一覧を返します",
+                    "operationId": "ltx2InfinityListTemplates",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "利用不可"}},
+                },
+                "post": {
+                    "summary": "LTX-2 Infinity テンプレート保存",
+                    "description": "テンプレートJSONを保存します",
+                    "operationId": "ltx2InfinitySaveTemplate",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {"type": "string"},
+                                        "template": {"type": "object"},
+                                    },
+                                    "required": ["name", "template"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}},
+                },
+            },
+            "/api/ltx2-infinity/storage": {
+                "get": {
+                    "summary": "LTX-2 Infinity ストレージ統計",
+                    "description": "ltx2_storage 配下のサイズ等を返します",
+                    "operationId": "ltx2InfinityStorageStats",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "利用不可"}},
+                }
+            },
+            "/api/pdf/to-excel": {
+                "post": {
+                    "summary": "PDF→Excel",
+                    "description": "PDF（ローカルパスまたはDrive URL）をExcelに変換します（既定: LLM強化OCR）",
+                    "operationId": "pdfToExcel",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "pdf_path": {"type": "string", "description": "PDFパス（リポジトリ配下のみ）"},
+                                        "drive_url": {"type": "string", "description": "Google Drive共有URL"},
+                                        "output_path": {"type": "string", "description": "出力xlsx（省略時自動）"},
+                                        "mode": {"type": "string", "default": "llm_enhanced"},
+                                        "quality": {"type": "string", "default": "balanced", "description": "fast / balanced / quality"},
+                                        "llm_model": {"type": "string", "default": "qwen2.5:7b"},
+                                        "use_llm_correction": {"type": "boolean", "default": True},
+                                        "use_ocr": {"type": "boolean", "default": True},
+                                    },
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}},
+                }
+            },
+            "/api/images/recent": {
+                "get": {
+                    "summary": "最近の画像一覧",
+                    "description": "gallery_images から最近の画像ファイル一覧を返します",
+                    "operationId": "getRecentImages",
+                    "parameters": [
+                        {"name": "limit", "in": "query", "schema": {"type": "integer", "default": 20}},
+                    ],
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/vision/describe_url": {
+                "post": {
+                    "summary": "画像URLを説明（Vision）",
+                    "description": "画像URL（Pixel7カメラのshot.jpg等）を取得して、ローカルVLM（例: llava）で説明文を生成します",
+                    "operationId": "visionDescribeUrl",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "image_url": {"type": "string", "description": "画像URL"},
+                                        "url": {"type": "string", "description": "image_urlの別名"},
+                                        "prompt": {"type": "string", "description": "説明の指示（日本語推奨）"},
+                                        "model": {"type": "string", "default": "llava:latest"},
+                                        "max_tokens": {"type": "integer", "default": 512},
+                                        "temperature": {"type": "number", "default": 0.2},
+                                    },
+                                    "required": [],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}},
+                }
+            },
+            "/api/vision/evaluate_url": {
+                "post": {
+                    "summary": "画像URLを評価（Vision）",
+                    "description": "画像URLを取得して、ローカルVLM（例: llava）でスコア評価（JSON）を生成します",
+                    "operationId": "visionEvaluateUrl",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "image_url": {"type": "string", "description": "画像URL"},
+                                        "url": {"type": "string", "description": "image_urlの別名"},
+                                        "criteria": {"type": "string", "description": "評価観点（任意）"},
+                                        "model": {"type": "string", "default": "llava:latest"},
+                                        "max_tokens": {"type": "integer", "default": 256},
+                                        "temperature": {"type": "number", "default": 0.2},
+                                    },
+                                    "required": [],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "400": {"description": "入力不正"}},
+                }
+            },
+            "/api/sd-prompt/generate": {
+                "post": {
+                    "summary": "SD用プロンプトを生成",
+                    "description": "日本語の説明からStable Diffusion用の英語プロンプトを生成します（Ollama）",
+                    "operationId": "generateSDPrompt",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "description": {
+                                            "type": "string",
+                                            "description": "画像の日本語説明",
+                                        },
+                                        "prompt": {
+                                            "type": "string",
+                                            "description": "descriptionの別名",
+                                        },
+                                        "model": {
+                                            "type": "string",
+                                            "description": "Ollamaモデル（デフォルト: llama3-uncensored）",
+                                            "default": "llama3-uncensored",
+                                        },
+                                        "temperature": {
+                                            "type": "number",
+                                            "description": "温度 0.0-1.0",
+                                            "default": 0.9,
+                                        },
+                                        "with_negative": {
+                                            "type": "boolean",
+                                            "description": "ネガティブプロンプトも返す",
+                                            "default": False,
+                                        },
+                                    },
+                                    "required": [],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/devices/status": {
+                "get": {
+                    "summary": "デバイス状態を取得",
+                    "description": "オーケストレーター経由で全デバイス（母艦・このは・X280・Pixel 7等）の状態を取得します",
+                    "operationId": "getDevicesStatus",
+                    "responses": {"200": {"description": "成功（devices, stats, queue_length 等）"}, "503": {"description": "オーケストレーター取得失敗"}},
+                }
+            },
+            "/api/pixel7/resources": {
+                "get": {
+                    "summary": "Pixel 7 リソース",
+                    "description": "Pixel 7 のバッテリー・メモリ等（ブリッジ 5122 にプロキシ）",
+                    "operationId": "getPixel7Resources",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "ブリッジ未接続"}},
+                }
+            },
+            "/api/pixel7/execute": {
+                "post": {
+                    "summary": "Pixel 7 でコマンド実行",
+                    "description": "Pixel 7 ブリッジ経由で Android コマンドを実行します",
+                    "operationId": "executePixel7Command",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {"command": {"type": "string", "description": "実行する shell コマンド"}},
+                                    "required": ["command"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "ブリッジ未接続"}},
+                }
+            },
+            "/api/pixel7/screenshot": {
+                "get": {
+                    "summary": "Pixel 7 スクリーンショット",
+                    "description": "Pixel 7 の画面をキャプチャし、保存パスを返します",
+                    "operationId": "getPixel7Screenshot",
+                    "responses": {"200": {"description": "成功（path 含む）"}, "503": {"description": "ブリッジ未接続"}},
+                }
+            },
+            "/api/pixel7/apps": {
+                "get": {
+                    "summary": "Pixel 7 アプリ一覧",
+                    "description": "Pixel 7 にインストールされているアプリ（パッケージ名）一覧",
+                    "operationId": "getPixel7Apps",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "ブリッジ未接続"}},
+                }
+            },
+            "/api/pixel7/tts": {
+                "post": {
+                    "summary": "Pixel 7 で音声再生（TTS）",
+                    "description": "テキストをサーバーで合成し、Pixel 7 に転送して再生。音声統合・ブリッジ要。",
+                    "operationId": "pixel7Tts",
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {"text": {"type": "string"}, "speed": {"type": "number"}},
+                                    "required": ["text"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "TTS/ブリッジ未利用"}},
+                }
+            },
+            "/api/pixel7/transcribe": {
+                "post": {
+                    "summary": "Pixel 7 の音声ファイルを文字起こし",
+                    "description": "remote_path で指定した端末上のファイルを取得し、STTで文字起こし。",
+                    "operationId": "pixel7Transcribe",
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "remote_path": {"type": "string", "description": "例: /sdcard/Download/rec.wav"},
+                                        "sample_rate": {"type": "integer", "default": 16000},
+                                    },
+                                    "required": ["remote_path"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功（text）"}, "503": {"description": "STT/ブリッジ未利用"}},
+                }
+            },
+            "/api/konoha/health": {
+                "get": {
+                    "summary": "Konoha ヘルス",
+                    "description": "Konoha（このはサーバー 5106）の稼働確認",
+                    "operationId": "getKonohaHealth",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "未接続"}},
+                }
+            },
+            "/api/nanokvm/console_url": {
+                "get": {
+                    "summary": "NanoKVM コンソールURL",
+                    "description": "NanoKVM ログイン画面の URL。ManaOS からブラウザで開く・Browser MCP でスナップショット取得に利用",
+                    "operationId": "getNanokvmConsoleUrl",
+                    "responses": {"200": {"description": "成功（url, message）"}, "503": {"description": "未設定"}},
+                }
+            },
+            "/api/nanokvm/health": {
+                "get": {
+                    "summary": "NanoKVM 到達性",
+                    "description": "NanoKVM（母艦接続 KVM）の到達性チェック",
+                    "operationId": "getNanokvmHealth",
+                    "responses": {"200": {"description": "成功（reachable）"}, "503": {"description": "未到達"}},
+                }
+            },
+            "/api/file-secretary/health": {
+                "get": {
+                    "summary": "File Secretary ヘルス",
+                    "description": "File Secretary の稼働確認（FILE_SECRETARY_URL にプロキシ）",
+                    "operationId": "getFileSecretaryHealth",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "未接続"}},
+                }
+            },
+            "/api/file-secretary/inbox/status": {
+                "get": {
+                    "summary": "File Secretary INBOX 状況",
+                    "description": "INBOX 状況取得。クエリ: source, status, days",
+                    "operationId": "getFileSecretaryInboxStatus",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "未接続"}},
+                }
+            },
+            "/api/file-secretary/files/organize": {
+                "post": {
+                    "summary": "File Secretary ファイル整理",
+                    "description": "ファイル整理実行。body: targets, thread_ref, user, auto_tag, auto_alias",
+                    "operationId": "postFileSecretaryOrganize",
+                    "requestBody": {"content": {"application/json": {"schema": {"type": "object"}}}},
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "未接続"}},
+                }
+            },
+            "/api/x280/resources": {
+                "get": {
+                    "summary": "X280 リソース",
+                    "description": "X280（ThinkPad）の CPU・メモリ・ディスクを取得します（5120 にプロキシ）",
+                    "operationId": "getX280Resources",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "X280 未接続"}},
+                }
+            },
+            "/api/x280/execute": {
+                "post": {
+                    "summary": "X280 でコマンド実行",
+                    "description": "X280 で PowerShell/CMD コマンドを実行します",
+                    "operationId": "executeX280Command",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "command": {"type": "string"},
+                                        "timeout": {"type": "integer"},
+                                    },
+                                    "required": ["command"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "X280 未接続"}},
+                }
+            },
+            "/api/mothership/resources": {
+                "get": {
+                    "summary": "母艦リソース",
+                    "description": "母艦（このAPIが動いているPC）の CPU・メモリ・ディスクを取得します（psutil 要）",
+                    "operationId": "getMothershipResources",
+                    "responses": {"200": {"description": "成功"}, "503": {"description": "psutil 未導入"}},
+                }
+            },
+            "/api/mothership/execute": {
+                "post": {
+                    "summary": "母艦でコマンド実行",
+                    "description": "母艦（ローカルPC）でシェルコマンドを実行します。タイムアウト付き。",
+                    "operationId": "executeMothershipCommand",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "command": {"type": "string", "description": "実行するコマンド"},
+                                        "timeout": {"type": "integer", "description": "タイムアウト秒（最大300）"},
+                                    },
+                                    "required": ["command"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功（stdout, stderr, returncode）"}, "408": {"description": "タイムアウト"}},
+                }
+            },
+            "/api/research/quick": {
+                "post": {
+                    "summary": "Step Deep Research クイック調査",
+                    "description": "調査クエリで作成→実行を一括実行",
+                    "operationId": "researchQuick",
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {"query": {"type": "string"}, "use_cache": {"type": "boolean", "default": True}},
+                                    "required": ["query"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/voice/health": {
+                "get": {
+                    "summary": "音声機能ヘルス",
+                    "description": "STT/TTS の稼働確認",
+                    "operationId": "getVoiceHealth",
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/n8n/workflows": {
+                "get": {
+                    "summary": "n8n ワークフロー一覧",
+                    "description": "n8n のワークフロー一覧を取得",
+                    "operationId": "getN8nWorkflows",
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/github/search": {
+                "get": {
+                    "summary": "GitHub リポジトリ検索",
+                    "description": "query でリポジトリを検索",
+                    "operationId": "githubSearch",
+                    "parameters": [
+                        {"name": "query", "in": "query", "required": True, "schema": {"type": "string"}},
+                        {"name": "limit", "in": "query", "schema": {"type": "integer", "default": 10}},
+                    ],
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/google_drive/upload": {
+                "post": {
+                    "summary": "Google Driveにファイルをアップロード",
+                    "description": "ファイルをGoogle Driveにアップロードします",
+                    "operationId": "uploadToGoogleDrive",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "file_path": {
+                                            "type": "string",
+                                            "description": "アップロードするファイルのパス",
+                                        },
+                                        "folder_id": {
+                                            "type": "string",
+                                            "description": "アップロード先のフォルダID（オプション）",
+                                        },
+                                    },
+                                    "required": ["file_path"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/obsidian/create": {
+                "post": {
+                    "summary": "Obsidianにノートを作成",
+                    "description": "Obsidianにノートを作成します",
+                    "operationId": "createObsidianNote",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "title": {
+                                            "type": "string",
+                                            "description": "ノートのタイトル",
+                                        },
+                                        "content": {
+                                            "type": "string",
+                                            "description": "ノートの内容",
+                                        },
+                                        "tags": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                            "description": "タグのリスト",
+                                        },
+                                    },
+                                    "required": ["title", "content"],
+                                }
+                            }
+                        },
+                    },
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/civitai/search": {
+                "get": {
+                    "summary": "CivitAIでモデルを検索",
+                    "description": "CivitAIでモデルを検索します",
+                    "operationId": "searchCivitAIModels",
+                    "parameters": [
+                        {
+                            "name": "query",
+                            "in": "query",
+                            "required": True,
+                            "schema": {"type": "string"},
+                            "description": "検索クエリ",
+                        },
+                        {
+                            "name": "limit",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer", "default": 10},
+                            "description": "結果の最大数",
+                        },
+                    ],
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/moltbot/plan": {
+                "post": {
+                    "summary": "MoltbotにPlanを送信",
+                    "description": (
+                        "まなOS→Moltbot Gateway経由でファイル整理Plan（list_only/read_only）を送信。"
+                        "body: intent, path, user_hint または完全なplan JSON"
+                    ),
+                    "operationId": "moltbotSubmitPlan",
+                    "requestBody": {
+                        "required": False,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "intent": {
+                                            "type": "string",
+                                            "description": "list_only | read_only",
+                                            "default": "list_only",
+                                        },
+                                        "path": {
+                                            "type": "string",
+                                            "description": "対象パス",
+                                            "default": "~/Downloads",
+                                        },
+                                        "user_hint": {
+                                            "type": "string",
+                                            "description": "ユーザー指示の要約",
+                                        },
+                                    },
+                                }
+                            }
+                        },
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "成功",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "ok": {"type": "boolean"},
+                                            "plan_id": {"type": "string"},
+                                            "data": {"type": "object"},
+                                        },
+                                    }
+                                }
+                            },
+                        }
+                    },
+                }
+            },
+            "/api/moltbot/plan/{plan_id}/result": {
+                "get": {
+                    "summary": "Plan実行結果を取得",
+                    "description": "Moltbotで実行したPlanの結果を取得します",
+                    "operationId": "moltbotGetResult",
+                    "parameters": [
+                        {
+                            "name": "plan_id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+            "/api/moltbot/health": {
+                "get": {
+                    "summary": "Moltbot Gatewayの死活確認",
+                    "description": "Moltbot Gatewayの稼働状態を返します",
+                    "operationId": "moltbotHealth",
+                    "responses": {"200": {"description": "成功"}},
+                }
+            },
+        },
+    }
