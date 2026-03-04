@@ -45,7 +45,9 @@ class TestSetupLogger:
 class TestGetLogger:
 
     def test_get_logger_creates_if_missing(self):
-        logger = get_logger("brand_new_logger")
+        import time
+        unique_name = f"_fresh_{int(time.time() * 1000)}"
+        logger = get_logger(unique_name)
         assert isinstance(logger, logging.Logger)
         assert len(logger.handlers) > 0
 

@@ -16,8 +16,8 @@ def _load_webhook_url() -> str:
     with config_path.open("r", encoding="utf-8") as f:
         config = json.load(f)
 
-    webhook_url = str(config.get("slack_webhook_url", "")).strip()
-    if not webhook_url:
+    webhook_url = str(config.get("slack_webhook_url", "") or "").strip()
+    if not webhook_url or webhook_url.lower() == "none":
         pytest.skip("Slack Webhook URLが未設定のためスキップ")
 
     return webhook_url
