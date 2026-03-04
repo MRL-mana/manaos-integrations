@@ -244,3 +244,38 @@ optional:
       - unified_api
     module: mcp-servers/mcp_proxy/mcp_proxy_server.py
     description: "MCP プロキシ・アクセス制御"
+
+  # ── 人格・自律・秘書 (未成熟: テスト/ledger登録済み・起動不可) ──
+  personality:
+    port: 5123
+    url: "http://127.0.0.1:5123"
+    enabled: false
+    depends_on:
+      - memory
+      - llm_routing
+    module: scripts/misc/personality_system.py
+    start_cmd: "python scripts/misc/personality_system.py"
+    description: "人格システム（清楚系ギャルペルソナ）― テスト整備まで enabled:false"
+    maturity: experimental
+
+  autonomy:
+    port: 5124
+    url: "http://127.0.0.1:5124"
+    enabled: false
+    depends_on:
+      - unified_api
+    module: scripts/misc/autonomy_system.py
+    start_cmd: "python scripts/misc/autonomy_system.py"
+    description: "自律システム L0〜L6 権限セット ― テスト整備まで enabled:false"
+    maturity: experimental
+
+  secretary:
+    port: 5125
+    url: "http://127.0.0.1:5125"
+    enabled: false
+    depends_on:
+      - unified_api
+    module: scripts/misc/secretary_system.py
+    start_cmd: "python scripts/misc/secretary_system.py"
+    description: "秘書システム（スケジュール/リマインダー/自動報告）― テスト整備まで enabled:false"
+    maturity: experimental
