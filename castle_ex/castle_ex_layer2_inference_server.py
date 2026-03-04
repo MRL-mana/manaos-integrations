@@ -63,6 +63,7 @@ class GenerateRequest(BaseModel):
     temperature: float = Field(default=0.2, ge=0.0, le=2.0)
     repetition_penalty: float = Field(default=1.1, ge=1.0, le=2.0)
     do_sample: bool = Field(default=False)
+    no_repeat_ngram_size: int = Field(default=3, ge=0, le=10, description="N-gram 繰り返し禁止サイズ (default: 3)")
 
 
 class GenerateResponse(BaseModel):
@@ -122,6 +123,7 @@ async def generate(req: GenerateRequest):
             temperature=req.temperature,
             repetition_penalty=req.repetition_penalty,
             do_sample=req.do_sample,
+            no_repeat_ngram_size=req.no_repeat_ngram_size,
         )
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))

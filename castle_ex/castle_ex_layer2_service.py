@@ -137,6 +137,7 @@ class Layer2InferenceService:
         temperature: float = 0.2,
         repetition_penalty: float = 1.1,
         do_sample: bool = False,
+        no_repeat_ngram_size: int = 3,
     ) -> str:
         """
         Parameters
@@ -177,6 +178,7 @@ class Layer2InferenceService:
                 **inputs,
                 max_new_tokens=max_new_tokens,
                 repetition_penalty=repetition_penalty,
+                no_repeat_ngram_size=no_repeat_ngram_size,
                 do_sample=do_sample,
                 pad_token_id=tok.pad_token_id,
                 eos_token_id=tok.eos_token_id,

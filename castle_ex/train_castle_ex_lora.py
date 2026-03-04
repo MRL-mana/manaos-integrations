@@ -250,6 +250,14 @@ def parse_args():
         help="チェックポイントから再開（'auto'で最新を自動検出、またはcheckpoint-XXXパスを指定）",
     )
     parser.add_argument(
+        "--init-lora-from",
+        type=str,
+        default=None,
+        help="LoRA重みの初期値を既存adapter（safetensors）から読み込む。"
+             "training state は引き継がず step=0 から学習開始。"
+             "prod adapterを起点に diff 学習する場合に使用。",
+    )
+    parser.add_argument(
         "--no-cuda",
         action="store_true",
         help="CUDAを無効化してCPUのみで実行",
@@ -407,6 +415,21 @@ def main():
     # PEFTモデル作成
     model = get_peft_model(base_model, lora_config)
     logger.info("LoRA適用完了")
+
+    # --init-lora-from: prod adapter の重みを注入（step=0 スタート用）
+    if args.init_lora_from:
+        from safetensors.torch import load_file as st_load
+        init_path = Path(args.init_lora_from)
+        st_file   = init_path / "adapter_model.safetensors"
+        if not st_file.exists():
+            raise FileNotFoundError(f"--init-lora-from: adapter_model.safetensors not found in {init_path}")
+        logger.info(f"[init-lora-from] Loading adapter weights from: {st_file}")
+        state = st_load(str(st_file), device="cpu")
+        missing, unexpected = model.load_state_dict(state, strict=False)
+        logger.info(f"[init-lora-from] loaded. missing={len(missing)} unexpected={len(unexpected)}")
+        if missing:
+            logger.warning(f"[init-lora-from] missing keys (first 5): {missing[:5]}")
+
     model.print_trainable_parameters()
     
     # 5. Data Collator
