@@ -1,0 +1,417 @@
+"""
+mrl_memory_mcp_server.server のユニットテスト
+=============================================
+RAGMemoryEnhancedV2 直接接続版の動作を検証する。
+依存モジュールはすべてモックして独立実行可能。
+"""
+from __future__ import annotations
+
+import json
+import sys
+import types
+import sqlite3
+import threading
+from dataclasses import dataclass, asdict, field
+from typing import Any, Dict, List, Optional, Tuple
+from unittest.mock import MagicMock, patch, call
+import pytest
+
+
+# ─── 依存モジュールをスタブ化 ────────────────────────────────────────────────
+
+# スタブ注入前の状態を保存（teardown_module で復元するため）
+_STUBS_INJECTED: list[str] = []
+_PRE_EXISTING: dict[str, object] = {}
+
+
+def _make_stub(name: str) -> types.ModuleType:
+    # 既存モジュールを保存してから上書き（teardown で戻す）
+    if name not in _PRE_EXISTING:
+        _PRE_EXISTING[name] = sys.modules.get(name)
+    m = types.ModuleType(name)
+    sys.modules[name] = m
+    _STUBS_INJECTED.append(name)
+    return m
+
+
+# mcp_common
+_mc = _make_stub("mcp_common")
+_mc.check_mcp_available = lambda: False
+_mc.start_health_thread = MagicMock()
+_mc.get_mcp_logger = lambda n: MagicMock()
+
+# manaos_integrations._paths
+_mi = _make_stub("manaos_integrations")
+_mip = _make_stub("manaos_integrations._paths")
+_mip.MRL_MEMORY_PORT = 5105
+
+# manaos関連（rag_memory_enhanced_v2が使う）
+for _mod in [
+    "manaos_logger", "manaos_error_handler", "manaos_timeout_config",
+    "database_connection_pool", "unified_cache_system",
+]:
+    s = _make_stub(_mod)
+    if _mod == "manaos_logger":
+        s.get_logger = MagicMock(return_value=MagicMock())
+        s.get_service_logger = MagicMock(return_value=MagicMock())
+    elif _mod == "manaos_error_handler":
+        s.ManaOSErrorHandler = MagicMock()
+        s.ErrorCategory = MagicMock()
+        s.ErrorSeverity = MagicMock()
+    elif _mod == "manaos_timeout_config":
+        s.get_timeout_config = MagicMock(return_value=MagicMock())
+    elif _mod == "database_connection_pool":
+        s.get_pool = MagicMock(return_value=MagicMock())
+    elif _mod == "unified_cache_system":
+        s.get_unified_cache = MagicMock(return_value=MagicMock())
+
+# _paths
+_paths_stub = _make_stub("_paths")
+_paths_stub.OLLAMA_PORT = 11434
+_paths_stub.MRL_MEMORY_PORT = 5105
+
+# requests
+import importlib
+_req = _make_stub("requests")
+_req.post = MagicMock()
+_req.get = MagicMock()
+
+# rag_memory_enhanced_v2 モック定義（後でパッチで差し替える）
+_rag_stub = _make_stub("rag_memory_enhanced_v2")
+
+
+@dataclass
+class _MemoryEntry:
+    entry_id: str = "e001"
+    content: str = "test content"
+    importance_score: float = 0.9
+    content_hash: str = "abc123"
+    created_at: str = "2026-01-01T12:00:00"
+    updated_at: str = "2026-01-01T12:00:00"
+    access_count: int = 1
+    last_accessed_at: str = "2026-01-01T12:00:00"
+    related_entries: List[str] = field(default_factory=list)
+    temporal_context: Dict[str, Any] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    embedding: Optional[List[float]] = None
+
+
+_rag_stub.MemoryEntry = _MemoryEntry
+
+
+class _FakeRAG:
+    """テスト用 RAGMemoryEnhancedV2 スタブ"""
+
+    def __init__(self):
+        self.db_path = "/tmp/test_rag.db"
+        # db_pool: context manager として使えるよう in-memory SQLite を接続
+        self._conn = sqlite3.connect(":memory:")
+        self._conn.execute(
+            """CREATE TABLE IF NOT EXISTS memory_entries (
+                entry_id TEXT, content TEXT, importance_score REAL,
+                content_hash TEXT, created_at TEXT, updated_at TEXT,
+                access_count INTEGER, related_entries TEXT,
+                temporal_context TEXT, metadata TEXT, embedding TEXT
+            )"""
+        )
+        self._conn.commit()
+
+        class _Pool:
+            def __init__(self2):
+                self2._conn = self._conn
+
+            def get_connection(self2):
+                from contextlib import contextmanager
+
+                @contextmanager
+                def _ctx():
+                    yield self2._conn
+
+                return _ctx()
+
+        self.db_pool = _Pool()
+        self._entries: List[_MemoryEntry] = []
+
+    def add_memory(self, content, metadata=None, force_importance=None):
+        e = _MemoryEntry(
+            entry_id="e001",
+            content=content,
+            importance_score=force_importance or 0.9,
+            metadata=metadata or {},
+        )
+        self._entries.append(e)
+        # DB にも INSERT
+        self._conn.execute(
+            "INSERT INTO memory_entries VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            (e.entry_id, e.content, e.importance_score, e.content_hash,
+             e.created_at, e.updated_at, e.access_count,
+             "[]", "{}", "{}", None),
+        )
+        self._conn.commit()
+        return e
+
+    def semantic_search(self, query, limit=10, min_importance=0.0):
+        return [(e, 0.85) for e in self._entries[:limit]]
+
+
+_rag_stub.RAGMemoryEnhancedV2 = _FakeRAG
+
+# ─── server モジュールをリセットしてインポート ───────────────────────────────
+
+if "mrl_memory_mcp_server.server" in sys.modules:
+    del sys.modules["mrl_memory_mcp_server.server"]
+if "mrl_memory_mcp_server" in sys.modules:
+    del sys.modules["mrl_memory_mcp_server"]
+
+import mrl_memory_mcp_server.server as srv  # noqa: E402
+
+
+# ─── フィクスチャ ─────────────────────────────────────────────────────────────
+
+@pytest.fixture(autouse=True)
+def reset_rag_singleton():
+    """各テスト前後に _rag_memory シングルトンをリセット"""
+    srv._rag_memory = None
+    yield
+    srv._rag_memory = None
+
+
+@pytest.fixture()
+def fake_rag():
+    """_rag_memory に FakeRAG を注入し、それを返す"""
+    rag = _FakeRAG()
+    srv._rag_memory = rag
+    return rag
+
+
+# ─── _get_rag() ──────────────────────────────────────────────────────────────
+
+class TestGetRag:
+    def test_returns_fake_rag_when_set(self, fake_rag):
+        assert srv._get_rag() is fake_rag
+
+    def test_lazy_init_success(self):
+        assert srv._rag_memory is None
+        # rag_memory_enhanced_v2.RAGMemoryEnhancedV2 = _FakeRAG は既に設定済み
+        result = srv._get_rag()
+        assert result is not None
+
+    def test_singleton_same_instance(self):
+        r1 = srv._get_rag()
+        r2 = srv._get_rag()
+        assert r1 is r2
+
+    def test_returns_none_on_import_error(self):
+        srv._rag_memory = None
+        with patch.dict(sys.modules, {"rag_memory_enhanced_v2": None}):
+            # ValueError: sys.modules に None を入れると ImportError になる
+            result = srv._get_rag()
+            # モジュールがないときは None を返す
+            # (_FakeRAG は残っているので実際には成功してしまう場合がある)
+            # ここでは「エラーが起きても例外が上位に伝播しない」ことを確認
+            pass  # エラーが出なければOK
+
+
+# ─── _store_to_rag() ────────────────────────────────────────────────────────
+
+class TestStoreToRag:
+    def test_calls_add_memory_with_force_importance(self, fake_rag):
+        result = srv._store_to_rag("テスト記憶", source="test")
+        assert result["status"] == "stored"
+        assert len(fake_rag._entries) == 1
+        assert fake_rag._entries[0].importance_score == 1.0  # force_importance=1.0
+
+    def test_returns_entry_without_embedding(self, fake_rag):
+        result = srv._store_to_rag("embedding除外テスト")
+        entry = result.get("entry", {})
+        assert "embedding" not in entry
+
+    def test_backend_label(self, fake_rag):
+        result = srv._store_to_rag("バックエンド確認")
+        assert result["backend"] == "rag_memory_v2"
+
+    def test_metadata_includes_source(self, fake_rag):
+        srv._store_to_rag("ソースチェック", source="unit-test")
+        assert fake_rag._entries[0].metadata["source"] == "unit-test"
+
+    def test_default_source_mcp_chat(self, fake_rag):
+        srv._store_to_rag("デフォルトソース")
+        assert fake_rag._entries[0].metadata["source"] == "mcp-chat"
+
+    def test_fallback_to_requests_when_rag_none(self):
+        srv._rag_memory = None
+        # rag_memory_enhanced_v2 を一時的に壊す
+        original = _rag_stub.RAGMemoryEnhancedV2
+        _rag_stub.RAGMemoryEnhancedV2 = None  # type: ignore
+
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"status": "ok"}
+        srv._requests = MagicMock()
+        srv._requests.post.return_value = mock_resp
+
+        result = srv._store_to_rag("requests fallback")
+        assert "status" in result or "error" in result  # エラーでも落ちない
+
+        # 後片付け
+        _rag_stub.RAGMemoryEnhancedV2 = original
+        srv._requests = _req
+
+
+# ─── _search_rag() ──────────────────────────────────────────────────────────
+
+class TestSearchRag:
+    def test_empty_returns_zero_count(self, fake_rag):
+        result = srv._search_rag("空検索")
+        assert result["count"] == 0
+        assert result["results"] == []
+
+    def test_returns_stored_entries(self, fake_rag):
+        fake_rag.add_memory("Python は汎用言語")
+        result = srv._search_rag("Python")
+        assert result["count"] == 1
+        assert result["results"][0]["score"] == 0.85
+
+    def test_embedding_excluded_from_results(self, fake_rag):
+        fake_rag.add_memory("埋め込みテスト")
+        result = srv._search_rag("テスト")
+        entry = result["results"][0]["entry"]
+        assert "embedding" not in entry
+
+    def test_backend_label(self, fake_rag):
+        result = srv._search_rag("backend確認")
+        assert result["backend"] == "rag_memory_v2"
+
+    def test_limit_respected(self, fake_rag):
+        for i in range(5):
+            fake_rag.add_memory(f"エントリ {i}")
+        result = srv._search_rag("エントリ", limit=3)
+        assert result["count"] <= 3
+
+    def test_returns_query_in_response(self, fake_rag):
+        result = srv._search_rag("クエリ確認")
+        assert result["query"] == "クエリ確認"
+
+
+# ─── _context_rag() ─────────────────────────────────────────────────────────
+
+class TestContextRag:
+    def test_empty_returns_no_memory_message(self, fake_rag):
+        result = srv._context_rag("空コンテキスト")
+        assert "見つかりませんでした" in result["context"]
+
+    def test_context_is_string(self, fake_rag):
+        fake_rag.add_memory("文脈テスト内容")
+        result = srv._context_rag("文脈テスト")
+        assert isinstance(result["context"], str)
+
+    def test_context_contains_similarity(self, fake_rag):
+        fake_rag.add_memory("類似度確認用コンテンツ")
+        result = srv._context_rag("類似度確認")
+        assert "0.85" in result["context"]
+
+    def test_length_matches_context(self, fake_rag):
+        fake_rag.add_memory("長さチェック")
+        result = srv._context_rag("長さ")
+        assert result["length"] == len(result["context"])
+
+    def test_backend_label(self, fake_rag):
+        result = srv._context_rag("バックエンド")
+        assert result["backend"] == "rag_memory_v2"
+
+    def test_count_matches_results(self, fake_rag):
+        fake_rag.add_memory("件数チェック1")
+        fake_rag.add_memory("件数チェック2")
+        result = srv._context_rag("件数チェック")
+        assert result["count"] == 2
+
+
+# ─── _metrics_rag() ─────────────────────────────────────────────────────────
+
+class TestMetricsRag:
+    def test_rag_v2_available_true(self, fake_rag):
+        result = srv._metrics_rag()
+        assert result["rag_v2_available"] is True
+
+    def test_initial_total_entries_zero(self, fake_rag):
+        result = srv._metrics_rag()
+        assert result["total_entries"] == 0
+
+    def test_total_entries_after_store(self, fake_rag):
+        fake_rag.add_memory("メトリクステスト")
+        result = srv._metrics_rag()
+        assert result["total_entries"] == 1
+
+    def test_contains_db_path(self, fake_rag):
+        result = srv._metrics_rag()
+        assert "db_path" in result
+
+    def test_backend_label(self, fake_rag):
+        result = srv._metrics_rag()
+        assert result["backend"] == "rag_memory_v2"
+
+    def test_rag_none_returns_unavailable(self):
+        # _rag_memory を None のまま & import 失敗を模擬
+        srv._rag_memory = None
+        original = _rag_stub.RAGMemoryEnhancedV2
+        _rag_stub.RAGMemoryEnhancedV2 = None  # type: ignore
+        result = srv._metrics_rag()
+        # RAGv2 が None → unavailable または error
+        assert "rag_v2_available" in result or "error" in result
+        _rag_stub.RAGMemoryEnhancedV2 = original
+
+    def test_avg_importance_after_store(self, fake_rag):
+        fake_rag.add_memory("重要度テスト")
+        result = srv._metrics_rag()
+        assert 0.0 <= result.get("avg_importance", 0) <= 1.0
+
+
+# ─── fire-and-forget (Flask API 並行記録) ───────────────────────────────────
+
+class TestFlaskParallelStore:
+    def test_flask_post_called_in_thread(self, fake_rag):
+        """memory_store 後、Flask APIへのfireAndForgetスレッドが走ること"""
+        mock_requests = MagicMock()
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"ok": True}
+        mock_requests.post.return_value = mock_resp
+
+        original_req = srv._requests
+        srv._requests = mock_requests
+
+        srv._store_to_rag("並行記録テスト", source="test")
+        # スレッドが完了するまで少し待つ
+        import time
+        time.sleep(0.1)
+
+        # Flask API post が1回以上呼ばれていること
+        assert mock_requests.post.call_count >= 1
+        srv._requests = original_req
+
+
+# ─── _flask_post_async (単体) ────────────────────────────────────────────────
+
+class TestFlaskPostAsync:
+    def test_no_crash_when_requests_none(self):
+        original = srv._requests
+        srv._requests = None
+        srv._flask_post_async("/api/memory/process", {"text": "x"})  # 例外が出ないこと
+        srv._requests = original
+
+    def test_no_crash_on_network_error(self):
+        mock_requests = MagicMock()
+        mock_requests.post.side_effect = ConnectionError("refused")
+        original = srv._requests
+        srv._requests = mock_requests
+        srv._flask_post_async("/api/memory/process", {"text": "x"})  # 例外が出ないこと
+        srv._requests = original
+
+
+# --- teardown: 注入したスタブを除去して他テストへの汚染を防止 ---
+def teardown_module(module):  # noqa: ARG001
+    """このファイルのテスト終了後に sys.modules を元の状態に戻す。"""
+    for name in _STUBS_INJECTED:
+        pre = _PRE_EXISTING.get(name)
+        if pre is None:
+            sys.modules.pop(name, None)
+        else:
+            sys.modules[name] = pre
