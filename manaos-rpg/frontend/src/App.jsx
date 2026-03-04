@@ -207,6 +207,14 @@ export default function App() {
         e.preventDefault()
         refreshSnapshot()
       }
+      if (e.key === 'l' || e.key === 'L') {
+        e.preventDefault()
+        setActive('lessons')
+      }
+      if (e.key === 'a' || e.key === 'A') {
+        e.preventDefault()
+        setActive('agents')
+      }
       if (e.key === '?' || (e.shiftKey && e.key === '/')) {
         e.preventDefault()
         setShowHelp(prev => !prev)
@@ -257,7 +265,7 @@ export default function App() {
           <span>API: {apiBase}</span>
           <span>サービス: {aliveCount}/{totalCount} alive</span>
           <span>更新: {fmtTs(state?.ts)}{lastRefreshTs ? ` (${fmtAgo(lastRefreshTs, tick)})` : ''}</span>
-          <span title="1-9,0: タブ切替 / R: 更新 / Esc: エラー閉じる / Ctrl+K: 検索">⌨ ショートカット有</span>
+          <span title="1-9,0: タブ切替 / L: 教訓 / A: エージェント / R: 更新 / Esc: 閉じる / Ctrl+K: 検索">⌨ ショートカット有</span>
         </div>
         <HealthStrip services={state?.services} />
         <div className="actions">
@@ -445,7 +453,9 @@ export default function App() {
             <kbd>7</kbd><span>マップ</span>
             <kbd>8</kbd><span>アイテム</span>
             <kbd>9</kbd><span>RL</span>
-            <kbd>0</kbd><span>システム</span>
+            <kbd>0</kbd><span>収益（KPI）</span>
+            <kbd>L</kbd><span>教訓</span>
+            <kbd>A</kbd><span>エージェント</span>
             <kbd>R</kbd><span>スナップショット更新</span>
             <kbd>Ctrl+K</kbd><span>グローバル検索</span>
             <kbd>?</kbd><span>このヘルプ</span>

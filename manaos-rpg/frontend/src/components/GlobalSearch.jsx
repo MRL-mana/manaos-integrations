@@ -9,6 +9,7 @@ const CAT_ICONS = {
   model: '🧠',
   device: '🗺️',
   skill: '✨',
+  nav: '🗂️',
 }
 
 function buildIndex(state) {
@@ -61,6 +62,10 @@ function buildIndex(state) {
       })
     }
   }
+  // 固定ナビゲーションエントリー（常時検索可能）
+  items.push({ cat: 'nav', id: 'lessons', label: '教訓（成長ログ）', sub: '指摘・修正パターン / Lキー', alive: true, tab: 'lessons' })
+  items.push({ cat: 'nav', id: 'agents', label: 'エージェント追跡', sub: 'ランク・品質スコア / Aキー', alive: true, tab: 'agents' })
+  items.push({ cat: 'nav', id: 'revenue', label: '収益（KPI）', sub: 'Billing / RL / 品質 / 0キー', alive: true, tab: 'revenue' })
   return items
 }
 
