@@ -152,9 +152,11 @@ optional:
 
   # ── 研究・ディープリサーチ ──
   step_deep_research:
-    port: 5200
-    url: "http://127.0.0.1:5200"
+    port: 5120
+    url: "http://127.0.0.1:5120"
     enabled: false
+    module: step_deep_research/api_server.py
+    start_cmd: "python step_deep_research/api_server.py"
     depends_on:
       - unified_api
     description: "Step-Deep-Research 調査ジョブシステム"
