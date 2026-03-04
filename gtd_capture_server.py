@@ -9,6 +9,8 @@ GTD Capture Server (port 5130)
 import os
 import re
 import json
+import subprocess
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -357,6 +359,58 @@ p {{ color: #8b949e; margin-bottom: 24px; text-align: center; font-size: 15px; }
 </body>
 </html>"""
     return PlainTextResponse(html, media_type="text/html")
+
+
+# ── ADB Wireless Keepalive ─────────────────────────────────────────────
+ADB_EXE     = r"C:\Users\mana4\Desktop\scrcpy\scrcpy-win64-v3.3.4\adb.exe"
+PIXEL7_IP   = "100.84.2.125"
+PIXEL7_PORT = 5555
+
+
+def _adb(*args, timeout=10):
+    try:
+        r = subprocess.run([ADB_EXE, *args], capture_output=True, text=True, timeout=timeout)
+        return (r.stdout + r.stderr).strip()
+    except Exception as e:
+        return str(e)
+
+
+def _adb_reconnect_bg():
+    """バックグラウンドで ADB tcpip + connect を実行"""
+    target = f"{PIXEL7_IP}:{PIXEL7_PORT}"
+    # まず USB 接続があれば tcpip 設定
+    devices = _adb("devices")
+    if "39111JEHN00394" in devices and "device" in devices:
+        _adb("-s", "39111JEHN00394", "tcpip", str(PIXEL7_PORT))
+        import time; time.sleep(3)
+    # Tailscale 経由で接続
+    result = _adb("connect", target)
+    return result
+
+
+@app.post("/api/adb/reconnect")
+def adb_reconnect():
+    """Pixel7 が呼び出す → 母艦側で adb tcpip 5555 + connect を実行"""
+    t = threading.Thread(target=_adb_reconnect_bg, daemon=True)
+    t.start()
+    t.join(timeout=8)
+    devices = _adb("devices")
+    target = f"{PIXEL7_IP}:{PIXEL7_PORT}"
+    connected = any(target in line and line.strip().endswith("device") for line in devices.splitlines())
+    return {"ok": True, "connected": connected, "devices": devices}
+
+
+@app.get("/api/adb/status")
+def adb_status():
+    """現在の ADB 接続状態を返す"""
+    devices = _adb("devices")
+    target  = f"{PIXEL7_IP}:{PIXEL7_PORT}"
+    # 行単位で判定：対象デバイスの行が "device" で終われば接続中
+    connected = any(
+        target in line and line.strip().endswith("device")
+        for line in devices.splitlines()
+    )
+    return {"connected": connected, "target": target, "devices": devices}
 
 
 if __name__ == "__main__":

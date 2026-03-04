@@ -63,6 +63,34 @@
             "successOutput": "response",
             "failureOutput": "detailed"
           }
+        },
+        {
+          "id": "7a3c8f21-d1e4-4b09-a7f6-3e5d91c042bb",
+          "name": "ADB Reconnect",
+          "method": "POST",
+          "url": "http://100.73.247.100:5130/api/adb/reconnect",
+          "authentication": "none",
+          "contentType": "text/plain",
+          "iconName": "wifi",
+          "responseHandling": {
+            "uiType": "dialog",
+            "successOutput": "response",
+            "failureOutput": "detailed"
+          }
+        },
+        {
+          "id": "9b5e2a14-f7c3-4d18-b8e1-6a2f83d157cc",
+          "name": "ADB Status",
+          "method": "GET",
+          "url": "http://100.73.247.100:5130/api/adb/status",
+          "authentication": "none",
+          "contentType": "text/plain",
+          "iconName": "tap_and_play",
+          "responseHandling": {
+            "uiType": "dialog",
+            "successOutput": "response",
+            "failureOutput": "detailed"
+          }
         }
       ]
     }
