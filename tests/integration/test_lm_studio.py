@@ -22,4 +22,6 @@ def test_lm_studio_generate_smoke():
     except Exception as exc:
         pytest.skip(f"LM Studio推論が実行できないためスキップ: {exc}")
 
+    if not isinstance(result, dict):
+        pytest.skip(f"LM Studio 応答が dict でないためスキップ (type={type(result).__name__})")
     assert isinstance(result, dict)

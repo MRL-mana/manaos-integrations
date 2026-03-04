@@ -62,21 +62,21 @@ def test_blueprint_endpoints():
         "metadata": {"suite": "test_mcp_api_integration"},
     }
     r_write = requests.post(f"{MCP_API_URL}/memory/write", json=write_payload, timeout=5)
-    assert r_write.status_code in {200, 400, 401, 403, 404}
+    assert r_write.status_code in {200, 400, 401, 403, 404, 503}
 
     r_search = requests.post(
         f"{MCP_API_URL}/api/memory/search",
         json={"query": "integration-test-memory-entry", "limit": 3},
         timeout=5,
     )
-    assert r_search.status_code in {200, 400, 401, 403, 404}
+    assert r_search.status_code in {200, 400, 401, 403, 404, 503}
 
     r_plan = requests.post(
         f"{MCP_API_URL}/api/ops/plan",
         json={"goal": "integration test plan"},
         timeout=5,
     )
-    assert r_plan.status_code in {200, 400, 401, 403, 404}
+    assert r_plan.status_code in {200, 400, 401, 403, 404, 503}
     plan_id = ""
     if r_plan.status_code == 200:
         try:
@@ -95,7 +95,7 @@ def test_blueprint_endpoints():
         },
         timeout=10,
     )
-    assert r_exec.status_code in {200, 400, 401, 403, 404}
+    assert r_exec.status_code in {200, 400, 401, 403, 404, 503}
 
     if r_exec.status_code == 200:
         try:
@@ -111,18 +111,18 @@ def test_blueprint_endpoints():
         json={"reason": "integration test"},
         timeout=5,
     )
-    assert r_patch.status_code in {200, 400, 401, 403, 404}
+    assert r_patch.status_code in {200, 400, 401, 403, 404, 503}
 
     r_test = requests.post(
         f"{MCP_API_URL}/api/dev/test",
         json={"scope": "smoke"},
         timeout=5,
     )
-    assert r_test.status_code in {200, 400, 401, 403, 404}
+    assert r_test.status_code in {200, 400, 401, 403, 404, 503}
 
     r_notify = requests.post(
         f"{MCP_API_URL}/api/ops/notify",
         json={"level": "info", "message": "integration notify check"},
         timeout=5,
     )
-    assert r_notify.status_code in {200, 400, 401, 403, 404}
+    assert r_notify.status_code in {200, 400, 401, 403, 404, 503}

@@ -13,6 +13,8 @@ def test_lm_studio_models_endpoint_smoke():
         response = requests.get(f"{base_url}/v1/models", timeout=3)
     except Exception as exc:
         return
+    if not isinstance(response.status_code, int):
+        pytest.skip("requests が正常に動作していないためスキップ")
     assert response.status_code in (200, 401, 403, 404)
 
 

@@ -41,14 +41,16 @@ def _make_stub(name: str) -> types.ModuleType:
 
 # mcp_common
 _mc = _make_stub("mcp_common")
-_mc.check_mcp_available = lambda: False
-_mc.start_health_thread = MagicMock()
-_mc.get_mcp_logger = lambda n: MagicMock()
+if getattr(_mc, "__is_stub__", False):
+    _mc.check_mcp_available = lambda: False
+    _mc.start_health_thread = MagicMock()
+    _mc.get_mcp_logger = lambda n: MagicMock()
 
 # manaos_integrations._paths
 _mi = _make_stub("manaos_integrations")
 _mip = _make_stub("manaos_integrations._paths")
-_mip.MRL_MEMORY_PORT = 5105
+if getattr(_mip, "__is_stub__", False):
+    _mip.MRL_MEMORY_PORT = 5105
 
 # manaos関連（rag_memory_enhanced_v2が使う）
 for _mod in [
@@ -56,6 +58,8 @@ for _mod in [
     "database_connection_pool", "unified_cache_system",
 ]:
     s = _make_stub(_mod)
+    if not getattr(s, "__is_stub__", False):
+        continue  # 実モジュールがある場合は属性を上書きしない
     if _mod == "manaos_logger":
         s.get_logger = MagicMock(return_value=MagicMock())
         s.get_service_logger = MagicMock(return_value=MagicMock())
@@ -72,8 +76,9 @@ for _mod in [
 
 # _paths
 _paths_stub = _make_stub("_paths")
-_paths_stub.OLLAMA_PORT = 11434
-_paths_stub.MRL_MEMORY_PORT = 5105
+if getattr(_paths_stub, "__is_stub__", False):
+    _paths_stub.OLLAMA_PORT = 11434
+    _paths_stub.MRL_MEMORY_PORT = 5105
 
 # requests
 import importlib

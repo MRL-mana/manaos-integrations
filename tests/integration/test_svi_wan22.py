@@ -46,7 +46,7 @@ def test_comfyui_connection_smoke():
 def test_queue_status_smoke():
     svi = _create_svi_client()
     if not svi.is_available():
-        pytest.xfail("ComfyUI未接続")
+        pytest.skip("ComfyUI未接続（環境依存のためスキップ）")
 
     queue_status = svi.get_queue_status()
     assert isinstance(queue_status, dict)

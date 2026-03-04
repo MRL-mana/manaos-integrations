@@ -161,6 +161,14 @@ $results["personality-thought-system"] = Start-WindowsService "personality-thoug
 $opsDashPath = "C:\Users\mana4\Desktop\ops-dashboard\backend\app.py"
 $results["ops-dashboard"]  = Start-WindowsService "ops-dashboard" $opsDashPath @{} "C:\Users\mana4\Desktop\ops-dashboard\backend" 9640
 
+# ── unified-api-server / MCP API server (PORT 9502) ──
+$uapiPath = "$ROOT\unified_api_server.py"
+$results["unified-api-server"] = Start-WindowsService "unified-api-server" $uapiPath @{ PORT = "9502"; UNIFIED_API_PORT = "9502" } "$ROOT" 9502
+
+# ── mrl-memory (PORT 5105) ──
+$mrlPath = "$ROOT\mrl_memory_integration.py"
+$results["mrl-memory"] = Start-WindowsService "mrl-memory" $mrlPath @{ PORT = "5105"; MRL_MEMORY_PORT = "5105" } "$ROOT" 5105
+
 # 3) ヘルスチェック実行
 Write-Host ""
 Write-Host "[3/4] Windows サービス ヘルスチェック..." -ForegroundColor Yellow
@@ -172,7 +180,9 @@ $healthTargets = @(
     @{ name = "autonomy-system";     url = "http://127.0.0.1:5124/health" },
     @{ name = "secretary-system";    url = "http://127.0.0.1:5125/health" },
     @{ name = "personality-thought-system"; url = "http://127.0.0.1:5126/health" },
-    @{ name = "ops-dashboard";       url = "http://127.0.0.1:9640/health" }
+    @{ name = "ops-dashboard";       url = "http://127.0.0.1:9640/health" },
+    @{ name = "unified-api-server";  url = "http://127.0.0.1:9502/health" },
+    @{ name = "mrl-memory";          url = "http://127.0.0.1:5105/health" }
 )
 
 if (-not $SkipHealthCheck) {
