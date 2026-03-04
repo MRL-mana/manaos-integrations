@@ -89,3 +89,9 @@ REMI_PORT: int = int(os.getenv("REMI_PORT", "8081"))
 GALLERY_API_PORT: int = GALLERY_PORT  # エイリアス（gallery_api_server.py用）
 AUTONOMOUS_OPS_PORT: int = int(os.getenv("AUTONOMOUS_OPS_PORT", "5131"))
 LAYER2_INFER_PORT: int = int(os.getenv("LAYER2_INFER_PORT", "9520"))  # CASTLE-EX Layer2 推論サーバー
+
+# ── MCP サーバー内蔵ヘルスチェックポート ─────────────────
+PERSONALITY_MCP_HEALTH_PORT: int = int(os.getenv("PERSONALITY_MCP_HEALTH_PORT", "5143"))
+AUTONOMY_MCP_HEALTH_PORT: int = int(os.getenv("AUTONOMY_MCP_HEALTH_PORT", "5144"))
+SECRETARY_MCP_HEALTH_PORT: int = int(os.getenv("SECRETARY_MCP_HEALTH_PORT", "5145"))
+TRINITY_MCP_HEALTH_PORT: int = int(os.getenv("TRINITY_MCP_HEALTH_PORT", "5146"))

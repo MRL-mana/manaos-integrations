@@ -15,8 +15,8 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-# ディレクトリ設定
-WORK_DIR = Path("/root/slack_integration")
+# ディレクトリ設定（Windows/Linux 共通）
+WORK_DIR = Path(os.environ.get("SLACK_WORK_DIR", str(Path(__file__).parent)))
 LOGS_DIR = WORK_DIR / "logs"
 CONFIG_DIR = WORK_DIR / "config"
 
@@ -632,6 +632,22 @@ def send_rich_message():
     
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/slack/webhook', methods=['POST'])
+def slack_webhook():
+    """Slack Incoming Webhook（汎用 – POST text/user/channel）"""
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        text = data.get("text", "")
+        user = data.get("user", "unknown")
+        channel = data.get("channel", "general")
+        if not text:
+            return jsonify({"status": "error", "error": "text is required"}), 400
+        log(f"Webhook受信: user={user} channel={channel} text={text[:80]}")
+        return jsonify({"status": "ok", "received": True, "user": user, "channel": channel})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
 
 
 @app.route('/send/status_board', methods=['POST'])

@@ -69,6 +69,32 @@
       "env": {
         "PORTAL_VOICE_API_URL": "http://127.0.0.1:5116"
       }
+    },
+    "personality-system": {
+      "command": "python",
+      "args": ["-m", "personality_mcp_server.server"],
+      "env": {
+        "PERSONALITY_API_URL": "http://127.0.0.1:5123"
+      }
+    },
+    "autonomy-system": {
+      "command": "python",
+      "args": ["-m", "autonomy_mcp_server.server"],
+      "env": {
+        "AUTONOMY_API_URL": "http://127.0.0.1:5124"
+      }
+    },
+    "secretary-system": {
+      "command": "python",
+      "args": ["-m", "secretary_mcp_server.server"],
+      "env": {
+        "SECRETARY_API_URL": "http://127.0.0.1:5125"
+      }
+    },
+    "trinity-system": {
+      "command": "python",
+      "args": ["-m", "trinity_mcp_server.server"],
+      "env": {}
     }
   }
 }

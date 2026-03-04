@@ -43,7 +43,7 @@ except Exception:
 
 # ── 設定 ─────────────────────────────────────────
 API_BASE = os.getenv("PERSONALITY_API_URL", f"http://127.0.0.1:{PERSONALITY_SYSTEM_PORT}")
-HEALTH_PORT = int(os.getenv("PERSONALITY_MCP_HEALTH_PORT", "5133"))
+HEALTH_PORT = int(os.getenv("PERSONALITY_MCP_HEALTH_PORT", "5143"))
 TIMEOUT = 10
 
 

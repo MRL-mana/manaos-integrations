@@ -43,7 +43,7 @@ except Exception:
 
 # ── 設定 ─────────────────────────────────────────
 API_BASE = os.getenv("SECRETARY_API_URL", f"http://127.0.0.1:{SECRETARY_SYSTEM_PORT}")
-HEALTH_PORT = int(os.getenv("SECRETARY_MCP_HEALTH_PORT", "5135"))
+HEALTH_PORT = int(os.getenv("SECRETARY_MCP_HEALTH_PORT", "5145"))
 TIMEOUT = 15
 
 

@@ -45,7 +45,7 @@ except Exception:
 
 # ── 設定 ─────────────────────────────────────────
 API_BASE = os.getenv("AUTONOMY_API_URL", f"http://127.0.0.1:{AUTONOMY_SYSTEM_PORT}")
-HEALTH_PORT = int(os.getenv("AUTONOMY_MCP_HEALTH_PORT", "5134"))
+HEALTH_PORT = int(os.getenv("AUTONOMY_MCP_HEALTH_PORT", "5144"))
 TIMEOUT = 10
 
 

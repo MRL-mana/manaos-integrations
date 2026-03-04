@@ -587,6 +587,140 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  # ─────────────────────────────────────────────────────────────
+  # 🎭 人格システム (port 5123)
+  # ─────────────────────────────────────────────────────────────
+  personality-system:
+    build:
+      context: .
+      dockerfile: scripts/misc/Dockerfile.personality
+    container_name: personality-system
+    restart: unless-stopped
+    ports:
+      - "5123:5123"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - PERSONALITY_SYSTEM_PORT=5123
+      - PORT=5123
+      - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://host.docker.internal:9502}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - manaos-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5123/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ─────────────────────────────────────────────────────────────
+  # 🤖 自律システム (port 5124)
+  # ─────────────────────────────────────────────────────────────
+  autonomy-system:
+    build:
+      context: .
+      dockerfile: scripts/misc/Dockerfile.autonomy
+    container_name: autonomy-system
+    restart: unless-stopped
+    ports:
+      - "5124:5124"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - AUTONOMY_SYSTEM_PORT=5124
+      - PORT=5124
+      - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://host.docker.internal:9502}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - manaos-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5124/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ─────────────────────────────────────────────────────────────
+  # 📋 秘書システム (port 5125)
+  # ─────────────────────────────────────────────────────────────
+  secretary-system:
+    build:
+      context: .
+      dockerfile: scripts/misc/Dockerfile.secretary
+    container_name: secretary-system
+    restart: unless-stopped
+    ports:
+      - "5125:5125"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - SECRETARY_SYSTEM_PORT=5125
+      - PORT=5125
+      - SECRETARY_DB_PATH=/app/data/secretary_system.db
+      - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://host.docker.internal:9502}
+    volumes:
+      - ./logs:/app/logs
+      - ./data/secretary:/app/data
+    networks:
+      - manaos-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5125/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 networks:
   manaos-network:
     driver: bridge

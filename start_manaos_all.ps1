@@ -141,6 +141,18 @@ $env:PORT = ""  # step-deep-research に PORT=8089 が継承されないよう�
 $sdrPath = "$ROOT\step_deep_research\run_server.py"
 $results["step-deep-research"] = Start-WindowsService "step-deep-research" $sdrPath @{} "$ROOT" 5120
 
+# ── personality-system (PORT 5123) ──
+$psysPath = "$ROOT\scripts\misc\personality_system.py"
+$results["personality-system"] = Start-WindowsService "personality-system" $psysPath @{ PERSONALITY_SYSTEM_PORT = "5123"; PORT = "5123" } "$ROOT" 5123
+
+# ── autonomy-system (PORT 5124) ──
+$asysPath = "$ROOT\scripts\misc\autonomy_system.py"
+$results["autonomy-system"] = Start-WindowsService "autonomy-system" $asysPath @{ AUTONOMY_SYSTEM_PORT = "5124"; PORT = "5124" } "$ROOT" 5124
+
+# ── secretary-system (PORT 5125) ──
+$ssysPath = "$ROOT\scripts\misc\secretary_system.py"
+$results["secretary-system"] = Start-WindowsService "secretary-system" $ssysPath @{ SECRETARY_SYSTEM_PORT = "5125"; PORT = "5125" } "$ROOT" 5125
+
 # ── ops-dashboard (PORT 9640) ──
 $opsDashPath = "C:\Users\mana4\Desktop\ops-dashboard\backend\app.py"
 $results["ops-dashboard"]  = Start-WindowsService "ops-dashboard" $opsDashPath @{} "C:\Users\mana4\Desktop\ops-dashboard\backend" 9640
@@ -152,6 +164,9 @@ Write-Host "[3/4] Windows サービス ヘルスチェック..." -ForegroundColo
 $healthTargets = @(
     @{ name = "file-secretary";      url = "http://127.0.0.1:8089/health" },
     @{ name = "step-deep-research";  url = "http://127.0.0.1:5120/health" },
+    @{ name = "personality-system";  url = "http://127.0.0.1:5123/health" },
+    @{ name = "autonomy-system";     url = "http://127.0.0.1:5124/health" },
+    @{ name = "secretary-system";    url = "http://127.0.0.1:5125/health" },
     @{ name = "ops-dashboard";       url = "http://127.0.0.1:9640/health" }
 )
 

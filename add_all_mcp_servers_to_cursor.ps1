@@ -225,6 +225,41 @@ $mcpServers = @{
         }
         cwd     = $projectPath
     }
+
+    # ── 人格・自律・秘書・トリニティ系 ─────────────────────────
+    "personality-system"       = @{
+        command = "python"
+        args    = @("-m", "personality_mcp_server.server")
+        env     = @{
+            PERSONALITY_API_URL = "http://127.0.0.1:5123"
+        }
+        cwd     = $projectPath
+    }
+
+    "autonomy-system"          = @{
+        command = "python"
+        args    = @("-m", "autonomy_mcp_server.server")
+        env     = @{
+            AUTONOMY_API_URL = "http://127.0.0.1:5124"
+        }
+        cwd     = $projectPath
+    }
+
+    "secretary-system"         = @{
+        command = "python"
+        args    = @("-m", "secretary_mcp_server.server")
+        env     = @{
+            SECRETARY_API_URL = "http://127.0.0.1:5125"
+        }
+        cwd     = $projectPath
+    }
+
+    "trinity-system"           = @{
+        command = "python"
+        args    = @("-m", "trinity_mcp_server.server")
+        env     = @{}
+        cwd     = $projectPath
+    }
 }
 
 # MCPサーバーを追加
