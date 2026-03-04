@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import sys, io
+if sys.stdout.encoding and sys.stdout.encoding.lower() in ('cp932', 'cp950', 'cp936', 'gbk', 'shift_jis'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 """
 tools/health_check_all.py  - ManaOS 全サービスヘルスチェッカー
 
@@ -100,9 +103,9 @@ def print_table(results: list, ts: str):
     total = len(results)
     print(f"\n  ManaOS ヘルスチェック  {ts}  [{ok}/{total} healthy]\n")
     print(f"  {'SERVICE':<22} {'STATUS':<10} {'LATENCY':>8}  URL")
-    print(f"  {'─'*22} {'─'*10} {'─'*8}  {'─'*35}")
+    print(f"  {'-'*22} {'-'*10} {'-'*8}  {'-'*35}")
     for r in results:
-        mark = "✓" if r["healthy"] else "✗"
+        mark = "OK" if r["healthy"] else "NG"
         color_on  = "\033[32m" if r["healthy"] else "\033[31m"
         color_off = "\033[0m"
         lat = f"{r['latency_ms']}ms" if r["latency_ms"] < 9999 else "timeout"
