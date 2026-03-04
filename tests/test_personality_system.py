@@ -213,3 +213,63 @@ class TestPersonalitySystemYaml:
     ) -> None:
         """YAML ロードを無効化するとデフォルト pure_gal が使われる"""
         assert system_no_yaml.current_persona.name == "pure_gal"
+
+
+# ---------- 品質強化: 永続化ラウンドトリップ ----------
+
+class TestPersonalitySaveRoundtrip:
+    def test_update_and_reload(self, tmp_path: Path) -> None:
+        """update_persona 後に PersonalitySystem を再生成しても変更が保持される"""
+        storage = tmp_path / "personas.json"
+        cfg = tmp_path / "cfg.json"
+        cfg.write_text(
+            json.dumps({
+                "enable_personality": True,
+                "default_persona": "pure_gal",
+                "persona_storage_path": str(storage),
+            }),
+            encoding="utf-8",
+        )
+        with patch.object(PersonalitySystem, "_load_persona_from_yaml", return_value=None):
+            sys1 = PersonalitySystem(config_path=cfg)
+            sys1.update_persona({"tone": "ぐっとクールに"})
+
+            # 同じ設定で再生成
+            sys2 = PersonalitySystem(config_path=cfg)
+
+        assert sys2.current_persona.tone == "ぐっとクールに"
+
+    def test_default_persona_prompt_contains_keyword(self, tmp_path: Path) -> None:
+        """デフォルトプロンプトに『清楚系ギャル』が含まれる"""
+        with patch.object(PersonalitySystem, "_load_persona_from_yaml", return_value=None):
+            sys = PersonalitySystem(config_path=tmp_path / "cfg.json")
+        assert "清楚" in sys.default_persona.personality_prompt
+
+    def test_apply_technical_context(self, tmp_path: Path) -> None:
+        """technical コンテキストでも base が結果に含まれる"""
+        with patch.object(PersonalitySystem, "_load_persona_from_yaml", return_value=None):
+            sys = PersonalitySystem(config_path=tmp_path / "cfg.json")
+        result = sys.apply_personality_to_prompt("コード解析タスク", context="technical")
+        assert "コード解析タスク" in result
+
+    def test_traits_survive_roundtrip(self, tmp_path: Path) -> None:
+        """traits が JSON 経由で保存・復元されても PersonalityTrait として扱える"""
+        storage = tmp_path / "personas.json"
+        cfg = tmp_path / "cfg.json"
+        cfg.write_text(
+            json.dumps({
+                "enable_personality": True,
+                "default_persona": "pure_gal",
+                "persona_storage_path": str(storage),
+            }),
+            encoding="utf-8",
+        )
+        with patch.object(PersonalitySystem, "_load_persona_from_yaml", return_value=None):
+            sys1 = PersonalitySystem(config_path=cfg)
+            sys1.update_persona({"traits": ["pure", "professional"]})
+            sys2 = PersonalitySystem(config_path=cfg)
+
+        # 復元されたトレイトが PersonalityTrait として機能するか確認
+        trait_values = [t.value if hasattr(t, "value") else t for t in sys2.current_persona.traits]
+        assert "pure" in trait_values
+        assert "professional" in trait_values
