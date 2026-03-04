@@ -4,11 +4,11 @@
 
 VSCode/Cursorに接続するメモリベースAIアシスタント。ManaOS と外部サービス（ComfyUI / Google Drive / CivitAI / n8n / Slack / Voice など）をつなぐ統合リポジトリ。
 
-## ✅ 最新反映（2026-03-03）
+## ✅ 最新反映（2026年3月3日）
 
-- PR #55: 画像生成サービス統合（`image-generation` サービス、OpenAPI拡張、LLM import path強化）
-- PR #56: 決済スタブAPI追加（`POST /payment/stripe`, `POST /payment/komoju`）
-- 画像生成基盤 v0.4.0（batch/feedback/GPU/memory/Slack/landing）を `master` に統合済み
+- PR #55: 画像生成サービス統合（image-generationサービス、OpenAPI拡張、LLMインポートパス強化）
+- PR #56: 決済スタブAPIの追加（POST /payment/stripe、POST /payment/komoju）
+- 画像生成基盤 v0.4.0（バッチ/フィードバック/GPU/メモリ/Slack/landing）にmaster統合済み
 
 運用入口は引き続き Unified API（9502）です。
 
@@ -21,24 +21,24 @@ ManaOSは「Unified APIを入口とする統合基盤」です。
 
 ### 必須（コア）
 
-- Memory
-- Learning
-- LLM Routing
-- Unified API（統合入口）
+- メモリ
+- 学習
+- LLMルーティング
+- 統合API（統合入口）
 
 この4つが動けば、ManaOSは成立します。
 
 ---
 
-## ➕ 任意追加（必要時のみ有効化）
+## ➕ 任意追加（必要な時のみ有効化）
 
-以下は用途が発生した場合のみ有効化します。
+以下は用途に応じてのみ有効化します。
 
-- Windows Automation
-- Pico HID
-- Moltbot
-- ComfyUI
-- Gallery
+- Windowsオートメーション
+- ピコHID
+- モルトボット
+- 快適なUI
+- ギャラリー
 
 常時起動は推奨しません。
 
@@ -46,10 +46,10 @@ ManaOSは「Unified APIを入口とする統合基盤」です。
 
 ## 🏭 本番推奨構成
 
-- Waitress運用
-- 3段階キー（Admin / Ops / Read-only）
-- IP allow/block
-- Rate limit
+- ウェイトレス運用
+- 3段階キー（管理者 / オペレーター / 読み取り専用）
+- IP許可/ブロック
+- レート制限
 - 監査ログ有効化
 
 ---
@@ -70,7 +70,7 @@ Unified APIヘルス確認
 
 ### Step 4
 
-失敗時は「[トラブルシューティング](TROUBLESHOOTING.md)」へ
+失敗時は「トラブルシューティング」へ
 
 一本道以外から始めないこと。
 
@@ -188,8 +188,6 @@ This repo enforces **Stage2 Contract Checks** as a required CI gate.
 ## 詳細ドキュメント
 
 ### 基本ガイド
-- **[クイックリファレンス](QUICKREF.md)** - 1ページのチートシート
-- **[Pixel7 5分セキュア導線](docs/guides/PIXEL7_MINIMAL_SECURE_MODE.md)** - 安全デフォルトでの起動・確認・CLI運用
 - **[VSCodeセットアップ](VSCODE_SETUP_GUIDE.md)** - VSCode完全セットアップガイド
 - **[VSCode vs Cursor](VSCODE_VS_CURSOR.md)** - どっちを使うべき?比較ガイド
 - **[VSCodeチェックリスト](VSCODE_CHECKLIST.md)** - 対応状況とクイックガイド
@@ -234,10 +232,10 @@ This repo enforces **Stage2 Contract Checks** as a required CI gate.
 
 - **統合APIサーバー**: `run_unified_api_server_prod.py`（本番）
 - **最小ハードニング手順**: `docs/guides/SECURITY_HARDENING.md`
-  - 3段階キー（Admin / Ops / Read-only）
-  - IP allow/block、CORS制御
-  - 監査ログ、Confirm Token、Rate limit / Concurrency
-  - OpenAPI公開制御、セキュリティヘッダ
+  - 3段階キー（管理者 / オペレーター / 読み取り専用）
+  - IP許可/ブロック、CORS制御
+  - 監査ログ、トークン確認、レート制限/同時実行
+  - OpenAPI公開制御、セキュリティヘッダー
 
 ## 起動
 
