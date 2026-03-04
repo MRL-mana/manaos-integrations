@@ -607,7 +607,64 @@
       "rejected_at": null,
       "rejection_reason": null,
       "category": null
+    },
+    {
+      "id": "test_todo_001",
+      "title": "テストタスク",
+      "reason": "動作確認のため",
+      "impact": "システム動作確認",
+      "risk": "low",
+      "autonomy_level_required": 1,
+      "estimated_minutes": 1,
+      "tags": [
+        "test"
+      ],
+      "state": "APPROVED",
+      "created_at": "2026-03-04T17:16:14.832238",
+      "approved_at": null,
+      "executed_at": null,
+      "rejected_at": null,
+      "rejection_reason": null,
+      "category": null
+    },
+    {
+      "id": "test_todo_001",
+      "title": "テストタスク",
+      "reason": "動作確認のため",
+      "impact": "システム動作確認",
+      "risk": "low",
+      "autonomy_level_required": 1,
+      "estimated_minutes": 1,
+      "tags": [
+        "test"
+      ],
+      "state": "APPROVED",
+      "created_at": "2026-03-04T17:19:12.084567",
+      "approved_at": null,
+      "executed_at": null,
+      "rejected_at": null,
+      "rejection_reason": null,
+      "category": null
+    },
+    {
+      "id": "test_todo_001",
+      "title": "テストタスク",
+      "reason": "動作確認のため",
+      "impact": "システム動作確認",
+      "risk": "low",
+      "autonomy_level_required": 1,
+      "estimated_minutes": 1,
+      "tags": [
+        "test"
+      ],
+      "state": "APPROVED",
+      "created_at": "2026-03-04T17:19:18.940223",
+      "approved_at": null,
+      "executed_at": null,
+      "rejected_at": null,
+      "rejection_reason": null,
+      "category": null
     }
   ],
-  "last_updated": "2026-03-04T17:04:07.312592"
+  "last_updated": "2026-03-04T17:19:18.941223"
 }
