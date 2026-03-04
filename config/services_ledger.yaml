@@ -13,6 +13,8 @@ core:
     port: 5126
     url: "http://127.0.0.1:5126"
     enabled: true
+    module: learning_system_api.py
+    start_cmd: "python learning_system_api.py"
     depends_on:
       - memory
 
