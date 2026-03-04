@@ -45,8 +45,8 @@ if (Test-Running) {
 
 Write-Host "  ► Step-Deep-Research API 起動中 (port $PORT)..." -ForegroundColor Cyan
 
-$env:PYTHONPATH = "$ROOT;$ROOT\scripts\misc"
-$pyArgs = @("-u", "$ROOT\step_deep_research\api_server.py")
+$env:PYTHONPATH = "$ROOT;$ROOT\scripts\misc;$ROOT\unified_api"
+$pyArgs = @("-u", "$ROOT\step_deep_research\run_server.py")
 
 if ($Bg) {
     $proc = Start-Process py.exe -ArgumentList (@("-3.10") + $pyArgs) `
