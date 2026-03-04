@@ -293,6 +293,7 @@ Reports/castle_ex_layer2_quick_eval_*.json
 Reports/gate_v1*.json
 artifacts/**/*.jsonl
 artifacts/**/*.json
+!artifacts/README.md
 PERSONAL_MINIMAL_RUNBOOK.md
 mother_to_x280_openwebui_pixel7.ps1
 pixel7_sync_openwebui_shortcut.ps1
