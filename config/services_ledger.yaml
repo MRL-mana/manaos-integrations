@@ -1,5 +1,6 @@
-version: 1
-updated_at: "2026-03-01"
+version: 2
+updated_at: "2026-03-04"
+# SINGLE SOURCE OF TRUTH - ポート/URL/有効フラグはここが正
 
 core:
   memory:
@@ -63,3 +64,174 @@ optional:
     url: "http://127.0.0.1:5559"
     enabled: false
     depends_on: []
+
+  # ── 画像・メディア ──
+  sd_image:
+    port: 5560
+    url: "http://127.0.0.1:5560"
+    enabled: false
+    depends_on: []
+    module: mcp-servers/manaos_services_sd/gallery_production.py
+    description: "Stable Diffusion 画像生成 + ギャラリー本番"
+
+  real_esrgan:
+    port: 5561
+    url: "http://127.0.0.1:5561"
+    enabled: false
+    depends_on: []
+    module: mcp-servers/real_esrgan
+    description: "Real-ESRGAN 超解像 (画像・動画)"
+
+  # ── OCR・文書処理 ──
+  ocr:
+    port: 5570
+    url: "http://127.0.0.1:5570"
+    enabled: false
+    depends_on:
+      - unified_api
+    module: mcp-servers/manaos_services_ocr/ocr_api.py
+    description: "OCR API サービス"
+
+  # ── 音声 ──
+  voice_stream:
+    port: 5580
+    url: "http://127.0.0.1:5580"
+    enabled: false
+    depends_on:
+      - unified_api
+    module: mcp-servers/voice_stream_system/voice_stream_server.py
+    description: "音声ストリーミングシステム"
+
+  # ── 通知 ──
+  slack:
+    port: 5590
+    url: "http://127.0.0.1:5590"
+    enabled: false
+    depends_on:
+      - unified_api
+    module: mcp-servers/slack_integration/slack_manaos_service.py
+    description: "Slack 完全統合"
+
+  line_notify:
+    port: 5591
+    url: "http://127.0.0.1:5591"
+    enabled: false
+    depends_on:
+      - unified_api
+    module: mcp-servers/line_notify_system/line_notify_service.py
+    description: "LINE 通知システム"
+
+  # ── 外部クラウド ──
+  runpod:
+    port: 5600
+    url: "http://127.0.0.1:5600"
+    enabled: false
+    depends_on: []
+    module: mcp-servers/runpod_integration/runpod_trinity_worker.py
+    description: "RunPod クラウド GPU 統合"
+
+  # ── エージェント ──
+  manaos_agents:
+    port: 5610
+    url: "http://127.0.0.1:5610"
+    enabled: false
+    depends_on:
+      - unified_api
+      - memory
+    module: mcp-servers/manaos_agents/agent_manager.py
+    description: "エージェント管理・起動制御"
+
+  # ── 認証 ──
+  sso_auth:
+    port: 5620
+    url: "http://127.0.0.1:5620"
+    enabled: false
+    depends_on: []
+    module: mcp-servers/sso_auth/sso_auth_server.py
+    description: "SSO 認証サーバー"
+
+  # ── 研究・ディープリサーチ ──
+  step_deep_research:
+    port: 5200
+    url: "http://127.0.0.1:5200"
+    enabled: false
+    depends_on:
+      - unified_api
+    description: "Step-Deep-Research 調査ジョブシステム"
+    env: STEP_DEEP_RESEARCH_URL
+
+  # ── File Secretary ──
+  file_secretary:
+    port: 8089
+    url: "http://127.0.0.1:8089"
+    enabled: false
+    depends_on:
+      - unified_api
+    description: "ファイル整理・秘書システム"
+    env: FILE_SECRETARY_URL
+
+  # ── Castle-EX Layer2 推論 ──
+  castle_ex_layer2:
+    port: 9520
+    url: "http://127.0.0.1:9520"
+    enabled: false
+    depends_on: []
+    description: "Castle-EX Layer2 LoRA 推論サーバー"
+    env: LAYER2_INFER_URL
+
+  # ── スケジューラー ──
+  smart_scheduler:
+    port: 5630
+    url: "http://127.0.0.1:5630"
+    enabled: false
+    depends_on:
+      - unified_api
+    module: mcp-servers/smart_scheduler/scheduler_engine.py
+    description: "スマートスケジューラー"
+
+  # ── ダッシュボード ──
+  ops_dashboard:
+    port: 5640
+    url: "http://127.0.0.1:5640"
+    enabled: false
+    depends_on: []
+    module: mcp-servers/ops_dashboard/app.py
+    description: "Ops ダッシュボード"
+
+  manaos_dashboard:
+    port: 5641
+    url: "http://127.0.0.1:5641"
+    enabled: false
+    depends_on:
+      - unified_api
+    module: mcp-servers/manaos_dashboard/app.py
+    description: "ManaOS Streamlit ダッシュボード"
+
+  # ── URL 要約 ──
+  url_summarization:
+    port: 5650
+    url: "http://127.0.0.1:5650"
+    enabled: false
+    depends_on: []
+    module: mcp-servers/url_summarization/notebooklm_server.py
+    description: "URL 要約・NotebookLM 統合"
+
+  # ── コンピューターユース ──
+  computer_use:
+    port: 5660
+    url: "http://127.0.0.1:5660"
+    enabled: false
+    depends_on:
+      - unified_api
+    module: mcp-servers/manaos_computer_use/manaos_computer_use_orchestrator.py
+    description: "Computer Use (スクリーン操作) オーケストレーター"
+
+  # ── MCP プロキシ ──
+  mcp_proxy:
+    port: 5670
+    url: "http://127.0.0.1:5670"
+    enabled: false
+    depends_on:
+      - unified_api
+    module: mcp-servers/mcp_proxy/mcp_proxy_server.py
+    description: "MCP プロキシ・アクセス制御"

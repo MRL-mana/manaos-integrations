@@ -18,6 +18,14 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 import threading
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SCRIPTS_MISC_DIR = REPO_ROOT / "scripts" / "misc"
+LLM_DIR = REPO_ROOT / "llm"
+for _sys_path in (REPO_ROOT, SCRIPTS_MISC_DIR, LLM_DIR):
+    _path_str = str(_sys_path)
+    if _sys_path.exists() and _path_str not in sys.path:
+        sys.path.insert(0, _path_str)
+
 try:
     from werkzeug.exceptions import HTTPException
 except Exception:  # pragma: no cover
@@ -248,12 +256,6 @@ TASK_PLANNER_BASE_URL = _service_url("task_planner", "TASK_PLANNER_URL", _env_in
 EXECUTOR_ENHANCED_BASE_URL = _service_url(
     "task_executor_enhanced", "EXECUTOR_ENHANCED_URL", _env_int("EXECUTOR_ENHANCED_PORT", 5107)
 )
-FILE_SECRETARY_BASE_URL = _service_url(
-    "file_secretary", "FILE_SECRETARY_URL", _env_int("FILE_SECRETARY_PORT", 5120)
-)
-STEP_DEEP_RESEARCH_BASE_URL = _service_url(
-    "step_deep_research", "STEP_DEEP_RESEARCH_URL", _env_int("STEP_DEEP_RESEARCH_PORT", 5121)
-)
 
 
 def _missing_env_vars(required: List[str]) -> List[str]:
@@ -349,7 +351,155 @@ try:
 
     COMFYUI_AVAILABLE = True
 except ImportError:
-    logger.warning("ComfyUI統合モジュールが見つかりません")
+    try:
+        from scripts.misc.comfyui_integration import ComfyUIIntegration
+
+        COMFYUI_AVAILABLE = True
+        logger.info("ComfyUI統合モジュールを scripts.misc から読み込みました")
+    except ImportError:
+        logger.warning("ComfyUI統合モジュールが見つかりません。軽量フォールバックを使用します")
+
+        class ComfyUIIntegration:
+            def __init__(self, base_url: str = "http://127.0.0.1:8188"):
+                self.base_url = (base_url or "http://127.0.0.1:8188").rstrip("/")
+
+            def is_available(self) -> bool:
+                if not REQUESTS_AVAILABLE:
+                    return False
+                try:
+                    response = requests.get(f"{self.base_url}/system_stats", timeout=5)
+                    return response.status_code == 200
+                except Exception:
+                    return False
+
+            def _list_checkpoints(self) -> List[str]:
+                if not REQUESTS_AVAILABLE:
+                    return []
+                try:
+                    response = requests.get(
+                        f"{self.base_url}/object_info/CheckpointLoaderSimple",
+                        timeout=10,
+                    )
+                    response.raise_for_status()
+                    data = response.json() or {}
+                    ckpts = (
+                        data.get("CheckpointLoaderSimple", {})
+                        .get("input", {})
+                        .get("required", {})
+                        .get("ckpt_name", [[[]]])[0]
+                    )
+                    return list(ckpts) if ckpts else []
+                except Exception:
+                    return []
+
+            def generate_image(
+                self,
+                prompt: str,
+                negative_prompt: str = "",
+                width: int = 512,
+                height: int = 512,
+                model: str = "",
+                loras: Optional[List[tuple]] = None,
+                steps: int = 20,
+                guidance_scale: float = 7.0,
+                sampler: str = "euler_ancestral",
+                scheduler: str = "karras",
+                seed: int = -1,
+            ) -> Optional[str]:
+                if not REQUESTS_AVAILABLE:
+                    return None
+                ckpts = self._list_checkpoints()
+                resolved_model = (model or "").strip()
+                if ckpts:
+                    if not resolved_model or resolved_model not in ckpts:
+                        resolved_model = ckpts[0]
+
+                if seed is None or int(seed) < 0:
+                    seed = int(time.time() * 1000) % (2**32)
+
+                workflow = {
+                    "1": {
+                        "inputs": {"ckpt_name": resolved_model},
+                        "class_type": "CheckpointLoaderSimple",
+                    },
+                    "2": {
+                        "inputs": {"text": prompt, "clip": ["1", 1]},
+                        "class_type": "CLIPTextEncode",
+                    },
+                    "3": {
+                        "inputs": {"text": negative_prompt or "", "clip": ["1", 1]},
+                        "class_type": "CLIPTextEncode",
+                    },
+                    "4": {
+                        "inputs": {
+                            "seed": int(seed),
+                            "steps": int(steps or 20),
+                            "cfg": float(guidance_scale or 7.0),
+                            "sampler_name": sampler or "euler_ancestral",
+                            "scheduler": scheduler or "karras",
+                            "denoise": 1.0,
+                            "model": ["1", 0],
+                            "positive": ["2", 0],
+                            "negative": ["3", 0],
+                            "latent_image": ["5", 0],
+                        },
+                        "class_type": "KSampler",
+                    },
+                    "5": {
+                        "inputs": {
+                            "width": int(width or 512),
+                            "height": int(height or 512),
+                            "batch_size": 1,
+                        },
+                        "class_type": "EmptyLatentImage",
+                    },
+                    "6": {
+                        "inputs": {"samples": ["4", 0], "vae": ["1", 2]},
+                        "class_type": "VAEDecode",
+                    },
+                    "7": {
+                        "inputs": {"filename_prefix": "manaos_txt2img", "images": ["6", 0]},
+                        "class_type": "SaveImage",
+                    },
+                }
+                try:
+                    response = requests.post(
+                        f"{self.base_url}/prompt",
+                        json={"prompt": workflow, "client_id": "manaos-unified-api"},
+                        timeout=30,
+                    )
+                    response.raise_for_status()
+                    return (response.json() or {}).get("prompt_id")
+                except Exception:
+                    return None
+
+            def get_queue_status(self) -> Dict[str, Any]:
+                if not REQUESTS_AVAILABLE:
+                    return {"error": "requests_unavailable"}
+                try:
+                    response = requests.get(f"{self.base_url}/queue", timeout=10)
+                    response.raise_for_status()
+                    return response.json() or {}
+                except Exception as e:
+                    return {"error": str(e)}
+
+            def get_history(self, max_items: int = 10) -> List[Dict[str, Any]]:
+                if not REQUESTS_AVAILABLE:
+                    return []
+                try:
+                    response = requests.get(f"{self.base_url}/history", timeout=10)
+                    response.raise_for_status()
+                    payload = response.json() or {}
+                    if isinstance(payload, dict):
+                        values = list(payload.values())
+                        return values[: max(1, min(int(max_items or 10), 50))]
+                    if isinstance(payload, list):
+                        return payload[: max(1, min(int(max_items or 10), 50))]
+                    return []
+                except Exception:
+                    return []
+
+        COMFYUI_AVAILABLE = REQUESTS_AVAILABLE
 
 # SVI × Wan 2.2動画生成統合（オプション）
 try:
@@ -467,7 +617,10 @@ IMAGE_STOCK_AVAILABLE = False
 
 # LLMルーティング統合（オプション）
 try:
-    from llm_routing import LLMRouter
+    try:
+        from llm.llm_routing import LLMRouter
+    except ImportError:
+        from llm_routing import LLMRouter
 
     LLM_ROUTING_AVAILABLE = True
 except ImportError:
@@ -476,7 +629,10 @@ except ImportError:
 # 拡張LLMルーティング統合（難易度判定対応）
 ENHANCED_LLM_ROUTING_AVAILABLE = False
 try:
-    from llm_router_enhanced import EnhancedLLMRouter
+    try:
+        from llm.llm_router_enhanced import EnhancedLLMRouter
+    except ImportError:
+        from llm_router_enhanced import EnhancedLLMRouter
 
     ENHANCED_LLM_ROUTING_AVAILABLE = True
 except ImportError:
@@ -522,6 +678,20 @@ except ImportError:
     PHASE2_MEMO_AVAILABLE = False
     get_memo_context_for_messages = None
 
+try:
+    from core5_identity_guard import (
+        evaluate_identity_guard,
+        get_identity_policy_config,
+        identity_guard_to_dict,
+    )
+
+    IDENTITY_GUARD_AVAILABLE = True
+except ImportError:
+    IDENTITY_GUARD_AVAILABLE = False
+    evaluate_identity_guard = None
+    get_identity_policy_config = None
+    identity_guard_to_dict = None
+
 # 通知ハブ統合（オプション）
 try:
     from notification_hub import NotificationHub
@@ -532,16 +702,11 @@ except ImportError:
 
 # 秘書機能統合（オプション）
 try:
-    from scripts.misc.secretary_routines import SecretaryRoutines
+    from secretary_routines import SecretaryRoutines
 
     SECRETARY_AVAILABLE = True
 except ImportError:
-    try:
-        from secretary_routines import SecretaryRoutines
-
-        SECRETARY_AVAILABLE = True
-    except ImportError:
-        logger.warning("秘書機能モジュールが見つかりません")
+    logger.warning("秘書機能モジュールが見つかりません")
 
 # 画像ストック統合（オプション）
 try:
@@ -690,28 +855,7 @@ def _get_client_ip() -> str:
 
 
 def _is_local_request() -> bool:
-    client_ip = _get_client_ip()
-    if client_ip in ("127.0.0.1", "::1"):
-        return True
-
-    # Docker bridge 経由で host -> container にアクセスする場合、
-    # remote_addr が 172.16-31.x.1 になるケースをローカル扱いする。
-    if _strtobool(os.getenv("MANAOS_ALLOW_DOCKER_GATEWAY_AS_LOCAL", "true"), default=True):
-        parts = client_ip.split(".") if client_ip else []
-        if len(parts) == 4 and parts[0] == "172":
-            try:
-                second = int(parts[1])
-            except Exception:
-                second = -1
-            if 16 <= second <= 31 and parts[3] == "1":
-                return True
-
-    # 明示的に追加したいIPは環境変数で許可（カンマ区切り）
-    extra_local = _parse_csv_set(os.getenv("MANAOS_LOCAL_TRUSTED_IPS", ""))
-    if client_ip and client_ip in extra_local:
-        return True
-
-    return False
+    return _get_client_ip() in ("127.0.0.1", "::1")
 
 
 def _parse_csv_set(value: str) -> set[str]:
@@ -1657,6 +1801,55 @@ def api_integrations_status():
     return jsonify(out), 200
 
 
+@app.route("/api/google_drive/upload", methods=["POST"])
+@auth_manager.require_api_key
+def api_google_drive_upload():
+    """Google Driveへファイルをアップロード（要認証）
+
+    Body(JSON):
+      - file_path: str (required)
+      - folder_id: str (optional)
+      - file_name: str (optional)
+      - overwrite: bool (optional)
+    """
+    data = request.get_json(silent=True) or {}
+    file_path = (data.get("file_path") or "").strip()
+    if not file_path:
+        return _json_error("file_path is required", 400, error="bad_request", namespace="google_drive")
+
+    drive = integrations.get("google_drive")
+    if not drive or not getattr(drive, "is_available", lambda: False)():
+        return _json_error("google_drive_unavailable", 503, error="unavailable", namespace="google_drive")
+
+    folder_id = (data.get("folder_id") or "").strip() or None
+    file_name = (data.get("file_name") or "").strip() or None
+    overwrite = bool(data.get("overwrite", False))
+
+    try:
+        file_id = drive.upload_file(
+            file_path=file_path,
+            folder_id=folder_id,
+            file_name=file_name,
+            overwrite=overwrite,
+        )
+        if not file_id:
+            return jsonify({"success": False, "error": "upload_failed"}), 500
+        return jsonify(
+            {
+                "success": True,
+                "file_id": file_id,
+                "url": f"https://drive.google.com/file/d/{file_id}/view",
+            }
+        ), 200
+    except Exception as e:
+        err = error_handler.handle_exception(
+            e,
+            context={"file_path": file_path, "action": "google_drive_upload"},
+            user_message="Google Driveへのアップロードに失敗しました",
+        )
+        return jsonify({"success": False, "error": err.message}), 500
+
+
 @app.route("/api/sd-prompt/generate", methods=["POST"])
 def api_sd_prompt_generate():
     """日本語の説明からStable Diffusion用の英語プロンプトを生成（Ollama）"""
@@ -1697,7 +1890,7 @@ def api_comfyui_generate():
     if not prompt:
         return _json_error("prompt is required", 400, error="bad_request", namespace="comfyui")
 
-    comfyui = integrations.get("comfyui")
+    comfyui = _get_or_init_comfyui()
     if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
         return _json_error("comfyui_unavailable", 503, error="unavailable", namespace="comfyui")
 
@@ -1801,11 +1994,1189 @@ def api_comfyui_generate():
     return jsonify({"error": "画像生成に失敗しました"}), 500
 
 
+# ─── Image Generation Service Proxy (→ :5560) ────────
+
+_IMAGE_GEN_BASE = os.getenv("IMAGE_GENERATION_URL", "http://127.0.0.1:5560")
+
+
+def _proxy_image_gen(subpath: str, method: str = "GET"):
+    """画像生成サービスへのプロキシ転送"""
+    url = f"{_IMAGE_GEN_BASE}{subpath}"
+    headers = {k: v for k, v in request.headers if k.lower() not in ("host", "content-length")}
+    try:
+        if method == "GET":
+            resp = requests.get(url, params=request.args, headers=headers, timeout=30)
+        else:
+            resp = requests.request(
+                method, url,
+                json=request.get_json(silent=True),
+                params=request.args,
+                headers=headers,
+                timeout=60,
+            )
+        return resp.content, resp.status_code, {"Content-Type": resp.headers.get("Content-Type", "application/json")}
+    except requests.exceptions.ConnectionError:
+        return _json_error("image_generation_service_unavailable", 503, error="unavailable", namespace="image_gen")
+    except requests.exceptions.Timeout:
+        return _json_error("image_generation_service_timeout", 504, error="timeout", namespace="image_gen")
+    except Exception as e:
+        logger.warning(f"Image Gen proxy error: {e}")
+        return _json_error("image_generation_proxy_error", 502, error="proxy_error", namespace="image_gen")
+
+
+@app.route("/api/v1/images/generate", methods=["POST"])
+def api_v1_images_generate():
+    """画像生成API (→ image_generation_service)"""
+    return _proxy_image_gen("/api/v1/generate", "POST")
+
+
+@app.route("/api/v1/images/status/<job_id>", methods=["GET"])
+def api_v1_images_status(job_id):
+    """ジョブ状態 (→ image_generation_service)"""
+    return _proxy_image_gen(f"/api/v1/status/{job_id}")
+
+
+@app.route("/api/v1/images/result/<job_id>", methods=["GET"])
+def api_v1_images_result(job_id):
+    """生成結果取得 (→ image_generation_service)"""
+    return _proxy_image_gen(f"/api/v1/result/{job_id}")
+
+
+@app.route("/api/v1/images/history", methods=["GET"])
+def api_v1_images_history():
+    """生成履歴 (→ image_generation_service)"""
+    return _proxy_image_gen("/api/v1/history")
+
+
+@app.route("/api/v1/images/dashboard", methods=["GET"])
+def api_v1_images_dashboard():
+    """ダッシュボード (→ image_generation_service)"""
+    return _proxy_image_gen("/api/v1/dashboard")
+
+
+@app.route("/api/v1/images/billing", methods=["GET"])
+def api_v1_images_billing():
+    """課金状態 (→ image_generation_service)"""
+    return _proxy_image_gen("/api/v1/billing")
+
+
+@app.route("/api/v1/images/enhance-preview", methods=["POST"])
+def api_v1_images_enhance_preview():
+    """プロンプト強化プレビュー (→ image_generation_service)"""
+    return _proxy_image_gen("/api/v1/enhance-preview", "POST")
+
+
+@app.route("/api/v1/images/health", methods=["GET"])
+def api_v1_images_health():
+    """画像生成サービスヘルスチェック (→ image_generation_service)"""
+    return _proxy_image_gen("/health")
+
+
+@app.route("/api/svi/capabilities", methods=["GET"])
+def api_svi_capabilities():
+    """ComfyUI の /object_info から SVI の必要ノード有無を返す（事前診断用）"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_unavailable", 503, error="unavailable", namespace="svi")
+
+    base_url = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188").rstrip("/")
+    required_generate = ["SVIWan22VideoGenerate", "SaveVideo"]
+    required_extend = ["SVIWan22VideoExtend", "LoadVideo", "SaveVideo"]
+
+    # Model assets required for local Wan I2V workflow (based on ComfyUI templates).
+    comfyui_path = Path(os.getenv("COMFYUI_PATH", "C:/ComfyUI"))
+    models_base = comfyui_path / "models"
+
+    # Try to pick a smaller Wan2.2 i2v diffusion model (fp8_scaled) if known.
+    preferred_unet = {
+        "role": "diffusion_model_i2v",
+        "save_path": "diffusion_models",
+        "filename": "wan2.1_i2v_480p_14B_fp16.safetensors",
+        "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/diffusion_models/wan2.1_i2v_480p_14B_fp16.safetensors",
+        "size": "(large)",
+    }
+
+    size_map: dict[str, str] = {}
+
+    try:
+        model_list_path = comfyui_path / "custom_nodes" / "ComfyUI-Manager" / "node_db" / "new" / "model-list.json"
+        if model_list_path.exists():
+            raw = json.loads(model_list_path.read_text(encoding="utf-8"))
+            models = raw.get("models") if isinstance(raw, dict) else None
+            if isinstance(models, list):
+                for m in models:
+                    if not isinstance(m, dict):
+                        continue
+                    fn = (m.get("filename") or "").strip()
+                    sz = (m.get("size") or "").strip()
+                    if fn and sz and fn not in size_map:
+                        size_map[fn] = sz
+
+                candidates = []
+                for m in models:
+                    if not isinstance(m, dict):
+                        continue
+                    if (m.get("base") or "") != "Wan2.2":
+                        continue
+                    if (m.get("type") or "") != "diffusion_model":
+                        continue
+                    fn = (m.get("filename") or "").strip()
+                    sp = (m.get("save_path") or "").strip().replace("\\", "/")
+                    if not fn or not sp:
+                        continue
+                    if "i2v" not in fn.lower():
+                        continue
+                    candidates.append(m)
+
+                # Prefer fp8_scaled i2v models (smaller), then any i2v.
+                def _rank(m: dict) -> tuple[int, int]:
+                    fn = (m.get("filename") or "").lower()
+                    size = (m.get("size") or "")
+                    # smaller first: fp8_scaled preferred
+                    fp8 = 0 if "fp8" in fn else 1
+                    # low_noise preferred for I2V stability (heuristic)
+                    low = 0 if "low_noise" in fn else 1
+                    return (fp8, low)
+
+                if candidates:
+                    best = sorted(candidates, key=_rank)[0]
+                    preferred_unet = {
+                        "role": "diffusion_model_i2v",
+                        "save_path": (best.get("save_path") or "diffusion_models").strip().replace("\\", "/"),
+                        "filename": (best.get("filename") or "").strip(),
+                        "url": (best.get("url") or "").strip(),
+                        "size": (best.get("size") or size_map.get((best.get("filename") or "").strip()) or "(large)"),
+                    }
+    except Exception:
+        pass
+
+    template_assets = [
+        preferred_unet,
+        {
+            "role": "text_encoder",
+            "save_path": "text_encoders",
+            "filename": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "size": size_map.get("umt5_xxl_fp8_e4m3fn_scaled.safetensors") or "(large)",
+        },
+        {
+            "role": "vae",
+            "save_path": "vae",
+            "filename": "wan_2.1_vae.safetensors",
+            "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors",
+            "size": size_map.get("wan_2.1_vae.safetensors") or "(large)",
+        },
+        {
+            "role": "clip_vision",
+            "save_path": "clip_vision",
+            "filename": "clip_vision_h.safetensors",
+            "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors",
+            "size": size_map.get("clip_vision_h.safetensors") or "(large)",
+        },
+    ]
+
+    def _asset_status(item: dict) -> dict:
+        save_path = str(item.get("save_path") or "").replace("\\", "/").strip("/")
+        filename = str(item.get("filename") or "").strip()
+        rel = f"{save_path}/{filename}" if save_path else filename
+        target_path = (models_base / save_path / filename).resolve()
+        url = item.get("url")
+        return {
+            "role": item.get("role"),
+            "relative_path": rel,
+            "target_path": str(target_path),
+            "exists": target_path.exists(),
+            "url": url,
+            "size": item.get("size"),
+            "download_ps": (
+                f"Start-BitsTransfer -Source '{url}' -Destination '{str(target_path)}'"
+                if isinstance(url, str) and url.strip()
+                else ""
+            ),
+        }
+
+    assets = [_asset_status(a) for a in template_assets]
+    missing_assets = [a for a in assets if not a.get("exists")]
+
+    def _parse_size_to_gb(value: Any) -> Optional[float]:
+        if not isinstance(value, str):
+            return None
+        text = value.strip().upper().replace(" ", "")
+        try:
+            if text.endswith("GB"):
+                return float(text[:-2])
+            if text.endswith("MB"):
+                return float(text[:-2]) / 1024.0
+        except Exception:
+            return None
+        return None
+
+    missing_total_gb = 0.0
+    missing_total_gb_known = True
+    for a in missing_assets:
+        gb = _parse_size_to_gb(a.get("size"))
+        if gb is None:
+            missing_total_gb_known = False
+            continue
+        missing_total_gb += gb
+
+    wan22_suggestions = []
+    try:
+        model_list_path = comfyui_path / "custom_nodes" / "ComfyUI-Manager" / "node_db" / "new" / "model-list.json"
+        if model_list_path.exists():
+            raw = json.loads(model_list_path.read_text(encoding="utf-8"))
+            models = raw.get("models") if isinstance(raw, dict) else None
+            if isinstance(models, list):
+                for m in models:
+                    if not isinstance(m, dict):
+                        continue
+                    if (m.get("base") or "") != "Wan2.2":
+                        continue
+                    if (m.get("type") or "") != "diffusion_model":
+                        continue
+                    fn = (m.get("filename") or "").strip()
+                    sp = (m.get("save_path") or "").strip().replace("\\", "/")
+                    if not fn or not sp:
+                        continue
+                    wan22_suggestions.append(
+                        {
+                            "name": m.get("name"),
+                            "filename": fn,
+                            "save_path": sp,
+                            "target_path": str((models_base / sp / fn).resolve()),
+                            "exists": (models_base / sp / fn).exists(),
+                            "url": m.get("url"),
+                            "size": m.get("size"),
+                        }
+                    )
+                wan22_suggestions = wan22_suggestions[:8]
+    except Exception:
+        wan22_suggestions = []
+
+    try:
+        r = requests.get(f"{base_url}/object_info", timeout=5)
+        r.raise_for_status()
+        obj = r.json() or {}
+        if not isinstance(obj, dict):
+            return _json_error(
+                "comfyui_object_info_invalid",
+                502,
+                error="bad_gateway",
+                namespace="svi",
+            )
+
+        available = {str(k) for k in obj.keys()}
+        missing_generate = [ct for ct in required_generate if ct not in available]
+        missing_extend = [ct for ct in required_extend if ct not in available]
+        return jsonify(
+            {
+                "comfyui_url": base_url,
+                "comfyui_path": str(comfyui_path),
+                "object_info": "ok",
+                "required": {"generate": required_generate, "extend": required_extend},
+                "missing": {"generate": missing_generate, "extend": missing_extend},
+                "model_assets": {
+                    "models_base": str(models_base),
+                    "required": assets,
+                    "missing": missing_assets,
+                    "ok": len(missing_assets) == 0,
+                    "missing_total_gb": round(missing_total_gb, 2) if missing_total_gb_known else None,
+                    "wan22_suggestions": wan22_suggestions,
+                },
+                "ok": (not missing_generate) and (not missing_extend) and (len(missing_assets) == 0),
+            }
+        ), 200
+    except Exception as e:
+        logger.warning(f"SVI capabilities error: {e}")
+        return _json_error(
+            "comfyui_object_info_failed",
+            502,
+            error="bad_gateway",
+            namespace="svi",
+            details={
+                "detail": str(e),
+                "comfyui_url": base_url,
+                "comfyui_path": str(comfyui_path),
+                "model_assets": {
+                    "models_base": str(models_base),
+                    "required": assets,
+                    "missing": missing_assets,
+                    "ok": len(missing_assets) == 0,
+                    "wan22_suggestions": wan22_suggestions,
+                },
+            },
+        )
+
+
+@app.route("/api/svi/generate", methods=["POST"])
+def api_svi_generate():
+    """SVI × Wan 2.2 で動画生成（prompt_id を返す）"""
+    if not SVI_WAN22_AVAILABLE:
+        return _json_error("svi_wan22_unavailable", 503, error="unavailable", namespace="svi")
+
+    data = request.get_json(silent=True) or {}
+    start_image_path = (data.get("start_image_path") or "").strip()
+    prompt = (data.get("prompt") or "").strip()
+    if not start_image_path:
+        return _json_error(
+            "start_image_path is required",
+            400,
+            error="bad_request",
+            namespace="svi",
+        )
+    if not prompt:
+        return _json_error("prompt is required", 400, error="bad_request", namespace="svi")
+
+    if not os.path.exists(start_image_path):
+        return _json_error(
+            "start_image_path_not_found",
+            404,
+            error="not_found",
+            namespace="svi",
+            detail=start_image_path,
+        )
+
+    svi = integrations.get("svi_wan22")
+    if not svi:
+        try:
+            svi = SVIWan22VideoIntegration(
+                base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
+            )
+        except Exception:
+            svi = None
+    if not svi or not getattr(svi, "is_available", lambda: False)():
+        return _json_error("comfyui_unavailable", 503, error="unavailable", namespace="svi")
+
+    quality = (data.get("quality") or "balanced").strip().lower()
+    video_length_seconds = int(data.get("video_length_seconds", 5) or 5)
+    steps = int(data.get("steps", 6) or 6)
+    motion_strength = float(data.get("motion_strength", 1.3) or 1.3)
+    sage_attention = bool(data.get("sage_attention", True))
+    extend_enabled = bool(data.get("extend_enabled", False))
+
+    # Quality presets (keep user override but nudge defaults)
+    if quality == "fast":
+        steps = min(steps, 6)
+        motion_strength = float(data.get("motion_strength", 1.2) or 1.2)
+    elif quality in {"quality", "high", "accurate"}:
+        steps = max(steps, 10)
+        motion_strength = float(data.get("motion_strength", 1.4) or 1.4)
+
+    try:
+        prompt_id = svi.generate_video(
+            start_image_path=start_image_path,
+            prompt=prompt,
+            video_length_seconds=video_length_seconds,
+            steps=steps,
+            motion_strength=motion_strength,
+            sage_attention=sage_attention,
+            extend_enabled=extend_enabled,
+        )
+    except Exception as e:
+        logger.warning(f"SVI generate error: {e}")
+        return _json_error("svi_generation_failed", 500, error="internal_error", namespace="svi")
+
+    if prompt_id:
+        return jsonify({"prompt_id": prompt_id, "status": "started"}), 200
+
+    last_error = getattr(svi, "last_error", None)
+    try:
+        detail = (last_error or {}).get("detail") if isinstance(last_error, dict) else None
+    except Exception:
+        detail = None
+
+    # Missing custom node is a common setup issue -> return 503 with a clear hint.
+    if isinstance(detail, dict):
+        err_obj = detail.get("error") if isinstance(detail.get("error"), dict) else None
+        err_type = (err_obj.get("type") if err_obj else "") or ""
+        err_msg = (err_obj.get("message") if err_obj else "") or ""
+        if err_type == "missing_node_type" or "missing_node_type" in (err_msg or ""):
+            return _json_error(
+                "svi_custom_node_missing",
+                503,
+                error="unavailable",
+                namespace="svi",
+                details={
+                    "hint": "ComfyUIに SVI × Wan 2.2 のカスタムノードが未導入です。該当ノード(SVIWan22VideoGenerate)をインストールして再起動してください。",
+                    "comfyui_error": detail,
+                },
+            )
+        if err_type == "missing_model_asset" or "missing_model_asset" in (err_msg or ""):
+            return _json_error(
+                "svi_model_missing",
+                503,
+                error="unavailable",
+                namespace="svi",
+                details={
+                    "hint": "Wan動画生成に必要なモデルファイルが未導入です。/api/svi/capabilities の model_assets.missing を参照して、指定パスに配置してください。",
+                    "missing": err_obj.get("missing") if isinstance(err_obj, dict) else None,
+                    "models_base": err_obj.get("models_base") if isinstance(err_obj, dict) else None,
+                    "comfyui_error": detail,
+                },
+            )
+
+    return _json_error(
+        "svi_generation_failed",
+        500,
+        error="internal_error",
+        namespace="svi",
+        details={"last_error": last_error} if last_error else None,
+    )
+
+
+@app.route("/api/svi/extend", methods=["POST"])
+def api_svi_extend():
+    """SVI × Wan 2.2 で動画延長（prompt_id を返す）"""
+    if not SVI_WAN22_AVAILABLE:
+        return _json_error("svi_wan22_unavailable", 503, error="unavailable", namespace="svi")
+
+    data = request.get_json(silent=True) or {}
+    previous_video_path = (data.get("previous_video_path") or "").strip()
+    prompt = (data.get("prompt") or "").strip()
+    if not previous_video_path:
+        return _json_error(
+            "previous_video_path is required",
+            400,
+            error="bad_request",
+            namespace="svi",
+        )
+    if not prompt:
+        return _json_error("prompt is required", 400, error="bad_request", namespace="svi")
+
+    if not os.path.exists(previous_video_path):
+        return _json_error(
+            "previous_video_path_not_found",
+            404,
+            error="not_found",
+            namespace="svi",
+            detail=previous_video_path,
+        )
+
+    svi = integrations.get("svi_wan22")
+    if not svi:
+        try:
+            svi = SVIWan22VideoIntegration(
+                base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
+            )
+        except Exception:
+            svi = None
+    if not svi or not getattr(svi, "is_available", lambda: False)():
+        return _json_error("comfyui_unavailable", 503, error="unavailable", namespace="svi")
+
+    quality = (data.get("quality") or "balanced").strip().lower()
+    extend_seconds = int(data.get("extend_seconds", 5) or 5)
+    steps = int(data.get("steps", 6) or 6)
+    motion_strength = float(data.get("motion_strength", 1.3) or 1.3)
+
+    if quality == "fast":
+        steps = min(steps, 6)
+        motion_strength = float(data.get("motion_strength", 1.2) or 1.2)
+    elif quality in {"quality", "high", "accurate"}:
+        steps = max(steps, 10)
+        motion_strength = float(data.get("motion_strength", 1.4) or 1.4)
+
+    try:
+        prompt_id = svi.extend_video(
+            previous_video_path=previous_video_path,
+            prompt=prompt,
+            extend_seconds=extend_seconds,
+            steps=steps,
+            motion_strength=motion_strength,
+        )
+    except Exception as e:
+        logger.warning(f"SVI extend error: {e}")
+        return _json_error("svi_extend_failed", 500, error="internal_error", namespace="svi")
+
+    if prompt_id:
+        return jsonify({"prompt_id": prompt_id, "status": "started"}), 200
+
+    last_error = getattr(svi, "last_error", None)
+    try:
+        detail = (last_error or {}).get("detail") if isinstance(last_error, dict) else None
+    except Exception:
+        detail = None
+
+    if isinstance(detail, dict):
+        err_obj = detail.get("error") if isinstance(detail.get("error"), dict) else None
+        err_type = (err_obj.get("type") if err_obj else "") or ""
+        err_msg = (err_obj.get("message") if err_obj else "") or ""
+        if err_type == "missing_node_type" or "missing_node_type" in (err_msg or ""):
+            return _json_error(
+                "svi_custom_node_missing",
+                503,
+                error="unavailable",
+                namespace="svi",
+                details={
+                    "hint": "ComfyUIに SVI × Wan 2.2 のカスタムノードが未導入です。該当ノード(SVIWan22VideoExtend)をインストールして再起動してください。",
+                    "comfyui_error": detail,
+                },
+            )
+        if err_type == "missing_model_asset" or "missing_model_asset" in (err_msg or ""):
+            return _json_error(
+                "svi_model_missing",
+                503,
+                error="unavailable",
+                namespace="svi",
+                details={
+                    "hint": "Wan動画延長に必要なモデルファイルが未導入です。/api/svi/capabilities の model_assets.missing を参照して、指定パスに配置してください。",
+                    "missing": err_obj.get("missing") if isinstance(err_obj, dict) else None,
+                    "models_base": err_obj.get("models_base") if isinstance(err_obj, dict) else None,
+                    "comfyui_error": detail,
+                },
+            )
+
+    return _json_error(
+        "svi_extend_failed",
+        500,
+        error="internal_error",
+        namespace="svi",
+        details={"last_error": last_error} if last_error else None,
+    )
+
+
+@app.route("/api/svi/queue", methods=["GET"])
+def api_svi_queue():
+    """ComfyUI の /queue を返す（SVI/LTXなど共通の実行状況確認）"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_unavailable", 503, error="unavailable", namespace="svi")
+
+    base_url = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188").rstrip("/")
+    try:
+        r = requests.get(f"{base_url}/queue", timeout=5)
+        r.raise_for_status()
+        data = r.json()
+
+        def _extract_prompt_ids(items):
+            out = []
+            for it in items or []:
+                if isinstance(it, (list, tuple)) and len(it) > 1:
+                    out.append(it[1])
+            return out
+
+        return jsonify(
+            {
+                "queue_running": data.get("queue_running", []),
+                "queue_pending": data.get("queue_pending", []),
+                "running_prompt_ids": _extract_prompt_ids(data.get("queue_running")),
+                "pending_prompt_ids": _extract_prompt_ids(data.get("queue_pending")),
+            }
+        ), 200
+    except Exception as e:
+        logger.warning(f"SVI queue error: {e}")
+        return _json_error("comfyui_queue_failed", 502, error="bad_gateway", namespace="svi")
+
+
+@app.route("/api/svi/history", methods=["GET"])
+def api_svi_history():
+    """ComfyUI の /history/{prompt_id} を要約して返す"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_unavailable", 503, error="unavailable", namespace="svi")
+
+    prompt_id = (request.args.get("prompt_id") or "").strip()
+    if not prompt_id:
+        return _json_error("prompt_id is required", 400, error="bad_request", namespace="svi")
+
+    base_url = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188").rstrip("/")
+    try:
+        r = requests.get(f"{base_url}/history/{prompt_id}", timeout=5)
+        if r.status_code == 404:
+            return _json_error("history_not_found", 404, error="not_found", namespace="svi")
+        r.raise_for_status()
+        raw = r.json() or {}
+        entry = raw.get(prompt_id)
+        if not entry:
+            return _json_error("history_not_found", 404, error="not_found", namespace="svi")
+
+        status = entry.get("status", {}) or {}
+        outputs = entry.get("outputs", {}) or {}
+
+        # collect output filenames (best-effort)
+        out_files = {"video": [], "images": []}
+        for _node_id, out in outputs.items():
+            if isinstance(out, dict):
+                if isinstance(out.get("video"), list):
+                    for vf in out["video"]:
+                        if isinstance(vf, dict) and vf.get("filename"):
+                            out_files["video"].append(vf.get("filename"))
+                if isinstance(out.get("images"), list):
+                    for im in out["images"]:
+                        if isinstance(im, dict) and im.get("filename"):
+                            out_files["images"].append(im.get("filename"))
+
+        return jsonify(
+            {
+                "prompt_id": prompt_id,
+                "status": {
+                    "status_str": status.get("status_str", "unknown"),
+                    "completed": bool(status.get("completed", False)),
+                    "messages": status.get("messages", [])[-10:],
+                },
+                "outputs": out_files,
+            }
+        ), 200
+    except Exception as e:
+        logger.warning(f"SVI history error: {e}")
+        return _json_error("comfyui_history_failed", 502, error="bad_gateway", namespace="svi")
+
+
+def _lazy_integration(key: str, factory):
+    """初期化待ちでも使えるよう、必要な統合インスタンスを遅延生成する。"""
+    inst = integrations.get(key)
+    if inst is not None:
+        return inst
+    try:
+        with initialization_lock:
+            inst = integrations.get(key)
+            if inst is not None:
+                return inst
+            new_inst = factory()
+            integrations[key] = new_inst
+            return new_inst
+    except Exception:
+        return None
+
+
+def _get_or_init_comfyui():
+    comfyui = integrations.get("comfyui")
+    if comfyui is not None:
+        return comfyui
+    if not COMFYUI_AVAILABLE:
+        return None
+    return _lazy_integration(
+        "comfyui",
+        lambda: ComfyUIIntegration(base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")),
+    )
+
+
+@app.route("/api/ltx2/generate", methods=["POST"])
+def api_ltx2_generate():
+    """LTX-2 動画生成（ComfyUIへワークフロー送信して待機）"""
+    data = request.get_json(silent=True) or {}
+    prompt = (data.get("prompt") or "").strip()
+    if not prompt:
+        return _json_error("prompt is required", 400, error="bad_request", namespace="ltx2")
+
+    ltx2 = integrations.get("ltx2")
+    if not ltx2:
+        ltx2 = _lazy_integration(
+            "ltx2",
+            lambda: LTX2VideoIntegration(base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")),
+        )
+    if not ltx2 or not getattr(ltx2, "is_available", lambda: False)():
+        return _json_error("ltx2_unavailable", 503, error="unavailable", namespace="ltx2")
+
+    workflow_path = (data.get("workflow") or data.get("workflow_path") or "").strip() or None
+    image = (data.get("image") or "").strip() or None
+    timeout = float(data.get("timeout", 600.0) or 600.0)
+
+    try:
+        result = ltx2.generate(prompt=prompt, workflow_path=workflow_path, image=image, timeout=timeout)
+        return jsonify(result), (200 if result.get("success") else 500)
+    except Exception as e:
+        logger.warning(f"LTX2 generate error: {e}")
+        return _json_error("ltx2_generate_failed", 500, error="internal_error", namespace="ltx2")
+
+
+@app.route("/api/ltx2/queue", methods=["GET"])
+def api_ltx2_queue():
+    """ComfyUI の /queue を返す（LTX-2用）"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_unavailable", 503, error="unavailable", namespace="ltx2")
+
+    base_url = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188").rstrip("/")
+    try:
+        r = requests.get(f"{base_url}/queue", timeout=5)
+        r.raise_for_status()
+        return jsonify(r.json()), 200
+    except Exception as e:
+        logger.warning(f"LTX2 queue error: {e}")
+        return _json_error("comfyui_queue_failed", 502, error="bad_gateway", namespace="ltx2")
+
+
+@app.route("/api/ltx2/history", methods=["GET"])
+def api_ltx2_history():
+    """ComfyUI の /history/{prompt_id} を返す（LTX-2用）"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_unavailable", 503, error="unavailable", namespace="ltx2")
+
+    prompt_id = (request.args.get("prompt_id") or "").strip()
+    if not prompt_id:
+        return _json_error("prompt_id is required", 400, error="bad_request", namespace="ltx2")
+
+    base_url = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188").rstrip("/")
+    try:
+        r = requests.get(f"{base_url}/history/{prompt_id}", timeout=5)
+        if r.status_code == 404:
+            return _json_error("history_not_found", 404, error="not_found", namespace="ltx2")
+        r.raise_for_status()
+        return jsonify(r.json()), 200
+    except Exception as e:
+        logger.warning(f"LTX2 history error: {e}")
+        return _json_error("comfyui_history_failed", 502, error="bad_gateway", namespace="ltx2")
+
+
+@app.route("/api/ltx2-infinity/generate", methods=["POST"])
+def api_ltx2_infinity_generate():
+    """LTX-2 Infinity: セグメント反復生成（最小実装）"""
+    data = request.get_json(silent=True) or {}
+    prompt = (data.get("prompt") or "").strip()
+    if not prompt:
+        return _json_error("prompt is required", 400, error="bad_request", namespace="ltx2_infinity")
+
+    inf = integrations.get("ltx2_infinity")
+    if not inf:
+        inf = _lazy_integration(
+            "ltx2_infinity",
+            lambda: LTX2InfinityIntegration(base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")),
+        )
+    if not inf or not getattr(inf, "is_available", lambda: False)():
+        return _json_error("ltx2_infinity_unavailable", 503, error="unavailable", namespace="ltx2_infinity")
+
+    segments = int(data.get("segments", 1) or 1)
+    workflow_path = (data.get("workflow") or data.get("workflow_path") or "").strip() or None
+    image = (data.get("image") or "").strip() or None
+    timeout_per_segment = float(data.get("timeout_per_segment", data.get("timeout", 600.0)) or 600.0)
+
+    try:
+        result = inf.generate(
+            prompt=prompt,
+            segments=segments,
+            workflow_path=workflow_path,
+            image=image,
+            timeout_per_segment=timeout_per_segment,
+            positive_suffix=(data.get("positive_suffix") or "").strip() or None,
+            negative_suffix=(data.get("negative_suffix") or "").strip() or None,
+        )
+        return jsonify(result), (200 if result.get("success") else 500)
+    except Exception as e:
+        logger.warning(f"LTX2 Infinity generate error: {e}")
+        return _json_error("ltx2_infinity_generate_failed", 500, error="internal_error", namespace="ltx2_infinity")
+
+
+@app.route("/api/ltx2-infinity/templates", methods=["GET", "POST"])
+def api_ltx2_infinity_templates():
+    """LTX-2 Infinity: テンプレート一覧/保存"""
+    mgr = integrations.get("ltx2_template_manager")
+    if not mgr:
+        mgr = _lazy_integration("ltx2_template_manager", lambda: LTX2TemplateManager())
+    if not mgr:
+        return _json_error("template_manager_unavailable", 503, error="unavailable", namespace="ltx2_infinity")
+
+    if request.method == "GET":
+        try:
+            return jsonify({"success": True, "templates": mgr.list_templates()}), 200
+        except Exception as e:
+            logger.warning(f"LTX2 templates list error: {e}")
+            return _json_error("templates_list_failed", 500, error="internal_error", namespace="ltx2_infinity")
+
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    tpl = data.get("template")
+    if not name or not isinstance(tpl, dict):
+        return _json_error("name and template(dict) are required", 400, error="bad_request", namespace="ltx2_infinity")
+    try:
+        path = mgr.save_template(name, tpl)
+        return jsonify({"success": True, "path": path}), 200
+    except Exception as e:
+        logger.warning(f"LTX2 template save error: {e}")
+        return _json_error("template_save_failed", 500, error="internal_error", namespace="ltx2_infinity")
+
+
+@app.route("/api/ltx2-infinity/storage", methods=["GET"])
+def api_ltx2_infinity_storage():
+    """LTX-2 Infinity: ストレージ統計"""
+    st = integrations.get("ltx2_storage_manager")
+    if not st:
+        st = _lazy_integration("ltx2_storage_manager", lambda: LTX2StorageManager())
+    if not st:
+        return _json_error("storage_manager_unavailable", 503, error="unavailable", namespace="ltx2_infinity")
+    try:
+        return jsonify({"success": True, "stats": st.get_storage_stats()}), 200
+    except Exception as e:
+        logger.warning(f"LTX2 storage stats error: {e}")
+        return _json_error("storage_stats_failed", 500, error="internal_error", namespace="ltx2_infinity")
+
+
+@app.route("/api/pdf/to-excel", methods=["POST"])
+def api_pdf_to_excel():
+    """PDF→Excel（OCR/LLM強化版を既定で使用）"""
+    data = request.get_json(silent=True) or {}
+    pdf_path = (data.get("pdf_path") or "").strip()
+    drive_url = (data.get("drive_url") or data.get("url") or "").strip()
+    output_path = (data.get("output_path") or "").strip()
+    mode = (data.get("mode") or "llm_enhanced").strip().lower()
+    quality = (data.get("quality") or "balanced").strip().lower()
+
+    if not pdf_path and not drive_url:
+        return _json_error("pdf_path or drive_url is required", 400, error="bad_request", namespace="pdf")
+
+    repo_root = Path(__file__).resolve().parent
+    out_dir = repo_root / "output" / "excel"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Resolve input
+    resolved_pdf = None
+    if drive_url:
+        try:
+            from pdf_to_excel_converter import PDFToExcelConverter
+
+            converter = PDFToExcelConverter(google_drive=None)
+            tmp_pdf = out_dir / f"temp_drive_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            downloaded = converter.download_from_google_drive(drive_url, output_path=str(tmp_pdf))
+            if not downloaded:
+                return _json_error("drive_download_failed", 502, error="bad_gateway", namespace="pdf")
+            resolved_pdf = Path(downloaded)
+        except Exception as e:
+            logger.warning(f"Drive download error: {e}")
+            return _json_error("drive_download_failed", 502, error="bad_gateway", namespace="pdf")
+    else:
+        p = Path(pdf_path)
+        if not p.is_absolute():
+            p = (repo_root / p).resolve()
+        else:
+            p = p.resolve()
+        try:
+            p.relative_to(repo_root)
+        except Exception:
+            return _json_error("pdf_path_outside_repo", 400, error="bad_request", namespace="pdf")
+        if not p.exists() or not p.is_file():
+            return _json_error("pdf_not_found", 404, error="not_found", namespace="pdf", detail=str(p))
+        resolved_pdf = p
+
+    if resolved_pdf.suffix.lower() != ".pdf":
+        return _json_error("not_a_pdf", 400, error="bad_request", namespace="pdf")
+
+    # Resolve output
+    if output_path:
+        out = Path(output_path)
+        if not out.is_absolute():
+            out = (repo_root / out).resolve()
+        else:
+            out = out.resolve()
+        try:
+            out.relative_to(repo_root)
+        except Exception:
+            return _json_error("output_path_outside_repo", 400, error="bad_request", namespace="pdf")
+    else:
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        out = out_dir / f"{resolved_pdf.stem}_{ts}.xlsx"
+
+    try:
+        # default: llm_enhanced
+        from pdf_to_excel_converter_llm_enhanced import PDFToExcelConverterLLMEnhanced
+
+        llm_model = (data.get("llm_model") or "qwen2.5:7b").strip() or "qwen2.5:7b"
+        use_llm_correction = bool(data.get("use_llm_correction", True))
+        use_ocr = bool(data.get("use_ocr", True))
+        ocr_providers = data.get("ocr_providers")
+        if not isinstance(ocr_providers, list) or not ocr_providers:
+            ocr_providers = ["tesseract", "google", "microsoft", "amazon"]
+
+        # Quality presets
+        use_super_ocr = bool(data.get("use_super_ocr", False))
+        if quality == "fast":
+            # Quick pass: local OCR only, no LLM correction by default
+            ocr_providers = ["tesseract"]
+            use_llm_correction = bool(data.get("use_llm_correction", False))
+            use_super_ocr = bool(data.get("use_super_ocr", False))
+        elif quality in {"quality", "high", "accurate"}:
+            # Accuracy pass: multi OCR + LLM correction (still configurable)
+            use_llm_correction = bool(data.get("use_llm_correction", True))
+            use_super_ocr = bool(data.get("use_super_ocr", True))
+
+        converter = PDFToExcelConverterLLMEnhanced(
+            use_llm_correction=use_llm_correction,
+            llm_model=llm_model,
+            ocr_providers=ocr_providers,
+            use_super_ocr=use_super_ocr,
+        )
+        result_path = converter.convert_to_excel(str(resolved_pdf), str(out), use_ocr=use_ocr)
+
+        return jsonify(
+            {
+                "success": True,
+                "output_path": result_path,
+                "pages": len(getattr(converter, "page_data", []) or []),
+                "llm_corrected_pages": sum(
+                    1
+                    for p in (getattr(converter, "page_data", []) or [])
+                    if isinstance(p, dict) and p.get("llm_corrected")
+                ),
+            }
+        ), 200
+    except Exception as e:
+        err = str(e)
+        logger.warning(f"PDF→Excel error: {err}")
+        return _json_error("pdf_to_excel_failed", 500, error="internal_error", namespace="pdf")
+
+
+@app.route("/api/images/recent", methods=["GET"])
+def api_images_recent():
+    """最近の画像ファイル一覧（gallery_images をスキャン）"""
+    try:
+        limit = int(request.args.get("limit", "20") or "20")
+    except Exception:
+        limit = 20
+    limit = max(1, min(limit, 200))
+    raw_qs = (getattr(request, "query_string", b"") or b"").decode("utf-8", errors="ignore")
+    debug_arg = (request.args.get("debug", "") or "").strip().lower()
+    debug = (
+        debug_arg in {"1", "true", "yes"}
+        or "debug=1" in raw_qs
+        or "debug=true" in raw_qs.lower()
+        or "debug=yes" in raw_qs.lower()
+    )
+
+    repo_root = Path(__file__).resolve().parent
+    workspace_root = repo_root.parent
+    images_dir = Path(os.getenv("GALLERY_IMAGES_DIR", str(workspace_root / "gallery_images")))
+    try:
+        images_dir = images_dir if images_dir.is_absolute() else (workspace_root / images_dir).resolve()
+    except Exception:
+        images_dir = (workspace_root / "gallery_images").resolve()
+
+    # Restrict to workspace to avoid arbitrary filesystem enumeration
+    try:
+        images_dir.relative_to(workspace_root)
+    except Exception:
+        images_dir = (workspace_root / "gallery_images").resolve()
+
+    if not images_dir.exists():
+        payload = {"success": True, "images": [], "source_dir": str(images_dir), "matched_images": 0}
+        if debug:
+            payload["debug"] = {
+                "repo_root": str(repo_root),
+                "workspace_root": str(workspace_root),
+                "images_dir": str(images_dir),
+                "images_dir_exists": False,
+            }
+        return jsonify(payload), 200
+
+    exts = {".png", ".jpg", ".jpeg", ".webp"}
+    items = []
+    scanned_files = 0
+    try:
+        for p in images_dir.rglob("*"):
+            if not p.is_file():
+                continue
+            scanned_files += 1
+            if p.suffix.lower() not in exts:
+                continue
+            try:
+                st = p.stat()
+            except Exception:
+                continue
+            items.append(
+                {
+                    "path": str(p),
+                    "name": p.name,
+                    "mtime": st.st_mtime,
+                    "size": st.st_size,
+                }
+            )
+
+        items.sort(key=lambda x: x.get("mtime", 0), reverse=True)
+        payload = {
+            "success": True,
+            "images": items[:limit],
+            "source_dir": str(images_dir),
+            "matched_images": len(items),
+        }
+        if debug:
+            payload["debug"] = {
+                "repo_root": str(repo_root),
+                "workspace_root": str(workspace_root),
+                "images_dir": str(images_dir),
+                "images_dir_exists": True,
+                "scanned_files": scanned_files,
+                "matched_images": len(items),
+            }
+        return jsonify(payload), 200
+    except Exception as e:
+        logger.warning(f"recent images error: {e}")
+        return _json_error("images_recent_failed", 500, error="internal_error", namespace="images")
+
+
+@app.route("/api/vision/describe_url", methods=["POST"])
+def api_vision_describe_url():
+    """画像URL（Pixel7カメラのshot.jpg等）を取得して、llavaで内容説明を返す"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_unavailable", 503, error="unavailable", namespace="vision")
+
+    data = request.get_json(silent=True) or {}
+    image_url = (data.get("image_url") or data.get("url") or "").strip()
+    if not image_url:
+        return _json_error("image_url is required", 400, error="bad_request", namespace="vision")
+
+    prompt = (data.get("prompt") or "この画像の内容を日本語で詳しく説明してください。"
+             ).strip() or "この画像の内容を日本語で詳しく説明してください。"
+    model = (data.get("model") or os.getenv("MANAOS_VISION_MODEL") or "llava:latest").strip() or "llava:latest"
+
+    try:
+        img_resp = requests.get(image_url, timeout=10)
+        img_resp.raise_for_status()
+        img_bytes = img_resp.content
+        if not img_bytes:
+            return _json_error("empty_image", 502, error="bad_gateway", namespace="vision")
+    except Exception as e:
+        logger.warning(f"vision fetch error: {e}")
+        return _json_error("fetch_failed", 502, error="bad_gateway", namespace="vision")
+
+    try:
+        import base64
+
+        image_b64 = base64.b64encode(img_bytes).decode("utf-8")
+        payload = {
+            "model": model,
+            "prompt": prompt,
+            "images": [image_b64],
+            "stream": False,
+            "options": {"temperature": float(data.get("temperature", 0.2) or 0.2), "num_predict": int(data.get("max_tokens", 512) or 512)},
+        }
+        ollama_url = get_ollama_url().rstrip("/")
+        r = requests.post(f"{ollama_url}/api/generate", json=payload, timeout=120)
+        try:
+            r.raise_for_status()
+        except Exception:
+            detail_text = ""
+            try:
+                detail_text = (r.json() or {}).get("error") or ""
+            except Exception:
+                detail_text = (r.text or "").strip()
+            if "model" in detail_text.lower() and "not found" in detail_text.lower():
+                return _json_error(
+                    "vision_model_unavailable",
+                    503,
+                    error="unavailable",
+                    namespace="vision",
+                    details={
+                        "requested": model,
+                        "available_models": available_models,
+                        "hint": "Install a vision model like llava:latest or set MANAOS_VISION_MODEL.",
+                        "ollama_error": detail_text,
+                    },
+                )
+            raise
+
+        resp = r.json() or {}
+        text = (resp.get("response") or "").strip()
+        return jsonify({"success": True, "model": model, "description": text}), 200
+    except Exception as e:
+        logger.warning(f"vision llava error: {e}")
+        return _json_error("vision_failed", 500, error="internal_error", namespace="vision")
+
+
+@app.route("/api/vision/evaluate_url", methods=["POST"])
+def api_vision_evaluate_url():
+    """画像URLを評価してスコア/短評を返す（llava等）。"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_unavailable", 503, error="unavailable", namespace="vision")
+
+    data = request.get_json(silent=True) or {}
+    image_url = (data.get("image_url") or data.get("url") or "").strip()
+    if not image_url:
+        return _json_error("image_url is required", 400, error="bad_request", namespace="vision")
+
+    criteria = (data.get("criteria") or "").strip()
+    model = (data.get("model") or os.getenv("MANAOS_VISION_MODEL") or "llava:latest").strip() or "llava:latest"
+    temperature = float(data.get("temperature", 0.2) or 0.2)
+    max_tokens = int(data.get("max_tokens", 256) or 256)
+
+    try:
+        img_resp = requests.get(image_url, timeout=10)
+        img_resp.raise_for_status()
+        img_bytes = img_resp.content
+        if not img_bytes:
+            return _json_error("empty_image", 502, error="bad_gateway", namespace="vision")
+    except Exception as e:
+        logger.warning(f"vision fetch error: {e}")
+        return _json_error("fetch_failed", 502, error="bad_gateway", namespace="vision")
+
+    base_prompt = (
+        "次の画像を評価してください。必ずJSONのみで返してください。"
+        "キーは score_overall, score_quality, score_aesthetic, score_clarity（0-100の整数）、notes（短い日本語）です。"
+    )
+    if criteria:
+        base_prompt += f" 評価観点: {criteria}"
+
+    try:
+        import base64
+        import json as _json
+
+        image_b64 = base64.b64encode(img_bytes).decode("utf-8")
+        ollama_url = get_ollama_url().rstrip("/")
+
+        # Select a vision-capable model if the requested one is missing.
+        fallback_note = None
+        available_models = []
+        try:
+            tags = requests.get(f"{ollama_url}/api/tags", timeout=10).json() or {}
+            available_models = [m.get("name") for m in (tags.get("models") or []) if m.get("name")]
+            if model not in available_models:
+                candidates = [
+                    n for n in available_models
+                    if any(k in n.lower() for k in ("llava", "vision", "vl", "minicpm", "qwen2.5-vl", "qwen2vl", "phi3-vision"))
+                ]
+                if candidates:
+                    fallback_note = f"fallback:{model}→{candidates[0]}"
+                    model = candidates[0]
+                else:
+                    return _json_error(
+                        "vision_model_unavailable",
+                        503,
+                        error="unavailable",
+                        namespace="vision",
+                        details={
+                            "requested": model,
+                            "available_models": available_models,
+                            "hint": "Install a vision model like llava:latest or set MANAOS_VISION_MODEL.",
+                        },
+                    )
+        except Exception:
+            # If we cannot fetch tags, proceed with the requested model.
+            pass
+
+        payload = {
+            "model": model,
+            "prompt": base_prompt,
+            "images": [image_b64],
+            "stream": False,
+            "options": {"temperature": temperature, "num_predict": max_tokens},
+        }
+        r = requests.post(f"{ollama_url}/api/generate", json=payload, timeout=120)
+        r.raise_for_status()
+        resp = r.json() or {}
+        text = (resp.get("response") or "").strip()
+
+        parsed = None
+        parsed_ok = False
+        if text:
+            try:
+                start = text.find("{")
+                end = text.rfind("}")
+                if start != -1 and end != -1 and end > start:
+                    parsed = _json.loads(text[start : end + 1])
+                    parsed_ok = isinstance(parsed, dict)
+            except Exception:
+                parsed_ok = False
+
+        return jsonify({
+            "success": True,
+            "model": model,
+            "model_fallback": fallback_note,
+            "evaluation": parsed if parsed_ok else None,
+            "parsed": parsed_ok,
+            "raw": text,
+        }), 200
+    except Exception as e:
+        logger.warning(f"vision evaluation error: {e}")
+        return _json_error("vision_failed", 500, error="internal_error", namespace="vision")
+
+
 @app.route("/api/comfyui/queue", methods=["GET"])
 @auth_manager.require_api_key
 def api_comfyui_queue():
     """ComfyUIキュー状態（要認証）"""
-    comfyui = integrations.get("comfyui")
+    comfyui = _get_or_init_comfyui()
     if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
         return _json_error("comfyui_unavailable", 503, error="unavailable", namespace="comfyui")
     try:
@@ -1819,7 +3190,7 @@ def api_comfyui_queue():
 @auth_manager.require_api_key
 def api_comfyui_history():
     """ComfyUI履歴"""
-    comfyui = integrations.get("comfyui")
+    comfyui = _get_or_init_comfyui()
     if not comfyui or not getattr(comfyui, "is_available", lambda: False)():
         return _json_error("comfyui_unavailable", 503, error="unavailable", namespace="comfyui")
     try:
@@ -1850,6 +3221,55 @@ def _get_or_init_enhanced_llm_router() -> Optional["EnhancedLLMRouter"]:
     except Exception as e:
         logger.warning(f"Enhanced LLM router init failed: {e}")
         return None
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _identity_guard_fail_closed_enabled() -> bool:
+    return _env_flag("MANAOS_IDENTITY_GUARD_FAIL_CLOSED", default=False)
+
+
+def _identity_guard_fail_closed_policy(reason: str) -> Dict[str, Any]:
+    return {
+        "checked": False,
+        "blocked": True,
+        "fail_closed": True,
+        "block_reason": reason,
+        "policy_version": "core5-identity-guard-v1",
+    }
+
+
+def _evaluate_identity_guard_or_fail_closed(
+    prompt: str,
+    context: Dict[str, Any],
+    preferences: Dict[str, Any],
+    endpoint: str,
+):
+    if not IDENTITY_GUARD_AVAILABLE or evaluate_identity_guard is None:
+        if _identity_guard_fail_closed_enabled():
+            logger.error(
+                "Identity guard unavailable and fail-closed active: endpoint=%s",
+                endpoint,
+            )
+            return None, _identity_guard_fail_closed_policy("identity_guard_unavailable")
+        return None, None
+
+    try:
+        return evaluate_identity_guard(prompt, context=context, preferences=preferences), None
+    except Exception as e:
+        logger.error(
+            "Identity guard evaluation error: endpoint=%s error=%s",
+            endpoint,
+            e,
+        )
+        if _identity_guard_fail_closed_enabled():
+            return None, _identity_guard_fail_closed_policy("identity_guard_evaluation_failed")
+        return None, None
 
 
 @app.route("/api/llm/health", methods=["GET"])
@@ -1892,6 +3312,86 @@ def api_llm_models():
         return _json_error("llm_models_failed", 500, error="internal_error", namespace="llm")
 
 
+@app.route("/api/llm/policy/status", methods=["GET"])
+def api_llm_policy_status():
+    """CORE5 Identityポリシー設定の状態を返す"""
+    if not IDENTITY_GUARD_AVAILABLE or get_identity_policy_config is None:
+        return jsonify(
+            {
+                "identity_guard": {
+                    "available": False,
+                    "fail_closed": _identity_guard_fail_closed_enabled(),
+                }
+            }
+        ), 200
+
+    try:
+        config = get_identity_policy_config()
+        return (
+            jsonify(
+                {
+                    "identity_guard": {
+                        "available": True,
+                        "fail_closed": _identity_guard_fail_closed_enabled(),
+                        **config,
+                    }
+                }
+            ),
+            200,
+        )
+    except Exception as e:
+        logger.warning(f"LLM policy status error: {e}")
+        return _json_error("llm_policy_status_failed", 500, error="internal_error", namespace="llm")
+
+
+@app.route("/api/llm/policy/evaluate", methods=["POST"])
+def api_llm_policy_evaluate():
+    """CORE5 Identityポリシーで入力を事前評価する（実行はしない）"""
+    data = request.get_json(silent=True) or {}
+    prompt = (data.get("prompt") or "").strip()
+    if not prompt:
+        return _json_error("prompt is required", 400, error="bad_request", namespace="llm")
+
+    context = data.get("context") or {}
+    if not isinstance(context, dict):
+        context = {}
+
+    preferences = data.get("preferences") or {}
+    if not isinstance(preferences, dict):
+        preferences = {}
+
+    include_normalized_prompt = bool(data.get("include_normalized_prompt", False))
+
+    if not IDENTITY_GUARD_AVAILABLE or evaluate_identity_guard is None or identity_guard_to_dict is None:
+        identity_payload: Dict[str, Any] = {
+            "checked": False,
+            "available": False,
+            "fail_closed": _identity_guard_fail_closed_enabled(),
+        }
+        if _identity_guard_fail_closed_enabled():
+            identity_payload.update(
+                {
+                    "blocked": True,
+                    "block_reason": "identity_guard_unavailable",
+                }
+            )
+        return jsonify({"identity_guard": identity_payload}), 200
+
+    try:
+        guard = evaluate_identity_guard(prompt, context=context, preferences=preferences)
+        return jsonify(
+            {
+                "identity_guard": identity_guard_to_dict(
+                    guard,
+                    include_normalized_prompt=include_normalized_prompt,
+                )
+            }
+        ), 200
+    except Exception as e:
+        logger.warning(f"LLM policy evaluate error: {e}")
+        return _json_error("llm_policy_evaluate_failed", 500, error="internal_error", namespace="llm")
+
+
 @app.route("/api/llm/analyze", methods=["POST"])
 def api_llm_analyze():
     """プロンプト難易度を分析（LLM呼び出しなし）"""
@@ -1922,12 +3422,47 @@ def api_llm_analyze():
         level = str(analyzer.get_difficulty_level(score))
         recommended = str(analyzer.get_recommended_model(score))
 
+        identity_payload: Dict[str, Any] = {
+            "checked": False,
+            "blocked": False,
+            "risk_score": 0.0,
+            "reasons": [],
+        }
+        guard, fail_closed_policy = _evaluate_identity_guard_or_fail_closed(
+            prompt,
+            context=context,
+            preferences={},
+            endpoint="/api/llm/analyze",
+        )
+        if fail_closed_policy is not None:
+            return (
+                jsonify(
+                    {
+                        "error": "identity_guard_unavailable_fail_closed",
+                        "policy_blocked": True,
+                        "identity_guard": fail_closed_policy,
+                    }
+                ),
+                503,
+            )
+
+        if guard is not None:
+            identity_payload = {
+                "checked": True,
+                "blocked": bool(guard.blocked),
+                "risk_score": float(guard.risk_score),
+                "reasons": list(guard.reasons),
+                "has_explicit_approval": bool(guard.has_explicit_approval),
+                "policy_version": guard.policy_version,
+            }
+
         return (
             jsonify(
                 {
                     "difficulty_score": score,
                     "difficulty_level": level,
                     "recommended_model": recommended,
+                    "identity_guard": identity_payload,
                 }
             ),
             200,
@@ -1964,7 +3499,68 @@ def api_llm_route():
         return _json_error("llm_routing_not_initialized", 503, error="unavailable", namespace="llm")
 
     try:
-        result = router.route(prompt=prompt, context=context, preferences=preferences)
+        normalized_prompt = prompt
+        guard, fail_closed_policy = _evaluate_identity_guard_or_fail_closed(
+            prompt,
+            context=context,
+            preferences=preferences,
+            endpoint="/api/llm/route",
+        )
+        if fail_closed_policy is not None:
+            return (
+                jsonify(
+                    {
+                        "success": True,
+                        "model": "manaos-policy-identity",
+                        "response": "安全ポリシーにより現在リクエストを処理できません。時間をおいて再試行してください。",
+                        "policy_blocked": True,
+                        "policy": {"identity": fail_closed_policy},
+                    }
+                ),
+                200,
+            )
+
+        if guard is not None:
+            if guard.blocked:
+                return (
+                    jsonify(
+                        {
+                            "success": True,
+                            "model": "manaos-policy-identity",
+                            "response": guard.fallback_response,
+                            "policy_blocked": True,
+                            "policy": {
+                                "identity": {
+                                    "checked": True,
+                                    "blocked": True,
+                                    "risk_score": float(guard.risk_score),
+                                    "reasons": list(guard.reasons),
+                                    "has_explicit_approval": bool(guard.has_explicit_approval),
+                                    "policy_version": guard.policy_version,
+                                }
+                            },
+                        }
+                    ),
+                    200,
+                )
+            normalized_prompt = guard.normalized_prompt
+
+        result = router.route(prompt=normalized_prompt, context=context, preferences=preferences)
+        if isinstance(result, dict):
+            identity_meta = {"checked": bool(guard is not None)}
+            if guard is not None:
+                identity_meta.update(
+                    {
+                        "blocked": False,
+                        "risk_score": float(guard.risk_score),
+                        "reasons": list(guard.reasons),
+                        "has_explicit_approval": bool(guard.has_explicit_approval),
+                        "policy_version": guard.policy_version,
+                    }
+                )
+            policy_meta = result.get("policy") if isinstance(result.get("policy"), dict) else {}
+            policy_meta["identity"] = identity_meta
+            result["policy"] = policy_meta
         return jsonify(result), 200
     except Exception as e:
         logger.warning(f"LLM route error: {e}")
@@ -2125,295 +3721,6 @@ def memory_search_blueprint():
     except Exception as e:
         logger.warning(f"Memory search error: {e}")
         return _json_error("memory_search_failed", 500, error="internal_error", namespace="memory")
-
-
-@app.route("/api/secretary/morning", methods=["POST"])
-def api_secretary_morning():
-    """朝の秘書ルーチンを実行"""
-    secretary = integrations.get("secretary")
-    if not secretary:
-        return _json_error("secretary_unavailable", 503, error="unavailable")
-
-    try:
-        result = secretary.morning_routine()
-        return jsonify({"status": "ok", "routine": "morning", "result": result}), 200
-    except Exception as e:
-        logger.warning(f"Secretary morning routine error: {e}")
-        return _json_error("secretary_morning_failed", 500, error="internal_error")
-
-
-@app.route("/api/secretary/noon", methods=["POST"])
-def api_secretary_noon():
-    """昼の秘書ルーチンを実行"""
-    secretary = integrations.get("secretary")
-    if not secretary:
-        return _json_error("secretary_unavailable", 503, error="unavailable")
-
-    try:
-        result = secretary.noon_routine()
-        return jsonify({"status": "ok", "routine": "noon", "result": result}), 200
-    except Exception as e:
-        logger.warning(f"Secretary noon routine error: {e}")
-        return _json_error("secretary_noon_failed", 500, error="internal_error")
-
-
-@app.route("/api/secretary/evening", methods=["POST"])
-def api_secretary_evening():
-    """夜の秘書ルーチンを実行"""
-    secretary = integrations.get("secretary")
-    if not secretary:
-        return _json_error("secretary_unavailable", 503, error="unavailable")
-
-    try:
-        result = secretary.evening_routine()
-        return jsonify({"status": "ok", "routine": "evening", "result": result}), 200
-    except Exception as e:
-        logger.warning(f"Secretary evening routine error: {e}")
-        return _json_error("secretary_evening_failed", 500, error="internal_error")
-
-
-@app.route("/api/file-secretary/health", methods=["GET"])
-def api_file_secretary_health():
-    """File Secretary ヘルスをプロキシ"""
-    if not REQUESTS_AVAILABLE:
-        return _json_error("requests_module_unavailable", 503, error="unavailable")
-
-    try:
-        response = requests.get(f"{FILE_SECRETARY_BASE_URL}/health", timeout=10)
-        try:
-            body = response.json()
-        except Exception:
-            body = {"raw": response.text}
-        return jsonify(body), int(response.status_code)
-    except Exception as e:
-        logger.warning(f"File Secretary health proxy error: {e}")
-        return _json_error("file_secretary_unreachable", 503, error="unavailable")
-
-
-@app.route("/api/file-secretary/inbox/status", methods=["GET"])
-def api_file_secretary_inbox_status():
-    """File Secretary INBOX状況をプロキシ"""
-    if not REQUESTS_AVAILABLE:
-        return _json_error("requests_module_unavailable", 503, error="unavailable")
-
-    try:
-        params = request.args.to_dict(flat=True)
-        response = requests.get(f"{FILE_SECRETARY_BASE_URL}/api/inbox/status", params=params, timeout=12)
-        try:
-            body = response.json()
-        except Exception:
-            body = {"raw": response.text}
-        return jsonify(body), int(response.status_code)
-    except Exception as e:
-        logger.warning(f"File Secretary inbox status proxy error: {e}")
-        return _json_error("file_secretary_unreachable", 503, error="unavailable")
-
-
-@app.route("/api/file-secretary/files/organize", methods=["POST"])
-def api_file_secretary_files_organize():
-    """File Secretary ファイル整理をプロキシ"""
-    if not REQUESTS_AVAILABLE:
-        return _json_error("requests_module_unavailable", 503, error="unavailable")
-
-    try:
-        payload = request.get_json(silent=True) or {}
-        response = requests.post(
-            f"{FILE_SECRETARY_BASE_URL}/api/files/organize",
-            json=payload,
-            timeout=30,
-        )
-        try:
-            body = response.json()
-        except Exception:
-            body = {"raw": response.text}
-        return jsonify(body), int(response.status_code)
-    except Exception as e:
-        logger.warning(f"File Secretary organize proxy error: {e}")
-        return _json_error("file_secretary_unreachable", 503, error="unavailable")
-
-
-@app.route("/api/file-secretary/files/search", methods=["GET"])
-def api_file_secretary_files_search():
-    """File Secretary ファイル検索をプロキシ"""
-    if not REQUESTS_AVAILABLE:
-        return _json_error("requests_module_unavailable", 503, error="unavailable")
-
-    try:
-        params = request.args.to_dict(flat=True)
-        response = requests.get(f"{FILE_SECRETARY_BASE_URL}/api/files/search", params=params, timeout=15)
-        try:
-            body = response.json()
-        except Exception:
-            body = {"raw": response.text}
-        return jsonify(body), int(response.status_code)
-    except Exception as e:
-        logger.warning(f"File Secretary search proxy error: {e}")
-        return _json_error("file_secretary_unreachable", 503, error="unavailable")
-
-
-@app.route("/api/research/quick", methods=["POST"])
-def api_research_quick():
-    """Step-Deep-Research ジョブを作成し、必要なら同期実行する。"""
-    data = request.get_json(silent=True) or {}
-    query = (data.get("query") or "").strip()
-    if not query:
-        return _json_error("query is required", 400, error="bad_request")
-
-    wait_for_result = bool(data.get("wait", False) or data.get("sync", False))
-    try:
-        execute_timeout = int(data.get("timeout_sec", 180) or 180)
-    except Exception:
-        execute_timeout = 180
-    execute_timeout = max(10, min(execute_timeout, 900))
-
-    step_research = integrations.get("step_deep_research")
-    if step_research:
-        try:
-            job_id = step_research.create_job(query)
-            if not wait_for_result:
-                return (
-                    jsonify(
-                        {
-                            "job_id": job_id,
-                            "status": "created",
-                            "mode": "async",
-                            "source": "integration",
-                            "next": f"POST {STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}",
-                        }
-                    ),
-                    202,
-                )
-
-            result = step_research.execute_job(job_id)
-            return jsonify({"job_id": job_id, "result": result, "mode": "sync", "source": "integration"}), 200
-        except Exception as e:
-            logger.warning(f"Step-Deep-Research integration execute error: {e}")
-
-    if not REQUESTS_AVAILABLE:
-        return _json_error("step_deep_research_unavailable", 503, error="unavailable")
-
-    def _kickoff_async_execute(job_id: str, timeout_sec: int = 900):
-        def _runner():
-            try:
-                requests.post(
-                    f"{STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}",
-                    timeout=max(30, min(int(timeout_sec), 1800)),
-                )
-            except Exception as e:
-                logger.warning(f"Step-Deep-Research async execute kickoff error ({job_id}): {e}")
-
-        threading.Thread(target=_runner, daemon=True).start()
-
-    try:
-        create_response = requests.post(
-            f"{STEP_DEEP_RESEARCH_BASE_URL}/research",
-            json={"query": query},
-            timeout=20,
-        )
-        create_body = create_response.json() if create_response.content else {}
-        if create_response.status_code >= 400:
-            return jsonify(create_body), int(create_response.status_code)
-
-        job_id = create_body.get("job_id")
-        if not job_id:
-            return _json_error("step_deep_research_job_id_missing", 502, error="upstream_error")
-
-        if not wait_for_result:
-            _kickoff_async_execute(job_id)
-            return (
-                jsonify(
-                    {
-                        "job_id": job_id,
-                        "status": "created",
-                        "execute_started": True,
-                        "mode": "async",
-                        "source": "http_proxy",
-                        "status_url": f"/api/research/status/{job_id}",
-                        "next": f"/api/research/status/{job_id}",
-                    }
-                ),
-                202,
-            )
-
-        execute_response = requests.post(
-            f"{STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}",
-            timeout=execute_timeout,
-        )
-        execute_body = execute_response.json() if execute_response.content else {}
-        return (
-            jsonify({"job_id": job_id, "result": execute_body, "mode": "sync", "source": "http_proxy"}),
-            int(execute_response.status_code),
-        )
-    except Exception as e:
-        logger.warning(f"Step-Deep-Research quick proxy error: {e}")
-        return _json_error("step_deep_research_unreachable", 503, error="unavailable")
-
-
-@app.route("/api/research/create", methods=["POST"])
-def api_research_create():
-    """Step-Deep-Research の調査ジョブ作成をプロキシ。"""
-    if not REQUESTS_AVAILABLE:
-        return _json_error("requests_module_unavailable", 503, error="unavailable")
-
-    data = request.get_json(silent=True) or {}
-    query = (data.get("query") or "").strip()
-    if not query:
-        return _json_error("query is required", 400, error="bad_request")
-
-    try:
-        response = requests.post(
-            f"{STEP_DEEP_RESEARCH_BASE_URL}/research",
-            json={"query": query},
-            timeout=20,
-        )
-        body = response.json() if response.content else {}
-        return jsonify(body), int(response.status_code)
-    except Exception as e:
-        logger.warning(f"Step-Deep-Research create proxy error: {e}")
-        return _json_error("step_deep_research_unreachable", 503, error="unavailable")
-
-
-@app.route("/api/research/execute/<job_id>", methods=["POST"])
-def api_research_execute(job_id: str):
-    """Step-Deep-Research の調査ジョブ実行をプロキシ。"""
-    if not REQUESTS_AVAILABLE:
-        return _json_error("requests_module_unavailable", 503, error="unavailable")
-
-    try:
-        data = request.get_json(silent=True) or {}
-        try:
-            timeout_sec = int(data.get("timeout_sec", 180) or 180)
-        except Exception:
-            timeout_sec = 180
-        timeout_sec = max(10, min(timeout_sec, 1800))
-
-        response = requests.post(
-            f"{STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}",
-            timeout=timeout_sec,
-        )
-        body = response.json() if response.content else {}
-        return jsonify(body), int(response.status_code)
-    except Exception as e:
-        logger.warning(f"Step-Deep-Research execute proxy error: {e}")
-        return _json_error("step_deep_research_unreachable", 503, error="unavailable")
-
-
-@app.route("/api/research/status/<job_id>", methods=["GET"])
-def api_research_status(job_id: str):
-    """Step-Deep-Research の調査ジョブ状態をプロキシ。"""
-    if not REQUESTS_AVAILABLE:
-        return _json_error("requests_module_unavailable", 503, error="unavailable")
-
-    try:
-        response = requests.get(
-            f"{STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}/status",
-            timeout=20,
-        )
-        body = response.json() if response.content else {}
-        return jsonify(body), int(response.status_code)
-    except Exception as e:
-        logger.warning(f"Step-Deep-Research status proxy error: {e}")
-        return _json_error("step_deep_research_unreachable", 503, error="unavailable")
 
 
 ops_jobs: Dict[str, Dict[str, Any]] = _load_jobs_from_disk("ops")
@@ -3891,99 +5198,28 @@ def companion_sw():
 @app.route("/ready", methods=["GET"])
 def ready():
     """
-    レディネスチェック（初期化完了チェック）
+    レディネスチェック（L1: 超軽量）
+
+    目的:
+        - 外部watchdog/監視が「プロセスが応答できているか」を最小コストで確認する
+        - 依存サービス（LLM/DB/通知など）の状態に引きずられて 503 になる事故を避ける
+
+    NOTE:
+        深い判定（初期化状態・依存チェック）は /status を参照する。
 
     Returns:
-        200: 初期化完了（すべての必須チェックがOK）
-        503: 初期化中（必須チェックが未完了）
-        500: 初期化エラー
+        200: HTTPとして応答できる（listenできている）
     """
-    with initialization_lock:
-        status = initialization_status["status"]
-        pending = initialization_status["pending"].copy()
-        completed = initialization_status["completed"].copy()
-        failed = initialization_status["failed"].copy()
-        checks = initialization_status.get("checks", {}).copy()
-
-    # NOTE: /ready は「依存関係まで含めたレディネス」のため、初回起動時に
-    # 依存（例: Ollama）が後から起動すると 503 のまま固定されがち。
-    # ここでは starting のときだけ軽量チェックを再計算し、条件を満たせば ready に遷移させる。
-    if status == "starting":
-        with initialization_lock:
-            try:
-                refreshed_checks = _get_cached_readiness_checks(integrations)
-                initialization_status["checks"] = refreshed_checks
-
-                required_checks = [
-                    "memory_db",
-                    "obsidian_path",
-                    "notification_hub",
-                    "llm_routing",
-                    "image_stock",
-                ]
-                available_checks = [
-                    check
-                    for check in required_checks
-                    if refreshed_checks.get(check, {}).get("status") != "not_available"
-                ]
-                all_required_ok = (
-                    all(
-                        refreshed_checks.get(check, {}).get("status") in ["ok", "warning"]
-                        for check in available_checks
-                    )
-                    if available_checks
-                    else True
-                )
-
-                if (
-                    not initialization_status["pending"]
-                    and all_required_ok
-                    and len(initialization_status["completed"]) > 0
-                ):
-                    initialization_status["status"] = "ready"
-
-            except Exception as e:
-                logger.warning(f"readiness refresh failed: {e}")
-
-            status = initialization_status["status"]
-            pending = initialization_status["pending"].copy()
-            completed = initialization_status["completed"].copy()
-            failed = initialization_status["failed"].copy()
-            checks = initialization_status.get("checks", {}).copy()
-
-    if status == "ready":
-        # 初期化完了：各統合の状態を確認（軽量化：タイムアウト対策）
-        integration_status = {}
-        for name, integration in integrations.items():
-            try:
-                # 重い処理を避けるため、単純に存在確認のみ
-                integration_status[name] = integration is not None
-            except Exception as e:
-                logger.warning(f"{name}の状態確認エラー: {e}")
-                integration_status[name] = False
-
-        return (
-            jsonify(
-                {
-            "status": "ready",
-            "integrations": integration_status,
-                    "initialization": {"completed": completed, "failed": failed},
-                    "readiness_checks": checks,
-                }
-            ),
-            200,
-        )
-    else:
-        # 初期化中またはエラー
-        return jsonify(
+    return (
+        jsonify(
             {
-            "status": status,
-            "pending": pending,
-            "completed": completed,
-            "failed": failed,
-                "readiness_checks": checks,
+                "status": "ready",
+                "mode": "l1",
+                "timestamp": datetime.now().isoformat(),
             }
-        ), (503 if status == "starting" else 500)
+        ),
+        200,
+    )
 
 
 @app.route("/status", methods=["GET"])
@@ -4129,6 +5365,263 @@ def status():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 秘書ルーチン (Secretary) API
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.route("/api/secretary/morning", methods=["POST"])
+def api_secretary_morning():
+    """朝の秘書ルーチンを実行"""
+    secretary = integrations.get("secretary")
+    if not secretary:
+        return _json_error("secretary_unavailable", 503, error="unavailable")
+    try:
+        result = secretary.morning_routine()
+        return jsonify({"status": "ok", "routine": "morning", "result": result}), 200
+    except Exception as e:
+        logger.warning(f"Secretary morning routine error: {e}")
+        return _json_error("secretary_morning_failed", 500, error="internal_error")
+
+
+@app.route("/api/secretary/noon", methods=["POST"])
+def api_secretary_noon():
+    """昼の秘書ルーチンを実行"""
+    secretary = integrations.get("secretary")
+    if not secretary:
+        return _json_error("secretary_unavailable", 503, error="unavailable")
+    try:
+        result = secretary.noon_routine()
+        return jsonify({"status": "ok", "routine": "noon", "result": result}), 200
+    except Exception as e:
+        logger.warning(f"Secretary noon routine error: {e}")
+        return _json_error("secretary_noon_failed", 500, error="internal_error")
+
+
+@app.route("/api/secretary/evening", methods=["POST"])
+def api_secretary_evening():
+    """夜の秘書ルーチンを実行"""
+    secretary = integrations.get("secretary")
+    if not secretary:
+        return _json_error("secretary_unavailable", 503, error="unavailable")
+    try:
+        result = secretary.evening_routine()
+        return jsonify({"status": "ok", "routine": "evening", "result": result}), 200
+    except Exception as e:
+        logger.warning(f"Secretary evening routine error: {e}")
+        return _json_error("secretary_evening_failed", 500, error="internal_error")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# File Secretary プロキシ API
+# ─────────────────────────────────────────────────────────────────────────────
+FILE_SECRETARY_BASE_URL = os.environ.get("FILE_SECRETARY_URL", "http://127.0.0.1:8089")
+
+
+@app.route("/api/file-secretary/health", methods=["GET"])
+def api_file_secretary_health():
+    """File Secretary ヘルスをプロキシ"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_module_unavailable", 503, error="unavailable")
+    try:
+        response = requests.get(f"{FILE_SECRETARY_BASE_URL}/health", timeout=10)
+        try:
+            body = response.json()
+        except Exception:
+            body = {"raw": response.text}
+        return jsonify(body), int(response.status_code)
+    except Exception as e:
+        logger.warning(f"File Secretary health proxy error: {e}")
+        return _json_error("file_secretary_unreachable", 503, error="unavailable")
+
+
+@app.route("/api/file-secretary/inbox/status", methods=["GET"])
+def api_file_secretary_inbox_status():
+    """File Secretary INBOX状況をプロキシ"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_module_unavailable", 503, error="unavailable")
+    try:
+        params = request.args.to_dict(flat=True)
+        response = requests.get(f"{FILE_SECRETARY_BASE_URL}/api/inbox/status", params=params, timeout=12)
+        try:
+            body = response.json()
+        except Exception:
+            body = {"raw": response.text}
+        return jsonify(body), int(response.status_code)
+    except Exception as e:
+        logger.warning(f"File Secretary inbox status proxy error: {e}")
+        return _json_error("file_secretary_unreachable", 503, error="unavailable")
+
+
+@app.route("/api/file-secretary/files/organize", methods=["POST"])
+def api_file_secretary_files_organize():
+    """File Secretary ファイル整理をプロキシ"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_module_unavailable", 503, error="unavailable")
+    try:
+        payload = request.get_json(silent=True) or {}
+        response = requests.post(
+            f"{FILE_SECRETARY_BASE_URL}/api/files/organize",
+            json=payload,
+            timeout=30,
+        )
+        try:
+            body = response.json()
+        except Exception:
+            body = {"raw": response.text}
+        return jsonify(body), int(response.status_code)
+    except Exception as e:
+        logger.warning(f"File Secretary organize proxy error: {e}")
+        return _json_error("file_secretary_unreachable", 503, error="unavailable")
+
+
+@app.route("/api/file-secretary/files/search", methods=["GET"])
+def api_file_secretary_files_search():
+    """File Secretary ファイル検索をプロキシ"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_module_unavailable", 503, error="unavailable")
+    try:
+        params = request.args.to_dict(flat=True)
+        response = requests.get(f"{FILE_SECRETARY_BASE_URL}/api/files/search", params=params, timeout=15)
+        try:
+            body = response.json()
+        except Exception:
+            body = {"raw": response.text}
+        return jsonify(body), int(response.status_code)
+    except Exception as e:
+        logger.warning(f"File Secretary search proxy error: {e}")
+        return _json_error("file_secretary_unreachable", 503, error="unavailable")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Step-Deep-Research プロキシ API
+# ─────────────────────────────────────────────────────────────────────────────
+STEP_DEEP_RESEARCH_BASE_URL = os.environ.get("STEP_DEEP_RESEARCH_URL", "http://127.0.0.1:5200")
+
+
+@app.route("/api/research/quick", methods=["POST"])
+def api_research_quick():
+    """Step-Deep-Research ジョブを作成し、必要なら同期実行する。"""
+    data = request.get_json(silent=True) or {}
+    query = (data.get("query") or "").strip()
+    if not query:
+        return _json_error("query is required", 400, error="bad_request")
+
+    wait_for_result = bool(data.get("wait", False) or data.get("sync", False))
+    try:
+        execute_timeout = int(data.get("timeout_sec", 180) or 180)
+    except Exception:
+        execute_timeout = 180
+    execute_timeout = max(10, min(execute_timeout, 900))
+
+    step_research = integrations.get("step_deep_research")
+    if step_research:
+        try:
+            job_id = step_research.create_job(query)
+            if not wait_for_result:
+                return jsonify({
+                    "job_id": job_id, "status": "created", "mode": "async",
+                    "source": "integration",
+                    "next": f"POST {STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}",
+                }), 202
+            result = step_research.execute_job(job_id)
+            return jsonify({"job_id": job_id, "result": result, "mode": "sync", "source": "integration"}), 200
+        except Exception as e:
+            logger.warning(f"Step-Deep-Research integration execute error: {e}")
+
+    if not REQUESTS_AVAILABLE:
+        return _json_error("step_deep_research_unavailable", 503, error="unavailable")
+
+    def _kickoff_async_execute(job_id: str, timeout_sec: int = 900):
+        def _runner():
+            try:
+                requests.post(f"{STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}",
+                              timeout=max(30, min(int(timeout_sec), 1800)))
+            except Exception as e:
+                logger.warning(f"Step-Deep-Research async execute kickoff error ({job_id}): {e}")
+        threading.Thread(target=_runner, daemon=True).start()
+
+    try:
+        create_response = requests.post(
+            f"{STEP_DEEP_RESEARCH_BASE_URL}/research", json={"query": query}, timeout=20)
+        create_body = create_response.json() if create_response.content else {}
+        if create_response.status_code >= 400:
+            return jsonify(create_body), int(create_response.status_code)
+        job_id = create_body.get("job_id")
+        if not job_id:
+            return _json_error("step_deep_research_job_id_missing", 502, error="upstream_error")
+        if not wait_for_result:
+            _kickoff_async_execute(job_id)
+            return jsonify({
+                "job_id": job_id, "status": "created", "execute_started": True,
+                "mode": "async", "source": "http_proxy",
+                "status_url": f"/api/research/status/{job_id}",
+                "next": f"/api/research/status/{job_id}",
+            }), 202
+        execute_response = requests.post(
+            f"{STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}", timeout=execute_timeout)
+        execute_body = execute_response.json() if execute_response.content else {}
+        return jsonify({"job_id": job_id, "result": execute_body, "mode": "sync", "source": "http_proxy"}), \
+               int(execute_response.status_code)
+    except Exception as e:
+        logger.warning(f"Step-Deep-Research quick proxy error: {e}")
+        return _json_error("step_deep_research_unreachable", 503, error="unavailable")
+
+
+@app.route("/api/research/create", methods=["POST"])
+def api_research_create():
+    """Step-Deep-Research の調査ジョブ作成をプロキシ。"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_module_unavailable", 503, error="unavailable")
+    data = request.get_json(silent=True) or {}
+    query = (data.get("query") or "").strip()
+    if not query:
+        return _json_error("query is required", 400, error="bad_request")
+    try:
+        response = requests.post(f"{STEP_DEEP_RESEARCH_BASE_URL}/research",
+                                 json={"query": query}, timeout=20)
+        body = response.json() if response.content else {}
+        return jsonify(body), int(response.status_code)
+    except Exception as e:
+        logger.warning(f"Step-Deep-Research create proxy error: {e}")
+        return _json_error("step_deep_research_unreachable", 503, error="unavailable")
+
+
+@app.route("/api/research/execute/<job_id>", methods=["POST"])
+def api_research_execute(job_id: str):
+    """Step-Deep-Research の調査ジョブ実行をプロキシ。"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_module_unavailable", 503, error="unavailable")
+    try:
+        data = request.get_json(silent=True) or {}
+        try:
+            timeout_sec = int(data.get("timeout_sec", 180) or 180)
+        except Exception:
+            timeout_sec = 180
+        timeout_sec = max(10, min(timeout_sec, 1800))
+        response = requests.post(f"{STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}",
+                                 timeout=timeout_sec)
+        body = response.json() if response.content else {}
+        return jsonify(body), int(response.status_code)
+    except Exception as e:
+        logger.warning(f"Step-Deep-Research execute proxy error: {e}")
+        return _json_error("step_deep_research_unreachable", 503, error="unavailable")
+
+
+@app.route("/api/research/status/<job_id>", methods=["GET"])
+def api_research_status(job_id: str):
+    """Step-Deep-Research の調査ジョブ状態をプロキシ。"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_module_unavailable", 503, error="unavailable")
+    try:
+        response = requests.get(f"{STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}/status",
+                                timeout=20)
+        body = response.json() if response.content else {}
+        return jsonify(body), int(response.status_code)
+    except Exception as e:
+        logger.warning(f"Step-Deep-Research status proxy error: {e}")
+        return _json_error("step_deep_research_unreachable", 503, error="unavailable")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # CASTLE-EX Layer2 LoRA 推論プロキシ (→ port 9520)
 # ─────────────────────────────────────────────────────────────────────────────
 _LAYER2_INFER_URL = os.environ.get("LAYER2_INFER_URL", "http://127.0.0.1:9520")
@@ -4136,34 +5629,14 @@ _LAYER2_INFER_URL = os.environ.get("LAYER2_INFER_URL", "http://127.0.0.1:9520")
 
 @app.route("/v1/castle_ex/layer2/generate", methods=["POST"])
 def castle_ex_layer2_generate():
-    """
-    Layer2 スタイル矯正 LoRA (v1.1.6 prod) を使った短文生成プロキシ。
-
-    Request body JSON:
-        prompt           : str  (必須)
-        mode             : str  "short" | "free" | "training_eval" (default: "short")
-        max_new_tokens   : int  1〜256 (default: 64)
-        temperature      : float(default: 0.2)
-        repetition_penalty: float (default: 1.1)
-        do_sample        : bool (default: false)
-
-    Response JSON:
-        text             : str   生成テキスト
-        mode             : str   使用モード
-        lora_active      : bool  LoRA アクティブ状態
-        latency_ms       : float 推論レイテンシ (ms)
-    """
+    """Layer2 スタイル矯正 LoRA (v1.1.6 prod) を使った短文生成プロキシ。"""
     if not REQUESTS_AVAILABLE:
         return jsonify({"error": "requests ライブラリが必要です"}), 500
     try:
         payload = request.get_json(force=True, silent=True) or {}
         if not payload.get("prompt"):
             return jsonify({"error": "prompt フィールドが必要です"}), 400
-        resp = requests.post(
-            f"{_LAYER2_INFER_URL}/generate",
-            json=payload,
-            timeout=120,
-        )
+        resp = requests.post(f"{_LAYER2_INFER_URL}/generate", json=payload, timeout=120)
         return jsonify(resp.json()), resp.status_code
     except requests.exceptions.ConnectionError:
         return jsonify({

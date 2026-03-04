@@ -5364,6 +5364,304 @@ def status():
     )
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# 秘書ルーチン (Secretary) API
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.route("/api/secretary/morning", methods=["POST"])
+def api_secretary_morning():
+    """朝の秘書ルーチンを実行"""
+    secretary = integrations.get("secretary")
+    if not secretary:
+        return _json_error("secretary_unavailable", 503, error="unavailable")
+    try:
+        result = secretary.morning_routine()
+        return jsonify({"status": "ok", "routine": "morning", "result": result}), 200
+    except Exception as e:
+        logger.warning(f"Secretary morning routine error: {e}")
+        return _json_error("secretary_morning_failed", 500, error="internal_error")
+
+
+@app.route("/api/secretary/noon", methods=["POST"])
+def api_secretary_noon():
+    """昼の秘書ルーチンを実行"""
+    secretary = integrations.get("secretary")
+    if not secretary:
+        return _json_error("secretary_unavailable", 503, error="unavailable")
+    try:
+        result = secretary.noon_routine()
+        return jsonify({"status": "ok", "routine": "noon", "result": result}), 200
+    except Exception as e:
+        logger.warning(f"Secretary noon routine error: {e}")
+        return _json_error("secretary_noon_failed", 500, error="internal_error")
+
+
+@app.route("/api/secretary/evening", methods=["POST"])
+def api_secretary_evening():
+    """夜の秘書ルーチンを実行"""
+    secretary = integrations.get("secretary")
+    if not secretary:
+        return _json_error("secretary_unavailable", 503, error="unavailable")
+    try:
+        result = secretary.evening_routine()
+        return jsonify({"status": "ok", "routine": "evening", "result": result}), 200
+    except Exception as e:
+        logger.warning(f"Secretary evening routine error: {e}")
+        return _json_error("secretary_evening_failed", 500, error="internal_error")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# File Secretary プロキシ API
+# ─────────────────────────────────────────────────────────────────────────────
+FILE_SECRETARY_BASE_URL = os.environ.get("FILE_SECRETARY_URL", "http://127.0.0.1:8089")
+
+
+@app.route("/api/file-secretary/health", methods=["GET"])
+def api_file_secretary_health():
+    """File Secretary ヘルスをプロキシ"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_module_unavailable", 503, error="unavailable")
+    try:
+        response = requests.get(f"{FILE_SECRETARY_BASE_URL}/health", timeout=10)
+        try:
+            body = response.json()
+        except Exception:
+            body = {"raw": response.text}
+        return jsonify(body), int(response.status_code)
+    except Exception as e:
+        logger.warning(f"File Secretary health proxy error: {e}")
+        return _json_error("file_secretary_unreachable", 503, error="unavailable")
+
+
+@app.route("/api/file-secretary/inbox/status", methods=["GET"])
+def api_file_secretary_inbox_status():
+    """File Secretary INBOX状況をプロキシ"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_module_unavailable", 503, error="unavailable")
+    try:
+        params = request.args.to_dict(flat=True)
+        response = requests.get(f"{FILE_SECRETARY_BASE_URL}/api/inbox/status", params=params, timeout=12)
+        try:
+            body = response.json()
+        except Exception:
+            body = {"raw": response.text}
+        return jsonify(body), int(response.status_code)
+    except Exception as e:
+        logger.warning(f"File Secretary inbox status proxy error: {e}")
+        return _json_error("file_secretary_unreachable", 503, error="unavailable")
+
+
+@app.route("/api/file-secretary/files/organize", methods=["POST"])
+def api_file_secretary_files_organize():
+    """File Secretary ファイル整理をプロキシ"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_module_unavailable", 503, error="unavailable")
+    try:
+        payload = request.get_json(silent=True) or {}
+        response = requests.post(
+            f"{FILE_SECRETARY_BASE_URL}/api/files/organize",
+            json=payload,
+            timeout=30,
+        )
+        try:
+            body = response.json()
+        except Exception:
+            body = {"raw": response.text}
+        return jsonify(body), int(response.status_code)
+    except Exception as e:
+        logger.warning(f"File Secretary organize proxy error: {e}")
+        return _json_error("file_secretary_unreachable", 503, error="unavailable")
+
+
+@app.route("/api/file-secretary/files/search", methods=["GET"])
+def api_file_secretary_files_search():
+    """File Secretary ファイル検索をプロキシ"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_module_unavailable", 503, error="unavailable")
+    try:
+        params = request.args.to_dict(flat=True)
+        response = requests.get(f"{FILE_SECRETARY_BASE_URL}/api/files/search", params=params, timeout=15)
+        try:
+            body = response.json()
+        except Exception:
+            body = {"raw": response.text}
+        return jsonify(body), int(response.status_code)
+    except Exception as e:
+        logger.warning(f"File Secretary search proxy error: {e}")
+        return _json_error("file_secretary_unreachable", 503, error="unavailable")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Step-Deep-Research プロキシ API
+# ─────────────────────────────────────────────────────────────────────────────
+STEP_DEEP_RESEARCH_BASE_URL = os.environ.get("STEP_DEEP_RESEARCH_URL", "http://127.0.0.1:5200")
+
+
+@app.route("/api/research/quick", methods=["POST"])
+def api_research_quick():
+    """Step-Deep-Research ジョブを作成し、必要なら同期実行する。"""
+    data = request.get_json(silent=True) or {}
+    query = (data.get("query") or "").strip()
+    if not query:
+        return _json_error("query is required", 400, error="bad_request")
+
+    wait_for_result = bool(data.get("wait", False) or data.get("sync", False))
+    try:
+        execute_timeout = int(data.get("timeout_sec", 180) or 180)
+    except Exception:
+        execute_timeout = 180
+    execute_timeout = max(10, min(execute_timeout, 900))
+
+    step_research = integrations.get("step_deep_research")
+    if step_research:
+        try:
+            job_id = step_research.create_job(query)
+            if not wait_for_result:
+                return jsonify({
+                    "job_id": job_id, "status": "created", "mode": "async",
+                    "source": "integration",
+                    "next": f"POST {STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}",
+                }), 202
+            result = step_research.execute_job(job_id)
+            return jsonify({"job_id": job_id, "result": result, "mode": "sync", "source": "integration"}), 200
+        except Exception as e:
+            logger.warning(f"Step-Deep-Research integration execute error: {e}")
+
+    if not REQUESTS_AVAILABLE:
+        return _json_error("step_deep_research_unavailable", 503, error="unavailable")
+
+    def _kickoff_async_execute(job_id: str, timeout_sec: int = 900):
+        def _runner():
+            try:
+                requests.post(f"{STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}",
+                              timeout=max(30, min(int(timeout_sec), 1800)))
+            except Exception as e:
+                logger.warning(f"Step-Deep-Research async execute kickoff error ({job_id}): {e}")
+        threading.Thread(target=_runner, daemon=True).start()
+
+    try:
+        create_response = requests.post(
+            f"{STEP_DEEP_RESEARCH_BASE_URL}/research", json={"query": query}, timeout=20)
+        create_body = create_response.json() if create_response.content else {}
+        if create_response.status_code >= 400:
+            return jsonify(create_body), int(create_response.status_code)
+        job_id = create_body.get("job_id")
+        if not job_id:
+            return _json_error("step_deep_research_job_id_missing", 502, error="upstream_error")
+        if not wait_for_result:
+            _kickoff_async_execute(job_id)
+            return jsonify({
+                "job_id": job_id, "status": "created", "execute_started": True,
+                "mode": "async", "source": "http_proxy",
+                "status_url": f"/api/research/status/{job_id}",
+                "next": f"/api/research/status/{job_id}",
+            }), 202
+        execute_response = requests.post(
+            f"{STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}", timeout=execute_timeout)
+        execute_body = execute_response.json() if execute_response.content else {}
+        return jsonify({"job_id": job_id, "result": execute_body, "mode": "sync", "source": "http_proxy"}), \
+               int(execute_response.status_code)
+    except Exception as e:
+        logger.warning(f"Step-Deep-Research quick proxy error: {e}")
+        return _json_error("step_deep_research_unreachable", 503, error="unavailable")
+
+
+@app.route("/api/research/create", methods=["POST"])
+def api_research_create():
+    """Step-Deep-Research の調査ジョブ作成をプロキシ。"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_module_unavailable", 503, error="unavailable")
+    data = request.get_json(silent=True) or {}
+    query = (data.get("query") or "").strip()
+    if not query:
+        return _json_error("query is required", 400, error="bad_request")
+    try:
+        response = requests.post(f"{STEP_DEEP_RESEARCH_BASE_URL}/research",
+                                 json={"query": query}, timeout=20)
+        body = response.json() if response.content else {}
+        return jsonify(body), int(response.status_code)
+    except Exception as e:
+        logger.warning(f"Step-Deep-Research create proxy error: {e}")
+        return _json_error("step_deep_research_unreachable", 503, error="unavailable")
+
+
+@app.route("/api/research/execute/<job_id>", methods=["POST"])
+def api_research_execute(job_id: str):
+    """Step-Deep-Research の調査ジョブ実行をプロキシ。"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_module_unavailable", 503, error="unavailable")
+    try:
+        data = request.get_json(silent=True) or {}
+        try:
+            timeout_sec = int(data.get("timeout_sec", 180) or 180)
+        except Exception:
+            timeout_sec = 180
+        timeout_sec = max(10, min(timeout_sec, 1800))
+        response = requests.post(f"{STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}",
+                                 timeout=timeout_sec)
+        body = response.json() if response.content else {}
+        return jsonify(body), int(response.status_code)
+    except Exception as e:
+        logger.warning(f"Step-Deep-Research execute proxy error: {e}")
+        return _json_error("step_deep_research_unreachable", 503, error="unavailable")
+
+
+@app.route("/api/research/status/<job_id>", methods=["GET"])
+def api_research_status(job_id: str):
+    """Step-Deep-Research の調査ジョブ状態をプロキシ。"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_module_unavailable", 503, error="unavailable")
+    try:
+        response = requests.get(f"{STEP_DEEP_RESEARCH_BASE_URL}/research/{job_id}/status",
+                                timeout=20)
+        body = response.json() if response.content else {}
+        return jsonify(body), int(response.status_code)
+    except Exception as e:
+        logger.warning(f"Step-Deep-Research status proxy error: {e}")
+        return _json_error("step_deep_research_unreachable", 503, error="unavailable")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CASTLE-EX Layer2 LoRA 推論プロキシ (→ port 9520)
+# ─────────────────────────────────────────────────────────────────────────────
+_LAYER2_INFER_URL = os.environ.get("LAYER2_INFER_URL", "http://127.0.0.1:9520")
+
+
+@app.route("/v1/castle_ex/layer2/generate", methods=["POST"])
+def castle_ex_layer2_generate():
+    """Layer2 スタイル矯正 LoRA (v1.1.6 prod) を使った短文生成プロキシ。"""
+    if not REQUESTS_AVAILABLE:
+        return jsonify({"error": "requests ライブラリが必要です"}), 500
+    try:
+        payload = request.get_json(force=True, silent=True) or {}
+        if not payload.get("prompt"):
+            return jsonify({"error": "prompt フィールドが必要です"}), 400
+        resp = requests.post(f"{_LAYER2_INFER_URL}/generate", json=payload, timeout=120)
+        return jsonify(resp.json()), resp.status_code
+    except requests.exceptions.ConnectionError:
+        return jsonify({
+            "error": "Layer2 推論サーバー (port 9520) が起動していません。"
+                     " start_castle_ex_layer2.ps1 を実行してください。"
+        }), 503
+    except Exception as exc:
+        logger.exception("castle_ex_layer2_generate error")
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/v1/castle_ex/layer2/status", methods=["GET"])
+def castle_ex_layer2_status():
+    """Layer2 推論サーバーの状態確認プロキシ"""
+    if not REQUESTS_AVAILABLE:
+        return jsonify({"error": "requests ライブラリが必要です"}), 500
+    try:
+        resp = requests.get(f"{_LAYER2_INFER_URL}/status", timeout=5)
+        return jsonify(resp.json()), resp.status_code
+    except requests.exceptions.ConnectionError:
+        return jsonify({"running": False, "error": "Layer2 推論サーバーが停止中"}), 503
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
 def main():
     """Unified API Server メイン関数"""
     port = int(os.getenv("PORT", os.getenv("UNIFIED_API_PORT", "9502")))
