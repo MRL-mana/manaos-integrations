@@ -287,6 +287,12 @@ node_modules/
 Reports/PostReboot_SelfCheck_Latest_Status.json
 Reports/PostReboot_SelfCheck_Latest_Status.txt
 Reports/OpenWebUI_Acceptance_Latest_Status.txt
+
+# Castle-EX Layer2 生成物（JSONLはスクリプト+seedで再生成可能、gateJSONはローカル運用）
+Reports/castle_ex_layer2_quick_eval_*.json
+Reports/gate_v1*.json
+artifacts/**/*.jsonl
+artifacts/**/*.json
 PERSONAL_MINIMAL_RUNBOOK.md
 mother_to_x280_openwebui_pixel7.ps1
 pixel7_sync_openwebui_shortcut.ps1
