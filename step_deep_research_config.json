@@ -18,7 +18,7 @@
   
   "planner": {
     "ollama_url": "http://127.0.0.1:11434",
-    "model": "llama3.2:3b",
+    "model": "qwen2.5:7b",
     "max_todo_items": 15,
     "planning_prompt_template": "step_deep_research/prompts/planner_prompt.txt"
   },
@@ -37,14 +37,14 @@
     
     "reader": {
       "ollama_url": "http://127.0.0.1:11434",
-      "model": "llama3.2:3b",
+      "model": "qwen2.5:7b",
       "max_chunk_size": 2000,
       "extraction_prompt_template": "step_deep_research/prompts/reader_prompt.txt"
     },
     
     "verifier": {
       "ollama_url": "http://127.0.0.1:11434",
-      "model": "llama3.2:3b",
+      "model": "qwen2.5:7b",
       "contradiction_threshold": 0.7,
       "verification_prompt_template": "step_deep_research/prompts/verifier_prompt.txt"
     },
@@ -59,7 +59,7 @@
   
   "critic": {
     "ollama_url": "http://127.0.0.1:11434",
-    "model": "llama3.2:3b",
+    "model": "qwen2.5:7b",
     "rubric_file": "step_deep_research/rubric_20_items.yaml",
     "min_pass_score": 14,
     "max_iterations": 3,

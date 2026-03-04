@@ -134,6 +134,49 @@ class ManaOSErrorHandler:
         self._log_error(manaos_error)
         
         return manaos_error
+
+    def handle_error(
+        self,
+        exception: Exception,
+        user_message: Optional[str] = None,
+        category: Optional[ErrorCategory] = None,
+        severity: Optional[ErrorSeverity] = None,
+        context: Optional[Dict[str, Any]] = None,
+        **kwargs,
+    ) -> ManaOSError:
+        """
+        互換API: 旧コードが利用する handle_error を handle_exception に橋渡しする。
+
+        Args:
+            exception: 例外オブジェクト
+            user_message: ユーザー向けメッセージ
+            category: 任意のカテゴリ上書き
+            severity: 任意の重要度上書き
+            context: コンテキスト情報
+            **kwargs: 追加互換引数（details など）
+
+        Returns:
+            ManaOSError
+        """
+        merged_context: Dict[str, Any] = {}
+        if isinstance(context, dict):
+            merged_context.update(context)
+        details = kwargs.get("details")
+        if isinstance(details, dict):
+            merged_context.update(details)
+
+        manaos_error = self.handle_exception(
+            exception=exception,
+            context=merged_context or None,
+            user_message=user_message,
+        )
+
+        if category is not None:
+            manaos_error.category = category
+        if severity is not None:
+            manaos_error.severity = severity
+
+        return manaos_error
     
     def handle_httpx_error(
         self,

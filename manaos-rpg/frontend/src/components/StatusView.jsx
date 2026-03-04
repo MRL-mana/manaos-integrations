@@ -53,11 +53,26 @@ const GaugeBar = memo(function GaugeBar({ label, pct }) {
   )
 })
 
-export default function StatusView({ host, services, models, devices, skills, danger, rlAnything, autonomy, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction }) {
+export default function StatusView({ host, storage, google, services, models, devices, skills, danger, rlAnything, autonomy, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction }) {
   const [showConfig, setShowConfig] = useState(false)
   const [manualCheck, setManualCheck] = useState(null)
   const [manualSaving, setManualSaving] = useState(false)
   const [manualMsg, setManualMsg] = useState('')
+  const [taskActionMsg, setTaskActionMsg] = useState('')
+  const [taskActionBusyId, setTaskActionBusyId] = useState('')
+  const [completedTaskIds, setCompletedTaskIds] = useState(() => new Set())
+  const [taskCreateTitle, setTaskCreateTitle] = useState('')
+  const [taskCreateBusy, setTaskCreateBusy] = useState(false)
+  const [taskCreateMsg, setTaskCreateMsg] = useState('')
+  const [calendarCreateTitle, setCalendarCreateTitle] = useState('')
+  const [calendarCreateBusy, setCalendarCreateBusy] = useState(false)
+  const [calendarCreateMsg, setCalendarCreateMsg] = useState('')
+  const [calendarDeleteBusyId, setCalendarDeleteBusyId] = useState('')
+  const [calendarDeleteMsg, setCalendarDeleteMsg] = useState('')
+  const [deletedCalendarEventIds, setDeletedCalendarEventIds] = useState(() => new Set())
+  const [gmailActionMsg, setGmailActionMsg] = useState('')
+  const [gmailActionBusyId, setGmailActionBusyId] = useState('')
+  const [readMailIds, setReadMailIds] = useState(() => new Set())
   const cpu = host?.cpu?.percent
   const mem = host?.mem?.percent
   const diskFree = host?.disk?.free_gb
@@ -65,6 +80,42 @@ export default function StatusView({ host, services, models, devices, skills, da
   const hostname = host?.host?.hostname
   const os = host?.host?.os
   const diskRoot = host?.host?.disk_root
+  const diskList = Array.isArray(host?.disks) ? host.disks : []
+  const diskListSorted = useMemo(() => {
+    return [...diskList].sort((a, b) => {
+      const ap = Number(a?.used_percent)
+      const bp = Number(b?.used_percent)
+      const av = Number.isFinite(ap) ? ap : -1
+      const bv = Number.isFinite(bp) ? bp : -1
+      return bv - av
+    })
+  }, [diskList])
+  const storageDisk = storage?.disk || {}
+  const storageRoots = Array.isArray(storage?.item_roots) ? storage.item_roots : []
+  const googleFiles = google?.files || {}
+  const googleServices = google?.services || {}
+  const googleCapabilities = Array.isArray(google?.capabilities) ? google.capabilities : []
+  const googleSummary = google?.capabilities_summary || {}
+  const googleToken = google?.token || {}
+  const googleNextSteps = Array.isArray(google?.next_steps) ? google.next_steps : []
+  const googleLive = google?.live_preview || {}
+  const drivePreview = googleLive?.drive_files || {}
+  const gmailPreview = googleLive?.gmail_profile || {}
+  const calendarPreview = googleLive?.calendar_events || {}
+  const tasksPreview = googleLive?.tasks_open || {}
+  const visibleCalendarEvents = useMemo(() => {
+    const base = Array.isArray(calendarPreview?.events) ? calendarPreview.events : []
+    return base.filter((e) => !deletedCalendarEventIds.has(String(e?.id || '')))
+  }, [calendarPreview, deletedCalendarEventIds])
+  const gmailUnread = Array.isArray(gmailPreview?.unread_messages) ? gmailPreview.unread_messages : []
+  const gmailCanMarkRead = gmailPreview?.can_mark_read === true
+  const visibleUnreadMails = useMemo(() => {
+    return gmailUnread.filter((m) => !readMailIds.has(String(m?.id || '')))
+  }, [gmailUnread, readMailIds])
+  const visibleTasks = useMemo(() => {
+    const base = Array.isArray(tasksPreview?.tasks) ? tasksPreview.tasks : []
+    return base.filter((t) => !completedTaskIds.has(String(t?.id || '')))
+  }, [tasksPreview, completedTaskIds])
 
   const nvidia = Array.isArray(host?.gpu?.nvidia) ? host.gpu.nvidia : []
   const apps = Array.isArray(host?.gpu?.apps) ? host.gpu.apps : []
@@ -151,6 +202,156 @@ export default function StatusView({ host, services, models, devices, skills, da
     setManualCheck({ ...manualCheck, [key]: value })
   }
 
+  async function completeGoogleTask(task) {
+    const taskId = String(task?.id || '')
+    const taskListId = String(task?.task_list_id || '')
+    if (!taskId || !taskListId) {
+      setTaskActionMsg('task id/list id が不足しています')
+      return
+    }
+    setTaskActionBusyId(taskId)
+    setTaskActionMsg('')
+    try {
+      const res = await fetchJson('/api/google/tasks/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_id: taskId, task_list_id: taskListId }),
+      })
+      if (!res?.ok) {
+        throw new Error(res?.detail || res?.error || res?.reason || 'task complete failed')
+      }
+      setCompletedTaskIds((prev) => {
+        const next = new Set(prev)
+        next.add(taskId)
+        return next
+      })
+      setTaskActionMsg(`完了: ${task?.title || taskId}`)
+      await fetchJson('/api/snapshot?force=1').catch(() => {})
+    } catch (e) {
+      setTaskActionMsg(`完了処理失敗: ${e?.message || e}`)
+    } finally {
+      setTaskActionBusyId('')
+    }
+  }
+
+  async function createGoogleTask() {
+    const title = String(taskCreateTitle || '').trim()
+    if (!title) {
+      setTaskCreateMsg('タイトルを入力してください')
+      return
+    }
+    setTaskCreateBusy(true)
+    setTaskCreateMsg('')
+    try {
+      const res = await fetchJson('/api/google/tasks/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      })
+      if (!res?.ok) {
+        throw new Error(res?.detail || res?.error || res?.reason || 'task create failed')
+      }
+      setTaskCreateTitle('')
+      setTaskCreateMsg(`追加: ${res?.task?.title || title}`)
+      setCompletedTaskIds(() => new Set())
+      await fetchJson('/api/snapshot?force=1').catch(() => {})
+    } catch (e) {
+      setTaskCreateMsg(`追加失敗: ${e?.message || e}`)
+    } finally {
+      setTaskCreateBusy(false)
+    }
+  }
+
+  async function createCalendarEvent() {
+    const summary = String(calendarCreateTitle || '').trim()
+    if (!summary) {
+      setCalendarCreateMsg('件名を入力してください')
+      return
+    }
+    setCalendarCreateBusy(true)
+    setCalendarCreateMsg('')
+    try {
+      const res = await fetchJson('/api/google/calendar/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary }),
+      })
+      if (!res?.ok) {
+        throw new Error(res?.detail || res?.error || res?.reason || 'calendar create failed')
+      }
+      setCalendarCreateTitle('')
+      setCalendarCreateMsg(`追加: ${res?.event?.summary || summary}`)
+      setDeletedCalendarEventIds(() => new Set())
+      await fetchJson('/api/snapshot?force=1').catch(() => {})
+    } catch (e) {
+      setCalendarCreateMsg(`追加失敗: ${e?.message || e}`)
+    } finally {
+      setCalendarCreateBusy(false)
+    }
+  }
+
+  async function deleteCalendarEvent(event) {
+    const eventId = String(event?.id || '')
+    if (!eventId) {
+      setCalendarDeleteMsg('event id が不足しています')
+      return
+    }
+    setCalendarDeleteBusyId(eventId)
+    setCalendarDeleteMsg('')
+    try {
+      const res = await fetchJson('/api/google/calendar/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: eventId }),
+      })
+      if (!res?.ok) {
+        throw new Error(res?.detail || res?.error || res?.reason || 'calendar delete failed')
+      }
+      setDeletedCalendarEventIds((prev) => {
+        const next = new Set(prev)
+        next.add(eventId)
+        return next
+      })
+      setCalendarDeleteMsg(`削除: ${event?.summary || eventId}`)
+      await fetchJson('/api/snapshot?force=1').catch(() => {})
+    } catch (e) {
+      setCalendarDeleteMsg(`削除失敗: ${e?.message || e}`)
+    } finally {
+      setCalendarDeleteBusyId('')
+    }
+  }
+
+  async function markGmailRead(mail) {
+    const messageId = String(mail?.id || '')
+    if (!messageId) {
+      setGmailActionMsg('message id が不足しています')
+      return
+    }
+    setGmailActionBusyId(messageId)
+    setGmailActionMsg('')
+    try {
+      const res = await fetchJson('/api/google/gmail/mark-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message_id: messageId }),
+      })
+      if (!res?.ok) {
+        throw new Error(res?.detail || res?.error || res?.reason || 'gmail mark-read failed')
+      }
+      setReadMailIds((prev) => {
+        const next = new Set(prev)
+        next.add(messageId)
+        return next
+      })
+      setGmailActionMsg(`既読: ${mail?.subject || messageId}`)
+      await fetchJson('/api/snapshot?force=1').catch(() => {})
+    } catch (e) {
+      setGmailActionMsg(`既読処理失敗: ${e?.message || e}`)
+    } finally {
+      setGmailActionBusyId('')
+    }
+  }
+
   return (
     <div className="grid" style={{ position: 'relative' }}>
       {/* カスタマイズボタン */}
@@ -175,8 +376,179 @@ export default function StatusView({ host, services, models, devices, skills, da
       </Box>
 
       <Box title="DISK">
-        <GaugeBar label={diskRoot || 'C:'} pct={diskTotal > 0 ? ((diskTotal - (diskFree ?? 0)) / diskTotal) * 100 : 0} />
-        <div className="small" style={{ marginTop: 4 }}>free {diskFree ?? '—'}GB / total {diskTotal ?? '—'}GB</div>
+        {diskListSorted.length > 0 ? (
+          <div style={{ display: 'grid', gap: 8 }}>
+            {diskListSorted.map((d, i) => {
+              const total = Number(d?.total_gb || 0)
+              const free = Number(d?.free_gb || 0)
+              const pct = total > 0 ? ((total - free) / total) * 100 : 0
+              const level = pct >= 90 ? 'ALERT' : pct >= 75 ? 'WATCH' : 'OK'
+              const levelClass = pct >= 90 ? 'danger' : pct >= 75 ? 'caution' : 'ok'
+              return (
+                <div key={`${d?.root || 'disk'}-${i}`}>
+                  <GaugeBar label={d?.root || `Disk${i + 1}`} pct={pct} />
+                  <div className="small" style={{ marginTop: 4 }}>
+                    free {d?.free_gb ?? '—'}GB / total {d?.total_gb ?? '—'}GB / <span className={levelClass}>{level}</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <>
+            <GaugeBar label={diskRoot || 'C:'} pct={diskTotal > 0 ? ((diskTotal - (diskFree ?? 0)) / diskTotal) * 100 : 0} />
+            <div className="small" style={{ marginTop: 4 }}>free {diskFree ?? '—'}GB / total {diskTotal ?? '—'}GB</div>
+          </>
+        )}
+      </Box>
+
+      <Box title="ストレージ状態">
+        <div className="kv"><span>対象root数</span><span className="mono">{storageRoots.length}</span></div>
+        <div className="kv"><span>最近ファイル数</span><span className="mono">{storage?.recent_total_count ?? 0}</span></div>
+        <div className="kv"><span>最近サイズ</span><span className="mono">{fmtBytes(storage?.recent_total_size_bytes)}</span></div>
+        <div className="kv"><span>使用率</span><span className="mono">{typeof storageDisk?.used_percent === 'number' ? `${storageDisk.used_percent}%` : '—'}</span></div>
+        <div className="small" style={{ marginTop: 6 }}>画像/動画の生成物rootサマリー</div>
+        {storageRoots.length > 0 ? (
+          <div style={{ marginTop: 8 }}>
+            {storageRoots.slice(0, 8).map((root) => (
+              <div key={root?.root_id || root?.label} className="kv">
+                <span>{root?.label || root?.root_id}</span>
+                <span className="mono">{root?.recent_count ?? 0}件 / {fmtBytes(root?.recent_size_bytes || 0)}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </Box>
+
+      <Box title="Googleサービス状態">
+        <div className="kv"><span>Drive準備</span><span className={google?.drive_ready ? 'ok' : 'caution'}>{google?.drive_ready ? 'READY' : 'SETUP NEEDED'}</span></div>
+        <div className="kv"><span>利用可能</span><span className="mono">{googleSummary?.usable ?? 0}/{googleSummary?.total ?? 0}</span></div>
+        <div className="kv"><span>token</span><span className={googleToken?.has_access_token ? 'ok' : 'danger'}>{googleToken?.has_access_token ? 'OK' : 'MISSING'}</span></div>
+        <div className="kv"><span>token expiry</span><span className={googleToken?.expired ? 'danger' : 'mono'}>{googleToken?.expiry || '—'}</span></div>
+        <div className="kv"><span>credentials.json</span><span className={googleFiles?.credentials_json?.exists ? 'ok' : 'danger'}>{googleFiles?.credentials_json?.exists ? 'OK' : 'MISSING'}</span></div>
+        <div className="kv"><span>token.json</span><span className={googleFiles?.token_json?.exists ? 'ok' : 'danger'}>{googleFiles?.token_json?.exists ? 'OK' : 'MISSING'}</span></div>
+        <div className="kv"><span>sync config</span><span className={googleFiles?.google_drive_sync_config?.exists ? 'ok' : 'caution'}>{googleFiles?.google_drive_sync_config?.exists ? 'OK' : 'OPTIONAL'}</span></div>
+        <div className="kv"><span>integration module</span><span className={googleServices?.integration_module?.exists ? 'ok' : 'danger'}>{googleServices?.integration_module?.exists ? 'OK' : 'MISSING'}</span></div>
+        {googleCapabilities.length > 0 ? (
+          <div style={{ marginTop: 8 }}>
+            {googleCapabilities.map((cap) => {
+              const usable = !!cap?.usable
+              const reason = String(cap?.reason || '')
+              let reasonLabel = 'ready'
+              if (reason === 'auth_missing') reasonLabel = 'auth missing'
+              else if (reason === 'module_missing') reasonLabel = 'module missing'
+              else if (reason === 'scope_missing') reasonLabel = 'scope missing'
+              else if (reason === 'scope_unknown') reasonLabel = 'scope unknown'
+              return (
+                <div key={cap?.id || cap?.label} className="kv">
+                  <span>{cap?.label || cap?.id}</span>
+                  <span className={usable ? 'ok' : 'caution'}>{usable ? 'USABLE' : `NOT READY (${reasonLabel})`}</span>
+                </div>
+              )
+            })}
+          </div>
+        ) : null}
+
+        <div className="small mono" style={{ marginTop: 10 }}>Driveファイル表示: {drivePreview?.ok ? 'ON' : `OFF (${drivePreview?.reason || 'not_ready'})`}</div>
+        {drivePreview?.ok && Array.isArray(drivePreview?.files) ? (
+          <div style={{ marginTop: 6 }}>
+            {drivePreview.files.slice(0, 5).map((f) => (
+              <div key={f?.id || f?.name} className="kv">
+                <span>{f?.name || '—'}</span>
+                <span className="mono">{f?.mimeType || '—'}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="small mono" style={{ marginTop: 10 }}>Gmail表示: {gmailPreview?.ok ? 'ON' : `OFF (${gmailPreview?.reason || 'not_ready'})`}</div>
+        {gmailPreview?.ok ? (
+          <div style={{ marginTop: 6 }}>
+            <div className="kv"><span>mailbox</span><span className="mono">{gmailPreview?.email || '—'}</span></div>
+            <div className="kv"><span>messages</span><span className="mono">{gmailPreview?.messages_total ?? '—'}</span></div>
+            <div className="kv"><span>threads</span><span className="mono">{gmailPreview?.threads_total ?? '—'}</span></div>
+            {visibleUnreadMails.length > 0 ? (
+              <div style={{ marginTop: 6 }}>
+                {visibleUnreadMails.slice(0, 3).map((mail, idx) => (
+                  <div key={mail?.id || idx} className="kv">
+                    <span>{mail?.subject || '（件名なし）'}</span>
+                    <span className="mono">{mail?.from || 'unknown'}</span>
+                    <button className="link" disabled={!gmailCanMarkRead || gmailActionBusyId === String(mail?.id || '')} onClick={() => markGmailRead(mail)}>
+                      {gmailActionBusyId === String(mail?.id || '') ? '既読中…' : '既読'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            {!gmailCanMarkRead ? <div className="small mono" style={{ marginTop: 6 }}>既読操作には `gmail.modify` scope が必要です</div> : null}
+            {gmailActionMsg ? <div className="small mono" style={{ marginTop: 6 }}>{gmailActionMsg}</div> : null}
+          </div>
+        ) : null}
+
+        <div className="small mono" style={{ marginTop: 10 }}>Calendar表示: {calendarPreview?.ok ? 'ON' : `OFF (${calendarPreview?.reason || 'not_ready'})`}</div>
+        <div style={{ marginTop: 6, display: 'flex', gap: 6, alignItems: 'center' }}>
+          <input
+            type="text"
+            value={calendarCreateTitle}
+            onChange={(e) => setCalendarCreateTitle(e.target.value)}
+            placeholder="新しい予定"
+            disabled={calendarCreateBusy}
+            style={{ flex: 1 }}
+          />
+          <button onClick={createCalendarEvent} disabled={calendarCreateBusy}>{calendarCreateBusy ? '追加中…' : '追加'}</button>
+        </div>
+        {calendarCreateMsg ? <div className="small mono" style={{ marginTop: 4 }}>{calendarCreateMsg}</div> : null}
+        {calendarPreview?.ok && Array.isArray(visibleCalendarEvents) ? (
+          <div style={{ marginTop: 6 }}>
+            {visibleCalendarEvents.slice(0, 3).map((e) => (
+              <div key={e?.id || e?.summary} className="kv">
+                <span>{e?.summary || '（無題）'}</span>
+                <span className="mono">{e?.start || '—'}</span>
+                <button className="link" disabled={calendarDeleteBusyId === String(e?.id || '')} onClick={() => deleteCalendarEvent(e)}>
+                  {calendarDeleteBusyId === String(e?.id || '') ? '削除中…' : '削除'}
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {calendarDeleteMsg ? <div className="small mono" style={{ marginTop: 4 }}>{calendarDeleteMsg}</div> : null}
+
+        <div className="small mono" style={{ marginTop: 10 }}>TODO表示: {tasksPreview?.ok ? 'ON' : `OFF (${tasksPreview?.reason || 'not_ready'})`}</div>
+        <div style={{ marginTop: 6, display: 'flex', gap: 6, alignItems: 'center' }}>
+          <input
+            type="text"
+            value={taskCreateTitle}
+            onChange={(e) => setTaskCreateTitle(e.target.value)}
+            placeholder="新しいTODO"
+            disabled={taskCreateBusy}
+            style={{ flex: 1 }}
+          />
+          <button onClick={createGoogleTask} disabled={taskCreateBusy}>{taskCreateBusy ? '追加中…' : '追加'}</button>
+        </div>
+        {taskCreateMsg ? <div className="small mono" style={{ marginTop: 4 }}>{taskCreateMsg}</div> : null}
+        {tasksPreview?.ok && Array.isArray(visibleTasks) ? (
+          <div style={{ marginTop: 6 }}>
+            {visibleTasks.slice(0, 3).map((t) => (
+              <div key={t?.id || t?.title} className="kv">
+                <span>{t?.title || '（無題）'}</span>
+                <span className="mono">{t?.due || '—'}</span>
+                <button className="link" disabled={taskActionBusyId === String(t?.id || '')} onClick={() => completeGoogleTask(t)}>
+                  {taskActionBusyId === String(t?.id || '') ? '完了中…' : '完了'}
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {taskActionMsg ? <div className="small mono" style={{ marginTop: 6 }}>{taskActionMsg}</div> : null}
+
+        {googleNextSteps.length > 0 ? (
+          <div style={{ marginTop: 10 }}>
+            <div className="small mono" style={{ marginBottom: 4 }}>次の手順</div>
+            {googleNextSteps.slice(0, 5).map((step, idx) => (
+              <div key={`gstep-${idx}`} className="small">- {step}</div>
+            ))}
+          </div>
+        ) : null}
       </Box>
 
       <Box title="GPU (NVIDIA)">

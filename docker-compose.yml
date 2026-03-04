@@ -11,10 +11,14 @@ services:
       - PORT=9500
       - BRAVE_API_KEY=${BRAVE_API_KEY:-}
       - CIVITAI_API_KEY=${CIVITAI_API_KEY:-}
+      - FILE_SECRETARY_URL=${FILE_SECRETARY_URL:-http://host.docker.internal:5120}
+      - STEP_DEEP_RESEARCH_URL=${STEP_DEEP_RESEARCH_URL:-http://host.docker.internal:5121}
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
       - ./backups:/app/backups
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     networks:
       - manaos-network

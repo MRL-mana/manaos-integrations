@@ -1,0 +1,104 @@
+{
+  "name": "Gmail → Trinity Orchestrator",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {},
+        "options": {}
+      },
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// メールデータを抽出\nconst subject = $input.item.json.subject || 'No Subject';\nconst from = $input.item.json.from || 'Unknown';\nconst bodyPreview = ($input.item.json.snippet || '').substring(0, 200);\n\nreturn {\n  subject: subject,\n  from: from,\n  body: bodyPreview\n};"
+      },
+      "name": "Extract Email Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:9500/webhook/gmail",
+        "method": "POST",
+        "bodyParametersUi": {
+          "parameter": []
+        },
+        "options": {}
+      },
+      "name": "Trinity Connector",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.success}}",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "Check Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "text": "✅ メール処理完了\\n\\n件名: {{$node[\"Extract Email Data\"].json.subject}}\\nTicket: {{$json.result.ticket_id}}\\nConfidence: {{$json.result.confidence}}",
+        "additionalFields": {}
+      },
+      "name": "Slack Success",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "text": "❌ メール処理失敗\\n\\nエラー: {{$json.error}}",
+        "additionalFields": {}
+      },
+      "name": "Slack Error",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [1050, 400]
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [[{"node": "Extract Email Data", "type": "main", "index": 0}]]
+    },
+    "Extract Email Data": {
+      "main": [[{"node": "Trinity Connector", "type": "main", "index": 0}]]
+    },
+    "Trinity Connector": {
+      "main": [[{"node": "Check Success", "type": "main", "index": 0}]]
+    },
+    "Check Success": {
+      "main": [
+        [{"node": "Slack Success", "type": "main", "index": 0}],
+        [{"node": "Slack Error", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "id": "trinity-gmail-orchestrator"
+}
+
+
+

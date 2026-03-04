@@ -99,6 +99,23 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
 - 「ManaOS: Pixel7 TermuxでHTTP Gateway停止（ADB補助）」
 
 - 「ManaOS: Pixel7 HTTP 起動（セットアップ→起動→監視）」
+  - 実体（目安）: `pixel7_termux_bootstrap_http_gateway.ps1` → `pixel7_termux_start_http_gateway.ps1` → `pixel7_http_watch_start.ps1`
+  - 直接実行用ラッパー: `pixel7_http_start_setup_watch.ps1`
+    - 既定で gateway 失敗時も継続（`-ContinueOnGatewayFailure`）
+    - 厳密運用: `-ContinueOnGatewayFailure:$false`
+  - 統合スクリプト: `pixel7_full_resident_http_start.ps1`（keepalive/scrcpy/reboot/http watch まで一括起動）
+
+- 日次運用ショートカット（推奨）
+  - 「ManaOS: Pixel7 推奨0 セットアップ＋起動（HTTP）」
+    - 初回・再構築時はまずこれを実行（トークン/配置/起動/監視）
+  - 「ManaOS: Pixel7 推奨 初回フル導線（セットアップ→開始→状態→停止→状態）」
+    - 初回確認を1本で往復実行（setup/start/check/stop/check）
+  - 「ManaOS: Pixel7 推奨① 開始（Full+HTTP）」
+  - 「ManaOS: Pixel7 推奨② 状態確認（Full+HTTP）」
+  - 「ManaOS: Pixel7 推奨③ 停止（Full+HTTP）」
+  - 「ManaOS: Pixel7 推奨フルサイクル（開始→状態→停止→状態）」
+    - 1タスクで開始→状態確認→停止→状態確認まで実行
+    - ターミナルに各ステップの実ログが順に表示される
 
 ※母艦側でトークンファイルがある場合、配置タスクは `api_token.txt` としてPixel側にも同梱します。
 
@@ -233,6 +250,10 @@ Pixel側でTermuxを開いてコマンドを打つのが面倒なときの補助
   - 状態確認: `pixel7_edge_watch_status.ps1`
   - 停止: `pixel7_edge_watch_stop.ps1 -Force`
 - 「ManaOS: Pixel7 外出フル常駐+HTTP（keepalive + scrcpy + reboot + http watch）」
+  - 統合スクリプト: `pixel7_full_resident_http_start.ps1`
+    - 例: `pwsh -File .\manaos_integrations\pixel7_full_resident_http_start.ps1 -RemoteOnly -AttemptHttpRecovery`
+  - 統合停止: `pixel7_full_resident_http_stop.ps1`
+    - 例: `pwsh -File .\manaos_integrations\pixel7_full_resident_http_stop.ps1`
 - 「ManaOS: Pixel7 URLを開く（HTTP→ADB 自動フォールバック）」
 - 「ManaOS: Pixel7 MacroDroid cmd送信（HTTP）」
 - 「ManaOS: Pixel7 MacroDroid cmd送信（HTTP→ADB）」

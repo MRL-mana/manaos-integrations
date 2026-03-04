@@ -54,9 +54,66 @@ function Get-HealthCode {
     }
 }
 
+function Get-TailscaleIPv4 {
+    try {
+        $ip = Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias '*Tailscale*' -ErrorAction SilentlyContinue |
+            Select-Object -ExpandProperty IPAddress -First 1
+        if (-not [string]::IsNullOrWhiteSpace($ip)) {
+            return [string]$ip
+        }
+    }
+    catch {
+    }
+    return ""
+}
+
+function Ensure-CorsOriginsForRemote {
+    param([string]$HostName, [int]$PortNumber)
+
+    if ($HostName -eq "127.0.0.1" -or $HostName -eq "localhost") {
+        return
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:MANAOS_CORS_ORIGINS)) {
+        return
+    }
+
+    $origins = New-Object System.Collections.Generic.List[string]
+    $origins.Add("http://localhost:5173")
+    $origins.Add("http://127.0.0.1:5173")
+    $origins.Add("http://$env:COMPUTERNAME:5173")
+
+    try {
+        $ips = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+            Where-Object { $_.IPAddress -and $_.IPAddress -notlike '169.254*' -and $_.IPAddress -ne '127.0.0.1' } |
+            Select-Object -ExpandProperty IPAddress -Unique
+        foreach ($ip in $ips) {
+            $origins.Add("http://$ip:5173")
+        }
+    }
+    catch {
+    }
+
+    $tailscaleIp = Get-TailscaleIPv4
+    if (-not [string]::IsNullOrWhiteSpace($tailscaleIp)) {
+        $origins.Add("http://$tailscaleIp:5173")
+    }
+
+    $env:MANAOS_CORS_ORIGINS = (($origins | Select-Object -Unique) -join ',')
+}
+
+function Resolve-ProbeHost {
+    param([string]$HostName)
+
+    if ($HostName -eq "0.0.0.0" -or $HostName -eq "::") {
+        return "127.0.0.1"
+    }
+    return $HostName
+}
+
 $listener = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+$probeHost = Resolve-ProbeHost -HostName $ListenHost
 if ($null -ne $listener) {
-    $healthCode = Get-HealthCode -HostName $ListenHost -PortNumber $Port
+    $healthCode = Get-HealthCode -HostName $probeHost -PortNumber $Port
     if ($healthCode -eq "200") {
         Write-Host "[OK] Backend already running on ${ListenHost}:${Port} (pid=$($listener.OwningProcess))" -ForegroundColor Green
         exit 0
@@ -67,6 +124,7 @@ if ($null -ne $listener) {
 }
 
 $resolvedPython = Resolve-PythonExe -ScriptRoot $scriptDir -Provided $PythonExe
+Ensure-CorsOriginsForRemote -HostName $ListenHost -PortNumber $Port
 $args = @("-m", "uvicorn", "app:app", "--host", $ListenHost, "--port", "$Port")
 $proc = Start-Process -FilePath $resolvedPython -ArgumentList $args -WorkingDirectory $backendDir -PassThru -WindowStyle Hidden
 
@@ -74,7 +132,7 @@ $deadline = (Get-Date).AddSeconds($StartupTimeoutSec)
 $started = $false
 while ((Get-Date) -lt $deadline) {
     Start-Sleep -Milliseconds 700
-    $healthCode = Get-HealthCode -HostName $ListenHost -PortNumber $Port
+    $healthCode = Get-HealthCode -HostName $probeHost -PortNumber $Port
     if ($healthCode -eq "200") {
         $started = $true
         break

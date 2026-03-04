@@ -4,7 +4,11 @@ import { ITEMS_SHOW_LIMIT, encodeRelPath, fmtTs, fmtBytes } from '../utils.js'
 const KIND_ICONS = { image: '🖼️', video: '🎬', audio: '🔊', text: '📄', other: '📦' }
 
 export default function ItemsView({ items, apiBase }) {
-  const recent = useMemo(() => (Array.isArray(items?.recent) ? items.recent : []), [items])
+  const recent = useMemo(() => (
+    Array.isArray(items?.recent)
+      ? items.recent.filter((it) => it?.kind === 'image' || it?.kind === 'video')
+      : []
+  ), [items])
   const roots = useMemo(() => (Array.isArray(items?.roots) ? items.roots : []), [items])
   const [brokenImgs, setBrokenImgs] = useState(() => new Set())
   const [expandedGroups, setExpandedGroups] = useState(() => new Set())
@@ -55,11 +59,11 @@ export default function ItemsView({ items, apiBase }) {
 
   return (
     <div>
-      <div className="panelTitle">アイテム（生成物） <span className="small">{filteredRecent.length}/{recent.length}件</span></div>
+      <div className="panelTitle">アイテム（画像/動画） <span className="small">{filteredRecent.length}/{recent.length}件</span></div>
 
       {/* サマリー */}
       <div className="itemsSummary">
-        {Array.from(kindCounts.entries()).sort((a, b) => b[1] - a[1]).map(([k, cnt]) => (
+        {Array.from(kindCounts.entries()).filter(([k]) => k === 'image' || k === 'video').sort((a, b) => b[1] - a[1]).map(([k, cnt]) => (
           <button key={k}
                   className={`logTypeChip${kindFilter === k ? ' logTypeChipActive' : ''}`}
                   onClick={() => setKindFilter(kindFilter === k ? '' : k)}>

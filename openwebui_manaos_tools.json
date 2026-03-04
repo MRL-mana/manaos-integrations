@@ -488,19 +488,19 @@
         {
             "name": "secretary_morning_routine",
             "description": "朝のルーチンを実行します",
-            "url": "http://127.0.0.1:5125/api/morning",
+            "url": "http://127.0.0.1:9502/api/secretary/morning",
             "method": "POST"
         },
         {
             "name": "secretary_noon_routine",
             "description": "昼のルーチンを実行します",
-            "url": "http://127.0.0.1:5125/api/noon",
+            "url": "http://127.0.0.1:9502/api/secretary/noon",
             "method": "POST"
         },
         {
             "name": "secretary_evening_routine",
             "description": "夜のルーチンを実行します",
-            "url": "http://127.0.0.1:5125/api/evening",
+            "url": "http://127.0.0.1:9502/api/secretary/evening",
             "method": "POST"
         },
         {

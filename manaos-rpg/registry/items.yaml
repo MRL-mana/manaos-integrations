@@ -23,6 +23,18 @@ items:
     max_files: 500
     note: "8000+ 画像/動画。生成パイプラインのメイン出力先"
 
+  - id: d_comfyui_output
+    label: D ComfyUI Output
+    path: "D:/ComfyUI/output"
+    max_files: 500
+    note: "Dドライブ運用時のComfyUI出力先"
+
+  - id: d_gallery_images
+    label: D Gallery Images
+    path: "D:/gallery_images"
+    max_files: 200
+    note: "Dドライブ運用時のギャラリ保存先"
+
   # ═══════ manaos_integrations 配下 ═══════
   - id: gallery
     label: Gallery Images

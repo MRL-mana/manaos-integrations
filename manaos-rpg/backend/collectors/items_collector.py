@@ -62,11 +62,12 @@ def scan_items(roots: list[ItemRoot], max_depth: int = 6) -> list[dict]:
 
                 rel = p.relative_to(base).as_posix()
                 ext = p.suffix.lower()
-                kind = "other"
                 if ext in IMAGE_EXT:
                     kind = "image"
                 elif ext in VIDEO_EXT:
                     kind = "video"
+                else:
+                    continue
 
                 mime, _ = mimetypes.guess_type(str(p))
                 collected.append(

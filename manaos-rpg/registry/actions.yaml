@@ -89,3 +89,66 @@ actions:
     cwd: .\
     timeout_sec: 120
     tags: [memory, ops]
+
+  - id: disk_top10_d
+    label: Dドライブ大容量ファイル Top10
+    kind: pwsh_file
+    path: manaos-rpg/scripts/actions/disk_top10_d.ps1
+    args: ["-Top", "10"]
+    cwd: .\
+    timeout_sec: 180
+    tags: [ops, storage]
+
+  - id: disk_top10_h
+    label: Hドライブ大容量ファイル Top10
+    kind: pwsh_file
+    path: manaos-rpg/scripts/actions/disk_top10_h.ps1
+    args: ["-Top", "10"]
+    cwd: .\
+    timeout_sec: 180
+    tags: [ops, storage]
+
+  - id: disk_top_hot
+    label: 逼迫ドライブ大容量ファイル Top10（自動判定）
+    kind: pwsh_file
+    path: manaos-rpg/scripts/actions/disk_top_hot.ps1
+    args: ["-Top", "10", "-MinUsedPercent", "80"]
+    cwd: .\
+    timeout_sec: 300
+    tags: [ops, storage]
+
+  - id: disk_tidy_c_d_report
+    label: C(OS)/D(AI)整理候補レポート（削除なし）
+    kind: pwsh_file
+    path: manaos-rpg/scripts/actions/disk_tidy_c_d_report.ps1
+    args: ["-TopFolders", "8", "-TopFileCount", "12", "-RecentDays", "14", "-MinFileGB", "1"]
+    cwd: .\
+    timeout_sec: 420
+    tags: [ops, storage]
+
+  - id: google_drive_backup_recent
+    label: Google DriveへD(AI)最近生成物をバックアップ
+    kind: pwsh_file
+    path: manaos-rpg/scripts/actions/google_drive_backup_recent.ps1
+    args: ["-MaxFiles", "20", "-RecentHours", "24", "-MinSizeMB", "5", "-FolderPath", "ManaOS_Backup/D_AI"]
+    cwd: .\
+    timeout_sec: 900
+    tags: [ops, storage, backup, cloud]
+
+  - id: organize_c_ai_to_d
+    label: CのAI生成物をD(AI)へ整理移動
+    kind: pwsh_file
+    path: manaos-rpg/scripts/actions/organize_c_ai_to_d.ps1
+    args: ["-MaxFiles", "120", "-RecentDays", "30"]
+    cwd: .\
+    timeout_sec: 900
+    tags: [ops, storage, organize]
+
+  - id: google_drive_backup_and_stage
+    label: Google Driveへバックアップ後にDへ退避
+    kind: pwsh_file
+    path: manaos-rpg/scripts/actions/google_drive_backup_and_stage.ps1
+    args: ["-MaxFiles", "30", "-RecentHours", "72", "-MinSizeMB", "5", "-FolderPath", "ManaOS_Backup/D_AI"]
+    cwd: .\
+    timeout_sec: 1200
+    tags: [ops, storage, backup, cloud, organize]

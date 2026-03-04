@@ -351,6 +351,8 @@ export default function App() {
           {state && active === 'status' ? (
             <StatusView
               host={state?.host}
+              storage={state?.storage}
+              google={state?.google}
               services={state?.services}
               models={state?.models}
               devices={state?.devices}

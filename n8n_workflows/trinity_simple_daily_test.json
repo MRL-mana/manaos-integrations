@@ -1,0 +1,64 @@
+{
+  "name": "Trinity Daily Test (簡易版)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "name": "Every 5 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "id": "schedule-trigger"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:9500/trigger/orchestrator",
+        "method": "POST",
+        "bodyParametersJson": "{\n  \"goal\": \"現在時刻を表示するPythonスクリプト\",\n  \"context\": [\"超シンプル\", \"1行\"],\n  \"budget_turns\": 3\n}",
+        "options": {}
+      },
+      "name": "Trinity Orchestrator",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "id": "orchestrator-call"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.success}}",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "Success Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "id": "success-check"
+    }
+  ],
+  "connections": {
+    "Every 5 Minutes": {
+      "main": [[{"node": "Trinity Orchestrator", "type": "main", "index": 0}]]
+    },
+    "Trinity Orchestrator": {
+      "main": [[{"node": "Success Check", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "trinity-daily-test"
+}
+

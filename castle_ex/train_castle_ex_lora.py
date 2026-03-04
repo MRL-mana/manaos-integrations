@@ -365,13 +365,20 @@ def main():
     # 3. ベースモデルロード
     logger.info("ベースモデルをロード中...")
     
-    # メイン学習スクリプトと同じアプローチ：eager attentionを使用してSM 120対応
+    # Windowsでのページファイル不足(1455)回避のため、GPU利用時は軽量ロードを優先
+    model_dtype = (
+        torch.float16
+        if (torch.cuda.is_available() and not args.no_cuda and args.fp16)
+        else torch.float32
+    )
+    logger.info(f"モデルロードdtype: {model_dtype}")
+
     base_model = AutoModelForCausalLM.from_pretrained(
         args.base_model,
-        torch_dtype=torch.float32,  # TrainingArgumentsのfp16で自動的にFP16に変換
+        torch_dtype=model_dtype,
         trust_remote_code=True,
-        low_cpu_mem_usage=False,  # checkpoint再開時のmeta tensor問題回避
-        attn_implementation=args.attn_implementation,  # SM 120対応のeagerを使用
+        low_cpu_mem_usage=True,
+        attn_implementation=args.attn_implementation,
     )
     
     # GPUに移動（device_mapを使わずに明示的に移動）

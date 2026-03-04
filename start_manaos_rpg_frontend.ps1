@@ -1,7 +1,9 @@
 param(
     [string]$BindAddress = "127.0.0.1",
     [int]$Port = 5173,
-    [int]$StartupTimeoutSec = 25
+    [int]$StartupTimeoutSec = 25,
+    [ValidateSet('dev','preview')]
+    [string]$ServeMode = 'dev'
 )
 
 $ErrorActionPreference = "Stop"
@@ -27,9 +29,19 @@ function Get-HttpCode {
     }
 }
 
+function Resolve-ProbeHost {
+    param([string]$HostName)
+
+    if ($HostName -eq "0.0.0.0" -or $HostName -eq "::") {
+        return "127.0.0.1"
+    }
+    return $HostName
+}
+
 $listener = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+$probeHost = Resolve-ProbeHost -HostName $BindAddress
 if ($null -ne $listener) {
-    $httpCode = Get-HttpCode -HostName $BindAddress -PortNumber $Port
+    $httpCode = Get-HttpCode -HostName $probeHost -PortNumber $Port
     if ($httpCode -match '^(200|304)$') {
         Write-Host "[OK] Frontend already running on ${BindAddress}:${Port} (pid=$($listener.OwningProcess))" -ForegroundColor Green
         exit 0
@@ -38,14 +50,26 @@ if ($null -ne $listener) {
     exit 1
 }
 
-$cmdArgs = @('/c', 'npm', 'run', 'dev', '--', '--host', $BindAddress, '--port', "$Port")
+if ($ServeMode -eq 'preview') {
+    $buildArgs = @('/c', 'npm', 'run', 'build')
+    $buildProc = Start-Process -FilePath 'cmd.exe' -ArgumentList $buildArgs -WorkingDirectory $frontendDir -PassThru -Wait -WindowStyle Hidden
+    if ($buildProc.ExitCode -ne 0) {
+        Write-Host "[ALERT] Frontend build failed (exit=$($buildProc.ExitCode))" -ForegroundColor Red
+        exit 1
+    }
+    $cmdArgs = @('/c', 'npm', 'run', 'preview', '--', '--host', $BindAddress, '--port', "$Port", '--strictPort')
+}
+else {
+    $cmdArgs = @('/c', 'npm', 'run', 'dev', '--', '--host', $BindAddress, '--port', "$Port", '--strictPort')
+}
+
 $proc = Start-Process -FilePath "cmd.exe" -ArgumentList $cmdArgs -WorkingDirectory $frontendDir -PassThru -WindowStyle Hidden
 
 $deadline = (Get-Date).AddSeconds($StartupTimeoutSec)
 $started = $false
 while ((Get-Date) -lt $deadline) {
     Start-Sleep -Milliseconds 700
-    $httpCode = Get-HttpCode -HostName $BindAddress -PortNumber $Port
+    $httpCode = Get-HttpCode -HostName $probeHost -PortNumber $Port
     if ($httpCode -match '^(200|304)$') {
         $started = $true
         break
@@ -53,7 +77,7 @@ while ((Get-Date) -lt $deadline) {
 }
 
 if ($started) {
-    Write-Host "[OK] Frontend started on ${BindAddress}:${Port} (pid=$($proc.Id))" -ForegroundColor Green
+    Write-Host "[OK] Frontend started on ${BindAddress}:${Port} (pid=$($proc.Id), mode=$ServeMode)" -ForegroundColor Green
     exit 0
 }
 

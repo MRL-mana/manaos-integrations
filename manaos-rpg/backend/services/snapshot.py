@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 import sys
 import time
-from datetime import datetime
+import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from core.config import (
     DEFAULT_MRL_MEMORY_BASE,
@@ -50,6 +52,557 @@ from services.unified_doctor import (
     _load_unified_proxy_rules,
     _maybe_refresh_unified_doctor_cache,
 )
+
+
+def _build_storage_status(host: dict[str, Any], item_roots: list[Any], items_recent: list[dict[str, Any]]) -> dict[str, Any]:
+    root_map: dict[str, dict[str, Any]] = {}
+    for root in item_roots:
+        rid = str(getattr(root, "id", "") or "")
+        if not rid:
+            continue
+        root_map[rid] = {
+            "root_id": rid,
+            "label": str(getattr(root, "label", rid) or rid),
+            "path": str(getattr(root, "path", "") or ""),
+            "recent_count": 0,
+            "recent_size_bytes": 0,
+            "images": 0,
+            "videos": 0,
+        }
+
+    for item in items_recent:
+        rid = str(item.get("root_id") or "")
+        if not rid:
+            continue
+        if rid not in root_map:
+            root_map[rid] = {
+                "root_id": rid,
+                "label": rid,
+                "path": "",
+                "recent_count": 0,
+                "recent_size_bytes": 0,
+                "images": 0,
+                "videos": 0,
+            }
+        row = root_map[rid]
+        row["recent_count"] += 1
+        row["recent_size_bytes"] += int(item.get("size_bytes") or 0)
+        kind = str(item.get("kind") or "")
+        if kind == "image":
+            row["images"] += 1
+        elif kind == "video":
+            row["videos"] += 1
+
+    roots = sorted(root_map.values(), key=lambda x: str(x.get("label") or x.get("root_id") or ""))
+    total_recent_size = sum(int(r.get("recent_size_bytes") or 0) for r in roots)
+    total_recent_count = sum(int(r.get("recent_count") or 0) for r in roots)
+    disk = host.get("disk") if isinstance(host, dict) else {}
+    disk_free = float((disk or {}).get("free_gb") or 0)
+    disk_total = float((disk or {}).get("total_gb") or 0)
+    disk_used = max(0.0, disk_total - disk_free)
+    disk_used_pct = (disk_used / disk_total * 100.0) if disk_total > 0 else None
+
+    return {
+        "disk": {
+            "root": (host.get("host") or {}).get("disk_root") if isinstance(host, dict) else None,
+            "free_gb": disk_free,
+            "total_gb": disk_total,
+            "used_gb": round(disk_used, 1),
+            "used_percent": round(disk_used_pct, 1) if isinstance(disk_used_pct, float) else None,
+        },
+        "item_roots": roots,
+        "recent_total_count": total_recent_count,
+        "recent_total_size_bytes": total_recent_size,
+    }
+
+
+def _build_google_status(repo_root: Path) -> dict[str, Any]:
+    desktop = Path(os.path.expandvars(r"%USERPROFILE%/Desktop")).resolve()
+    file_candidates: dict[str, list[Path]] = {
+        "credentials_json": [
+            desktop / "credentials.json",
+            repo_root / "credentials.json",
+        ],
+        "token_json": [
+            desktop / "token.json",
+            repo_root / "token.json",
+        ],
+        "google_drive_sync_config": [
+            desktop / "google_drive_sync_config.json",
+            repo_root / "google_drive_sync_config.json",
+        ],
+    }
+
+    def _pick_existing(candidates: list[Path]) -> Path:
+        for candidate in candidates:
+            try:
+                if candidate.exists():
+                    return candidate
+            except Exception:
+                continue
+        return candidates[0] if candidates else Path()
+
+    files: dict[str, Any] = {}
+    for key, candidates in file_candidates.items():
+        path = _pick_existing(candidates)
+        exists = path.exists()
+        files[key] = {
+            "exists": exists,
+            "path": str(path),
+            "mtime": int(path.stat().st_mtime) if exists else None,
+        }
+
+    integration_dir = repo_root / "google_drive_integration.py"
+    setup_script = repo_root / "setup_google_drive.ps1"
+    test_script = repo_root / "test_google_drive_integration.py"
+
+    services = {
+        "integration_module": {
+            "exists": integration_dir.exists(),
+            "path": str(integration_dir),
+        },
+        "setup_script": {
+            "exists": setup_script.exists(),
+            "path": str(setup_script),
+        },
+        "test_script": {
+            "exists": test_script.exists(),
+            "path": str(test_script),
+        },
+    }
+
+    drive_ready = bool(files["credentials_json"]["exists"] and files["token_json"]["exists"])
+
+    token_scopes: list[str] = []
+    access_token = ""
+    token_expiry_iso = ""
+    token_expired: bool | None = None
+    if files["token_json"]["exists"]:
+        try:
+            token_payload = json.loads(Path(files["token_json"]["path"]).read_text(encoding="utf-8", errors="replace"))
+            if isinstance(token_payload, dict):
+                raw_scopes = token_payload.get("scopes")
+                if isinstance(raw_scopes, list):
+                    token_scopes = [str(x).strip() for x in raw_scopes if str(x).strip()]
+                elif isinstance(token_payload.get("scope"), str):
+                    token_scopes = [s.strip() for s in str(token_payload.get("scope") or "").split(" ") if s.strip()]
+                access_token = str(
+                    token_payload.get("access_token")
+                    or token_payload.get("token")
+                    or ""
+                ).strip()
+                token_expiry_iso = str(token_payload.get("expiry") or "").strip()
+        except Exception:
+            token_scopes = []
+
+    if token_expiry_iso:
+        try:
+            iso = token_expiry_iso.replace("Z", "+00:00")
+            dt = datetime.fromisoformat(iso)
+            now = datetime.now(dt.tzinfo) if dt.tzinfo else datetime.now()
+            token_expired = now >= dt
+        except Exception:
+            token_expired = None
+
+    def _scope_ready(required_fragments: list[str]) -> bool | None:
+        if not token_scopes:
+            return None
+        lowered = [s.lower() for s in token_scopes]
+        for frag in required_fragments:
+            key = str(frag or "").lower()
+            if key and any(key in s for s in lowered):
+                return True
+        return False
+
+    capabilities_def = [
+        {
+            "id": "drive",
+            "label": "Google Drive",
+            "module_paths": [
+                repo_root / "scripts" / "google" / "google_drive_integration.py",
+                repo_root / "google_drive_integration.py",
+            ],
+            "scope_fragments": ["drive"],
+            "module_required": False,
+        },
+        {
+            "id": "calendar",
+            "label": "Google Calendar",
+            "module_paths": [
+                repo_root / "scripts" / "google" / "google_calendar_tasks_sheets_integration.py",
+            ],
+            "scope_fragments": ["calendar"],
+            "module_required": False,
+        },
+        {
+            "id": "tasks",
+            "label": "Google Tasks (TODO)",
+            "module_paths": [
+                repo_root / "scripts" / "google" / "google_calendar_tasks_sheets_integration.py",
+            ],
+            "scope_fragments": ["tasks"],
+            "module_required": False,
+        },
+        {
+            "id": "gmail",
+            "label": "Gmail",
+            "module_paths": [
+                repo_root / "scripts" / "google" / "google_gmail_integration.py",
+                repo_root / "gmail_integration.py",
+            ],
+            "scope_fragments": ["gmail"],
+            "module_required": False,
+        },
+        {
+            "id": "sheets",
+            "label": "Google Sheets",
+            "module_paths": [
+                repo_root / "scripts" / "google" / "google_calendar_tasks_sheets_integration.py",
+                repo_root / "scripts" / "document_processing" / "excel_to_google_sheets.py",
+            ],
+            "scope_fragments": ["spreadsheets", "sheets"],
+            "module_required": False,
+        },
+        {
+            "id": "photos",
+            "label": "Google Photos",
+            "module_paths": [
+                repo_root / "scripts" / "google" / "google_photos_integration.py",
+                repo_root / "google_photos_integration.py",
+            ],
+            "scope_fragments": ["photoslibrary"],
+            "module_required": False,
+        },
+    ]
+
+    capabilities: list[dict[str, Any]] = []
+    for cap in capabilities_def:
+        module_exists = any(path.exists() for path in cap["module_paths"])
+        module_required = bool(cap.get("module_required", False))
+        scope_status = _scope_ready(cap["scope_fragments"])
+        usable = bool(drive_ready and (token_expired is not True) and (scope_status is True) and (module_exists or not module_required))
+        if not drive_ready:
+            reason = "auth_missing"
+        elif token_expired is True:
+            reason = "token_expired"
+        elif not module_exists:
+            reason = "module_missing" if module_required else "ready_no_local_module"
+        elif scope_status is False:
+            reason = "scope_missing"
+        elif scope_status is None:
+            reason = "scope_unknown"
+        else:
+            reason = "ready"
+
+        capabilities.append(
+            {
+                "id": cap["id"],
+                "label": cap["label"],
+                "usable": usable,
+                "reason": reason,
+                "module_exists": module_exists,
+                "module_required": module_required,
+                "scope_ready": scope_status,
+            }
+        )
+
+    usable_count = sum(1 for c in capabilities if bool(c.get("usable")))
+
+    next_steps: list[str] = []
+    if not files.get("credentials_json", {}).get("exists"):
+        next_steps.append("credentials.json を配置（Desktop または manaos_integrations 直下）")
+    if not files.get("token_json", {}).get("exists"):
+        next_steps.append("token.json を作成（Google認証を実行）")
+    if token_expired is True:
+        next_steps.append("token が期限切れ：google_auth_reauth.py で再認証")
+    if any(c.get("reason") == "scope_missing" for c in capabilities):
+        next_steps.append("必要scope不足：再認証時に Calendar/Tasks/Gmail/Sheets scope を付与")
+
+    drive_scope_ready = _scope_ready(["drive"])
+    gmail_scope_ready = _scope_ready(["gmail"])
+    gmail_modify_scope_ready = _scope_ready(["gmail.modify"])
+    calendar_scope_ready = _scope_ready(["calendar"])
+    tasks_scope_ready = _scope_ready(["tasks"])
+    if gmail_modify_scope_ready is False:
+        next_steps.append("Gmail既読操作には gmail.modify scope が必要（google_auth_reauth_full.py で再認証）")
+
+    live_preview: dict[str, Any] = {
+        "drive_files": {
+            "ok": False,
+            "reason": "not_attempted",
+            "files": [],
+        },
+        "gmail_profile": {
+            "ok": False,
+            "reason": "not_attempted",
+            "can_mark_read": False,
+            "email": "",
+            "messages_total": None,
+            "threads_total": None,
+            "unread_messages": [],
+        },
+        "calendar_events": {
+            "ok": False,
+            "reason": "not_attempted",
+            "events": [],
+        },
+        "tasks_open": {
+            "ok": False,
+            "reason": "not_attempted",
+            "tasks": [],
+        },
+    }
+
+    can_probe = bool(drive_ready and access_token and (token_expired is not True))
+    auth_headers = {"Authorization": f"Bearer {access_token}"} if can_probe else {}
+
+    if can_probe and (drive_scope_ready is True):
+        drive_res = _http_json_get(
+            "https://www.googleapis.com/drive/v3/files?pageSize=8&fields=files(id,name,mimeType,modifiedTime)&orderBy=modifiedTime%20desc",
+            timeout_s=3.5,
+            headers=auth_headers,
+        )
+        if drive_res.get("ok"):
+            data = drive_res.get("data") if isinstance(drive_res.get("data"), dict) else {}
+            files_list = data.get("files") if isinstance(data.get("files"), list) else []
+            live_preview["drive_files"] = {
+                "ok": True,
+                "reason": "ready",
+                "files": [
+                    {
+                        "id": str(x.get("id") or ""),
+                        "name": str(x.get("name") or ""),
+                        "mimeType": str(x.get("mimeType") or ""),
+                        "modifiedTime": str(x.get("modifiedTime") or ""),
+                    }
+                    for x in files_list
+                    if isinstance(x, dict)
+                ],
+            }
+        else:
+            live_preview["drive_files"] = {
+                "ok": False,
+                "reason": "api_error",
+                "status": drive_res.get("status"),
+                "error": str(drive_res.get("error") or "")[:240],
+                "files": [],
+            }
+    elif drive_scope_ready is False:
+        live_preview["drive_files"]["reason"] = "scope_missing"
+    elif not drive_ready:
+        live_preview["drive_files"]["reason"] = "auth_missing"
+    elif token_expired is True:
+        live_preview["drive_files"]["reason"] = "token_expired"
+
+    if can_probe and (gmail_scope_ready is True):
+        gmail_res = _http_json_get(
+            "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+            timeout_s=3.5,
+            headers=auth_headers,
+        )
+        if gmail_res.get("ok"):
+            data = gmail_res.get("data") if isinstance(gmail_res.get("data"), dict) else {}
+            unread_messages: list[dict[str, Any]] = []
+            unread_list_res = _http_json_get(
+                "https://gmail.googleapis.com/gmail/v1/users/me/messages?q=is%3Aunread&maxResults=3",
+                timeout_s=3.5,
+                headers=auth_headers,
+            )
+            if unread_list_res.get("ok"):
+                list_data = unread_list_res.get("data") if isinstance(unread_list_res.get("data"), dict) else {}
+                msgs = list_data.get("messages") if isinstance(list_data.get("messages"), list) else []
+                for msg in msgs:
+                    if not isinstance(msg, dict):
+                        continue
+                    msg_id = str(msg.get("id") or "").strip()
+                    if not msg_id:
+                        continue
+                    detail_res = _http_json_get(
+                        f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{quote(msg_id, safe='')}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date",
+                        timeout_s=3.5,
+                        headers=auth_headers,
+                    )
+                    if not detail_res.get("ok"):
+                        continue
+                    detail = detail_res.get("data") if isinstance(detail_res.get("data"), dict) else {}
+                    payload = detail.get("payload") if isinstance(detail.get("payload"), dict) else {}
+                    headers = payload.get("headers") if isinstance(payload.get("headers"), list) else []
+                    subject = ""
+                    sender = ""
+                    date_raw = ""
+                    for header in headers:
+                        if not isinstance(header, dict):
+                            continue
+                        name = str(header.get("name") or "").lower()
+                        value = str(header.get("value") or "")
+                        if name == "subject":
+                            subject = value
+                        elif name == "from":
+                            sender = value
+                        elif name == "date":
+                            date_raw = value
+                    unread_messages.append(
+                        {
+                            "id": msg_id,
+                            "subject": subject,
+                            "from": sender,
+                            "date": date_raw,
+                        }
+                    )
+            live_preview["gmail_profile"] = {
+                "ok": True,
+                "reason": "ready",
+                "can_mark_read": gmail_modify_scope_ready is True,
+                "email": str(data.get("emailAddress") or ""),
+                "messages_total": data.get("messagesTotal"),
+                "threads_total": data.get("threadsTotal"),
+                "unread_messages": unread_messages,
+            }
+        else:
+            live_preview["gmail_profile"] = {
+                "ok": False,
+                "reason": "api_error",
+                "can_mark_read": gmail_modify_scope_ready is True,
+                "status": gmail_res.get("status"),
+                "error": str(gmail_res.get("error") or "")[:240],
+                "email": "",
+                "messages_total": None,
+                "threads_total": None,
+                "unread_messages": [],
+            }
+    elif gmail_scope_ready is False:
+        live_preview["gmail_profile"]["reason"] = "scope_missing"
+    elif not drive_ready:
+        live_preview["gmail_profile"]["reason"] = "auth_missing"
+    elif token_expired is True:
+        live_preview["gmail_profile"]["reason"] = "token_expired"
+
+    if can_probe and (calendar_scope_ready is True):
+        now_iso = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        calendar_url = (
+            "https://www.googleapis.com/calendar/v3/calendars/primary/events"
+            f"?maxResults=5&singleEvents=true&orderBy=startTime&timeMin={quote(now_iso, safe='')}"
+        )
+        calendar_res = _http_json_get(
+            calendar_url,
+            timeout_s=3.5,
+            headers=auth_headers,
+        )
+        if calendar_res.get("ok"):
+            data = calendar_res.get("data") if isinstance(calendar_res.get("data"), dict) else {}
+            event_items = data.get("items") if isinstance(data.get("items"), list) else []
+            live_preview["calendar_events"] = {
+                "ok": True,
+                "reason": "ready",
+                "events": [
+                    {
+                        "id": str(x.get("id") or ""),
+                        "summary": str(x.get("summary") or ""),
+                        "start": str(((x.get("start") or {}).get("dateTime") or (x.get("start") or {}).get("date") or "")),
+                    }
+                    for x in event_items
+                    if isinstance(x, dict)
+                ],
+            }
+        else:
+            live_preview["calendar_events"] = {
+                "ok": False,
+                "reason": "api_error",
+                "status": calendar_res.get("status"),
+                "error": str(calendar_res.get("error") or "")[:240],
+                "events": [],
+            }
+    elif calendar_scope_ready is False:
+        live_preview["calendar_events"]["reason"] = "scope_missing"
+    elif not drive_ready:
+        live_preview["calendar_events"]["reason"] = "auth_missing"
+    elif token_expired is True:
+        live_preview["calendar_events"]["reason"] = "token_expired"
+
+    if can_probe and (tasks_scope_ready is True):
+        lists_res = _http_json_get(
+            "https://tasks.googleapis.com/tasks/v1/users/@me/lists?maxResults=1",
+            timeout_s=3.5,
+            headers=auth_headers,
+        )
+        if lists_res.get("ok"):
+            data = lists_res.get("data") if isinstance(lists_res.get("data"), dict) else {}
+            task_lists = data.get("items") if isinstance(data.get("items"), list) else []
+            task_list_id = ""
+            if task_lists and isinstance(task_lists[0], dict):
+                task_list_id = str(task_lists[0].get("id") or "")
+
+            if task_list_id:
+                tasks_res = _http_json_get(
+                    f"https://tasks.googleapis.com/tasks/v1/lists/{quote(task_list_id, safe='')}/tasks?showCompleted=false&maxResults=5",
+                    timeout_s=3.5,
+                    headers=auth_headers,
+                )
+                if tasks_res.get("ok"):
+                    tdata = tasks_res.get("data") if isinstance(tasks_res.get("data"), dict) else {}
+                    task_items = tdata.get("items") if isinstance(tdata.get("items"), list) else []
+                    live_preview["tasks_open"] = {
+                        "ok": True,
+                        "reason": "ready",
+                        "tasks": [
+                            {
+                                "id": str(x.get("id") or ""),
+                                "task_list_id": task_list_id,
+                                "title": str(x.get("title") or ""),
+                                "due": str(x.get("due") or ""),
+                            }
+                            for x in task_items
+                            if isinstance(x, dict)
+                        ],
+                    }
+                else:
+                    live_preview["tasks_open"] = {
+                        "ok": False,
+                        "reason": "api_error",
+                        "status": tasks_res.get("status"),
+                        "error": str(tasks_res.get("error") or "")[:240],
+                        "tasks": [],
+                    }
+            else:
+                live_preview["tasks_open"] = {
+                    "ok": True,
+                    "reason": "ready",
+                    "tasks": [],
+                }
+        else:
+            live_preview["tasks_open"] = {
+                "ok": False,
+                "reason": "api_error",
+                "status": lists_res.get("status"),
+                "error": str(lists_res.get("error") or "")[:240],
+                "tasks": [],
+            }
+    elif tasks_scope_ready is False:
+        live_preview["tasks_open"]["reason"] = "scope_missing"
+    elif not drive_ready:
+        live_preview["tasks_open"]["reason"] = "auth_missing"
+    elif token_expired is True:
+        live_preview["tasks_open"]["reason"] = "token_expired"
+
+    return {
+        "drive_ready": drive_ready,
+        "auth_ready": drive_ready,
+        "files": files,
+        "services": services,
+        "token_scopes": token_scopes,
+        "token": {
+            "has_access_token": bool(access_token),
+            "expiry": token_expiry_iso or None,
+            "expired": token_expired,
+        },
+        "capabilities": capabilities,
+        "capabilities_summary": {
+            "usable": usable_count,
+            "total": len(capabilities),
+        },
+        "next_steps": next_steps,
+        "live_preview": live_preview,
+    }
 
 
 def _read_json_file(path: Path) -> dict[str, Any] | None:
@@ -419,9 +972,114 @@ def snapshot() -> dict[str, Any]:
         models_enriched.append(m2)
 
     next_actions: list[str] = []
+    next_action_hints: list[dict[str, Any]] = []
     disk_free = float(host.get("disk", {}).get("free_gb") or 0)
     if disk_free and disk_free < 50:
         next_actions.append("空き容量が少なめ：古いログ/モデル/生成物の退避や削除")
+    try:
+        disks = host.get("disks") if isinstance(host, dict) else None
+        if isinstance(disks, list):
+            disk_alert = []
+            disk_watch = []
+            for d in disks:
+                if not isinstance(d, dict):
+                    continue
+                root = str(d.get("root") or "")
+                used_pct_raw = d.get("used_percent")
+                try:
+                    used_pct = float(used_pct_raw)
+                except Exception:
+                    continue
+                if used_pct >= 90:
+                    disk_alert.append(f"{root}({used_pct:.1f}%)")
+                elif used_pct >= 80:
+                    disk_watch.append(f"{root}({used_pct:.1f}%)")
+            if disk_alert:
+                _append_next_action(
+                    next_actions,
+                    f"ストレージ逼迫(ALERT)：{', '.join(disk_alert)} / 大容量ファイル整理・退避を推奨",
+                )
+                _append_next_action_hint(
+                    next_action_hints,
+                    label="実行：逼迫ドライブ大容量ファイル Top10（自動判定）",
+                    action_id="disk_top_hot",
+                )
+                _append_next_action_hint(
+                    next_action_hints,
+                    label="実行：C(OS)/D(AI)整理候補レポート（削除なし）",
+                    action_id="disk_tidy_c_d_report",
+                )
+                _append_next_action_hint(
+                    next_action_hints,
+                    label="実行：CのAI生成物をD(AI)へ整理移動",
+                    action_id="organize_c_ai_to_d",
+                )
+                _append_next_action_hint(
+                    next_action_hints,
+                    label="実行：Google DriveへD(AI)最近生成物をバックアップ",
+                    action_id="google_drive_backup_recent",
+                )
+                _append_next_action_hint(
+                    next_action_hints,
+                    label="実行：Google Driveへバックアップ後にDへ退避",
+                    action_id="google_drive_backup_and_stage",
+                )
+                if any(str(x).startswith("D:\\") for x in (disk_alert + disk_watch)):
+                    _append_next_action_hint(
+                        next_action_hints,
+                        label="実行：Dドライブ大容量ファイル Top10",
+                        action_id="disk_top10_d",
+                    )
+                if any(str(x).startswith("H:\\") for x in (disk_alert + disk_watch)):
+                    _append_next_action_hint(
+                        next_action_hints,
+                        label="実行：Hドライブ大容量ファイル Top10",
+                        action_id="disk_top10_h",
+                    )
+            elif disk_watch:
+                _append_next_action(
+                    next_actions,
+                    f"ストレージ高負荷(WATCH)：{', '.join(disk_watch)} / 早めのクリーンアップを推奨",
+                )
+                _append_next_action_hint(
+                    next_action_hints,
+                    label="実行：逼迫ドライブ大容量ファイル Top10（自動判定）",
+                    action_id="disk_top_hot",
+                )
+                _append_next_action_hint(
+                    next_action_hints,
+                    label="実行：C(OS)/D(AI)整理候補レポート（削除なし）",
+                    action_id="disk_tidy_c_d_report",
+                )
+                _append_next_action_hint(
+                    next_action_hints,
+                    label="実行：CのAI生成物をD(AI)へ整理移動",
+                    action_id="organize_c_ai_to_d",
+                )
+                _append_next_action_hint(
+                    next_action_hints,
+                    label="実行：Google DriveへD(AI)最近生成物をバックアップ",
+                    action_id="google_drive_backup_recent",
+                )
+                _append_next_action_hint(
+                    next_action_hints,
+                    label="実行：Google Driveへバックアップ後にDへ退避",
+                    action_id="google_drive_backup_and_stage",
+                )
+                if any(str(x).startswith("D:\\") for x in disk_watch):
+                    _append_next_action_hint(
+                        next_action_hints,
+                        label="実行：Dドライブ大容量ファイル Top10",
+                        action_id="disk_top10_d",
+                    )
+                if any(str(x).startswith("H:\\") for x in disk_watch):
+                    _append_next_action_hint(
+                        next_action_hints,
+                        label="実行：Hドライブ大容量ファイル Top10",
+                        action_id="disk_top10_h",
+                    )
+    except Exception:
+        pass
     cpu = float(host.get("cpu", {}).get("percent") or 0)
     if cpu > 90:
         next_actions.append("CPU高負荷：重い処理を止める/再起動/並列数を下げる")
@@ -470,8 +1128,6 @@ def snapshot() -> dict[str, Any]:
     always_on_down = [s.get("id") for s in services_status if (not s.get("alive")) and ("always_on" in (s.get("tags") or []))]
     if always_on_down:
         next_actions.append(f"常駐が落ちてる：{', '.join([str(x) for x in always_on_down])} を復旧")
-
-    next_action_hints: list[dict[str, Any]] = []
 
     try:
         if mrl_status.get("ok") and isinstance(mrl_status.get("metrics"), dict):
@@ -656,6 +1312,8 @@ def snapshot() -> dict[str, Any]:
         append_event(EVENTS_FILE, "service_recovered", "always_on が復旧しました", {"services": recovered})
 
     autonomy = _build_autonomy_status()
+    storage_status = _build_storage_status(host, item_roots, items_recent)
+    google_status = _build_google_status(REPO_ROOT)
 
     return {
         "ts": int(time.time()),
@@ -682,6 +1340,8 @@ def snapshot() -> dict[str, Any]:
             "roots": [{"id": r.id, "label": r.label} for r in item_roots],
             "recent": items_recent,
         },
+        "storage": storage_status,
+        "google": google_status,
         "actions": [{"id": a.get("id"), "label": a.get("label"), "tags": a.get("tags") or []} for a in actions],
         "actions_enabled": _actions_enabled(),
         "danger": danger,

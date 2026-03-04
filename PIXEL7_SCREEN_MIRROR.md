@@ -16,11 +16,24 @@
 - **外出・ミラー監視（バックグラウンド）**: 「ManaOS: Pixel7 外出モード 画面ミラー監視開始（バックグラウンド）」
 - **外出・ミラー監視停止**: 「ManaOS: Pixel7 外出モード 画面ミラー監視 停止（scrcpy watch stop）」
 
+## 日次運用（Full+HTTP 推奨）
+
+- 「ManaOS: Pixel7 推奨0 セットアップ＋起動（HTTP）」
+- 「ManaOS: Pixel7 推奨 初回フル導線（セットアップ→開始→状態→停止→状態）」
+- 「ManaOS: Pixel7 推奨① 開始（Full+HTTP）」
+- 「ManaOS: Pixel7 推奨② 状態確認（Full+HTTP）」
+- 「ManaOS: Pixel7 推奨③ 停止（Full+HTTP）」
+- 「ManaOS: Pixel7 推奨フルサイクル（開始→状態→停止→状態）」
+  - 1タスクで開始〜停止まで往復確認
+  - 実体は `pixel7_full_resident_http_start.ps1` / `pixel7_full_resident_http_status.ps1` / `pixel7_full_resident_http_stop.ps1`
+
 ## 停止（まとめて止める）
 
 - 「ManaOS: Pixel7 一括停止（watch/keepalive/scrcpy/rebootwatch）」
 
 ※HTTP監視（Pixel7 HTTP watch）も運用している場合、このタスクで一緒に停止します。
+  - 直接実行用: `pwsh -File .\manaos_integrations\pixel7_full_resident_http_stop.ps1`
+  - 状態確認: `pwsh -File .\manaos_integrations\pixel7_full_resident_http_status.ps1`
 
 ※外出モードのバックグラウンド監視は、端末の発熱を抑えるため **端末画面OFF**（scrcpy `--turn-screen-off`）を有効化しています。
 

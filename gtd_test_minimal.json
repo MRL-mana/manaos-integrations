@@ -1,0 +1,1 @@
+{"info": "test", "version": 1, "categories": [{"name": "Test", "shortcuts": [{"name": "GTD Health", "description": "test", "method": "GET", "url": "http://100.73.247.100:5130/health", "responseHandling": "toast", "iconName": "monitor_heart"}]}]}

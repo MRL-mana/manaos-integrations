@@ -1,0 +1,56 @@
+{
+  "name": "Daily Task Planning (毎朝9時)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Schedule: Every Day 9:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:9500/webhook/daily_plan",
+        "method": "POST",
+        "options": {}
+      },
+      "name": "Trinity Connector",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "text": "おはよう、マナ！☀️\\n\\n今日のタスク計画できたよ📋\\n\\nTicket: {{$json.result.ticket_id}}\\nConfidence: {{$json.result.confidence}}\\n\\nNotionに登録済み✅",
+        "additionalFields": {}
+      },
+      "name": "Slack Morning Report",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Schedule: Every Day 9:00": {
+      "main": [[{"node": "Trinity Connector", "type": "main", "index": 0}]]
+    },
+    "Trinity Connector": {
+      "main": [[{"node": "Slack Morning Report", "type": "main", "index": 0}]]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "id": "trinity-daily-planning"
+}
+
+
+

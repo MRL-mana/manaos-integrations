@@ -17,7 +17,7 @@ $scrcpyDir = Join-Path $env:USERPROFILE 'Desktop\scrcpy\scrcpy-win64-v3.3.4'
 $adbExe = Join-Path $scrcpyDir 'adb.exe'
 
 if (-not (Test-Path $adbExe)) {
-    Write-Host ("adb.exe が見つかりません: {0}" -f $adbExe) -ForegroundColor Red
+    Write-Host ("adb.exe not found: {0}" -f $adbExe) -ForegroundColor Red
     exit 1
 }
 
@@ -71,9 +71,9 @@ if ([string]::IsNullOrWhiteSpace($DeviceSerial)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($DeviceSerial)) {
-    Write-Host 'デバイスが見つかりません。先に「Pixel7 無線ADB復旧（5555）」を実行してください。' -ForegroundColor Yellow
+    Write-Host 'Device not found. Considered already stopped.' -ForegroundColor Yellow
     Write-Host (Get-DevicesText) -ForegroundColor Gray
-    exit 2
+    exit 0
 }
 
 Write-Host '=== Pixel7 Termux Stop HTTP Gateway (ADB assisted) ===' -ForegroundColor Cyan
@@ -99,9 +99,13 @@ function Send-TermuxLine([string]$line) {
 }
 
 function Test-Listening {
-    $cmd = "(ss -ltn 2>/dev/null || netstat -ltn 2>/dev/null) | grep ':{0} ' || true" -f $ApiPort
-    $out = (& $adbExe -s $DeviceSerial shell $cmd 2>$null | Out-String)
-    return ($out -match (":{0}\s" -f [regex]::Escape([string]$ApiPort)))
+    $needle = (":{0}\s" -f [regex]::Escape([string]$ApiPort))
+
+    $out = (& $adbExe -s $DeviceSerial shell 'ss -ltn 2>/dev/null' 2>$null | Out-String)
+    if ($out -match $needle) { return $true }
+
+    $out2 = (& $adbExe -s $DeviceSerial shell 'netstat -ltn 2>/dev/null' 2>$null | Out-String)
+    return ($out2 -match $needle)
 }
 
 function Wait-ForStop {
@@ -114,7 +118,7 @@ function Wait-ForStop {
     return (-not (Test-Listening))
 }
 
-Send-TermuxLine "pkill -f pixel7_api_gateway.py || true"
+Send-TermuxLine "pkill -f pixel7_api_gateway.py"
 
 if (Wait-ForStop) {
     Write-Host 'OK (port is stopped)' -ForegroundColor Green

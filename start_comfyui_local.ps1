@@ -5,6 +5,7 @@ param(
     [string]$ComfyUIPath = "",
     [switch]$CPU,
     [switch]$LowVRAM,
+    [switch]$BindAll,
     [switch]$Background,
     [string]$LogDir = ""
 )
@@ -108,6 +109,9 @@ if ($pidInUse) {
 $arguments = @('main.py', '--port', $Port.ToString())
 if ($forceCpu) { $arguments += '--cpu' }
 if ($LowVRAM) { $arguments += '--lowvram' }
+if ($BindAll) {
+    $arguments += @('--listen', '0.0.0.0')
+}
 
 # Reduce some Windows console-related issues
 $env:TQDM_DISABLE = '1'
@@ -136,7 +140,12 @@ if ($Background) {
 }
 
 Write-Host ""
-Write-Host ("Open: http://127.0.0.1:{0}" -f $Port) -ForegroundColor Cyan
+if ($BindAll) {
+    Write-Host ("Open(local): http://127.0.0.1:{0}" -f $Port) -ForegroundColor Cyan
+    Write-Host ("Open(remote): http://<tailscale-ip>:{0}" -f $Port) -ForegroundColor Cyan
+} else {
+    Write-Host ("Open: http://127.0.0.1:{0}" -f $Port) -ForegroundColor Cyan
+}
 Write-Host "Stop: Ctrl+C" -ForegroundColor Yellow
 Write-Host ""
 

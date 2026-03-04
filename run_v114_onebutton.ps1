@@ -2,9 +2,13 @@ param(
     [switch]$SkipDataGen,
     [switch]$DryRun,
     [switch]$ForceRestart,
+    [switch]$NoMonitor,
     [int]$MaxSteps = 4500,
-    [int]$SaveSteps = 500,
+    [int]$SaveSteps = 100,
     [int]$EvalSteps = 500,
+    [int]$MaxLength = 384,
+    [int]$BatchSize = 1,
+    [int]$GradientAccumulationSteps = 16,
     [string]$ResumeFromCheckpoint = "auto"
 )
 
@@ -22,6 +26,12 @@ $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $stdoutLog = Join-Path $logDir "layer2_lora_v114_train_${timestamp}.stdout.log"
 $stderrLog = Join-Path $logDir "layer2_lora_v114_train_${timestamp}.stderr.log"
 $launchLog = Join-Path $logDir "layer2_lora_v114_train_${timestamp}.launch.log"
+$monitorScript = Join-Path $root "monitor_v114_ckpt1500_then_quick_eval.ps1"
+
+$pythonExe = (& py.exe -3.10 -c "import sys; print(sys.executable)").Trim()
+if (-not $pythonExe -or -not (Test-Path $pythonExe)) {
+    throw "python executable not found for -3.10"
+}
 
 $baseModel = "D:\castle_ex_training\castle_ex_v1_1"
 $outputDir = "D:\castle_ex_training\lora_castle_ex_layer2_v1_1_4_stylefix"
@@ -62,7 +72,7 @@ if (-not (Test-Path $evalJsonl)) {
     throw "eval jsonl not found: $evalJsonl"
 }
 
-$alreadyRunning = Get-CimInstance Win32_Process -Filter "Name='python.exe'" |
+$alreadyRunning = Get-CimInstance Win32_Process |
     Where-Object { $_.CommandLine -like "*train_castle_ex_lora.py*" -and $_.CommandLine -like "*v1_1_4_stylefix*" }
 
 if ($alreadyRunning) {
@@ -100,7 +110,6 @@ $env:PYTORCH_CUDA_ALLOC_CONF = "expandable_segments:True"
 $env:PYTHONUNBUFFERED = "1"
 
 $args = @(
-    "-3.10",
     "-u",
     "castle_ex\train_castle_ex_lora.py",
     "--base-model", $baseModel,
@@ -111,9 +120,9 @@ $args = @(
     "--lora-alpha", "32",
     "--lora-dropout", "0.05",
     "--target-modules", "q_proj,k_proj,v_proj,o_proj",
-    "--max-length", "512",
-    "--batch-size", "2",
-    "--gradient-accumulation-steps", "8",
+    "--max-length", "$MaxLength",
+    "--batch-size", "$BatchSize",
+    "--gradient-accumulation-steps", "$GradientAccumulationSteps",
     "--learning-rate", "2e-4",
     "--max-steps", "$MaxSteps",
     "--save-steps", "$SaveSteps",
@@ -130,21 +139,35 @@ $args = @(
     "TRAIN_JSONL=$trainJsonl",
     "EVAL_JSONL=$evalJsonl",
     "MAX_STEPS=$MaxSteps",
-    "RESUME_ARG=$resumePath"
+    "MAX_LENGTH=$MaxLength",
+    "BATCH_SIZE=$BatchSize",
+    "GRAD_ACCUM=$GradientAccumulationSteps",
+    "RESUME_ARG=$resumePath",
+    "PYTHON_EXE=$pythonExe"
 ) | Out-File -FilePath $launchLog -Encoding utf8
 
 if ($DryRun) {
-    Write-Host "[DRY-RUN] launch command: py.exe $($args -join ' ')"
+    Write-Host "[DRY-RUN] launch command: $pythonExe $($args -join ' ')"
     Write-Host "[DRY-RUN] launch log: $launchLog"
     exit 0
 }
 
-$proc = Start-Process -FilePath "py.exe" -ArgumentList $args -WorkingDirectory $root -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog -PassThru
+$proc = Start-Process -FilePath $pythonExe -ArgumentList $args -WorkingDirectory $root -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog -PassThru
 
 Write-Host "[OK] launched v1.1.4 style-fix training"
 Write-Host "  pid: $($proc.Id)"
 Write-Host "  stdout: $stdoutLog"
 Write-Host "  stderr: $stderrLog"
 Write-Host "  launch: $launchLog"
+
+if (-not $NoMonitor) {
+    if (Test-Path $monitorScript) {
+        $mon = Start-Process -FilePath "powershell" -ArgumentList @("-ExecutionPolicy", "Bypass", "-File", $monitorScript, "-CheckpointStep", "$MaxSteps", "-PollSec", "120") -WorkingDirectory $root -PassThru
+        Write-Host "[OK] launched monitor pid=$($mon.Id) script=$monitorScript checkpoint=$MaxSteps"
+    }
+    else {
+        Write-Host "[WARN] monitor script not found: $monitorScript"
+    }
+}
 
 exit 0

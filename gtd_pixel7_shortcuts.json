@@ -1,0 +1,53 @@
+{
+  "info": "ManaOS GTD Pixel7 Shortcuts",
+  "version": 1,
+  "setup_guide": {
+    "ja": [
+      "1. Google Playから「HTTP Shortcuts」をインストール",
+      "   https://play.google.com/store/apps/details?id=ch.rmy.android.http_shortcuts",
+      "2. アプリを開く → 右上メニュー → Import/Export → Import",
+      "3. このファイルを選択してインポート",
+      "4. ホーム画面長押し → ウィジェット → HTTP Shortcuts を選択",
+      "5. 好きなショートカットを選んでウィジェット配置完了！"
+    ]
+  },
+  "categories": [
+    {
+      "name": "GTD",
+      "shortcuts": [
+        {
+          "name": "GTD Capture",
+          "description": "Inbox capture form",
+          "method": "GET",
+          "url": "http://100.73.247.100:5130/capture",
+          "responseHandling": "browser",
+          "iconName": "create"
+        },
+        {
+          "name": "Today Morning",
+          "description": "Morning summary",
+          "method": "GET",
+          "url": "http://100.73.247.100:5130/morning",
+          "responseHandling": "browser",
+          "iconName": "wb_sunny"
+        },
+        {
+          "name": "Inbox Status",
+          "description": "Inbox status JSON",
+          "method": "GET",
+          "url": "http://100.73.247.100:5130/api/gtd/status",
+          "responseHandling": "dialog",
+          "iconName": "inbox"
+        },
+        {
+          "name": "GTD Health",
+          "description": "Health check",
+          "method": "GET",
+          "url": "http://100.73.247.100:5130/health",
+          "responseHandling": "toast",
+          "iconName": "monitor_heart"
+        }
+      ]
+    }
+  ]
+}
