@@ -17,6 +17,7 @@ from routers import (
     actions,
     generate,
     items,
+    lessons,
     ollama,
     registry,
     revenue,
@@ -54,6 +55,7 @@ for _r in (
     items,
     rl_anything,
     revenue,
+    lessons,
 ):
     app.include_router(_r.router)
 

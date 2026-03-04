@@ -23,7 +23,9 @@ export const FALLBACK_MENU = [
   { id: 'items', label: 'アイテム（生成物）', icon: '🎒' },
   { id: 'rl', label: '強化学習(RL)', icon: '🧠' },
   { id: 'revenue', label: '収益（KPI）', icon: '💰' },
-  { id: 'systems', label: 'システム（統合）', icon: '⚙️' }
+  { id: 'systems', label: 'システム（統合）', icon: '⚙️' },
+  { id: 'lessons', label: '教訓（成長ログ）', icon: '📖' },
+  { id: 'agents', label: 'エージェント', icon: '🤖' }
 ]
 
 export const DIFFICULTY_CLS = { beginner: 'ok', standard: '', advanced: 'caution', expert: 'danger' }

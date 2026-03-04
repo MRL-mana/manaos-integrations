@@ -23,8 +23,10 @@ import HealthStrip from './components/HealthStrip.jsx'
 const RLView = lazy(() => import('./components/RLView.jsx'))
 const SkillsView = lazy(() => import('./components/SkillsView.jsx'))
 const RevenueView = lazy(() => import('./components/RevenueView.jsx'))
+const LessonsView = lazy(() => import('./components/LessonsView.jsx'))
+const AgentsView = lazy(() => import('./components/AgentsView.jsx'))
 
-const TAB_IDS = ['status','party','bestiary','skills','quests','logs','map','items','rl','revenue','systems']
+const TAB_IDS = ['status','party','bestiary','skills','quests','logs','map','items','rl','revenue','systems','lessons','agents']
 
 export default function App() {
   const [state, setState] = useState(null)
@@ -408,6 +410,16 @@ export default function App() {
               actionsEnabled={state?.actions_enabled}
               runningAction={runningAction}
             />
+          ) : null}
+          {active === 'lessons' ? (
+            <Suspense fallback={lazyFallback}>
+              <LessonsView />
+            </Suspense>
+          ) : null}
+          {active === 'agents' ? (
+            <Suspense fallback={lazyFallback}>
+              <AgentsView />
+            </Suspense>
           ) : null}
           </div>
         </section>
