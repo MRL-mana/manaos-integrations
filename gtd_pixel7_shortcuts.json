@@ -1,51 +1,68 @@
 {
-  "info": "ManaOS GTD Pixel7 Shortcuts",
-  "version": 1,
-  "setup_guide": {
-    "ja": [
-      "1. Google Playから「HTTP Shortcuts」をインストール",
-      "   https://play.google.com/store/apps/details?id=ch.rmy.android.http_shortcuts",
-      "2. アプリを開く → 右上メニュー → Import/Export → Import",
-      "3. このファイルを選択してインポート",
-      "4. ホーム画面長押し → ウィジェット → HTTP Shortcuts を選択",
-      "5. 好きなショートカットを選んでウィジェット配置完了！"
-    ]
-  },
+  "version": 91,
+  "compatibilityVersion": 90,
   "categories": [
     {
+      "id": "24573dfc-efc5-4610-ba2b-b2186bd8ae74",
       "name": "GTD",
+      "layoutType": "linear_list",
+      "background": "white",
       "shortcuts": [
         {
+          "id": "101e4246-54c4-494f-8b56-2071fe4e79a9",
           "name": "GTD Capture",
-          "description": "Inbox capture form",
           "method": "GET",
           "url": "http://100.73.247.100:5130/capture",
-          "responseHandling": "browser",
-          "iconName": "create"
+          "authentication": "none",
+          "contentType": "text/plain",
+          "iconName": "create",
+          "responseHandling": {
+            "uiType": "window",
+            "successOutput": "response",
+            "failureOutput": "detailed"
+          }
         },
         {
+          "id": "b06f360a-063f-49b5-8bc9-1a03b0b283e1",
           "name": "Today Morning",
-          "description": "Morning summary",
           "method": "GET",
           "url": "http://100.73.247.100:5130/morning",
-          "responseHandling": "browser",
-          "iconName": "wb_sunny"
+          "authentication": "none",
+          "contentType": "text/plain",
+          "iconName": "wb_sunny",
+          "responseHandling": {
+            "uiType": "window",
+            "successOutput": "response",
+            "failureOutput": "detailed"
+          }
         },
         {
+          "id": "e6e7df9d-8739-49d1-95c2-c062618b4680",
           "name": "Inbox Status",
-          "description": "Inbox status JSON",
           "method": "GET",
           "url": "http://100.73.247.100:5130/api/gtd/status",
-          "responseHandling": "dialog",
-          "iconName": "inbox"
+          "authentication": "none",
+          "contentType": "text/plain",
+          "iconName": "inbox",
+          "responseHandling": {
+            "uiType": "dialog",
+            "successOutput": "response",
+            "failureOutput": "detailed"
+          }
         },
         {
+          "id": "34fedd99-b84b-40fd-ab62-be2a7e6fe4be",
           "name": "GTD Health",
-          "description": "Health check",
           "method": "GET",
           "url": "http://100.73.247.100:5130/health",
-          "responseHandling": "toast",
-          "iconName": "monitor_heart"
+          "authentication": "none",
+          "contentType": "text/plain",
+          "iconName": "favorite",
+          "responseHandling": {
+            "uiType": "toast",
+            "successOutput": "response",
+            "failureOutput": "detailed"
+          }
         }
       ]
     }
