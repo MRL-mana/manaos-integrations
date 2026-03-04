@@ -60,6 +60,10 @@ HTTP_TIMEOUT = 5  # Flask API フォールバック用（短め）
 _rag_memory = None
 _rag_lock = threading.Lock()
 
+# ── EpisodicMemory 直接接続 ────────────────────────
+_episodic_memory = None
+_episodic_lock = threading.Lock()
+
 
 def _get_rag():
     """シングルトンで RAGMemoryEnhancedV2 を返す（遅延初期化）"""
@@ -75,6 +79,22 @@ def _get_rag():
                     logger.error(f"RAGMemoryEnhancedV2 初期化失敗: {e}")
                     _rag_memory = None
     return _rag_memory
+
+
+def _get_episodic():
+    """シングルトンで EpisodicMemory を返す（遅延初期化）"""
+    global _episodic_memory
+    if _episodic_memory is None:
+        with _episodic_lock:
+            if _episodic_memory is None:
+                try:
+                    from episodic_memory import EpisodicMemory
+                    _episodic_memory = EpisodicMemory()
+                    logger.info("EpisodicMemory 初期化成功")
+                except Exception as e:
+                    logger.error(f"EpisodicMemory 初期化失敗: {e}")
+                    _episodic_memory = None
+    return _episodic_memory
 
 
 # ── Flask API フォールバック（fire-and-forget）─────
@@ -98,8 +118,27 @@ def _flask_post_async(path: str, body: dict):
         pass
 
 
-def _store_to_rag(text: str, source: str = "mcp-chat") -> dict:
-    """RAGv2 に記憶を保存し、並行して Flask API にも記録"""
+def _store_to_episodic(text: str, session_id: str, source: str = "mcp-chat") -> Optional[dict]:
+    """EpisodicMemory に会話履歴を保存（fire-and-forget 用）"""
+    em = _get_episodic()
+    if em is None:
+        return None
+    try:
+        entry = em.store(
+            content=text,
+            session_id=session_id,
+            memory_type="conversation",
+            importance_score=0.7,  # MCP経由の記録は重要度高め
+            tags=[source, "mcp"],
+        )
+        return {"entry_id": entry.entry_id, "expires_at": entry.expires_at}
+    except Exception as e:
+        logger.warning(f"EpisodicMemory store エラー: {e}")
+        return None
+
+
+def _store_to_rag(text: str, source: str = "mcp-chat", session_id: Optional[str] = None) -> dict:
+    """RAGv2 + EpisodicMemory にデュアル書き込み、並行して Flask API にも記録"""
     rag = _get_rag()
     if rag is None:
         # v2 が使えない場合は Flask API に転送
@@ -135,6 +174,14 @@ def _store_to_rag(text: str, source: str = "mcp-chat") -> dict:
     except Exception as e:
         logger.warning(f"RAGv2 add_memory エラー: {e}")
         result = {"error": str(e)}
+
+    # EpisodicMemory にも並行記録（fire-and-forget）
+    _sid = session_id or f"mcp-{source}"
+    threading.Thread(
+        target=_store_to_episodic,
+        args=(text, _sid, source),
+        daemon=True,
+    ).start()
 
     # Flask APIにも並行記録（fire-and-forget）
     threading.Thread(
@@ -201,7 +248,7 @@ def _context_rag(query: str, limit: int = 5) -> dict:
 
 
 def _metrics_rag() -> dict:
-    """RAGv2 の統計情報"""
+    """RAGv2 + EpisodicMemory の統計情報"""
     rag = _get_rag()
     if rag is None:
         return {"error": "RAGMemoryEnhancedV2 が利用不可", "rag_v2_available": False}
@@ -215,7 +262,7 @@ def _metrics_rag() -> dict:
             row = cursor.fetchone()
             avg_imp = round(row[0] or 0, 3)
             max_imp = round(row[1] or 0, 3)
-        return {
+        rag_metrics = {
             "rag_v2_available": True,
             "total_entries": total,
             "avg_importance": avg_imp,
@@ -224,7 +271,20 @@ def _metrics_rag() -> dict:
             "backend": "rag_memory_v2",
         }
     except Exception as e:
-        return {"error": str(e), "rag_v2_available": True}
+        rag_metrics = {"error": str(e), "rag_v2_available": True}
+
+    # EpisodicMemory 統計
+    em = _get_episodic()
+    if em is None:
+        episodic_metrics = {"episodic_available": False}
+    else:
+        try:
+            stats = em.stats()
+            episodic_metrics = {"episodic_available": True, **stats}
+        except Exception as e:
+            episodic_metrics = {"episodic_available": True, "error": str(e)}
+
+    return {**rag_metrics, "episodic": episodic_metrics}
 
 
 # ── ヘルスチェック HTTP (mcp_common 使用) ───────────
@@ -251,12 +311,13 @@ if MCP_AVAILABLE:
             ),
             Tool(
                 name="memory_store",
-                description="テキストをManaOSメモリに保存。重要な決定・学び・コンテキスト・アクション履歴を記憶。",
+                description="テキストをManaOSメモリに保存。重要な決定・学び・コンテキスト・アクション履歴を RAGv2 + 中期記憶(EpisodicMemory) にデュアル記録。",
                 inputSchema={
                     "type": "object",
                     "properties": {
                         "text": {"type": "string", "description": "保存するテキスト"},
                         "source": {"type": "string", "description": "情報源", "default": "mcp-chat"},
+                        "session_id": {"type": "string", "description": "セッションID（エピソード記憶グループ化用）"},
                     },
                     "required": ["text"],
                 },
@@ -290,7 +351,11 @@ if MCP_AVAILABLE:
                 )
             elif name == "memory_store":
                 result = await loop.run_in_executor(
-                    None, lambda: _store_to_rag(arguments["text"], arguments.get("source", "mcp-chat"))
+                    None, lambda: _store_to_rag(
+                        arguments["text"],
+                        arguments.get("source", "mcp-chat"),
+                        arguments.get("session_id"),
+                    )
                 )
             elif name == "memory_context":
                 result = await loop.run_in_executor(

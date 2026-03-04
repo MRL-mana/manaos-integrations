@@ -25,10 +25,15 @@ _PRE_EXISTING: dict[str, object] = {}
 
 
 def _make_stub(name: str) -> types.ModuleType:
-    # 既存モジュールを保存してから上書き（teardown で戻す）
-    if name not in _PRE_EXISTING:
-        _PRE_EXISTING[name] = sys.modules.get(name)
+    # 既に実モジュールが存在する場合は上書きせずそのまま返す（後続テスト汚染防止）
+    if name in sys.modules:
+        existing = sys.modules[name]
+        if not getattr(existing, "__is_stub__", False):
+            return existing  # type: ignore[return-value]
+    # 新規スタブを注入し、teardown で除去できるよう記録する
+    _PRE_EXISTING[name] = sys.modules.get(name)
     m = types.ModuleType(name)
+    m.__is_stub__ = True  # type: ignore[attr-defined]
     sys.modules[name] = m
     _STUBS_INJECTED.append(name)
     return m
@@ -73,11 +78,59 @@ _paths_stub.MRL_MEMORY_PORT = 5105
 # requests
 import importlib
 _req = _make_stub("requests")
-_req.post = MagicMock()
-_req.get = MagicMock()
+if getattr(_req, "__is_stub__", False):
+    _req.post = MagicMock()
+    _req.get = MagicMock()
 
 # rag_memory_enhanced_v2 モック定義（後でパッチで差し替える）
 _rag_stub = _make_stub("rag_memory_enhanced_v2")
+
+
+# episodic_memory モック定義
+_ep_stub = _make_stub("episodic_memory")
+
+
+@dataclass
+class _EpisodicEntry:
+    entry_id: str = "ep001"
+    content: str = "test episode"
+    session_id: str = "s1"
+    memory_type: str = "conversation"
+    importance_score: float = 0.7
+    tags: List[str] = field(default_factory=list)
+    created_at: str = "2026-01-01T12:00:00"
+    expires_at: str = "2026-01-02T12:00:00"
+    promoted: bool = False
+    promotion_id: Optional[str] = None
+
+
+class _FakeEpisodicMemory:
+    """テスト用 EpisodicMemory スタブ"""
+
+    def __init__(self):
+        self._entries: List[_EpisodicEntry] = []
+
+    def store(self, content, session_id, memory_type="conversation",
+               importance_score=0.5, tags=None, ttl_hours=24):
+        e = _EpisodicEntry(
+            content=content,
+            session_id=session_id,
+            memory_type=memory_type,
+            importance_score=importance_score,
+            tags=tags or [],
+        )
+        self._entries.append(e)
+        return e
+
+    def stats(self):
+        return {
+            "total": len(self._entries),
+            "by_type": {"conversation": len(self._entries)},
+        }
+
+
+_ep_stub.EpisodicMemory = _FakeEpisodicMemory
+_ep_stub.EpisodicEntry = _EpisodicEntry
 
 
 @dataclass
@@ -170,10 +223,12 @@ import mrl_memory_mcp_server.server as srv  # noqa: E402
 
 @pytest.fixture(autouse=True)
 def reset_rag_singleton():
-    """各テスト前後に _rag_memory シングルトンをリセット"""
+    """各テスト前後に _rag_memory / _episodic_memory シングルトンをリセット"""
     srv._rag_memory = None
+    srv._episodic_memory = None
     yield
     srv._rag_memory = None
+    srv._episodic_memory = None
 
 
 @pytest.fixture()
@@ -182,6 +237,14 @@ def fake_rag():
     rag = _FakeRAG()
     srv._rag_memory = rag
     return rag
+
+
+@pytest.fixture()
+def fake_episodic():
+    """_episodic_memory に FakeEpisodicMemory を注入し、それを返す"""
+    em = _FakeEpisodicMemory()
+    srv._episodic_memory = em
+    return em
 
 
 # ─── _get_rag() ──────────────────────────────────────────────────────────────
@@ -404,6 +467,101 @@ class TestFlaskPostAsync:
         srv._requests = mock_requests
         srv._flask_post_async("/api/memory/process", {"text": "x"})  # 例外が出ないこと
         srv._requests = original
+
+
+# ─── _store_to_episodic() ────────────────────────────────────────────────────
+
+class TestStoreToEpisodic:
+    def test_stores_entry(self, fake_episodic):
+        result = srv._store_to_episodic("会話テスト", session_id="ses1")
+        assert result is not None
+        assert "entry_id" in result
+        assert len(fake_episodic._entries) == 1
+
+    def test_session_id_passed(self, fake_episodic):
+        srv._store_to_episodic("セッションテスト", session_id="ses-abc")
+        assert fake_episodic._entries[0].session_id == "ses-abc"
+
+    def test_memory_type_is_conversation(self, fake_episodic):
+        srv._store_to_episodic("タイプチェック", session_id="s1")
+        assert fake_episodic._entries[0].memory_type == "conversation"
+
+    def test_importance_score_0_7(self, fake_episodic):
+        srv._store_to_episodic("重要度チェック", session_id="s1")
+        assert fake_episodic._entries[0].importance_score == 0.7
+
+    def test_returns_none_when_episodic_unavailable(self):
+        srv._episodic_memory = None
+        original = _ep_stub.EpisodicMemory
+        _ep_stub.EpisodicMemory = None  # type: ignore
+        result = srv._store_to_episodic("unavailable test", session_id="s1")
+        assert result is None
+        _ep_stub.EpisodicMemory = original
+
+    def test_no_crash_on_store_error(self, fake_episodic):
+        fake_episodic.store = MagicMock(side_effect=RuntimeError("broken"))
+        result = srv._store_to_episodic("エラーテスト", session_id="s1")
+        assert result is None  # エラーでも None を返す（例外を上位に伝播しない）
+
+
+# ─── デュアルライト（RAGv2 + EpisodicMemory 同時記録） ────────────────────────
+
+class TestDualWrite:
+    def test_rag_and_episodic_both_written(self, fake_rag, fake_episodic):
+        srv._store_to_rag("デュアル書き込みテスト", source="test", session_id="ses1")
+        import time; time.sleep(0.1)
+        # RAGv2 に記録される
+        assert len(fake_rag._entries) == 1
+        # EpisodicMemory にも記録される
+        assert len(fake_episodic._entries) == 1
+
+    def test_session_id_forwarded_to_episodic(self, fake_rag, fake_episodic):
+        srv._store_to_rag("セッションID転送テスト", source="src", session_id="custom-session")
+        import time; time.sleep(0.1)
+        assert fake_episodic._entries[0].session_id == "custom-session"
+
+    def test_default_session_id_from_source(self, fake_rag, fake_episodic):
+        srv._store_to_rag("デフォルトセッションテスト", source="my-source")
+        import time; time.sleep(0.1)
+        assert fake_episodic._entries[0].session_id == "mcp-my-source"
+
+    def test_rag_store_still_succeeds_even_if_episodic_fails(self, fake_rag):
+        """episodic が失敗しても RAGv2 への書き込みは成功する"""
+        broken_em = _FakeEpisodicMemory()
+        broken_em.store = MagicMock(side_effect=RuntimeError("episodic broken"))
+        srv._episodic_memory = broken_em
+        result = srv._store_to_rag("耐障害テスト", source="test")
+        assert result["status"] == "stored"  # RAGv2 は成功
+        assert len(fake_rag._entries) == 1
+
+
+# ─── _metrics_rag() episodic フィールド ─────────────────────────────────────
+
+class TestMetricsEpisodic:
+    def test_metrics_contains_episodic_key(self, fake_rag, fake_episodic):
+        result = srv._metrics_rag()
+        assert "episodic" in result
+
+    def test_episodic_available_true(self, fake_rag, fake_episodic):
+        result = srv._metrics_rag()
+        assert result["episodic"]["episodic_available"] is True
+
+    def test_episodic_total_zero_initially(self, fake_rag, fake_episodic):
+        result = srv._metrics_rag()
+        assert result["episodic"]["total"] == 0
+
+    def test_episodic_total_after_store(self, fake_rag, fake_episodic):
+        fake_episodic.store("test", session_id="s1")
+        result = srv._metrics_rag()
+        assert result["episodic"]["total"] == 1
+
+    def test_episodic_unavailable_when_none(self, fake_rag):
+        srv._episodic_memory = None
+        original = _ep_stub.EpisodicMemory
+        _ep_stub.EpisodicMemory = None  # type: ignore
+        result = srv._metrics_rag()
+        assert result["episodic"]["episodic_available"] is False
+        _ep_stub.EpisodicMemory = original
 
 
 # --- teardown: 注入したスタブを除去して他テストへの汚染を防止 ---
