@@ -64,6 +64,7 @@ $env:HF_HUB_DISABLE_PROGRESS_BARS = "1"
 $env:TQDM_DISABLE                 = "1"
 $env:PYTORCH_CUDA_ALLOC_CONF      = "expandable_segments:True"
 $env:PYTHONUNBUFFERED             = "1"
+if ($env:TRANSFORMERS_CACHE) { $env:HF_HOME = $env:TRANSFORMERS_CACHE }
 
 # ── 5) 学習引数 ────────────────────────────────────────────────────────────────
 $trainArgs = @(
