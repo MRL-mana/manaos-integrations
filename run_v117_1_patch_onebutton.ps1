@@ -31,19 +31,20 @@ if (-not $pythonExe -or -not (Test-Path $pythonExe)) { throw "python -3.10 not f
 
 # v1.1.7.1 固有パス
 $baseModel    = "D:\castle_ex_training\castle_ex_v1_1"
-$initLoraFrom = "D:\castle_ex_training\lora_castle_ex_layer2_v1_1_7_patch"  # v1.1.7 checkpoint-300 を起点
 $outputDir    = "D:\castle_ex_training\lora_castle_ex_layer2_v1_1_7_1_patch"
 $trainJsonl   = Join-Path $root "castle_ex_dataset_layer2_lora_v1_1_7_1_train.jsonl"
 $evalJsonl    = Join-Path $root "castle_ex_dataset_layer2_lora_v1_1_6_audit100.jsonl"
+
+# init-lora: v1.1.7 checkpoint-300 を起点（なければ root）
+$v117outDir    = "D:\castle_ex_training\lora_castle_ex_layer2_v1_1_7_patch"
+$v117ck300     = Join-Path $v117outDir "checkpoint-300"
+$initLoraFrom  = if (Test-Path $v117ck300) { $v117ck300 } else { $v117outDir }
+Write-Host "[init-lora] from: $initLoraFrom"
 
 # 必須パス確認
 foreach ($p in @($baseModel, $trainJsonl, $evalJsonl)) {
     if (-not (Test-Path $p)) { throw "required path not found: $p" }
 }
-# initLoraFrom は checkpoint-300 で確認
-$initLoraFrom300 = Join-Path $initLoraFrom "checkpoint-300"
-$srcLora = if (Test-Path $initLoraFrom300) { $initLoraFrom300 } else { $initLoraFrom }
-Write-Host "[init-lora] from: $srcLora"
 
 # 出力ディレクトリ作成
 if (-not (Test-Path $outputDir)) { New-Item -ItemType Directory -Path $outputDir -Force | Out-Null }
@@ -53,7 +54,7 @@ if (-not (Test-Path $outputDir)) { New-Item -ItemType Directory -Path $outputDir
     "v1.1.7.1 patch training"
     "started: $(Get-Date -Format 's')"
     "base: $baseModel"
-    "init_lora: $srcLora"
+    "init_lora: $initLoraFrom"
     "output: $outputDir"
     "train: $trainJsonl"
     "lines: $((Get-Content $trainJsonl | Measure-Object -Line).Lines)"
@@ -66,41 +67,55 @@ if ($DryRun) {
     exit 0
 }
 
-# ── 学習プロセス起動 ──────────────────────────────────
+# ── 環境変数 ────────────────────────────────────────────
+$env:HF_HUB_DISABLE_PROGRESS_BARS = "1"
+$env:TQDM_DISABLE                 = "1"
+$env:PYTORCH_CUDA_ALLOC_CONF      = "expandable_segments:True"
+$env:PYTHONUNBUFFERED             = "1"
+
+# ── 学習引数（run_v117_onebutton.ps1 と同一構造）────────
 $trainArgs = @(
-    "-3.10", "-u",
-    (Join-Path $root "scripts\train\train_castle_ex_lora.py"),
-    "--base-model",      $baseModel,
-    "--init-lora-from",  $srcLora,
-    "--output-dir",      $outputDir,
-    "--train-data",      $trainJsonl,
-    "--eval-data",       $evalJsonl,
-    "--max-steps",       $MaxSteps,
-    "--save-steps",      $SaveSteps,
-    "--eval-steps",      $EvalSteps,
-    "--max-length",      $MaxLength,
-    "--batch-size",      $BatchSize,
-    "--gradient-accumulation-steps", $GradientAccumulationSteps,
-    "--device-map",      "cuda:0"
+    "-u",
+    "castle_ex\train_castle_ex_lora.py",
+    "--base-model",                   $baseModel,
+    "--init-lora-from",               $initLoraFrom,
+    "--train-data",                   $trainJsonl,
+    "--eval-data",                    $evalJsonl,
+    "--output-dir",                   $outputDir,
+    "--lora-r",                       "16",
+    "--lora-alpha",                   "32",
+    "--lora-dropout",                 "0.05",
+    "--target-modules",               "q_proj,k_proj,v_proj,o_proj",
+    "--max-length",                   "$MaxLength",
+    "--batch-size",                   "$BatchSize",
+    "--gradient-accumulation-steps",  "$GradientAccumulationSteps",
+    "--learning-rate",                "2e-4",
+    "--max-steps",                    "$MaxSteps",
+    "--save-steps",                   "$SaveSteps",
+    "--eval-steps",                   "$EvalSteps",
+    "--fp16"
 )
-$trainProc = Start-Process "py.exe" -ArgumentList $trainArgs `
+$trainProc = Start-Process -FilePath $pythonExe -ArgumentList $trainArgs `
+    -WorkingDirectory $root `
     -RedirectStandardOutput $stdoutLog `
     -RedirectStandardError  $stderrLog `
-    -NoNewWindow -PassThru
-Write-Host "[v1.1.7.1] train PID=$($trainProc.Id)"
+    -PassThru
+Write-Host "[OK] launched v1.1.7.1 patch training"
+Write-Host "  pid    : $($trainProc.Id)"
 Write-Host "  stdout : $stdoutLog"
 Write-Host "  stderr : $stderrLog"
 Write-Host "  launch : $launchLog"
 
 # ── モニター起動 ──────────────────────────────────────
 if (-not $NoMonitor) {
-    $monArgs = @(
-        "-ExecutionPolicy", "Bypass",
-        "-File", $monitorScript,
-        "-OutDir", $outputDir,
-        "-CheckpointStep", $MaxSteps
-    )
-    $monProc = Start-Process "powershell" -ArgumentList $monArgs -NoNewWindow -PassThru
-    Write-Host "[v1.1.7.1] monitor PID=$($monProc.Id)"
+    if (Test-Path $monitorScript) {
+        $mon = Start-Process -FilePath "powershell" `
+            -ArgumentList @("-ExecutionPolicy","Bypass","-File",$monitorScript,`
+                            "-OutDir",$outputDir,"-CheckpointStep","$MaxSteps","-PollSec","60") `
+            -WorkingDirectory $root -PassThru
+        Write-Host "[OK] monitor PID=$($mon.Id) checkpoint=$MaxSteps"
+    } else {
+        Write-Host "[WARN] monitor script not found: $monitorScript"
+    }
 }
 Write-Host "`n[READY] gate JSON → auto_gate_check_and_deploy_v117.ps1 で判定"
