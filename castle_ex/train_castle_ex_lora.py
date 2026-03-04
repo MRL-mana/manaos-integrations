@@ -456,7 +456,10 @@ def main():
         logging_dir=args.output_dir + "/logs",
         fp16=use_fp16,
         gradient_checkpointing=not args.no_cuda,  # VRAM削減 (GPU時のみ)
-        gradient_checkpointing_kwargs={"use_reentrant": False},
+        # use_reentrant=False + preserve_rng_state=False:
+        # RTX5080 Blackwell (SM120) で fork_rng→set_rng_state が cudaErrorIllegalAddress を起こすため
+        # preserve_rng_state=False で fork_rng をスキップ (DropoutなしLoRAでは品質影響なし)
+        gradient_checkpointing_kwargs={"use_reentrant": False, "preserve_rng_state": False},
         report_to="none",
         remove_unused_columns=False,
         load_best_model_at_end=False,
