@@ -214,6 +214,117 @@ class _FakeRAG:
 
 _rag_stub.RAGMemoryEnhancedV2 = _FakeRAG
 
+# ─── lessons_recorder スタブ ─────────────────────────────────────────────────
+
+_lr_stub = _make_stub("lessons_recorder")
+
+
+@dataclass
+class _LessonEntry:
+    lesson_id: str = "lr001"
+    instruction: str = "test instruction"
+    category: str = "other"
+    trigger_text: str = ""
+    session_id: str = ""
+    created_at: str = "2026-01-01T12:00:00"
+    access_count: int = 0
+    last_accessed_at: str = ""
+    tags: List[str] = field(default_factory=list)
+
+
+class _FakeLessonsRecorder:
+    def __init__(self):
+        self._lessons: List[_LessonEntry] = []
+
+    def record_lesson(self, instruction, category="other", trigger_text="",
+                      session_id="", tags=None):
+        # 重複チェック（instructionが同じならaccess_count+1）
+        for l in self._lessons:
+            if l.instruction == instruction:
+                l.access_count += 1
+                return l
+        e = _LessonEntry(
+            lesson_id=f"lr{len(self._lessons):03d}",
+            instruction=instruction,
+            category=category,
+            trigger_text=trigger_text,
+            session_id=session_id,
+            tags=tags or [],
+        )
+        self._lessons.append(e)
+        return e
+
+    def search_lessons(self, query="", category=None, limit=10):
+        results = self._lessons
+        if query:
+            results = [l for l in results if query in l.instruction]
+        if category:
+            results = [l for l in results if l.category == category]
+        return results[:limit]
+
+    def get_context_text(self, limit=10, category=None):
+        lessons = self.search_lessons(limit=limit, category=category)
+        if not lessons:
+            return "（教訓なし）"
+        return "\n".join(f"- {l.instruction}" for l in lessons)
+
+    def stats(self):
+        return {"total": len(self._lessons)}
+
+
+# リアルモジュールが既にある場合は Lesson を上書きしない
+if getattr(_lr_stub, "__is_stub__", False):
+    _lr_stub.LessonsRecorder = _FakeLessonsRecorder
+    _lr_stub.Lesson = _LessonEntry
+
+# ─── agent_tracker スタブ（_UsageRecord/_AgentStats/_FakeAgentTracker 先に定義）─
+
+@dataclass
+class _UsageRecord:
+    agent_name: str = "test-agent"
+    task_summary: str = ""
+    session_id: str = ""
+    recorded_at: str = "2026-01-01T12:00:00"
+
+
+@dataclass
+class _AgentStats:
+    agent_name: str = "test-agent"
+    total_uses: int = 0
+    rank: str = "N"
+    last_used_at: str = ""
+    days_since_use: Optional[int] = None
+    is_parking_candidate: bool = True
+
+
+class _FakeAgentTracker:
+    def __init__(self):
+        self._records: List[_UsageRecord] = []
+
+    def track(self, agent_name, task_summary="", session_id=""):
+        r = _UsageRecord(agent_name=agent_name, task_summary=task_summary, session_id=session_id)
+        self._records.append(r)
+        return r
+
+    def get_stats(self, agent_name):
+        count = sum(1 for r in self._records if r.agent_name == agent_name)
+        return _AgentStats(agent_name=agent_name, total_uses=count,
+                           rank="N-B" if count >= 5 else ("N-C" if count >= 1 else "N"))
+
+    def audit_agents_dir(self, agents_dir=None):
+        return {"total": 0, "passing": 0, "failing": 0, "results": [], "low_quality": []}
+
+    def stats(self):
+        return {"total_agents": len({r.agent_name for r in self._records})}
+
+
+_at_stub = _make_stub("agent_tracker")
+if getattr(_at_stub, "__is_stub__", False):
+    _at_stub.AgentTracker = _FakeAgentTracker
+    _at_stub.UsageRecord = _UsageRecord
+    _at_stub.AgentStats = _AgentStats
+
+
 # ─── server モジュールをリセットしてインポート ───────────────────────────────
 
 if "mrl_memory_mcp_server.server" in sys.modules:
@@ -228,12 +339,16 @@ import mrl_memory_mcp_server.server as srv  # noqa: E402
 
 @pytest.fixture(autouse=True)
 def reset_rag_singleton():
-    """各テスト前後に _rag_memory / _episodic_memory シングルトンをリセット"""
+    """各テスト前後にシングルトンをリセット"""
     srv._rag_memory = None
     srv._episodic_memory = None
+    srv._lessons_recorder = None
+    srv._agent_tracker = None
     yield
     srv._rag_memory = None
     srv._episodic_memory = None
+    srv._lessons_recorder = None
+    srv._agent_tracker = None
 
 
 @pytest.fixture()
@@ -250,6 +365,22 @@ def fake_episodic():
     em = _FakeEpisodicMemory()
     srv._episodic_memory = em
     return em
+
+
+@pytest.fixture()
+def fake_lessons():
+    """_lessons_recorder に FakeLessonsRecorder を注入し、それを返す"""
+    lr = _FakeLessonsRecorder()
+    srv._lessons_recorder = lr
+    return lr
+
+
+@pytest.fixture()
+def fake_tracker():
+    """_agent_tracker に FakeAgentTracker を注入し、それを返す"""
+    tracker = _FakeAgentTracker()
+    srv._agent_tracker = tracker
+    return tracker
 
 
 # ─── _get_rag() ──────────────────────────────────────────────────────────────
@@ -567,6 +698,106 @@ class TestMetricsEpisodic:
         result = srv._metrics_rag()
         assert result["episodic"]["episodic_available"] is False
         _ep_stub.EpisodicMemory = original
+
+
+# ─── _record_lesson() ────────────────────────────────────────────────────────
+
+class TestRecordLesson:
+    def test_basic_record(self, fake_lessons):
+        result = srv._record_lesson("コードを省略しない")
+        assert result["status"] == "recorded"
+        assert "lesson_id" in result
+
+    def test_instruction_stored(self, fake_lessons):
+        result = srv._record_lesson("テスト教訓")
+        assert result["instruction"] == "テスト教訓"
+
+    def test_category_stored(self, fake_lessons):
+        result = srv._record_lesson("フォーマット", category="output_format")
+        assert result["category"] == "output_format"
+
+    def test_duplicate_increments_access_count(self, fake_lessons):
+        srv._record_lesson("同じ教訓")
+        result2 = srv._record_lesson("同じ教訓")
+        # _FakeLessonsRecorder は重複で access_count+1 → 2回目は 1
+        assert result2["access_count"] >= 1
+
+    def test_lessons_unavailable_returns_error(self, monkeypatch):
+        monkeypatch.setattr(srv, "_get_lessons", lambda: None)
+        result = srv._record_lesson("失敗テスト")
+        assert "error" in result
+
+
+# ─── _search_lessons() ────────────────────────────────────────────────────────
+
+class TestSearchLessons:
+    def test_empty_returns_context(self, fake_lessons):
+        result = srv._search_lessons()
+        assert "context" in result
+        assert "lessons" in result
+
+    def test_stored_lesson_appears(self, fake_lessons):
+        fake_lessons.record_lesson("Python を使う")
+        result = srv._search_lessons(query="Python")
+        assert result["count"] == 1
+
+    def test_category_filter(self, fake_lessons):
+        fake_lessons.record_lesson("フォーマット守る", category="output_format")
+        result = srv._search_lessons(category="output_format")
+        assert result["count"] >= 1
+
+    def test_limit_applies(self, fake_lessons):
+        for i in range(5):
+            fake_lessons.record_lesson(f"lesson {i}")
+        result = srv._search_lessons(limit=2)
+        assert result["count"] <= 2
+
+    def test_lessons_unavailable_returns_error(self, monkeypatch):
+        monkeypatch.setattr(srv, "_get_lessons", lambda: None)
+        result = srv._search_lessons()
+        assert "error" in result
+
+
+# ─── _track_agent() ───────────────────────────────────────────────────────────
+
+class TestTrackAgent:
+    def test_returns_tracked_status(self, fake_tracker):
+        result = srv._track_agent("my-agent")
+        assert result["status"] == "tracked"
+
+    def test_agent_name_in_result(self, fake_tracker):
+        result = srv._track_agent("agent-x")
+        assert result["agent_name"] == "agent-x"
+
+    def test_rank_returned(self, fake_tracker):
+        result = srv._track_agent("agent-r")
+        assert "rank" in result
+
+    def test_total_uses_returned(self, fake_tracker):
+        result = srv._track_agent("agent-r")
+        assert "total_uses" in result
+
+    def test_tracker_unavailable_returns_error(self, monkeypatch):
+        monkeypatch.setattr(srv, "_get_tracker", lambda: None)
+        result = srv._track_agent("ghost-agent")
+        assert "error" in result
+
+
+# ─── _audit_agents() ──────────────────────────────────────────────────────────
+
+class TestAuditAgents:
+    def test_returns_total(self, fake_tracker):
+        result = srv._audit_agents()
+        assert "total" in result
+
+    def test_tracker_unavailable_returns_error(self, monkeypatch):
+        monkeypatch.setattr(srv, "_get_tracker", lambda: None)
+        result = srv._audit_agents()
+        assert "error" in result
+
+    def test_custom_dir_passed(self, fake_tracker):
+        result = srv._audit_agents(agents_dir="/tmp/test_agents")
+        assert "total" in result
 
 
 # --- teardown: 注入したスタブを除去して他テストへの汚染を防止 ---

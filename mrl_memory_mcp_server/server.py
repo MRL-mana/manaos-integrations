@@ -64,6 +64,14 @@ _rag_lock = threading.Lock()
 _episodic_memory = None
 _episodic_lock = threading.Lock()
 
+# ── LessonsRecorder 直接接続 ──────────────────────
+_lessons_recorder = None
+_lessons_lock = threading.Lock()
+
+# ── AgentTracker 直接接続 ──────────────────────────
+_agent_tracker = None
+_agent_tracker_lock = threading.Lock()
+
 
 def _get_rag():
     """シングルトンで RAGMemoryEnhancedV2 を返す（遅延初期化）"""
@@ -95,6 +103,38 @@ def _get_episodic():
                     logger.error(f"EpisodicMemory 初期化失敗: {e}")
                     _episodic_memory = None
     return _episodic_memory
+
+
+def _get_lessons():
+    """シングルトンで LessonsRecorder を返す（遅延初期化）"""
+    global _lessons_recorder
+    if _lessons_recorder is None:
+        with _lessons_lock:
+            if _lessons_recorder is None:
+                try:
+                    from lessons_recorder import LessonsRecorder
+                    _lessons_recorder = LessonsRecorder()
+                    logger.info("LessonsRecorder 初期化成功")
+                except Exception as e:
+                    logger.error(f"LessonsRecorder 初期化失敗: {e}")
+                    _lessons_recorder = None
+    return _lessons_recorder
+
+
+def _get_tracker():
+    """シングルトンで AgentTracker を返す（遅延初期化）"""
+    global _agent_tracker
+    if _agent_tracker is None:
+        with _agent_tracker_lock:
+            if _agent_tracker is None:
+                try:
+                    from agent_tracker import AgentTracker
+                    _agent_tracker = AgentTracker()
+                    logger.info("AgentTracker 初期化成功")
+                except Exception as e:
+                    logger.error(f"AgentTracker 初期化失敗: {e}")
+                    _agent_tracker = None
+    return _agent_tracker
 
 
 # ── Flask API フォールバック（fire-and-forget）─────
@@ -247,6 +287,96 @@ def _context_rag(query: str, limit: int = 5) -> dict:
     }
 
 
+def _record_lesson(
+    instruction: str,
+    category: str = "other",
+    trigger_text: str = "",
+    session_id: str = "",
+) -> dict:
+    """指摘・訂正を教訓として記録する"""
+    lr = _get_lessons()
+    if lr is None:
+        return {"error": "LessonsRecorder が利用不可"}
+    try:
+        lesson = lr.record_lesson(
+            instruction=instruction,
+            category=category,
+            trigger_text=trigger_text,
+            session_id=session_id,
+        )
+        return {
+            "status": "recorded",
+            "lesson_id": lesson.lesson_id,
+            "instruction": lesson.instruction,
+            "category": lesson.category,
+            "access_count": lesson.access_count,
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def _search_lessons(query: str = "", category: Optional[str] = None, limit: int = 10) -> dict:
+    """過去の教訓・失敗パターンを検索する"""
+    lr = _get_lessons()
+    if lr is None:
+        return {"error": "LessonsRecorder が利用不可"}
+    try:
+        lessons = lr.search_lessons(query=query, category=category, limit=limit)
+        context = lr.get_context_text(limit=limit, category=category)
+        return {
+            "query": query,
+            "count": len(lessons),
+            "context": context,
+            "lessons": [
+                {
+                    "lesson_id": l.lesson_id,
+                    "instruction": l.instruction,
+                    "category": l.category,
+                    "access_count": l.access_count,
+                    "created_at": l.created_at,
+                }
+                for l in lessons
+            ],
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def _track_agent(agent_name: str, task_summary: str = "", session_id: str = "") -> dict:
+    """エージェント使用をトラッキングする"""
+    tracker = _get_tracker()
+    if tracker is None:
+        return {"error": "AgentTracker が利用不可"}
+    try:
+        record = tracker.track(
+            agent_name=agent_name,
+            task_summary=task_summary,
+            session_id=session_id,
+        )
+        stats = tracker.get_stats(agent_name)
+        return {
+            "status": "tracked",
+            "agent_name": agent_name,
+            "rank": stats.rank,
+            "total_uses": stats.total_uses,
+            "recorded_at": record.recorded_at,
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def _audit_agents(agents_dir: Optional[str] = None) -> dict:
+    """エージェント品質スコアを確認する"""
+    tracker = _get_tracker()
+    if tracker is None:
+        return {"error": "AgentTracker が利用不可"}
+    try:
+        result = tracker.audit_agents_dir(agents_dir=agents_dir)
+        return result
+    except Exception as e:
+        return {"error": str(e)}
+
+
 def _metrics_rag() -> dict:
     """RAGv2 + EpisodicMemory の統計情報"""
     rag = _get_rag()
@@ -339,6 +469,59 @@ if MCP_AVAILABLE:
                 description="MRL Memory (RAGv2) のメトリクス・統計情報を取得。",
                 inputSchema={"type": "object", "properties": {}},
             ),
+            Tool(
+                name="lessons_record",
+                description="指摘・訂正・失敗パターンを教訓として永続記録する。セッション開始時に自動注入して同じミスを繰り返さない。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "instruction": {"type": "string", "description": "教訓テキスト（例: コードブロックを省略しない）"},
+                        "category": {
+                            "type": "string",
+                            "description": "カテゴリ: output_format / behavior / technical / context / other",
+                            "default": "other",
+                        },
+                        "trigger_text": {"type": "string", "description": "指摘を引き起こした元テキスト（任意）", "default": ""},
+                        "session_id": {"type": "string", "description": "セッションID（任意）", "default": ""},
+                    },
+                    "required": ["instruction"],
+                },
+            ),
+            Tool(
+                name="lessons_search",
+                description="過去の教訓・失敗パターンを検索してセッション注入テキストを生成する。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "検索クエリ（空文字で全件取得）", "default": ""},
+                        "category": {"type": "string", "description": "カテゴリでフィルタ（任意）"},
+                        "limit": {"type": "integer", "description": "取得件数", "default": 10},
+                    },
+                },
+            ),
+            Tool(
+                name="agent_track",
+                description="Claudeエージェントの使用をトラッキングしランク（N/N-C/N-B/N-A/N-S）を更新する。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "agent_name": {"type": "string", "description": "エージェント名"},
+                        "task_summary": {"type": "string", "description": "タスク概要（任意）", "default": ""},
+                        "session_id": {"type": "string", "description": "セッションID（任意）", "default": ""},
+                    },
+                    "required": ["agent_name"],
+                },
+            ),
+            Tool(
+                name="agent_audit",
+                description="エージェント定義ファイル（.md）を品質スコアリング（100点満点）してフィードバックを返す。",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "agents_dir": {"type": "string", "description": "エージェントディレクトリパス（省略で~/.claude/agents）"},
+                    },
+                },
+            ),
         ]
 
     @server.call_tool()
@@ -363,6 +546,35 @@ if MCP_AVAILABLE:
                 )
             elif name == "memory_metrics":
                 result = await loop.run_in_executor(None, _metrics_rag)
+            elif name == "lessons_record":
+                result = await loop.run_in_executor(
+                    None, lambda: _record_lesson(
+                        arguments["instruction"],
+                        arguments.get("category", "other"),
+                        arguments.get("trigger_text", ""),
+                        arguments.get("session_id", ""),
+                    )
+                )
+            elif name == "lessons_search":
+                result = await loop.run_in_executor(
+                    None, lambda: _search_lessons(
+                        arguments.get("query", ""),
+                        arguments.get("category"),
+                        arguments.get("limit", 10),
+                    )
+                )
+            elif name == "agent_track":
+                result = await loop.run_in_executor(
+                    None, lambda: _track_agent(
+                        arguments["agent_name"],
+                        arguments.get("task_summary", ""),
+                        arguments.get("session_id", ""),
+                    )
+                )
+            elif name == "agent_audit":
+                result = await loop.run_in_executor(
+                    None, lambda: _audit_agents(arguments.get("agents_dir"))
+                )
             else:
                 result = {"error": f"不明なツール: {name}"}
 
