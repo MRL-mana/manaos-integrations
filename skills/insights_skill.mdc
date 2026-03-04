@@ -1,0 +1,82 @@
+---
+name: insights
+description: Zettelkasten から洞察を抽出 - パターン検索・関連ノートのクラスタリング・仮説生成
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "run_terminal_cmd"
+---
+
+# /insights - 洞察の抽出
+
+**目的**: Zettelkasten と GTD の蓄積データから「気づいていなかったパターン・接続・仮説」を発見します。
+
+## 使用方法
+
+```
+/insights [テーマ（省略可）]
+```
+
+## 実行手順
+
+### Step 1: Permanent ノートの全文スキャン
+
+```bash
+ls zettelkasten/permanent/*.md 2>/dev/null | wc -l
+grep -h "^## タグ" zettelkasten/permanent/*.md | sort | uniq -c | sort -rn | head -20
+```
+
+頻出タグ・トピックのマップを作成。
+
+### Step 2: クラスタリング
+
+タグや本文キーワードで関連ノート群を特定。
+「孤立しているノート」（リンクゼロ）を発見する。
+
+### Step 3: 接続の提案
+
+孤立ノートと他ノートの接続候補を提案:
+「AノートとBノートはXという観点で繋げられそうです」
+
+### Step 4: 未検討の問いを発見
+
+複数ノートが共通して指し示すが、まだ独立したノートになっていないアイデアを特定。
+→ 新しい `/zettel` の候補として提案。
+
+### Step 5: GTD との接続
+
+Zettelkasten の洞察が、現在の Projects や Next Actions にどう活きるかをマッピング。
+
+### Step 6: 洞察レポート保存
+
+`zettelkasten/permanent/YYYYMMDD_insights_report.md` に保存:
+
+```markdown
+# 洞察レポート YYYY-MM-DD
+
+## 分析範囲
+- Permanent notes: N件
+- 主要トピック: 
+
+## 発見したパターン
+1. 
+
+## 新しい接続候補
+- A ↔ B: 
+
+## 次の `/zettel` 候補
+- 
+
+## GTD への示唆
+- 
+```
+
+## MANAOS RL-Anything との統合
+
+`rl_anything/` の学習ログと組み合わせることで、
+システム改善のパターンをZettelkastenに取り込めます。

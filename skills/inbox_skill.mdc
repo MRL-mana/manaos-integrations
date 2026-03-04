@@ -1,0 +1,59 @@
+---
+name: inbox
+description: GTD Inboxを処理 - 各アイテムを振り分け・削除・next-actions化
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# /inbox - Inbox の処理
+
+**目的**: `gtd/inbox/` に溜まったアイテムをGTDの5ステップで振り分けます。
+
+## 実行手順
+
+### Step 1: Inbox の全ファイルを一覧表示
+
+```bash
+ls gtd/inbox/*.md 2>/dev/null | head -30
+```
+
+### Step 2: 各アイテムに対してインタラクティブに判断
+
+各アイテムについて以下の質問をする:
+
+```
+1. これは何か？（明確化）
+2. アクションが必要か？
+   → NO: 参照・いつか/また・削除
+   → YES: 2分以内にできる？即やる / 次のアクション（Next Actions）/ 誰かに委任（Waiting）
+3. プロジェクトになるか？（2ステップ以上）
+```
+
+### Step 3: 振り分け実行
+
+| 判断 | 移動先 |
+|------|--------|
+| 次のアクション | `gtd/next-actions/items/` |
+| プロジェクト | `gtd/projects/items/<slug>/` |
+| 待ち | `gtd/waiting/` |
+| いつかやる | `gtd/someday/` |
+| 知識メモ | `zettelkasten/fleeting/` |
+| 不要 | 削除 |
+
+### Step 4: 完了報告
+
+処理したアイテム数・振り分け先の内訳をサマリ表示。
+
+## MANAOS File Secretary との統合
+
+`00_INBOX/` に投下したファイルは File Secretary が自動処理します。
+GTD inbox (`gtd/inbox/`) は **AIとの対話で判断が必要なアイテム** 専用です。

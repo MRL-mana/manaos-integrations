@@ -1,0 +1,73 @@
+---
+name: zettel
+description: Zettelkasten ノートの作成 - 原子的アイデアをPermanentノートとして記録
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# /zettel - Zettelkasten ノート作成
+
+**目的**: 1つのアイデアを「永久ノート（Permanent Note）」として Zettelkasten に追加します。
+既存ノートとのリンクを見つけ、知識ネットワークを育てます。
+
+## 使用方法
+
+```
+/zettel [アイデアのタイトルまたは内容]
+```
+
+## 実行手順
+
+### Step 1: アイデアを1文で定義
+
+「このノートが答える問いは何か？」を明確にする。
+
+### Step 2: 既存ノートとの接続を検索
+
+```bash
+grep -r "[キーワード]" zettelkasten/permanent/ --include="*.md" -l
+grep -r "[キーワード]" zettelkasten/literature/ --include="*.md" -l
+```
+
+関連ノートを3〜5件ピックアップ。
+
+### Step 3: Permanent ノートを作成
+
+`zettelkasten/permanent/YYYYMMDD_<slug>.md`:
+
+```markdown
+# [タイトル]
+
+## 本文
+（自分の言葉で、1アイデアを完結に記述。200-400字程度）
+
+## なぜこれが重要か
+（このアイデアの価値・応用・示唆）
+
+## 参照元
+- [[literature/YYYYMMDD_...]]
+- （URL / 書籍名）
+
+## 関連ノート
+- [[permanent/YYYYMMDD_...]] - （どう関連するか1行で）
+
+## タグ
+#zettelkasten #<topic1> #<topic2>
+```
+
+### Step 4: 関連ノートの末尾にバックリンクを追加
+
+既存ノートの「関連ノート」セクションに今回のノートへのリンクを追記。
+
+### Step 5: Fleeting noteがあれば移動・削除
+
+元になった `zettelkasten/fleeting/` のメモを削除またはアーカイブ。

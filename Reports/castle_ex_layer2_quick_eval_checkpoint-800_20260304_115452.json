@@ -1,0 +1,298 @@
+{
+  "summary": {
+    "total": 20,
+    "correct": 20,
+    "acc": 1.0,
+    "invalid": 0,
+    "by_layer": {
+      "2": {
+        "total": 20,
+        "correct": 20,
+        "acc": 1.0,
+        "invalid": 0
+      }
+    }
+  },
+  "details": [
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "93f0ed6b43f1",
+      "gold": "ピットの危険度は中です。 はい。",
+      "pred": "ピット の 危険度 は？ ピットの危険度は中です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "verbose_echo",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "bf6d1a73faa3",
+      "gold": "オイル の 大きさ は？ オイルの大きさは赤です。",
+      "pred": "オイル の 大きさ は？ オイルの大きさは赤です。 駐車まずは給油の方が䊧します。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "verbose_echo",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "bf6d1a73faa3",
+      "gold": "オイル の 大きさ は？ オイルの大きさは赤です。",
+      "pred": "オイル の 大きさ は？ オイルの大きさは赤です。 駐車まずは給油の方が䊧します。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "28ea8f442d52",
+      "gold": "オイル交換の優先度は小さいです。 はい。",
+      "pred": "オイル交換 の 優先度 は？ オイル交換の優先度は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "28ea8f442d52",
+      "gold": "オイル交換の優先度は小さいです。 はい。",
+      "pred": "オイル交換 の 優先度 は？ オイル交換の優先度は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "repeat_phrase",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "d45c7abd8ce6",
+      "gold": "レジの色は低いです。 レジの色は低いです。",
+      "pred": "レジ の 色 は？ レジの色は低いです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "repeat_phrase",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "d45c7abd8ce6",
+      "gold": "レジの色は低いです。 レジの色は低いです。",
+      "pred": "レジ の 色 は？ レジの色は低いです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "repeat_phrase",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "d45c7abd8ce6",
+      "gold": "レジの色は低いです。 レジの色は低いです。",
+      "pred": "レジ の 色 は？ レジの色は低いです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "93f0ed6b43f1",
+      "gold": "ピットの危険度は中です。 はい。",
+      "pred": "ピット の 危険度 は？ ピットの危険度は中です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "verbose_echo",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "bf6d1a73faa3",
+      "gold": "オイル の 大きさ は？ オイルの大きさは赤です。",
+      "pred": "オイル の 大きさ は？ オイルの大きさは赤です。 駐車まずは給油の方が䊧します。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "28ea8f442d52",
+      "gold": "オイル交換の優先度は小さいです。 はい。",
+      "pred": "オイル交換 の 優先度 は？ オイル交換の優先度は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "28ea8f442d52",
+      "gold": "オイル交換の優先度は小さいです。 はい。",
+      "pred": "オイル交換 の 優先度 は？ オイル交換の優先度は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "93f0ed6b43f1",
+      "gold": "ピットの危険度は中です。 はい。",
+      "pred": "ピット の 危険度 は？ ピットの危険度は中です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "verbose_echo",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "bf6d1a73faa3",
+      "gold": "オイル の 大きさ は？ オイルの大きさは赤です。",
+      "pred": "オイル の 大きさ は？ オイルの大きさは赤です。 駐車まずは給油の方が䊧します。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "93f0ed6b43f1",
+      "gold": "ピットの危険度は中です。 はい。",
+      "pred": "ピット の 危険度 は？ ピットの危険度は中です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "verbose_echo",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "bf6d1a73faa3",
+      "gold": "オイル の 大きさ は？ オイルの大きさは赤です。",
+      "pred": "オイル の 大きさ は？ オイルの大きさは赤です。 駐車まずは給油の方が䊧します。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "93f0ed6b43f1",
+      "gold": "ピットの危険度は中です。 はい。",
+      "pred": "ピット の 危険度 は？ ピットの危険度は中です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "repeat_phrase",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "d45c7abd8ce6",
+      "gold": "レジの色は低いです。 レジの色は低いです。",
+      "pred": "レジ の 色 は？ レジの色は低いです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "28ea8f442d52",
+      "gold": "オイル交換の優先度は小さいです。 はい。",
+      "pred": "オイル交換 の 優先度 は？ オイル交換の優先度は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "repeat_phrase",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "d45c7abd8ce6",
+      "gold": "レジの色は低いです。 レジの色は低いです。",
+      "pred": "レジ の 色 は？ レジの色は低いです。"
+    }
+  ]
+}

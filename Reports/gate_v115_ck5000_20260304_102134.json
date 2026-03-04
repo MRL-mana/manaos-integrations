@@ -1,0 +1,9 @@
+﻿{
+    "checkpoint":  5000,
+    "eval_json":  "C:\\Users\\mana4\\Desktop\\manaos_integrations\\Reports\\castle_ex_layer2_quick_eval_checkpoint-5000_20260304_103555.json",
+    "acc":  0.25,
+    "contains_hai":  5,
+    "contains_repeat_phrase":  15,
+    "passed":  false,
+    "generated_at":  "2026-03-04T10:37:19"
+}

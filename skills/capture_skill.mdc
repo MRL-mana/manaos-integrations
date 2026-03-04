@@ -1,0 +1,52 @@
+---
+name: capture
+description: アイデア・タスク・URL・メモをGTD Inboxに素早くキャプチャ
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Write"
+cursor:
+  allowed-tools:
+    - "write"
+---
+
+# /capture - クイックキャプチャ
+
+**目的**: 「気になること・やること・見つけたもの」を判断なしに素早く Inbox に投入します。
+
+## 使用方法
+
+```
+/capture [内容]
+```
+
+例:
+- `/capture Tailscaleの設定でIPv6有効化を試す`
+- `/capture https://example.com/article 気になる記事`
+- `/capture 週次レビューの時間を火曜19時に固定したい`
+
+## 処理内容
+
+1. `gtd/inbox/YYYYMMDD_HHMM_<slug>.md` にファイルを作成
+2. 内容をマークダウンで保存（判断・分類しない）
+3. 保存完了を確認メッセージで通知
+
+## 保存テンプレート
+
+```markdown
+# [タイトル]
+
+- キャプチャ日時: YYYY-MM-DD HH:MM
+- 種類: タスク / アイデア / URL / メモ / その他
+
+## 内容
+[キャプチャした内容]
+
+## メモ
+（任意）
+```
+
+## ルール
+- 判断しない（良し悪し・優先度・分類は週次レビューで行う）
+- 2分以内にできることもまずキャプチャ（後の文脈で判断）
+- URLはタイトルと1行コメントを付けて保存

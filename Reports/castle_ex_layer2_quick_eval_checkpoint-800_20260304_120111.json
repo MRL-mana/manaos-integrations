@@ -1,0 +1,1418 @@
+{
+  "summary": {
+    "total": 100,
+    "correct": 86,
+    "acc": 0.86,
+    "invalid": 0,
+    "by_layer": {
+      "2": {
+        "total": 100,
+        "correct": 86,
+        "acc": 0.86,
+        "invalid": 0
+      }
+    }
+  },
+  "details": [
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "93f0ed6b43f1",
+      "gold": "ピットの危険度は中です。 はい。",
+      "pred": "ピット の 危険度 は？ ピットの危険度は中です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "verbose_echo",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "bf6d1a73faa3",
+      "gold": "オイル の 大きさ は？ オイルの大きさは赤です。",
+      "pred": "オイル の 大きさ は？ オイルの大きさは赤です。 駐車まずは給油の方が䊧します。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "verbose_echo",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "bf6d1a73faa3",
+      "gold": "オイル の 大きさ は？ オイルの大きさは赤です。",
+      "pred": "オイル の 大きさ は？ オイルの大きさは赤です。 駐車まずは給油の方が䊧します。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "28ea8f442d52",
+      "gold": "オイル交換の優先度は小さいです。 はい。",
+      "pred": "オイル交換 の 優先度 は？ オイル交換の優先度は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "28ea8f442d52",
+      "gold": "オイル交換の優先度は小さいです。 はい。",
+      "pred": "オイル交換 の 優先度 は？ オイル交換の優先度は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "repeat_phrase",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "d45c7abd8ce6",
+      "gold": "レジの色は低いです。 レジの色は低いです。",
+      "pred": "レジ の 色 は？ レジの色は低いです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "repeat_phrase",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "d45c7abd8ce6",
+      "gold": "レジの色は低いです。 レジの色は低いです。",
+      "pred": "レジ の 色 は？ レジの色は低いです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "repeat_phrase",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "d45c7abd8ce6",
+      "gold": "レジの色は低いです。 レジの色は低いです。",
+      "pred": "レジ の 色 は？ レジの色は低いです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "93f0ed6b43f1",
+      "gold": "ピットの危険度は中です。 はい。",
+      "pred": "ピット の 危険度 は？ ピットの危険度は中です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "verbose_echo",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "bf6d1a73faa3",
+      "gold": "オイル の 大きさ は？ オイルの大きさは赤です。",
+      "pred": "オイル の 大きさ は？ オイルの大きさは赤です。 駐車まずは給油の方が䊧します。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "28ea8f442d52",
+      "gold": "オイル交換の優先度は小さいです。 はい。",
+      "pred": "オイル交換 の 優先度 は？ オイル交換の優先度は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "28ea8f442d52",
+      "gold": "オイル交換の優先度は小さいです。 はい。",
+      "pred": "オイル交換 の 優先度 は？ オイル交換の優先度は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "93f0ed6b43f1",
+      "gold": "ピットの危険度は中です。 はい。",
+      "pred": "ピット の 危険度 は？ ピットの危険度は中です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "verbose_echo",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "bf6d1a73faa3",
+      "gold": "オイル の 大きさ は？ オイルの大きさは赤です。",
+      "pred": "オイル の 大きさ は？ オイルの大きさは赤です。 駐車まずは給油の方が䊧します。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "93f0ed6b43f1",
+      "gold": "ピットの危険度は中です。 はい。",
+      "pred": "ピット の 危険度 は？ ピットの危険度は中です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "verbose_echo",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "bf6d1a73faa3",
+      "gold": "オイル の 大きさ は？ オイルの大きさは赤です。",
+      "pred": "オイル の 大きさ は？ オイルの大きさは赤です。 駐車まずは給油の方が䊧します。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "93f0ed6b43f1",
+      "gold": "ピットの危険度は中です。 はい。",
+      "pred": "ピット の 危険度 は？ ピットの危険度は中です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "repeat_phrase",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "d45c7abd8ce6",
+      "gold": "レジの色は低いです。 レジの色は低いです。",
+      "pred": "レジ の 色 は？ レジの色は低いです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "aizuchi_tail",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "28ea8f442d52",
+      "gold": "オイル交換の優先度は小さいです。 はい。",
+      "pred": "オイル交換 の 優先度 は？ オイル交換の優先度は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": false,
+      "error_type": "repeat_phrase",
+      "type": "relation",
+      "template_id": "l2_attribute_v1_1_4_hardneg",
+      "pair_id": "d45c7abd8ce6",
+      "gold": "レジの色は低いです。 レジの色は低いです。",
+      "pred": "レジ の 色 は？ レジの色は低いです。"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "7968cfbea9a8",
+      "gold": "洗車機の大きさは小さいです。",
+      "pred": "洗車機 の 大きさ は？ 洗車機の大きさは黒です。"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "c18ef7c6c4a7",
+      "gold": "オイル交換の難易度は低いです。",
+      "pred": "オイル交換 の 難易度 は？ オイル交換の難易度は小さいです。"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "eefc5218657f",
+      "gold": "😢の難易度は低いです。",
+      "pred": "😢 の 難易度 は？ 😢の難易度は中です。 駐車場です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "93f0ed6b43f1",
+      "gold": "ピットの危険度は中です。",
+      "pred": "ピット の 危険度 は？ ピットの危険度は中です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "cd2933e537a4",
+      "gold": "洗車機の色は黒です。",
+      "pred": "洗車機 の 色 は？ 洗車機の色は黒です。   駐車場です。"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "6bdebc1cf032",
+      "gold": "車の危険度は低いです。",
+      "pred": "車 の 危険度 は？ オイルの方が簡単です。"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "e03384700175",
+      "gold": "洗車の優先度は小さいです。",
+      "pred": "洗車 の 優先度 は？ 洗車の優先度は小さなです。  難易度は低いです。  駐車場です。    ��"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "bf6d1a73faa3",
+      "gold": "オイルの大きさは赤です。",
+      "pred": "オイル の 大きさ は？ オイルの大きさは赤です。 駐車まずは給油の方が䊧します。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "cd2933e537a4",
+      "gold": "洗車機の色は黒です。",
+      "pred": "洗車機 の 色 は？ 洗車機の色は黒です。   駐車場です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "9710f4fe4161",
+      "gold": "給油の色は低いです。",
+      "pred": "給油 の 色 は？ 給油の色は低いです。    難易度は低いです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "401db197ffa8",
+      "gold": "レジの優先度は低いです。",
+      "pred": "レジ の 優先度 は？ レジの優先度は低いです。    駐車場です。"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "0720dada5050",
+      "gold": "エンジンの危険度は中です。",
+      "pred": "エンジン の 危険度 は？ エンジンの危険度は簡単です。   難易度は簡単です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "7e11ed673b1d",
+      "gold": "ピットの優先度は低いです。",
+      "pred": "ピット の 優先度 は？ ピットの優先度は低いです。     難易度は低いです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "28ea8f442d52",
+      "gold": "オイル交換の優先度は小さいです。",
+      "pred": "オイル交換 の 優先度 は？ オイル交換の優先度は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "190516a5decf",
+      "gold": "エンジンの危険度は簡単です。",
+      "pred": "エンジン の 危険度 は？ エンジンの危険度は簡単です。   難易度は簡単です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "190516a5decf",
+      "gold": "エンジンの危険度は簡単です。",
+      "pred": "エンジン の 危険度 は？ エンジンの危険度は簡単です。   難易度は簡単です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "bf6d1a73faa3",
+      "gold": "オイルの大きさは赤です。",
+      "pred": "オイル の 大きさ は？ オイルの大きさは赤です。 駐車まずは給油の方が䊧します。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "ab9eab5fd58b",
+      "gold": "洗車の重要度は中です。",
+      "pred": "洗車 の 重要度 は？ 洗車の中は難しいです。 それは素晴らしいね！おめでとう！ それは嬉しいね！次も頑張ろう！ 大�"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "93f0ed6b43f1",
+      "gold": "ピットの危険度は中です。",
+      "pred": "ピット の 危険度 は？ ピットの危険度は中です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "e1e01a7381cb",
+      "gold": "猫の難易度は中です。",
+      "pred": "猫 の 難易度 は？ 猫の難易度は中です。 絶対に中です。 難易度の方が簡単です。 はい。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "93f0ed6b43f1",
+      "gold": "ピットの危険度は中です。",
+      "pred": "ピット の 危険度 は？ ピットの危険度は中です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "9710f4fe4161",
+      "gold": "給油の色は低いです。",
+      "pred": "給油 の 色 は？ 給油の色は低いです。    難易度は低いです。"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "c18ef7c6c4a7",
+      "gold": "オイル交換の難易度は低いです。",
+      "pred": "オイル交換 の 難易度 は？ オイル交換の難易度は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "7e11ed673b1d",
+      "gold": "ピットの優先度は低いです。",
+      "pred": "ピット の 優先度 は？ ピットの優先度は低いです。     難易度は低いです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "28ea8f442d52",
+      "gold": "オイル交換の優先度は小さいです。",
+      "pred": "オイル交換 の 優先度 は？ オイル交換の優先度は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "28ea8f442d52",
+      "gold": "オイル交換の優先度は小さいです。",
+      "pred": "オイル交換 の 優先度 は？ オイル交換の優先度は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "d45c7abd8ce6",
+      "gold": "レジの色は低いです。",
+      "pred": "レジ の 色 は？ レジの色は低いです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "bf6d1a73faa3",
+      "gold": "オイルの大きさは赤です。",
+      "pred": "オイル の 大きさ は？ オイルの大きさは赤です。 駐車まずは給油の方が䊧します。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "93f0ed6b43f1",
+      "gold": "ピットの危険度は中です。",
+      "pred": "ピット の 危険度 は？ ピットの危険度は中です。"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "e03384700175",
+      "gold": "洗車の優先度は小さいです。",
+      "pred": "洗車 の 優先度 は？ 洗車の優先度は小さなです。  難易度は低いです。  駐車場です。    ��"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "d45c7abd8ce6",
+      "gold": "レジの色は低いです。",
+      "pred": "レジ の 色 は？ レジの色は低いです。"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "5f6fc719c7c1",
+      "gold": "オイル交換の色は低いです。",
+      "pred": "オイル交換 の 色 は？ オイル交換の色は小さいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "d45c7abd8ce6",
+      "gold": "レジの色は低いです。",
+      "pred": "レジ の 色 は？ レジの色は低いです。"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "e03384700175",
+      "gold": "洗車の優先度は小さいです。",
+      "pred": "洗車 の 優先度 は？ 洗車の優先度は小さなです。  難易度は低いです。  駐車場です。    ��"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_attribute",
+      "pair_id": "bf6d1a73faa3",
+      "gold": "オイルの大きさは赤です。",
+      "pred": "オイル の 大きさ は？ オイルの大きさは赤です。 駐車まずは給油の方が䊧します。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "f583e1bf8bcb",
+      "gold": "会計と清掃では清掃の方が難しいです。",
+      "pred": "会計 と 清掃、どっちが難しい？ 会計と清掃では{l2_b}の方が難しいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "09c49fb21e7e",
+      "gold": "オイル交換と給油では給油の方が重要です。",
+      "pred": "オイル交換 と 給油、どっちが重要？ オイル交換と給油では{l2_b}の方が重要です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "c9187b61c880",
+      "gold": "清掃とオイル交換ではオイル交換の方が効率的です。",
+      "pred": "清掃 と オイル交換、どっちが効率的？"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "7dc87ed9876b",
+      "gold": "点検と給油では点検の方が危険です。",
+      "pred": "点検 と 給油、どっちが危険？ 点検と給油では{l2_a}の方が危険です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "fc10993e3a2a",
+      "gold": "点検と洗車では洗車の方が簡単です。",
+      "pred": "点検 と 洗車、どっちが簡単？ 洗車の方が簡単です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "cfba022df70b",
+      "gold": "オイル交換と洗車では洗車の方が効率的です。",
+      "pred": "オイル交換 と 洗車、どっちが効率的？ オイル交換と洗車では{l2_b}の方が効率的です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "3b5d369a102b",
+      "gold": "洗車と給油では給油の方が重要です。",
+      "pred": "洗車 と 給油、どっちが重要？ 洗車と給油では{l2_b}の方が重要です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "50a59f899988",
+      "gold": "オイル交換と給油では給油の方が効率的です。",
+      "pred": "オイル交換 と 給油、どっちが効率的？ オイル交換と給油中、どっちが効率的？ オイル交換と給油中、どっちが効率的？ オ"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "6b903d6ed94b",
+      "gold": "会計とクレーム対応では会計の方が早いです。",
+      "pred": "会計 と クレーム対応、どっちが早い？ 会計とクレーム対応では{l2_b}の方が早いです。 洗車 洗車 洗車 洗車 �"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "e9cb73430ac6",
+      "gold": "点検と洗車では点検の方が効率的です。",
+      "pred": "点検 と 洗車、どっちが効率的？ 点洧と洗車では{l2_b}の方が効率的です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "bbc5cb9b395d",
+      "gold": "給油とタイヤ空気圧では給油の方が効率的です。",
+      "pred": "給油 と タイヤ空気圧、どっちが効率的？ 給油とタイヤ空気圧では{l2_a}の方が効率的です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "f583e1bf8bcb",
+      "gold": "会計と清掃では清掃の方が難しいです。",
+      "pred": "会計 と 清掃、どっちが難しい？ 会計と清掃では{l2_b}の方が難しいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "09c49fb21e7e",
+      "gold": "オイル交換と給油では給油の方が重要です。",
+      "pred": "オイル交換 と 給油、どっちが重要？ オイル交換と給油では{l2_b}の方が重要です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "6e54bb0f1119",
+      "gold": "清掃とオイル交換では清掃の方が効率的です。",
+      "pred": "清掃 と オイル交換、どっちが効率的？"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "f583e1bf8bcb",
+      "gold": "会計と清掃では清掃の方が難しいです。",
+      "pred": "会計 と 清掃、どっちが難しい？ 会計と清掃では{l2_b}の方が難しいです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "7dc87ed9876b",
+      "gold": "点検と給油では点検の方が危険です。",
+      "pred": "点検 と 給油、どっちが危険？ 点検と給油では{l2_a}の方が危険です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "e04a95fb3109",
+      "gold": "オイル交換と洗車では洗車の方が簡単です。",
+      "pred": "オイル交換 と 洗車、どっちが簡単？ オイル交換と洗車では{l2_b}の方が簡単です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "e9cb73430ac6",
+      "gold": "点検と洗車では点検の方が効率的です。",
+      "pred": "点検 と 洗車、どっちが効率的？ 点洧と洗車では{l2_b}の方が効率的です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "6860415c262c",
+      "gold": "洗車とオイル交換では洗車の方が危険です。",
+      "pred": "洗車 と オイル交換、どっちが危険？ 洗車とオイル交換では{l2_b}の方が危険です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "6e54bb0f1119",
+      "gold": "清掃とオイル交換では清掃の方が効率的です。",
+      "pred": "清掃 と オイル交換、どっちが効率的？"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "44e576995b04",
+      "gold": "タイヤ空気圧と給油ではタイヤ空気圧の方が早いです。",
+      "pred": "タイヤ空気圧 と 給油、どっちが早い？ タイヤ空気圧と給油では{l2_b}の方が早いです。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "6b903d6ed94b",
+      "gold": "会計とクレーム対応では会計の方が早いです。",
+      "pred": "会計 と クレーム対応、どっちが早い？ 会計とクレーム対応では{l2_b}の方が早いです。 洗車 洗車 洗車 洗車 �"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "da26e340f1ba",
+      "gold": "清掃と洗車では清掃の方が重要です。",
+      "pred": "清掃 と 洗車、どっちが重要？"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "52dfa2d47122",
+      "gold": "洗車と点検では洗車の方が効率的です。",
+      "pred": "洗車 と 点検、どっちが効率的？ 洗車と給油では{l2_b}の方が効率的です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "cfba022df70b",
+      "gold": "オイル交換と洗車では洗車の方が効率的です。",
+      "pred": "オイル交換 と 洗車、どっちが効率的？ オイル交換と洗車では{l2_b}の方が効率的です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "e19262b73f17",
+      "gold": "給油とクレーム対応ではクレーム対応の方が早いです。",
+      "pred": "給油 と クレーム対応、どっちが早い？ 給油とクレーム対応では{l2_b}の方が早いです。 給油の方が早いです。 給油"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "bac14115a250",
+      "gold": "タイヤ空気圧と給油ではタイヤ空気圧の方が難しいです。",
+      "pred": "タイヤ空気圧 と 給油、どっちが難しい？ タイヤ空気圧と給油では{l2_a}の方が難しいです。 タイヤ空気圧と給油では{l2_b}の方が"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "6421ff71a568",
+      "gold": "洗車とオイル交換では洗車の方が安全です。",
+      "pred": "洗車 と オイル交換、どっちが安全？ 洗車の方が早いです。 洗車の方が 洗車の方が 洗車の方は 洗車の方は"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "50a59f899988",
+      "gold": "オイル交換と給油では給油の方が効率的です。",
+      "pred": "オイル交換 と 給油、どっちが効率的？ オイル交換と給油中、どっちが効率的？ オイル交換と給油中、どっちが効率的？ オ"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "34a28c11ed54",
+      "gold": "会計とタイヤ空気圧では会計の方が安全です。",
+      "pred": "会計 と タイヤ空気圧、どっちが安全？ 会計とタイヤ空気圧では{l2_a}の方が安全です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "b6cb3d8d7aaf",
+      "gold": "クレーム対応とオイル交換ではクレーム対応の方が遅いです。",
+      "pred": "クレーム対応 と オイル交換、どっちが遅い？"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "3b5d369a102b",
+      "gold": "洗車と給油では給油の方が重要です。",
+      "pred": "洗車 と 給油、どっちが重要？ 洗車と給油では{l2_b}の方が重要です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "fb5b182159ac",
+      "gold": "点検と清掃では清掃の方が難しいです。",
+      "pred": "点検 と 清掃、どっちが難しい？"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "c9187b61c880",
+      "gold": "清掃とオイル交換ではオイル交換の方が効率的です。",
+      "pred": "清掃 と オイル交換、どっちが効率的？"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_comparison",
+      "pair_id": "6328a27efe79",
+      "gold": "クレーム対応と給油ではクレーム対応の方が簡単です。",
+      "pred": "クレーム対応 と 給油、どっちが簡単？ 給油です。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "e6c290bef8d5",
+      "gold": "いいえ。ブレーキは構成に含まれません。",
+      "pred": "ブレーキ は 構成 の一部？ いいえ。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "7dec0c424699",
+      "gold": "はい。ピットは文脈に含まれます。",
+      "pred": "ピット は 文脈 の一部？ はい。 はい。 ピットは文脈に含まれます。 はい。 はい。 はい。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "e6c290bef8d5",
+      "gold": "いいえ。ブレーキは構成に含まれません。",
+      "pred": "ブレーキ は 構成 の一部？ いいえ。"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "74162dc8feb6",
+      "gold": "いいえ。ピットは構成に含まれません。",
+      "pred": "ピット は 構成 の一部？ はい。  はい。"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "2c79f5448e22",
+      "gold": "いいえ。洗車機は感情に含まれません。",
+      "pred": "洗車機 は 感情 の一部？ はい。洗車機は構成に含まれます。 はい。 洗車機は構成に含まれます。 はい。 はい"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "e6c290bef8d5",
+      "gold": "いいえ。ブレーキは構成に含まれません。",
+      "pred": "ブレーキ は 構成 の一部？ いいえ。"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "d23027432f07",
+      "gold": "いいえ。エンジンは作業に含まれません。",
+      "pred": "エンジン は 作業 の一部？ はい。 はい。 エンジンは作業に含まれます。 はい。  はい。  はい。  はい。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "e6c290bef8d5",
+      "gold": "いいえ。ブレーキは構成に含まれません。",
+      "pred": "ブレーキ は 構成 の一部？ いいえ。"
+    },
+    {
+      "ok": true,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "47bb2c02f5f3",
+      "gold": "はい。給油ノズルは店舗に含まれます。",
+      "pred": "給油ノズル は 店舗 の一部？ はい。 給油は中 はい。  はい。  はい。  はい。  はい。  は"
+    },
+    {
+      "ok": false,
+      "layer": 2,
+      "axes": [
+        "logic"
+      ],
+      "positive": true,
+      "error_type": null,
+      "type": "relation",
+      "template_id": "l2_part_whole",
+      "pair_id": "d1e0b00f3c65",
+      "gold": "はい。洗車機は空間に含まれます。",
+      "pred": "洗車機 は 空間 の一部？ いいえ。 駐車場です。 洗車機は空間にはありません。"
+    }
+  ]
+}

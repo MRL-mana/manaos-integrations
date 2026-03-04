@@ -1,0 +1,69 @@
+---
+name: review
+description: 週次レビュー - GTD全リストの更新・Inbox処理・プロジェクト進捗確認
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# /review - 週次レビュー
+
+**目的**: GTD システム全体をリフレッシュ。毎週1回（推奨: 金曜夕方〜日曜）実施。
+
+## チェックリスト
+
+### 1. 収集の完了（キャプチャ漏れをゼロにする）
+- [ ] 頭の中にあるものを全て `/capture` でInboxに投入
+- [ ] メモ帳・付箋・メール・Slackを確認して未キャプチャを追加
+- [ ] `00_INBOX/` （File Secretary）の状態確認
+
+### 2. Inbox の処理（`/inbox`）
+- [ ] `gtd/inbox/` のアイテムをゼロにする
+
+### 3. Next Actions の見直し
+- [ ] 完了済みアイテムを `archive/gtd/done/YYYY-MM/` に移動
+- [ ] 時代遅れのアクションを削除・更新
+
+### 4. Waiting の確認
+- [ ] `gtd/waiting/` のアイテムでフォローアップすべきものを特定
+
+### 5. Projects の確認
+- [ ] 各プロジェクトに「次のアクション」が存在するか確認
+- [ ] 完了プロジェクトをアーカイブ
+
+### 6. Someday/Maybe の見直し
+- [ ] 「今週 active 化したいもの」があれば Next Actions に昇格
+
+### 7. Zettelkasten の見直し
+- [ ] `zettelkasten/fleeting/` の整理（permanent化 or 削除）
+- [ ] 新しい接続・洞察を `/zettel` で記録
+
+### 8. 週次サマリ作成
+
+`gtd/daily-logs/YYYY-WW_weekly-review.md` に保存:
+
+```markdown
+# 週次レビュー YYYY-MM-DD
+
+## 先週の振り返り
+- 完了: 
+- 未完了: 
+- 学び: 
+
+## 来週の3大テーマ
+1. 
+2. 
+3. 
+
+## Inbox処理件数: N件
+## Next Actions数: N件
+## Projects数: N件
+```

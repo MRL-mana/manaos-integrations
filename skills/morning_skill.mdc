@@ -1,0 +1,76 @@
+---
+name: morning
+description: 朝のルーティン - 日次ログ作成・GTD inbox確認・今日の優先事項設定
+targets: ["claudecode", "cursor"]
+claudecode:
+  allowed-tools:
+    - "Read"
+    - "Write"
+    - "Bash"
+cursor:
+  allowed-tools:
+    - "read_file"
+    - "write"
+    - "run_terminal_cmd"
+---
+
+# /morning - 朝のルーティン
+
+**目的**: 毎朝の思考の整理をサポート。日次ログ生成・GTD Inbox確認・今日の3大優先事項設定を行います。
+
+## 実行手順
+
+### Step 1: 今日の日次ログファイルを作成
+
+`gtd/daily-logs/YYYY-MM-DD.md` を作成（なければ）:
+
+```markdown
+# YYYY-MM-DD 日次ログ
+
+## 今日の3大優先事項
+1. 
+2. 
+3. 
+
+## 昨日の申し送り
+（前日ログから転記）
+
+## 完了タスク
+- 
+
+## 気づき・メモ
+- 
+
+## 明日への申し送り
+- 
+```
+
+### Step 2: GTD Inbox の確認
+
+`gtd/inbox/` のファイル数を確認し、滞留している項目を報告。
+10件以上なら「週次レビューを推奨」と通知。
+
+### Step 3: Next Actions の確認
+
+`gtd/next-actions/items/` を読み、今日できそうなアクションを3〜5件ピックアップ。
+
+### Step 4: MANAOS morning API 呼び出し（任意）
+
+```bash
+curl -s -X POST http://127.0.0.1:5125/api/morning | jq .
+```
+
+## 出力形式（YAML で日次ログに保存）
+
+```yaml
+kind: morning_routine
+date: YYYY-MM-DD
+priorities:
+  - "優先事項1"
+  - "優先事項2"
+  - "優先事項3"
+inbox_count: 0
+suggested_actions:
+  - "アクション1"
+  - "アクション2"
+```
