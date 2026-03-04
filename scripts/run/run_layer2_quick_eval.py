@@ -96,7 +96,8 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    repo_root = Path(__file__).resolve().parent
+    script_dir = Path(__file__).resolve().parent
+    repo_root = script_dir.parents[1]
     eval_path = (repo_root / args.eval_data).resolve()
     if not eval_path.exists():
         raise SystemExit(f"eval-data not found: {eval_path}")
