@@ -122,3 +122,14 @@ manaos_integrations/
 ---
 
 *最終更新: セッション開始時に自動生成 by GitHub Copilot*
+
+<!-- LESSONS_AUTO_START -->
+
+## 📖 最新教訓ログ（自動注入）
+
+> 自動更新: 2026-03-04 23:58  |  合計 **0** 件  |  なし
+> このセクションは `inject_lessons_to_claude_md.py` が自動更新します。手動編集不可。
+
+*教訓はまだ記録されていません。*
+
+<!-- LESSONS_AUTO_END -->
