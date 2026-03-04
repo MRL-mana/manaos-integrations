@@ -25,6 +25,16 @@ from _paths import OLLAMA_PORT
 OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 VISION_MODEL = "llava:latest"
 
+
+@pytest.fixture
+def pdf_path(request):
+    """環境変数 TEST_PDF_PATH から PDF パスを取得。未指定ならスキップ。"""
+    path = os.getenv("TEST_PDF_PATH", "")
+    if not path or not os.path.exists(path):
+        pytest.skip("TEST_PDF_PATH が未設定または存在しないためスキップ")
+    return path
+
+
 def test_vision_llm_single_page(pdf_path: str, page_num: int = 0):
     """1ページだけVision LLMで処理"""
     print(f"PDFを読み込み中: {pdf_path}")

@@ -204,6 +204,16 @@ class PersonalitySystem:
 - 会話・雑談では普通に話す
 - 過度に丁寧な忖度表現は避ける
 
+【思想（価値観）】
+- 事実をありのままに伝えることを最優先する
+- 誠実であることが最も重要だと考える
+- ユーザーの目標達成を全力でサポートする
+
+【判断原則】
+- 報告時: 事実のみ。推測・感想は明示して区別する
+- 提案時: メリット・デメリットを並列で提示する
+- 不明な場合: 「わからない」と正直に伝える
+
 【話し方のルール】
 - 報告時：「完璧に」「素晴らしい」「最高の」などの形容詞は使わない
 - 報告時：事実のみを淡々と伝える
@@ -268,33 +278,81 @@ class PersonalitySystem:
         """人格プロンプトを取得"""
         return self.current_persona.personality_prompt
     
-    def apply_personality_to_prompt(self, base_prompt: str, context: Optional[str] = None) -> str:
+    def _fetch_memory_snippets(self, query: str, limit: int = 5) -> List[str]:
+        """メモリサーバーからスニペットを取得する。
+
+        Args:
+            query: 検索クエリ
+            limit: 最大取得件数
+
+        Returns:
+            スニペット文字列のリスト
+        """
+        try:
+            import requests as _requests
+        except ImportError:
+            return []
+
+        memory_url = self.config.get("memory_url", "http://localhost:5080/api/memory/search")
+
+        def _call(q: str) -> List[str]:
+            try:
+                resp = _requests.post(memory_url, json={"query": q, "limit": limit})
+                if resp.status_code == 200:
+                    data = resp.json()
+                    results = data.get("results", [])
+                    return [r.get("value") or r.get("text", "") for r in results if r.get("value") or r.get("text")]
+            except Exception:
+                pass
+            return []
+
+        snippets = _call(query)
+        if snippets:
+            return snippets
+
+        # 空の場合はスペース区切りのトークンで再試行
+        for token in query.split():
+            if token == query:
+                continue
+            snippets = _call(token)
+            if snippets:
+                return snippets
+
+        return []
+
+    def apply_personality_to_prompt(
+        self,
+        base_prompt: str,
+        context: Optional[str] = None,
+        memory_snippets: Optional[List[str]] = None,
+    ) -> str:
         """
         プロンプトに人格を適用
-        
+
         Args:
             base_prompt: ベースプロンプト
             context: コンテキスト（会話/報告など）
-        
+            memory_snippets: 関連記憶スニペット
+
         Returns:
             人格が適用されたプロンプト
         """
         if not self.config.get("enable_personality", True):
             return base_prompt
-        
-        # コンテキストに応じて人格プロンプトを調整
-        if context == "report":
-            # 報告時は事実のみを伝えるスタイル
-            personality_instruction = "報告時は事実のみを淡々と伝えてください。誇張表現は使わないでください。"
-        elif context == "conversation":
-            # 会話時は普通に話す
-            personality_instruction = "会話では普通に話してください。"
-        else:
-            personality_instruction = self.current_persona.personality_prompt
-        
-        return f"""{personality_instruction}
 
-{base_prompt}"""
+        parts: List[str] = [self.current_persona.personality_prompt]
+
+        # コンテキスト固有の追加指示
+        if context == "report":
+            parts.append("報告時は事実のみを淡々と伝えてください。誇張表現は使わないでください。")
+
+        # 関連記憶セクション
+        if memory_snippets:
+            memory_lines = "\n".join(f"- {s}" for s in memory_snippets)
+            parts.append(f"【関連記憶（要約）】\n{memory_lines}")
+
+        parts.append(base_prompt)
+        return "\n\n".join(parts)
     
     def get_current_persona(self) -> Dict[str, Any]:
         """現在の人格プロフィールを取得"""

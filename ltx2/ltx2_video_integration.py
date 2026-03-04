@@ -70,6 +70,7 @@ class LTX2VideoIntegration:
         use_res2s_sampler: bool | None = None,
         model_name: str | None = None,
         workflow_path: str | None = None,
+        **kwargs,  # pass1_width, pass1_height, pass2_width, pass2_height など将来拡張用
     ) -> Dict[str, Any]:
         """互換API: 既存テスト向けにワークフローdictを返す。
 
