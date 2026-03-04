@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 # nogo_A_inject_and_retrain.ps1
-# NO-GO A: acc不足 → NG pair_id 上位を正例再注入して v1.1.7.1 patch 学習
+# NO-GO A: acc不足 → NG pair_id を eval JSON から特定 → 正例再注入で v1.1.7.1 学習
 
 param(
     [string]$GateDir       = "C:\Users\mana4\Desktop\manaos_integrations\Reports",
@@ -16,38 +16,57 @@ function Write-Log($msg) { Write-Host "[$(Get-Date -Format 'HH:mm:ss')] $msg" }
 
 # 最新 gate JSON 取得
 $gateFile = Get-ChildItem $GateDir -Filter $GatePattern | Sort-Object LastWriteTime -Desc | Select-Object -First 1
-if (-not $gateFile) { Write-Error "gate JSON なし"; exit 1 }
+if (-not $gateFile) { Write-Error "gate JSON なし: $GateDir\$GatePattern"; exit 1 }
 $g = Get-Content $gateFile.FullName -Encoding UTF8 | ConvertFrom-Json
 Write-Log "gate: $($gateFile.Name) | acc=$($g.acc)"
 
-# failed_ids からNG例特定（gate JSONに failed_ids[] がある場合）
-$failedIds = @()
-if ($g.PSObject.Properties['failed_ids']) { $failedIds = $g.failed_ids | Select-Object -First $TopN }
-Write-Log "NG pair_ids (top$TopN): $($failedIds -join ', ')"
+if (-not $g.eval_json -or -not (Test-Path $g.eval_json)) {
+    Write-Error "gate.eval_json が見つかりません: $($g.eval_json)"
+    exit 1
+}
 
-# audit100からNG行を抽出して正例タグ付け
+# eval JSON から ok=false の pair_id を取得
+Write-Log "eval JSON: $($g.eval_json)"
+$evalData = Get-Content $g.eval_json -Encoding UTF8 | ConvertFrom-Json
+$ngDetails = $evalData.details | Where-Object { -not $_.ok } | Select-Object -First $TopN
+Write-Log "NG examples (top$TopN): $($ngDetails.Count) 件"
+$ngDetails | ForEach-Object { Write-Log "  pair_id=$($_.pair_id) | pred=$($_.pred.Substring(0, [Math]::Min(60,$_.pred.Length)))..." }
+
+# audit100 から NG pair_id に対応する行を positive=true で注入
+# eval JSON の gold を正解として使う（audit100でなくevalから直接生成）
 $auditLines = Get-Content $AuditData -Encoding UTF8
 $injections = @()
-foreach ($id in $failedIds) {
-    $hit = $auditLines | Where-Object { $_ -match "`"pair_id`"\s*:\s*`"$id`"" } | Select-Object -First 1
-    if ($hit) {
-        $obj = $hit | ConvertFrom-Json
+foreach ($row in $ngDetails) {
+    # audit100から同じ pair_id を探す（あれば元データを再利用）
+    $auditHit = $auditLines | Where-Object { $_ -match [regex]::Escape($row.pair_id) } | Select-Object -First 1
+    if ($auditHit) {
+        $obj = $auditHit | ConvertFrom-Json
         $obj | Add-Member -Force NoteProperty "positive" $true
-        $obj | Add-Member -Force NoteProperty "_injected_from" "nogo_A"
+        $obj | Add-Member -Force NoteProperty "_injected_from" "nogo_A_audit"
         $injections += ($obj | ConvertTo-Json -Compress)
+    } else {
+        # eval details から直接 input/output を構築
+        $synth = [PSCustomObject]@{
+            pair_id      = $row.pair_id
+            input        = if ($row.PSObject.Properties['input']) { $row.input } else { "" }
+            output       = $row.gold
+            positive     = $true
+            _injected_from = "nogo_A_eval_gold"
+        }
+        $injections += ($synth | ConvertTo-Json -Compress)
     }
 }
-Write-Log "注入候補: $($injections.Count) 件"
+Write-Log "注入件数: $($injections.Count)"
 
-# ベース traindata + injections を v1.1.7.1 用に合成
+# ベース traindata + injections をマージ
 $baseLines = Get-Content $BaseTrainData -Encoding UTF8
-$merged = ($baseLines + $injections) | Where-Object { $_.Trim() -ne "" }
+$merged    = ($baseLines + $injections) | Where-Object { $_.Trim() -ne "" }
 Write-Log "マージ後: $($merged.Count) 件 → $OutputTrain"
 
 if (-not $DryRun) {
     $merged | Set-Content $OutputTrain -Encoding UTF8
     Write-Log "書き出し完了"
     Write-Log ""
-    Write-Log "次ステップ: run_v117_patch1_onebutton.ps1 を実行してください"
-    Write-Log "  (SrcDir, OutputDir を v1.1.7.1 に差し替えてから)"
+    Write-Log "次ステップ: run_v117_onebutton.ps1 の OutputDir を"
+    Write-Log "  lora_castle_ex_layer2_v1_1_7_1_patch に変更して再学習"
 }
