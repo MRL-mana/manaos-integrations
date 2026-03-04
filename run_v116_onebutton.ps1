@@ -80,7 +80,8 @@ if ($alreadyRunning) {
 
 $env:HF_HUB_DISABLE_PROGRESS_BARS = "1"
 $env:TQDM_DISABLE = "1"
-$env:PYTORCH_CUDA_ALLOC_CONF = "expandable_segments:True"
+# NOTE: expandable_segments:True は Blackwell (SM120/RTX5080) 非対応
+$env:PYTORCH_CUDA_ALLOC_CONF = "max_split_size_mb:512"
 $env:PYTHONUNBUFFERED = "1"
 
 $trainArgs = @(

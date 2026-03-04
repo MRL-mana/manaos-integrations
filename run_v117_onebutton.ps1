@@ -62,7 +62,9 @@ if ($alreadyRunning) {
 # ── 4) 環境変数設定 ────────────────────────────────────────────────────────────
 $env:HF_HUB_DISABLE_PROGRESS_BARS = "1"
 $env:TQDM_DISABLE                 = "1"
-$env:PYTORCH_CUDA_ALLOC_CONF      = "expandable_segments:True"
+# NOTE: expandable_segments:True は Blackwell (SM120/RTX5080) 非対応 → OOM の原因
+# max_split_size_mb:512 はすべての GPU で動作し、断片化によるOOMを抑制する
+$env:PYTORCH_CUDA_ALLOC_CONF      = "max_split_size_mb:512"
 $env:PYTHONUNBUFFERED             = "1"
 if ($env:TRANSFORMERS_CACHE) { $env:HF_HOME = $env:TRANSFORMERS_CACHE }
 
