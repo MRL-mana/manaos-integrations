@@ -87,3 +87,4 @@ TTS_PORT: int = int(os.getenv("TTS_PORT", "5002"))
 REMI_PORT: int = int(os.getenv("REMI_PORT", "8081"))
 GALLERY_API_PORT: int = GALLERY_PORT  # エイリアス（gallery_api_server.py用）
 AUTONOMOUS_OPS_PORT: int = int(os.getenv("AUTONOMOUS_OPS_PORT", "5131"))
+LAYER2_INFER_PORT: int = int(os.getenv("LAYER2_INFER_PORT", "9520"))  # CASTLE-EX Layer2 推論サーバー

@@ -4128,6 +4128,67 @@ def status():
     )
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# CASTLE-EX Layer2 LoRA 推論プロキシ (→ port 9520)
+# ─────────────────────────────────────────────────────────────────────────────
+_LAYER2_INFER_URL = os.environ.get("LAYER2_INFER_URL", "http://127.0.0.1:9520")
+
+
+@app.route("/v1/castle_ex/layer2/generate", methods=["POST"])
+def castle_ex_layer2_generate():
+    """
+    Layer2 スタイル矯正 LoRA (v1.1.6 prod) を使った短文生成プロキシ。
+
+    Request body JSON:
+        prompt           : str  (必須)
+        mode             : str  "short" | "free" | "training_eval" (default: "short")
+        max_new_tokens   : int  1〜256 (default: 64)
+        temperature      : float(default: 0.2)
+        repetition_penalty: float (default: 1.1)
+        do_sample        : bool (default: false)
+
+    Response JSON:
+        text             : str   生成テキスト
+        mode             : str   使用モード
+        lora_active      : bool  LoRA アクティブ状態
+        latency_ms       : float 推論レイテンシ (ms)
+    """
+    if not REQUESTS_AVAILABLE:
+        return jsonify({"error": "requests ライブラリが必要です"}), 500
+    try:
+        payload = request.get_json(force=True, silent=True) or {}
+        if not payload.get("prompt"):
+            return jsonify({"error": "prompt フィールドが必要です"}), 400
+        resp = requests.post(
+            f"{_LAYER2_INFER_URL}/generate",
+            json=payload,
+            timeout=120,
+        )
+        return jsonify(resp.json()), resp.status_code
+    except requests.exceptions.ConnectionError:
+        return jsonify({
+            "error": "Layer2 推論サーバー (port 9520) が起動していません。"
+                     " start_castle_ex_layer2.ps1 を実行してください。"
+        }), 503
+    except Exception as exc:
+        logger.exception("castle_ex_layer2_generate error")
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/v1/castle_ex/layer2/status", methods=["GET"])
+def castle_ex_layer2_status():
+    """Layer2 推論サーバーの状態確認プロキシ"""
+    if not REQUESTS_AVAILABLE:
+        return jsonify({"error": "requests ライブラリが必要です"}), 500
+    try:
+        resp = requests.get(f"{_LAYER2_INFER_URL}/status", timeout=5)
+        return jsonify(resp.json()), resp.status_code
+    except requests.exceptions.ConnectionError:
+        return jsonify({"running": False, "error": "Layer2 推論サーバーが停止中"}), 503
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
 def main():
     """Unified API Server メイン関数"""
     port = int(os.getenv("PORT", os.getenv("UNIFIED_API_PORT", "9502")))
