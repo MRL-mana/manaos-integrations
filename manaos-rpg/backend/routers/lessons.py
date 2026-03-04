@@ -112,11 +112,11 @@ async def agents_list() -> Dict[str, Any]:
         all_agents: List[Any] = tracker.list_all_ranks()
         items = [
             {
-                "name": a.name,
+                "name": a.agent_name,
                 "rank": a.rank,
                 "total_uses": a.total_uses,
-                "last_used": getattr(a, "last_used", None),
-                "last_task": getattr(a, "last_task", ""),
+                "last_used": getattr(a, "last_used_at", None),
+                "last_task": getattr(a, "last_task_summary", ""),
             }
             for a in all_agents
         ]
@@ -136,10 +136,10 @@ async def agents_parking() -> Dict[str, Any]:
         candidates: List[Any] = tracker.get_parking_candidates()
         items = [
             {
-                "name": a.name,
+                "name": a.agent_name,
                 "rank": a.rank,
                 "total_uses": a.total_uses,
-                "last_used": getattr(a, "last_used", None),
+                "last_used": getattr(a, "last_used_at", None),
             }
             for a in candidates
         ]

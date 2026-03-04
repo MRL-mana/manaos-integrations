@@ -48,6 +48,32 @@ def _get_rl_dashboard() -> dict | None:
         return dash
     except Exception:
         return {"enabled": False, "error": "rl_anything not available"}
+
+
+# ── 教訓サマリー (安全インポート) ──
+def _get_lessons_summary() -> dict:
+    """lessons_recorder.stats() のサマリーを安全に取得"""
+    try:
+        _misc = str(REPO_ROOT / "scripts" / "misc")
+        if _misc not in sys.path:
+            sys.path.insert(0, _misc)
+        from lessons_recorder import get_lessons_recorder
+        return get_lessons_recorder().stats()
+    except Exception:
+        return {"total": 0, "by_category": {}, "top_repeated": []}
+
+
+# ── エージェントサマリー (安全インポート) ──
+def _get_agents_summary() -> dict:
+    """agent_tracker.stats() のサマリーを安全に取得"""
+    try:
+        _misc = str(REPO_ROOT / "scripts" / "misc")
+        if _misc not in sys.path:
+            sys.path.insert(0, _misc)
+        from agent_tracker import get_agent_tracker
+        return get_agent_tracker().stats()
+    except Exception:
+        return {"total": 0, "by_rank": {}, "ns_count": 0}
 from services.unified_doctor import (
     _load_unified_proxy_rules,
     _maybe_refresh_unified_doctor_cache,
@@ -1350,4 +1376,6 @@ def snapshot() -> dict[str, Any]:
         "always_on_down": down_now,
         "rl_anything": _get_rl_dashboard(),
         "autonomy": autonomy,
+        "lessons": _get_lessons_summary(),
+        "agents": _get_agents_summary(),
     }

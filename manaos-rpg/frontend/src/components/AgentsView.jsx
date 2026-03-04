@@ -115,7 +115,7 @@ export default function AgentsView() {
     count: agentList.filter((a) => a.rank === r).length,
   }))
 
-  /* フィルtar済みリスト */
+  /* フィルター済みリスト */
   const filtered = rankFilter
     ? agentList.filter((a) => a.rank === rankFilter)
     : agentList

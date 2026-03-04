@@ -333,6 +333,14 @@ export default function App() {
             } else if (m.id === 'systems') {
               const d = Number(state?.danger || 0)
               if (d > 0) badge = <span className="menuBadge menuBadgeDanger">⚠{d}</span>
+            } else if (m.id === 'lessons') {
+              const total = Number(state?.lessons?.total || 0)
+              if (total > 0) badge = <span className="menuBadge">{total > 999 ? '999+' : total}</span>
+            } else if (m.id === 'agents') {
+              const ns = Number(state?.agents?.rank_distribution?.['N-S'] || 0)
+              const tot = Number(state?.agents?.total_agents || 0)
+              if (ns > 0) badge = <span className="menuBadge menuBadgeOk">N-S:{ns}</span>
+              else if (tot > 0) badge = <span className="menuBadge">{tot}</span>
             }
             return (
               <button
@@ -376,6 +384,8 @@ export default function App() {
               actionResult={actionResult}
               actionsEnabled={state?.actions_enabled}
               runningAction={runningAction}
+              lessons={state?.lessons}
+              agents={state?.agents}
             />
           ) : null}
           {state && active === 'party' ? <PartyView services={state?.services} /> : null}

@@ -53,7 +53,7 @@ const GaugeBar = memo(function GaugeBar({ label, pct }) {
   )
 })
 
-export default function StatusView({ host, storage, google, services, models, devices, skills, danger, rlAnything, autonomy, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction }) {
+export default function StatusView({ host, storage, google, services, models, devices, skills, danger, rlAnything, autonomy, nextActions, nextActionHints, onRunAction, actionResult, actionsEnabled, runningAction, lessons, agents }) {
   const [showConfig, setShowConfig] = useState(false)
   const [manualCheck, setManualCheck] = useState(null)
   const [manualSaving, setManualSaving] = useState(false)
@@ -779,6 +779,22 @@ export default function StatusView({ host, storage, google, services, models, de
           </div>
         ) : null}
       </Box>
+      {/* AI成長ログ サマリー */}
+      {(Number(lessons?.total) > 0 || Number(agents?.total_agents) > 0) ? (
+        <Box title="📖 AI成長ログ">
+          <div className="kv"><span>教訓</span><span className="mono">{lessons?.total ?? 0} 件</span></div>
+          {lessons?.top_repeated?.[0] ? (
+            <div className="small" style={{ color: '#aaa', marginTop: '2px' }}>最頼出: {String(lessons.top_repeated[0].instruction || '').slice(0, 60)}</div>
+          ) : null}
+          <div className="kv" style={{ marginTop: '6px' }}><span>エージェント</span><span className="mono">{agents?.total_agents ?? 0} 体</span></div>
+          {Number(agents?.rank_distribution?.['N-S']) > 0 ? (
+            <div className="small ok">★ N-S 達成: {agents.rank_distribution['N-S']} 体</div>
+          ) : null}
+          {Number(agents?.parking_candidates) > 0 ? (
+            <div className="small caution">パーキング候補: {agents.parking_candidates} 体（30日未使用）</div>
+          ) : null}
+        </Box>
+      ) : null}
       {/* DashboardConfig モーダル */}
       {showConfig && (
         <DashboardConfig onClose={() => setShowConfig(false)} />
