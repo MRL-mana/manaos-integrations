@@ -357,6 +357,11 @@ migrated_from_konoha/user_data_backups/
 # pytest debug
 _pytest_debug*.txt
 
+# テスト一時結果ファイル（再発防止）
+test_*.txt
+test_result*.txt
+test_output*.txt
+
 # Vite cache/timestamp files
 *.timestamp-*.mjs
 vite.config.js.timestamp-*
