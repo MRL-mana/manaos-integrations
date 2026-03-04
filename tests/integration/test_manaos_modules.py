@@ -9,12 +9,20 @@ import sys
 from pathlib import Path
 import importlib
 import pytest
+from unittest.mock import MagicMock
 
 # テスト対象モジュール
 sys.path.insert(0, str(Path(__file__).parent))
 
 
 def _require(module_name: str):
+    # 他のテストがstubやMockをsys.modulesに注入している場合は削除して実モジュールを取得
+    # types.ModuleType のstub（属性が少ない）かMagicMockの場合は強制的に再インポート
+    existing = sys.modules.get(module_name)
+    if existing is not None:
+        # MagicMockか、実モジュールでない(ファイルパスなし)stub モジュールは除去
+        if isinstance(existing, MagicMock) or not getattr(existing, "__file__", None):
+            del sys.modules[module_name]
     try:
         return importlib.import_module(module_name)
     except ImportError as exc:

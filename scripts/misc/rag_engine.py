@@ -564,7 +564,7 @@ class RAGEngine:
         """インデックス済みドキュメントの一覧を返す。"""
         with self._conn() as conn:
             rows = conn.execute(
-                "SELECT * FROM rag_documents ORDER BY indexed_at DESC"
+                "SELECT * FROM rag_documents ORDER BY indexed_at DESC, rowid DESC"
             ).fetchall()
         return [
             {
