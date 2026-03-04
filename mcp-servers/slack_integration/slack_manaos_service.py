@@ -706,7 +706,8 @@ if __name__ == '__main__':
     log("💬 Slack統合サービス起動")
     log("=" * 60)
     log(f"トークン設定: {'✅ 済' if SLACK_TOKEN else '❌ 未設定'}")
-    log("API起動中... (http://0.0.0.0:5020)")
+    _port = int(os.getenv("PORT", "5590"))
+    log(f"API起動中... (http://0.0.0.0:{_port})")
     log("エンドポイント:")
     log("  - /health")
     log("  - /send")
@@ -720,5 +721,5 @@ if __name__ == '__main__':
     log("  - /slack/interactions")
     log("Ctrl+C で停止")
     
-    app.run(host='0.0.0.0', port=5020, debug=os.getenv("DEBUG", "False").lower() == "true")
+    app.run(host='0.0.0.0', port=int(os.getenv("PORT", "5590")), debug=os.getenv("DEBUG", "False").lower() == "true")
 

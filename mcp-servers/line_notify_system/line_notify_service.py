@@ -277,8 +277,9 @@ if __name__ == '__main__':
     log("📱 LINE Notifyサービス起動")
     log("=" * 60)
     log(f"トークン設定: {'✅ 済' if LINE_TOKEN else '❌ 未設定'}")
-    log("API起動中... (http://0.0.0.0:5015)")
+    _port = int(os.getenv("PORT", "5591"))
+    log(f"API起動中... (http://0.0.0.0:{_port})")
     log("Ctrl+C で停止")
     
-    app.run(host='0.0.0.0', port=5015, debug=os.getenv("DEBUG", "False").lower() == "true")
+    app.run(host='0.0.0.0', port=_port, debug=os.getenv("DEBUG", "False").lower() == "true")
 

@@ -168,8 +168,8 @@ optional:
 
   # ── File Secretary ──
   file_secretary:
-    port: 8089
-    url: "http://127.0.0.1:8089"
+    port: 5120
+    url: "http://127.0.0.1:5120"
     enabled: false
     depends_on:
       - unified_api
