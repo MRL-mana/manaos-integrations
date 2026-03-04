@@ -38,6 +38,7 @@ SERVICES = [
     # Windows 直接起動サービス
     ("step-deep-research",  "http://127.0.0.1:5120/health",        ["optional","windows"]),
     ("file-secretary",      "http://127.0.0.1:8089/health",        ["optional","windows"]),
+    ("ops-dashboard",       "http://127.0.0.1:9640/health",        ["optional","windows"]),
     ("perf-monitor",        "http://127.0.0.1:9425/health",        ["docker"]),
     ("slack-bot",           "http://127.0.0.1:5300/health",        ["docker"]),
     ("voicevox",            "http://127.0.0.1:50021/version",      ["docker"]),

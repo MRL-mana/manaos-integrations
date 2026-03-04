@@ -158,9 +158,9 @@ optional:
   step_deep_research:
     port: 5120
     url: "http://127.0.0.1:5120"
-    enabled: false
-    module: step_deep_research/api_server.py
-    start_cmd: "python step_deep_research/api_server.py"
+    enabled: true
+    module: step_deep_research/run_server.py
+    start_cmd: "python step_deep_research/run_server.py"
     depends_on:
       - unified_api
     description: "Step-Deep-Research 調査ジョブシステム"
@@ -168,9 +168,11 @@ optional:
 
   # ── File Secretary ──
   file_secretary:
-    port: 5120
-    url: "http://127.0.0.1:5120"
-    enabled: false
+    port: 8089
+    url: "http://127.0.0.1:8089"
+    enabled: true
+    module: file_secretary/file_secretary_api.py
+    start_cmd: "python file_secretary/file_secretary_start.py"
     depends_on:
       - unified_api
     description: "ファイル整理・秘書システム"
@@ -200,12 +202,14 @@ optional:
 
   # ── ダッシュボード ──
   ops_dashboard:
-    port: 5640
-    url: "http://127.0.0.1:5640"
-    enabled: false
+    port: 9640
+    url: "http://127.0.0.1:9640"
+    enabled: true
     depends_on: []
-    module: mcp-servers/ops_dashboard/app.py
-    description: "Ops ダッシュボード"
+    module: ../ops-dashboard/backend/app.py
+    start_cmd: "python C:/Users/mana4/Desktop/ops-dashboard/backend/app.py"
+    description: "Ops ダッシュボード モックAPI（stats/logs/action）"
+    env: OPS_DASHBOARD_URL
 
   manaos_dashboard:
     port: 5641
