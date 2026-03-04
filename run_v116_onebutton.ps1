@@ -124,7 +124,26 @@ if ($DryRun) {
     exit 0
 }
 
-$proc = Start-Process -FilePath $pythonExe -ArgumentList $trainArgs -WorkingDirectory $root -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog -PassThru
+# Start-Process -RedirectStandardOutput は暗黙に -NoNewWindow を impliesするため
+# ターミナル閉鎖で forrtl window-CLOSE 死する。
+# .batファイル + ProcessStartInfo CreateNoWindow=true で完全デタッチする。
+$trainArgsStr = ($trainArgs | ForEach-Object {
+    if ($_ -match '[\s"]') { "`"$($_ -replace '"','\"')`"" } else { $_ }}) -join ' '
+
+$launchBat = $launchLog -replace '\.launch\.log$','.launch.bat'
+@"
+@echo off
+set PYTHONIOENCODING=utf-8
+set PYTORCH_CUDA_ALLOC_CONF=$($env:PYTORCH_CUDA_ALLOC_CONF)
+`"$pythonExe`" $trainArgsStr >> `"$stdoutLog`" 2>> `"$stderrLog`"
+"@ | Out-File -FilePath $launchBat -Encoding ASCII
+
+$psi = New-Object System.Diagnostics.ProcessStartInfo
+$psi.FileName        = $launchBat
+$psi.WorkingDirectory = $root
+$psi.UseShellExecute  = $false
+$psi.CreateNoWindow   = $true
+$proc = [System.Diagnostics.Process]::Start($psi)
 
 Write-Host "[OK] launched v1.1.6 posonly training"
 Write-Host "  pid: $($proc.Id)"
@@ -134,7 +153,13 @@ Write-Host "  launch: $launchLog"
 
 if (-not $NoMonitor) {
     if (Test-Path $monitorScript) {
-        $mon = Start-Process -FilePath "powershell" -ArgumentList @("-ExecutionPolicy", "Bypass", "-File", $monitorScript, "-CheckpointStep", "$MaxSteps", "-PollSec", "60") -WorkingDirectory $root -PassThru
+        $monPsi = New-Object System.Diagnostics.ProcessStartInfo
+        $monPsi.FileName        = "powershell"
+        $monPsi.Arguments       = "-ExecutionPolicy Bypass -File `"$monitorScript`" -CheckpointStep $MaxSteps -PollSec 60"
+        $monPsi.WorkingDirectory = $root
+        $monPsi.UseShellExecute  = $false
+        $monPsi.CreateNoWindow   = $true
+        $mon = [System.Diagnostics.Process]::Start($monPsi)
         Write-Host "[OK] launched monitor pid=$($mon.Id) script=$monitorScript checkpoint=$MaxSteps"
     }
     else {
