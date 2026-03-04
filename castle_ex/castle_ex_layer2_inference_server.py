@@ -70,7 +70,10 @@ class GenerateResponse(BaseModel):
     text: str
     mode: str
     lora_active: bool
+    adapter_loaded: str | None  # 現在ロード中のLoRAパス（LoRA OFFなら None）
     latency_ms: float
+    ok: bool = True
+    error: str | None = None
 
 
 # ─── FastAPI アプリ ───────────────────────────────────────────────────────────
@@ -132,10 +135,12 @@ async def generate(req: GenerateRequest):
         raise HTTPException(status_code=500, detail=str(e))
     latency = (time.perf_counter() - t0) * 1000
 
+    st = svc.status()  # 1回だけ呼ぶ
     return GenerateResponse(
         text=text,
         mode=req.mode,
-        lora_active=svc.status()["lora_active"],
+        lora_active=st["lora_active"],
+        adapter_loaded=st["lora_path"] if st["lora_active"] else None,
         latency_ms=round(latency, 1),
     )
 
