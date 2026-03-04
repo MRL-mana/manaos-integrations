@@ -176,8 +176,11 @@ optional:
     url: "http://127.0.0.1:9520"
     enabled: false
     depends_on: []
-    description: "Castle-EX Layer2 LoRA 推論サーバー"
+    description: "Castle-EX Layer2 LoRA 推論サーバー（GPU独立プロセス）"
     env: LAYER2_INFER_URL
+    module: castle_ex/castle_ex_layer2_inference_server.py
+    start_cmd: "powershell -ExecutionPolicy Bypass -File start_castle_ex_layer2.ps1"
+    version: "1.1.6"
 
   # ── スケジューラー ──
   smart_scheduler:
