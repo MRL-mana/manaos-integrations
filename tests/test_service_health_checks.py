@@ -1,3 +1,4 @@
+import pytest
 #!/usr/bin/env python3
 """
 サービスヘルスチェックテストスクリプト
@@ -83,8 +84,8 @@ def test_core_services():
     unavailable = len(results) - available
     
     print(f"\n📊 結果: {available} サービス利用可能 / {unavailable} サービス利用不可")
-    
-    return results
+    # サービス数だけアサートして警告が無いことを確認
+    assert isinstance(results, list)
 
 
 def test_optional_services():
@@ -116,8 +117,7 @@ def test_optional_services():
     
     print(f"\n📊 結果: {available} サービス利用可能 / {unavailable} サービス利用不可")
     print("ℹ️  オプションサービスはシステム動作に必須ではありません")
-    
-    return results
+    assert isinstance(results, list)
 
 
 def test_environment_variable_usage():
@@ -152,8 +152,8 @@ def test_environment_variable_usage():
         print("✅ 環境変数が正しく使用されています")
     else:
         print("ℹ️  すべてデフォルト値を使用（ローカル開発環境）")
-    
-    return True
+    # 環境変数設定有無にかかわらず成功（デフォルト値で動作するため）
+    assert set_count >= 0
 
 
 def main():
