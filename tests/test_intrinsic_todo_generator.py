@@ -19,26 +19,21 @@ _PROJECT_ROOT = Path(__file__).parent.parent
 if str(_PROJECT_ROOT / "scripts" / "misc") not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT / "scripts" / "misc"))
 
-# --- 外部モジュールのスタブ化 ---
-_stubs = {}
-for _mod in ("manaos_logger", "obsidian_integration", "_paths"):
-    _m = MagicMock()
-    _stubs[_mod] = _m
-    sys.modules.setdefault(_mod, _m)
+# ================================================================================
+# 外部モジュールのスタブ化（汚染防止設計）
+# - obsidian_integration: 実モジュール不在 → sys.modules に stub を注入（teardown で除去）
+# - manaos_logger: 実モジュールあり → パッチ不要（実 logger を使用）
+# - _paths: 実モジュールあり → パッチ不要（実モジュールを使用）
+# ================================================================================
 
-# _paths のポート定数
-sys.modules["_paths"].LEARNING_SYSTEM_PORT = 5200
-sys.modules["_paths"].METRICS_COLLECTOR_PORT = 5201
-sys.modules["_paths"].TASK_CRITIC_PORT = 5202
-
-# manaos_logger のスタブ
-_logger_stub = MagicMock()
-sys.modules["manaos_logger"].get_logger = MagicMock(return_value=_logger_stub)
-sys.modules["manaos_logger"].get_service_logger = MagicMock(return_value=_logger_stub)
-
-# obsidian_integration スタブ
+# --- obsidian_integration stub（実モジュールなし） ---
 _obs_stub = MagicMock()
-sys.modules["obsidian_integration"].ObsidianIntegration = MagicMock(return_value=_obs_stub)
+_obs_stub.is_available = MagicMock(return_value=True)  # bool を返すよう明示
+_obs_module_stub = MagicMock()
+_obs_module_stub.ObsidianIntegration = MagicMock(return_value=_obs_stub)
+_obs_was_injected = "obsidian_integration" not in sys.modules
+if _obs_was_injected:
+    sys.modules["obsidian_integration"] = _obs_module_stub
 
 from intrinsic_todo_generator import IntrinsicTodo, IntrinsicTodoGenerator
 
@@ -427,3 +422,12 @@ class TestFlaskAPI:
         data = resp.get_json()
         assert "todos" in data
         assert data["count"] == 1
+
+
+# ======================================================
+# モジュール終了時のスタブ後片付け
+# ======================================================
+def teardown_module(module):  # noqa: ARG001
+    """このファイルのテスト終了後に注入した obsidian_integration スタブを除去する（テスト汚染防止）"""
+    if _obs_was_injected and sys.modules.get("obsidian_integration") is _obs_module_stub:
+        del sys.modules["obsidian_integration"]
