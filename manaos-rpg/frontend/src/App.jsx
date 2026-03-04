@@ -38,12 +38,27 @@ export default function App() {
   const [err, setErr] = useState('')
   const [actionResult, setActionResult] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [autoRefresh, setAutoRefresh] = useState(false)
+  const [autoRefresh, _setAutoRefresh] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('manaos-autoRefresh') ?? 'true') } catch { return true }
+  })
+  const setAutoRefresh = useCallback((v) => {
+    _setAutoRefresh(v)
+    try { localStorage.setItem('manaos-autoRefresh', JSON.stringify(v)) } catch {}
+  }, [])
   const [lastRefreshTs, setLastRefreshTs] = useState(null)
   const [tick, setTick] = useState(0)
   const [showHelp, setShowHelp] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [settings, setSettings] = useState({ apiKey: '', refreshMs: 30000, theme: 'default' })
+  const [settings, _setSettings] = useState(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem('manaos-settings') ?? 'null')
+      return s ? { apiKey: '', refreshMs: 30000, theme: 'default', ...s } : { apiKey: '', refreshMs: 30000, theme: 'default' }
+    } catch { return { apiKey: '', refreshMs: 30000, theme: 'default' } }
+  })
+  const setSettings = useCallback((cfg) => {
+    _setSettings(cfg)
+    try { localStorage.setItem('manaos-settings', JSON.stringify(cfg)) } catch {}
+  }, [])
   const panelRef = useRef(null)
   const refreshingRef = useRef(false)
   const stateRef = useRef(null)
