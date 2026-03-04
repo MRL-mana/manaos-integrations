@@ -57,7 +57,7 @@ services:
     networks:
       - manaos-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9502/health"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; urllib.request.urlopen('http://localhost:9502/health', timeout=5)\""]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -86,7 +86,7 @@ services:
     networks:
       - manaos-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9508/health"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; urllib.request.urlopen('http://localhost:9508/health', timeout=5)\""]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -112,7 +112,7 @@ services:
     networks:
       - manaos-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9509/health"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; urllib.request.urlopen('http://localhost:9509/health', timeout=5)\""]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -142,10 +142,11 @@ services:
     networks:
       - manaos-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5559/health"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; urllib.request.urlopen('http://localhost:5559/health', timeout=5)\""]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
 
   # Video Pipeline MCP Server
   # NOTE: MCPサーバーはstdio経由でCursorから起動される設計のため
@@ -169,7 +170,7 @@ services:
     networks:
       - manaos-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9511/health"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; urllib.request.urlopen('http://localhost:9511/health', timeout=5)\""]
       interval: 30s
       timeout: 10s
       retries: 3
