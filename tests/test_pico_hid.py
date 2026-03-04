@@ -35,13 +35,27 @@ class TestPCHIDClient:
         self.mock_mouse.Button.middle = "middle"
         self.mock_keyboard.Key = MagicMock()
 
+        # モジュールキャッシュをクリアして再インポートを強制
+        for mod in list(sys.modules.keys()):
+            if "pico_hid" in mod:
+                del sys.modules[mod]
+
         with patch.dict("sys.modules", {
             "pynput": MagicMock(),
             "pynput.mouse": self.mock_mouse,
             "pynput.keyboard": self.mock_keyboard,
+            "serial": MagicMock(),
+            "serial.tools": MagicMock(),
+            "serial.tools.list_ports": MagicMock(),
         }):
             from pico_hid.pc.pico_hid_client import PCHIDClient
             self.PCHIDClient = PCHIDClient
+            yield  # モックをテスト実行中も維持
+
+        # クリーンアップ
+        for mod in list(sys.modules.keys()):
+            if "pico_hid" in mod:
+                del sys.modules[mod]
 
     def test_init(self):
         """PCHIDClient が初期化できる"""
@@ -101,6 +115,11 @@ class TestPicoHIDClient:
         self.mock_serial.is_open = True
         self.mock_serial.readline.return_value = b"OK\n"
 
+        # モジュールキャッシュをクリアして再インポートを強制
+        for mod in list(sys.modules.keys()):
+            if "pico_hid" in mod:
+                del sys.modules[mod]
+
         with patch.dict("sys.modules", {
             "serial": self.mock_serial_module,
             "serial.tools": MagicMock(),
@@ -111,6 +130,12 @@ class TestPicoHIDClient:
         }):
             from pico_hid.pc.pico_hid_client import PicoHIDClient
             self.PicoHIDClient = PicoHIDClient
+            yield  # モックをテスト実行中も維持
+
+        # クリーンアップ
+        for mod in list(sys.modules.keys()):
+            if "pico_hid" in mod:
+                del sys.modules[mod]
 
     def test_init_with_port(self):
         """COM ポート指定で初期化"""

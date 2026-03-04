@@ -133,8 +133,9 @@ $results = @{}
 
 # ── file-secretary (PORT 8089) ──
 $fsPath = "$ROOT\file_secretary\file_secretary_api.py"
-$fsEnv  = @{ PORT = "8089"; FILE_SECRETARY_PORT = "8089" }
+$fsEnv  = @{ FILE_SECRETARY_PORT = "8089"; PORT = "8089" }
 $results["file-secretary"] = Start-WindowsService "file-secretary" $fsPath $fsEnv "" 8089
+$env:PORT = ""  # step-deep-research に PORT=8089 が継承されないようリセット
 
 # ── step-deep-research (PORT 5120) ──
 $sdrPath = "$ROOT\step_deep_research\run_server.py"

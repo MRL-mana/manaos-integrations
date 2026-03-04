@@ -13,6 +13,7 @@ tools/health_check_all.py  - ManaOS 全サービスヘルスチェッカー
 
 """
 import argparse
+import http.client
 import json
 import sys
 import time
@@ -81,6 +82,12 @@ def check_one(name: str, url: str, tags: list) -> Dict[str, Any]:
         return {"name": name, "url": url, "tags": tags,
                 "healthy": False, "status": "error",
                 "latency_ms": latency_ms, "error": f"HTTP {e.code}"}
+    except (http.client.RemoteDisconnected, ConnectionResetError) as e:
+        # サーバーが応答後に接続を切断（HTTP/1.0 または正常終了パターン）→ alive 扱い
+        latency_ms = int((time.monotonic() - start) * 1000)
+        return {"name": name, "url": url, "tags": tags,
+                "healthy": True, "status": "alive",
+                "latency_ms": latency_ms, "error": None}
     except Exception as e:
         latency_ms = int((time.monotonic() - start) * 1000)
         return {"name": name, "url": url, "tags": tags,

@@ -6,7 +6,20 @@ Flask API実装
 """
 
 import os
+import sys
 from pathlib import Path
+
+# リポジトリルートを sys.path に追加（manaos_logger 等を解決）
+_HERE = Path(__file__).resolve().parent
+_ROOT = _HERE.parent
+for _p in [str(_ROOT), str(_ROOT / "scripts" / "misc"), str(_ROOT / "unified_api")]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+# ポート設定: FILE_SECRETARY_PORT または 8089 （親から汗染された PORT を上書き）
+_fs_port = int(os.environ.get("FILE_SECRETARY_PORT", "8089"))
+os.environ["PORT"] = str(_fs_port)
+
 from typing import Dict, Any, Optional, List
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -560,7 +573,7 @@ def handle_slack():
 
 
 if __name__ == '__main__':
-    port = int(os.getenv("PORT", 5120))
+    port = int(os.getenv("PORT", 8089))
     logger.info(f"🔌 File Secretary API起動中... (ポート: {port})")
     app.run(host='0.0.0.0', port=port, debug=os.getenv("DEBUG", "False").lower() == "true")
 
