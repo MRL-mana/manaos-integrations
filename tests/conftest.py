@@ -12,10 +12,26 @@ import sys
 import io
 from pathlib import Path
 
-# リポジトリルートを sys.path に追加
-REPO_ROOT = str(Path(__file__).resolve().parents[1])
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
+# リポジトリルートおよびサブモジュールを sys.path に追加
+_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = str(_ROOT)
+
+_EXTRA_ROOTS = [
+    _ROOT,
+    _ROOT / "unified_api",     # unified_logging 等
+    _ROOT / "scripts" / "misc",
+    _ROOT / "scripts" / "cursor",
+    _ROOT / "scripts" / "gpu",
+    _ROOT / "scripts" / "github",
+    _ROOT / "llm",
+    _ROOT / "file_secretary",
+    _ROOT / "mrl_memory",
+    _ROOT / "step_deep_research",
+]
+for _p in _EXTRA_ROOTS:
+    _s = str(_p)
+    if _s not in sys.path:
+        sys.path.insert(0, _s)
 
 # ── 安全な stdout/stderr の保存 ──────────────────────────────
 # os.dup で FD を複製し、独立した TextIOWrapper を作る。

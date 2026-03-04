@@ -202,6 +202,8 @@ test_*.py
 manaos-rpg/backend/storage/unified_doctor_cache.json
 !tests/test_*.py
 !tests/conftest.py
+!tests/**/test_*.py
+!tests/**/conftest.py
 check_*.py
 check_*.ps1
 
