@@ -1,0 +1,395 @@
+"""
+難易度ルーティング対応のLLMルーター
+プロンプトの難易度を分析して、適切なモデルにルーティング
+"""
+
+import os
+from manaos_logger import get_logger, get_service_logger
+import requests
+from typing import Dict, Any, Optional, List
+from llm_difficulty_analyzer import DifficultyAnalyzer
+from _paths import LM_STUDIO_PORT, OLLAMA_PORT
+
+logger = get_service_logger("llm-router-enhanced")
+class EnhancedLLMRouter:
+    """難易度ルーティング対応のLLMルーター"""
+    
+    def __init__(self, lm_studio_url: Optional[str] = None, ollama_url: Optional[str] = None):
+        """
+        初期化
+        
+        Args:
+            lm_studio_url: LM StudioのOpenAI互換API URL
+            ollama_url: OllamaのAPI URL
+        """
+        self.analyzer = DifficultyAnalyzer()
+        self.lm_studio_url = lm_studio_url or f"http://127.0.0.1:{LM_STUDIO_PORT}/v1"
+        self.ollama_url = ollama_url or f"http://127.0.0.1:{OLLAMA_PORT}"
+        
+        logger.info(f"LLMRouter initialized: lm_studio={self.lm_studio_url}, ollama={self.ollama_url}")
+        
+        # モデル設定（LM Studio用）
+        self.models = {
+            "light": "Qwen2.5-Coder-7B-Instruct",
+            "medium": "Qwen2.5-Coder-14B-Instruct",
+            "heavy": "Qwen2.5-Coder-32B-Instruct"
+        }
+        
+        # モデル設定（Ollama用） - 利用可能なモデルを優先
+        self.ollama_models = {
+            "light": "dolphin-llama3:8b",  # 軽量
+            "medium": "dolphin-mistral:7b",  # 中規模
+            "heavy": "qwen2.5:7b"  # 高性能
+        }
+        
+        # 使用するLLMサーバー（"lm_studio" or "ollama"）
+        # 環境変数で上書き可能、デフォルトは "ollama"
+        self.llm_server = os.getenv("LLM_SERVER", "ollama")
+
+    def _get_ollama_installed_models(self) -> List[str]:
+        """Ollamaに導入済みのモデル一覧を取得"""
+        try:
+            response = requests.get(f"{self.ollama_url}/api/tags", timeout=5.0)
+            if response.status_code != 200:
+                logger.warning(f"Ollama API error: HTTP {response.status_code}")
+                return []
+            data = response.json()
+            models = data.get("models", [])
+            names = [model.get("name") for model in models if model.get("name")]
+            logger.info(f"Ollama models loaded: {names}")
+            return names
+        except Exception as e:
+            logger.error(f"Ollama connection error: {e}", exc_info=True)
+            return []
+
+    def _resolve_ollama_model(self, preferred: str, fallback_candidates: List[str]) -> str:
+        """導入済みモデルから最適な候補を解決"""
+        installed = self._get_ollama_installed_models()
+        if not installed:
+            return preferred
+
+        candidates = [preferred, *fallback_candidates]
+        for candidate in candidates:
+            if candidate in installed:
+                return candidate
+
+        for candidate in candidates:
+            base_name = candidate.split(":")[0]
+            for model_name in installed:
+                if model_name == base_name or model_name.startswith(f"{base_name}:"):
+                    return model_name
+
+        return installed[0]
+    
+    def route(
+        self,
+        prompt: str,
+        context: Optional[Dict[str, Any]] = None,
+        preferences: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        リクエストをルーティング
+        
+        Args:
+            prompt: ユーザーのプロンプト
+            context: コンテキスト情報（code_context, file_path等）
+            preferences: ユーザー設定（prefer_speed, prefer_quality等）
+        
+        Returns:
+            {
+                "model": "モデル名",
+                "difficulty_score": スコア,
+                "difficulty_level": "low/medium/high",
+                "reasoning": "理由",
+                "response": "応答",
+                "response_time_ms": レスポンス時間（ミリ秒）
+            }
+        """
+        if context is None:
+            context = {}
+        if preferences is None:
+            preferences = {}
+        
+        # 難易度判定
+        difficulty_score = self.analyzer.calculate_difficulty(prompt, context)
+        difficulty_level = self.analyzer.get_difficulty_level(difficulty_score)
+        
+        # ユーザー設定を考慮
+        prefer_speed = preferences.get("prefer_speed", False)
+        prefer_quality = preferences.get("prefer_quality", False)
+        force_model = preferences.get("force_model", None)
+        
+        # モデル選択
+        model_key = "light"
+
+        if force_model:
+            # ユーザーが明示的にモデルを指定
+            model_key = "forced"
+            model = force_model
+            reasoning = f"ユーザー指定のモデルを使用: {model}"
+        elif prefer_speed or difficulty_score < 10:
+            # 速度優先 or 低難易度
+            model_key = "light"
+            model = self._get_model_name(model_key)
+            reasoning = f"プロンプトが短く、単純なタスクのため軽量モデルを選択（難易度スコア: {difficulty_score:.2f}）"
+        elif prefer_quality or difficulty_score > 30:
+            # 品質優先 or 高難易度
+            model_key = "heavy"
+            model = self._get_model_name(model_key)
+            reasoning = f"プロンプトが複雑で、高品質な応答が必要なため高精度モデルを選択（難易度スコア: {difficulty_score:.2f}）"
+        else:
+            # 中程度の難易度
+            model_key = "medium"
+            model = self._get_model_name(model_key)
+            reasoning = f"中程度の複雑度のため中量モデルを選択（難易度スコア: {difficulty_score:.2f}）"
+        
+        # LLM呼び出し
+        import time
+        start_time = time.time()
+        
+        try:
+            response = self._call_llm(model, prompt, context)
+            response_time_ms = int((time.time() - start_time) * 1000)
+            
+            return {
+                "model": model,
+                "difficulty_score": difficulty_score,
+                "difficulty_level": difficulty_level,
+                "reasoning": reasoning,
+                "response": response,
+                "response_time_ms": response_time_ms,
+                "success": True
+            }
+        except Exception as e:
+            logger.error(f"LLM呼び出しエラー: {e}")
+            response_time_ms = int((time.time() - start_time) * 1000)
+            
+            # フォールバック（軽量モデルに切り替え）
+            if model_key != "light":
+                logger.info("フォールバック: 軽量モデルに切り替え")
+                try:
+                    fallback_model = self._get_model_name("light")
+                    response = self._call_llm(fallback_model, prompt, context)
+                    return {
+                        "model": fallback_model,
+                        "difficulty_score": difficulty_score,
+                        "difficulty_level": difficulty_level,
+                        "reasoning": f"{reasoning}（フォールバック: {fallback_model}）",
+                        "response": response,
+                        "response_time_ms": response_time_ms,
+                        "success": True,
+                        "fallback_used": True
+                    }
+                except Exception as fallback_error:
+                    logger.error(f"フォールバックも失敗: {fallback_error}")
+            
+            return {
+                "model": model,
+                "difficulty_score": difficulty_score,
+                "difficulty_level": difficulty_level,
+                "reasoning": reasoning,
+                "response": None,
+                "error": str(e),
+                "response_time_ms": response_time_ms,
+                "success": False
+            }
+    
+    def _get_model_name(self, model_key: str) -> str:
+        """
+        モデルキーから実際のモデル名を取得
+        
+        Args:
+            model_key: "light", "medium", "heavy"
+        
+        Returns:
+            モデル名
+        """
+        if self.llm_server == "ollama":
+            # フォールバック候補 - 利用可能なモデルから選択
+            model_candidates = {
+                "light": ["dolphin-llama3:8b", "qwen2.5:7b", "llava:latest"],
+                "medium": ["dolphin-mistral:7b", "qwen2.5:7b", "dolphin-llama3:8b"],
+                "heavy": ["qwen2.5:7b", "dolphin-mistral:7b", "dolphin-llama3:8b"],
+            }
+            preferred = self.ollama_models.get(model_key, self.ollama_models["light"])
+            candidates = model_candidates.get(model_key, model_candidates["light"])
+            return self._resolve_ollama_model(preferred, candidates)
+        else:
+            return self.models.get(model_key, self.models["light"])
+    
+    def _call_llm(self, model: str, prompt: str, context: Dict[str, Any]) -> str:
+        """
+        LLMを呼び出し
+        
+        Args:
+            model: モデル名
+            prompt: プロンプト
+            context: コンテキスト情報
+        
+        Returns:
+            LLMの応答
+        """
+        # システムプロンプトを構築
+        system_prompt = "You are a helpful coding assistant. Provide clear, concise, and accurate code solutions."
+        
+        # コンテキストがあれば追加
+        if context.get("code_context"):
+            system_prompt += f"\n\nCode context:\n{context['code_context']}"
+        
+        # メッセージを構築
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ]
+
+        generation = context.get("_generation") if isinstance(context.get("_generation"), dict) else {}
+        req_temperature = generation.get("temperature", 0.2)
+        req_max_tokens = generation.get("max_tokens", 256)
+        req_top_p = generation.get("top_p", 1.0)
+        req_stop = generation.get("stop")
+        req_timeout = generation.get("timeout_sec", 300.0)
+
+        try:
+            temperature = max(0.0, min(2.0, float(req_temperature)))
+        except (TypeError, ValueError):
+            temperature = 0.2
+
+        try:
+            max_tokens = max(1, min(4096, int(req_max_tokens)))
+        except (TypeError, ValueError):
+            max_tokens = 256
+
+        try:
+            top_p = max(0.0, min(1.0, float(req_top_p)))
+        except (TypeError, ValueError):
+            top_p = 1.0
+
+        try:
+            timeout_sec = max(30.0, min(600.0, float(req_timeout)))
+        except (TypeError, ValueError):
+            timeout_sec = 300.0
+        
+        if self.llm_server == "ollama":
+            installed_models = self._get_ollama_installed_models()
+            if installed_models and model not in installed_models:
+                model = self._resolve_ollama_model(model, installed_models)
+
+            payload = {
+                "model": model,
+                "messages": messages,
+                "stream": False,
+                "options": {
+                    "temperature": temperature,
+                    "num_predict": max_tokens,
+                    "top_p": top_p,
+                }
+            }
+            if isinstance(req_stop, list) and req_stop:
+                payload["options"]["stop"] = req_stop
+
+            # Ollama API
+            response = requests.post(
+                f"{self.ollama_url}/api/chat",
+                json=payload,
+                timeout=timeout_sec
+            )
+            
+            if response.status_code != 200:
+                raise Exception(f"Ollama APIエラー: HTTP {response.status_code}")
+            
+            result = response.json()
+            return result.get("message", {}).get("content", "")
+        else:
+            # LM Studio OpenAI互換API
+            response = requests.post(
+                f"{self.lm_studio_url}/chat/completions",
+                json={
+                    "model": model,
+                    "messages": messages,
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                    "top_p": top_p,
+                    "stop": req_stop if isinstance(req_stop, list) else None
+                },
+                timeout=timeout_sec
+            )
+            
+            if response.status_code != 200:
+                raise Exception(f"LM Studio APIエラー: HTTP {response.status_code}")
+            
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+    
+    def get_available_models(self) -> List[str]:
+        """
+        利用可能なモデル一覧を取得
+        
+        Returns:
+            モデル名のリスト
+        """
+        if self.llm_server == "ollama":
+            installed = self._get_ollama_installed_models()
+            if installed:
+                return installed
+            return list(self.ollama_models.values())
+        else:
+            return list(self.models.values())
+
+
+if __name__ == "__main__":
+    # テスト
+    router = EnhancedLLMRouter()
+    
+    # テストケース1：軽量タスク
+    print("=== テスト1: 軽量タスク ===")
+    result1 = router.route(
+        prompt="この関数のタイポを修正して",
+        context={"code_context": "def hello():\n    print('helo')"}
+    )
+    print(f"モデル: {result1['model']}")
+    print(f"難易度スコア: {result1['difficulty_score']:.2f}")
+    print(f"理由: {result1['reasoning']}")
+    print(f"応答: {result1.get('response', 'エラー')[:100]}...")
+    print()
+    
+    # テストケース2：中量タスク
+    print("=== テスト2: 中量タスク ===")
+    result2 = router.route(
+        prompt="このコードをリファクタリングして、関数を分割して",
+        context={
+            "code_context": """
+def process_data(data):
+    for item in data:
+        if item['type'] == 'A':
+            result = item['value'] * 2
+        elif item['type'] == 'B':
+            result = item['value'] * 3
+        else:
+            result = item['value']
+        print(result)
+"""
+        }
+    )
+    print(f"モデル: {result2['model']}")
+    print(f"難易度スコア: {result2['difficulty_score']:.2f}")
+    print(f"理由: {result2['reasoning']}")
+    print()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
