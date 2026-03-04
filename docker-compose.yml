@@ -79,6 +79,7 @@ services:
       - PYTHONPATH=/app:/app/scripts/misc
     volumes:
       - ./learning_system_api.py:/app/learning_system_api.py:ro
+      - ./scripts:/app/scripts:ro
       - ./data:/app/data
       - ./logs:/app/logs
     restart: unless-stopped
@@ -133,6 +134,8 @@ services:
       - PYTHONPATH=/app
     volumes:
       - ./gallery_api.py:/app/gallery_api.py:ro
+      - ./scripts:/app/scripts:ro
+      - ./_paths.py:/app/_paths.py:ro
       - ./gallery_images:/app/gallery_images
       - ./logs:/app/logs
     restart: unless-stopped

@@ -63,6 +63,9 @@ except ImportError:
         logging.basicConfig(level=logging.INFO)
         get_service_logger = lambda name: logging.getLogger(name)
         class ManaOSErrorHandler:
+            def __init__(self, *args, **kwargs):
+                pass
+
             def handle_exception(self, e, **kwargs):
                 pass
         ErrorCategory = type('ErrorCategory', (), {})

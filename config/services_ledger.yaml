@@ -65,6 +65,8 @@ optional:
     port: 5559
     url: "http://127.0.0.1:5559"
     enabled: false
+    module: gallery_api.py
+    start_cmd: "python gallery_api.py"
     depends_on: []
 
   # ── 画像・メディア ──
