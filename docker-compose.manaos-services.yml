@@ -721,6 +721,48 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  # 🧠 人格思想システム (port 5126)
+  personality-thought-system:
+    build:
+      context: .
+      dockerfile: scripts/misc/Dockerfile.personality_thought
+    container_name: personality-thought-system
+    restart: unless-stopped
+    ports:
+      - "5126:5126"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Tokyo
+      - PERSONALITY_THOUGHT_PORT=5126
+      - PORT=5126
+    volumes:
+      - ./logs:/app/logs
+      - ./data/personality_thought:/app/data/personality_thought
+    networks:
+      - manaos-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5126/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 networks:
   manaos-network:
     driver: bridge

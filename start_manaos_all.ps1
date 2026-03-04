@@ -153,6 +153,10 @@ $results["autonomy-system"] = Start-WindowsService "autonomy-system" $asysPath @
 $ssysPath = "$ROOT\scripts\misc\secretary_system.py"
 $results["secretary-system"] = Start-WindowsService "secretary-system" $ssysPath @{ SECRETARY_SYSTEM_PORT = "5125"; PORT = "5125" } "$ROOT" 5125
 
+# ── personality-thought-system (PORT 5126) ──
+$ptsysPath = "$ROOT\scripts\misc\personality_thought_system.py"
+$results["personality-thought-system"] = Start-WindowsService "personality-thought-system" $ptsysPath @{ PERSONALITY_THOUGHT_PORT = "5126"; PORT = "5126" } "$ROOT" 5126
+
 # ── ops-dashboard (PORT 9640) ──
 $opsDashPath = "C:\Users\mana4\Desktop\ops-dashboard\backend\app.py"
 $results["ops-dashboard"]  = Start-WindowsService "ops-dashboard" $opsDashPath @{} "C:\Users\mana4\Desktop\ops-dashboard\backend" 9640
@@ -167,6 +171,7 @@ $healthTargets = @(
     @{ name = "personality-system";  url = "http://127.0.0.1:5123/health" },
     @{ name = "autonomy-system";     url = "http://127.0.0.1:5124/health" },
     @{ name = "secretary-system";    url = "http://127.0.0.1:5125/health" },
+    @{ name = "personality-thought-system"; url = "http://127.0.0.1:5126/health" },
     @{ name = "ops-dashboard";       url = "http://127.0.0.1:9640/health" }
 )
 

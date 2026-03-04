@@ -1,0 +1,31 @@
+# 🧠 ManaOS 人格思想システム Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY scripts/misc/personality_thought_system.py /app/
+COPY manaos_logger.py /app/
+COPY manaos_error_handler.py /app/
+COPY manaos_timeout_config.py /app/
+COPY manaos_config_validator.py /app/
+COPY _paths.py /app/
+
+RUN mkdir -p /app/data/personality_thought
+
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV TZ=Asia/Tokyo
+ENV PERSONALITY_THOUGHT_PORT=5126
+ENV PORT=5126
+
+EXPOSE 5126
+
+CMD ["python", "personality_thought_system.py"]

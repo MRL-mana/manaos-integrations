@@ -132,7 +132,7 @@ class BaseIntegration(ABC):
             
             # 内部チェックを実行
             self._available = self._check_availability_internal()
-            return self._available
+            return bool(self._available)  # 必ず bool を返す
         
         except Exception as e:
             error = self.error_handler.handle_exception(

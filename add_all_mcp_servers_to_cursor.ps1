@@ -260,6 +260,15 @@ $mcpServers = @{
         env     = @{}
         cwd     = $projectPath
     }
+
+    "personality-thought-system" = @{
+        command = "python"
+        args    = @("-m", "personality_thought_mcp_server.server")
+        env     = @{
+            PERSONALITY_THOUGHT_API_URL = "http://127.0.0.1:5126"
+        }
+        cwd     = $projectPath
+    }
 }
 
 # MCPサーバーを追加

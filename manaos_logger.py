@@ -110,6 +110,13 @@ def get_logger(name: str, **kwargs) -> logging.Logger:
     if not logger.handlers:
         setup_logger(name, **kwargs)
     
+    # フォールバック: それでもハンドラーが0ならコンソールハンドラーを保証
+    if not logger.handlers:
+        _fallback = logging.StreamHandler(sys.stdout)
+        _fallback.setLevel(logging.INFO)
+        _fallback.setFormatter(logging.Formatter(LOG_FORMAT, datefmt=LOG_DATE_FORMAT))
+        logger.addHandler(_fallback)
+    
     return logger
 
 

@@ -95,6 +95,13 @@
       "command": "python",
       "args": ["-m", "trinity_mcp_server.server"],
       "env": {}
+    },
+    "personality-thought-system": {
+      "command": "python",
+      "args": ["-m", "personality_thought_mcp_server.server"],
+      "env": {
+        "PERSONALITY_THOUGHT_API_URL": "http://127.0.0.1:5126"
+      }
     }
   }
 }
