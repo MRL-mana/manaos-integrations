@@ -93,8 +93,10 @@ def get_research_status(job_id):
 
 
 if __name__ == '__main__':
+    import os
     init_orchestrator()
-    app.run(host='0.0.0.0', port=5120, debug=True)
+    port = int(os.getenv('PORT', 5120))
+    app.run(host='0.0.0.0', port=port, debug=False)
 
 
 

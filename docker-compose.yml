@@ -229,6 +229,89 @@ services:
     networks:
       - manaos-network
 
+  # ==================== desktop プロジェクト引き継ぎサービス ====================
+  # 注: 内部ポート ≠ 公開ポートのため正しいマッピングで再定義
+
+  command-hub:
+    image: desktop-command-hub:latest
+    container_name: manaos-command-hub
+    ports:
+      - "5004:9404"
+    command: ["python", "-m", "uvicorn", "manaos_command_hub:app", "--host", "0.0.0.0", "--port", "9404"]
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - manaos-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9404/health', timeout=5)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  enhanced-api:
+    image: desktop-enhanced-api:latest
+    container_name: manaos-enhanced-api
+    ports:
+      - "5008:9406"
+    command: ["python", "-m", "uvicorn", "manaos_enhanced_api:app", "--host", "0.0.0.0", "--port", "9406"]
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - manaos-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9406/health', timeout=5)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  enhanced-integ:
+    image: desktop-enhanced-integration:latest
+    container_name: manaos-enhanced-integ
+    ports:
+      - "5007:9431"
+    command: ["python", "-m", "uvicorn", "enhanced_manaos_integration:app", "--host", "0.0.0.0", "--port", "9431"]
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - manaos-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9431/health', timeout=5)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  unified-ui:
+    image: desktop-unified-ui:latest
+    container_name: manaos-unified-ui
+    ports:
+      - "5009:9408"
+    command: ["python", "-m", "uvicorn", "manaos_unified_ui:app", "--host", "0.0.0.0", "--port", "9408"]
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - manaos-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:9408/health', timeout=5)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
 # ==================== ネットワーク ====================
 networks:
   manaos-network:
