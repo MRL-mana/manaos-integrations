@@ -87,6 +87,8 @@ services:
       retries: 3
 
   # LLM Routing MCP Server
+  # NOTE: MCPサーバーはstdio経由でCursorから起動される設計のため
+  #       Dockerスタンドアロン起動は非対応。restart:noで無限ループ防止。
   llm-routing:
     build:
       context: .
@@ -100,7 +102,7 @@ services:
       - LLM_ROUTING_HOST=0.0.0.0
     volumes:
       - ./logs:/app/logs
-    restart: unless-stopped
+    restart: "no"
     networks:
       - manaos-network
     healthcheck:
@@ -123,7 +125,9 @@ services:
     environment:
       - GALLERY_PORT=5559
       - GALLERY_HOST=0.0.0.0
+      - PYTHONPATH=/app
     volumes:
+      - ./gallery_api.py:/app/gallery_api.py:ro
       - ./gallery_images:/app/gallery_images
       - ./logs:/app/logs
     restart: unless-stopped
@@ -136,6 +140,8 @@ services:
       retries: 3
 
   # Video Pipeline MCP Server
+  # NOTE: MCPサーバーはstdio経由でCursorから起動される設計のため
+  #       Dockerスタンドアロン起動は非対応。restart:noで無限ループ防止。
   video-pipeline:
     build:
       context: .
@@ -151,7 +157,7 @@ services:
       - ./data:/app/data
       - ./output:/app/output
       - ./logs:/app/logs
-    restart: unless-stopped
+    restart: "no"
     networks:
       - manaos-network
     healthcheck:

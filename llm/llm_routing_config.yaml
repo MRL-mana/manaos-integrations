@@ -1,0 +1,131 @@
+# LLMルーティング設定
+# ロール別モデル + fallback設定
+
+ollama_url: "http://127.0.0.1:11434"
+
+routing:
+  conversation:
+    # 会話（軽量・高速・レスポンス最優先）
+    # phase1 実験用: Ollama に存在する qwen2.5:7b を使用（lfm2.5:1.2b は LM Studio 専用）
+    primary: "qwen2.5:7b"
+    fallback:
+      - "llama3.2:3b"
+      - "qwen2.5:7b"
+      - "llama3.1:8b"
+    priority: "latency"
+    max_tokens: 2048
+    temperature: 0.7
+    use_case:
+      - "日常対話"
+      - "雑談"
+      - "質問応答"
+
+  lightweight_conversation:
+    # 常駐軽量LLM（オフライン会話・下書き・整理専用）
+    # LFM 2.5専用タスクタイプ：CPU前提、常時起動、日本語特化
+    primary: "lfm2.5:1.2b"
+    fallback:
+      - "llama3.2:3b"
+      - "llama3.2:1b"
+    priority: "latency"
+    max_tokens: 1024
+    temperature: 0.8
+    use_case:
+      - "オフライン会話"
+      - "下書き作成"
+      - "テキスト整理"
+      - "メモ作成"
+      - "軽量タスク"
+
+  reasoning:
+    # 推論（重い・強い・品質最優先）
+    primary: "qwen2.5:72b"
+    fallback:
+      - "qwen2.5:32b"
+      - "llama3.1:70b"
+    priority: "quality"
+    max_tokens: 8192
+    temperature: 0.3
+    use_case:
+      - "複雑な判断"
+      - "分析"
+      - "計画立案"
+
+  automation:
+    # 自動処理（ツール呼び出し得意・安定最優先）
+    primary: "qwen2.5:14b"
+    fallback:
+      - "llama3.1:8b"
+      - "mistral:7b"
+    priority: "tool_use"
+    max_tokens: 4096
+    temperature: 0.5
+    use_case:
+      - "タスク実行"
+      - "コード生成"
+      - "データ処理"
+
+  creative_writing:
+    # クリエイティブ・コンテンツ生成（無検閲・自由表現・感情豊か）
+    # Dolphin系モデル: ユーザー意図を最大限尊重
+    primary: "dolphin-llama3:8b"
+    fallback:
+      - "dolphin-mistral:7b"
+      - "qwen2.5:7b"
+    priority: "quality"
+    max_tokens: 4096
+    temperature: 0.85
+    use_case:
+      - "記事執筆"
+      - "レビュー生成"
+      - "コンテンツ作成"
+      - "クリエイティブライティング"
+      - "コピーライティング"
+      - "SNS投稿文作成"
+
+  quick_generation:
+    # 高速テキスト生成（タイトル・メタ説明文・ハッシュタグ等）
+    # Dolphin-Mistral: 爆速レスポンス
+    primary: "dolphin-mistral:7b"
+    fallback:
+      - "dolphin-llama3:8b"
+      - "qwen2.5:7b"
+    priority: "latency"
+    max_tokens: 512
+    temperature: 0.9
+    use_case:
+      - "タイトル生成"
+      - "メタ説明文"
+      - "ハッシュタグ生成"
+      - "キャッチコピー"
+      - "ALTテキスト生成"
+
+  image_analysis:
+    # 画像解析（Llava: マルチモーダル）
+    # SEO用ALTテキスト、画像説明、コンテンツ分類
+    primary: "llava:latest"
+    fallback: []
+    priority: "quality"
+    max_tokens: 1024
+    temperature: 0.3
+    use_case:
+      - "画像解析"
+      - "ALTテキスト生成"
+      - "画像説明"
+      - "コンテンツ分類"
+
+# 監査ログ設定
+audit_log:
+  enabled: true
+  storage: "obsidian" # obsidian or local_cache
+  include_fields:
+    - "request_id"
+    - "timestamp"
+    - "routed_model"
+    - "task_type"
+    - "memory_refs"
+    - "tools_used"
+    - "input_summary"
+    - "output_summary"
+    - "latency_ms"
+    - "fallback_used"
