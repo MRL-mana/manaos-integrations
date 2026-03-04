@@ -265,25 +265,85 @@ class SecretarySystem:
         conn.close()
         return reminders
     
+    @staticmethod
+    def _next_scheduled_time(scheduled_time: str, reminder_type: ReminderType) -> Optional[str]:
+        """
+        繰り返しリマインダーの次回予定時刻を計算する。
+        ONCE / CUSTOM の場合は None を返す。
+        """
+        if reminder_type not in (ReminderType.DAILY, ReminderType.WEEKLY, ReminderType.MONTHLY):
+            return None
+        try:
+            base = datetime.fromisoformat(scheduled_time)
+        except Exception:
+            base = datetime.now()
+        if reminder_type == ReminderType.DAILY:
+            next_dt = base + timedelta(days=1)
+        elif reminder_type == ReminderType.WEEKLY:
+            next_dt = base + timedelta(weeks=1)
+        else:  # MONTHLY
+            # 30日後（年月をまたぐ場合も安全）
+            year = base.year + (base.month // 12)
+            month = (base.month % 12) + 1
+            try:
+                import calendar
+                last_day = calendar.monthrange(year, month)[1]
+                day = min(base.day, last_day)
+                next_dt = base.replace(year=year, month=month, day=day)
+            except Exception:
+                next_dt = base + timedelta(days=30)
+        return next_dt.isoformat()
+
     def complete_reminder(self, reminder_id: str):
         """
-        リマインダーを完了
+        リマインダーを完了する。
+        - ONCE / CUSTOM: completed フラグを立てる（従来動作）
+        - DAILY / WEEKLY / MONTHLY: 次回予定時刻に再スケジュールし、
+          completed は立てない（繰り返し継続）
         
         Args:
             reminder_id: リマインダーID
         """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
-        cursor.execute("""
-            UPDATE reminders
-            SET completed = 1, completed_at = ?
-            WHERE reminder_id = ?
-        """, (datetime.now().isoformat(), reminder_id))
-        
+
+        # 現在のリマインダー情報を取得
+        cursor.execute(
+            "SELECT reminder_type, scheduled_time FROM reminders WHERE reminder_id = ?",
+            (reminder_id,),
+        )
+        row = cursor.fetchone()
+
+        if row:
+            try:
+                rtype = ReminderType(row[0])
+            except ValueError:
+                rtype = ReminderType.ONCE
+            scheduled_time = row[1]
+            next_time = self._next_scheduled_time(scheduled_time, rtype)
+
+            if next_time is not None:
+                # 繰り返しリマインダー → 再スケジュール
+                cursor.execute(
+                    """UPDATE reminders
+                       SET scheduled_time = ?, completed = 0, completed_at = NULL
+                       WHERE reminder_id = ?""",
+                    (next_time, reminder_id),
+                )
+                conn.commit()
+                conn.close()
+                logger.info(f"🔄 リマインダー再スケジュール: {reminder_id} → {next_time}")
+                return
+
+        # ONCE / CUSTOM または行が存在しない → 完了にする
+        cursor.execute(
+            """UPDATE reminders
+               SET completed = 1, completed_at = ?
+               WHERE reminder_id = ?""",
+            (datetime.now().isoformat(), reminder_id),
+        )
         conn.commit()
         conn.close()
-        
         logger.info(f"✅ リマインダー完了: {reminder_id}")
     
     def generate_daily_report(self) -> Report:

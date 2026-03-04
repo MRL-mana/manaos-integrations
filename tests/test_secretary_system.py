@@ -199,6 +199,146 @@ class TestCompleteReminder:
 
 
 # ======================================================================
+# 9. 繰り返しリマインダーの再スケジュール
+# ======================================================================
+
+class TestRecurringReminderReschedule:
+    """DAILY / WEEKLY / MONTHLY リマインダーは complete_reminder 後に
+    次回予定時刻で再スケジュールされる（completed=False 維持）"""
+
+    def _add_and_complete(
+        self,
+        tmp_path: Path,
+        reminder_type: ReminderType,
+        rid: str = "r_recur",
+    ):
+        sec = make_secretary(tmp_path)
+        r = make_reminder(rid=rid, reminder_type=reminder_type)
+        sec.add_reminder(r)
+        original_time = r.scheduled_time
+        sec.complete_reminder(rid)
+        return sec, original_time
+
+    # ------------------------------------------------------------------
+    # DAILY
+    # ------------------------------------------------------------------
+    def test_daily_not_completed_after_complete(self, tmp_path: Path) -> None:
+        sec, _ = self._add_and_complete(tmp_path, ReminderType.DAILY, "r_daily")
+        due_ids = [x.reminder_id for x in sec.get_due_reminders()]
+        # 次回は 1 日後なのでまだ期限切れではない → due に出ない
+        assert "r_daily" not in due_ids
+
+    def test_daily_rescheduled_to_next_day(self, tmp_path: Path) -> None:
+        sec, original_time = self._add_and_complete(tmp_path, ReminderType.DAILY, "r_daily2")
+        from datetime import datetime as _dt
+        orig_dt = _dt.fromisoformat(original_time)
+        expected = (orig_dt + __import__("datetime").timedelta(days=1)).date()
+        # DB から直接確認
+        import sqlite3
+        conn = sqlite3.connect(sec.db_path)
+        row = conn.execute(
+            "SELECT scheduled_time, completed FROM reminders WHERE reminder_id = ?",
+            ("r_daily2",),
+        ).fetchone()
+        conn.close()
+        assert row is not None
+        assert row[1] == 0, "DAILY reminder should NOT be marked completed"
+        rescheduled_date = _dt.fromisoformat(row[0]).date()
+        assert rescheduled_date == expected
+
+    # ------------------------------------------------------------------
+    # WEEKLY
+    # ------------------------------------------------------------------
+    def test_weekly_rescheduled_to_next_week(self, tmp_path: Path) -> None:
+        sec, original_time = self._add_and_complete(tmp_path, ReminderType.WEEKLY, "r_weekly")
+        from datetime import datetime as _dt
+        orig_dt = _dt.fromisoformat(original_time)
+        expected = (orig_dt + __import__("datetime").timedelta(weeks=1)).date()
+        import sqlite3
+        conn = sqlite3.connect(sec.db_path)
+        row = conn.execute(
+            "SELECT scheduled_time, completed FROM reminders WHERE reminder_id = ?",
+            ("r_weekly",),
+        ).fetchone()
+        conn.close()
+        assert row[1] == 0, "WEEKLY reminder should NOT be completed"
+        rescheduled_date = _dt.fromisoformat(row[0]).date()
+        assert rescheduled_date == expected
+
+    # ------------------------------------------------------------------
+    # MONTHLY
+    # ------------------------------------------------------------------
+    def test_monthly_rescheduled_to_next_month(self, tmp_path: Path) -> None:
+        sec, original_time = self._add_and_complete(tmp_path, ReminderType.MONTHLY, "r_monthly")
+        from datetime import datetime as _dt
+        orig_dt = _dt.fromisoformat(original_time)
+        import sqlite3
+        conn = sqlite3.connect(sec.db_path)
+        row = conn.execute(
+            "SELECT scheduled_time, completed FROM reminders WHERE reminder_id = ?",
+            ("r_monthly",),
+        ).fetchone()
+        conn.close()
+        assert row[1] == 0, "MONTHLY reminder should NOT be completed"
+        rescheduled_dt = _dt.fromisoformat(row[0])
+        # 月が進んでいること（少なくとも25日以上後）
+        delta = rescheduled_dt - orig_dt
+        assert delta.days >= 25, f"Expected ~30 day offset, got {delta.days}"
+
+    # ------------------------------------------------------------------
+    # ONCE → 完了で completed=1 のまま（従来動作）
+    # ------------------------------------------------------------------
+    def test_once_marked_completed(self, tmp_path: Path) -> None:
+        sec = make_secretary(tmp_path)
+        r = make_reminder(rid="r_once", reminder_type=ReminderType.ONCE)
+        sec.add_reminder(r)
+        sec.complete_reminder("r_once")
+        import sqlite3
+        conn = sqlite3.connect(sec.db_path)
+        row = conn.execute(
+            "SELECT completed FROM reminders WHERE reminder_id = ?", ("r_once",)
+        ).fetchone()
+        conn.close()
+        assert row[0] == 1, "ONCE reminder SHOULD be completed"
+
+    def test_once_not_in_due_after_complete(self, tmp_path: Path) -> None:
+        sec = make_secretary(tmp_path)
+        r = make_reminder(rid="r_once2", reminder_type=ReminderType.ONCE)
+        sec.add_reminder(r)
+        sec.complete_reminder("r_once2")
+        due_ids = [x.reminder_id for x in sec.get_due_reminders()]
+        assert "r_once2" not in due_ids
+
+    # ------------------------------------------------------------------
+    # _next_scheduled_time ユーティリティのテスト
+    # ------------------------------------------------------------------
+    def test_next_time_custom_returns_none(self, tmp_path: Path) -> None:
+        from scripts.misc.secretary_system import SecretarySystem as SS, ReminderType as RT
+        result = SS._next_scheduled_time("2026-03-04T10:00:00", RT.CUSTOM)
+        assert result is None
+
+    def test_next_time_once_returns_none(self, tmp_path: Path) -> None:
+        from scripts.misc.secretary_system import SecretarySystem as SS, ReminderType as RT
+        result = SS._next_scheduled_time("2026-03-04T10:00:00", RT.ONCE)
+        assert result is None
+
+    def test_next_time_daily_adds_one_day(self, tmp_path: Path) -> None:
+        from scripts.misc.secretary_system import SecretarySystem as SS, ReminderType as RT
+        from datetime import datetime as _dt
+        result = SS._next_scheduled_time("2026-03-04T10:00:00", RT.DAILY)
+        assert result is not None
+        assert _dt.fromisoformat(result).date().day == 5  # 4 + 1
+
+    def test_next_time_weekly_adds_7_days(self, tmp_path: Path) -> None:
+        from scripts.misc.secretary_system import SecretarySystem as SS, ReminderType as RT
+        from datetime import datetime as _dt
+        result = SS._next_scheduled_time("2026-03-04T10:00:00", RT.WEEKLY)
+        assert result is not None
+        delta = _dt.fromisoformat(result) - _dt.fromisoformat("2026-03-04T10:00:00")
+        assert delta.days == 7
+
+
+# ======================================================================
 # 7. _save_report / get_reports
 # ======================================================================
 
