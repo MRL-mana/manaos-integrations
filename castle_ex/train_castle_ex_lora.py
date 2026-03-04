@@ -430,12 +430,16 @@ def main():
         if missing:
             logger.warning(f"[init-lora-from] missing keys (first 5): {missing[:5]}")
 
+    # gradient checkpointing + PEFT 互換 (OOM対策)
+    if torch.cuda.is_available() and not args.no_cuda:
+        model.enable_input_require_grads()
+
     model.print_trainable_parameters()
     
     # 5. Data Collator
     data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
     
-    # 6. 学習設定（確定レシピ: batch_size=2, fp16 when GPU）
+    # 6. 学習設定（gradient_checkpointing=True でVRAM削減）
     use_fp16 = args.fp16 and torch.cuda.is_available() and not args.no_cuda
     training_kwargs = dict(
         output_dir=args.output_dir,
@@ -451,6 +455,8 @@ def main():
         logging_steps=50,
         logging_dir=args.output_dir + "/logs",
         fp16=use_fp16,
+        gradient_checkpointing=not args.no_cuda,  # VRAM削減 (GPU時のみ)
+        gradient_checkpointing_kwargs={"use_reentrant": False},
         report_to="none",
         remove_unused_columns=False,
         load_best_model_at_end=False,
