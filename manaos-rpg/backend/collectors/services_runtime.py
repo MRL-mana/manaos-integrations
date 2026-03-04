@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 from collectors.docker_inspect import get_docker_container_runtime
@@ -7,15 +8,33 @@ from collectors.http_probe import http_probe
 from collectors.pm2_runtime import get_pm2_runtime_by_name
 from collectors.ports_probe import is_port_open
 
+# 並列チェックの最大スレッド数 (大量サービスでもタイムアウト合計が長くならないようにする)
+_MAX_WORKERS = 20
+
 
 def compute_services_status(
     services: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    out: list[dict[str, Any]] = []
-    for s in services:
+    if not services:
+        return []
+
+    results: dict[int, dict[str, Any]] = {}
+
+    def _check(idx: int, s: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         runtime = _compute_one(s)
-        out.append({**s, **runtime})
-    return out
+        return idx, {**s, **runtime}
+
+    with ThreadPoolExecutor(max_workers=min(_MAX_WORKERS, len(services))) as pool:
+        futures = {pool.submit(_check, i, s): i for i, s in enumerate(services)}
+        for fut in as_completed(futures):
+            try:
+                idx, merged = fut.result()
+                results[idx] = merged
+            except Exception:
+                i = futures[fut]
+                results[i] = dict(services[i])
+
+    return [results[i] for i in range(len(services))]
 
 
 def _compute_one(service: dict[str, Any]) -> dict[str, Any]:

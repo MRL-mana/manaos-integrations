@@ -905,8 +905,8 @@ def snapshot() -> dict[str, Any]:
         }
 
     # mrl-memory (Unified memory未搭載時のフォールバック先)
-    mrl_health = _http_json_get(f"{DEFAULT_MRL_MEMORY_BASE}/health", timeout_s=3.0)
-    mrl_metrics = _http_json_get(f"{DEFAULT_MRL_MEMORY_BASE}/api/metrics", timeout_s=4.0)
+    mrl_health = _http_json_get(f"{DEFAULT_MRL_MEMORY_BASE}/health", timeout_s=1.0)
+    mrl_metrics = _http_json_get(f"{DEFAULT_MRL_MEMORY_BASE}/api/metrics", timeout_s=1.0)
     mrl_status: dict[str, Any] = {
         "ok": bool(mrl_health.get("ok")),
         "base": DEFAULT_MRL_MEMORY_BASE,

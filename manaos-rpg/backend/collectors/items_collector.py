@@ -40,9 +40,16 @@ def scan_items(roots: list[ItemRoot], max_depth: int = 6) -> list[dict]:
         if not base.exists() or not base.is_dir():
             continue
 
+        limit = max(1, int(root.max_files))
+        # 早期終了バッファ: max_files の 4 倍まで溜まったら打ち切ってからソート
+        # これにより 8000+ ファイルのディレクトリでも O(max_files) 相当で終わる
+        early_stop = limit * 4
         collected: list[dict] = []
 
+        walk_done = False
         for dirpath, dirnames, filenames in os.walk(base):
+            if walk_done:
+                break
             rel_dir = Path(dirpath).relative_to(base)
             depth = len(rel_dir.parts)
             if depth >= max_depth:
@@ -85,8 +92,15 @@ def scan_items(roots: list[ItemRoot], max_depth: int = 6) -> list[dict]:
                     }
                 )
 
+                # 早期終了: バッファが一杯になったらここでソート→切り捨て
+                if len(collected) >= early_stop:
+                    collected.sort(key=lambda x: int(x.get("mtime") or 0), reverse=True)
+                    collected = collected[:limit]
+                    walk_done = True
+                    break
+
         collected.sort(key=lambda x: int(x.get("mtime") or 0), reverse=True)
-        items.extend(collected[: max(1, int(root.max_files))])
+        items.extend(collected[:limit])
 
     items.sort(key=lambda x: int(x.get("mtime") or 0), reverse=True)
     return items

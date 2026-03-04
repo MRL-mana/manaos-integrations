@@ -18,7 +18,7 @@ def get_docker_container_runtime(container: str) -> dict[str, Any] | None:
             check=False,
             capture_output=True,
             text=True,
-            timeout=2.5,
+            timeout=1.0,
         )
         if completed.returncode != 0:
             return {

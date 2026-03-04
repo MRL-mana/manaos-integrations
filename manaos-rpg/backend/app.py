@@ -7,6 +7,8 @@ Start with:  uvicorn app:app --host 0.0.0.0 --port 9510
 from __future__ import annotations
 
 import os
+import threading
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,7 +29,26 @@ from routers import (
     unified_proxy,
 )
 
-app = FastAPI(title="ManaOS RPG API", version="0.1")
+
+def _prewarm_snapshot() -> None:
+    """バックエンド起動直後にスナップショットをバックグラウンドでプリウォーム。
+    初回アクセスで 15+ 秒待たされるのを防ぐ。"""
+    try:
+        from routers.snapshot import _snapshot_cached
+        _snapshot_cached(force_refresh=True)
+    except Exception:
+        pass
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 起動時: バックグラウンドスレッドでスナップショットをプリウォーム
+    t = threading.Thread(target=_prewarm_snapshot, daemon=True, name="snapshot-prewarm")
+    t.start()
+    yield
+    # シャットダウン時: 特になし
+
+app = FastAPI(title="ManaOS RPG API", version="0.1", lifespan=lifespan)
 
 _CORS_ORIGIN_REGEX = os.getenv(
     "MANAOS_CORS_ORIGIN_REGEX",
