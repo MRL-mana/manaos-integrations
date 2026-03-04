@@ -22,7 +22,11 @@ _EXTRA_PATHS = [
     _PROJECT_ROOT,
     _PROJECT_ROOT / "file_secretary",
     _PROJECT_ROOT / "scripts" / "misc",
+    _PROJECT_ROOT / "scripts" / "github",
     _PROJECT_ROOT / "step_deep_research",
+    _PROJECT_ROOT / "llm",
+    _PROJECT_ROOT / "mrl_memory",
+    _PROJECT_ROOT / "unified_api",  # unified_logging.get_service_logger 等
 ]
 
 for _p in _EXTRA_PATHS:
