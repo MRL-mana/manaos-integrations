@@ -7,19 +7,23 @@
 - 統合 API セキュリティ
 """
 
+import os
 import pytest
 import json
 import time
 from datetime import datetime
+from unittest.mock import patch
 
 
 @pytest.fixture(scope="module")
 def client():
-    """テスト用 Flask クライアント（モジュール共有）"""
+    """テスト用 Flask クライアント（モジュール共有・レートリミット無効）"""
     try:
         from unified_api_server import app
         app.config["TESTING"] = True
-        yield app.test_client()
+        # テスト中はレートリミットを無効化
+        with patch.dict(os.environ, {"MANAOS_RATE_LIMIT_ENABLED": "false"}):
+            yield app.test_client()
     except ImportError:
         pytest.skip("unified_api_server not available")
 
