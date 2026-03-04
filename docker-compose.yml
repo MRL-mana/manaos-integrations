@@ -61,6 +61,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 60s
 
   # Learning System API
   learning-system:
@@ -68,13 +69,16 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: manaos-learning-system
-    command: python -m learning_system_api
+    command: python learning_system_api.py
     ports:
       - "${LEARNING_SYSTEM_PORT:-9508}:9508"
     environment:
+      - PORT=9508
       - LEARNING_SYSTEM_PORT=9508
       - LEARNING_SYSTEM_HOST=0.0.0.0
+      - PYTHONPATH=/app:/app/scripts/misc
     volumes:
+      - ./learning_system_api.py:/app/learning_system_api.py:ro
       - ./data:/app/data
       - ./logs:/app/logs
     restart: unless-stopped
@@ -85,6 +89,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 40s
 
   # LLM Routing MCP Server
   # NOTE: MCPサーバーはstdio経由でCursorから起動される設計のため
