@@ -48,7 +48,15 @@ $evalProc = Start-Process -FilePath "py.exe" -ArgumentList $evalArgs `
     -RedirectStandardOutput $stdoutLog `
     -RedirectStandardError  $stderrLog `
     -PassThru -Wait
-if ($evalProc.ExitCode -ne 0) { throw "quick eval failed exit=$($evalProc.ExitCode)" }
+if ($evalProc.ExitCode -ne 0) {
+    # stderrをmonitorLogに転記して原因を一発で確認できるようにする
+    "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] EVAL FAILED exit=$($evalProc.ExitCode)" | Add-Content $monitorLog -Encoding UTF8
+    if (Test-Path $stderrLog) {
+        "--- stderr ---" | Add-Content $monitorLog -Encoding UTF8
+        Get-Content $stderrLog -Encoding UTF8 | Select-Object -Last 40 | Add-Content $monitorLog -Encoding UTF8
+    }
+    throw "quick eval failed exit=$($evalProc.ExitCode). see $stderrLog"
+}
 
 $latest = Get-ChildItem $reportsDir -Filter "castle_ex_layer2_quick_eval_checkpoint-$CheckpointStep*.json" |
     Sort-Object LastWriteTime -Desc | Select-Object -First 1
