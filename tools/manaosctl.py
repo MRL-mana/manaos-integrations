@@ -281,6 +281,63 @@ def topo_sort(targets: List[str], services: Dict[str, Any]) -> List[str]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 通知ユーティリティ
+# ─────────────────────────────────────────────────────────────────────────────
+
+def send_notify(title: str, message: str, priority: str = "default") -> str:
+    """Slack → ntfy.sh 自動フォールバック通知。
+    戻り値: 'slack' | 'ntfy' | 'failed'
+    """
+    import json as _json
+
+    # ── Slack 試行 ───────────────────────────────────────────────────────────
+    webhook_url = os.environ.get("SLACK_WEBHOOK_URL", "")
+    if not webhook_url:
+        env_file = REPO_ROOT / ".env"
+        if env_file.exists():
+            for line in env_file.read_text(encoding="utf-8").splitlines():
+                if line.startswith("SLACK_WEBHOOK_URL="):
+                    webhook_url = line.split("=", 1)[1].strip()
+                    break
+
+    if webhook_url:
+        try:
+            body = _json.dumps({"text": f"*[{title}]* {message}"}).encode("utf-8")
+            req = urllib.request.Request(
+                webhook_url, data=body,
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=5) as r:
+                if r.status < 300:
+                    return "slack"
+        except Exception:
+            pass  # ntfy へフォールバック
+
+    # ── ntfy.sh フォールバック ────────────────────────────────────────────────
+    topic = os.environ.get("NTFY_TOPIC", "manaos-default")
+    url   = f"https://ntfy.sh/{topic}"
+    try:
+        body_bytes = message.encode("utf-8")
+        # ntfy の Title ヘッダーは ASCII のみ受け付ける
+        ascii_title = title.encode("ascii", errors="replace").decode("ascii")
+        req = urllib.request.Request(
+            url, data=body_bytes,
+            headers={
+                "Title":        ascii_title,
+                "Priority":     priority,
+                "Content-Type": "text/plain; charset=utf-8",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=5) as r:
+            if r.status < 300:
+                return "ntfy"
+    except Exception:
+        pass
+
+    return "failed"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # サブコマンド実装
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -1152,6 +1209,7 @@ def cmd_watch(args: argparse.Namespace) -> int:
                     else watch_cfg.get("default_interval", 60))
     once         = getattr(args, "once", False)
     use_policy   = getattr(args, "policy", False) or watch_cfg.get("policy_on_down", False)
+    use_notify   = getattr(args, "notify", False)
     log_path_str = getattr(args, "log", None)
     log_file     = open(log_path_str, "a", encoding="utf-8") if log_path_str else None
 
@@ -1182,6 +1240,8 @@ def cmd_watch(args: argparse.Namespace) -> int:
                     cur_status[name] = "UP" if is_alive(svc) else "DOWN"
 
             # ── 変化検出 ────────────────────────────────────────────────
+            up_cnt   = sum(1 for s in cur_status.values() if s == "UP")
+            down_cnt = sum(1 for s in cur_status.values() if s == "DOWN")
             changes: List[str] = []
             for name, st in cur_status.items():
                 prev = prev_status.get(name)
@@ -1200,15 +1260,23 @@ def cmd_watch(args: argparse.Namespace) -> int:
                 _log(c("  ⚠ 変化検出!", YELLOW))
                 for ch in changes:
                     _log(f"    {ch}")
+                newly_down = [n for n, s in cur_status.items()
+                              if s == "DOWN" and prev_status.get(n) in ("UP", None)]
                 if use_policy:
-                    newly_down = [n for n, s in cur_status.items()
-                                  if s == "DOWN" and prev_status.get(n) in ("UP", None)]
                     if newly_down:
                         _log(c(f"  → policy --check 自動実行 (新規DOWN: {newly_down})", MAGENTA))
                         subprocess.run(
                             [PYTHON_EXE, __file__, "policy", "--check"],
                             cwd=str(REPO_ROOT),
                         )
+                if use_notify and newly_down:
+                    names_str = ", ".join(newly_down)
+                    result = send_notify(
+                        title="ManaOS DOWN Alert",
+                        message=f"DOWN detected: {names_str} ({now})",
+                        priority="high",
+                    )
+                    _log(c(f"  → ntfy 通知送信: {result} ({names_str})", MAGENTA))
             else:
                 _log(c("  変化なし", DIM))
 
@@ -1363,11 +1431,179 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         print()
         print(c(f"  [GTD Inbox  {len(items)} 件]", BOLD + CYAN))
         print(c("  " + "─" * 50, DIM))
-        for f in items[:30]:
-            print(f"    {f.stem}")
+        for i, f in enumerate(items[:30]):
+            print(f"    [{i+1}] {f.stem}")
         if len(items) > 30:
             print(c(f"    ... 他 {len(items) - 30} 件", DIM))
         print()
+        return 0
+
+    elif subcmd == "next":
+        items = sorted(
+            [f for f in GTD_NA.glob("*.md") if f.name.upper() != "README.MD"]
+        )
+        projects_dir = GTD_ROOT / "projects" / "items"
+        proj_items: list[Path] = []
+        if projects_dir.exists():
+            proj_items = sorted([f for f in projects_dir.rglob("*.md") if f.name.upper() != "README.MD"])
+        use_json = getattr(args, "json", False)
+        if use_json:
+            print(json.dumps({
+                "next_actions": [f.stem for f in items],
+                "projects":     [str(f.relative_to(REPO_ROOT)) for f in proj_items],
+            }, ensure_ascii=False, indent=2))
+            return 0
+        print()
+        print(c(f"  [Next Actions  {len(items)} 件]", BOLD + GREEN))
+        print(c("  " + "─" * 50, DIM))
+        if items:
+            for f in items:
+                print(f"    ✅ {f.stem}")
+        else:
+            print(c("    （なし）", DIM))
+        if proj_items:
+            print()
+            print(c(f"  [Projects  {len(proj_items)} ファイル]", BOLD + YELLOW))
+            print(c("  " + "─" * 50, DIM))
+            for f in proj_items:
+                print(f"    📁 {f.relative_to(GTD_ROOT / 'projects')}")
+        print()
+        return 0
+
+    elif subcmd == "process":
+        # Inbox の各アイテムを next-actions / projects / someday / waiting / done に振り分ける
+        import shutil as _shutil
+        DEST_MAP = {
+            "n": GTD_NA,
+            "next": GTD_NA,
+            "p": GTD_ROOT / "projects" / "items",
+            "project": GTD_ROOT / "projects" / "items",
+            "s": GTD_ROOT / "someday",
+            "someday": GTD_ROOT / "someday",
+            "w": GTD_ROOT / "waiting",
+            "waiting": GTD_ROOT / "waiting",
+            "d": GTD_ROOT / "archive" / "done",
+            "done": GTD_ROOT / "archive" / "done",
+            "x": None,  # skip / delete
+        }
+        LABEL_MAP = {
+            "n": c("Next Actions", GREEN),
+            "p": c("Projects",    YELLOW),
+            "s": c("Someday",     DIM),
+            "w": c("Waiting",     CYAN),
+            "d": c("Done/Archive", MAGENTA),
+            "x": c("Skip",        DIM),
+        }
+        target_arg = getattr(args, "target", None)
+        dest_flag  = getattr(args, "to",     None)
+
+        items = sorted(
+            [f for f in GTD_INBOX.glob("*.md") if f.name.upper() != "README.MD"]
+        )
+        if not items:
+            print(c("  Inbox は空です。", DIM))
+            return 0
+
+        # --target + --to でバッチ移動
+        if target_arg and dest_flag:
+            dest_key = dest_flag.lower()
+            if dest_key not in DEST_MAP:
+                print(c(f"[ERROR] --to に指定できる値: next / projects / someday / waiting / done", RED), file=sys.stderr)
+                return 1
+            matched = [f for f in items if target_arg.lower() in f.stem.lower()]
+            if not matched:
+                print(c(f"  '{target_arg}' に一致する Inbox アイテムが見つかりません", YELLOW))
+                return 1
+            for f in matched:
+                dest_dir = DEST_MAP.get(dest_key.rstrip("s"), DEST_MAP.get(dest_key))
+                dest_dir.mkdir(parents=True, exist_ok=True)
+                _shutil.move(str(f), str(dest_dir / f.name))
+                print(c(f"  ✅ {f.name}  →  {dest_dir.name}/", GREEN))
+            print(c(f"  {len(matched)} 件処理完了", CYAN))
+            return 0
+
+        # インタラクティブモード
+        print()
+        print(c(f"  [GTD Process  Inbox {len(items)} 件]", BOLD + CYAN))
+        print(c("  n=Next  p=Project  s=Someday  w=Waiting  d=Done  x=Skip  q=終了", DIM))
+        print(c("  " + "─" * 60, DIM))
+        moved = 0
+        for f in items:
+            print(f"\n  📥 {c(f.stem, BOLD)}")
+            # ファイルの1行目（タイトル）を表示
+            try:
+                first_line = f.read_text(encoding="utf-8", errors="replace").splitlines()[0].lstrip("# ").strip()
+                if first_line != f.stem:
+                    print(c(f"     {first_line}", DIM))
+            except Exception:
+                pass
+            choice = input("  → ").strip().lower()
+            if choice == "q":
+                print(c("  中断しました", DIM))
+                break
+            if choice == "x" or not choice:
+                print(c("   Skip", DIM))
+                continue
+            dest_key = {"next": "n", "project": "p", "projects": "p",
+                        "someday": "s", "waiting": "w", "done": "d"}.get(choice, choice)
+            short = dest_key.rstrip("s")
+            dest_dir = DEST_MAP.get(short) or DEST_MAP.get(dest_key)
+            if dest_dir is None:
+                print(c("   不明な選択、スキップ", YELLOW))
+                continue
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            _shutil.move(str(f), str(dest_dir / f.name))
+            moved += 1
+            label = LABEL_MAP.get(short, dest_key)
+            print(c(f"   → {label} に移動", GREEN))
+        print()
+        print(c(f"  {moved} 件処理  |  残 Inbox: {_inbox_count()} 件", CYAN))
+        return 0
+
+    elif subcmd == "weekly":
+        # 週次レビュー: 先週のログ + 今週の傾向 + Inbox状況
+        today   = datetime.datetime.now()
+        use_json = getattr(args, "json", False)
+        logs    = sorted([f for f in GTD_LOGS.glob("[0-9][0-9][0-9][0-9]-*.md")], reverse=True)
+        week_logs = [f for f in logs if f.name >= (today - datetime.timedelta(days=7)).strftime("%Y-%m-%d")]
+        inbox_n = _inbox_count()
+        na_n    = _na_count()
+        # Inbox件数推移（直近7日分のログからInbox件数を読む）
+        trend   = []
+        for wl in reversed(week_logs):
+            try:
+                txt = wl.read_text(encoding="utf-8", errors="replace")
+                for line in txt.splitlines():
+                    if "件数:" in line and "件" in line:
+                        import re as _re2
+                        m = _re2.search(r"(\d+)\s*件", line)
+                        if m:
+                            trend.append({"date": wl.stem, "inbox": int(m.group(1))})
+                        break
+            except Exception:
+                pass
+        if use_json:
+            print(json.dumps({
+                "week_logs":      [f.stem for f in week_logs],
+                "inbox_now":      inbox_n,
+                "next_actions":   na_n,
+                "inbox_trend":    trend,
+            }, ensure_ascii=False, indent=2))
+            return 0
+        print()
+        print(c(f"  [GTD Weekly Review  {today.strftime('%Y-%m-%d')}]", BOLD + CYAN))
+        print(c("  " + "─" * 60, DIM))
+        print(f"  📄 先週のログ: {len(week_logs)} 日分  （{', '.join(f.stem for f in week_logs[:5])} ...）")
+        print(f"  📥 現在のInbox: {inbox_n} 件")
+        print(f"  ✅ Next Actions: {na_n} 件")
+        if trend:
+            print()
+            print(c("  Inbox 推移 (直近ログより)", DIM))
+            for t in trend:
+                bar = "█" * min(t["inbox"], 20)
+                print(f"    {t['date']}  {bar}  {t['inbox']}件")
+        print()
+        print(c("  ヒント: manaosctl gtd process  → Inbox を振り分けて Next Actions を作る", DIM))
         return 0
 
     else:  # status
@@ -1392,6 +1628,20 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         print(f"  📄 今日の日次ログ: {'✓ あり' if log_exists else '✗ なし (manaosctl gtd morning で作成)'}")
         print()
         return 0
+
+
+def cmd_notify(args: argparse.Namespace) -> int:
+    """Slack → ntfy.sh 自動フォールバック通知を送信する。"""
+    title   = getattr(args, "title",    "ManaOS Notify")
+    prio    = getattr(args, "priority", "default")
+    message = " ".join(args.message) if isinstance(args.message, list) else args.message
+
+    print(c(f"\n  ManaOS Notify  [{title}]", BOLD + CYAN))
+    print(c(f"  {message}", DIM))
+    result = send_notify(title=title, message=message, priority=prio)
+    col = GREEN if result in ("slack", "ntfy") else RED
+    print(c(f"\n  送信結果: {result}", col))
+    return 0 if result != "failed" else 1
 
 
 def main() -> None:
@@ -1482,15 +1732,32 @@ def main() -> None:
                          help="DOWN検出時に policy --check を自動実行")
     p_watch.add_argument("--log",    type=str, default=None,
                          help="ANSI除去したログを追記するファイルパス")
+    p_watch.add_argument("--notify", action="store_true",
+                         help="サービスDOWN検出時に ntfy/Slack 通知を自動送信")
+
+    # notify
+    p_notify = sub.add_parser("notify", help="ntfy.sh / Slack に通知を送信する")
+    p_notify.add_argument("message", nargs="+", help="送信するメッセージ")
+    p_notify.add_argument("--title",    type=str, default="ManaOS Notify", help="通知タイトル")
+    p_notify.add_argument("--priority", type=str, default="default",
+                          choices=["min", "low", "default", "high", "urgent"],
+                          help="ntfy 優先度 (default: default)")
 
     # gtd
-    p_gtd = sub.add_parser("gtd", help="GTD 操作 (morning / capture / inbox / status)")
+    p_gtd = sub.add_parser("gtd", help="GTD 操作 (morning / capture / inbox / next / process / weekly / status)")
     p_gtd_sub = p_gtd.add_subparsers(dest="subcmd")
     p_gtd_sub.add_parser("morning", help="今日の日次ログを表示（なければ作成）")
     p_gtd_capture = p_gtd_sub.add_parser("capture", help="Inbox にテキストを保存")
     p_gtd_capture.add_argument("text", nargs="+", help="保存するテキスト")
     p_gtd_inbox = p_gtd_sub.add_parser("inbox", help="Inbox 一覧表示")
     p_gtd_inbox.add_argument("--json", action="store_true")
+    p_gtd_next = p_gtd_sub.add_parser("next", help="Next Actions 一覧表示")
+    p_gtd_next.add_argument("--json", action="store_true")
+    p_gtd_process = p_gtd_sub.add_parser("process", help="Inbox アイテムを振り分ける（インタラクティブ or バッチ）")
+    p_gtd_process.add_argument("--target", type=str, default=None, help="対象ファイル名の一部文字列")
+    p_gtd_process.add_argument("--to",     type=str, default=None, help="移動先: next/projects/someday/waiting/done")
+    p_gtd_weekly = p_gtd_sub.add_parser("weekly", help="週次レビュー（先週ログ + Inbox推移）")
+    p_gtd_weekly.add_argument("--json", action="store_true")
     p_gtd_status = p_gtd_sub.add_parser("status", help="GTD ステータス概要")
     p_gtd_status.add_argument("--json", action="store_true")
 
@@ -1512,6 +1779,7 @@ def main() -> None:
         "tier":      cmd_tier,
         "watch":     cmd_watch,
         "gtd":       cmd_gtd,
+        "notify":    cmd_notify,
     }
     sys.exit(dispatch[args.command](args))
 

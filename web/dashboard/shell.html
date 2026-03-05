@@ -547,6 +547,9 @@ const SLASH_CMDS = [
   { cmd: "/memo <text>",      desc: "Inbox にメモを保存 (GTD キャプチャ)" },
   { cmd: "/inbox",            desc: "GTD Inbox 一覧表示" },
   { cmd: "/morning",          desc: "今日の日次ログを表示/作成" },
+  // 通知
+  { cmd: "/notify <msg>",     desc: "ntfy / Slack に通知を送信" },
+  { cmd: "/notify <msg> --title <T>", desc: "タイトル付きで通知" },
 ];
 
 // ── Command history (↑/↓) ─────────────────────────────────────────────────
@@ -1173,6 +1176,8 @@ function showHelp() {
     ["/memo &lt;text&gt;", "Inbox にメモ保存 (GTD キャプチャ)"],
     ["/inbox",            "GTD Inbox 一覧"],
     ["/morning",          "今日の日次ログ表示/作成"],
+    // 通知
+    ["/notify &lt;msg&gt;", "ntfy / Slack に通知を送信"],
   ];
   const tBody = rows.map(([c, d]) =>
     `<tr><td style="font-family:monospace;white-space:nowrap;color:var(--accent);padding:2px 14px 2px 0">${c}</td>` +
@@ -1230,8 +1235,12 @@ async function send() {
       if (!arg) { appendAgent("<span style='color:var(--fail)'>/memo の後にテキストを入力してください 例: /memo スタンドの在庫確認</span>"); return; }
       await sendGtdCapture(arg, message); return;
     }
-    if (cmd === "inbox")   { await sendShellRun("gtd", ["inbox"],   message); return; }
-    if (cmd === "morning") { await sendShellRun("gtd", ["morning"], message); return; }
+    if (cmd === "inbox")   { await sendShellRun("gtd",    ["inbox"],   message); return; }
+    if (cmd === "morning") { await sendShellRun("gtd",    ["morning"], message); return; }
+    if (cmd === "notify") {
+      if (!arg) { appendAgent("<span style='color:var(--fail)'>/notify の後にメッセージを入力してください 例: /notify テスト通知</span>"); return; }
+      await sendShellRun("notify", arg.split(/\s+/), message); return;
+    }
 
     const remap = {
       status:  "全サービスの状態を確認して",
