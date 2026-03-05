@@ -94,6 +94,116 @@
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared" }
+    },
+
+    // ─── manaosctl 運用タスク群 ──────────────────────────────
+    {
+      "label": "ManaOS: ① status（全サービス状態）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "status"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "ManaOS: ② up（Tier0+1 起動）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "up"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "ManaOS: ③ heal（DOWNを自動復旧）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "heal"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "ManaOS: ④ deps --order（起動順序確認）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "deps", "--order"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "ManaOS: ⑤ events（直近イベント30件）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "events"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "ManaOS: ⑥ analyze（LLMでイベント分析）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "analyze"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "ManaOS: ⑦ tier（Tier別サービス一覧）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "tier"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "ManaOS: heal --dry-run（復旧プレビュー）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "heal", "--dry-run"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "ManaOS: deps（全依存一覧）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "deps"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "ManaOS: deps --tree（blast-radius ツリー）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "deps", "--tree"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "ManaOS: watch --once（監視1回実行）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "watch", "--once"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "ManaOS: watch（60秒間隔 監視ループ）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "watch"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
     }
   ]
 }
