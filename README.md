@@ -147,6 +147,47 @@ python -m pytest tests/ --cov=. --cov-report=term-missing
 
 ---
 
+## 🔧 Tools
+
+### 依存関係・ブラスト半径分析
+
+`tools/check_blast_radius.py` は `config/services_ledger.yaml` を読んで、サービス障害時の連鎖影響（ブラスト半径）と復旧順序を出力する。
+
+```bash
+# 全サービス Tier 一覧
+python tools/check_blast_radius.py --ledger config/services_ledger.yaml
+
+# unified_api が落ちたとき死ぬサービスと復旧手順
+python tools/check_blast_radius.py --ledger config/services_ledger.yaml --service unified_api
+
+# 復旧手順書 (Tier 0 → 1 → 2, 依存解決済み起動順) + Quick Quiz
+python tools/check_blast_radius.py --ledger config/services_ledger.yaml --recovery-order
+```
+
+### ヘルスチェック
+
+`tools/health_check_all.py` は全サービスの HTTP ヘルスエンドポイントを並列チェックする。
+
+```bash
+# ledger を SSOT として使用 (推奨)
+python tools/health_check_all.py --ledger config/services_ledger.yaml
+
+# JSON 出力
+python tools/health_check_all.py --ledger config/services_ledger.yaml --json
+
+# 10秒ごとに繰り返し監視
+python tools/health_check_all.py --ledger config/services_ledger.yaml --watch 10
+```
+
+### Ledger 検証
+
+```bash
+# schema + README 整合性チェック (CI でも実行される)
+python tools/validate_ledger.py --ledger config/services_ledger.yaml --readme README.md
+```
+
+---
+
 ## CI Gates
 
 ### CI Contract Gate (Stage2)

@@ -95,8 +95,43 @@ def check_one(name: str, url: str, tags: list) -> Dict[str, Any]:
                 "latency_ms": latency_ms, "error": str(e)[:80]}
 
 
-def run_checks(filter_tag: str = None) -> list:
-    targets = [(n, u, t) for n, u, t in SERVICES if not filter_tag or filter_tag in t]
+def load_ledger_services(ledger_path: str, filter_tag: str = None) -> list:
+    """services_ledger.yaml から (name, url, tags) を生成する。"""
+    try:
+        import yaml
+    except ImportError:
+        print("[ERROR] pyyaml が必要です: pip install pyyaml", file=sys.stderr)
+        sys.exit(1)
+
+    with open(ledger_path, encoding="utf-8") as f:
+        data = yaml.safe_load(f) or {}
+
+    results = []
+    for group in ("core", "optional"):
+        block = data.get(group) or {}
+        for name, spec in block.items():
+            if not isinstance(spec, dict):
+                continue
+            if not spec.get("enabled", False):
+                continue
+            port = spec.get("port")
+            url = str(spec.get("url") or "").strip()
+            if not url and isinstance(port, int):
+                url = f"http://127.0.0.1:{port}/health"
+            elif url and not url.endswith("/health"):
+                url = url.rstrip("/") + "/health"
+            tags = [group]
+            if filter_tag and filter_tag not in tags:
+                continue
+            results.append((name, url, tags))
+    return results
+
+
+def run_checks(filter_tag: str = None, ledger_path: str = None) -> list:
+    if ledger_path:
+        targets = load_ledger_services(ledger_path, filter_tag)
+    else:
+        targets = [(n, u, t) for n, u, t in SERVICES if not filter_tag or filter_tag in t]
     results = []
     with ThreadPoolExecutor(max_workers=16) as ex:
         future_map = {ex.submit(check_one, n, u, t): (n, u, t) for n, u, t in targets}
@@ -127,11 +162,16 @@ def main():
     ap.add_argument("--watch", type=int, metavar="SEC", help="繰り返し間隔(秒)")
     ap.add_argument("--tag", default=None, help="フィルタ: core / docker / optional / windows")
     ap.add_argument("--fail-only", action="store_true", help="unhealthy のみ表示")
+    ap.add_argument(
+        "--ledger", default=None, metavar="PATH",
+        help="services_ledger.yaml を SSOT として使用 (例: config/services_ledger.yaml)。"
+             "指定しない場合は従来の hardcoded リストを使用。",
+    )
     args = ap.parse_args()
 
     def once():
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        results = run_checks(args.tag)
+        results = run_checks(args.tag, ledger_path=args.ledger)
         if args.fail_only:
             results = [r for r in results if not r["healthy"]]
         if args.json:

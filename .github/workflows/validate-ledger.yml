@@ -39,6 +39,16 @@ jobs:
         run: |
           python tools/validate_ledger.py --ledger config/services_ledger.yaml --readme README.md
 
+      - name: Blast radius smoke test
+        run: |
+          # Summary must exit 0 and list at least 1 service
+          python tools/check_blast_radius.py --ledger config/services_ledger.yaml --no-color | grep -q "ManaOS Services Summary"
+          # Blast radius for unified_api must show affected services
+          python tools/check_blast_radius.py --ledger config/services_ledger.yaml --service unified_api --no-color | grep -q "Blast Radius"
+          # Recovery order must include Tier-0 section
+          python tools/check_blast_radius.py --ledger config/services_ledger.yaml --recovery-order --no-color | grep -q "Tier 0"
+          echo "Blast radius smoke: PASS"
+
   validate-openapi:
     runs-on: ubuntu-latest
     needs: validate
