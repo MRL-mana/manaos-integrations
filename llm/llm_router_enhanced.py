@@ -37,9 +37,10 @@ class EnhancedLLMRouter:
         
         # モデル設定（Ollama用） - 利用可能なモデルを優先
         self.ollama_models = {
-            "light": "dolphin-llama3:8b",  # 軽量
-            "medium": "dolphin-mistral:7b",  # 中規模
-            "heavy": "qwen2.5:7b"  # 高性能
+            "light": "dolphin-llama3:8b",   # 軽量・汎用
+            "medium": "dolphin-mistral:7b",  # 中規模・汎用
+            "heavy": "qwen2.5:7b",           # 高性能・汎用
+            "coding": "qwen2.5-coder:7b",    # コーディング専用
         }
         
         # 使用するLLMサーバー（"lm_studio" or "ollama"）
@@ -122,11 +123,20 @@ class EnhancedLLMRouter:
         # モデル選択
         model_key = "light"
 
+        prefer_coding = preferences.get("prefer_coding", False)
+        # コンテキストにコードが含まれる場合は自動的にコーディングモードへ
+        has_code_context = bool(context.get("code_context") or context.get("file_path"))
+
         if force_model:
             # ユーザーが明示的にモデルを指定
             model_key = "forced"
             model = force_model
             reasoning = f"ユーザー指定のモデルを使用: {model}"
+        elif prefer_coding or has_code_context:
+            # コーディング専用モデルを使用
+            model_key = "coding"
+            model = self._get_model_name(model_key)
+            reasoning = f"コーディングタスクのためqwen2.5-coder専用モデルを選択"
         elif prefer_speed or difficulty_score < 10:
             # 速度優先 or 低難易度
             model_key = "light"
@@ -207,9 +217,10 @@ class EnhancedLLMRouter:
         if self.llm_server == "ollama":
             # フォールバック候補 - 利用可能なモデルから選択
             model_candidates = {
-                "light": ["dolphin-llama3:8b", "qwen2.5:7b", "llava:latest"],
+                "light":  ["dolphin-llama3:8b", "qwen2.5:7b", "llava:latest"],
                 "medium": ["dolphin-mistral:7b", "qwen2.5:7b", "dolphin-llama3:8b"],
-                "heavy": ["qwen2.5:7b", "dolphin-mistral:7b", "dolphin-llama3:8b"],
+                "heavy":  ["qwen2.5:7b", "dolphin-mistral:7b", "dolphin-llama3:8b"],
+                "coding": ["qwen2.5-coder:7b", "qwen2.5:7b", "dolphin-mistral:7b"],
             }
             preferred = self.ollama_models.get(model_key, self.ollama_models["light"])
             candidates = model_candidates.get(model_key, model_candidates["light"])
