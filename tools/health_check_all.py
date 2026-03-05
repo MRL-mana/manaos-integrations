@@ -173,6 +173,13 @@ def main():
     )
     args = ap.parse_args()
 
+    if not args.ledger:
+        print(
+            "[TIP] --ledger config/services_ledger.yaml を指定すると SSOT モードで動作します "
+            "(hardcoded リストは将来廃止予定)。",
+            file=sys.stderr,
+        )
+
     if args.list_only:
         # CI dry-run: サービスリストのパースだけ確認し HTTP は叩かない
         if args.ledger:

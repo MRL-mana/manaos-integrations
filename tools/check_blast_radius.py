@@ -11,6 +11,7 @@ ManaOS Blast Radius Checker
   python check_blast_radius.py --service memory        # memory が落ちた時
   python check_blast_radius.py --recovery-order        # Tier 順の復旧手順書を出力
   python check_blast_radius.py --live                  # 実サービスを HTTP プローブして DOWN のブラスト半径を表示
+  python check_blast_radius.py --live --json           # JSON 形式で機械可読出力 (CI/スクリプト連携用)
   python check_blast_radius.py --ledger path/to/services_ledger.yaml
 
 終了コード:
@@ -21,7 +22,9 @@ ManaOS Blast Radius Checker
 from __future__ import annotations
 
 import argparse
+import datetime
 import http.client
+import json
 import sys
 import urllib.error
 import urllib.request
@@ -293,6 +296,50 @@ def cmd_live(
     print()
 
 
+def cmd_live_json(
+    services: Dict[str, Service],
+    reverse_deps: Dict[str, Set[str]],
+) -> None:
+    """--live --json: 機械可読 JSON 形式でライブプローブ結果を出力する。
+
+    出力フォーマット:
+    {
+      "timestamp": "<ISO-8601>",
+      "probed": {"service_name": "OK|DOWN|NO_URL|SKIP|HTTP_xxx", ...},
+      "down": ["svc_a", "svc_b"],
+      "cascade": {"svc_a": ["svc_x", "svc_y"], ...},
+      "total_at_risk": <int>
+    }
+    """
+    results: Dict[str, str] = {}
+    with ThreadPoolExecutor(max_workers=12) as ex:
+        futs = {ex.submit(probe_live, svc): svc for svc in services.values()}
+        for fut in as_completed(futs):
+            name, status = fut.result()
+            results[name] = status
+
+    down_enabled: List[str] = sorted(
+        name for name, st in results.items()
+        if st not in ("OK", "SKIP", "NO_URL") and services[name].enabled
+    )
+
+    cascade: Dict[str, List[str]] = {}
+    total_at_risk: Set[str] = set()
+    for svc_name in down_enabled:
+        affected = compute_blast_radius(svc_name, services, reverse_deps)
+        cascade[svc_name] = affected
+        total_at_risk.update(affected)
+
+    payload: Dict[str, Any] = {
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "probed": dict(sorted(results.items())),
+        "down": down_enabled,
+        "cascade": cascade,
+        "total_at_risk": len(total_at_risk),
+    }
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+
+
 # ── 表示ヘルパー ──────────────────────────────────────────────────────────────
 TIER_LABEL = {0: "[TIER-0:CRIT]", 1: "[TIER-1:MAJOR]", 2: "[TIER-2:OPT ]"}
 TIER_COLOR = {0: RED, 1: YELLOW, 2: GREEN}
@@ -479,6 +526,8 @@ def main() -> int:
                         help="復旧手順書を出力")
     parser.add_argument("--live", "-L", action="store_true",
                         help="実サービスに HTTP プローブして DOWN のブラスト半径を表示")
+    parser.add_argument("--json", "-j", action="store_true",
+                        help="--live の結果を JSON 形式で出力 (--live と組み合わせて使用)")
     parser.add_argument("--no-color", action="store_true",
                         help="カラー出力を無効化")
     args = parser.parse_args()
@@ -501,7 +550,10 @@ def main() -> int:
     reverse_deps = build_reverse_deps(services)
 
     if args.live:
-        cmd_live(services, reverse_deps, use_color)
+        if args.json:
+            cmd_live_json(services, reverse_deps)
+        else:
+            cmd_live(services, reverse_deps, use_color)
     elif args.service:
         cmd_blast_radius(args.service, services, reverse_deps, use_color)
     elif args.recovery_order:

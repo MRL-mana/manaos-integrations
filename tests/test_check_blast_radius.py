@@ -24,12 +24,16 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-# sys.path にリポジトリルートと tools/ を追加
+# tools/ を sys.path の先頭に強制配置 (他のテストが先に実行されても確実に正しい
+# バージョンがロードされるよう、既存エントリを一旦除去してから再挿入する)
 _ROOT = Path(__file__).resolve().parents[1]
-for _p in (_ROOT, _ROOT / "tools"):
-    s = str(_p)
-    if s not in sys.path:
-        sys.path.insert(0, s)
+_TOOLS = str(_ROOT / "tools")
+if _TOOLS in sys.path:
+    sys.path.remove(_TOOLS)
+sys.path.insert(0, _TOOLS)
+# _ROOT 自体も (なければ) 追加
+if str(_ROOT) not in sys.path:
+    sys.path.insert(1, str(_ROOT))
 
 from check_blast_radius import (
     Service,

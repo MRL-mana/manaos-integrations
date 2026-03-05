@@ -121,6 +121,13 @@ def validate_basic(services: Dict[str, ServiceRef]) -> List[str]:
                 f"Service '{service_name}' must be under core, but found under {services[service_name].group}"
             )
 
+    for service in services.values():
+        if service.enabled and service.port is None and not service.url:
+            errors.append(
+                f"Enabled service '{service.name}' has neither port nor url "
+                f"(set enabled: false or provide port/url)"
+            )
+
     return errors
 
 

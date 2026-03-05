@@ -12,8 +12,14 @@ on:
       - 'tools/validate_ledger.py'
       - 'tools/validate_contract.py'
       - 'tools/stage3_e2e_smoke.py'
+      - 'tools/check_blast_radius.py'
+      - 'tools/dashboard_cli.py'
+      - 'tools/health_check_all.py'
       - 'config/services_ledger.yaml'
       - 'README.md'
+      - 'tests/test_check_blast_radius.py'
+      - 'tests/test_validate_ledger.py'
+      - 'tests/test_dashboard_cli.py'
 
 concurrency:
   group: validate-ledger-${{ github.ref }}
@@ -59,6 +65,15 @@ jobs:
         run: |
           pip install pytest
           python -m pytest tests/test_check_blast_radius.py -v --tb=short
+
+      - name: Unit tests (validate ledger)
+        run: |
+          python -m pytest tests/test_validate_ledger.py -v --tb=short
+
+      - name: Unit tests (dashboard cli)
+        run: |
+          pip install requests
+          python -m pytest tests/test_dashboard_cli.py -v --tb=short
 
   validate-openapi:
     runs-on: ubuntu-latest
