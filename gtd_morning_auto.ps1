@@ -128,31 +128,51 @@ if ($pixel7Token) {
     Write-Host "[GTD Morning] Pixel7通知: トークン未設定（スキップ）"
 }
 
-# ---- Slack 通知（朝3分フォーマット）----
-$slackEnv = [System.Environment]::GetEnvironmentVariable("SLACK_WEBHOOK_URL", "User")
-if (-not $slackEnv) { $slackEnv = $env:SLACK_WEBHOOK_URL }
-if ($Notify -and $slackEnv) {
-    # Top3: naItemsから最大3件（名前のみ）
-    $top3Lines = if ($naItems.Count -gt 0) {
-        ($naItems | Select-Object -First 3 | ForEach-Object { "  • $($_.BaseName)" }) -join "`n"
-    } else { "  （Next Actions なし — `/na add <タスク>` で追加）" }
+# ---- 通知本文を組み立て ----
+$top3Lines = if ($naItems.Count -gt 0) {
+    ($naItems | Select-Object -First 3 | ForEach-Object { "  • $($_.BaseName)" }) -join "`n"
+} else { "  （Next Actions なし）" }
+$inboxStatus = if ($inboxCount -ge 10) { "$inboxCount 件（要処理！）" } elseif ($inboxCount -gt 0) { "$inboxCount 件" } else { "クリア" }
 
-    $inboxStatus = if ($inboxCount -ge 10) { ":warning: $inboxCount 件（要処理）" }
-                   elseif ($inboxCount -gt 0) { "$inboxCount 件" }
-                   else { "✅ クリア" }
+# ---- 通知送信ヘルパー (Slack → ntfy.sh 自動フォールバック) ----
+function Send-ManaOSNotify {
+    param([string]$Title, [string]$Body)
 
-    $slackText = ":sunrise: *ManaOS Morning — $Date*`n" +
-                 "`n:inbox_tray: Inbox: $inboxStatus" +
-                 "`n:zap: 今日のTop 3`n$top3Lines" +
-                 "`n`n_:no_entry_sign: 今日やらないこと：GTD日次ログの `今日の3大優先事項` に書いておこう_"
-
-    $msg = @{ text = $slackText } | ConvertTo-Json
-    try {
-        Invoke-RestMethod -Uri $slackEnv -Method POST -Body $msg -ContentType "application/json" -TimeoutSec 5 | Out-Null
-        Write-Host "[GTD Morning] Slack通知: OK"
-    } catch {
-        Write-Host "[GTD Morning] Slack通知: スキップ（$($_.Exception.Message)）"
+    # 1) Slack Webhook
+    $slackUrl = [System.Environment]::GetEnvironmentVariable("SLACK_WEBHOOK_URL", "User")
+    if (-not $slackUrl) { $slackUrl = $env:SLACK_WEBHOOK_URL }
+    if ($slackUrl) {
+        try {
+            $msg = @{ text = "*$Title*`n$Body" } | ConvertTo-Json
+            Invoke-RestMethod -Uri $slackUrl -Method POST -Body $msg -ContentType "application/json" -TimeoutSec 5 | Out-Null
+            Write-Host "[GTD Morning] 通知: Slack OK"
+            return
+        } catch { Write-Host "[GTD Morning] Slack: NG ($($_.Exception.Message)) → ntfy にフォールバック" }
     }
+
+    # 2) ntfy.sh フォールバック（アカウント不要・スマートフォンアプリ対応）
+    $ntfyTopic = [System.Environment]::GetEnvironmentVariable("NTFY_TOPIC", "User")
+    if (-not $ntfyTopic) { $ntfyTopic = $env:NTFY_TOPIC }
+    if (-not $ntfyTopic) { $ntfyTopic = "manaos-$(hostname)" }
+    try {
+        python -c "
+import urllib.request, sys
+req = urllib.request.Request(
+    'https://ntfy.sh/$ntfyTopic',
+    data=sys.argv[1].encode('utf-8'),
+    method='POST',
+    headers={'Title': sys.argv[2].encode('utf-8').decode('ascii','replace'), 'Priority': 'default', 'Tags': 'sunrise', 'Content-Type': 'text/plain; charset=utf-8'}
+)
+urllib.request.urlopen(req, timeout=8)
+print('ntfy OK')
+" "$Body" "$Title" 2>&1 | ForEach-Object { Write-Host "[GTD Morning] ntfy: $_" }
+    } catch { Write-Host "[GTD Morning] ntfy: NG ($($_.Exception.Message))" }
+}
+
+if ($Notify) {
+    $title = "ManaOS Morning $Date"
+    $body  = "Inbox: $inboxStatus`nTop3:`n$top3Lines`n`n[1つやらないことを決めよう]"
+    Send-ManaOSNotify -Title $title -Body $body
 }
 
 # ---- サマリ出力 ----

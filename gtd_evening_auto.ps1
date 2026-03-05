@@ -73,24 +73,45 @@ Write-Host " 明日Top1   : $tomorrowTop"
 Write-Host " 気づき     : $insightTop"
 Write-Host "============================================"
 
-# ---- Slack 通知（夜3分フォーマット）----
-$slackEnv = [System.Environment]::GetEnvironmentVariable("SLACK_WEBHOOK_URL", "User")
-if (-not $slackEnv) { $slackEnv = $env:SLACK_WEBHOOK_URL }
-if ($Notify -and $slackEnv) {
-    $slackText = ":night_with_stars: *ManaOS Evening — $Date*`n" +
-                 "`n:white_check_mark: 完了タスク（$doneCount 件）`n$doneText" +
-                 "`n`n:dart: 明日のTop 1: *$tomorrowTop*" +
-                 "`n:bulb: 今日の気づき: $insightTop" +
-                 "`n`n_$achievement_"
+# ---- 通知送信ヘルパー (Slack → ntfy.sh 自動フォールバック) ----
+function Send-ManaOSNotify {
+    param([string]$Title, [string]$Body)
 
-    $msg = @{ text = $slackText } | ConvertTo-Json
-    try {
-        Invoke-RestMethod -Uri $slackEnv -Method POST -Body $msg `
-            -ContentType "application/json" -TimeoutSec 5 | Out-Null
-        Write-Host "[GTD Evening] Slack通知: OK"
-    } catch {
-        Write-Host "[GTD Evening] Slack通知: スキップ（$($_.Exception.Message)）"
+    # 1) Slack Webhook
+    $slackUrl = [System.Environment]::GetEnvironmentVariable("SLACK_WEBHOOK_URL", "User")
+    if (-not $slackUrl) { $slackUrl = $env:SLACK_WEBHOOK_URL }
+    if ($slackUrl) {
+        try {
+            $msg = @{ text = "*$Title*`n$Body" } | ConvertTo-Json
+            Invoke-RestMethod -Uri $slackUrl -Method POST -Body $msg -ContentType "application/json" -TimeoutSec 5 | Out-Null
+            Write-Host "[GTD Evening] 通知: Slack OK"
+            return
+        } catch { Write-Host "[GTD Evening] Slack: NG → ntfy にフォールバック" }
     }
+
+    # 2) ntfy.sh フォールバック
+    $ntfyTopic = [System.Environment]::GetEnvironmentVariable("NTFY_TOPIC", "User")
+    if (-not $ntfyTopic) { $ntfyTopic = $env:NTFY_TOPIC }
+    if (-not $ntfyTopic) { $ntfyTopic = "manaos-$(hostname)" }
+    try {
+        python -c "
+import urllib.request, sys
+req = urllib.request.Request(
+    'https://ntfy.sh/$ntfyTopic',
+    data=sys.argv[1].encode('utf-8'),
+    method='POST',
+    headers={'Title': sys.argv[2].encode('utf-8').decode('ascii','replace'), 'Priority': 'default', 'Tags': 'night_with_stars', 'Content-Type': 'text/plain; charset=utf-8'}
+)
+urllib.request.urlopen(req, timeout=8)
+print('ntfy OK')
+" "$Body" "$Title" 2>&1 | ForEach-Object { Write-Host "[GTD Evening] ntfy: $_" }
+    } catch { Write-Host "[GTD Evening] ntfy: NG ($($_.Exception.Message))" }
+}
+
+if ($Notify) {
+    $title = "ManaOS Evening $Date"
+    $body  = "完了: $doneCount 件 ($achievement)`n$doneText`n`n明日Top1: $tomorrowTop`n気づき: $insightTop"
+    Send-ManaOSNotify -Title $title -Body $body
 } else {
-    Write-Host "[GTD Evening] Slack通知: スキップ（webhook未設定）"
+    Write-Host "[GTD Evening] 通知: スキップ（-Notify:\$false）"
 }
