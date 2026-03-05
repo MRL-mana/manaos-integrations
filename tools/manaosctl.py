@@ -552,6 +552,57 @@ def cmd_events(args: argparse.Namespace) -> int:
     print()
     return 0
 
+
+def cmd_analyze(args: argparse.Namespace) -> int:
+    """直近イベントを llm_routing (port 5111) に投げて分析。"""
+    import urllib.request
+
+    n   = getattr(args, "n", 30)
+    url = getattr(args, "url", "http://127.0.0.1:5111/api/llm/route")
+
+    events = read_events(n=n)
+    if not events:
+        print(c("  (イベントなし — 先にサービスを起動してください)", DIM))
+        return 0
+
+    events_text = json.dumps(events, ensure_ascii=False, indent=2)
+    prompt = (
+        f"以下は ManaOS の直近 {len(events)} 件のイベントログです。\n"
+        f"分析して「はっきり分かる日本語」で答えてください。\n"
+        f"1. 異常パターン（頂点5件）\n"
+        f"2. 問題の原因推定\n"
+        f"3. 推奨アクション\n"
+        f"\nEvents:\n{events_text}"
+    )
+
+    print(c(f"\n[ManaOS Event Analysis (n={len(events)})]", BOLD + CYAN))
+    print(c(f"  LLM エンドポイント: {url}", DIM))
+    print()
+
+    payload = json.dumps({"prompt": prompt, "model": "auto"}, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(
+        url, data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+        if getattr(args, "json", False):
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+        else:
+            model     = result.get("model", "?")
+            resp_text = result.get("response", "(レスポンスなし)")
+            print(c(f"[使用モデル: {model}]", DIM))
+            print()
+            print(resp_text)
+            print()
+        _emit("analyze", detail=f"n={len(events)} model={result.get('model','?')}", source="manaosctl")
+    except Exception as e:
+        print(c(f"  [ERROR] LLM接続失敗: {e}", RED))
+        print(c("  ヒント: llm_routing が起動しているか確認してください", DIM))
+        return 1
+    return 0
 # ── エントリポイント ──────────────────────────────────────────────────────────
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -604,6 +655,13 @@ def main() -> None:
     p_events.add_argument("--filter", type=str, help="イベント名またはサービス名で絞り込む")
     p_events.add_argument("--json", action="store_true")
 
+    # analyze
+    p_analyze = sub.add_parser("analyze", help="イベントを LLM に詳細分析させる")
+    p_analyze.add_argument("-n",    type=int, default=30, help="分析する直近件数 (デフォルト: 30)")
+    p_analyze.add_argument("--url", type=str, default="http://127.0.0.1:5111/api/llm/route",
+                           help="LLM ルーティング URL")
+    p_analyze.add_argument("--json", action="store_true")
+
     args = parser.parse_args()
 
     dispatch = {
@@ -615,6 +673,7 @@ def main() -> None:
         "cost":      cmd_cost,
         "dashboard": cmd_dashboard,
         "events":    cmd_events,
+        "analyze":   cmd_analyze,
     }
     sys.exit(dispatch[args.command](args))
 

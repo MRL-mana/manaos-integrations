@@ -30,6 +30,7 @@ from typing import Optional
 REPO_ROOT  = Path(__file__).parent.parent
 LOG_DIR    = REPO_ROOT / "logs"
 EVENT_LOG  = LOG_DIR / "events.jsonl"
+ROTATE_AT  = 5000   # この行数超えたら events.1.jsonl にローテーション
 
 # イベント種別（表示色マッピング用）
 EVENT_COLORS = {
@@ -47,6 +48,23 @@ RESET = "\x1b[0m"
 DIM   = "\x1b[2m"
 
 
+def _maybe_rotate() -> None:
+    """EVENT_LOG が ROTATE_AT 行を超えていたら events.1.jsonl にシフト。"""
+    if not EVENT_LOG.exists():
+        return
+    try:
+        count = sum(1 for _ in EVENT_LOG.open(encoding="utf-8", errors="replace"))
+    except OSError:
+        return
+    if count >= ROTATE_AT:
+        rotated = LOG_DIR / "events.1.jsonl"
+        try:
+            rotated.unlink(missing_ok=True)
+            EVENT_LOG.rename(rotated)
+        except OSError:
+            pass  # rename 失敗しても継続
+
+
 def emit(
     event: str,
     service: Optional[str] = None,
@@ -55,6 +73,7 @@ def emit(
 ) -> None:
     """イベントを logs/events.jsonl に追記する。"""
     LOG_DIR.mkdir(parents=True, exist_ok=True)
+    _maybe_rotate()
     record = {
         "time":    datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         "event":   event,
