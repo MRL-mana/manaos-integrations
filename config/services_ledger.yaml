@@ -105,6 +105,7 @@ core:
     stop_cmd: null
     auto_restart: true
     cost_risk: "low"
+    recovery_hint: "learning_system_api.py の存在確認。memory / unified_api が先に UP していることを確認してから再起動。"
 
   personality:
     port: 5123
@@ -119,6 +120,7 @@ core:
     stop_cmd: null
     auto_restart: true
     cost_risk: "low"
+    recovery_hint: "scripts/misc/personality_system.py の存在確認。memory / learning が UP してから起動。"
 
   autonomy:
     port: 5124
@@ -133,6 +135,7 @@ core:
     stop_cmd: null
     auto_restart: true
     cost_risk: "low"
+    recovery_hint: "scripts/misc/autonomy_system.py の存在確認。memory / learning / personality が全て UP してから起動。"
 
   secretary:
     port: 5125
@@ -147,6 +150,7 @@ core:
     stop_cmd: null
     auto_restart: true
     cost_risk: "low"
+    recovery_hint: "scripts/misc/secretary_system.py の存在確認。unified_api / memory が UP していることを確認。"
 
   trinity:
     port: 5146
@@ -161,6 +165,7 @@ core:
     stop_cmd: null
     auto_restart: true
     cost_risk: "low"
+    recovery_hint: "trinity_mcp_server/server.py の存在確認。unified_api / memory / personality が全て UP してから起動。"
 
   intent_router:
     port: 5100
@@ -175,6 +180,7 @@ core:
     stop_cmd: null
     auto_restart: true
     cost_risk: "low"
+    recovery_hint: "scripts/misc/intent_router.py の存在確認。llm_routing が UP していることを確認。"
 
   task_queue:
     port: 5104
@@ -189,6 +195,7 @@ core:
     stop_cmd: null
     auto_restart: true
     cost_risk: "low"
+    recovery_hint: "scripts/misc/task_queue_system.py の存在確認。unified_api が UP していることを確認。"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -210,6 +217,7 @@ optional:
     stop_cmd: null
     auto_restart: false
     cost_risk: "med"
+    recovery_hint: "python -m video_pipeline_mcp_server.server を手動起動。unified_api が UP していることを確認。"
 
   comfyui:
     port: 8188
@@ -224,6 +232,7 @@ optional:
     stop_cmd: null
     auto_restart: false
     cost_risk: "high"
+    recovery_hint: "GPU VRAM を確認してから起動。他の高 VRAM プロセス（ollama の大モデル等）を先に停止。C:/mana_workspace/storage500/ComfyUI の存在確認。"
 
   gallery:
     port: 5559
@@ -238,6 +247,7 @@ optional:
     stop_cmd: null
     auto_restart: false
     cost_risk: "low"
+    recovery_hint: "comfyui が UP していることを確認してから起動。comfyui より先には起動不可。"
 
   castle_ex_layer2:
     port: 9520
@@ -281,6 +291,7 @@ optional:
     stop_cmd: null
     auto_restart: false
     cost_risk: "low"
+    recovery_hint: "windows_automation_mcp_server/server.py の存在確認。依存パッケージ確認: pip install pyautogui pywin32。"
 
   pico_hid:
     port: 5136
@@ -295,6 +306,7 @@ optional:
     stop_cmd: null
     auto_restart: false
     cost_risk: "low"
+    recovery_hint: "Pico HID デバイスの USB 接続を確認。デバイスマネージャーで COM ポートが認識されているか確認してから起動。"
 
   pixel7_bridge:
     port: 5122
@@ -309,6 +321,7 @@ optional:
     stop_cmd: null
     auto_restart: false
     cost_risk: "low"
+    recovery_hint: "ADB デバイス接続確認: adb devices。pixel7_api_gateway.py の存在確認。unified_api が UP していることを確認。"
 
   # Tier 2: 外部連携
   slack_integration:
@@ -324,6 +337,7 @@ optional:
     stop_cmd: null
     auto_restart: false
     cost_risk: "low"
+    recovery_hint: "SLACK_WEBHOOK_URL 環境変数の設定確認。mcp-servers/slack_integration/slack_manaos_service.py の存在確認。"
 
   step_deep_research:
     port: 5120
@@ -338,6 +352,7 @@ optional:
     stop_cmd: null
     auto_restart: false
     cost_risk: "med"
+    recovery_hint: "step_deep_research/run_server.py の存在確認。llm_routing が UP していることを確認。"
 
   # Tier 2: 監視 / 運用
   service_monitor:

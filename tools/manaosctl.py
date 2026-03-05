@@ -162,7 +162,13 @@ def start_one(svc: Dict[str, Any], dry_run: bool = False, wait: bool = True,
     cmd = f'"{PYTHON_EXE}" {start_cmd[7:]}' if start_cmd.startswith("python ") else start_cmd
 
     if dry_run:
+        deps = svc.get("depends_on") or []
+        hint = svc.get("recovery_hint", "")
         print(c(f"  [DRY] {name} — {cmd}", CYAN))
+        if deps:
+            print(c(f"        deps: {deps}", DIM))
+        if hint:
+            print(c(f"        💡 {hint}", DIM))
         return True
 
     # 依存サービスが UP するまで待機
@@ -427,7 +433,19 @@ def cmd_report(args: argparse.Namespace) -> int:
 
     print(c(f"\n=== ManaOS Report ({report['generated_at']}) ===", BOLD + CYAN))
     print(c(f"  UP:       {len(up):>3}  {sorted(up)}", GREEN))
-    print(c(f"  DOWN:     {len(down):>3}  {sorted(down)}", RED if down else DIM))
+    if down:
+        print(c(f"  DOWN:     {len(down):>3}", RED))
+        for name in sorted(down):
+            svc = services[name]
+            print(c(f"    ✗ {name}  (Tier{svc.get('tier','-')})", RED))
+            blast = svc.get("blast_note", "")
+            if blast:
+                print(c(f"      ⚡ 影響: {blast}", YELLOW))
+            hint = svc.get("recovery_hint", "")
+            if hint:
+                print(c(f"      💡 復旧ヒント: {hint}", DIM))
+    else:
+        print(c(f"  DOWN:       0  []", DIM))
     print(c(f"  DISABLED: {len(disabled):>3}", DIM))
 
     if heal_entries:
