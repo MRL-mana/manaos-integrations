@@ -123,7 +123,30 @@ def is_alive(svc: Dict[str, Any], timeout: float = 2.0) -> bool:
 
 
 # ── サービス起動 ──────────────────────────────────────────────────────────────
-def start_one(svc: Dict[str, Any], dry_run: bool = False, wait: bool = True) -> bool:
+DEP_WAIT_TIMEOUT = 30   # 依存サービスのヘルスチェック待機上限（秒）
+
+
+def wait_for_deps(svc: Dict[str, Any], services: Dict[str, Any]) -> bool:
+    """depends_on に列挙されたサービスが全部 UP になるまで最大 DEP_WAIT_TIMEOUT 秒待つ。"""
+    deps = [d for d in (svc.get("depends_on") or []) if d in services]
+    if not deps:
+        return True
+    deadline = time.time() + DEP_WAIT_TIMEOUT
+    pending = list(deps)
+    print(c(f"  ⏳ deps 待機: {pending}", DIM), end="", flush=True)
+    while pending and time.time() < deadline:
+        time.sleep(1)
+        print(".", end="", flush=True)
+        pending = [d for d in pending if not is_alive(services[d], timeout=1.5)]
+    print()
+    if pending:
+        print(c(f"  [WARN] deps タイムアウト: {pending} — 起動を続行", YELLOW))
+        return False
+    return True
+
+
+def start_one(svc: Dict[str, Any], dry_run: bool = False, wait: bool = True,
+              services: Dict[str, Any] | None = None) -> bool:
     name = svc["name"]
     start_cmd = svc.get("start_cmd")
     if not start_cmd:
@@ -135,6 +158,10 @@ def start_one(svc: Dict[str, Any], dry_run: bool = False, wait: bool = True) -> 
     if dry_run:
         print(c(f"  [DRY] {name} — {cmd}", CYAN))
         return True
+
+    # 依存サービスが UP するまで待機
+    if services:
+        wait_for_deps(svc, services)
 
     print(c(f"  → {name} 起動中...", CYAN), end=" ", flush=True)
     _emit("heal_trigger", service=name, detail=str(start_cmd), source="manaosctl")
@@ -299,7 +326,7 @@ def cmd_up(args: argparse.Namespace) -> int:
         if is_alive(services[name]):
             print(c(f"  [SKIP] {name} — 既に起動中", DIM))
             continue
-        ok = start_one(services[name], dry_run=dry)
+        ok = start_one(services[name], dry_run=dry, services=services)
         if not ok:
             failed.append(name)
 
