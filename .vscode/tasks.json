@@ -204,6 +204,94 @@
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    // ── GTD ──────────────────────────────────────────────────────────────────
+    {
+      "label": "shell: ManaOS: GTD Morning（今日の日次ログ作成）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "gtd", "morning"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "shell: ManaOS: GTD Inbox一覧（件数確認）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "gtd", "inbox"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "shell: ManaOS: GTD Morning タスク登録（毎朝07:00）",
+      "type": "shell",
+      "command": "schtasks",
+      "args": [
+        "/Create", "/TN", "ManaOS_GTD_Morning", "/SC", "DAILY", "/ST", "07:00",
+        "/TR",
+        "cmd /c \"cd /d ${workspaceFolder} && python tools/manaosctl.py gtd morning >> logs/gtd_morning.log 2>&1\"",
+        "/F"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "shell: ManaOS: GTD Morning タスク解除",
+      "type": "shell",
+      "command": "schtasks",
+      "args": ["/Delete", "/TN", "ManaOS_GTD_Morning", "/F"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "shell: ManaOS: GTD Capture Server 起動（port 5130）",
+      "type": "shell",
+      "command": "python",
+      "args": ["gtd_capture_server.py"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "echo": true }
+    },
+    {
+      "label": "shell: ManaOS: GTD Capture Server 停止",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-Command", "Get-NetTCPConnection -LocalPort 5130 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id (Get-Process -Id (Get-NetTCPConnection -LocalPort 5130 -State Listen).OwningProcess).Id -Force }; Write-Host 'GTD Capture Server 停止完了 (port 5130)'"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "shell: ManaOS: GTD Capture ヘルスチェック",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-Command", "try { $r = Invoke-RestMethod http://127.0.0.1:5130/health; Write-Host \"UP: $($r | ConvertTo-Json -Compress)\" } catch { Write-Host 'DOWN: GTD Capture Server は起動していません' }"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "shell: ManaOS: GTD Pixel7 Shortcuts インポートファイルを開く",
+      "type": "shell",
+      "command": "start",
+      "args": ["http://127.0.0.1:5130/import/shortcuts"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "shell: ManaOS: GTD Pixel7 ショートカット インポート実行",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-Command", "Invoke-WebRequest http://127.0.0.1:5130/download/gtd-shortcuts -OutFile $env:TEMP\\gtd_pixel7_shortcuts.json; Write-Host \"保存先: $env:TEMP\\gtd_pixel7_shortcuts.json\""],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
     }
   ]
 }

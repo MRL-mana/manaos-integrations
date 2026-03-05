@@ -399,3 +399,18 @@ optional:
     auto_restart: false
     cost_risk: "low"
     recovery_hint: "unified_api が UP していれば http://127.0.0.1:9502/shell でアクセス可。unified_api を再起動して確認。"
+  # Tier 2: GTD / 日次ログ
+  gtd_capture:
+    port: 5130
+    url: "http://127.0.0.1:5130"
+    enabled: true
+    tier: 2
+    blast_note: "Pixel7 からの GTD キャプチャが止まる。現場メモ・日次ログ更新が不可になる。"
+    depends_on: []
+    description: "GTD キャプチャサーバー (Pixel7 → Inbox / 日次ログ管理)"
+    health_url: "http://127.0.0.1:5130/health"
+    start_cmd: "python gtd_capture_server.py"
+    stop_cmd: null
+    auto_restart: false
+    cost_risk: "low"
+    recovery_hint: "python gtd_capture_server.py を手動起動。gtd/ ディレクトリが存在するか確認。"

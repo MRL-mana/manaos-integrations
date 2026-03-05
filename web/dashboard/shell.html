@@ -543,6 +543,10 @@ const SLASH_CMDS = [
   { cmd: "/services",         desc: "サービス一覧パネル再読み込み" },
   { cmd: "/clear",            desc: "チャット履歴クリア" },
   { cmd: "/help",             desc: "コマンド一覧を表示" },
+  // GTD
+  { cmd: "/memo <text>",      desc: "Inbox にメモを保存 (GTD キャプチャ)" },
+  { cmd: "/inbox",            desc: "GTD Inbox 一覧表示" },
+  { cmd: "/morning",          desc: "今日の日次ログを表示/作成" },
 ];
 
 // ── Command history (↑/↓) ─────────────────────────────────────────────────
@@ -1114,6 +1118,39 @@ async function sendShellRun(command, args, label) {
   }
 }
 
+// ── GTD Capture (direct POST to port 5130) ──────────────────────────────
+async function sendGtdCapture(text, label) {
+  appendUser(label);
+  const thinkingEl = appendThinking();
+  try {
+    const resp = await fetch("http://127.0.0.1:5130/api/gtd/capture", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, source: "shell", type: "inbox" }),
+    });
+    const data = await resp.json().catch(() => ({ status: "error" }));
+    const ok = resp.ok;
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `
+      <div class="avatar">OS</div>
+      <div class="bubble">
+        <div style="margin-bottom:4px"><span class="intent-tag ${ok ? "tag-run_ok" : "tag-run_err"}">${ok ? "GTD SAVED" : "GTD ERR"}</span></div>
+        <pre class="result-block">${escHtml(ok ? "\u2705 Inbox \u4fdd\u5b58: " + (data.file || text) : JSON.stringify(data, null, 2))}</pre>
+        ${ts()}
+      </div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+    saveMsg("agent", ok ? "[GTD] " + text : "[GTD ERR]");
+  } catch (err) {
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble" style="color:var(--fail)">GTD Capture Server DOWN (port 5130)<br>${escHtml(String(err))}${ts()}</div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+  }
+}
+
 // ── /help inline display ──────────────────────────────────────────────────
 function showHelp() {
   hideEmpty();
@@ -1132,6 +1169,10 @@ function showHelp() {
     ["/services",         "サービス一覧パネル再読み込み"],
     ["/clear",            "チャット履歴クリア"],
     ["/help",             "このヘルプを表示"],
+    // GTD
+    ["/memo &lt;text&gt;", "Inbox にメモ保存 (GTD キャプチャ)"],
+    ["/inbox",            "GTD Inbox 一覧"],
+    ["/morning",          "今日の日次ログ表示/作成"],
   ];
   const tBody = rows.map(([c, d]) =>
     `<tr><td style="font-family:monospace;white-space:nowrap;color:var(--accent);padding:2px 14px 2px 0">${c}</td>` +
@@ -1184,6 +1225,13 @@ async function send() {
     if (cmd === "report")    { await sendShellRun("report",    [], message); return; }
     if (cmd === "cost")      { await sendShellRun("cost",      [], message); return; }
     if (cmd === "dashboard") { await sendShellRun("dashboard", [], message); return; }
+    // GTD slash commands
+    if (cmd === "memo") {
+      if (!arg) { appendAgent("<span style='color:var(--fail)'>/memo の後にテキストを入力してください 例: /memo スタンドの在庫確認</span>"); return; }
+      await sendGtdCapture(arg, message); return;
+    }
+    if (cmd === "inbox")   { await sendShellRun("gtd", ["inbox"],   message); return; }
+    if (cmd === "morning") { await sendShellRun("gtd", ["morning"], message); return; }
 
     const remap = {
       status:  "全サービスの状態を確認して",

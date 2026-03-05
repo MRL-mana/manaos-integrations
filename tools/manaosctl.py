@@ -1283,6 +1283,117 @@ def cmd_tier(args: argparse.Namespace) -> int:
     return 0
 
 
+# ── GTD ───────────────────────────────────────────────────────────────────────
+def cmd_gtd(args: argparse.Namespace) -> int:
+    """GTD 操作: morning / capture / inbox / status"""
+    import re as _re
+
+    subcmd = getattr(args, "subcmd", None) or "status"
+
+    GTD_ROOT  = REPO_ROOT / "gtd"
+    GTD_INBOX = GTD_ROOT / "inbox"
+    GTD_NA    = GTD_ROOT / "next-actions" / "items"
+    GTD_LOGS  = GTD_ROOT / "daily-logs"
+
+    def _inbox_count() -> int:
+        return len([f for f in GTD_INBOX.glob("*.md") if f.name.upper() != "README.MD"])
+
+    def _na_count() -> int:
+        return len([f for f in GTD_NA.glob("*.md") if f.name.upper() != "README.MD"])
+
+    if subcmd == "morning":
+        today   = datetime.datetime.now().strftime("%Y-%m-%d")
+        log     = GTD_LOGS / f"{today}.md"
+        inbox_n = _inbox_count()
+        na_items = sorted([f for f in GTD_NA.glob("*.md") if f.name.upper() != "README.MD"])
+        na_lines = "\n".join(f"  - {f.stem}" for f in na_items) or "  （Next Actions なし）"
+
+        if not log.exists():
+            GTD_LOGS.mkdir(parents=True, exist_ok=True)
+            log.write_text(
+                f"# {today} 日次ログ\n\n"
+                f"## 今日の3大優先事項\n1. \n2. \n3. \n\n"
+                f"## 今日のNext Actions候補\n{na_lines}\n\n"
+                f"## Inbox状況\n  件数: {inbox_n} 件\n\n"
+                f"## 完了タスク\n- \n\n"
+                f"## 気づき・メモ\n- \n\n"
+                f"## 明日への申し送り\n- \n",
+                encoding="utf-8",
+            )
+            print(c(f"✅ 日次ログ作成: {log}", GREEN))
+        else:
+            print(c(f"  📄 今日のログ: {log}", DIM))
+
+        print()
+        print(log.read_text(encoding="utf-8"))
+        print(c(f"  📥 Inbox: {inbox_n} 件  |  ✅ Next Actions: {_na_count()} 件", CYAN))
+        return 0
+
+    elif subcmd == "capture":
+        text_parts = getattr(args, "text", []) or []
+        text = " ".join(text_parts).strip()
+        if not text:
+            print(c("[ERROR] テキストを指定してください: manaosctl gtd capture <text>", RED), file=sys.stderr)
+            return 1
+        now  = datetime.datetime.now()
+        slug = _re.sub(r"[^\w\s]", "", text)[:25].strip().replace(" ", "_")
+        fname = f"{now.strftime('%Y%m%d_%H%M')}_CLI_{slug}.md"
+        GTD_INBOX.mkdir(parents=True, exist_ok=True)
+        path  = GTD_INBOX / fname
+        path.write_text(
+            f"# {text}\n\n"
+            f"- キャプチャ日時: {now.strftime('%Y-%m-%d %H:%M')}\n"
+            f"- ソース: manaosctl\n\n"
+            f"## 内容\n{text}\n",
+            encoding="utf-8",
+        )
+        count = _inbox_count()
+        print(c(f"✅ Inbox 保存: {fname}  (残 {count} 件)", GREEN))
+        return 0
+
+    elif subcmd == "inbox":
+        items = sorted(
+            [f for f in GTD_INBOX.glob("*.md") if f.name.upper() != "README.MD"],
+            reverse=True,
+        )
+        use_json = getattr(args, "json", False)
+        if use_json:
+            print(json.dumps([f.stem for f in items], ensure_ascii=False, indent=2))
+            return 0
+        print()
+        print(c(f"  [GTD Inbox  {len(items)} 件]", BOLD + CYAN))
+        print(c("  " + "─" * 50, DIM))
+        for f in items[:30]:
+            print(f"    {f.stem}")
+        if len(items) > 30:
+            print(c(f"    ... 他 {len(items) - 30} 件", DIM))
+        print()
+        return 0
+
+    else:  # status
+        today     = datetime.datetime.now().strftime("%Y-%m-%d")
+        inbox_n   = _inbox_count()
+        na_n      = _na_count()
+        log_exists = (GTD_LOGS / f"{today}.md").exists()
+        use_json  = getattr(args, "json", False)
+        if use_json:
+            print(json.dumps({
+                "date":            today,
+                "inbox_count":     inbox_n,
+                "next_actions":    na_n,
+                "daily_log_today": log_exists,
+            }, ensure_ascii=False, indent=2))
+            return 0
+        print()
+        print(c(f"  [GTD Status  {today}]", BOLD + CYAN))
+        print(c("  " + "─" * 40, DIM))
+        print(f"  📥 Inbox:          {inbox_n} 件")
+        print(f"  ✅ Next Actions:   {na_n} 件")
+        print(f"  📄 今日の日次ログ: {'✓ あり' if log_exists else '✗ なし (manaosctl gtd morning で作成)'}")
+        print()
+        return 0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="manaosctl",
@@ -1372,6 +1483,17 @@ def main() -> None:
     p_watch.add_argument("--log",    type=str, default=None,
                          help="ANSI除去したログを追記するファイルパス")
 
+    # gtd
+    p_gtd = sub.add_parser("gtd", help="GTD 操作 (morning / capture / inbox / status)")
+    p_gtd_sub = p_gtd.add_subparsers(dest="subcmd")
+    p_gtd_sub.add_parser("morning", help="今日の日次ログを表示（なければ作成）")
+    p_gtd_capture = p_gtd_sub.add_parser("capture", help="Inbox にテキストを保存")
+    p_gtd_capture.add_argument("text", nargs="+", help="保存するテキスト")
+    p_gtd_inbox = p_gtd_sub.add_parser("inbox", help="Inbox 一覧表示")
+    p_gtd_inbox.add_argument("--json", action="store_true")
+    p_gtd_status = p_gtd_sub.add_parser("status", help="GTD ステータス概要")
+    p_gtd_status.add_argument("--json", action="store_true")
+
     args = parser.parse_args()
 
     dispatch = {
@@ -1389,6 +1511,7 @@ def main() -> None:
         "policy":    cmd_policy,
         "tier":      cmd_tier,
         "watch":     cmd_watch,
+        "gtd":       cmd_gtd,
     }
     sys.exit(dispatch[args.command](args))
 
