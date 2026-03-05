@@ -78,6 +78,15 @@
       "presentation": { "reveal": "always", "panel": "dedicated" }
     },
     {
+      "label": "ManaOS: Control Panel を開く (ブラウザ)",
+      "type": "shell",
+      "command": "Start-Process",
+      "args": ["http://127.0.0.1:9800/"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "silent", "panel": "shared" }
+    },
+    {
       "label": "ManaOS: daily report (stdout)",
       "type": "shell",
       "command": "python",
