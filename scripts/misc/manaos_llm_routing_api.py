@@ -3,8 +3,6 @@ ManaOS統合LLMルーティングAPI
 難易度判定とルーティングを提供するFlask API
 """
 
-from flask import Flask, Response, jsonify, request, stream_with_context
-from flask_cors import CORS
 import os
 import json
 import time
@@ -12,9 +10,9 @@ import uuid
 import re
 import sys
 from pathlib import Path
-from manaos_logger import get_logger, get_service_logger
 from typing import Dict, Any, Optional, List
 
+# sys.path をインポートより先に設定（manaos_logger / llm モジュールをrepo rootから解決）
 _CURRENT_DIR = Path(__file__).resolve().parent
 _REPO_ROOT = _CURRENT_DIR.parents[1]
 _LLM_DIR = _REPO_ROOT / "llm"
@@ -22,6 +20,10 @@ for _path in (_REPO_ROOT, _LLM_DIR):
     _path_str = str(_path)
     if _path_str not in sys.path:
         sys.path.insert(0, _path_str)
+
+from flask import Flask, Response, jsonify, request, stream_with_context
+from flask_cors import CORS
+from manaos_logger import get_logger, get_service_logger
 
 try:
     from llm.llm_router_enhanced import EnhancedLLMRouter
@@ -408,8 +410,8 @@ def openai_chat_completions():
 
 
 if __name__ == "__main__":
-    # 開発用サーバー起動
-    port = int(os.getenv("PORT", "5211"))
+    # 開発用サーバー起動 (services_ledger.yaml: llm_routing = 5111)
+    port = int(os.getenv("LLM_ROUTING_PORT", os.getenv("PORT", "5111")))
     debug_mode = os.getenv("MANAOS_LLM_ROUTER_DEBUG", "false").strip().lower() in {"1", "true", "yes", "on"}
     logger.info(f"ManaOS LLMルーティングAPIを起動: http://127.0.0.1:{port}")
     app.run(host="0.0.0.0", port=port, debug=debug_mode, use_reloader=debug_mode)
