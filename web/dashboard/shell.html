@@ -514,9 +514,37 @@ function clearStorage() {
 }
 
 function healService(name) {
-  msgInput.value = `${name} を復旧して`;
-  msgInput.focus();
-  send();
+  const label = `⟳ ${name} heal`;
+  appendUser(label);
+  const thinkingEl = appendThinking();
+  const headers = { "Content-Type": "application/json" };
+  const key = apiKeyEl.value.trim();
+  if (key) headers["X-API-Key"] = key;
+  fetch("/api/shell/heal", { method: "POST", headers, body: JSON.stringify({ service: name }) })
+    .then(r => r.json().then(d => ({ ok: r.ok, status: r.status, data: d })))
+    .then(({ ok, status, data }) => {
+      const exitCode = data.exit_code ?? "?";
+      const out = (data.stdout || "").trim();
+      const mainText = ok
+        ? `<span style="color:var(--ok)">heal 完了 (exit ${exitCode})</span>${out ? `<pre style="margin-top:6px;white-space:pre-wrap;font-size:11px">${escHtml(out.slice(0,800))}</pre>` : ""}`
+        : `<span style="color:var(--fail)">heal 失敗 (exit ${exitCode})</span><br><pre style="font-size:11px">${escHtml((data.stderr||"").slice(0,400))}</pre>`;
+      const el = document.createElement("div");
+      el.className = "msg agent";
+      el.innerHTML = `
+        <div class="avatar">OS</div>
+        <div class="bubble">
+          <span class="intent-tag ${ok ? 'tag-system_control' : 'tag-error'}">${ok ? 'HEALED' : 'ERROR'}</span>
+          <div style="margin-top:6px">${mainText}</div>
+          ${ts()}
+        </div>`;
+      thinkingEl.replaceWith(el);
+      saveMsg("agent", `[heal] ${name} exit=${exitCode}`);
+      scrollEnd();
+      loadServices(); // サイドバー即更新
+    })
+    .catch(err => {
+      replaceThinking(thinkingEl, { status: "dispatch_error", error: String(err), plan: {} });
+    });
 }
 // ── DOM refs ───────────────────────────────────────────────────────────────
 const layoutEl    = document.getElementById("layout");

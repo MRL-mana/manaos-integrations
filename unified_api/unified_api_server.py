@@ -5373,6 +5373,20 @@ _INTENT_ROUTER_URL = "http://127.0.0.1:5100/api/classify"
 _shell_history: collections.deque = collections.deque(maxlen=100)
 
 
+def _shell_known_services() -> set:
+    """services_ledger.yaml からサービス名セットを返す（heal ルーティング用）"""
+    try:
+        ledger_path = REPO_ROOT / "config" / "services_ledger.yaml"
+        with open(ledger_path, "r", encoding="utf-8") as f:
+            ledger = yaml.safe_load(f) or {}
+        names: set = set()
+        for section in ("core", "optional"):
+            names.update((ledger.get(section) or {}).keys())
+        return names
+    except Exception:
+        return set()
+
+
 def _shell_classify_inline(message: str) -> Dict[str, Any]:
     """intent_router が落ちているときのキーワードベース・フォールバック分類"""
     text = message.lower()
@@ -5402,8 +5416,22 @@ def _shell_build_dispatch(intent: Dict[str, Any], message: str) -> tuple:
 
     if intent_type == "system_control":
         msg = message.lower()
-        if any(k in msg for k in ("heal", "復旧", "修復")):
-            return "POST", f"{base}/ops/plan", {"text": message}
+        if any(k in msg for k in ("heal", "復旧", "修復", "restart", "再起動")):
+            # entities に service 名があれば直接 /api/shell/heal へ
+            svc_name = intent.get("entities", {}).get("service") or intent.get("entities", {}).get("target")
+            if not svc_name:
+                # メッセージから最初の既知サービス名をマッチ
+                import re as _re
+                words = _re.split(r"[\s,、。]+", message)
+                known = _shell_known_services()
+                for w in words:
+                    if w.lower() in known:
+                        svc_name = w.lower()
+                        break
+            body: Dict[str, Any] = {"dry_run": False}
+            if svc_name:
+                body["service"] = svc_name
+            return "POST", f"{base}/api/shell/heal", body
         return "GET", f"{base}/api/integrations/status", {}
 
     if intent_type == "task_execution":
@@ -5677,6 +5705,56 @@ def api_shell_services():
             })
 
     return jsonify({"services": result, "count": len(result)}), 200
+
+
+@app.route("/api/shell/heal", methods=["POST"])
+def api_shell_heal():
+    """
+    ManaOS Shell ─ サービスのヒールを直接実行 (manaosctl heal ラッパ).
+
+    Request body:
+        {"service": "ollama"}              → 指定サービスのみヒール
+        {"service": null}                  → 全サービス auto-heal
+        {"service": "ollama", "dry_run": true}  → dry-run
+
+    Response:
+        {"status": "ok", "service": "ollama", "exit_code": 0, "stdout": "...", "stderr": "..."}
+    """
+    data = request.get_json(silent=True) or {}
+    svc_name: Optional[str] = (data.get("service") or "").strip() or None
+    dry_run = bool(data.get("dry_run", False))
+
+    manaosctl = REPO_ROOT / "tools" / "manaosctl.py"
+    if not manaosctl.exists():
+        return _json_error("manaosctl.py not found", 503, namespace="shell_heal")
+
+    cmd = [sys.executable, str(manaosctl), "heal"]
+    if dry_run:
+        cmd.append("--dry-run")
+    if svc_name:
+        cmd += ["--service", svc_name]
+
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(REPO_ROOT),
+            timeout=60,
+        )
+        ok = proc.returncode == 0
+        return jsonify({
+            "status":    "ok" if ok else "error",
+            "service":   svc_name,
+            "exit_code": proc.returncode,
+            "stdout":    proc.stdout[-4000:] if proc.stdout else "",
+            "stderr":    proc.stderr[-2000:] if proc.stderr else "",
+            "dry_run":   dry_run,
+        }), 200 if ok else 207
+    except subprocess.TimeoutExpired:
+        return _json_error("heal timed out (60s)", 504, namespace="shell_heal")
+    except Exception as exc:
+        return _json_error(str(exc), 500, namespace="shell_heal")
 
 
 @app.route("/shell", methods=["GET"])
