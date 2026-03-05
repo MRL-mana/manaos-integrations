@@ -174,6 +174,9 @@ def start_service(svc: Dict[str, Any], dry_run: bool = False,
 
     if dry_run:
         log(f"  [DRY-RUN] {name} — would run: {cmd}")
+        hint = svc.get("recovery_hint", "")
+        if hint:
+            log(f"    💡 {hint}")
         return True
 
     # 依存サービスが UP するまで待機

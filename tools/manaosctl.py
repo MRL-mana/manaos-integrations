@@ -286,6 +286,7 @@ def cmd_status(args: argparse.Namespace) -> int:
             "status": status,
             "auto_restart": svc.get("auto_restart", False),
             "cost_risk": svc.get("cost_risk", "-"),
+            "hint": svc.get("recovery_hint", ""),
         })
 
     if getattr(args, "json", False):
@@ -299,6 +300,8 @@ def cmd_status(args: argparse.Namespace) -> int:
         ah = c("✓", GREEN) if r["auto_restart"] else c("✗", DIM)
         cr = c(str(r["cost_risk"]), YELLOW if r["cost_risk"] == "med" else (RED if r["cost_risk"] == "high" else RESET))
         print(f"{r['service']:<22} {r['tier']:>4} {str(r['port']):>6} {c(r['status'], st_color):<19} {ah:<12} {cr}")
+        if r["status"] == "DOWN" and r["hint"]:
+            print(c(f"  {'':22}  💡 {r['hint']}", DIM))
     print()
     return 0
 
@@ -549,6 +552,37 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
         print(c(f"  ✗  DOWN サービス: {down_names}  → manaosctl heal で復旧", RED))
     if not down_count and not high_running:
         print(c("  ✓  全サービス正常", GREEN))
+    print(c(bar, BOLD))
+
+    # ── Policy パネル ────────────────────────────────────────────────────────
+    try:
+        import yaml as _yaml
+        with open(POLICY_PATH, encoding="utf-8") as _f:
+            _pol_data = _yaml.safe_load(_f)
+        _policies = [p for p in (_pol_data.get("policies") or []) if p.get("enabled", True)]
+
+        AUTOLABEL = {"read_only": ("read_only", DIM), "suggest": ("suggest ", YELLOW), "execute": ("execute ", GREEN)}
+        print(c(f"\n  ▶ Policy ({len(_policies)} enabled)", BOLD))
+        print(c(f"  {'Name':<32} {'Trigger':<22} {'Action':<10} {'Autonomy':<10} tier≥N", DIM))
+        print(c(f"  {'─'*32} {'─'*22} {'─'*10} {'─'*10} {'─'*5}", DIM))
+        for _p in _policies:
+            _lbl, _col = AUTOLABEL.get(_p.get("autonomy_level", ""), (_p.get("autonomy_level", "?"), DIM))
+            _tr = str(_p.get("tier_restriction", 0))
+            print(f"  {_p['name']:<32} {_p.get('trigger',''):<22} {_p.get('action',''):<10} {c(_lbl, _col):<19} {_tr}")
+
+        # 直近 policy 発火イベントを最大5件表示
+        _pol_events = [e for e in read_events(n=200)
+                       if e.get("event", "").startswith("policy_")][-5:]
+        if _pol_events:
+            print(c(f"\n  直近 Policy 発火:", DIM))
+            for _e in _pol_events:
+                _t = _e.get("time", "")[:19]
+                _ev = _e.get("event", "")
+                _det = _e.get("detail", "")[:60]
+                print(c(f"    {_t}  {_ev:<24} {_det}", DIM))
+    except Exception:
+        pass
+
     print(c(bar, BOLD))
     print()
     return 1 if down_count else 0
