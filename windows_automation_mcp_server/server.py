@@ -31,7 +31,9 @@ import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # toolkitのimportパスを確保
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _REPO_ROOT)
+sys.path.insert(0, os.path.join(_REPO_ROOT, "scripts", "misc"))
 
 try:
     from mcp.server import Server
