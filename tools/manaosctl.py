@@ -13,7 +13,12 @@ manaosctl — ManaOS オペレーション CLI
   python tools/manaosctl.py deps                    # 全サービス依存一覧
   python tools/manaosctl.py deps llm_routing        # 特定サービスの依存詳細
   python tools/manaosctl.py deps --order            # 起動順序表示
+  python tools/manaosctl.py deps --tree             # ASCII blast-radius ツリー
   python tools/manaosctl.py deps --json             # JSON出力
+
+  python tools/manaosctl.py watch                   # 定期監視ループ（60秒間隔）
+  python tools/manaosctl.py watch --interval 30     # 30秒間隔
+  python tools/manaosctl.py watch --once            # 1回だけ実行して終了
 
   python tools/manaosctl.py up                  # auto_restart=true の全サービス起動
   python tools/manaosctl.py up --tier 1         # Tier1 のみ起動
@@ -605,6 +610,28 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
     print()
     return 1 if down_count else 0
 
+
+def cmd_shell(args: argparse.Namespace) -> int:
+    """ManaOS Shell ブラウザ UI を開く。unified_api が UP していることを確認してから起動。"""
+    import webbrowser as _wb
+    port = int(os.environ.get("UNIFIED_API_PORT", "9502"))
+    url  = f"http://127.0.0.1:{port}/shell"
+
+    # unified_api の生存確認
+    services = load_ledger()
+    ua = services.get("unified_api", {})
+    alive = is_alive(ua) if ua else False
+
+    if not alive:
+        print(c("✗ unified_api が DOWN しています。先に起動してください:", RED))
+        print(c("    manaosctl up --tier 0", DIM))
+        return 1
+
+    print(c(f"✓ unified_api UP   →   {url}", GREEN))
+    _wb.open(url)
+    return 0
+
+
 def cmd_events(args: argparse.Namespace) -> int:
     """イベント履歴を時系列表示。"""
     n    = getattr(args, "n", 50)
@@ -755,6 +782,54 @@ def cmd_deps(args: argparse.Namespace) -> int:
         print()
         return 0
 
+    # ─── ASCII blast-radius ツリー ─────────────────────────────────────
+    if getattr(args, "tree", False):
+        # 根 = enabled かつ依存なし（またはすべての依存先が services に存在しない）
+        roots = sorted(
+            [n for n, s in services.items()
+             if s.get("enabled", False)
+             and not [d for d in (s.get("depends_on") or []) if d in services]],
+            key=lambda n: (services[n].get("tier", 9), n)
+        )
+        print(c(f"\n  ▶ 依存ツリー  (blast-radius: 根→葉の方向)", BOLD))
+        print(c("  根サービスが落ちると下流の葉サービスが連鎖影響を受ける", DIM))
+        print()
+
+        visited: set = set()
+
+        def _st(name: str) -> str:
+            svc = services.get(name, {})
+            if not svc.get("enabled", True):
+                return c("○", DIM)
+            return c("●", GREEN) if is_alive(svc) else c("●", RED)
+
+        def render_tree(name: str, prefix: str, is_last: bool) -> None:
+            conn = "└─→ " if is_last else "├─→ "
+            svc  = services.get(name, {})
+            tier = c(f"Tier{svc.get('tier','?')}", DIM)
+            loop = c(" (↩ 既出)", DIM) if name in visited else ""
+            print(f"  {prefix}{c(conn, DIM)}{_st(name)} {name}  {tier}{loop}")
+            if name in visited:
+                return
+            visited.add(name)
+            ds_list = sorted(get_downstream(name))
+            for i, ds in enumerate(ds_list):
+                ext = "    " if is_last else "│   "
+                render_tree(ds, prefix + ext, i == len(ds_list) - 1)
+
+        for root in roots:
+            svc  = services[root]
+            tier = c(f"Tier{svc.get('tier','?')}", DIM)
+            print(f"  {_st(root)} {c(root, BOLD)}  {tier}")
+            ds_list = sorted(get_downstream(root))
+            for i, ds in enumerate(ds_list):
+                render_tree(ds, "  ", i == len(ds_list) - 1)
+            print()
+
+        print(c("  ヒント: manaosctl deps <name> で特定サービスの up/down stream 詳細", DIM))
+        print()
+        return 0
+
     # ─── 特定サービスの詳細 ────────────────────────────────────────────
     if target_name:
         if target_name not in services:
@@ -866,6 +941,8 @@ def cmd_policy(args: argparse.Namespace) -> int:
         print(c(f"\n[POLICY] {p_name} → NOTIFY: {msg}", MAGENTA))
         _emit("policy", service=target,
               detail=f"notify by policy:{p_name}", source="manaosctl")
+        notified = False
+        # 1st: slack_integration サービス経由
         try:
             payload = json.dumps({"text": msg}, ensure_ascii=False).encode("utf-8")
             req = urllib.request.Request(
@@ -874,8 +951,27 @@ def cmd_policy(args: argparse.Namespace) -> int:
             )
             with urllib.request.urlopen(req, timeout=3):
                 pass
+            notified = True
         except Exception:
             pass
+        # 2nd: MANAOS_SLACK_WEBHOOK 環境変数から直接 POST（フォールバック）
+        if not notified:
+            webhook_url = os.environ.get("MANAOS_SLACK_WEBHOOK", "")
+            if webhook_url:
+                try:
+                    payload = json.dumps({"text": msg}, ensure_ascii=False).encode("utf-8")
+                    req = urllib.request.Request(
+                        webhook_url, data=payload,
+                        headers={"Content-Type": "application/json"}, method="POST",
+                    )
+                    with urllib.request.urlopen(req, timeout=5):
+                        pass
+                    notified = True
+                    print(c("  → Slack webhook (直接) 送信完了", DIM))
+                except Exception as e:
+                    print(c(f"  → Slack webhook 失敗: {e}", DIM))
+        if not notified:
+            print(c("  → 通知先なし (slack_integration DOWN / MANAOS_SLACK_WEBHOOK 未設定)", DIM))
         fired.append(f"{p_name}→notify:{target}")
 
     # ── ポリシーループ ────────────────────────────────────────────────────
@@ -1017,6 +1113,70 @@ def cmd_policy(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_watch(args: argparse.Namespace) -> int:
+    """定期的に status + policy チェックを繰り返す監視ループ。"""
+    interval = getattr(args, "interval", 60)
+    once     = getattr(args, "once", False)
+
+    print(c(f"\n  ManaOS Watch  (interval={interval}s, Ctrl+C で停止)", BOLD + CYAN))
+    print(c("  " + "─" * 50, DIM))
+
+    prev_status: Dict[str, str] = {}
+
+    try:
+        while True:
+            now      = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            services = load_ledger()
+
+            # ── ステータス収集 ──────────────────────────────────────────
+            cur_status: Dict[str, str] = {}
+            for name, svc in services.items():
+                if not svc.get("enabled", False):
+                    cur_status[name] = "DISABLED"
+                else:
+                    cur_status[name] = "UP" if is_alive(svc) else "DOWN"
+
+            # ── 変化検出 ────────────────────────────────────────────────
+            changes: List[str] = []
+            for name, st in cur_status.items():
+                prev = prev_status.get(name)
+                if prev and prev != st:
+                    col = GREEN if st == "UP" else (RED if st == "DOWN" else DIM)
+                    changes.append(c(f"{name}: {prev} → {st}", col))
+                    _emit(f"service_{st.lower()}", service=name,
+                          detail=f"watch detected: {prev}→{st}",
+                          source="manaosctl-watch")
+
+            up_cnt   = sum(1 for s in cur_status.values() if s == "UP")
+            down_cnt = sum(1 for s in cur_status.values() if s == "DOWN")
+
+            up_str   = c(f"UP:{up_cnt}", GREEN)
+            down_str = c(f"DOWN:{down_cnt}", RED if down_cnt else DIM)
+            print(c(f"\n[{now}]", DIM) + f"  {up_str}  {down_str}", end="")
+
+            if changes:
+                print(c("  ⚠ 変化検出!", YELLOW))
+                for ch in changes:
+                    print(f"    {ch}")
+            else:
+                print(c("  変化なし", DIM))
+
+            if down_cnt:
+                down_names = [n for n, s in cur_status.items() if s == "DOWN"]
+                print(c(f"  DOWN: {down_names}", RED))
+
+            prev_status = cur_status
+
+            if once:
+                break
+            time.sleep(interval)
+
+    except KeyboardInterrupt:
+        print(c("\n\n  Watch 停止。", DIM))
+
+    return 0
+
+
 def cmd_tier(args: argparse.Namespace) -> int:
     """Tier 別サービス一覧を表示する（OS 層マップ）。"""
     services = load_ledger()
@@ -1114,10 +1274,14 @@ def main() -> None:
     # dashboard
     sub.add_parser("dashboard", help="全サービスダッシュボード表示")
 
+    # shell
+    sub.add_parser("shell", help="ManaOS Shell ブラウザ UI を開く (http://127.0.0.1:9502/shell)")
+
     # deps
     p_deps = sub.add_parser("deps", help="依存ツリー可視化・起動順序表示")
     p_deps.add_argument("service", nargs="?", help="詳細表示するサービス名")
     p_deps.add_argument("--order", action="store_true", help="起動順序リスト表示")
+    p_deps.add_argument("--tree",  action="store_true", help="ASCII blast-radius ツリー表示")
     p_deps.add_argument("--json",  action="store_true")
 
     # events
@@ -1143,6 +1307,11 @@ def main() -> None:
     p_tier = sub.add_parser("tier", help="Tier 別サービス一覧（OS 層マップ）")
     p_tier.add_argument("--json", action="store_true")
 
+    # watch
+    p_watch = sub.add_parser("watch", help="定期監視ループ（status + policy）")
+    p_watch.add_argument("--interval", type=int, default=60, help="チェック間隔秒（デフォルト: 60）")
+    p_watch.add_argument("--once",     action="store_true", help="1回だけ実行して終了")
+
     args = parser.parse_args()
 
     dispatch = {
@@ -1153,11 +1322,13 @@ def main() -> None:
         "report":    cmd_report,
         "cost":      cmd_cost,
         "dashboard": cmd_dashboard,
+        "shell":     cmd_shell,
         "deps":      cmd_deps,
         "events":    cmd_events,
         "analyze":   cmd_analyze,
         "policy":    cmd_policy,
         "tier":      cmd_tier,
+        "watch":     cmd_watch,
     }
     sys.exit(dispatch[args.command](args))
 
