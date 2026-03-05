@@ -34,6 +34,11 @@ core:
     blast_note: "LLM全推論が止まる。llm_routing→unified_api→ほぼ全機能が連鎖停止。"
     depends_on: []
     description: "Ollama LLMエンジン (外部プロセス)"
+    health_url: "http://127.0.0.1:11434/api/tags"
+    start_cmd: "ollama serve"
+    stop_cmd: null
+    auto_restart: true
+    cost_risk: "low"
 
   llm_routing:
     port: 5111
@@ -43,6 +48,11 @@ core:
     blast_note: "AI応答が全停止。intent_router / trinity / autonomy が機能不全。"
     depends_on: [ollama]
     description: "LLM ルーティング MCP サーバー"
+    health_url: "http://127.0.0.1:5111/health"
+    start_cmd: "python scripts/misc/manaos_llm_routing_api.py"
+    stop_cmd: null
+    auto_restart: true
+    cost_risk: "low"
 
   memory:
     port: 5105
@@ -52,6 +62,11 @@ core:
     blast_note: "記憶読み書きが止まる。personality / secretary / learning が劣化運転に切り替わるか停止。"
     depends_on: []
     description: "MRL Memory 記憶管理システム (SSOT)"
+    health_url: "http://127.0.0.1:5105/health"
+    start_cmd: "python mrl_memory_integration.py"
+    stop_cmd: null
+    auto_restart: true
+    cost_risk: "low"
 
   unified_api:
     port: 9502
@@ -61,6 +76,11 @@ core:
     blast_note: "API ゲートウェイ停止。secretary / trinity / task_queue / pixel7 系が全停止。"
     depends_on: [memory, llm_routing]
     description: "Unified API サーバー (統合ゲートウェイ)"
+    health_url: "http://127.0.0.1:9502/health"
+    start_cmd: "python unified_api/unified_api_server.py"
+    stop_cmd: null
+    auto_restart: true
+    cost_risk: "low"
 
   # ---------------------------------------------------------------------------
   # Tier 1 : 主要機能 AI 人格・自律・秘書・タスク系
@@ -74,6 +94,11 @@ core:
     blast_note: "自動改善・最適化が停止。personality / autonomy の適応能力が落ちる。"
     depends_on: [memory, unified_api]
     description: "学習・自動改善システム"
+    health_url: "http://127.0.0.1:5126/health"
+    start_cmd: "python learning_system_api.py"
+    stop_cmd: null
+    auto_restart: true
+    cost_risk: "low"
 
   personality:
     port: 5123
@@ -83,6 +108,11 @@ core:
     blast_note: "AI 人格応答が劣化。trinity の Remi / Luna / Mina が素っ気なくなる。"
     depends_on: [memory, learning]
     description: "AI 人格システム"
+    health_url: "http://127.0.0.1:5123/health"
+    start_cmd: "python -m scripts.misc.personality_system"
+    stop_cmd: null
+    auto_restart: true
+    cost_risk: "low"
 
   autonomy:
     port: 5124
@@ -92,6 +122,11 @@ core:
     blast_note: "自律タスク生成・RL ループが停止。RLAnything が機能しない。"
     depends_on: [memory, learning, personality]
     description: "自律エージェントシステム"
+    health_url: "http://127.0.0.1:5124/health"
+    start_cmd: "python scripts/misc/autonomy_system.py"
+    stop_cmd: null
+    auto_restart: true
+    cost_risk: "low"
 
   secretary:
     port: 5125
@@ -101,6 +136,11 @@ core:
     blast_note: "スケジュール管理・リマインダーが止まる。GTD 系タスクが全停止。"
     depends_on: [unified_api, memory]
     description: "秘書システム (スケジュール / GTD)"
+    health_url: "http://127.0.0.1:5125/health"
+    start_cmd: "python scripts/misc/secretary_system.py"
+    stop_cmd: null
+    auto_restart: true
+    cost_risk: "low"
 
   trinity:
     port: 5146
@@ -110,6 +150,11 @@ core:
     blast_note: "Remi / Luna / Mina ルーティングが停止。メインチャット窓口が落ちる。"
     depends_on: [unified_api, memory, personality]
     description: "Trinity エージェントシステム (MCP ヘルスポート)"
+    health_url: "http://127.0.0.1:5146/health"
+    start_cmd: "python trinity_mcp_server/server.py"
+    stop_cmd: null
+    auto_restart: true
+    cost_risk: "low"
 
   intent_router:
     port: 5100
@@ -119,6 +164,11 @@ core:
     blast_note: "意図分類が止まる。unified_api 経由の振り分けが劣化。"
     depends_on: [llm_routing]
     description: "意図ルーター"
+    health_url: "http://127.0.0.1:5100/health"
+    start_cmd: "python scripts/misc/intent_router.py"
+    stop_cmd: null
+    auto_restart: true
+    cost_risk: "low"
 
   task_queue:
     port: 5104
@@ -128,6 +178,11 @@ core:
     blast_note: "非同期タスク処理が停止。autonomy の計画実行が詰まる。"
     depends_on: [unified_api]
     description: "タスクキューシステム"
+    health_url: "http://127.0.0.1:5104/health"
+    start_cmd: "python scripts/misc/task_queue_system.py"
+    stop_cmd: null
+    auto_restart: true
+    cost_risk: "low"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -144,6 +199,11 @@ optional:
     blast_note: "動画生成が止まる。SVI / LTX2 ワークフローが実行不可。"
     depends_on: [unified_api]
     description: "動画生成パイプライン MCP サーバー"
+    health_url: "http://127.0.0.1:5112/health"
+    start_cmd: "python -m video_pipeline_mcp_server.server"
+    stop_cmd: null
+    auto_restart: false
+    cost_risk: "med"
 
   comfyui:
     port: 8188
@@ -153,6 +213,11 @@ optional:
     blast_note: "画像生成が止まる。gallery も空になる。"
     depends_on: []
     description: "ComfyUI 画像生成エンジン"
+    health_url: "http://127.0.0.1:8188/"
+    start_cmd: "python C:/mana_workspace/storage500/ComfyUI/main.py --port 8188 --listen 127.0.0.1"
+    stop_cmd: null
+    auto_restart: false
+    cost_risk: "high"
 
   gallery:
     port: 5559
@@ -162,6 +227,11 @@ optional:
     blast_note: "生成画像の閲覧・管理が停止。comfyui は動いても見えなくなる。"
     depends_on: [comfyui]
     description: "ギャラリー API"
+    health_url: "http://127.0.0.1:5559/health"
+    start_cmd: "python -m gallery_api_mcp_server.server"
+    stop_cmd: null
+    auto_restart: false
+    cost_risk: "low"
 
   castle_ex_layer2:
     port: 9520
@@ -171,6 +241,11 @@ optional:
     blast_note: "CASTLE-EX LoRA 推論が停止。learning の fine-tune フィードバックが途切れる。"
     depends_on: [learning]
     description: "CASTLE-EX Layer2 推論サーバー"
+    health_url: null
+    start_cmd: null
+    stop_cmd: null
+    auto_restart: false
+    cost_risk: "high"
 
   # Tier 2: 自動化系
   n8n:
@@ -181,6 +256,11 @@ optional:
     blast_note: "n8n ワークフローが全停止。secretary の自動通知が途切れる。"
     depends_on: [unified_api]
     description: "n8n ワークフロー自動化"
+    health_url: "http://127.0.0.1:5678/healthz"
+    start_cmd: null
+    stop_cmd: null
+    auto_restart: false
+    cost_risk: "low"
 
   windows_automation:
     port: 5115
@@ -190,6 +270,11 @@ optional:
     blast_note: "PC GUI 操作・スクリーンショットが停止。"
     depends_on: []
     description: "Windows 自動化 MCP サーバー"
+    health_url: "http://127.0.0.1:5115/health"
+    start_cmd: "python windows_automation_mcp_server/server.py"
+    stop_cmd: null
+    auto_restart: false
+    cost_risk: "low"
 
   pico_hid:
     port: 5136
@@ -199,6 +284,11 @@ optional:
     blast_note: "マウス / キーボード HID 操作が停止。PC フォールバックは残る場合あり。"
     depends_on: []
     description: "Pico HID マウス / キーボード MCP サーバー"
+    health_url: "http://127.0.0.1:5136/health"
+    start_cmd: "python -m pico_hid_mcp_server"
+    stop_cmd: null
+    auto_restart: false
+    cost_risk: "low"
 
   pixel7_bridge:
     port: 5122
@@ -208,6 +298,11 @@ optional:
     blast_note: "Pixel7 ADB 操作 / scrcpy 連携が全停止。"
     depends_on: [unified_api]
     description: "Pixel7 ブリッジ (ADB / scrcpy)"
+    health_url: "http://127.0.0.1:5122/health"
+    start_cmd: "python pixel7_api_gateway.py"
+    stop_cmd: null
+    auto_restart: false
+    cost_risk: "low"
 
   # Tier 2: 外部連携
   slack_integration:
@@ -218,6 +313,11 @@ optional:
     blast_note: "Slack 通知が途絶える。secretary の外部通知が失われる。"
     depends_on: [unified_api]
     description: "Slack 統合"
+    health_url: "http://127.0.0.1:5590/health"
+    start_cmd: "python mcp-servers/slack_integration/slack_manaos_service.py"
+    stop_cmd: null
+    auto_restart: false
+    cost_risk: "low"
 
   step_deep_research:
     port: 5120
@@ -227,6 +327,11 @@ optional:
     blast_note: "Web 調査・SSOT 更新が停止。secretary の情報収集が劣化。"
     depends_on: [llm_routing]
     description: "Step Deep Research / File Secretary"
+    health_url: "http://127.0.0.1:5120/health"
+    start_cmd: "python step_deep_research/run_server.py"
+    stop_cmd: null
+    auto_restart: false
+    cost_risk: "med"
 
   # Tier 2: 監視 / 運用
   service_monitor:
@@ -237,6 +342,11 @@ optional:
     blast_note: "監視が止まるだけ。他サービスへの影響なし。ただし障害検知が遅れる。"
     depends_on: [unified_api]
     description: "Service Monitor (watchdog)"
+    health_url: null
+    start_cmd: null
+    stop_cmd: null
+    auto_restart: false
+    cost_risk: "low"
 
   # Tier 2: 音声・TTS
   voicevox:
@@ -247,3 +357,8 @@ optional:
     blast_note: "音声合成が停止。trinity の音声応答が無声になる。"
     depends_on: []
     description: "VOICEVOX TTS エンジン"
+    health_url: "http://127.0.0.1:50021/version"
+    start_cmd: null
+    stop_cmd: null
+    auto_restart: false
+    cost_risk: "low"
