@@ -112,6 +112,15 @@
       line-height: 1.55;
       word-break: break-word;
     }
+    .ts {
+      font-size: 10px;
+      color: var(--muted);
+      opacity: .6;
+      margin-top: 4px;
+      display: block;
+      text-align: right;
+    }
+    .msg.user .ts { text-align: left; }
 
     .avatar {
       width: 28px;
@@ -615,6 +624,12 @@ function setMsg(text, dry = false) {
   msgInput.focus();
 }
 
+// ── hh:mm timestamp helper ────────────────────────────────────────────────
+function ts() {
+  const d = new Date();
+  return `<span class="ts">${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</span>`;
+}
+
 // ── Append user bubble ─────────────────────────────────────────────────────
 function appendUser(text) {
   hideEmpty();
@@ -622,7 +637,7 @@ function appendUser(text) {
   el.className = "msg user";
   el.innerHTML = `
     <div class="avatar">M</div>
-    <div class="bubble">${escHtml(text)}</div>`;
+    <div class="bubble">${escHtml(text)}${ts()}</div>`;
   historyEl.appendChild(el);
   scrollEnd();
   saveMsg("user", text);
@@ -638,6 +653,7 @@ function appendAgentSSE() {
     <div class="bubble">
       <div id="sse-steps" style="display:flex;flex-direction:column;gap:2px"></div>
       <div id="sse-result" style="margin-top:6px;display:none"></div>
+      <span id="sse-ts" class="ts"></span>
     </div>`;
   historyEl.appendChild(el);
   scrollEnd();
@@ -705,6 +721,8 @@ function finalizeSSE(refs, lastData) {
       <summary style="font-size:11px;color:var(--muted);cursor:pointer">JSON ▾</summary>
       <div class="result-block">${escHtml(resultJson)}</div>
     </details>`;
+  const tsEl = refs.el.querySelector("#sse-ts");
+  if (tsEl) { const d = new Date(); tsEl.textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
   saveMsg("agent", `[${intentType}] ${stripTags(mainText)}`);
   scrollEnd();
 }
@@ -720,7 +738,7 @@ function appendThinking() {
     <div class="bubble thinking">
       <span class="dots"><span></span><span></span><span></span></span>
       <span>thinking…</span>
-    </div>`;
+    </div>`;  // ts injected by replaceThinking
   historyEl.appendChild(el);
   scrollEnd();
   return el;
@@ -772,6 +790,7 @@ function replaceThinking(thinkingEl, data) {
         <summary style="font-size:11px;color:var(--muted);cursor:pointer">JSON ▾</summary>
         <div class="result-block">${escHtml(resultJson)}</div>
       </details>
+      ${ts()}
     </div>`;
   thinkingEl.replaceWith(el);
   saveMsg("agent", `[${intentType}] ${stripTags(mainText)}`);
