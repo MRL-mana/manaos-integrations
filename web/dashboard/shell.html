@@ -506,13 +506,18 @@
     </div>
   </div>
 
-  <!-- Sidebar: Services -->
+  <!-- Sidebar: Services + GTD -->
   <aside id="sidebar">
     <div class="sidebar-title">
       Services
       <button class="sidebar-refresh" id="svc-refresh-btn" onclick="loadServices()">↻</button>
     </div>
     <div id="svc-list"><div class="svc-loading">loading…</div></div>
+    <div class="sidebar-title" style="margin-top:10px">
+      GTD
+      <button class="sidebar-refresh" onclick="pollGtdStatus()">↻</button>
+    </div>
+    <div id="gtd-side"><div class="svc-loading">loading…</div></div>
   </aside>
 
   <!-- Input bar -->
@@ -566,6 +571,9 @@ const SLASH_CMDS = [
   // 通知
   { cmd: "/notify <msg>",     desc: "ntfy / Slack に通知を送信" },
   { cmd: "/notify <msg> --title <T>", desc: "タイトル付きで通知" },
+  // GTD 拡張
+  { cmd: "/gtd",              desc: "GTD ステータス概要（Inbox / Next 件数）" },
+  { cmd: "/weekly",           desc: "GTD 週次レビュー（先週ログ + Inbox 推移）" },
 ];
 
 // ── Command history (↑/↓) ─────────────────────────────────────────────────
@@ -793,6 +801,8 @@ async function pollGtdStatus() {
     const d = await r.json();
     const inbox = d.inbox_count ?? 0;
     const na    = d.next_actions ?? 0;
+    const today = d.daily_log_today;
+    // ヘッダーバッジ更新
     if (inbox > 0) {
       gtdBadge.textContent = `\uD83D\uDCCB ${inbox}`;
       gtdBadge.style.display = "";
@@ -801,6 +811,33 @@ async function pollGtdStatus() {
       gtdBadge.style.display = "";
     } else {
       gtdBadge.style.display = "none";
+    }
+    // サイドパネル更新
+    const gtdSide = document.getElementById("gtd-side");
+    if (gtdSide) {
+      const inboxColor = inbox > 0 ? "var(--warn)" : "var(--ok)";
+      const naColor    = na > 0    ? "var(--ok)"   : "var(--muted)";
+      const logMark    = today     ? "\u2705" : "\u274C";
+      gtdSide.innerHTML = `
+        <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/inbox';send()">
+          <span style="font-size:10px">📥</span>
+          <span class="svc-name">Inbox</span>
+          <span class="svc-port" style="color:${inboxColor}">${inbox}件</span>
+        </div>
+        <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/next';send()">
+          <span style="font-size:10px">\u2705</span>
+          <span class="svc-name">Next Actions</span>
+          <span class="svc-port" style="color:${naColor}">${na}件</span>
+        </div>
+        <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/morning';send()">
+          <span style="font-size:10px">📅</span>
+          <span class="svc-name">今日のログ</span>
+          <span class="svc-port">${logMark}</span>
+        </div>
+        <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/memo ';msgInput.focus()">
+          <span style="font-size:10px">\u270F\uFE0F</span>
+          <span class="svc-name" style="color:var(--muted)"><em>+ Capture</em></span>
+        </div>`;
     }
   } catch { /* silent */ }
 }
@@ -1269,6 +1306,9 @@ function showHelp() {
     ["/process &lt;N&gt; &lt;dest&gt;", "Inbox[N]を振り分け (next/done/someday/waiting/project)"],
     // 通知
     ["/notify &lt;msg&gt;", "ntfy / Slack に通知を送信"],
+    // GTD 拡張
+    ["/gtd",              "GTD ステータス概要（Inbox/Next 件数）"],
+    ["/weekly",           "GTD 週次レビュー（先週ログ + Inbox 推移）"],
   ];
   const tBody = rows.map(([c, d]) =>
     `<tr><td style="font-family:monospace;white-space:nowrap;color:var(--accent);padding:2px 14px 2px 0">${c}</td>` +
@@ -1344,6 +1384,8 @@ async function send() {
       if (!arg) { appendAgent("<span style='color:var(--fail)'>/notify の後にメッセージを入力してください 例: /notify テスト通知</span>"); return; }
       await sendShellRun("notify", arg.split(/\s+/), message); return;
     }
+    if (cmd === "gtd")    { await sendShellRun("gtd",    ["status"], message); return; }
+    if (cmd === "weekly") { await sendShellRun("gtd",    ["weekly"], message); return; }
 
     const remap = {
       status:  "全サービスの状態を確認して",
