@@ -230,15 +230,13 @@ optional:
 
   # Tier 2: 監視 / 運用
   service_monitor:
-    port: 5111
-    url: "http://127.0.0.1:5111"
+    port: null
+    url: null
     enabled: false
     tier: 2
     blast_note: "監視が止まるだけ。他サービスへの影響なし。ただし障害検知が遅れる。"
     depends_on: [unified_api]
     description: "Service Monitor (watchdog)"
-    # NOTE: 5111 は llm_routing と競合の可能性あり。
-    #       SERVICE_MONITOR_PORT 環境変数で別ポートに逃がすこと推奨。
 
   # Tier 2: 音声・TTS
   voicevox:
