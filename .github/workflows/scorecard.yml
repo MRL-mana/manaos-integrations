@@ -35,7 +35,7 @@ jobs:
 
       - name: Upload artifact
         if: hashFiles('results.sarif') != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: scorecard-sarif
           path: results.sarif
