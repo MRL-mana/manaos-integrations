@@ -4,11 +4,15 @@
 
 VSCode/Cursorに接続するメモリベースAIアシスタント。ManaOS と外部サービス（ComfyUI / Google Drive / CivitAI / n8n / Slack / Voice など）をつなぐ統合リポジトリ。
 
-## ✅ 最新反映（2026年3月3日）
+## ✅ 最新反映（2026年3月5日）
 
 - PR #55: 画像生成サービス統合（image-generationサービス、OpenAPI拡張、LLMインポートパス強化）
 - PR #56: 決済スタブAPIの追加（POST /payment/stripe、POST /payment/komoju）
 - 画像生成基盤 v0.4.0（バッチ/フィードバック/GPU/メモリ/Slack/landing）にmaster統合済み
+- `heal.py`: `wait_for_deps` 追加 — 依存サービスが UP するまで待ってから起動（上流障害 vs 単独障害を自動判別）
+- `manaosctl deps` コマンド追加 — 依存一覧・起動順序・影響度分析
+- 自動ポリシー / Control Panel (port 9800) / events / analyze コマンド群を追加
+- `.github/copilot-instructions.md` 完全最新化（正確ポート・全コマンド記載）
 
 運用入口は引き続き Unified API（9502）です。
 
@@ -205,6 +209,40 @@ python tools/dashboard_cli.py --ledger config/services_ledger.yaml --check
 python tools/dashboard_cli.py --ledger config/services_ledger.yaml --check --blast
 ```
 
+### manaosctl — 統合操作 CLI
+
+`tools/manaosctl.py` はサービス起動・復旧・分析を一元管理するメイン CLI。
+
+```bash
+# 状態確認
+python tools/manaosctl.py status              # 全サービス状態
+python tools/manaosctl.py status --json       # JSON 出力
+python tools/manaosctl.py dashboard           # タイル表示
+
+# 起動（depends_on 順で自動ソート）
+python tools/manaosctl.py up                  # Tier0+1 の auto_restart サービス
+python tools/manaosctl.py up --all            # Tier2 含む全起動
+python tools/manaosctl.py up trinity          # 特定サービスのみ
+
+# 復旧
+python tools/manaosctl.py heal                # DOWN サービスを自動復旧
+python tools/manaosctl.py heal --dry-run      # ドライラン確認
+
+# 依存関係
+python tools/manaosctl.py deps                # 全サービス依存一覧（UP/DOWN表示）
+python tools/manaosctl.py deps --order        # 起動順序リスト（topo sort）
+python tools/manaosctl.py deps unified_api    # 特定サービスの上流/下流分析
+
+# イベント・分析
+python tools/manaosctl.py events              # イベント履歴（直近30件）
+python tools/manaosctl.py analyze             # LLM によるイベント分析
+python tools/manaosctl.py cost                # コストリスク一覧
+
+# ポリシー
+python tools/manaosctl.py policy --list       # ポリシー一覧
+python tools/manaosctl.py policy --check      # ポリシー評価・実行
+```
+
 ---
 
 ## CI Gates
@@ -344,6 +382,20 @@ python scripts/catalog_scripts.py > scripts/CATALOG.md
 ```
 
 Pixel7 最小CLI（health/status/open-url）は `scripts/pixel7/manaos_pixel7_cli.py` を使用します。
+
+## Control Panel
+
+Web ダッシュボード UI は常時 `http://127.0.0.1:9800/` で稼働（PC ログオン時に TaskScheduler が自動起動）。
+
+```powershell
+# 手動起動
+python scripts/misc/manaos_dashboard_server.py
+
+# ブラウザで開く
+Start-Process 'http://127.0.0.1:9800/'
+```
+
+---
 
 ## Dashboard監視運用メモ
 
