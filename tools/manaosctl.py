@@ -20,6 +20,7 @@ manaosctl — ManaOS オペレーション CLI
   python tools/manaosctl.py watch --interval 30     # 30秒間隔
   python tools/manaosctl.py watch --once            # 1回だけ実行して終了
   python tools/manaosctl.py watch --policy          # DOWN検出時に policy --check を自動実行
+  python tools/manaosctl.py watch --log logs/watch.log  # ローリングログ追記
 
   python tools/manaosctl.py up                  # auto_restart=true の全サービス起動
   python tools/manaosctl.py up --tier 1         # Tier1 のみ起動
@@ -1142,6 +1143,16 @@ def cmd_watch(args: argparse.Namespace) -> int:
                     else watch_cfg.get("default_interval", 60))
     once         = getattr(args, "once", False)
     use_policy   = getattr(args, "policy", False) or watch_cfg.get("policy_on_down", False)
+    log_path_str = getattr(args, "log", None)
+    log_file     = open(log_path_str, "a", encoding="utf-8") if log_path_str else None
+
+    def _log(line: str) -> None:
+        """コンソールとオプションのログファイルに同時出力。"""
+        print(line)
+        if log_file:
+            import re as _re
+            log_file.write(_re.sub(r"\x1b\[[0-9;]*m", "", line) + "\n")
+            log_file.flush()
 
     print(c(f"\n  ManaOS Watch  (interval={interval}s, Ctrl+C で停止)", BOLD + CYAN))
     print(c("  " + "─" * 50, DIM))
@@ -1172,32 +1183,29 @@ def cmd_watch(args: argparse.Namespace) -> int:
                           detail=f"watch detected: {prev}→{st}",
                           source="manaosctl-watch")
 
-            up_cnt   = sum(1 for s in cur_status.values() if s == "UP")
-            down_cnt = sum(1 for s in cur_status.values() if s == "DOWN")
-
             up_str   = c(f"UP:{up_cnt}", GREEN)
             down_str = c(f"DOWN:{down_cnt}", RED if down_cnt else DIM)
-            print(c(f"\n[{now}]", DIM) + f"  {up_str}  {down_str}", end="")
+            _log(c(f"\n[{now}]", DIM) + f"  {up_str}  {down_str}")
 
             if changes:
-                print(c("  ⚠ 変化検出!", YELLOW))
+                _log(c("  ⚠ 変化検出!", YELLOW))
                 for ch in changes:
-                    print(f"    {ch}")
+                    _log(f"    {ch}")
                 if use_policy:
                     newly_down = [n for n, s in cur_status.items()
                                   if s == "DOWN" and prev_status.get(n) in ("UP", None)]
                     if newly_down:
-                        print(c(f"  → policy --check 自動実行 (新規DOWN: {newly_down})", MAGENTA))
+                        _log(c(f"  → policy --check 自動実行 (新規DOWN: {newly_down})", MAGENTA))
                         subprocess.run(
                             [PYTHON_EXE, __file__, "policy", "--check"],
                             cwd=str(REPO_ROOT),
                         )
             else:
-                print(c("  変化なし", DIM))
+                _log(c("  変化なし", DIM))
 
             if down_cnt:
                 down_names = [n for n, s in cur_status.items() if s == "DOWN"]
-                print(c(f"  DOWN: {down_names}", RED))
+                _log(c(f"  DOWN: {down_names}", RED))
 
             prev_status = cur_status
 
@@ -1206,7 +1214,10 @@ def cmd_watch(args: argparse.Namespace) -> int:
             time.sleep(interval)
 
     except KeyboardInterrupt:
-        print(c("\n\n  Watch 停止。", DIM))
+        _log(c("\n\n  Watch 停止。", DIM))
+    finally:
+        if log_file:
+            log_file.close()
 
     return 0
 
@@ -1348,6 +1359,8 @@ def main() -> None:
     p_watch.add_argument("--once",   action="store_true", help="1回だけ実行して終了")
     p_watch.add_argument("--policy", action="store_true",
                          help="DOWN検出時に policy --check を自動実行")
+    p_watch.add_argument("--log",    type=str, default=None,
+                         help="ANSI除去したログを追記するファイルパス")
 
     args = parser.parse_args()
 

@@ -157,6 +157,9 @@
     .tag-device_status     { background: var(--tag-sys);  color: #fff; }
     .tag-error             { background: var(--tag-err);  color: #fff; }
     .tag-dry_run           { background: var(--warn);     color: #000; }
+    .tag-run_ok            { background: #16a34a;          color: #fff; }
+    .tag-run_err           { background: var(--tag-err);   color: #fff; }
+    .tag-help              { background: #6366f1;          color: #fff; }
 
     .dispatch-line {
       font-size: 11px;
@@ -501,7 +504,7 @@
   <!-- Input bar -->
   <div class="input-bar">
     <div id="cmd-suggest"></div>
-    <input id="msg-input" type="text" placeholder="例：comfyuiで猫を生成して、/でコマンド一覧" autocomplete="off" />
+    <input id="msg-input" type="text" placeholder="例：comfyuiで猫を生成して  |  /deps  /events  /tier  /watch  /help" autocomplete="off" />
     <label class="dry-label"><input type="checkbox" id="dry-check" /> dry_run</label>
     <div class="api-key-group">
       <input id="api-key" type="password" placeholder="X-API-Key (任意)" />
@@ -528,8 +531,15 @@ const SLASH_CMDS = [
   { cmd: "/restart <svc>",   desc: "指定サービスを再起動" },
   { cmd: "/report",          desc: "状態レポート" },
   { cmd: "/analyze",         desc: "ログ分析" },
+  { cmd: "/deps",            desc: "依存グラフ全体表示" },
+  { cmd: "/deps <svc>",      desc: "指定サービスの依存グラフ" },
+  { cmd: "/events",          desc: "最近のイベント 30件" },
+  { cmd: "/events <n>",      desc: "最近のイベント n件" },
+  { cmd: "/tier",            desc: "サービス tier 一覧" },
+  { cmd: "/watch",           desc: "全サービス 1回ポーリング" },
   { cmd: "/services",        desc: "サービス一覧リロード" },
   { cmd: "/clear",           desc: "チャット履歴クリア" },
+  { cmd: "/help",            desc: "コマンド一覧を表示" },
 ];
 
 // ── Command history (↑/↓) ─────────────────────────────────────────────────
@@ -1059,6 +1069,82 @@ async function sendFetch(message) {
   }
 }
 
+// ── Direct manaosctl runner ──────────────────────────────────────────────
+async function sendShellRun(command, args, label) {
+  appendUser(label);
+  const thinkingEl = appendThinking();
+  const apiKey = apiKeyEl.value.trim();
+  const headers = { "Content-Type": "application/json" };
+  if (apiKey) headers["X-API-Key"] = apiKey;
+  try {
+    const resp = await fetch("/api/shell/run", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ command, args }),
+    });
+    let data;
+    try { data = await resp.json(); }
+    catch { data = { status: "error", output: await resp.text(), exit_code: -1 }; }
+    const ok = (data.status === "ok");
+    const cmdLabel = command + (args.length ? " " + args.join(" ") : "");
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `
+      <div class="avatar">OS</div>
+      <div class="bubble">
+        <div style="margin-bottom:4px">
+          <span class="intent-tag ${ok ? "tag-run_ok" : "tag-run_err"}">${ok ? "RUN OK" : "RUN ERR"}</span>
+          <span style="font-size:11px;color:var(--muted);margin-left:4px;font-family:monospace">${escHtml(cmdLabel)}</span>
+        </div>
+        <pre class="result-block" style="white-space:pre-wrap;word-break:break-all;max-height:400px;overflow-y:auto">${escHtml(data.output || "(no output)")}</pre>
+        ${ts()}
+      </div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+    saveMsg("agent", `[${cmdLabel}]\n` + (data.output || ""));
+  } catch (err) {
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble" style="color:var(--fail)">${escHtml(String(err))}${ts()}</div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+  }
+}
+
+// ── /help inline display ──────────────────────────────────────────────────
+function showHelp() {
+  hideEmpty();
+  const rows = [
+    ["/status",        "全サービスの状態確認"],
+    ["/heal [svc]",    "DOWN サービスを復旧（省略=全部）"],
+    ["/restart &lt;svc&gt;", "サービス再起動"],
+    ["/report",        "状態レポート（LLM 解釈）"],
+    ["/analyze",       "ログ分析（LLM 解釈）"],
+    ["/deps [svc]",    "依存グラフ表示（省略=全体）"],
+    ["/events [n]",    "最近のイベント一覧（省略=30件）"],
+    ["/tier",          "サービス tier 一覧"],
+    ["/watch",         "全サービス 1回ポーリング"],
+    ["/services",      "サービス一覧パネル再読み込み"],
+    ["/clear",         "チャット履歴クリア"],
+    ["/help",          "このヘルプを表示"],
+  ];
+  const tBody = rows.map(([c, d]) =>
+    `<tr><td style="font-family:monospace;white-space:nowrap;color:var(--accent);padding:2px 14px 2px 0">${c}</td>` +
+    `<td style="color:var(--text);font-size:12px">${d}</td></tr>`
+  ).join("");
+  const el = document.createElement("div");
+  el.className = "msg agent";
+  el.innerHTML = `
+    <div class="avatar">OS</div>
+    <div class="bubble">
+      <div style="margin-bottom:6px"><span class="intent-tag tag-help">HELP</span></div>
+      <table style="border-collapse:collapse">${tBody}</table>
+      ${ts()}
+    </div>`;
+  historyEl.appendChild(el);
+  scrollEnd();
+}
+
 // ── Main send dispatcher ───────────────────────────────────────────────────
 async function send() {
   if (busy) return;
@@ -1073,6 +1159,20 @@ async function send() {
     const arg = parts.slice(1).join(" ");
     if (cmd === "clear") { clearStorage(); return; }
     if (cmd === "services" || cmd === "svc") { loadServices(); return; }
+    if (cmd === "help" || cmd === "?") { showHelp(); return; }
+
+    // ── Direct manaosctl shortcuts ──────────────────────────────────────
+    if (cmd === "deps") {
+      const runArgs = arg ? ["--tree", arg] : ["--tree"];
+      await sendShellRun("deps", runArgs, message); return;
+    }
+    if (cmd === "events") {
+      const runArgs = (arg && /^\d+$/.test(arg)) ? ["-n", arg] : [];
+      await sendShellRun("events", runArgs, message); return;
+    }
+    if (cmd === "tier")  { await sendShellRun("tier",  [], message); return; }
+    if (cmd === "watch") { await sendShellRun("watch", [], message); return; }
+
     const remap = {
       status:  "全サービスの状態を確認して",
       heal:    arg ? `${arg} を heal して` : "DOWN サービスを全部 heal して",
