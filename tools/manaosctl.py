@@ -388,6 +388,125 @@ def cmd_report(args: argparse.Namespace) -> int:
     return 1 if down else 0
 
 
+def cmd_cost(args: argparse.Namespace) -> int:
+    """cost_risk=high/med のサービスを一覧表示。"""
+    services = load_ledger()
+
+    rows = []
+    for name, svc in sorted(services.items(), key=lambda x: (x[1].get("tier", 9), x[0])):
+        risk = svc.get("cost_risk", "low")
+        if not svc.get("enabled", False):
+            continue
+        alive = is_alive(svc)
+        rows.append({
+            "service": name,
+            "tier": svc.get("tier", 2),
+            "port": svc.get("port", "-"),
+            "cost_risk": risk,
+            "status": "UP" if alive else "DOWN",
+        })
+
+    high = [r for r in rows if r["cost_risk"] == "high"]
+    med  = [r for r in rows if r["cost_risk"] == "med"]
+
+    if getattr(args, "json", False):
+        print(json.dumps({"high": high, "med": med}, ensure_ascii=False, indent=2))
+        return 0
+
+    print(c(f"\n=== ManaOS Cost Monitor ===", BOLD))
+
+    if high:
+        print(c("\n  [HIGH COST] 重量/課金リスクあり", RED + BOLD))
+        print(c(f"  {'Service':<22} {'Tier':>4} {'Port':>6} Status", BOLD))
+        print("  " + "─" * 46)
+        for r in high:
+            st = c(r["status"], GREEN if r["status"] == "UP" else RED)
+            print(f"  {r['service']:<22} {r['tier']:>4} {str(r['port']):>6} {st}")
+    else:
+        print(c("  [HIGH COST] なし", DIM))
+
+    if med:
+        print(c("\n  [MED COST] 中程度リスク", YELLOW + BOLD))
+        print(c(f"  {'Service':<22} {'Tier':>4} {'Port':>6} Status", BOLD))
+        print("  " + "─" * 46)
+        for r in med:
+            st = c(r["status"], GREEN if r["status"] == "UP" else RED)
+            print(f"  {r['service']:<22} {r['tier']:>4} {str(r['port']):>6} {st}")
+    else:
+        print(c("  [MED COST] なし", DIM))
+
+    running_high = [r for r in high if r["status"] == "UP"]
+    if running_high:
+        names = [r["service"] for r in running_high]
+        print(c(f"\n  ⚠  HIGH COST 稼働中: {names}", RED))
+        print(c("     不要なら manaosctl restart <name> で停止を検討してください", DIM))
+    print()
+    return 0
+
+
+def cmd_dashboard(args: argparse.Namespace) -> int:
+    """サービス状態ダッシュボード（Tier × UP/DOWN/DISABLED の全体像）。"""
+    import shutil
+    services = load_ledger()
+    width = min(shutil.get_terminal_size((100, 24)).columns, 120)
+
+    # ステータス収集
+    rows = []
+    for name, svc in sorted(services.items(), key=lambda x: (x[1].get("tier", 9), x[0])):
+        tier = svc.get("tier", 2)
+        if not svc.get("enabled", False):
+            status, st_color = "DISABLED", DIM
+        else:
+            alive = is_alive(svc)
+            status, st_color = ("UP", GREEN) if alive else ("DOWN", RED)
+        rows.append({
+            "name": name,
+            "tier": tier,
+            "port": svc.get("port", "-"),
+            "status": status,
+            "color": st_color,
+            "auto_restart": svc.get("auto_restart", False),
+            "cost_risk": svc.get("cost_risk", "low"),
+        })
+
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    up_count       = sum(1 for r in rows if r["status"] == "UP")
+    down_count     = sum(1 for r in rows if r["status"] == "DOWN")
+    disabled_count = sum(1 for r in rows if r["status"] == "DISABLED")
+    high_running   = [r["name"] for r in rows if r["cost_risk"] == "high" and r["status"] == "UP"]
+
+    bar = "═" * width
+    print(c(bar, BOLD))
+    title = f"  ManaOS Dashboard  {now}  |  UP:{up_count}  DOWN:{down_count}  DISABLED:{disabled_count}"
+    print(c(title, BOLD + CYAN))
+    print(c(bar, BOLD))
+
+    cur_tier = -1
+    for r in rows:
+        if r["tier"] != cur_tier:
+            cur_tier = r["tier"]
+            label = {0: "Tier 0 — Core", 1: "Tier 1 — Main", 2: "Tier 2 — Optional"}.get(cur_tier, f"Tier {cur_tier}")
+            print(c(f"\n  ▶ {label}", BOLD))
+            print(c(f"  {'Service':<24} {'Port':>6}  {'Status':<10} {'AutoHeal':<9} CostRisk", DIM))
+            print(c(f"  {'─'*24} {'─'*6}  {'─'*10} {'─'*9} {'─'*8}", DIM))
+        ah  = c("✓ heal", GREEN) if r["auto_restart"] else c("✗", DIM)
+        cr  = c(r["cost_risk"], YELLOW if r["cost_risk"] == "med" else (RED if r["cost_risk"] == "high" else DIM))
+        st  = c(f"{r['status']:<10}", r["color"])
+        print(f"  {r['name']:<24} {str(r['port']):>6}  {st} {ah:<16} {cr}")
+
+    print(c(f"\n{bar}", BOLD))
+    if high_running:
+        print(c(f"  ⚠  HIGH COST 稼働中: {high_running}", RED))
+    if down_count:
+        down_names = [r["name"] for r in rows if r["status"] == "DOWN"]
+        print(c(f"  ✗  DOWN サービス: {down_names}  → manaosctl heal で復旧", RED))
+    if not down_count and not high_running:
+        print(c("  ✓  全サービス正常", GREEN))
+    print(c(bar, BOLD))
+    print()
+    return 1 if down_count else 0
+
+
 # ── エントリポイント ──────────────────────────────────────────────────────────
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -427,14 +546,23 @@ def main() -> None:
     p_report = sub.add_parser("report", help="状態レポート")
     p_report.add_argument("--json", action="store_true")
 
+    # cost
+    p_cost = sub.add_parser("cost", help="高コストサービス一覧 (cost_risk=high/med)")
+    p_cost.add_argument("--json", action="store_true")
+
+    # dashboard
+    sub.add_parser("dashboard", help="全サービスダッシュボード表示")
+
     args = parser.parse_args()
 
     dispatch = {
-        "status":  cmd_status,
-        "up":      cmd_up,
-        "restart": cmd_restart,
-        "heal":    cmd_heal,
-        "report":  cmd_report,
+        "status":    cmd_status,
+        "up":        cmd_up,
+        "restart":   cmd_restart,
+        "heal":      cmd_heal,
+        "report":    cmd_report,
+        "cost":      cmd_cost,
+        "dashboard": cmd_dashboard,
     }
     sys.exit(dispatch[args.command](args))
 
