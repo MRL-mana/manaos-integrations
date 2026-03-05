@@ -167,7 +167,22 @@ def main():
         help="services_ledger.yaml を SSOT として使用 (例: config/services_ledger.yaml)。"
              "指定しない場合は従来の hardcoded リストを使用。",
     )
+    ap.add_argument(
+        "--list-only", action="store_true",
+        help="実際に HTTP プローブせずに対象サービスの一覧だけ出力 (CI dry-run 用)。",
+    )
     args = ap.parse_args()
+
+    if args.list_only:
+        # CI dry-run: サービスリストのパースだけ確認し HTTP は叩かない
+        if args.ledger:
+            services = load_ledger_services(args.ledger, args.tag)
+        else:
+            services = [(n, u, t) for n, u, t in SERVICES if not args.tag or args.tag in t]
+        for name, url, tags in services:
+            print(f"  {name:<30} {url}")
+        print(f"total: {len(services)} services")
+        sys.exit(0)
 
     def once():
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

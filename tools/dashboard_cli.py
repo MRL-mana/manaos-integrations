@@ -9,6 +9,7 @@ import datetime as dt
 import json
 import os
 import sys
+from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -203,6 +204,56 @@ def dependency_alerts(rows: list[ServiceRow]) -> list[str]:
                     f"{row.name} depends_on {dependency}: {dep.summary}"
                 )
     return alerts
+
+
+def _build_rev_deps(rows: list[ServiceRow]) -> dict[str, set[str]]:
+    """逆依存グラフを構築: dep_name -> {dependants}"""
+    rev: dict[str, set[str]] = {}
+    for row in rows:
+        for dep in row.depends_on:
+            rev.setdefault(dep, set()).add(row.name)
+    return rev
+
+
+def _bfs_blast(target: str, rev_deps: dict[str, set[str]]) -> list[str]:
+    """BFS でブラスト半径 (連鎖停止するサービス名リスト) を求める。"""
+    visited: set[str] = set()
+    queue: deque[str] = deque([target])
+    while queue:
+        node = queue.popleft()
+        for dep in rev_deps.get(node, set()):
+            if dep not in visited:
+                visited.add(dep)
+                queue.append(dep)
+    return sorted(visited)
+
+
+def print_blast_alerts(
+    rows: list[ServiceRow],
+    use_color: bool,
+) -> None:
+    """DOWN/TIMEOUT のサービスについてブラスト半径を表示する。"""
+    down_rows = [
+        r for r in rows
+        if r.enabled and r.summary in ("DOWN", "TIMEOUT")
+    ]
+    if not down_rows:
+        return
+
+    rev_deps = _build_rev_deps(rows)
+    print("BLAST RISK")
+    for row in down_rows:
+        affected = _bfs_blast(row.name, rev_deps)
+        if affected:
+            names = ", ".join(affected[:8])
+            if len(affected) > 8:
+                names += f" +{len(affected) - 8} more"
+            line = f"[BLAST] {row.name} DOWN -> cascades to: {names} ({len(affected)} total)"
+            print(colorize(line, "fail", use_color))
+        else:
+            line = f"[BLAST] {row.name} DOWN -> isolated (no cascade)"
+            print(colorize(line, "warn", use_color))
+    print()
 
 
 def fetch_latest_validate_ledger(repo: str, token: str) -> dict[str, Any]:
@@ -414,6 +465,11 @@ def main() -> int:
     parser.add_argument("--timeout", type=float, default=2.5)
     parser.add_argument("--no-color", action="store_true")
     parser.add_argument(
+        "--blast",
+        action="store_true",
+        help="--check と組み合わせ: DOWN サービスのブラスト半径を表示",
+    )
+    parser.add_argument(
         "--file-secretary-audit",
         default="logs/file_secretary_audit.jsonl",
     )
@@ -470,6 +526,9 @@ def main() -> int:
     else:
         print("(none)")
     print()
+
+    if args.blast and args.check:
+        print_blast_alerts(rows, use_color)
 
     if args.ci:
         print_ci(ci_data, use_color)

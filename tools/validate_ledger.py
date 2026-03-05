@@ -39,6 +39,7 @@ class ServiceRef:
     url: str | None
     enabled: bool
     depends_on: List[str]
+    tier: int = 0
 
 
 def eprint(*args: Any) -> None:
@@ -71,6 +72,10 @@ def parse_services(ledger: Dict[str, Any]) -> Dict[str, ServiceRef]:
             if url is not None and not isinstance(url, str):
                 raise ValueError(f"{group_name}.{service_name}.url must be str")
 
+            tier_raw = config.get("tier", 2 if group_name == "optional" else 1)
+            if not isinstance(tier_raw, int):
+                raise ValueError(f"{group_name}.{service_name}.tier must be int")
+
             services[service_name] = ServiceRef(
                 name=service_name,
                 group=group_name,
@@ -78,6 +83,7 @@ def parse_services(ledger: Dict[str, Any]) -> Dict[str, ServiceRef]:
                 url=url,
                 enabled=enabled,
                 depends_on=[str(dep) for dep in depends_on],
+                tier=tier_raw,
             )
 
     add_group("core")
@@ -115,6 +121,36 @@ def validate_basic(services: Dict[str, ServiceRef]) -> List[str]:
                 f"Service '{service_name}' must be under core, but found under {services[service_name].group}"
             )
 
+    return errors
+
+
+def validate_tier_integrity(services: Dict[str, ServiceRef]) -> List[str]:
+    """tier 整合性チェック。
+
+    ルール:
+    1. core サービス (tier 0/1) が optional サービス (tier 2) に依存してはいけない
+    2. 依存先の tier が依存元の tier 以上は許容しない
+       (例: tier-0 サービスが tier-1/2 に依存するのは不変)
+    """
+    errors: List[str] = []
+    for service in services.values():
+        for dep_name in service.depends_on:
+            dep = services.get(dep_name)
+            if dep is None:
+                continue  # already caught by validate_basic
+            # core should not depend on optional
+            if service.group == "core" and dep.group == "optional":
+                errors.append(
+                    f"Tier violation: core service '{service.name}' depends on "
+                    f"optional service '{dep_name}' (optional services are not guaranteed)"
+                )
+            # depender tier must be >= dependency tier (low number = higher priority)
+            if service.tier < dep.tier:
+                errors.append(
+                    f"Tier violation: '{service.name}' (tier {service.tier}) depends on "
+                    f"'{dep_name}' (tier {dep.tier}) - higher-priority service "
+                    f"should not depend on lower-priority service"
+                )
     return errors
 
 
@@ -191,6 +227,7 @@ def main() -> int:
 
     errors: List[str] = []
     errors += validate_basic(services)
+    errors += validate_tier_integrity(services)
     errors += validate_readme(args.readme)
 
     if args.check_openapi:

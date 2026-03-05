@@ -49,6 +49,12 @@ jobs:
           python tools/check_blast_radius.py --ledger config/services_ledger.yaml --recovery-order --no-color | grep -q "Tier 0"
           echo "Blast radius smoke: PASS"
 
+      - name: Health check ledger parse (dry-run)
+        run: |
+          # Verify health_check_all --ledger can parse services without HTTP calls
+          python tools/health_check_all.py --ledger config/services_ledger.yaml --list-only | grep -q "total:"
+          echo "Health check ledger parse: PASS"
+
   validate-openapi:
     runs-on: ubuntu-latest
     needs: validate
