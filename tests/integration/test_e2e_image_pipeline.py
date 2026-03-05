@@ -200,14 +200,15 @@ class TestGalleryE2E:
 
     @skip_no_gallery
     def test_gallery_stats(self):
-        resp = httpx.get(f"{GALLERY_URL}/api/gallery/stats", timeout=10)
+        # 実際のルート: /api/images (count + images リスト)
+        resp = httpx.get(f"{GALLERY_URL}/api/images", timeout=10)
         assert resp.status_code == 200
         data = resp.json()
-        assert "total_images" in data
+        assert "count" in data or "images" in data
 
     @skip_no_gallery
     def test_gallery_list(self):
-        resp = httpx.get(f"{GALLERY_URL}/api/gallery/images?limit=5", timeout=10)
+        resp = httpx.get(f"{GALLERY_URL}/api/images?limit=5", timeout=10)
         assert resp.status_code == 200
         data = resp.json()
         assert "images" in data

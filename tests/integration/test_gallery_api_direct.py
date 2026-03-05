@@ -40,9 +40,25 @@ def _is_gallery_api_ready() -> bool:
         return False
 
 
+def _is_comfyui_ready() -> bool:
+    """gallery /health の comfyui_available フラグを確認する。"""
+    try:
+        response = requests.get(
+            GALLERY_API.rsplit("/api/generate", 1)[0] + "/health",
+            timeout=3,
+        )
+        if response.status_code == 200:
+            return response.json().get("comfyui_available", False)
+    except requests.RequestException:
+        pass
+    return False
+
+
 def test_gallery_api_generate_smoke():
     if not _is_gallery_api_ready():
         return
+    if not _is_comfyui_ready():
+        pytest.skip("ComfyUI is not available (comfyui_available=false)")
 
     response = requests.post(
         GALLERY_API,
