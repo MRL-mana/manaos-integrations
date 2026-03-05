@@ -39,10 +39,13 @@
     "**/venv": true,
     "**/ENV": true,
     "**/env": true,
-    "**/node_modules": true
+    "**/node_modules": true,
+    "**/.hf_cache": true,
+    "**/.cache": true,
+    "**/.brv": true
   },
 
-  // 検索除外設定
+  // 検索除外設定（AIが読まない・検索にヒットしない範囲を最大化）
   "search.exclude": {
     "**/__pycache__": true,
     "**/*.pyc": true,
@@ -52,7 +55,40 @@
     "**/.venv": true,
     "**/venv": true,
     "**/*.db": true,
-    "**/*.log": true
+    "**/*.log": true,
+    // 大容量・低頻度アクセスディレクトリ
+    "archive/**": true,
+    "artifacts/**": true,
+    "outputs/**": true,
+    "output/**": true,
+    "gallery_images/**": true,
+    "generated_images/**": true,
+    "ltx2_storage/**": true,
+    "ollama_models/**": true,
+    "sd-webui/**": true,
+    "logs/**": true,
+    "backups/**": true,
+    "crash_snapshots/**": true,
+    "phase1_runs/**": true,
+    "moltbot_audit/**": true,
+    "mem0_storage/**": true,
+    "screenshots/**": true,
+    "Reports/**": true,
+    "data/**": true,
+    ".hf_cache/**": true,
+    ".cache/**": true,
+    ".brv/**": true,
+    // 実験・非アクティブ
+    "experiments/**": true,
+    "oh_my_opencode/**": true,
+    "sara-ai/**": true,
+    "free-assistant/**": true,
+    "manaos-rpg/**": true,
+    "rl_anything/**": true,
+    "ltx2/**": true,
+    "ltx2_mcp_server/**": true,
+    "ltx2_workflows/**": true,
+    "ltx2_templates/**": true
   },
 
   // PowerShell設定
@@ -83,14 +119,40 @@
   "markdown.preview.fontSize": 14,
   "markdown.preview.lineHeight": 1.6,
 
-  // ワークスペース設定
+  // ワークスペース設定（ファイル監視の除外 — ここが重さに直結）
   "files.watcherExclude": {
     "**/.git/objects/**": true,
     "**/.git/subtree-cache/**": true,
     "**/node_modules/**": true,
     "**/__pycache__/**": true,
     "**/*.db": true,
-    "**/*.log": true
+    "**/*.log": true,
+    // 大容量ディレクトリを監視対象から完全除外
+    "**/archive/**": true,
+    "**/artifacts/**": true,
+    "**/outputs/**": true,
+    "**/output/**": true,
+    "**/gallery_images/**": true,
+    "**/generated_images/**": true,
+    "**/ltx2_storage/**": true,
+    "**/ollama_models/**": true,
+    "**/sd-webui/**": true,
+    "**/logs/**": true,
+    "**/backups/**": true,
+    "**/crash_snapshots/**": true,
+    "**/phase1_runs/**": true,
+    "**/moltbot_audit/**": true,
+    "**/mem0_storage/**": true,
+    "**/screenshots/**": true,
+    "**/.hf_cache/**": true,
+    "**/.cache/**": true,
+    "**/.brv/**": true,
+    "**/experiments/**": true,
+    "**/sara-ai/**": true,
+    "**/free-assistant/**": true,
+    "**/manaos-rpg/**": true,
+    "**/rl_anything/**": true,
+    "**/ltx2/**": true
   },
 
   // ターミナル設定
