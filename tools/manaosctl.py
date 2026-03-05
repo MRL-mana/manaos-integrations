@@ -968,6 +968,60 @@ def cmd_policy(args: argparse.Namespace) -> int:
     if getattr(args, "json", False):
         print(json.dumps({"fired": fired}, ensure_ascii=False, indent=2))
     return 0
+
+
+def cmd_tier(args: argparse.Namespace) -> int:
+    """Tier 別サービス一覧を表示する（OS 層マップ）。"""
+    services = load_ledger()
+    tier_map: dict[int, list[str]] = {}
+    for name, svc in services.items():
+        t = svc.get("tier", 99)
+        tier_map.setdefault(t, []).append(name)
+
+    tier_labels = {
+        0: ("Tier 0  — コアインフラ（落ちたら全滅）", RED),
+        1: ("Tier 1  — 主要機能（なるべく常時 UP）", YELLOW),
+        2: ("Tier 2  — オプション（必要な時だけ）", DIM),
+    }
+
+    if getattr(args, "json", False):
+        out: dict[str, list[dict]] = {}
+        for tier_num in sorted(tier_map):
+            out[str(tier_num)] = [
+                {
+                    "name": n,
+                    "port": services[n].get("port"),
+                    "enabled": services[n].get("enabled", True),
+                    "status": "UP" if is_alive(services[n], timeout=1.5) else "DOWN",
+                }
+                for n in sorted(tier_map[tier_num])
+            ]
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+        return 0
+
+    print()
+    for tier_num in sorted(tier_map):
+        label, color = tier_labels.get(tier_num, (f"Tier {tier_num}", DIM))
+        print(c(f"\n  {label}", color + BOLD if color != DIM else BOLD))
+        print(c("  " + "─" * 60, DIM))
+        for name in sorted(tier_map[tier_num]):
+            svc = services[name]
+            port = svc.get("port", "—")
+            enabled = svc.get("enabled", True)
+            if not enabled:
+                status_str = c("DISABLED", DIM)
+            elif is_alive(svc, timeout=1.5):
+                status_str = c("UP", GREEN)
+            else:
+                status_str = c("DOWN", RED)
+            deps = ", ".join(svc.get("depends_on") or []) or "─"
+            print(f"    {status_str}  {name:<25} :{str(port):<7} deps: {c(deps, DIM)}")
+    print()
+    print(c("  ヒント: manaosctl status --json / manaosctl deps --order", DIM))
+    print()
+    return 0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="manaosctl",
@@ -1038,6 +1092,10 @@ def main() -> None:
     p_policy.add_argument("--check", action="store_true", help="ポリシーを評価してアクション実行（デフォルト）")
     p_policy.add_argument("--json",  action="store_true")
 
+    # tier
+    p_tier = sub.add_parser("tier", help="Tier 別サービス一覧（OS 層マップ）")
+    p_tier.add_argument("--json", action="store_true")
+
     args = parser.parse_args()
 
     dispatch = {
@@ -1052,6 +1110,7 @@ def main() -> None:
         "events":    cmd_events,
         "analyze":   cmd_analyze,
         "policy":    cmd_policy,
+        "tier":      cmd_tier,
     }
     sys.exit(dispatch[args.command](args))
 

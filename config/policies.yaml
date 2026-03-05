@@ -6,10 +6,24 @@
 # trigger        : emit() に渡す event 名
 # condition.cost_risk : "high" / "med" (service の cost_risk が一致するとき)
 # condition.within_minutes : 直近 N 分以内に trigger が発生したとき
-# action         : stop (サービス停止) | notify (Slack 通知)
+# action         : stop (サービス停止) | notify (Slack 通知) | block (実行拒否)
 # target         : action 対象サービス名。空欄 = trigger に含まれる service 名
 # cooldown_minutes : 同ルールを再発動するまでの冷却時間
+#
+# ─── Autonomy Level（自律権限モデル） ────────────────────────
+# autonomy_level  : 実行を許可する自律レベルの上限
+#   read_only   → 情報取得・通知のみ（executeは不可）
+#   suggest     → 提案のみ（人間が承認してから実行）
+#   execute     → 定義済み runbook の自動実行を許可
+#
+# tier_restriction : 操作を許可する Tier の上限（0〜2）
+#   0 → Tier0 サービスへの操作は手動確認必須
+#   1 → Tier0+1 は手動、Tier2 のみ自動
+#   2 → 全 Tier で自動操作を許可
 
+# ════════════════════════════════════════════════════
+# SECTION 1: コストガード
+# ════════════════════════════════════════════════════
 policies:
   - name: cost_alert_auto_stop
     enabled: true
@@ -19,7 +33,13 @@ policies:
       cost_risk: high
       within_minutes: 30
     action: stop
+    autonomy_level: execute
+    tier_restriction: 2   # Tier2（comfyui等）のみ自動停止
     cooldown_minutes: 60
+
+# ════════════════════════════════════════════════════
+# SECTION 2: 障害通知
+# ════════════════════════════════════════════════════
 
   - name: heal_fail_slack
     enabled: true
@@ -28,6 +48,7 @@ policies:
     condition:
       within_minutes: 10
     action: notify
+    autonomy_level: read_only
     cooldown_minutes: 30
 
   - name: service_down_notify
@@ -37,4 +58,71 @@ policies:
     condition:
       within_minutes: 5
     action: notify
+    autonomy_level: read_only
     cooldown_minutes: 15
+
+  - name: tier0_down_alert
+    enabled: true
+    description: "Tier0 サービスが DOWN したら最優先で通知（autonomy=suggest、手動復旧を促す）"
+    trigger: service_down
+    condition:
+      tier: 0
+      within_minutes: 2
+    action: notify
+    autonomy_level: suggest   # Tier0は自動実行せず必ず人間へ提案
+    cooldown_minutes: 5
+
+# ════════════════════════════════════════════════════
+# SECTION 3: 自律実行ガード（execute を制限するルール）
+# ════════════════════════════════════════════════════
+
+  - name: block_tier0_auto_stop
+    enabled: true
+    description: "Tier0 サービスの自動停止を拒否（必ず手動確認）"
+    trigger: auto_stop_request
+    condition:
+      tier: 0
+    action: block
+    autonomy_level: read_only   # Tier0への停止は絶対ブロック
+    cooldown_minutes: 0
+
+  - name: block_tier1_auto_stop_without_approval
+    enabled: true
+    description: "Tier1 サービスの自動停止は suggest のみ（承認待ち）"
+    trigger: auto_stop_request
+    condition:
+      tier: 1
+    action: block
+    autonomy_level: suggest
+    cooldown_minutes: 0
+
+# ════════════════════════════════════════════════════
+# SECTION 4: 自動復旧（execute 権限が必要）
+# ════════════════════════════════════════════════════
+
+  - name: tier2_auto_heal
+    enabled: true
+    description: "Tier2 サービスの障害は自動復旧を許可"
+    trigger: service_down
+    condition:
+      tier: 2
+      within_minutes: 15
+    action: heal
+    autonomy_level: execute   # Tier2は自動実行OK
+    tier_restriction: 2
+    cooldown_minutes: 20
+
+# ════════════════════════════════════════════════════
+# SECTION 5: 運用ガード
+# ════════════════════════════════════════════════════
+
+  - name: analyze_on_multi_fail
+    enabled: true
+    description: "5分以内に3件以上の障害 → LLM自動分析を実行"
+    trigger: heal_fail
+    condition:
+      count_threshold: 3
+      within_minutes: 5
+    action: analyze
+    autonomy_level: execute
+    cooldown_minutes: 30
