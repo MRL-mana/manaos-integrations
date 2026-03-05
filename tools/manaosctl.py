@@ -54,6 +54,16 @@ except ImportError:
     print("pyyaml が必要です: pip install pyyaml", file=sys.stderr)
     sys.exit(2)
 
+# events.py を tools/ から import
+sys.path.insert(0, str(Path(__file__).parent))
+try:
+    from events import emit as _emit, read_events, EVENT_LOG, EVENT_COLORS
+except ImportError:
+    def _emit(*a, **kw): pass
+    def read_events(n=50): return []
+    EVENT_LOG = None
+    EVENT_COLORS = {}
+
 # ── パス ─────────────────────────────────────────────────────────────────────
 REPO_ROOT   = Path(__file__).parent.parent
 LEDGER_PATH = REPO_ROOT / "config" / "services_ledger.yaml"
@@ -127,6 +137,7 @@ def start_one(svc: Dict[str, Any], dry_run: bool = False, wait: bool = True) -> 
         return True
 
     print(c(f"  → {name} 起動中...", CYAN), end=" ", flush=True)
+    _emit("heal_trigger", service=name, detail=str(start_cmd), source="manaosctl")
     try:
         if sys.platform == "win32":
             subprocess.Popen(
@@ -150,8 +161,10 @@ def start_one(svc: Dict[str, Any], dry_run: bool = False, wait: bool = True) -> 
         time.sleep(1)
         if is_alive(svc, timeout=1.5):
             print(c("OK", GREEN))
+            _emit("service_up", service=name, detail="started by manaosctl", source="manaosctl")
             return True
     print(c("TIMEOUT", YELLOW))
+    _emit("service_down", service=name, detail="startup timeout", source="manaosctl")
     return False
 
 
@@ -188,6 +201,7 @@ def stop_one(svc: Dict[str, Any], dry_run: bool = False) -> bool:
             subprocess.run(["taskkill", "/F", "/PID", str(pid)],
                            capture_output=True)
         print(c(f"  [STOPPED] {name} (PID: {pids})", GREEN))
+        _emit("shutdown", service=name, detail=f"stopped pid={pids}", source="manaosctl")
         return True
     except Exception as e:
         print(c(f"  [ERROR] {name} — {e}", RED))
@@ -506,6 +520,37 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
     print()
     return 1 if down_count else 0
 
+def cmd_events(args: argparse.Namespace) -> int:
+    """イベント履歴を時系列表示。"""
+    n    = getattr(args, "n", 50)
+    filt = getattr(args, "filter", None)
+    events = read_events(n=max(n * 3, 200))  # 多めに読んでフィルタ後に残す
+
+    if filt:
+        events = [e for e in events if filt in e.get("event", "") or filt in e.get("service", "")]
+    events = events[-n:]
+
+    if getattr(args, "json", False):
+        print(json.dumps(events, ensure_ascii=False, indent=2))
+        return 0
+
+    if not events:
+        print(c("  (イベントなし — logs/events.jsonl がまだ空です)", DIM))
+        return 0
+
+    # 表示
+    EVLEN = 16
+    print(c(f"\n{'Time':<20} {'Event':<{EVLEN}} {'Service':<24} Detail", BOLD))
+    print("─" * 90)
+    for e in events:
+        t    = e.get("time", "")[:19]
+        ev   = e.get("event", "")[:EVLEN]
+        svc  = e.get("service", "")[:24]
+        det  = e.get("detail", "")[:50]
+        col  = EVENT_COLORS.get(e.get("event", ""), "")
+        print(f"{c(t, DIM)} {c(ev, col):<{EVLEN+10}} {svc:<24} {c(det, DIM)}")
+    print()
+    return 0
 
 # ── エントリポイント ──────────────────────────────────────────────────────────
 def main() -> None:
@@ -553,6 +598,12 @@ def main() -> None:
     # dashboard
     sub.add_parser("dashboard", help="全サービスダッシュボード表示")
 
+    # events
+    p_events = sub.add_parser("events", help="イベント履歴表示")
+    p_events.add_argument("-n", type=int, default=30, help="表示件数 (デフォルト: 30)")
+    p_events.add_argument("--filter", type=str, help="イベント名またはサービス名で絞り込む")
+    p_events.add_argument("--json", action="store_true")
+
     args = parser.parse_args()
 
     dispatch = {
@@ -563,6 +614,7 @@ def main() -> None:
         "report":    cmd_report,
         "cost":      cmd_cost,
         "dashboard": cmd_dashboard,
+        "events":    cmd_events,
     }
     sys.exit(dispatch[args.command](args))
 

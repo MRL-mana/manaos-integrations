@@ -48,6 +48,13 @@ except ImportError:
     print("pyyaml が必要です: pip install pyyaml", file=sys.stderr)
     sys.exit(2)
 
+# events.py を tools/ から import
+sys.path.insert(0, str(Path(__file__).parent))
+try:
+    from events import emit as _emit_event
+except ImportError:
+    def _emit_event(*a, **kw): pass  # フォールバック: 無視
+
 # ── 設定 ─────────────────────────────────────────────────────────────────────
 REPO_ROOT    = Path(__file__).parent.parent
 LEDGER_PATH  = REPO_ROOT / "config" / "services_ledger.yaml"
@@ -146,6 +153,7 @@ def start_service(svc: Dict[str, Any], dry_run: bool = False) -> bool:
         return True
 
     log(f"  [STARTING] {name} — {cmd}")
+    _emit_event("heal_trigger", service=name, detail=cmd, source="heal.py")
     try:
         if sys.platform == "win32":
             subprocess.Popen(
@@ -174,9 +182,11 @@ def start_service(svc: Dict[str, Any], dry_run: bool = False) -> bool:
         time.sleep(1.5)
         if is_alive(svc, timeout=2.0):
             log(f"  [OK] {name} — ヘルスチェック通過")
+            _emit_event("heal_ok", service=name, detail="health check passed", source="heal.py")
             return True
 
     log(f"  [FAIL] {name} — {HEAL_TIMEOUT}秒以内にヘルスチェック未通過")
+    _emit_event("heal_fail", service=name, detail=f"no response within {HEAL_TIMEOUT}s", source="heal.py")
     return False
 
 
