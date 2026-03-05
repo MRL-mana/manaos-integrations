@@ -1,0 +1,19 @@
+# ManaOS 設定ファイル
+# 環境変数は YAML の値より優先されます
+#
+# 例:
+#   MANAOS_SLACK_WEBHOOK=https://hooks.slack.com/... のように環境変数でも設定可能
+
+notifications:
+  # Slack Incoming Webhook URL
+  # 空文字のままにすると MANAOS_SLACK_WEBHOOK 環境変数のみが使用されます
+  slack_webhook_url: ""
+
+watch:
+  # manaosctl watch のデフォルトチェック間隔（秒）
+  # --interval フラグで上書き可能
+  default_interval: 60
+
+  # true にすると DOWN 変化を検出したとき自動で policy --check を実行します
+  # --policy フラグでも同様の効果があります
+  policy_on_down: false

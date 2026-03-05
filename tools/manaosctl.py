@@ -19,6 +19,7 @@ manaosctl — ManaOS オペレーション CLI
   python tools/manaosctl.py watch                   # 定期監視ループ（60秒間隔）
   python tools/manaosctl.py watch --interval 30     # 30秒間隔
   python tools/manaosctl.py watch --once            # 1回だけ実行して終了
+  python tools/manaosctl.py watch --policy          # DOWN検出時に policy --check を自動実行
 
   python tools/manaosctl.py up                  # auto_restart=true の全サービス起動
   python tools/manaosctl.py up --tier 1         # Tier1 のみ起動
@@ -76,9 +77,10 @@ except ImportError:
 
 # ── パス ─────────────────────────────────────────────────────────────────────
 REPO_ROOT   = Path(__file__).parent.parent
-LEDGER_PATH = REPO_ROOT / "config" / "services_ledger.yaml"
-POLICY_PATH = REPO_ROOT / "config" / "policies.yaml"
-TOOLS_DIR   = REPO_ROOT / "tools"
+LEDGER_PATH   = REPO_ROOT / "config" / "services_ledger.yaml"
+POLICY_PATH   = REPO_ROOT / "config" / "policies.yaml"
+SETTINGS_PATH = REPO_ROOT / "config" / "settings.yaml"
+TOOLS_DIR     = REPO_ROOT / "tools"
 LOG_DIR     = REPO_ROOT / "logs"
 HEAL_LOG    = LOG_DIR / "heal.log"
 PYTHON_EXE  = sys.executable
@@ -98,6 +100,14 @@ def c(text: str, color: str) -> str:
 
 
 # ── Ledger ロード ─────────────────────────────────────────────────────────────
+def load_settings() -> Dict[str, Any]:
+    """config/settings.yaml を読み込む（なければ空dict）。"""
+    if not SETTINGS_PATH.exists():
+        return {}
+    with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f) or {}
+
+
 def load_ledger(path: Path = LEDGER_PATH) -> Dict[str, Any]:
     if not path.exists():
         print(f"[ERROR] services_ledger.yaml not found: {path}", file=sys.stderr)
@@ -784,15 +794,23 @@ def cmd_deps(args: argparse.Namespace) -> int:
 
     # ─── ASCII blast-radius ツリー ─────────────────────────────────────
     if getattr(args, "tree", False):
-        # 根 = enabled かつ依存なし（またはすべての依存先が services に存在しない）
-        roots = sorted(
-            [n for n, s in services.items()
-             if s.get("enabled", False)
-             and not [d for d in (s.get("depends_on") or []) if d in services]],
-            key=lambda n: (services[n].get("tier", 9), n)
-        )
-        print(c(f"\n  ▶ 依存ツリー  (blast-radius: 根→葉の方向)", BOLD))
-        print(c("  根サービスが落ちると下流の葉サービスが連鎖影響を受ける", DIM))
+        if target_name:
+            if target_name not in services:
+                print(c(f"[ERROR] サービス '{target_name}' が見つかりません", RED))
+                return 1
+            roots = [target_name]
+            dn_count = len(all_downstream(target_name))
+            print(c(f"\n  ▶ {target_name} 依存ツリー  (blast-radius: 下流への影響)", BOLD))
+            print(c(f"  このサービスが落ちると下流 {dn_count} サービスが連鎖影響を受ける", DIM))
+        else:
+            roots = sorted(
+                [n for n, s in services.items()
+                 if s.get("enabled", False)
+                 and not [d for d in (s.get("depends_on") or []) if d in services]],
+                key=lambda n: (services[n].get("tier", 9), n)
+            )
+            print(c(f"\n  ▶ 依存ツリー  (blast-radius: 根→葉の方向)", BOLD))
+            print(c("  根サービスが落ちると下流の葉サービスが連鎖影響を受ける", DIM))
         print()
 
         visited: set = set()
@@ -801,7 +819,7 @@ def cmd_deps(args: argparse.Namespace) -> int:
             svc = services.get(name, {})
             if not svc.get("enabled", True):
                 return c("○", DIM)
-            return c("●", GREEN) if is_alive(svc) else c("●", RED)
+            return c("●", GREEN) if is_alive(svc, timeout=0.5) else c("●", RED)
 
         def render_tree(name: str, prefix: str, is_last: bool) -> None:
             conn = "└─→ " if is_last else "├─→ "
@@ -909,6 +927,7 @@ def cmd_policy(args: argparse.Namespace) -> int:
 
     # --check モード（デフォルト）: ポリシーを評価してアクションを実行
     services   = load_ledger()
+    settings   = load_settings()
     events_log = read_events(n=500)
     now_ts     = datetime.datetime.now()
     fired:   list[str] = []
@@ -954,9 +973,10 @@ def cmd_policy(args: argparse.Namespace) -> int:
             notified = True
         except Exception:
             pass
-        # 2nd: MANAOS_SLACK_WEBHOOK 環境変数から直接 POST（フォールバック）
+        # 2nd: MANAOS_SLACK_WEBHOOK 環境変数 or settings.yaml から直接 POST（フォールバック）
         if not notified:
-            webhook_url = os.environ.get("MANAOS_SLACK_WEBHOOK", "")
+            webhook_url = (os.environ.get("MANAOS_SLACK_WEBHOOK")
+                           or settings.get("notifications", {}).get("slack_webhook_url", ""))
             if webhook_url:
                 try:
                     payload = json.dumps({"text": msg}, ensure_ascii=False).encode("utf-8")
@@ -1115,8 +1135,13 @@ def cmd_policy(args: argparse.Namespace) -> int:
 
 def cmd_watch(args: argparse.Namespace) -> int:
     """定期的に status + policy チェックを繰り返す監視ループ。"""
-    interval = getattr(args, "interval", 60)
-    once     = getattr(args, "once", False)
+    settings     = load_settings()
+    watch_cfg    = settings.get("watch", {})
+    _raw_interval = getattr(args, "interval", None)
+    interval     = (_raw_interval if _raw_interval is not None
+                    else watch_cfg.get("default_interval", 60))
+    once         = getattr(args, "once", False)
+    use_policy   = getattr(args, "policy", False) or watch_cfg.get("policy_on_down", False)
 
     print(c(f"\n  ManaOS Watch  (interval={interval}s, Ctrl+C で停止)", BOLD + CYAN))
     print(c("  " + "─" * 50, DIM))
@@ -1158,6 +1183,15 @@ def cmd_watch(args: argparse.Namespace) -> int:
                 print(c("  ⚠ 変化検出!", YELLOW))
                 for ch in changes:
                     print(f"    {ch}")
+                if use_policy:
+                    newly_down = [n for n, s in cur_status.items()
+                                  if s == "DOWN" and prev_status.get(n) in ("UP", None)]
+                    if newly_down:
+                        print(c(f"  → policy --check 自動実行 (新規DOWN: {newly_down})", MAGENTA))
+                        subprocess.run(
+                            [PYTHON_EXE, __file__, "policy", "--check"],
+                            cwd=str(REPO_ROOT),
+                        )
             else:
                 print(c("  変化なし", DIM))
 
@@ -1309,8 +1343,11 @@ def main() -> None:
 
     # watch
     p_watch = sub.add_parser("watch", help="定期監視ループ（status + policy）")
-    p_watch.add_argument("--interval", type=int, default=60, help="チェック間隔秒（デフォルト: 60）")
-    p_watch.add_argument("--once",     action="store_true", help="1回だけ実行して終了")
+    p_watch.add_argument("--interval", type=int, default=None,
+                         help="チェック間隔秒（省略時は settings.yaml の値または 60）")
+    p_watch.add_argument("--once",   action="store_true", help="1回だけ実行して終了")
+    p_watch.add_argument("--policy", action="store_true",
+                         help="DOWN検出時に policy --check を自動実行")
 
     args = parser.parse_args()
 
