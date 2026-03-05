@@ -16,6 +16,13 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import sqlite3
 
+# sys.path: repo root (scripts/misc/ -> scripts/ -> repo_root)
+import sys as _sys
+from pathlib import Path as _Path
+_REPO_ROOT = _Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in _sys.path:
+    _sys.path.insert(0, str(_REPO_ROOT))
+
 # 統一モジュールのインポート
 from manaos_logger import get_logger, get_service_logger
 from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
