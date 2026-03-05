@@ -430,6 +430,19 @@
       padding: 1px 7px;
       margin-left: 6px;
     }
+    #gtd-badge {
+      display: none;
+      background: #7c3aed;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 1px 8px;
+      margin-left: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #gtd-badge:hover { opacity: .82; }
     /* コマンド補完ポップアップ */
     #cmd-suggest {
       position: absolute;
@@ -464,6 +477,7 @@
   <header>
     <div class="logo">ManaOS <span>Shell</span></div>
     <span id="down-badge"></span>
+    <span id="gtd-badge" title="GTD Inbox件数 (クリックで一覧)"></span>
     <div class="badge" id="status-badge">connecting…</div>
     <div class="header-right">
       <label class="dry-label" style="margin-right:8px">
@@ -548,6 +562,7 @@ const SLASH_CMDS = [
   { cmd: "/inbox",            desc: "GTD Inbox 一覧表示" },
   { cmd: "/morning",          desc: "今日の日次ログを表示/作成" },
   { cmd: "/next",             desc: "Next Actions 一覧（やること確認）" },
+  { cmd: "/process <N> <dest>", desc: "Inbox[N]を振り分け (dest: next/done/someday/waiting/project)" },
   // 通知
   { cmd: "/notify <msg>",     desc: "ntfy / Slack に通知を送信" },
   { cmd: "/notify <msg> --title <T>", desc: "タイトル付きで通知" },
@@ -768,6 +783,67 @@ async function pollHealth() {
 }
 pollHealth();
 setInterval(pollHealth, 15000);
+
+// ── GTD status poll ───────────────────────────────────────────────────────
+const gtdBadge = document.getElementById("gtd-badge");
+async function pollGtdStatus() {
+  try {
+    const r = await fetch("/api/gtd/status");
+    if (!r.ok) return;
+    const d = await r.json();
+    const inbox = d.inbox_count ?? 0;
+    const na    = d.next_actions ?? 0;
+    if (inbox > 0) {
+      gtdBadge.textContent = `\uD83D\uDCCB ${inbox}`;
+      gtdBadge.style.display = "";
+    } else if (na > 0) {
+      gtdBadge.textContent = `\u2705 ${na}`;
+      gtdBadge.style.display = "";
+    } else {
+      gtdBadge.style.display = "none";
+    }
+  } catch { /* silent */ }
+}
+gtdBadge.addEventListener("click", () => { msgInput.value = "/inbox"; send(); });
+pollGtdStatus();
+setInterval(pollGtdStatus, 30000);
+
+// ── GTD Process (batch) ───────────────────────────────────────────────────
+async function sendGtdProcess(index, dest, label) {
+  appendUser(label);
+  const thinkingEl = appendThinking();
+  // DEST_MAP 表示名
+  const DEST_LABEL = { next:"Next Actions", project:"Projects", projects:"Projects",
+    someday:"Someday", waiting:"Waiting", done:"Done (archive)" };
+  try {
+    const resp = await fetch("/api/gtd/process", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ index, to: dest }),
+    });
+    const data = await resp.json().catch(() => ({ status: "error" }));
+    const ok = resp.ok;
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `
+      <div class="avatar">OS</div>
+      <div class="bubble">
+        <div style="margin-bottom:4px"><span class="intent-tag ${ok ? "tag-run_ok" : "tag-run_err"}">${ok ? "GTD MOVED" : "GTD ERR"}</span></div>
+        <pre class="result-block">${escHtml(ok ? `\u2705 [${index}] → ${DEST_LABEL[dest] || dest}\n${data.target || ""}` : JSON.stringify(data, null, 2))}</pre>
+        ${ts()}
+      </div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+    saveMsg("agent", ok ? `[GTD process] ${index}->${dest}` : "[GTD ERR]");
+    if (ok) pollGtdStatus();
+  } catch (err) {
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble" style="color:var(--fail)">GTD Process Error<br>${escHtml(String(err))}${ts()}</div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+  }
+}
 
 // ── Toast ──────────────────────────────────────────────────────────────────
 function showToast(msg, ms = 3000) {
@@ -1190,6 +1266,7 @@ function showHelp() {
     ["/inbox",            "GTD Inbox 一覧"],
     ["/morning",          "今日の日次ログ表示/作成"],
     ["/next",             "Next Actions 一覧（やること確認）"],
+    ["/process &lt;N&gt; &lt;dest&gt;", "Inbox[N]を振り分け (next/done/someday/waiting/project)"],
     // 通知
     ["/notify &lt;msg&gt;", "ntfy / Slack に通知を送信"],
   ];
@@ -1252,6 +1329,17 @@ async function send() {
     if (cmd === "inbox")   { await sendShellRun("gtd",    ["inbox"],   message); return; }
     if (cmd === "morning") { await sendShellRun("gtd",    ["morning"], message); return; }
     if (cmd === "next")    { await sendShellRun("gtd",    ["next"],    message); return; }
+    if (cmd === "process") {
+      const parts2 = arg.split(/\s+/);
+      const n    = parseInt(parts2[0], 10);
+      const dest = (parts2[1] || "").toLowerCase();
+      const validDests = ["next", "project", "projects", "someday", "waiting", "done"];
+      if (!n || n < 1 || !dest || !validDests.includes(dest)) {
+        appendAgent(`<span style='color:var(--fail)'>/process の書式: /process &lt;N&gt; &lt;dest&gt;<br>例: /process 1 next<br>dest: next / done / someday / waiting / project</span>`);
+        return;
+      }
+      await sendGtdProcess(n, dest, message); return;
+    }
     if (cmd === "notify") {
       if (!arg) { appendAgent("<span style='color:var(--fail)'>/notify の後にメッセージを入力してください 例: /notify テスト通知</span>"); return; }
       await sendShellRun("notify", arg.split(/\s+/), message); return;

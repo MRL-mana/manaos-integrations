@@ -5948,6 +5948,26 @@ def gtd_weekly_proxy():
     out = _gtd_run_cli("weekly", "--json")
     return out, 200, {"Content-Type": "application/json"}
 
+@app.route("/api/gtd/process", methods=["POST"])
+def gtd_process_proxy():
+    """Inbox アイテムをバッチ移動: {"index": 1, "to": "next"}。"""
+    payload = request.get_json(force=True, silent=True) or {}
+    idx = payload.get("index")
+    to  = payload.get("to")
+    if not idx or not to:
+        return _json_error("index and to are required", 400, namespace="gtd")
+    inbox_out = _gtd_run_cli("inbox", "--json")
+    try:
+        inbox_list = json.loads(inbox_out)
+    except Exception:
+        return _json_error("failed to parse inbox list", 500, namespace="gtd")
+    n = len(inbox_list)
+    if not (1 <= int(idx) <= n):
+        return _json_error(f"index out of range 1-{n}", 400, namespace="gtd")
+    target = inbox_list[int(idx) - 1]
+    out = _gtd_run_cli("process", "--target", target, "--to", str(to))
+    return jsonify({"status": "ok", "target": target, "to": to, "output": out.strip()}), 200
+
 # =============================================================================
 # END ManaOS Shell
 # =============================================================================
