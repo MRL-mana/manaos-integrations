@@ -645,12 +645,16 @@ def cmd_shell(args: argparse.Namespace) -> int:
 
 def cmd_events(args: argparse.Namespace) -> int:
     """イベント履歴を時系列表示。"""
-    n    = getattr(args, "n", 50)
-    filt = getattr(args, "filter", None)
-    events = read_events(n=max(n * 3, 200))  # 多めに読んでフィルタ後に残す
+    n         = getattr(args, "n", 50)
+    filt      = getattr(args, "filter", None)
+    since_min = getattr(args, "since", None)
+    events    = read_events(n=max(n * 3, 200))  # 多めに読んでフィルタ後に残す
 
     if filt:
         events = [e for e in events if filt in e.get("event", "") or filt in e.get("service", "")]
+    if since_min is not None:
+        cutoff = (datetime.datetime.now() - datetime.timedelta(minutes=since_min)).isoformat()[:19]
+        events = [e for e in events if e.get("time", "")[:19] >= cutoff]
     events = events[-n:]
 
     if getattr(args, "json", False):
@@ -661,9 +665,14 @@ def cmd_events(args: argparse.Namespace) -> int:
         print(c("  (イベントなし — logs/events.jsonl がまだ空です)", DIM))
         return 0
 
+    hparts = [f"{len(events)}件"]
+    if filt:      hparts.append(f"filter={filt}")
+    if since_min: hparts.append(f"since={since_min}m")
+    print(c(f"\n[Events  {'  '.join(hparts)}]", BOLD + CYAN))
+
     # 表示
     EVLEN = 16
-    print(c(f"\n{'Time':<20} {'Event':<{EVLEN}} {'Service':<24} Detail", BOLD))
+    print(c(f"{'Time':<20} {'Event':<{EVLEN}} {'Service':<24} Detail", BOLD))
     print("─" * 90)
     for e in events:
         t    = e.get("time", "")[:19]
@@ -1333,6 +1342,7 @@ def main() -> None:
     p_events = sub.add_parser("events", help="イベント履歴表示")
     p_events.add_argument("-n", type=int, default=30, help="表示件数 (デフォルト: 30)")
     p_events.add_argument("--filter", type=str, help="イベント名またはサービス名で絞り込む")
+    p_events.add_argument("--since", type=int, default=None, help="最近N分以内のイベントのみ表示")
     p_events.add_argument("--json", action="store_true")
 
     # analyze
