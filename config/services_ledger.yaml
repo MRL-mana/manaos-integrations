@@ -1,285 +1,251 @@
-version: 2
-updated_at: "2026-03-04"
-# SINGLE SOURCE OF TRUTH - ポート/URL/有効フラグはここが正
+# =============================================================================
+# ManaOS Services Ledger (SSOT)
+# =============================================================================
+# 配置先: config/services_ledger.yaml  (tools/validate_ledger.py デフォルトパス)
+# 用途:
+#   - サービス依存関係の Single Source of Truth
+#   - tools/validate_ledger.py  → 定義整合性チェック
+#   - tools/check_blast_radius.py → blast radius / 復旧順序の可視化
+#   - tools/dashboard_cli.py     → ヘルス一覧表示
+#
+# tier 定義:
+#   0 = 落ちたら全滅  (Tier0 が最優先復旧)
+#   1 = 主要機能が止まる
+#   2 = 便利機能が止まる (最後に復旧)
+#
+# 必須コアサービス (validate_ledger が強制確認):
+#   memory / learning / llm_routing / unified_api
+# =============================================================================
 
+# ─────────────────────────────────────────────────────────────────────────────
+# CORE GROUP  ―  必須サービス。ここが落ちると主要機能に影響。
+# ─────────────────────────────────────────────────────────────────────────────
 core:
-  memory:
-    port: 5105
-    url: "http://127.0.0.1:5105"
-    enabled: true
-    depends_on: []
 
-  learning:
-    port: 5126
-    url: "http://127.0.0.1:5126"
+  # ---------------------------------------------------------------------------
+  # Tier 0 : 根幹。これが落ちると連鎖が始まる。
+  # ---------------------------------------------------------------------------
+
+  ollama:
+    port: 11434
+    url: "http://127.0.0.1:11434"
     enabled: true
-    module: learning_system_api.py
-    start_cmd: "python learning_system_api.py"
-    depends_on:
-      - memory
+    tier: 0
+    blast_note: "LLM全推論が止まる。llm_routing→unified_api→ほぼ全機能が連鎖停止。"
+    depends_on: []
+    description: "Ollama LLMエンジン (外部プロセス)"
 
   llm_routing:
     port: 5111
     url: "http://127.0.0.1:5111"
     enabled: true
+    tier: 0
+    blast_note: "AI応答が全停止。intent_router / trinity / autonomy が機能不全。"
+    depends_on: [ollama]
+    description: "LLM ルーティング MCP サーバー"
+
+  memory:
+    port: 5105
+    url: "http://127.0.0.1:5105"
+    enabled: true
+    tier: 0
+    blast_note: "記憶読み書きが止まる。personality / secretary / learning が劣化運転に切り替わるか停止。"
     depends_on: []
+    description: "MRL Memory 記憶管理システム (SSOT)"
 
   unified_api:
     port: 9502
     url: "http://127.0.0.1:9502"
     enabled: true
-    depends_on:
-      - memory
-      - learning
-      - llm_routing
+    tier: 0
+    blast_note: "API ゲートウェイ停止。secretary / trinity / task_queue / pixel7 系が全停止。"
+    depends_on: [memory, llm_routing]
+    description: "Unified API サーバー (統合ゲートウェイ)"
 
-optional:
-  windows_automation:
-    port: 5115
-    url: "http://127.0.0.1:5115"
-    enabled: false
-    depends_on:
-      - unified_api
+  # ---------------------------------------------------------------------------
+  # Tier 1 : 主要機能 AI 人格・自律・秘書・タスク系
+  # ---------------------------------------------------------------------------
 
-  pico_hid:
-    port: 5136
-    url: "http://127.0.0.1:5136"
-    enabled: false
-    depends_on:
-      - unified_api
-
-  moltbot:
-    port: 8088
-    url: "http://127.0.0.1:8088"
-    enabled: false
-    depends_on:
-      - unified_api
-
-  comfyui:
-    port: 8188
-    url: "http://127.0.0.1:8188"
-    enabled: false
-    depends_on: []
-
-  gallery:
-    port: 5559
-    url: "http://127.0.0.1:5559"
-    enabled: false
-    module: gallery_api.py
-    start_cmd: "python gallery_api.py"
-    depends_on: []
-
-  # ── 画像・メディア ──
-  sd_image:
-    port: 5560
-    url: "http://127.0.0.1:5560"
-    enabled: false
-    depends_on: []
-    module: mcp-servers/manaos_services_sd/gallery_production.py
-    description: "Stable Diffusion 画像生成 + ギャラリー本番"
-
-  real_esrgan:
-    port: 5561
-    url: "http://127.0.0.1:5561"
-    enabled: false
-    depends_on: []
-    module: mcp-servers/real_esrgan
-    description: "Real-ESRGAN 超解像 (画像・動画)"
-
-  # ── OCR・文書処理 ──
-  ocr:
-    port: 5570
-    url: "http://127.0.0.1:5570"
-    enabled: false
-    depends_on:
-      - unified_api
-    module: mcp-servers/manaos_services_ocr/ocr_api.py
-    description: "OCR API サービス"
-
-  # ── 音声 ──
-  voice_stream:
-    port: 5580
-    url: "http://127.0.0.1:5580"
-    enabled: false
-    depends_on:
-      - unified_api
-    module: mcp-servers/voice_stream_system/voice_stream_server.py
-    description: "音声ストリーミングシステム"
-
-  # ── 通知 ──
-  slack:
-    port: 5590
-    url: "http://127.0.0.1:5590"
-    enabled: false
-    depends_on:
-      - unified_api
-    module: mcp-servers/slack_integration/slack_manaos_service.py
-    description: "Slack 完全統合"
-
-  line_notify:
-    port: 5591
-    url: "http://127.0.0.1:5591"
-    enabled: false
-    depends_on:
-      - unified_api
-    module: mcp-servers/line_notify_system/line_notify_service.py
-    description: "LINE 通知システム"
-
-  # ── 外部クラウド ──
-  runpod:
-    port: 5600
-    url: "http://127.0.0.1:5600"
-    enabled: false
-    depends_on: []
-    module: mcp-servers/runpod_integration/runpod_trinity_worker.py
-    description: "RunPod クラウド GPU 統合"
-
-  # ── エージェント ──
-  manaos_agents:
-    port: 5610
-    url: "http://127.0.0.1:5610"
-    enabled: false
-    depends_on:
-      - unified_api
-      - memory
-    module: mcp-servers/manaos_agents/agent_manager.py
-    description: "エージェント管理・起動制御"
-
-  # ── 認証 ──
-  sso_auth:
-    port: 5620
-    url: "http://127.0.0.1:5620"
-    enabled: false
-    depends_on: []
-    module: mcp-servers/sso_auth/sso_auth_server.py
-    description: "SSO 認証サーバー"
-
-  # ── 研究・ディープリサーチ ──
-  step_deep_research:
-    port: 5120
-    url: "http://127.0.0.1:5120"
+  learning:
+    port: 5126
+    url: "http://127.0.0.1:5126"
     enabled: true
-    module: step_deep_research/run_server.py
-    start_cmd: "python step_deep_research/run_server.py"
-    depends_on:
-      - unified_api
-    description: "Step-Deep-Research 調査ジョブシステム"
-    env: STEP_DEEP_RESEARCH_URL
+    tier: 1
+    blast_note: "自動改善・最適化が停止。personality / autonomy の適応能力が落ちる。"
+    depends_on: [memory, unified_api]
+    description: "学習・自動改善システム"
 
-  # ── File Secretary ──
-  file_secretary:
-    port: 8089
-    url: "http://127.0.0.1:8089"
-    enabled: true
-    module: file_secretary/file_secretary_api.py
-    start_cmd: "python file_secretary/file_secretary_start.py"
-    depends_on:
-      - unified_api
-    description: "ファイル整理・秘書システム"
-    env: FILE_SECRETARY_URL
-
-  # ── Castle-EX Layer2 推論 ──
-  castle_ex_layer2:
-    port: 9520
-    url: "http://127.0.0.1:9520"
-    enabled: false
-    depends_on: []
-    description: "Castle-EX Layer2 LoRA 推論サーバー（GPU独立プロセス）"
-    env: LAYER2_INFER_URL
-    module: castle_ex/castle_ex_layer2_inference_server.py
-    start_cmd: "powershell -ExecutionPolicy Bypass -File start_castle_ex_layer2.ps1"
-    version: "1.1.6"
-
-  # ── スケジューラー ──
-  smart_scheduler:
-    port: 5630
-    url: "http://127.0.0.1:5630"
-    enabled: false
-    depends_on:
-      - unified_api
-    module: mcp-servers/smart_scheduler/scheduler_engine.py
-    description: "スマートスケジューラー"
-
-  # ── ダッシュボード ──
-  ops_dashboard:
-    port: 9640
-    url: "http://127.0.0.1:9640"
-    enabled: true
-    depends_on: []
-    module: ../ops-dashboard/backend/app.py
-    start_cmd: "python C:/Users/mana4/Desktop/ops-dashboard/backend/app.py"
-    description: "Ops ダッシュボード モックAPI（stats/logs/action）"
-    env: OPS_DASHBOARD_URL
-
-  manaos_dashboard:
-    port: 5641
-    url: "http://127.0.0.1:5641"
-    enabled: false
-    depends_on:
-      - unified_api
-    module: mcp-servers/manaos_dashboard/app.py
-    description: "ManaOS Streamlit ダッシュボード"
-
-  # ── URL 要約 ──
-  url_summarization:
-    port: 5650
-    url: "http://127.0.0.1:5650"
-    enabled: false
-    depends_on: []
-    module: mcp-servers/url_summarization/notebooklm_server.py
-    description: "URL 要約・NotebookLM 統合"
-
-  # ── コンピューターユース ──
-  computer_use:
-    port: 5660
-    url: "http://127.0.0.1:5660"
-    enabled: false
-    depends_on:
-      - unified_api
-    module: mcp-servers/manaos_computer_use/manaos_computer_use_orchestrator.py
-    description: "Computer Use (スクリーン操作) オーケストレーター"
-
-  # ── MCP プロキシ ──
-  mcp_proxy:
-    port: 5670
-    url: "http://127.0.0.1:5670"
-    enabled: false
-    depends_on:
-      - unified_api
-    module: mcp-servers/mcp_proxy/mcp_proxy_server.py
-    description: "MCP プロキシ・アクセス制御"
-
-  # ── 人格・自律・秘書 (未成熟: テスト/ledger登録済み・起動不可) ──
   personality:
     port: 5123
     url: "http://127.0.0.1:5123"
-    enabled: false
-    depends_on:
-      - memory
-      - llm_routing
-    module: scripts/misc/personality_system.py
-    start_cmd: "python scripts/misc/personality_system.py"
-    description: "人格システム（清楚系ギャルペルソナ）― テスト整備まで enabled:false"
-    maturity: experimental
+    enabled: true
+    tier: 1
+    blast_note: "AI 人格応答が劣化。trinity の Remi / Luna / Mina が素っ気なくなる。"
+    depends_on: [memory, learning]
+    description: "AI 人格システム"
 
   autonomy:
     port: 5124
     url: "http://127.0.0.1:5124"
-    enabled: false
-    depends_on:
-      - unified_api
-    module: scripts/misc/autonomy_system.py
-    start_cmd: "python scripts/misc/autonomy_system.py"
-    description: "自律システム L0〜L6 権限セット ― テスト整備まで enabled:false"
-    maturity: experimental
+    enabled: true
+    tier: 1
+    blast_note: "自律タスク生成・RL ループが停止。RLAnything が機能しない。"
+    depends_on: [memory, learning, personality]
+    description: "自律エージェントシステム"
 
   secretary:
     port: 5125
     url: "http://127.0.0.1:5125"
+    enabled: true
+    tier: 1
+    blast_note: "スケジュール管理・リマインダーが止まる。GTD 系タスクが全停止。"
+    depends_on: [unified_api, memory]
+    description: "秘書システム (スケジュール / GTD)"
+
+  trinity:
+    port: 5146
+    url: "http://127.0.0.1:5146"
+    enabled: true
+    tier: 1
+    blast_note: "Remi / Luna / Mina ルーティングが停止。メインチャット窓口が落ちる。"
+    depends_on: [unified_api, memory, personality]
+    description: "Trinity エージェントシステム (MCP ヘルスポート)"
+
+  intent_router:
+    port: 5100
+    url: "http://127.0.0.1:5100"
+    enabled: true
+    tier: 1
+    blast_note: "意図分類が止まる。unified_api 経由の振り分けが劣化。"
+    depends_on: [llm_routing]
+    description: "意図ルーター"
+
+  task_queue:
+    port: 5104
+    url: "http://127.0.0.1:5104"
+    enabled: true
+    tier: 1
+    blast_note: "非同期タスク処理が停止。autonomy の計画実行が詰まる。"
+    depends_on: [unified_api]
+    description: "タスクキューシステム"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OPTIONAL GROUP  ―  便利機能。落ちても core は無傷。
+# ─────────────────────────────────────────────────────────────────────────────
+optional:
+
+  # Tier 2: 生成系 / メディア
+  video_pipeline:
+    port: 5112
+    url: "http://127.0.0.1:5112"
+    enabled: true
+    tier: 2
+    blast_note: "動画生成が止まる。SVI / LTX2 ワークフローが実行不可。"
+    depends_on: [unified_api]
+    description: "動画生成パイプライン MCP サーバー"
+
+  comfyui:
+    port: 8188
+    url: "http://127.0.0.1:8188"
+    enabled: true
+    tier: 2
+    blast_note: "画像生成が止まる。gallery も空になる。"
+    depends_on: []
+    description: "ComfyUI 画像生成エンジン"
+
+  gallery:
+    port: 5559
+    url: "http://127.0.0.1:5559"
+    enabled: true
+    tier: 2
+    blast_note: "生成画像の閲覧・管理が停止。comfyui は動いても見えなくなる。"
+    depends_on: [comfyui]
+    description: "ギャラリー API"
+
+  castle_ex_layer2:
+    port: 9520
+    url: "http://127.0.0.1:9520"
     enabled: false
-    depends_on:
-      - unified_api
-    module: scripts/misc/secretary_system.py
-    start_cmd: "python scripts/misc/secretary_system.py"
-    description: "秘書システム（スケジュール/リマインダー/自動報告）― テスト整備まで enabled:false"
-    maturity: experimental
+    tier: 2
+    blast_note: "CASTLE-EX LoRA 推論が停止。learning の fine-tune フィードバックが途切れる。"
+    depends_on: [learning]
+    description: "CASTLE-EX Layer2 推論サーバー"
+
+  # Tier 2: 自動化系
+  n8n:
+    port: 5678
+    url: "http://127.0.0.1:5678"
+    enabled: true
+    tier: 2
+    blast_note: "n8n ワークフローが全停止。secretary の自動通知が途切れる。"
+    depends_on: [unified_api]
+    description: "n8n ワークフロー自動化"
+
+  windows_automation:
+    port: 5115
+    url: "http://127.0.0.1:5115"
+    enabled: true
+    tier: 2
+    blast_note: "PC GUI 操作・スクリーンショットが停止。"
+    depends_on: []
+    description: "Windows 自動化 MCP サーバー"
+
+  pico_hid:
+    port: 5136
+    url: "http://127.0.0.1:5136"
+    enabled: true
+    tier: 2
+    blast_note: "マウス / キーボード HID 操作が停止。PC フォールバックは残る場合あり。"
+    depends_on: []
+    description: "Pico HID マウス / キーボード MCP サーバー"
+
+  pixel7_bridge:
+    port: 5122
+    url: "http://127.0.0.1:5122"
+    enabled: true
+    tier: 2
+    blast_note: "Pixel7 ADB 操作 / scrcpy 連携が全停止。"
+    depends_on: [unified_api]
+    description: "Pixel7 ブリッジ (ADB / scrcpy)"
+
+  # Tier 2: 外部連携
+  slack_integration:
+    port: 5590
+    url: "http://127.0.0.1:5590"
+    enabled: true
+    tier: 2
+    blast_note: "Slack 通知が途絶える。secretary の外部通知が失われる。"
+    depends_on: [unified_api]
+    description: "Slack 統合"
+
+  step_deep_research:
+    port: 5120
+    url: "http://127.0.0.1:5120"
+    enabled: true
+    tier: 2
+    blast_note: "Web 調査・SSOT 更新が停止。secretary の情報収集が劣化。"
+    depends_on: [llm_routing]
+    description: "Step Deep Research / File Secretary"
+
+  # Tier 2: 監視 / 運用
+  service_monitor:
+    port: 5111
+    url: "http://127.0.0.1:5111"
+    enabled: false
+    tier: 2
+    blast_note: "監視が止まるだけ。他サービスへの影響なし。ただし障害検知が遅れる。"
+    depends_on: [unified_api]
+    description: "Service Monitor (watchdog)"
+    # NOTE: 5111 は llm_routing と競合の可能性あり。
+    #       SERVICE_MONITOR_PORT 環境変数で別ポートに逃がすこと推奨。
+
+  # Tier 2: 音声・TTS
+  voicevox:
+    port: 50021
+    url: "http://127.0.0.1:50021"
+    enabled: false
+    tier: 2
+    blast_note: "音声合成が停止。trinity の音声応答が無声になる。"
+    depends_on: []
+    description: "VOICEVOX TTS エンジン"
