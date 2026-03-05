@@ -6,10 +6,11 @@ ManaOS Blast Radius Checker
 配置先: tools/check_blast_radius.py
 
 使い方:
-  python check_blast_radius.py                         # 全サービスのサマリー + 復旧順序
+  python check_blast_radius.py                         # 全サービスのサマリー
   python check_blast_radius.py --service unified_api   # unified_api が落ちた時の影響範囲
   python check_blast_radius.py --service memory        # memory が落ちた時
   python check_blast_radius.py --recovery-order        # Tier 順の復旧手順書を出力
+  python check_blast_radius.py --live                  # 実サービスを HTTP プローブして DOWN のブラスト半径を表示
   python check_blast_radius.py --ledger path/to/services_ledger.yaml
 
 終了コード:

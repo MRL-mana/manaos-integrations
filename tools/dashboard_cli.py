@@ -529,6 +529,10 @@ def main() -> int:
 
     if args.blast and args.check:
         print_blast_alerts(rows, use_color)
+    elif args.blast and not args.check:
+        use_color_local = (not args.no_color) and sys.stdout.isatty()
+        print(colorize("[NOTE] --blast requires --check to be enabled (no probe = no blast data)", "warn", use_color_local))
+        print()
 
     if args.ci:
         print_ci(ci_data, use_color)

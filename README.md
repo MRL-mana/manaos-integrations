@@ -162,6 +162,9 @@ python tools/check_blast_radius.py --ledger config/services_ledger.yaml --servic
 
 # 復旧手順書 (Tier 0 → 1 → 2, 依存解決済み起動順) + Quick Quiz
 python tools/check_blast_radius.py --ledger config/services_ledger.yaml --recovery-order
+
+# 実サービスを HTTP プローブして DOWN のブラスト半径をリアルタイム表示
+python tools/check_blast_radius.py --ledger config/services_ledger.yaml --live
 ```
 
 ### ヘルスチェック
@@ -177,13 +180,29 @@ python tools/health_check_all.py --ledger config/services_ledger.yaml --json
 
 # 10秒ごとに繰り返し監視
 python tools/health_check_all.py --ledger config/services_ledger.yaml --watch 10
+
+# HTTP プローブなしでサービス一覧だけ確認 (CI dry-run)
+python tools/health_check_all.py --ledger config/services_ledger.yaml --list-only
 ```
 
 ### Ledger 検証
 
 ```bash
-# schema + README 整合性チェック (CI でも実行される)
+# schema + tier 整合性 + README 整合性チェック (CI でも実行される)
 python tools/validate_ledger.py --ledger config/services_ledger.yaml --readme README.md
+```
+
+### Dashboard (SSOT + Health + Blast)
+
+```bash
+# サービス状態テーブル表示
+python tools/dashboard_cli.py --ledger config/services_ledger.yaml
+
+# ヘルスプローブ付き
+python tools/dashboard_cli.py --ledger config/services_ledger.yaml --check
+
+# DOWN サービスのブラスト半径も表示
+python tools/dashboard_cli.py --ledger config/services_ledger.yaml --check --blast
 ```
 
 ---

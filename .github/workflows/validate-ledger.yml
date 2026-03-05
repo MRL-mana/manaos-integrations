@@ -55,6 +55,11 @@ jobs:
           python tools/health_check_all.py --ledger config/services_ledger.yaml --list-only | grep -q "total:"
           echo "Health check ledger parse: PASS"
 
+      - name: Unit tests (blast radius)
+        run: |
+          pip install pytest
+          python -m pytest tests/test_check_blast_radius.py -v --tb=short
+
   validate-openapi:
     runs-on: ubuntu-latest
     needs: validate
