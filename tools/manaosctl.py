@@ -10,6 +10,11 @@ manaosctl — ManaOS オペレーション CLI
   python tools/manaosctl.py status --tier 0     # Tier0 のみ
   python tools/manaosctl.py status --json       # JSON 出力
 
+  python tools/manaosctl.py deps                    # 全サービス依存一覧
+  python tools/manaosctl.py deps llm_routing        # 特定サービスの依存詳細
+  python tools/manaosctl.py deps --order            # 起動順序表示
+  python tools/manaosctl.py deps --json             # JSON出力
+
   python tools/manaosctl.py up                  # auto_restart=true の全サービス起動
   python tools/manaosctl.py up --tier 1         # Tier1 のみ起動
   python tools/manaosctl.py up trinity          # 特定サービス起動
@@ -633,6 +638,242 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_deps(args: argparse.Namespace) -> int:
+    """サービスの依存ツリーの可視化。起動順序、上流/下流の影響表示。"""
+    services = load_ledger()
+    target_name: str | None = getattr(args, "service", None)
+    show_order = getattr(args, "order", False)
+    as_json    = getattr(args, "json", False)
+
+    def get_upstream(name: str) -> List[str]:
+        """name が依存しているサービス一覧。"""
+        return [d for d in (services.get(name, {}).get("depends_on") or []) if d in services]
+
+    def get_downstream(name: str) -> List[str]:
+        """そのサービスに依存しているサービス一覧。"""
+        return [n for n, svc in services.items() if name in (svc.get("depends_on") or [])]
+
+    def all_upstream(name: str, visited: set | None = None) -> List[str]:
+        """depends_on を再帰的にたどった全上流。"""
+        if visited is None:
+            visited = set()
+        for dep in get_upstream(name):
+            if dep not in visited:
+                visited.add(dep)
+                all_upstream(dep, visited)
+        return sorted(visited)
+
+    def all_downstream(name: str, visited: set | None = None) -> List[str]:
+        """再帰的にたどった全下流。"""
+        if visited is None:
+            visited = set()
+        for ds in get_downstream(name):
+            if ds not in visited:
+                visited.add(ds)
+                all_downstream(ds, visited)
+        return sorted(visited)
+
+    if as_json:
+        if target_name and target_name in services:
+            result = {
+                "service": target_name,
+                "upstream": all_upstream(target_name),
+                "downstream": all_downstream(target_name),
+                "start_order": topo_sort(list(services.keys()), services),
+            }
+        else:
+            result = {
+                name: {
+                    "depends_on": get_upstream(name),
+                    "depended_by": get_downstream(name),
+                }
+                for name in sorted(services)
+            }
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
+
+    # ─── 全体ツリー表示 / 起動順序 ──────────────────────────────────────
+    if show_order:
+        enabled = [n for n, s in services.items() if s.get("enabled", False)]
+        ordered = topo_sort(enabled, services)
+        print(c(f"\n{'#':>3}  {'Service':<24} {'Tier':>4}  depends_on", BOLD))
+        print("─" * 70)
+        for i, name in enumerate(ordered, 1):
+            svc  = services[name]
+            deps = ", ".join(get_upstream(name)) or c("―", DIM)
+            tier = svc.get("tier", "?")
+            alive = is_alive(svc)
+            st = c("●", GREEN if alive else (DIM if not svc.get("enabled") else RED))
+            print(f"{i:>3}  {st} {name:<23} {str(tier):>4}  {c(deps, DIM)}")
+        print()
+        return 0
+
+    # ─── 特定サービスの詳細 ───────────────────────────────────────────────
+    if target_name:
+        if target_name not in services:
+            print(c(f"[ERROR] 不明なサービス: {target_name}", RED), file=sys.stderr)
+            return 2
+        svc = services[target_name]
+        alive = is_alive(svc)
+        st = c("UP", GREEN) if alive else c("DOWN", RED)
+
+        up_direct   = get_upstream(target_name)
+        up_all      = all_upstream(target_name)
+        down_direct = get_downstream(target_name)
+        down_all    = all_downstream(target_name)
+
+        dead_deps = [d for d in up_all if not is_alive(services.get(d, {}), timeout=1.5)]
+
+        print(c(f"\n▶ {target_name}  [", BOLD) + st + c(f"]  Tier {svc.get('tier','?')}", BOLD))
+        print(c(f"  {svc.get('description','')}", DIM))
+        if dead_deps:
+            print(c(f"  ⚠  上流 DOWN: {dead_deps}  ← そのサービスを先に復旧すること", RED))
+
+        print()
+        print(c(f"  ↑ requires  (direct): ", DIM) + (c(", ".join(up_direct), CYAN) if up_direct else c("―", DIM)))
+        print(c(f"  ↑ requires  (all)   : ", DIM) + (c(", ".join(up_all), CYAN) if up_all else c("―", DIM)))
+        print(c(f"  ↓ needed by (direct): ", DIM) + (c(", ".join(down_direct), YELLOW) if down_direct else c("―", DIM)))
+        print(c(f"  ↓ needed by (all)   : ", DIM) + (c(", ".join(down_all), YELLOW) if down_all else c("―", DIM)))
+        print()
+        if down_all:
+            print(c(f"  ⚠  このサービスが落ちると {len(down_all)} サービスが影響を受ける: {down_all}", MAGENTA))
+        return 0
+
+    # ─── 全サービスの依存一覧 ──────────────────────────────────────────────────
+    print(c(f"\n{'Service':<24} {'Tier':>4}  {'depends_on':<34} needed_by", BOLD))
+    print("─" * 90)
+    for name in sorted(services, key=lambda n: (services[n].get("tier", 9), n)):
+        svc   = services[name]
+        alive = is_alive(svc) if svc.get("enabled") else None
+        if alive is True:
+            st = c("●", GREEN)
+        elif alive is False:
+            st = c("●", RED)
+        else:
+            st = c("◦", DIM)
+        tier    = str(svc.get("tier", "?"))
+        deps    = ", ".join(get_upstream(name))  or "―"
+        rev_dep = ", ".join(get_downstream(name)) or "―"
+        print(f"{st} {name:<23} {tier:>4}  {c(deps[:34], DIM):<40} {c(rev_dep[:30], DIM)}")
+    print(c("\n  ヒント: manaosctl deps <name>で個別詳細 / --order で起動順表示", DIM))
+    print()
+    return 0
+
+
+def cmd_deps(args: argparse.Namespace) -> int:
+    """サービスの依存ツリーの可視化。起動順序、上流/下流の影響表示。"""
+    services = load_ledger()
+    target_name: Optional[str] = getattr(args, "service", None)
+    show_order  = getattr(args, "order", False)
+    as_json     = getattr(args, "json", False)
+
+    def get_upstream(name: str) -> List[str]:
+        return [d for d in (services.get(name, {}).get("depends_on") or []) if d in services]
+
+    def get_downstream(name: str) -> List[str]:
+        return [n for n, svc in services.items() if name in (svc.get("depends_on") or [])]
+
+    def all_upstream(name: str, visited: Optional[set] = None) -> List[str]:
+        if visited is None:
+            visited = set()
+        for dep in get_upstream(name):
+            if dep not in visited:
+                visited.add(dep)
+                all_upstream(dep, visited)
+        return sorted(visited)
+
+    def all_downstream(name: str, visited: Optional[set] = None) -> List[str]:
+        if visited is None:
+            visited = set()
+        for ds in get_downstream(name):
+            if ds not in visited:
+                visited.add(ds)
+                all_downstream(ds, visited)
+        return sorted(visited)
+
+    if as_json:
+        if target_name and target_name in services:
+            result: Dict[str, Any] = {
+                "service":     target_name,
+                "upstream":    all_upstream(target_name),
+                "downstream":  all_downstream(target_name),
+                "start_order": topo_sort(list(services.keys()), services),
+            }
+        else:
+            result = {
+                name: {
+                    "depends_on":  get_upstream(name),
+                    "depended_by": get_downstream(name),
+                }
+                for name in sorted(services)
+            }
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
+
+    # ─── 起動順序表示 ──────────────────────────────────────────────────
+    if show_order:
+        enabled = [n for n, s in services.items() if s.get("enabled", False)]
+        ordered = topo_sort(enabled, services)
+        print(c(f"\n{'#':>3}  {'Service':<24} {'Tier':>4}  depends_on", BOLD))
+        print("─" * 70)
+        for i, name in enumerate(ordered, 1):
+            svc  = services[name]
+            deps = ", ".join(get_upstream(name)) or c("─", DIM)
+            alive = is_alive(svc)
+            st = c("●", GREEN if alive else (DIM if not svc.get("enabled") else RED))
+            print(f"{i:>3}  {st} {name:<23} {str(svc.get('tier','?')):>4}  {c(deps, DIM)}")
+        print()
+        return 0
+
+    # ─── 特定サービスの詳細 ────────────────────────────────────────────
+    if target_name:
+        if target_name not in services:
+            print(c(f"[ERROR] 不明なサービス: {target_name}", RED), file=sys.stderr)
+            return 2
+        svc         = services[target_name]
+        alive       = is_alive(svc)
+        st          = c("UP", GREEN) if alive else c("DOWN", RED)
+        up_direct   = get_upstream(target_name)
+        up_all      = all_upstream(target_name)
+        down_direct = get_downstream(target_name)
+        down_all    = all_downstream(target_name)
+        dead_deps   = [d for d in up_all if not is_alive(services[d], timeout=1.5)]
+
+        print(c(f"\n▶ {target_name}  [", BOLD) + st + c(f"]  Tier {svc.get('tier','?')}", BOLD))
+        print(c(f"  {svc.get('description','')}", DIM))
+        if dead_deps:
+            print(c(f"  ⚠  上流 DOWN: {dead_deps}  ← そのサービスを先に復旧すること", RED))
+        print()
+        print(c("  ↑ requires  (direct): ", DIM) + (c(", ".join(up_direct), CYAN)   if up_direct   else c("─", DIM)))
+        print(c("  ↑ requires  (all)   : ", DIM) + (c(", ".join(up_all), CYAN)      if up_all      else c("─", DIM)))
+        print(c("  ↓ needed by (direct): ", DIM) + (c(", ".join(down_direct), YELLOW) if down_direct else c("─", DIM)))
+        print(c("  ↓ needed by (all)   : ", DIM) + (c(", ".join(down_all), YELLOW)  if down_all    else c("─", DIM)))
+        print()
+        if down_all:
+            print(c(f"  ⚠  このサービスが落ちると {len(down_all)} サービスが影響を受ける: {down_all}", MAGENTA))
+        return 0
+
+    # ─── 全サービスの依存一覧 ──────────────────────────────────────────
+    print(c(f"\n{'Service':<24} {'Tier':>4}  {'depends_on':<38} needed_by", BOLD))
+    print("─" * 94)
+    for name in sorted(services, key=lambda n: (services[n].get("tier", 9), n)):
+        svc   = services[name]
+        alive = is_alive(svc) if svc.get("enabled") else None
+        if alive is True:
+            st = c("●", GREEN)
+        elif alive is False:
+            st = c("●", RED)
+        else:
+            st = c("○", DIM)
+        tier    = str(svc.get("tier", "?"))
+        deps    = ", ".join(get_upstream(name))   or "─"
+        rev_dep = ", ".join(get_downstream(name)) or "─"
+        print(f"{st} {name:<23} {tier:>4}  {c(deps[:38], DIM):<44} {c(rev_dep[:30], DIM)}")
+    print(c("\n  ヒント: manaosctl deps <name> で個別詳細 / --order で起動順表示", DIM))
+    print()
+    return 0
+
+
 def cmd_policy(args: argparse.Namespace) -> int:
     """config/policies.yaml のポリシーを評価・表示する。"""
     if not POLICY_PATH.exists():
@@ -772,6 +1013,12 @@ def main() -> None:
     # dashboard
     sub.add_parser("dashboard", help="全サービスダッシュボード表示")
 
+    # deps
+    p_deps = sub.add_parser("deps", help="依存ツリー可視化・起動順序表示")
+    p_deps.add_argument("service", nargs="?", help="詳細表示するサービス名")
+    p_deps.add_argument("--order", action="store_true", help="起動順序リスト表示")
+    p_deps.add_argument("--json",  action="store_true")
+
     # events
     p_events = sub.add_parser("events", help="イベント履歴表示")
     p_events.add_argument("-n", type=int, default=30, help="表示件数 (デフォルト: 30)")
@@ -801,6 +1048,7 @@ def main() -> None:
         "report":    cmd_report,
         "cost":      cmd_cost,
         "dashboard": cmd_dashboard,
+        "deps":      cmd_deps,
         "events":    cmd_events,
         "analyze":   cmd_analyze,
         "policy":    cmd_policy,

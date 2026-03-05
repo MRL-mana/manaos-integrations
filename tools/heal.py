@@ -61,9 +61,10 @@ LEDGER_PATH  = REPO_ROOT / "config" / "services_ledger.yaml"
 LOG_DIR      = REPO_ROOT / "logs"
 HEAL_LOG     = LOG_DIR / "heal.log"
 PYTHON_EXE   = sys.executable
-HEAL_TIMEOUT = 10.0  # ヘルスチェック待機 (秒)
-RETRY_MAX    = 3     # 起動リトライ回数
-RETRY_WAIT   = 3.0   # リトライ間隔 (秒)
+HEAL_TIMEOUT     = 10.0  # ヘルスチェック待機 (秒)
+RETRY_MAX        = 3     # 起動リトライ回数
+RETRY_WAIT       = 3.0   # リトライ間隔 (秒)
+DEP_WAIT_TIMEOUT = 30    # 依存サービス UP 待機上限 (秒)
 
 # ── カラー ────────────────────────────────────────────────────────────────────
 RESET  = "\x1b[0m"
@@ -130,8 +131,31 @@ def is_alive(svc: Dict[str, Any], timeout: float = 2.0) -> bool:
     return False
 
 
+# ── 依存待機 ────────────────────────────────────────────────────────────────
+def wait_for_deps(svc: Dict[str, Any], all_services: Dict[str, Any]) -> bool:
+    """depends_on のサービスが全部 UP になるまで最大 DEP_WAIT_TIMEOUT 秒待つ。"""
+    deps = [d for d in (svc.get("depends_on") or []) if d in all_services]
+    if not deps:
+        return True
+    alive_deps = [d for d in deps if is_alive(all_services[d], timeout=1.5)]
+    pending = [d for d in deps if d not in alive_deps]
+    if not pending:
+        return True
+    log(f"  ⏳ {svc['name']} — deps待機: {pending}")
+    deadline = time.time() + DEP_WAIT_TIMEOUT
+    while pending and time.time() < deadline:
+        time.sleep(1)
+        pending = [d for d in pending if not is_alive(all_services[d], timeout=1.5)]
+    if pending:
+        log(f"  [WARN] {svc['name']} — deps タイムアウト: {pending} — 起動続行")
+        return False
+    log(f"  [DEPS OK] {svc['name']} — 全依存 UP")
+    return True
+
+
 # ── 起動 ─────────────────────────────────────────────────────────────────────
-def start_service(svc: Dict[str, Any], dry_run: bool = False) -> bool:
+def start_service(svc: Dict[str, Any], dry_run: bool = False,
+                  all_services: Dict[str, Any] | None = None) -> bool:
     """
     start_cmd を実行してバックグラウンド起動。
     HEAL_TIMEOUT 秒以内にヘルスチェック成功すれば True。
@@ -151,6 +175,10 @@ def start_service(svc: Dict[str, Any], dry_run: bool = False) -> bool:
     if dry_run:
         log(f"  [DRY-RUN] {name} — would run: {cmd}")
         return True
+
+    # 依存サービスが UP するまで待機
+    if all_services:
+        wait_for_deps(svc, all_services)
 
     log(f"  [STARTING] {name} — {cmd}")
     _emit_event("heal_trigger", service=name, detail=cmd, source="heal.py")
@@ -265,8 +293,29 @@ def main() -> None:
         sys.exit(0)
 
     log(f"  DOWN 検知: {down_targets}")
-    log(f"  起動順序解決中...")
 
+    # ── 上流障害 vs 単独障害 の分類 ──────────────────────────────────────────
+    # 依存先がひとつでも DOWN なら「上流障害 (upstream_dead)」
+    # 依存先がすべて UP  なら「単独障害 (isolated_dead)」
+    upstream_dead: List[str] = []   # 依存先が落ちているため巻き込まれた
+    isolated_dead: List[str] = []   # 依存先は UP、自分だけクラッシュ
+    for name in down_targets:
+        deps = [d for d in (all_services.get(name, {}).get("depends_on") or [])
+                if d in all_services]
+        dead_deps = [d for d in deps if not is_alive(all_services[d], timeout=1.5)]
+        if dead_deps:
+            upstream_dead.append(name)
+            log(f"  [UPSTREAM FAIL] {name} — 依存 DOWN: {dead_deps}")
+        else:
+            isolated_dead.append(name)
+            log(f"  [ISOLATED FAIL] {name} — 依存は正常、単独クラッシュ")
+
+    if upstream_dead:
+        log(f"  ⚠  上流障害サービス (deps復旧後に自動リトライ): {upstream_dead}")
+    if isolated_dead:
+        log(f"  ✗  単独障害サービス (即時復旧対象): {isolated_dead}")
+
+    log(f"  起動順序解決中...")
     ordered = topo_sort(down_targets, all_services)
     log(f"  起動順: {ordered}")
 
@@ -279,7 +328,7 @@ def main() -> None:
         success = False
         for attempt in range(1, RETRY_MAX + 1):
             log(f"  [{attempt}/{RETRY_MAX}] {name} 起動試行...")
-            ok = start_service(svc, dry_run=args.dry_run)
+            ok = start_service(svc, dry_run=args.dry_run, all_services=all_services)
             if ok:
                 success = True
                 break
@@ -305,6 +354,8 @@ def main() -> None:
             "healed": healed,
             "failed": failed,
             "already_up": already_up,
+            "upstream_dead": upstream_dead,
+            "isolated_dead": isolated_dead,
             "results": results,
         }, ensure_ascii=False, indent=2))
 
