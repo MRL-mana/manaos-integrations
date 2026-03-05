@@ -5417,7 +5417,7 @@ def _shell_build_dispatch(intent: Dict[str, Any], message: str) -> tuple:
     if intent_type == "system_control":
         msg = message.lower()
         if any(k in msg for k in ("heal", "復旧", "修復", "restart", "再起動")):
-            # entities に service 名があれば直接 /api/shell/heal へ
+            # entities に service 名があれば直接 /api/shell/heal / restart へ
             svc_name = intent.get("entities", {}).get("service") or intent.get("entities", {}).get("target")
             if not svc_name:
                 # メッセージから最初の既知サービス名をマッチ
@@ -5431,7 +5431,9 @@ def _shell_build_dispatch(intent: Dict[str, Any], message: str) -> tuple:
             body: Dict[str, Any] = {"dry_run": False}
             if svc_name:
                 body["service"] = svc_name
-            return "POST", f"{base}/api/shell/heal", body
+            is_restart = any(k in msg for k in ("restart", "再起動", "reboot"))
+            endpoint = "/api/shell/restart" if is_restart else "/api/shell/heal"
+            return "POST", f"{base}{endpoint}", body
         return "GET", f"{base}/api/integrations/status", {}
 
     if intent_type == "task_execution":
@@ -5707,6 +5709,96 @@ def api_shell_services():
     return jsonify({"services": result, "count": len(result)}), 200
 
 
+@app.route("/api/shell/restart", methods=["POST"])
+def api_shell_restart():
+    """
+    ManaOS Shell ─ サービスの再起動 (manaosctl restart ラッパ).
+
+    Request body:
+        {"service": "ollama"}   → 指定サービスのみ再起動
+        {"service": null}       → 全サービス再起動
+
+    Response:
+        {"status": "ok", "service": "ollama", "exit_code": 0, "stdout": "...", "stderr": "..."}
+    """
+    data = request.get_json(silent=True) or {}
+    svc_name: Optional[str] = (data.get("service") or "").strip() or None
+
+    manaosctl = REPO_ROOT / "tools" / "manaosctl.py"
+    if not manaosctl.exists():
+        return _json_error("manaosctl.py not found", 503, namespace="shell_restart")
+
+    cmd = [sys.executable, str(manaosctl), "restart"]
+    if svc_name:
+        cmd += [svc_name]
+
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(REPO_ROOT),
+            timeout=120,
+        )
+        ok = proc.returncode == 0
+        return jsonify({
+            "status":    "ok" if ok else "error",
+            "service":   svc_name,
+            "exit_code": proc.returncode,
+            "stdout":    proc.stdout[-4000:] if proc.stdout else "",
+            "stderr":    proc.stderr[-2000:] if proc.stderr else "",
+        }), 200 if ok else 207
+    except subprocess.TimeoutExpired:
+        return _json_error("restart timed out (120s)", 504, namespace="shell_restart")
+    except Exception as exc:
+        return _json_error(str(exc), 500, namespace="shell_restart")
+
+
+@app.route("/api/shell/restart", methods=["POST"])
+def api_shell_restart():
+    """
+    ManaOS Shell ─ サービスの再起動 (manaosctl restart ラッパ).
+
+    Request body:
+        {"service": "ollama"}   → 指定サービスのみ再起動
+        {"service": null}       → 全サービス再起動
+
+    Response:
+        {"status": "ok", "service": "ollama", "exit_code": 0, "stdout": "...", "stderr": "..."}
+    """
+    data = request.get_json(silent=True) or {}
+    svc_name: Optional[str] = (data.get("service") or "").strip() or None
+
+    manaosctl = REPO_ROOT / "tools" / "manaosctl.py"
+    if not manaosctl.exists():
+        return _json_error("manaosctl.py not found", 503, namespace="shell_restart")
+
+    cmd = [sys.executable, str(manaosctl), "restart"]
+    if svc_name:
+        cmd += [svc_name]
+
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(REPO_ROOT),
+            timeout=120,
+        )
+        ok = proc.returncode == 0
+        return jsonify({
+            "status":    "ok" if ok else "error",
+            "service":   svc_name,
+            "exit_code": proc.returncode,
+            "stdout":    proc.stdout[-4000:] if proc.stdout else "",
+            "stderr":    proc.stderr[-2000:] if proc.stderr else "",
+        }), 200 if ok else 207
+    except subprocess.TimeoutExpired:
+        return _json_error("restart timed out (120s)", 504, namespace="shell_restart")
+    except Exception as exc:
+        return _json_error(str(exc), 500, namespace="shell_restart")
+
+
 @app.route("/api/shell/heal", methods=["POST"])
 def api_shell_heal():
     """
@@ -5755,6 +5847,69 @@ def api_shell_heal():
         return _json_error("heal timed out (60s)", 504, namespace="shell_heal")
     except Exception as exc:
         return _json_error(str(exc), 500, namespace="shell_heal")
+
+
+# manaosctl run コマンドのホワイトリスト（副作用のある操作は除外）
+_SHELL_RUN_WHITELIST = frozenset({"status", "deps", "events", "tier", "report", "cost", "dashboard", "watch"})
+
+_ANSI_RE = __import__("re").compile(r"\x1b\[[0-9;]*m")
+
+
+@app.route("/api/shell/run", methods=["POST"])
+def api_shell_run():
+    """
+    ManaOS Shell — manaosctl コマンドを直接実行してテキスト出力を返す。
+
+    Request body:
+        {"command": "deps", "args": ["--tree", "unified_api"]}
+        {"command": "events", "args": ["-n", "20"]}
+        {"command": "watch", "args": []}         # --once を自動付与
+        {"command": "tier", "args": []}
+
+    Response:
+        {"status": "ok", "command": "deps", "args": [...], "output": "...", "exit_code": 0}
+    """
+    data    = request.get_json(silent=True) or {}
+    command = (data.get("command") or "").strip().lower()
+    args    = [str(a) for a in (data.get("args") or [])]
+
+    if command not in _SHELL_RUN_WHITELIST:
+        return _json_error(
+            f"command '{command}' not in whitelist. allowed: {sorted(_SHELL_RUN_WHITELIST)}",
+            400, namespace="shell_run",
+        )
+
+    manaosctl = REPO_ROOT / "tools" / "manaosctl.py"
+    if not manaosctl.exists():
+        return _json_error("manaosctl.py not found", 503, namespace="shell_run")
+
+    # watch は --once を強制（無限ループ防止）
+    if command == "watch" and "--once" not in args:
+        args = ["--once"] + [a for a in args if a not in ("--interval",)]
+
+    cmd = [sys.executable, str(manaosctl), command] + args
+
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(REPO_ROOT),
+            timeout=30,
+        )
+        raw_out = (proc.stdout or "") + (proc.stderr or "")
+        output  = _ANSI_RE.sub("", raw_out)
+        return jsonify({
+            "status":    "ok" if proc.returncode in (0, 1) else "error",
+            "command":   command,
+            "args":      args,
+            "output":    output[-6000:],
+            "exit_code": proc.returncode,
+        }), 200
+    except subprocess.TimeoutExpired:
+        return _json_error(f"command timed out (30s): {command}", 504, namespace="shell_run")
+    except Exception as exc:
+        return _json_error(str(exc), 500, namespace="shell_run")
 
 
 @app.route("/shell", methods=["GET"])

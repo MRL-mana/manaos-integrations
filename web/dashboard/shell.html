@@ -405,6 +405,53 @@
       flex-shrink: 0;
     }
     .svc-heal-btn:hover { background: var(--line2); }
+    .svc-restart-btn {
+      background: none;
+      border: 1px solid var(--line2);
+      border-radius: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      padding: 0 4px;
+      cursor: pointer;
+      line-height: 17px;
+      flex-shrink: 0;
+    }
+    .svc-restart-btn:hover { background: var(--line2); color: var(--accent); }
+    #down-badge {
+      display: none;
+      background: var(--fail);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 1px 7px;
+      margin-left: 6px;
+    }
+    /* コマンド補完ポップアップ */
+    #cmd-suggest {
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      z-index: 100;
+      overflow: hidden;
+      display: none;
+    }
+    .cmd-item {
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+    }
+    .cmd-item:hover, .cmd-item.active { background: var(--line2); }
+    .cmd-item .cmd-name { color: var(--accent); font-family: ui-monospace, monospace; font-weight: 600; }
+    .cmd-item .cmd-desc { color: var(--muted); font-size: 11px; }
+    .input-bar { position: relative; }
   </style>
 </head>
 <body>
@@ -413,6 +460,7 @@
   <!-- Header -->
   <header>
     <div class="logo">ManaOS <span>Shell</span></div>
+    <span id="down-badge"></span>
     <div class="badge" id="status-badge">connecting…</div>
     <div class="header-right">
       <label class="dry-label" style="margin-right:8px">
@@ -452,7 +500,8 @@
 
   <!-- Input bar -->
   <div class="input-bar">
-    <input id="msg-input" type="text" placeholder="例：comfyuiで猫を生成して" autocomplete="off" />
+    <div id="cmd-suggest"></div>
+    <input id="msg-input" type="text" placeholder="例：comfyuiで猫を生成して、/でコマンド一覧" autocomplete="off" />
     <label class="dry-label"><input type="checkbox" id="dry-check" /> dry_run</label>
     <div class="api-key-group">
       <input id="api-key" type="password" placeholder="X-API-Key (任意)" />
@@ -470,6 +519,19 @@ const SHELL_STREAM   = "/api/shell/stream";
 const HEALTH_URL     = "/health";
 const SERVICES_URL   = "/api/shell/services";
 let busy = false;
+
+// ── Slash command definitions (for autocomplete) ───────────────────────────
+const SLASH_CMDS = [
+  { cmd: "/status",          desc: "全サービスの状態確認" },
+  { cmd: "/heal",            desc: "DOWN サービスを全部復旧" },
+  { cmd: "/heal <svc>",      desc: "指定サービスを heal" },
+  { cmd: "/restart <svc>",   desc: "指定サービスを再起動" },
+  { cmd: "/report",          desc: "状態レポート" },
+  { cmd: "/analyze",         desc: "ログ分析" },
+  { cmd: "/services",        desc: "サービス一覧リロード" },
+  { cmd: "/clear",           desc: "チャット履歴クリア" },
+];
+
 // ── Command history (↑/↓) ─────────────────────────────────────────────────
 const cmdHist = [];
 let cmdHistIdx = -1;
@@ -588,6 +650,16 @@ async function loadServices() {
 
 function renderServices(svcs) {
   if (!svcs.length) { svcList.innerHTML = '<div class="svc-loading">No services</div>'; return; }
+  const down = svcs.filter(s => s.summary === "DOWN" || s.summary === "TIMEOUT");
+  // ヘッダー DOWN バッジ更新
+  if (downBadge) {
+    if (down.length) {
+      downBadge.textContent = `▼ DOWN: ${down.length}`;
+      downBadge.style.display = "inline-block";
+    } else {
+      downBadge.style.display = "none";
+    }
+  }
   const core = svcs.filter(s => s.section === "core");
   const opt  = svcs.filter(s => s.section === "optional");
   let html = "";
@@ -612,17 +684,55 @@ function svcRow(s) {
   const healBtn = dotClass === "down"
     ? `<button class="svc-heal-btn" onclick="healService('${safeName}')" title="heal ${escHtml(s.name)}">⟳</button>`
     : "";
+  const restartBtn = dotClass !== "skip"
+    ? `<button class="svc-restart-btn" onclick="restartService('${safeName}')" title="restart ${escHtml(s.name)}">↺</button>`
+    : "";
   return `<div class="svc-row" title="${escHtml(s.health)} / ${escHtml(s.summary)}">
     <span class="svc-dot ${dotClass}"></span>
     <span class="svc-name">${escHtml(s.name)}</span>
     <span class="svc-port">${port}</span>
-    ${healBtn}
+    ${healBtn}${restartBtn}
   </div>`;
 }
 
 // Auto-load + refresh every 30s
 loadServices();
 setInterval(loadServices, 30000);
+
+// ── Restart service (direct API) ─────────────────────────────────────────
+function restartService(name) {
+  const label = `↺ ${name} restart`;
+  appendUser(label);
+  const thinkingEl = appendThinking();
+  const headers = { "Content-Type": "application/json" };
+  const key = apiKeyEl.value.trim();
+  if (key) headers["X-API-Key"] = key;
+  fetch("/api/shell/restart", { method: "POST", headers, body: JSON.stringify({ service: name }) })
+    .then(r => r.json().then(d => ({ ok: r.ok, status: r.status, data: d })))
+    .then(({ ok, status, data }) => {
+      const exitCode = data.exit_code ?? "?";
+      const out = (data.stdout || "").trim();
+      const mainText = ok
+        ? `<span style="color:var(--ok)">restart 完了 (exit ${exitCode})</span>${out ? `<pre style="margin-top:6px;white-space:pre-wrap;font-size:11px">${escHtml(out.slice(0,800))}</pre>` : ""}`
+        : `<span style="color:var(--fail)">restart 失敗 (exit ${exitCode})</span><br><pre style="font-size:11px">${escHtml((data.stderr||"").slice(0,400))}</pre>`;
+      const el = document.createElement("div");
+      el.className = "msg agent";
+      el.innerHTML = `
+        <div class="avatar">OS</div>
+        <div class="bubble">
+          <span class="intent-tag ${ok ? 'tag-system_control' : 'tag-error'}">${ok ? 'RESTARTED' : 'ERROR'}</span>
+          <div style="margin-top:6px">${mainText}</div>
+          ${ts()}
+        </div>`;
+      thinkingEl.replaceWith(el);
+      saveMsg("agent", `[restart] ${name} exit=${exitCode}`);
+      scrollEnd();
+      loadServices();
+    })
+    .catch(err => {
+      replaceThinking(thinkingEl, { status: "dispatch_error", error: String(err), plan: {} });
+    });
+}
 
 // ── Health poll ────────────────────────────────────────────────────────────
 async function pollHealth() {
@@ -966,6 +1076,7 @@ async function send() {
     const remap = {
       status:  "全サービスの状態を確認して",
       heal:    arg ? `${arg} を heal して` : "DOWN サービスを全部 heal して",
+      restart: arg ? `${arg} を再起動して` : "サービスを再起動して",
       report:  "現在の状態レポートを出して",
       analyze: "ログを分析して",
     };
@@ -1000,8 +1111,65 @@ async function send() {
   }
 }
 
+// ── Command autocomplete ───────────────────────────────────────────────────
+let suggestIdx = -1;
+
+function updateSuggest() {
+  const val = msgInput.value;
+  if (!val.startsWith("/")) { hideSuggest(); return; }
+  const frag = val.toLowerCase();
+  const matches = SLASH_CMDS.filter(c => c.cmd.toLowerCase().startsWith(frag));
+  if (!matches.length) { hideSuggest(); return; }
+  suggestIdx = -1;
+  cmdSuggest.innerHTML = matches.map((c, i) =>
+    `<div class="cmd-item" data-idx="${i}" onmousedown="pickSuggest(${i})">
+       <span class="cmd-name">${escHtml(c.cmd)}</span>
+       <span class="cmd-desc">${escHtml(c.desc)}</span>
+     </div>`
+  ).join("");
+  cmdSuggest._matches = matches;
+  cmdSuggest.style.display = "block";
+}
+
+function hideSuggest() {
+  cmdSuggest.style.display = "none";
+  cmdSuggest._matches = [];
+  suggestIdx = -1;
+}
+
+function pickSuggest(idx) {
+  const m = (cmdSuggest._matches || [])[idx];
+  if (!m) return;
+  // コマンド部分だけ挿入（引数プレースホルダは除く）
+  const base = m.cmd.split(" ")[0] + (m.cmd.includes("<") ? " " : " ");
+  msgInput.value = base;
+  hideSuggest();
+  msgInput.focus();
+}
+
+function moveSuggest(dir) {
+  const items = cmdSuggest.querySelectorAll(".cmd-item");
+  if (!items.length) return false;
+  items.forEach(el => el.classList.remove("active"));
+  suggestIdx = (suggestIdx + dir + items.length) % items.length;
+  items[suggestIdx].classList.add("active");
+  return true;
+}
+
+msgInput.addEventListener("input", updateSuggest);
+msgInput.addEventListener("blur", () => setTimeout(hideSuggest, 150));
+
 // ── Key bindings ───────────────────────────────────────────────────────────
 msgInput.addEventListener("keydown", e => {
+  // 補完ポップアップが開いているとき ArrowUp/Down/Tab/Enter が補完に使われる
+  if (cmdSuggest.style.display !== "none") {
+    if (e.key === "ArrowDown") { e.preventDefault(); moveSuggest(1); return; }
+    if (e.key === "ArrowUp")   { e.preventDefault(); moveSuggest(-1); return; }
+    if (e.key === "Tab" || e.key === "Enter") {
+      if (suggestIdx >= 0) { e.preventDefault(); pickSuggest(suggestIdx); return; }
+    }
+    if (e.key === "Escape") { e.preventDefault(); hideSuggest(); return; }
+  }
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); return; }
   if (e.key === "ArrowUp") {
     e.preventDefault();
