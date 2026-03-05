@@ -1,0 +1,40 @@
+# ManaOS Automation Policies
+# ====================================================
+# manaosctl policy --check  で評価
+# manaosctl policy --list   で一覧表示
+#
+# trigger        : emit() に渡す event 名
+# condition.cost_risk : "high" / "med" (service の cost_risk が一致するとき)
+# condition.within_minutes : 直近 N 分以内に trigger が発生したとき
+# action         : stop (サービス停止) | notify (Slack 通知)
+# target         : action 対象サービス名。空欄 = trigger に含まれる service 名
+# cooldown_minutes : 同ルールを再発動するまでの冷却時間
+
+policies:
+  - name: cost_alert_auto_stop
+    enabled: true
+    description: "HIGH COST サービスが cost_alert を受けたら自動停止"
+    trigger: cost_alert
+    condition:
+      cost_risk: high
+      within_minutes: 30
+    action: stop
+    cooldown_minutes: 60
+
+  - name: heal_fail_slack
+    enabled: true
+    description: "heal 失敗時に Slack 通知"
+    trigger: heal_fail
+    condition:
+      within_minutes: 10
+    action: notify
+    cooldown_minutes: 30
+
+  - name: service_down_notify
+    enabled: true
+    description: "サービスが DOWN したら即 Slack 通知"
+    trigger: service_down
+    condition:
+      within_minutes: 5
+    action: notify
+    cooldown_minutes: 15

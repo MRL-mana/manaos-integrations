@@ -28,6 +28,7 @@ from pathlib import Path
 REPO_ROOT   = Path(__file__).parent.parent.parent
 TOOLS_DIR   = REPO_ROOT / "tools"
 ANALYSIS_DIR = REPO_ROOT / "logs" / "analysis"
+SUMMARY_JSON = REPO_ROOT / "logs" / "events.summary.json"
 LLM_URL     = "http://127.0.0.1:5111/api/llm/route"
 
 sys.path.insert(0, str(TOOLS_DIR))
@@ -64,11 +65,24 @@ def build_prompt(events: list[dict], services: list[dict], n_events: int) -> str
     if down_names:
         svc_summary += f"\nDOWN中: {down_names}"
 
+    # 過去の要約（長期記憶）があれば追加
+    history_text = ""
+    if SUMMARY_JSON.exists():
+        try:
+            prev = json.loads(SUMMARY_JSON.read_text(encoding="utf-8"))
+            prev_ts  = prev.get("last_updated", "?")
+            prev_sum = prev.get("summary", "")
+            if prev_sum:
+                history_text = f"\n## 前回レポート要約 ({prev_ts})\n{prev_sum[:400]}\n"
+        except Exception:
+            pass
+
     events_text = json.dumps(events, ensure_ascii=False, indent=2) if events else "（イベントなし）"
 
     return (
         f"ManaOS 定期レポート ({now})\n\n"
-        f"## サービス状態\n{svc_summary}\n\n"
+        f"## サービス状態\n{svc_summary}\n"
+        f"{history_text}\n"
         f"## 直近 {n_events} 件のイベント\n{events_text}\n\n"
         f"以上のデータを分析して、以下の形式で日本語レポートを作成してください:\n\n"
         f"### 1. 総合評価（1行）\n"
@@ -103,6 +117,33 @@ def save_report(report: str, model: str) -> Path:
     )
     path.write_text(header + report, encoding="utf-8")
     return path
+
+
+def update_summary(report: str, model: str, events: list[dict], services: list[dict]) -> None:
+    """logs/events.summary.json を更新（長期記憶）。"""
+    up   = sum(1 for s in services if s.get("alive"))
+    down = sum(1 for s in services if not s.get("alive"))
+
+    # レポートの 1行目（総合評価）をサマリーとして抽出
+    lines = [l.strip() for l in report.splitlines() if l.strip()]
+    short = lines[0] if lines else report[:200]
+
+    summary = {
+        "last_updated": datetime.datetime.now().isoformat(),
+        "model": model,
+        "summary": short,
+        "service_up": up,
+        "service_down": down,
+        "events_analyzed": len(events),
+    }
+    try:
+        SUMMARY_JSON.parent.mkdir(parents=True, exist_ok=True)
+        SUMMARY_JSON.write_text(
+            json.dumps(summary, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+    except Exception as e:
+        print(f"[WARN] summary.json 更新失敗: {e}", file=sys.stderr)
 
 
 def notify_slack(text: str) -> None:
@@ -151,6 +192,9 @@ def main() -> None:
         print(f"[モデル: {model}]")
         print()
         print(report)
+
+    # 長期記憶を更新
+    update_summary(report, model, events, services)
 
     emit("analyze", detail=f"daily_report n={len(events)} model={model}", source="daily_report")
 

@@ -24,6 +24,9 @@ from __future__ import annotations
 import datetime
 import json
 import sys
+import threading
+import urllib.request
+import urllib.error
 from pathlib import Path
 from typing import Optional
 
@@ -31,6 +34,17 @@ REPO_ROOT  = Path(__file__).parent.parent
 LOG_DIR    = REPO_ROOT / "logs"
 EVENT_LOG  = LOG_DIR / "events.jsonl"
 ROTATE_AT  = 5000   # この行数超えたら events.1.jsonl にローテーション
+
+# Slack 通知先（slack_integration サービス）
+SLACK_URL = "http://127.0.0.1:5590/notify"
+
+# このイベントが来たら Slack 通知を Fire-and-forget で送る
+SLACK_NOTIFY_EVENTS: frozenset[str] = frozenset({
+    "service_down",
+    "heal_trigger",
+    "heal_fail",
+    "cost_alert",
+})
 
 # イベント種別（表示色マッピング用）
 EVENT_COLORS = {
@@ -46,6 +60,30 @@ EVENT_COLORS = {
 }
 RESET = "\x1b[0m"
 DIM   = "\x1b[2m"
+
+
+def _notify_slack_async(event: str, service: str, detail: str) -> None:
+    """Slack 通知を別スレッドで Fire-and-forget 送信（失敗は無視）。"""
+    def _post() -> None:
+        try:
+            text = f"[ManaOS] *{event}*"
+            if service:
+                text += f"  `{service}`"
+            if detail:
+                text += f"\n> {detail}"
+            payload = json.dumps({"text": text}, ensure_ascii=False).encode("utf-8")
+            req = urllib.request.Request(
+                SLACK_URL, data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=3):
+                pass
+        except Exception:
+            pass  # Slack 停止中でも events.py はノーエラーで動く
+
+    t = threading.Thread(target=_post, daemon=True)
+    t.start()
 
 
 def _maybe_rotate() -> None:
@@ -83,6 +121,10 @@ def emit(
     }
     with open(EVENT_LOG, "a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    # 重要イベントは Slack にも通知
+    if event in SLACK_NOTIFY_EVENTS:
+        _notify_slack_async(event, service or "", detail or "")
 
 
 def read_events(n: int = 50) -> list[dict]:

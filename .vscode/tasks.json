@@ -48,6 +48,43 @@
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true },
       "group": "none"
+    },
+    {
+      "label": "ManaOS: policy --list",
+      "type": "shell",
+      "command": "python",
+      "args": ["${workspaceFolder}/tools/manaosctl.py", "policy", "--list"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "ManaOS: policy --check",
+      "type": "shell",
+      "command": "python",
+      "args": ["${workspaceFolder}/tools/manaosctl.py", "policy", "--check"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "ManaOS: Control Panel 起動 (port 9800)",
+      "type": "shell",
+      "command": "python",
+      "args": ["${workspaceFolder}/scripts/misc/manaos_dashboard_server.py"],
+      "isBackground": true,
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "ManaOS: daily report (stdout)",
+      "type": "shell",
+      "command": "python",
+      "args": ["${workspaceFolder}/scripts/misc/manaos_daily_report.py", "--stdout"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
     }
   ]
 }

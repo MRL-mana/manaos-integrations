@@ -67,6 +67,7 @@ except ImportError:
 # ── パス ─────────────────────────────────────────────────────────────────────
 REPO_ROOT   = Path(__file__).parent.parent
 LEDGER_PATH = REPO_ROOT / "config" / "services_ledger.yaml"
+POLICY_PATH = REPO_ROOT / "config" / "policies.yaml"
 TOOLS_DIR   = REPO_ROOT / "tools"
 LOG_DIR     = REPO_ROOT / "logs"
 HEAL_LOG    = LOG_DIR / "heal.log"
@@ -630,7 +631,102 @@ def cmd_analyze(args: argparse.Namespace) -> int:
         print(c("  ヒント: llm_routing が起動しているか確認してください", DIM))
         return 1
     return 0
-# ── エントリポイント ──────────────────────────────────────────────────────────
+
+
+def cmd_policy(args: argparse.Namespace) -> int:
+    """config/policies.yaml のポリシーを評価・表示する。"""
+    if not POLICY_PATH.exists():
+        print(c(f"[ERROR] policies.yaml が見つかりません: {POLICY_PATH}", RED))
+        return 2
+
+    with open(POLICY_PATH, "r", encoding="utf-8") as f:
+        raw_policies = yaml.safe_load(f) or {}
+    policies = raw_policies.get("policies", [])
+
+    # --list モード
+    if getattr(args, "list", False):
+        print(c(f"\n{'Name':<30} {'Trigger':<16} {'Action':<10} Enabled", BOLD))
+        print("─" * 70)
+        for p in policies:
+            en = c("✓", GREEN) if p.get("enabled") else c("✗", DIM)
+            print(f"{p['name']:<30} {p.get('trigger',''):<16} {p.get('action',''):<10} {en}  — {p.get('description','')}")
+        print()
+        return 0
+
+    # --check モード（デフォルト）: ポリシーを評価してアクションを実行
+    services = load_ledger()
+    events   = read_events(n=500)
+    now_ts   = datetime.datetime.now()
+    fired: list[str] = []
+
+    for p in policies:
+        if not p.get("enabled", True):
+            continue
+        trigger = p.get("trigger", "")
+        cond    = p.get("condition", {})
+        action  = p.get("action", "")
+        within  = cond.get("within_minutes", 60)
+        cutoff  = now_ts - datetime.timedelta(minutes=within)
+
+        # trigger にマッチするイベントを within_minutes 以内で探す
+        matched = [
+            e for e in events
+            if e.get("event") == trigger
+            and datetime.datetime.fromisoformat(e.get("time", "2000-01-01")) >= cutoff
+        ]
+        if not matched:
+            continue
+
+        # cost_risk 条件
+        if "cost_risk" in cond:
+            required_risk = cond["cost_risk"]
+            matched = [
+                e for e in matched
+                if services.get(e.get("service", ""), {}).get("cost_risk") == required_risk
+            ]
+        if not matched:
+            continue
+
+        # アクション実行
+        p_name = p["name"]
+        for ev in matched:
+            svc_name = ev.get("service", "")
+            target   = svc_name or p.get("target", "")
+
+            if action == "stop" and target and target in services:
+                if is_alive(services[target]):
+                    print(c(f"\n[POLICY] {p_name} → STOP {target}", MAGENTA))
+                    stop_one(services[target])
+                    _emit("policy", service=target,
+                          detail=f"auto-stop by policy:{p_name}", source="manaosctl")
+                    fired.append(f"{p_name}→stop:{target}")
+
+            elif action == "notify":
+                msg = f"[Policy: {p_name}] {trigger} 検出: {target} — {ev.get('detail','')}"
+                print(c(f"\n[POLICY] {p_name} → NOTIFY: {msg}", MAGENTA))
+                _emit("policy", service=target,
+                      detail=f"notify by policy:{p_name}", source="manaosctl")
+                # Slack 通知（slack_integration が UP の場合）
+                try:
+                    payload = json.dumps({"text": msg}, ensure_ascii=False).encode("utf-8")
+                    req = urllib.request.Request(
+                        "http://127.0.0.1:5590/notify", data=payload,
+                        headers={"Content-Type": "application/json"}, method="POST",
+                    )
+                    with urllib.request.urlopen(req, timeout=3):
+                        pass
+                except Exception:
+                    pass
+                fired.append(f"{p_name}→notify")
+
+    if fired:
+        print(c(f"\n[POLICY] 実行済みアクション: {fired}", GREEN))
+    else:
+        print(c("\n[POLICY] 発火条件に該当するポリシーはなし", DIM))
+
+    if getattr(args, "json", False):
+        print(json.dumps({"fired": fired}, ensure_ascii=False, indent=2))
+    return 0
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="manaosctl",
@@ -689,6 +785,12 @@ def main() -> None:
                            help="LLM ルーティング URL")
     p_analyze.add_argument("--json", action="store_true")
 
+    # policy
+    p_policy = sub.add_parser("policy", help="ポリシーを評価・一覧表示")
+    p_policy.add_argument("--list",  action="store_true", help="ポリシー一覧表示のみ")
+    p_policy.add_argument("--check", action="store_true", help="ポリシーを評価してアクション実行（デフォルト）")
+    p_policy.add_argument("--json",  action="store_true")
+
     args = parser.parse_args()
 
     dispatch = {
@@ -701,6 +803,7 @@ def main() -> None:
         "dashboard": cmd_dashboard,
         "events":    cmd_events,
         "analyze":   cmd_analyze,
+        "policy":    cmd_policy,
     }
     sys.exit(dispatch[args.command](args))
 
