@@ -292,6 +292,33 @@
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "shell: ManaOS: GTD Next Actions一覧",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "gtd", "next"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "shell: ManaOS: GTD Process（Inbox振り分け）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "gtd", "process"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "echo": true, "focus": true }
+    },
+    {
+      "label": "shell: ManaOS: GTD Weekly Review",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "gtd", "weekly"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
     }
   ]
 }

@@ -547,6 +547,7 @@ const SLASH_CMDS = [
   { cmd: "/memo <text>",      desc: "Inbox にメモを保存 (GTD キャプチャ)" },
   { cmd: "/inbox",            desc: "GTD Inbox 一覧表示" },
   { cmd: "/morning",          desc: "今日の日次ログを表示/作成" },
+  { cmd: "/next",             desc: "Next Actions 一覧（やること確認）" },
   // 通知
   { cmd: "/notify <msg>",     desc: "ntfy / Slack に通知を送信" },
   { cmd: "/notify <msg> --title <T>", desc: "タイトル付きで通知" },
@@ -1121,24 +1122,36 @@ async function sendShellRun(command, args, label) {
   }
 }
 
-// ── GTD Capture (direct POST to port 5130) ──────────────────────────────
+// ── GTD Capture (direct POST to port 5130, fallback to unified_api) ────────
 async function sendGtdCapture(text, label) {
   appendUser(label);
   const thinkingEl = appendThinking();
-  try {
-    const resp = await fetch("http://127.0.0.1:5130/api/gtd/capture", {
+  const payload = JSON.stringify({ text, source: "shell", type: "inbox" });
+  async function _post(url) {
+    return await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, source: "shell", type: "inbox" }),
+      body: payload,
     });
+  }
+  try {
+    let resp, via = "direct";
+    try {
+      resp = await _post("http://127.0.0.1:5130/api/gtd/capture");
+      if (!resp.ok && resp.status === 0) throw new Error("unreachable");
+    } catch (_) {
+      via = "unified_api";
+      resp = await _post("/api/gtd/capture");
+    }
     const data = await resp.json().catch(() => ({ status: "error" }));
     const ok = resp.ok;
+    const proxyNote = via === "unified_api" ? " <small style='opacity:.6'>via proxy</small>" : "";
     const el = document.createElement("div");
     el.className = "msg agent";
     el.innerHTML = `
       <div class="avatar">OS</div>
       <div class="bubble">
-        <div style="margin-bottom:4px"><span class="intent-tag ${ok ? "tag-run_ok" : "tag-run_err"}">${ok ? "GTD SAVED" : "GTD ERR"}</span></div>
+        <div style="margin-bottom:4px"><span class="intent-tag ${ok ? "tag-run_ok" : "tag-run_err"}">${ok ? "GTD SAVED" : "GTD ERR"}</span>${proxyNote}</div>
         <pre class="result-block">${escHtml(ok ? "\u2705 Inbox \u4fdd\u5b58: " + (data.file || text) : JSON.stringify(data, null, 2))}</pre>
         ${ts()}
       </div>`;
@@ -1148,7 +1161,7 @@ async function sendGtdCapture(text, label) {
   } catch (err) {
     const el = document.createElement("div");
     el.className = "msg agent";
-    el.innerHTML = `<div class="avatar">OS</div><div class="bubble" style="color:var(--fail)">GTD Capture Server DOWN (port 5130)<br>${escHtml(String(err))}${ts()}</div>`;
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble" style="color:var(--fail)">GTD Capture Server DOWN (port 5130 + unified_api)<br>${escHtml(String(err))}${ts()}</div>`;
     thinkingEl.replaceWith(el);
     scrollEnd();
   }
@@ -1176,6 +1189,7 @@ function showHelp() {
     ["/memo &lt;text&gt;", "Inbox にメモ保存 (GTD キャプチャ)"],
     ["/inbox",            "GTD Inbox 一覧"],
     ["/morning",          "今日の日次ログ表示/作成"],
+    ["/next",             "Next Actions 一覧（やること確認）"],
     // 通知
     ["/notify &lt;msg&gt;", "ntfy / Slack に通知を送信"],
   ];
@@ -1237,6 +1251,7 @@ async function send() {
     }
     if (cmd === "inbox")   { await sendShellRun("gtd",    ["inbox"],   message); return; }
     if (cmd === "morning") { await sendShellRun("gtd",    ["morning"], message); return; }
+    if (cmd === "next")    { await sendShellRun("gtd",    ["next"],    message); return; }
     if (cmd === "notify") {
       if (!arg) { appendAgent("<span style='color:var(--fail)'>/notify の後にメッセージを入力してください 例: /notify テスト通知</span>"); return; }
       await sendShellRun("notify", arg.split(/\s+/), message); return;

@@ -5876,6 +5876,78 @@ def shell_ui():
     return send_from_directory(str(shell_html.parent), shell_html.name, mimetype="text/html; charset=utf-8")
 
 
+# ── GTD Proxy (→ port 5130) ──────────────────────────────────────────────────
+_GTD_CAPTURE_URL = "http://127.0.0.1:5130"
+
+def _gtd_run_cli(*args, timeout: int = 15) -> str:
+    """manaosctl gtd サブコマンドをサブプロセスで実行してstdoutを返す。"""
+    result = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / "manaosctl.py"), "gtd", *args],
+        capture_output=True, text=True, timeout=timeout, cwd=str(REPO_ROOT)
+    )
+    return result.stdout
+
+@app.route("/api/gtd/capture", methods=["POST"])
+def gtd_capture_proxy():
+    """Inbox に1アイテム追加 (GTD Capture Server → フォールバック: manaosctl)。"""
+    import urllib.request as _ur
+    import urllib.error as _ue
+    try:
+        body = request.get_data()
+        req = _ur.Request(
+            f"{_GTD_CAPTURE_URL}/api/gtd/capture",
+            data=body, headers={"Content-Type": "application/json"}, method="POST"
+        )
+        with _ur.urlopen(req, timeout=5) as r:
+            return r.read(), r.status, {"Content-Type": "application/json"}
+    except _ue.URLError:
+        # port 5130 DOWN → manaosctl gtd capture でフォールバック
+        try:
+            payload = request.get_json(force=True, silent=True) or {}
+            text = payload.get("text") or payload.get("content") or ""
+            if not text:
+                return _json_error("text field required", 400, namespace="gtd")
+            out = _gtd_run_cli("capture", text)
+            return jsonify({"status": "ok", "source": "fallback_cli", "output": out.strip()}), 200
+        except Exception as exc:
+            return _json_error(str(exc), 500, namespace="gtd")
+
+@app.route("/api/gtd/status", methods=["GET"])
+def gtd_status_proxy():
+    """GTD ステータス (port 5130 → フォールバック: manaosctl --json)。"""
+    import urllib.request as _ur
+    import urllib.error as _ue
+    try:
+        with _ur.urlopen(f"{_GTD_CAPTURE_URL}/api/gtd/status", timeout=5) as r:
+            return r.read(), r.status, {"Content-Type": "application/json"}
+    except _ue.URLError:
+        out = _gtd_run_cli("status", "--json")
+        return out, 200, {"Content-Type": "application/json"}
+
+@app.route("/api/gtd/morning", methods=["GET"])
+def gtd_morning_proxy():
+    """今日のモーニングログを取得・作成。"""
+    out = _gtd_run_cli("morning")
+    return jsonify({"status": "ok", "output": out.strip()}), 200
+
+@app.route("/api/gtd/inbox", methods=["GET"])
+def gtd_inbox_proxy():
+    """Inbox 一覧 JSON を返す。"""
+    out = _gtd_run_cli("inbox", "--json")
+    return out, 200, {"Content-Type": "application/json"}
+
+@app.route("/api/gtd/next", methods=["GET"])
+def gtd_next_proxy():
+    """Next Actions + Projects 一覧 JSON を返す。"""
+    out = _gtd_run_cli("next", "--json")
+    return out, 200, {"Content-Type": "application/json"}
+
+@app.route("/api/gtd/weekly", methods=["GET"])
+def gtd_weekly_proxy():
+    """週次レビュー JSON を返す。"""
+    out = _gtd_run_cli("weekly", "--json")
+    return out, 200, {"Content-Type": "application/json"}
+
 # =============================================================================
 # END ManaOS Shell
 # =============================================================================
