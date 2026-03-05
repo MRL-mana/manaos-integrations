@@ -5754,51 +5754,6 @@ def api_shell_restart():
         return _json_error(str(exc), 500, namespace="shell_restart")
 
 
-@app.route("/api/shell/restart", methods=["POST"])
-def api_shell_restart():
-    """
-    ManaOS Shell ─ サービスの再起動 (manaosctl restart ラッパ).
-
-    Request body:
-        {"service": "ollama"}   → 指定サービスのみ再起動
-        {"service": null}       → 全サービス再起動
-
-    Response:
-        {"status": "ok", "service": "ollama", "exit_code": 0, "stdout": "...", "stderr": "..."}
-    """
-    data = request.get_json(silent=True) or {}
-    svc_name: Optional[str] = (data.get("service") or "").strip() or None
-
-    manaosctl = REPO_ROOT / "tools" / "manaosctl.py"
-    if not manaosctl.exists():
-        return _json_error("manaosctl.py not found", 503, namespace="shell_restart")
-
-    cmd = [sys.executable, str(manaosctl), "restart"]
-    if svc_name:
-        cmd += [svc_name]
-
-    try:
-        proc = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=str(REPO_ROOT),
-            timeout=120,
-        )
-        ok = proc.returncode == 0
-        return jsonify({
-            "status":    "ok" if ok else "error",
-            "service":   svc_name,
-            "exit_code": proc.returncode,
-            "stdout":    proc.stdout[-4000:] if proc.stdout else "",
-            "stderr":    proc.stderr[-2000:] if proc.stderr else "",
-        }), 200 if ok else 207
-    except subprocess.TimeoutExpired:
-        return _json_error("restart timed out (120s)", 504, namespace="shell_restart")
-    except Exception as exc:
-        return _json_error(str(exc), 500, namespace="shell_restart")
-
-
 @app.route("/api/shell/heal", methods=["POST"])
 def api_shell_heal():
     """
