@@ -1,3 +1,7 @@
+"""copilot-instructions.md を最新版で全書き直しするユーティリティスクリプト。"""
+import pathlib
+
+content = """\
 # ManaOS Copilot Instructions
 
 このリポジトリは **ManaOS** — Mana が運用する自律型 AI オペレーティングシステム — の中核です。
@@ -78,7 +82,7 @@ Tier 2  便利機能が止まる（最後に復旧）
 
 ```powershell
 # すべて manaos_integrations/ から実行
-cd C:\Users\mana4\Desktop\manaos_integrations
+cd C:\\Users\\mana4\\Desktop\\manaos_integrations
 
 # 状態確認
 python tools/manaosctl.py status              # 全サービス状態
@@ -178,7 +182,7 @@ manaos_integrations/
 **すべてのコマンドはここから実行する：**
 
 ```
-C:\Users\mana4\Desktop\manaos_integrations
+C:\\Users\\mana4\\Desktop\\manaos_integrations
 ```
 
 VS Code Tasks を追加するときは必ず `options.cwd` を設定する。  
@@ -201,7 +205,7 @@ VS Code Tasks を追加するときは必ず `options.cwd` を設定する。
 - **新サービスの追加**: `services_ledger.yaml` → `manaosctl` の起動コマンド追加 → `health_url` 必須
 - **新 CLI コマンド**: `manaosctl.py` の `dispatch` に追加（スタンドアロンスクリプト禁止）
 - **イベント記録**: 重要な操作は `tools/events.emit()` で記録する
-- **Python バージョン**: 3.10（`C:\Users\mana4\AppData\Local\Programs\Python\Python310\python.exe`）
+- **Python バージョン**: 3.10（`C:\\Users\\mana4\\AppData\\Local\\Programs\\Python\\Python310\\python.exe`）
 - **コミットメッセージ**: `feat(scope):` / `fix(scope):` / `chore(scope):`
 - **VS Code タスク名**: `ManaOS: ` プレフィックス必須
 
@@ -239,10 +243,15 @@ VS Code Tasks を追加するときは必ず `options.cwd` を設定する。
 
 1. `access_count` は初回 `1` から始まる（`0` ではない）
 2. `lessons_search(query="")` は全件返却（`query` 省略 = 全教訓取得）
-3. ComfyUI の本体コードは `C:\mana_workspace\storage500\ComfyUI\main.py`
+3. ComfyUI の本体コードは `C:\\mana_workspace\\storage500\\ComfyUI\\main.py`
 4. Tier 1 ポートは `5123`/`5124`/`5125`/`5126` — 古いドキュメントの `5101`-`5104` は誤り
-5. `.github/copilot-instructions.md` は LF (`\n`) で保存する（CRLF だと replace_string_in_file が失敗する）
+5. `.github/copilot-instructions.md` は LF (`\\n`) で保存する（CRLF だと replace_string_in_file が失敗する）
 
 ---
 
 *Auto-updated: 2026-03-05 | commit 093a5d7+*
+"""
+
+dest = pathlib.Path(r'C:\Users\mana4\Desktop\manaos_integrations\.github\copilot-instructions.md')
+dest.write_text(content, encoding='utf-8')
+print(f"WRITTEN: {len(content)} chars -> {dest}")
