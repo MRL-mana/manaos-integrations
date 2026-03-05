@@ -383,3 +383,19 @@ optional:
     stop_cmd: null
     auto_restart: false
     cost_risk: "low"
+
+  # Tier 2: Shell UI (脱VS Code エントリポイント)
+  shell_ui:
+    port: 9502          # unified_api と同居 (/shell ルート)
+    url: "http://127.0.0.1:9502"
+    enabled: true
+    tier: 2
+    blast_note: "ブラウザ Shell UI が使えなくなる。unified_api 自体は無傷（同ポート内ルート）。"
+    depends_on: [unified_api]
+    description: "ManaOS Shell ブラウザ UI (/shell) + /api/shell + /api/shell/stream + /api/shell/services"
+    health_url: "http://127.0.0.1:9502/health"
+    start_cmd: null     # unified_api 起動で自動有効化
+    stop_cmd: null
+    auto_restart: false
+    cost_risk: "low"
+    recovery_hint: "unified_api が UP していれば http://127.0.0.1:9502/shell でアクセス可。unified_api を再起動して確認。"

@@ -13,6 +13,7 @@ import json
 import time
 import uuid
 import subprocess
+import collections
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
@@ -5362,6 +5363,334 @@ def status():
         ),
         200,
     )
+
+
+# =============================================================================
+# ManaOS Shell  ─  自然言語 → 意図分類 → 既存 API へ Dispatch
+# =============================================================================
+
+_INTENT_ROUTER_URL = "http://127.0.0.1:5100/api/classify"
+_shell_history: collections.deque = collections.deque(maxlen=100)
+
+
+def _shell_classify_inline(message: str) -> Dict[str, Any]:
+    """intent_router が落ちているときのキーワードベース・フォールバック分類"""
+    text = message.lower()
+    if any(k in text for k in ("画像", "生成", "描いて", "絵", "イラスト", "comfyui", "generate image", "image gen")):
+        return {"intent_type": "image_generation", "confidence": 0.8, "entities": {}}
+    if any(k in text for k in ("起動", "再起動", "停止", "状態", "status", "ヘルス", "サービス", "heal", "復旧")):
+        return {"intent_type": "system_control", "confidence": 0.8, "entities": {}}
+    if any(k in text for k in ("実行", "やって", "作成", "処理", "タスク", "タスク登録")):
+        return {"intent_type": "task_execution", "confidence": 0.7, "entities": {}}
+    if any(k in text for k in ("コード", "実装", "プログラム", "スクリプト", "code")):
+        return {"intent_type": "code_generation", "confidence": 0.8, "entities": {}}
+    if any(k in text for k in ("分析", "集計", "レポート", "統計", "analyze")):
+        return {"intent_type": "data_analysis", "confidence": 0.7, "entities": {}}
+    if any(k in text for k in ("pixel7", "デバイス", "adb", "スマホ", "android")):
+        return {"intent_type": "device_status", "confidence": 0.8, "entities": {}}
+    return {"intent_type": "conversation", "confidence": 0.5, "entities": {}}
+
+
+def _shell_build_dispatch(intent: Dict[str, Any], message: str) -> tuple:
+    """intent_type → (method, url, body) へマッピング"""
+    intent_type = intent.get("intent_type", "unknown")
+    _port = int(os.getenv("UNIFIED_API_PORT", "9502"))
+    base = f"http://127.0.0.1:{_port}"
+
+    if intent_type == "image_generation":
+        return "POST", f"{base}/api/comfyui/generate", {"prompt": message}
+
+    if intent_type == "system_control":
+        msg = message.lower()
+        if any(k in msg for k in ("heal", "復旧", "修復")):
+            return "POST", f"{base}/ops/plan", {"text": message}
+        return "GET", f"{base}/api/integrations/status", {}
+
+    if intent_type == "task_execution":
+        return "POST", f"{base}/ops/plan", {"text": message}
+
+    if intent_type == "data_analysis":
+        return "POST", f"{base}/api/llm/analyze", {"text": message}
+
+    if intent_type == "device_status":
+        return "GET", f"{base}/api/integrations/status", {}
+
+    # conversation / information_search / code_generation / scheduling / file_* / unknown
+    return "POST", f"{base}/api/llm/route", {"prompt": message, "context": f"intent:{intent_type}"}
+
+
+@app.route("/api/shell", methods=["POST"])
+def api_shell():
+    """
+    ManaOS Shell ─ 自然言語を受け取り、意図分類して既存 API へ転送する。
+
+    Request body:
+        {"message": "comfyui で猫を生成して", "dry_run": false}
+
+    Response:
+        {"status": "ok", "plan": {...}, "dispatch": "url", "http_status": 200, "result": {...}}
+    """
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests module unavailable", 503, error="unavailable", namespace="shell")
+
+    data = request.get_json(silent=True) or {}
+    message = (data.get("message") or data.get("text") or "").strip()
+    if not message:
+        return _json_error("message is required", 400, error="bad_request", namespace="shell")
+
+    dry_run = bool(data.get("dry_run", False))
+
+    # ── 1. 意図分類 ──────────────────────────────────────────────────────────
+    intent: Dict[str, Any] = {}
+    classifier_used = "inline_keyword"
+
+    try:
+        ir_resp = requests.post(
+            _INTENT_ROUTER_URL,
+            json={"text": message},
+            timeout=5.0,
+        )
+        if ir_resp.status_code == 200:
+            body = ir_resp.json()
+            # intent_router は dataclass を asdict() で返す
+            intent = {
+                "intent_type":       body.get("intent_type", "unknown"),
+                "confidence":        float(body.get("confidence", 0.5)),
+                "entities":          body.get("entities", {}),
+                "reasoning":         body.get("reasoning", ""),
+                "suggested_actions": body.get("suggested_actions", []),
+            }
+            classifier_used = "intent_router"
+    except Exception:
+        pass  # fall through to inline
+
+    if not intent or intent.get("intent_type", "unknown") == "unknown":
+        intent = _shell_classify_inline(message)
+
+    # ── 2. Dispatch 先を決定 ───────────────────────────────────────────────
+    method, dispatch_url, dispatch_body = _shell_build_dispatch(intent, message)
+
+    plan = {
+        "intent":     intent,
+        "dispatch":   {"method": method, "url": dispatch_url, "body": dispatch_body},
+        "classifier": classifier_used,
+    }
+
+    if dry_run:
+        return jsonify({"status": "dry_run", "plan": plan}), 200
+
+    # ── 3. 実行（元のリクエストの認証ヘッダーを転送） ────────────────────
+    forward_headers: Dict[str, str] = {"Content-Type": "application/json"}
+    api_key = (request.headers.get("X-API-Key") or "").strip()
+    if api_key:
+        forward_headers["X-API-Key"] = api_key
+    else:
+        auth_hdr = (request.headers.get("Authorization") or "").strip()
+        if auth_hdr:
+            forward_headers["Authorization"] = auth_hdr
+
+    try:
+        if method == "GET":
+            result_resp = requests.get(dispatch_url, headers=forward_headers, timeout=60.0)
+        else:
+            result_resp = requests.post(
+                dispatch_url, json=dispatch_body, headers=forward_headers, timeout=120.0
+            )
+        try:
+            result = result_resp.json()
+        except Exception:
+            result = {"raw": result_resp.text[:500]}
+        upstream_status = result_resp.status_code
+    except Exception as exc:
+        return jsonify({
+            "status": "dispatch_error",
+            "plan":   plan,
+            "error":  str(exc)[:200],
+        }), 502
+
+    _shell_history.append({
+        "ts":       datetime.utcnow().isoformat() + "Z",
+        "message":  message,
+        "intent":   intent.get("intent_type", "unknown"),
+        "status":   "ok" if upstream_status < 400 else "upstream_error",
+        "dispatch": dispatch_url,
+    })
+    return jsonify({
+        "status":      "ok" if upstream_status < 400 else "upstream_error",
+        "plan":        plan,
+        "dispatch":    dispatch_url,
+        "http_status": upstream_status,
+        "result":      result,
+    }), 200
+
+
+@app.route("/api/shell/stream", methods=["POST"])
+def api_shell_stream():
+    """
+    ManaOS Shell SSE版 ─ 各処理ステップをリアルタイムでストリーム。
+
+    Request body:
+        {"message": "サービス状態を教えて", "dry_run": false}
+
+    SSE events (text/event-stream):
+        data: {"step": "classifying", "message": "..."}
+        data: {"step": "classified", "intent": {...}, "classifier": "..."}
+        data: {"step": "dispatching", "method": "GET", "url": "..."}
+        data: {"step": "done", "status": "ok", "http_status": 200, "result": {...}}
+        data: {"step": "error", "error": "..."}
+    """
+    if not REQUESTS_AVAILABLE:
+        def _err():
+            yield f"data: {json.dumps({'step':'error','error':'requests unavailable'})}\n\n"
+        return Response(stream_with_context(_err()), mimetype="text/event-stream")
+
+    data = request.get_json(silent=True) or {}
+    message = (data.get("message") or data.get("text") or "").strip()
+    dry_run = bool(data.get("dry_run", False))
+
+    # 認証ヘッダーをここで確定（generator 内は request コンテキスト外）
+    api_key = (request.headers.get("X-API-Key") or "").strip()
+    auth_hdr = (request.headers.get("Authorization") or "").strip()
+
+    def generate():
+        if not message:
+            yield f"data: {json.dumps({'step':'error','error':'message is required'})}\n\n"
+            return
+
+        # step 1: classifying
+        yield f"data: {json.dumps({'step':'classifying','message':message})}\n\n"
+
+        intent: Dict[str, Any] = {}
+        classifier_used = "inline_keyword"
+        try:
+            ir_resp = requests.post(_INTENT_ROUTER_URL, json={"text": message}, timeout=5.0)
+            if ir_resp.status_code == 200:
+                body = ir_resp.json()
+                intent = {
+                    "intent_type":       body.get("intent_type", "unknown"),
+                    "confidence":        float(body.get("confidence", 0.5)),
+                    "entities":          body.get("entities", {}),
+                    "reasoning":         body.get("reasoning", ""),
+                    "suggested_actions": body.get("suggested_actions", []),
+                }
+                classifier_used = "intent_router"
+        except Exception:
+            pass
+
+        if not intent or intent.get("intent_type", "unknown") == "unknown":
+            intent = _shell_classify_inline(message)
+
+        # step 2: classified
+        yield f"data: {json.dumps({'step':'classified','intent':intent,'classifier':classifier_used})}\n\n"
+
+        method, dispatch_url, dispatch_body = _shell_build_dispatch(intent, message)
+
+        # step 3: dispatching
+        yield f"data: {json.dumps({'step':'dispatching','method':method,'url':dispatch_url})}\n\n"
+
+        if dry_run:
+            plan = {"intent": intent, "dispatch": {"method": method, "url": dispatch_url, "body": dispatch_body}, "classifier": classifier_used}
+            yield f"data: {json.dumps({'step':'done','status':'dry_run','plan':plan})}\n\n"
+            return
+
+        forward_headers: Dict[str, str] = {"Content-Type": "application/json"}
+        if api_key:
+            forward_headers["X-API-Key"] = api_key
+        elif auth_hdr:
+            forward_headers["Authorization"] = auth_hdr
+
+        try:
+            if method == "GET":
+                result_resp = requests.get(dispatch_url, headers=forward_headers, timeout=60.0)
+            else:
+                result_resp = requests.post(dispatch_url, json=dispatch_body, headers=forward_headers, timeout=120.0)
+            try:
+                result = result_resp.json()
+            except Exception:
+                result = {"raw": result_resp.text[:500]}
+            upstream_status = result_resp.status_code
+        except Exception as exc:
+            yield f"data: {json.dumps({'step':'error','error':str(exc)[:200]})}\n\n"
+            return
+
+        # step 4: done
+        status = "ok" if upstream_status < 400 else "upstream_error"
+        yield f"data: {json.dumps({'step':'done','status':status,'http_status':upstream_status,'result':result})}\n\n"
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@app.route("/api/shell/history", methods=["GET"])
+def api_shell_history():
+    """ManaOS Shell ─ 直近メッセージ履歴 (in-memory ring buffer, 再起動でリセット)."""
+    n = min(int(request.args.get("n", 50)), 200)
+    return jsonify({"history": list(_shell_history)[-n:], "total": len(_shell_history)}), 200
+
+
+@app.route("/api/shell/services", methods=["GET"])
+def api_shell_services():
+    """
+    ManaOS Shell ─ サービス一覧 (services_ledger.yaml + health probe)。
+    dashboard_cli の normalize_rows / probe_service を軽量に再実装。
+
+    Response:
+        {"services": [{"name":"ollama","port":11434,"section":"core","enabled":true,"summary":"OK","health":"ok"},...]}
+    """
+    ledger_path = REPO_ROOT / "config" / "services_ledger.yaml"
+    if not ledger_path.exists():
+        return _json_error("services_ledger.yaml not found", 503, namespace="shell_services")
+
+    try:
+        with open(ledger_path, "r", encoding="utf-8") as f:
+            ledger = yaml.safe_load(f) or {}
+    except Exception as exc:
+        return _json_error(str(exc), 500, namespace="shell_services")
+
+    result = []
+    for section in ("core", "optional"):
+        for svc_name, svc in (ledger.get(section) or {}).items():
+            enabled = bool(svc.get("enabled", section == "core"))
+            port = svc.get("port")
+            url = svc.get("url") or (f"http://127.0.0.1:{port}" if port else None)
+            health_url = url and f"{url.rstrip('/')}/health"
+            health_txt = "n/a"
+            summary = "NO_URL"
+            if health_url:
+                try:
+                    r = requests.get(health_url, timeout=2.0)
+                    health_txt = "ok" if r.status_code < 400 else f"http_{r.status_code}"
+                    summary = "OK" if r.status_code < 400 else ("HTTP_401" if r.status_code == 401 else "WARN")
+                except Exception:
+                    health_txt = "timeout"
+                    summary = "DOWN"
+            result.append({
+                "name":    svc_name,
+                "section": section,
+                "enabled": enabled,
+                "port":    port,
+                "health":  health_txt,
+                "summary": summary,
+            })
+
+    return jsonify({"services": result, "count": len(result)}), 200
+
+
+@app.route("/shell", methods=["GET"])
+def shell_ui():
+    """ManaOS Shell ブラウザ UI (web/dashboard/shell.html)"""
+    shell_html = REPO_ROOT / "web" / "dashboard" / "shell.html"
+    if not shell_html.exists():
+        return "shell.html not found — run the setup to generate it.", 404
+    return send_from_directory(str(shell_html.parent), shell_html.name, mimetype="text/html; charset=utf-8")
+
+
+# =============================================================================
+# END ManaOS Shell
+# =============================================================================
 
 
 def main():
