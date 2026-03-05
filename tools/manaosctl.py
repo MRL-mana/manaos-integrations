@@ -641,128 +641,6 @@ def cmd_analyze(args: argparse.Namespace) -> int:
 def cmd_deps(args: argparse.Namespace) -> int:
     """サービスの依存ツリーの可視化。起動順序、上流/下流の影響表示。"""
     services = load_ledger()
-    target_name: str | None = getattr(args, "service", None)
-    show_order = getattr(args, "order", False)
-    as_json    = getattr(args, "json", False)
-
-    def get_upstream(name: str) -> List[str]:
-        """name が依存しているサービス一覧。"""
-        return [d for d in (services.get(name, {}).get("depends_on") or []) if d in services]
-
-    def get_downstream(name: str) -> List[str]:
-        """そのサービスに依存しているサービス一覧。"""
-        return [n for n, svc in services.items() if name in (svc.get("depends_on") or [])]
-
-    def all_upstream(name: str, visited: set | None = None) -> List[str]:
-        """depends_on を再帰的にたどった全上流。"""
-        if visited is None:
-            visited = set()
-        for dep in get_upstream(name):
-            if dep not in visited:
-                visited.add(dep)
-                all_upstream(dep, visited)
-        return sorted(visited)
-
-    def all_downstream(name: str, visited: set | None = None) -> List[str]:
-        """再帰的にたどった全下流。"""
-        if visited is None:
-            visited = set()
-        for ds in get_downstream(name):
-            if ds not in visited:
-                visited.add(ds)
-                all_downstream(ds, visited)
-        return sorted(visited)
-
-    if as_json:
-        if target_name and target_name in services:
-            result = {
-                "service": target_name,
-                "upstream": all_upstream(target_name),
-                "downstream": all_downstream(target_name),
-                "start_order": topo_sort(list(services.keys()), services),
-            }
-        else:
-            result = {
-                name: {
-                    "depends_on": get_upstream(name),
-                    "depended_by": get_downstream(name),
-                }
-                for name in sorted(services)
-            }
-        print(json.dumps(result, ensure_ascii=False, indent=2))
-        return 0
-
-    # ─── 全体ツリー表示 / 起動順序 ──────────────────────────────────────
-    if show_order:
-        enabled = [n for n, s in services.items() if s.get("enabled", False)]
-        ordered = topo_sort(enabled, services)
-        print(c(f"\n{'#':>3}  {'Service':<24} {'Tier':>4}  depends_on", BOLD))
-        print("─" * 70)
-        for i, name in enumerate(ordered, 1):
-            svc  = services[name]
-            deps = ", ".join(get_upstream(name)) or c("―", DIM)
-            tier = svc.get("tier", "?")
-            alive = is_alive(svc)
-            st = c("●", GREEN if alive else (DIM if not svc.get("enabled") else RED))
-            print(f"{i:>3}  {st} {name:<23} {str(tier):>4}  {c(deps, DIM)}")
-        print()
-        return 0
-
-    # ─── 特定サービスの詳細 ───────────────────────────────────────────────
-    if target_name:
-        if target_name not in services:
-            print(c(f"[ERROR] 不明なサービス: {target_name}", RED), file=sys.stderr)
-            return 2
-        svc = services[target_name]
-        alive = is_alive(svc)
-        st = c("UP", GREEN) if alive else c("DOWN", RED)
-
-        up_direct   = get_upstream(target_name)
-        up_all      = all_upstream(target_name)
-        down_direct = get_downstream(target_name)
-        down_all    = all_downstream(target_name)
-
-        dead_deps = [d for d in up_all if not is_alive(services.get(d, {}), timeout=1.5)]
-
-        print(c(f"\n▶ {target_name}  [", BOLD) + st + c(f"]  Tier {svc.get('tier','?')}", BOLD))
-        print(c(f"  {svc.get('description','')}", DIM))
-        if dead_deps:
-            print(c(f"  ⚠  上流 DOWN: {dead_deps}  ← そのサービスを先に復旧すること", RED))
-
-        print()
-        print(c(f"  ↑ requires  (direct): ", DIM) + (c(", ".join(up_direct), CYAN) if up_direct else c("―", DIM)))
-        print(c(f"  ↑ requires  (all)   : ", DIM) + (c(", ".join(up_all), CYAN) if up_all else c("―", DIM)))
-        print(c(f"  ↓ needed by (direct): ", DIM) + (c(", ".join(down_direct), YELLOW) if down_direct else c("―", DIM)))
-        print(c(f"  ↓ needed by (all)   : ", DIM) + (c(", ".join(down_all), YELLOW) if down_all else c("―", DIM)))
-        print()
-        if down_all:
-            print(c(f"  ⚠  このサービスが落ちると {len(down_all)} サービスが影響を受ける: {down_all}", MAGENTA))
-        return 0
-
-    # ─── 全サービスの依存一覧 ──────────────────────────────────────────────────
-    print(c(f"\n{'Service':<24} {'Tier':>4}  {'depends_on':<34} needed_by", BOLD))
-    print("─" * 90)
-    for name in sorted(services, key=lambda n: (services[n].get("tier", 9), n)):
-        svc   = services[name]
-        alive = is_alive(svc) if svc.get("enabled") else None
-        if alive is True:
-            st = c("●", GREEN)
-        elif alive is False:
-            st = c("●", RED)
-        else:
-            st = c("◦", DIM)
-        tier    = str(svc.get("tier", "?"))
-        deps    = ", ".join(get_upstream(name))  or "―"
-        rev_dep = ", ".join(get_downstream(name)) or "―"
-        print(f"{st} {name:<23} {tier:>4}  {c(deps[:34], DIM):<40} {c(rev_dep[:30], DIM)}")
-    print(c("\n  ヒント: manaosctl deps <name>で個別詳細 / --order で起動順表示", DIM))
-    print()
-    return 0
-
-
-def cmd_deps(args: argparse.Namespace) -> int:
-    """サービスの依存ツリーの可視化。起動順序、上流/下流の影響表示。"""
-    services = load_ledger()
     target_name: Optional[str] = getattr(args, "service", None)
     show_order  = getattr(args, "order", False)
     as_json     = getattr(args, "json", False)
@@ -886,87 +764,204 @@ def cmd_policy(args: argparse.Namespace) -> int:
 
     # --list モード
     if getattr(args, "list", False):
-        print(c(f"\n{'Name':<30} {'Trigger':<16} {'Action':<10} Enabled", BOLD))
-        print("─" * 70)
+        _AL_COLOR = {"execute": GREEN, "suggest": YELLOW, "read_only": DIM}
+        print(c(f"\n  {'Name':<34} {'Trigger':<20} {'Action':<10} {'Autonomy':<12} En", BOLD))
+        print("  " + "─" * 84)
         for p in policies:
-            en = c("✓", GREEN) if p.get("enabled") else c("✗", DIM)
-            print(f"{p['name']:<30} {p.get('trigger',''):<16} {p.get('action',''):<10} {en}  — {p.get('description','')}")
+            en     = c("✓", GREEN) if p.get("enabled") else c("✗", DIM)
+            al     = p.get("autonomy_level", "—")
+            al_fmt = c(f"{al:<12}", _AL_COLOR.get(al, RESET))
+            tr     = f"tier≥{p['tier_restriction']}" if "tier_restriction" in p else "—"
+            print(
+                f"  {p['name']:<34} {p.get('trigger',''):<20} {p.get('action',''):<10}"
+                f" {al_fmt} {en}  [{tr}]"
+            )
+            print(f"    {c(p.get('description',''), DIM)}")
         print()
         return 0
 
     # --check モード（デフォルト）: ポリシーを評価してアクションを実行
-    services = load_ledger()
-    events   = read_events(n=500)
-    now_ts   = datetime.datetime.now()
-    fired: list[str] = []
+    services   = load_ledger()
+    events_log = read_events(n=500)
+    now_ts     = datetime.datetime.now()
+    fired:   list[str] = []
+    blocked: list[str] = []
+    pending: list[str] = []
 
+    # ── ヘルパー ──────────────────────────────────────────────────────────
+    def _parse_ts(t_str: str) -> datetime.datetime:
+        try:
+            return datetime.datetime.fromisoformat(t_str)
+        except (ValueError, TypeError):
+            return datetime.datetime(2000, 1, 1)
+
+    def _in_cooldown(p_name: str, cooldown_minutes: int) -> bool:
+        if cooldown_minutes <= 0:
+            return False
+        cutoff = now_ts - datetime.timedelta(minutes=cooldown_minutes)
+        return any(
+            e.get("event") == "policy"
+            and f"policy:{p_name}" in e.get("detail", "")
+            and _parse_ts(e.get("time", "")) >= cutoff
+            for e in events_log
+        )
+
+    def _get_tier(svc_name: str) -> int:
+        return services.get(svc_name, {}).get("tier", 99)
+
+    def _do_notify(p_name: str, trigger: str, target: str, ev: dict) -> None:
+        msg = f"[Policy: {p_name}] {trigger} 検出: {target} — {ev.get('detail', '')}"
+        print(c(f"\n[POLICY] {p_name} → NOTIFY: {msg}", MAGENTA))
+        _emit("policy", service=target,
+              detail=f"notify by policy:{p_name}", source="manaosctl")
+        try:
+            payload = json.dumps({"text": msg}, ensure_ascii=False).encode("utf-8")
+            req = urllib.request.Request(
+                "http://127.0.0.1:5590/notify", data=payload,
+                headers={"Content-Type": "application/json"}, method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=3):
+                pass
+        except Exception:
+            pass
+        fired.append(f"{p_name}→notify:{target}")
+
+    # ── ポリシーループ ────────────────────────────────────────────────────
     for p in policies:
         if not p.get("enabled", True):
             continue
-        trigger = p.get("trigger", "")
-        cond    = p.get("condition", {})
-        action  = p.get("action", "")
-        within  = cond.get("within_minutes", 60)
-        cutoff  = now_ts - datetime.timedelta(minutes=within)
 
-        # trigger にマッチするイベントを within_minutes 以内で探す
+        p_name    = p["name"]
+        trigger   = p.get("trigger", "")
+        cond      = p.get("condition", {})
+        action    = p.get("action", "")
+        al        = p.get("autonomy_level", "execute")   # フィールドなし→execute
+        t_restr   = p.get("tier_restriction", 0)         # フィールドなし→全Tier許可
+        within    = cond.get("within_minutes", 60)
+        cooldown  = p.get("cooldown_minutes", 0)
+        threshold = cond.get("count_threshold", 1)
+        cutoff    = now_ts - datetime.timedelta(minutes=within)
+
+        # クールダウン中はスキップ
+        if _in_cooldown(p_name, cooldown):
+            continue
+
+        # trigger にマッチするイベントを within_minutes 以内で取得
         matched = [
-            e for e in events
+            e for e in events_log
             if e.get("event") == trigger
-            and datetime.datetime.fromisoformat(e.get("time", "2000-01-01")) >= cutoff
+            and _parse_ts(e.get("time", "")) >= cutoff
         ]
         if not matched:
             continue
 
-        # cost_risk 条件
+        # ── 追加フィルタ ─────────────────────────────────────────────────
         if "cost_risk" in cond:
-            required_risk = cond["cost_risk"]
-            matched = [
-                e for e in matched
-                if services.get(e.get("service", ""), {}).get("cost_risk") == required_risk
-            ]
+            r = cond["cost_risk"]
+            matched = [e for e in matched
+                       if services.get(e.get("service", ""), {}).get("cost_risk") == r]
+        if "tier" in cond:
+            req_t = int(cond["tier"])
+            matched = [e for e in matched if _get_tier(e.get("service", "")) == req_t]
         if not matched:
             continue
 
-        # アクション実行
-        p_name = p["name"]
-        for ev in matched:
-            svc_name = ev.get("service", "")
-            target   = svc_name or p.get("target", "")
+        # count_threshold チェック
+        if len(matched) < threshold:
+            continue
 
-            if action == "stop" and target and target in services:
-                if is_alive(services[target]):
-                    print(c(f"\n[POLICY] {p_name} → STOP {target}", MAGENTA))
-                    stop_one(services[target])
-                    _emit("policy", service=target,
-                          detail=f"auto-stop by policy:{p_name}", source="manaosctl")
-                    fired.append(f"{p_name}→stop:{target}")
+        # ── アクション（autonomy_level ガード付き）────────────────────────
+        # block: autonomy_level に関わらず常に記録
+        if action == "block":
+            ev     = matched[0]
+            target = ev.get("service", "") or p.get("target", "")
+            print(c(f"\n[POLICY] {p_name} → BLOCKED: {target} ({trigger})", RED))
+            _emit("policy", service=target,
+                  detail=f"blocked by policy:{p_name}", source="manaosctl")
+            blocked.append(f"{p_name}→block:{target}")
+            continue
 
-            elif action == "notify":
-                msg = f"[Policy: {p_name}] {trigger} 検出: {target} — {ev.get('detail','')}"
-                print(c(f"\n[POLICY] {p_name} → NOTIFY: {msg}", MAGENTA))
+        # notify: read_only でも実行（情報通知は常に許可）
+        if action == "notify":
+            ev     = matched[0]
+            target = ev.get("service", "") or p.get("target", "")
+            _do_notify(p_name, trigger, target, ev)
+            continue
+
+        # stop / heal / analyze: autonomy_level でガード
+        if al == "read_only":
+            print(c(f"\n[POLICY] {p_name} → SKIP (read_only): {action} は手動実行のみ", DIM))
+            blocked.append(f"{p_name}→skip(read_only):{action}")
+            continue
+
+        if al == "suggest":
+            ev     = matched[0]
+            target = ev.get("service", "") or p.get("target", "")
+            print(c(f"\n[POLICY] {p_name} → SUGGEST (未実行・要承認): {action} {target}", YELLOW))
+            print(c(f"  実行するには: manaosctl {action} {target}", DIM))
+            _emit("policy", service=target,
+                  detail=f"suggest by policy:{p_name}", source="manaosctl")
+            pending.append(f"{p_name}→suggest:{action}:{target}")
+            continue
+
+        # al == "execute" ── 自動実行 ─────────────────────────────────────
+        ev       = matched[0]
+        target   = ev.get("service", "") or p.get("target", "")
+        svc_tier = _get_tier(target)
+
+        # tier_restriction: svc_tier < t_restr の場合は自動実行しない
+        if svc_tier < t_restr:
+            print(c(f"\n[POLICY] {p_name} → SKIP (tier_restriction={t_restr}): "
+                    f"{target}(tier={svc_tier}) — 手動確認が必要", YELLOW))
+            pending.append(f"{p_name}→skip(tier<{t_restr}):{target}")
+            continue
+
+        if action == "stop" and target and target in services:
+            if is_alive(services[target]):
+                print(c(f"\n[POLICY] {p_name} → STOP {target}", MAGENTA))
+                stop_one(services[target])
                 _emit("policy", service=target,
-                      detail=f"notify by policy:{p_name}", source="manaosctl")
-                # Slack 通知（slack_integration が UP の場合）
-                try:
-                    payload = json.dumps({"text": msg}, ensure_ascii=False).encode("utf-8")
-                    req = urllib.request.Request(
-                        "http://127.0.0.1:5590/notify", data=payload,
-                        headers={"Content-Type": "application/json"}, method="POST",
-                    )
-                    with urllib.request.urlopen(req, timeout=3):
-                        pass
-                except Exception:
-                    pass
-                fired.append(f"{p_name}→notify")
+                      detail=f"auto-stop by policy:{p_name}", source="manaosctl")
+                fired.append(f"{p_name}→stop:{target}")
 
+        elif action == "heal" and target:
+            print(c(f"\n[POLICY] {p_name} → HEAL {target}", MAGENTA))
+            heal_script = TOOLS_DIR / "heal.py"
+            subprocess.Popen(
+                [PYTHON_EXE, str(heal_script), "--service", target],
+                cwd=str(REPO_ROOT),
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
+            _emit("policy", service=target,
+                  detail=f"auto-heal by policy:{p_name}", source="manaosctl")
+            fired.append(f"{p_name}→heal:{target}")
+
+        elif action == "analyze":
+            print(c(f"\n[POLICY] {p_name} → ANALYZE (LLM自動分析)", MAGENTA))
+            subprocess.Popen(
+                [PYTHON_EXE, __file__, "analyze"],
+                cwd=str(REPO_ROOT),
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
+            _emit("policy", detail=f"auto-analyze by policy:{p_name}", source="manaosctl")
+            fired.append(f"{p_name}→analyze")
+
+    # ── サマリー ──────────────────────────────────────────────────────────
+    print()
     if fired:
-        print(c(f"\n[POLICY] 実行済みアクション: {fired}", GREEN))
-    else:
-        print(c("\n[POLICY] 発火条件に該当するポリシーはなし", DIM))
+        print(c(f"[POLICY] 実行済み:   {fired}", GREEN))
+    if pending:
+        print(c(f"[POLICY] 承認待ち:   {pending}", YELLOW))
+    if blocked:
+        print(c(f"[POLICY] スキップ:   {blocked}", DIM))
+    if not fired and not pending and not blocked:
+        print(c("[POLICY] 発火条件に該当するポリシーはなし", DIM))
 
     if getattr(args, "json", False):
-        print(json.dumps({"fired": fired}, ensure_ascii=False, indent=2))
+        print(json.dumps(
+            {"fired": fired, "pending": pending, "blocked": blocked},
+            ensure_ascii=False, indent=2,
+        ))
     return 0
 
 

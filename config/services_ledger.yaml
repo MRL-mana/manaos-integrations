@@ -24,6 +24,8 @@ core:
 
   # ---------------------------------------------------------------------------
   # Tier 0 : 根幹。これが落ちると連鎖が始まる。
+  # ⚠ Tier0 の自動停止・変更は禁止。必ず人間が手動で判断すること。
+  # 復旧優先順: ollama → memory → llm_routing → unified_api
   # ---------------------------------------------------------------------------
 
   ollama:
@@ -39,6 +41,7 @@ core:
     stop_cmd: null
     auto_restart: true
     cost_risk: "low"
+    recovery_hint: "ollama serve を手動実行。GPU/VRAM不足の場合は他の推論を先に停止。"
 
   llm_routing:
     port: 5111
@@ -53,6 +56,7 @@ core:
     stop_cmd: null
     auto_restart: true
     cost_risk: "low"
+    recovery_hint: "ollama が先に UP していることを確認してから起動。ポート5111が使用中なら lsof -i:5111 で確認。"
 
   memory:
     port: 5105
@@ -67,6 +71,7 @@ core:
     stop_cmd: null
     auto_restart: true
     cost_risk: "low"
+    recovery_hint: "rag_memory.db が存在するか確認。破損時はバックアップから復元: backups/rag_memory.db.bak"
 
   unified_api:
     port: 9502
@@ -81,6 +86,7 @@ core:
     stop_cmd: null
     auto_restart: true
     cost_risk: "low"
+    recovery_hint: "memory と llm_routing の両方が UP してから起動。ポート9502競合時は再起動: restart_unified_api_port9502.ps1"
 
   # ---------------------------------------------------------------------------
   # Tier 1 : 主要機能 AI 人格・自律・秘書・タスク系
