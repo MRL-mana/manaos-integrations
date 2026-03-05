@@ -259,8 +259,9 @@ def cmd_status(args: argparse.Namespace) -> int:
 def cmd_up(args: argparse.Namespace) -> int:
     """指定サービス / Tier を起動。"""
     services = load_ledger()
-    tiers = set(args.tiers) if getattr(args, "tiers", None) else {0, 1}
-    force = getattr(args, "force", False)
+    all_tier  = getattr(args, "all", False)
+    tiers = set(args.tiers) if getattr(args, "tiers", None) else ({0, 1, 2} if all_tier else {0, 1})
+    force = getattr(args, "force", False) or all_tier  # --all は全サービス強制起動
     dry   = getattr(args, "dry_run", False)
     target_names: List[str] = getattr(args, "target", []) or []
 
@@ -404,6 +405,7 @@ def main() -> None:
     p_up = sub.add_parser("up", help="サービス起動")
     p_up.add_argument("target", nargs="*", help="サービス名（省略時は tier 対象）")
     p_up.add_argument("--tier", type=int, action="append", dest="tiers")
+    p_up.add_argument("--all", action="store_true", help="Tier2 含む全サービス起動")
     p_up.add_argument("--force", action="store_true", help="auto_restart=false でも起動")
     p_up.add_argument("--dry-run", action="store_true")
 
