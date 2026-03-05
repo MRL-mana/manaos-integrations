@@ -128,17 +128,30 @@ if ($pixel7Token) {
     Write-Host "[GTD Morning] Pixel7通知: トークン未設定（スキップ）"
 }
 
-# ---- Slack 通知（オプション）----
+# ---- Slack 通知（朝3分フォーマット）----
 $slackEnv = [System.Environment]::GetEnvironmentVariable("SLACK_WEBHOOK_URL", "User")
+if (-not $slackEnv) { $slackEnv = $env:SLACK_WEBHOOK_URL }
 if ($Notify -and $slackEnv) {
-    $msg = @{
-        text = "*[GTD Morning] $Date*`nInbox: $inboxCount 件`nNext Actions候補: $($naItems.Count) 件`n`n$naLines"
-    } | ConvertTo-Json
+    # Top3: naItemsから最大3件（名前のみ）
+    $top3Lines = if ($naItems.Count -gt 0) {
+        ($naItems | Select-Object -First 3 | ForEach-Object { "  • $($_.BaseName)" }) -join "`n"
+    } else { "  （Next Actions なし — `/na add <タスク>` で追加）" }
+
+    $inboxStatus = if ($inboxCount -ge 10) { ":warning: $inboxCount 件（要処理）" }
+                   elseif ($inboxCount -gt 0) { "$inboxCount 件" }
+                   else { "✅ クリア" }
+
+    $slackText = ":sunrise: *ManaOS Morning — $Date*`n" +
+                 "`n:inbox_tray: Inbox: $inboxStatus" +
+                 "`n:zap: 今日のTop 3`n$top3Lines" +
+                 "`n`n_:no_entry_sign: 今日やらないこと：GTD日次ログの `今日の3大優先事項` に書いておこう_"
+
+    $msg = @{ text = $slackText } | ConvertTo-Json
     try {
         Invoke-RestMethod -Uri $slackEnv -Method POST -Body $msg -ContentType "application/json" -TimeoutSec 5 | Out-Null
         Write-Host "[GTD Morning] Slack通知: OK"
     } catch {
-        Write-Host "[GTD Morning] Slack通知: スキップ"
+        Write-Host "[GTD Morning] Slack通知: スキップ（$($_.Exception.Message)）"
     }
 }
 
