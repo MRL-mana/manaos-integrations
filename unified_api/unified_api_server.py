@@ -6057,6 +6057,23 @@ def gtd_projects_proxy():
     return out, 200, {"Content-Type": "application/json"}
 
 
+@app.route("/api/gtd/search", methods=["GET"])
+def gtd_search():
+    """GET /api/gtd/search?q=<keyword>
+    next/inbox/someday/waiting/projects を横断全文検索し、マッチ一覧を JSON 配列で返す。
+    """
+    q = request.args.get("q", "").strip()
+    if not q:
+        return jsonify({"error": "q parameter is required"}), 400
+    out = _gtd_run_cli("search", q, "--json")
+    try:
+        import json as _json
+        results = _json.loads(out)
+    except Exception:
+        results = []
+    return jsonify({"query": q, "results": results, "count": len(results)}), 200
+
+
 @app.route("/api/shell/logs", methods=["GET"])
 def shell_logs():
     """GET /api/shell/logs?service=llm_routing&n=30

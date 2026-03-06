@@ -613,6 +613,7 @@ const SLASH_CMDS = [
   { cmd: "/someday",              desc: "Someday リスト一覧表示" },
   { cmd: "/waiting",              desc: "Waiting リスト一覧表示" },
   { cmd: "/projects",             desc: "Projects リスト一覧表示" },
+  { cmd: "/search <keyword>",     desc: "GTD 全テキスト検索 (next/inbox/someday/waiting/projects)  例: /search 資料作成" },
   { cmd: "/process <N> <dest>", desc: "Inbox[N]を振り分け (dest: next/done/someday/waiting/project)" },
   // 通知
   { cmd: "/notify <msg>",     desc: "ntfy / Slack に通知を送信" },
@@ -875,6 +876,9 @@ async function pollGtdStatus() {
     const today = d.daily_log_today;
     const ct    = d.current_task;   // {name, started_at, timer_min} or null
     const timerRem = d.timer_remaining_min ?? null;  // int or null
+    const somN  = d.someday_count  ?? 0;
+    const waitN = d.waiting_count  ?? 0;
+    const projN = d.projects_count ?? 0;
     // ヘッダー GTD バッジ更新
     if (ct) {
       gtdBadge.textContent = `🔥`;
@@ -914,6 +918,7 @@ async function pollGtdStatus() {
     if (gtdSide) {
       const inboxColor = inbox > 0 ? "var(--warn)" : "var(--ok)";
       const naColor    = na > 0    ? "var(--ok)"   : "var(--muted)";
+      const somColor   = somN > 0  ? "var(--muted)" : "var(--muted)";
       const logMark    = today     ? "✅" : "❌";
       const ctRow = ct
         ? `<div class="svc-row" style="background:rgba(255,200,0,.08);cursor:pointer" onclick="msgInput.value='/done';send()">
@@ -937,6 +942,21 @@ async function pollGtdStatus() {
           <span class="svc-port" style="color:${naColor}">${na}件 <span id="na-toggle-arrow">▶</span></span>
         </div>
         <div id="na-inline-list" style="display:none"></div>
+        <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/projects';send()">
+          <span style="font-size:10px">📁</span>
+          <span class="svc-name">Projects</span>
+          <span class="svc-port" style="color:var(--muted)">${projN}件</span>
+        </div>
+        <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/someday';send()">
+          <span style="font-size:10px">📦</span>
+          <span class="svc-name">Someday</span>
+          <span class="svc-port" style="color:${somColor}">${somN}件</span>
+        </div>
+        <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/waiting';send()">
+          <span style="font-size:10px">⏳</span>
+          <span class="svc-name">Waiting</span>
+          <span class="svc-port" style="color:var(--muted)">${waitN}件</span>
+        </div>
         <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/morning';send()">
           <span style="font-size:10px">📅</span>
           <span class="svc-name">今日のログ</span>
@@ -1489,6 +1509,7 @@ function showHelp() {
     ["/someday",             "Someday リスト一覧表示"],
     ["/waiting",             "Waiting リスト一覧表示"],
     ["/projects",            "Projects リスト一覧表示"],
+    ["/search &lt;keyword&gt;",    "GTD 全テキスト検索 (next/inbox/someday/waiting/projects)"],
     ["/process &lt;N&gt; &lt;dest&gt;", "Inbox[N]を振り分け (next/done/someday/waiting/project)"],
     // 通知
     ["/notify &lt;msg&gt;", "ntfy / Slack に通知を送信"],
@@ -1623,6 +1644,10 @@ async function send() {
     }
     if (cmd === "projects") {
       await sendShellRun("gtd", ["projects"], message); return;
+    }
+    if (cmd === "search") {
+      if (!arg) { appendAgent("<span style='color:var(--fail)'>/search の後にキーワードを入力してください 例: /search 資料作成</span>"); return; }
+      await sendShellRun("gtd", ["search", ...arg.split(/\s+/).filter(Boolean)], message); return;
     }
     if (cmd === "commit") {
       const pushArgs = arg.includes("--push") ? ["commit", "--push"] : ["commit"];

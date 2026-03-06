@@ -1996,6 +1996,50 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         print()
         return 0
 
+    elif subcmd == "search":
+        # 全テキスト検索: Next Actions / Inbox / Someday / Waiting / Projects を対象
+        query_parts = getattr(args, "query", []) or []
+        query       = " ".join(query_parts).strip().lower()
+        use_json    = getattr(args, "json", False)
+        if not query:
+            print(c("[ERROR] 検索キーワードを指定してください: manaosctl gtd search <keyword>", RED), file=sys.stderr)
+            return 1
+        search_dirs = [
+            ("next",     GTD_NA),
+            ("inbox",    GTD_INBOX),
+            ("someday",  GTD_ROOT / "someday"),
+            ("waiting",  GTD_ROOT / "waiting"),
+            ("projects", GTD_ROOT / "projects" / "items"),
+        ]
+        results = []
+        for category, dpath in search_dirs:
+            if not dpath.exists():
+                continue
+            for f in sorted(dpath.glob("*.md")):
+                if f.name.upper() == "README.MD":
+                    continue
+                try:
+                    content = f.read_text(encoding="utf-8", errors="replace")
+                except Exception:
+                    content = ""
+                if query in f.stem.lower() or query in content.lower():
+                    results.append({"category": category, "name": f.stem, "path": str(f)})
+        if use_json:
+            print(json.dumps(results, ensure_ascii=False, indent=2))
+            return 0
+        print()
+        print(c(f"  [GTD Search: \"{query}\"  {len(results)} 件]", BOLD + CYAN))
+        print(c("  " + "─" * 50, DIM))
+        if not results:
+            print(c("    （一致なし）", DIM))
+        else:
+            cat_label = {"next": "✅", "inbox": "📥", "someday": "📦", "waiting": "⏳", "projects": "📁"}
+            for r in results:
+                icon = cat_label.get(r["category"], "•")
+                print(f"    {icon} [{r['category']}]  {r['name']}")
+        print()
+        return 0
+
     else:  # status
         today      = datetime.datetime.now().strftime("%Y-%m-%d")
         inbox_n    = _inbox_count()
@@ -2003,6 +2047,13 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         log_exists = (GTD_LOGS / f"{today}.md").exists()
         cur        = _read_current()
         use_json   = getattr(args, "json", False)
+        # カウンター: someday / waiting / projects
+        _som_n  = len([f for f in (GTD_ROOT / "someday").glob("*.md")
+                        if f.name.upper() != "README.MD"]) if (GTD_ROOT / "someday").exists() else 0
+        _wait_n = len([f for f in (GTD_ROOT / "waiting").glob("*.md")
+                        if f.name.upper() != "README.MD"]) if (GTD_ROOT / "waiting").exists() else 0
+        _proj_n = len([f for f in (GTD_ROOT / "projects" / "items").glob("*.md")
+                        if f.name.upper() != "README.MD"]) if (GTD_ROOT / "projects" / "items").exists() else 0
         if use_json:
             _timer_rem: object = None
             if cur and cur.get("timer_min", 0) > 0:
@@ -2019,6 +2070,9 @@ def cmd_gtd(args: argparse.Namespace) -> int:
                 "daily_log_today":     log_exists,
                 "current_task":        cur or None,
                 "timer_remaining_min": _timer_rem,
+                "someday_count":       _som_n,
+                "waiting_count":       _wait_n,
+                "projects_count":      _proj_n,
             }, ensure_ascii=False, indent=2))
             return 0
         print()
@@ -2030,6 +2084,9 @@ def cmd_gtd(args: argparse.Namespace) -> int:
             print(c(f"       開始: {started}", DIM))
         print(f"  📥 Inbox:          {inbox_n} 件")
         print(f"  ✅ Next Actions:   {na_n} 件")
+        print(f"  📦 Someday:        {_som_n} 件")
+        print(f"  ⏳ Waiting:        {_wait_n} 件")
+        print(f"  📁 Projects:       {_proj_n} 件")
         print(f"  📄 今日の日次ログ: {'✓ あり' if log_exists else '✗ なし (manaosctl gtd morning で作成)'}")
         print()
         return 0
@@ -2363,6 +2420,9 @@ def main() -> None:
     p_gtd_commit.add_argument("--push", action="store_true", help="コミット後に git push origin master も実行")
     p_gtd_status = p_gtd_sub.add_parser("status", help="GTD ステータス概要")
     p_gtd_status.add_argument("--json", action="store_true")
+    p_gtd_search = p_gtd_sub.add_parser("search", help="GTD 全テキスト検索 (next/inbox/someday/waiting/projects)")
+    p_gtd_search.add_argument("query", nargs="+", help="検索キーワード")
+    p_gtd_search.add_argument("--json", action="store_true")
 
     args = parser.parse_args()
 
