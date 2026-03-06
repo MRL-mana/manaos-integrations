@@ -1359,16 +1359,36 @@ def cmd_gtd(args: argparse.Namespace) -> int:
 
     subcmd = getattr(args, "subcmd", None) or "status"
 
-    GTD_ROOT  = REPO_ROOT / "gtd"
-    GTD_INBOX = GTD_ROOT / "inbox"
-    GTD_NA    = GTD_ROOT / "next-actions" / "items"
-    GTD_LOGS  = GTD_ROOT / "daily-logs"
+    GTD_ROOT    = REPO_ROOT / "gtd"
+    GTD_INBOX   = GTD_ROOT / "inbox"
+    GTD_NA      = GTD_ROOT / "next-actions" / "items"
+    GTD_LOGS    = GTD_ROOT / "daily-logs"
+    GTD_CURRENT = GTD_ROOT / ".current_task.json"  # 作業中タスク記録
 
     def _inbox_count() -> int:
         return len([f for f in GTD_INBOX.glob("*.md") if f.name.upper() != "README.MD"])
 
     def _na_count() -> int:
         return len([f for f in GTD_NA.glob("*.md") if f.name.upper() != "README.MD"])
+
+    def _read_current() -> dict:
+        """current_task.json を読んで dict を返す (未存在/破損時は {})."""
+        try:
+            if GTD_CURRENT.exists():
+                return json.loads(GTD_CURRENT.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+        return {}
+
+    def _write_current(name: str, started_at: str) -> None:
+        GTD_CURRENT.write_text(
+            json.dumps({"name": name, "started_at": started_at}, ensure_ascii=False),
+            encoding="utf-8",
+        )
+
+    def _clear_current() -> None:
+        if GTD_CURRENT.exists():
+            GTD_CURRENT.unlink()
 
     if subcmd == "morning":
         today   = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -1761,6 +1781,8 @@ def cmd_gtd(args: argparse.Namespace) -> int:
             else:
                 print(c(f"  [INFO] \u30bf\u30a4\u30de\u30fc\u767b\u9332\u306fWindows\u306e\u307f\u5bfe\u5fdc", DIM))
         print()
+        # ── current_task.json に保存 ─────────────────────────────────────────
+        _write_current(task_name, now_dt.isoformat())
         return 0
 
     elif subcmd == "done":
@@ -1847,6 +1869,10 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         print(c(f"  \u2705 \u5b8c\u4e86\uff01: {task_name}", BOLD + GREEN))
         print(c(f"  {now_str}  \u6b8b\u308a {remaining} \u4ef6  (\u901a\u77e5: {notify_result})", DIM))
         print()
+        # ── current_task クリア ───────────────────────────────────────────────
+        cur = _read_current()
+        if cur.get("name", "") == task_name:
+            _clear_current()
         return 0
 
     elif subcmd == "commit":
@@ -1886,23 +1912,65 @@ def cmd_gtd(args: argparse.Namespace) -> int:
                 return 1
         return 0
 
+    elif subcmd == "someday":
+        dir_path = GTD_ROOT / "someday"
+        items    = sorted([f for f in dir_path.glob("*.md")
+                           if f.name.upper() != "README.MD"]) if dir_path.exists() else []
+        use_json = getattr(args, "json", False)
+        if use_json:
+            print(json.dumps([f.stem for f in items], ensure_ascii=False, indent=2))
+            return 0
+        print()
+        print(c(f"  [Someday  {len(items)} 件]", BOLD + DIM))
+        print(c("  " + "─" * 50, DIM))
+        for i, f in enumerate(items, 1):
+            print(f"    [{i}] {f.stem}")
+        if not items:
+            print(c("    （なし）", DIM))
+        print()
+        return 0
+
+    elif subcmd == "waiting":
+        dir_path = GTD_ROOT / "waiting"
+        items    = sorted([f for f in dir_path.glob("*.md")
+                           if f.name.upper() != "README.MD"]) if dir_path.exists() else []
+        use_json = getattr(args, "json", False)
+        if use_json:
+            print(json.dumps([f.stem for f in items], ensure_ascii=False, indent=2))
+            return 0
+        print()
+        print(c(f"  [Waiting  {len(items)} 件]", BOLD + YELLOW))
+        print(c("  " + "─" * 50, DIM))
+        for i, f in enumerate(items, 1):
+            print(f"    [{i}] {f.stem}")
+        if not items:
+            print(c("    （なし）", DIM))
+        print()
+        return 0
+
     else:  # status
-        today     = datetime.datetime.now().strftime("%Y-%m-%d")
-        inbox_n   = _inbox_count()
-        na_n      = _na_count()
+        today      = datetime.datetime.now().strftime("%Y-%m-%d")
+        inbox_n    = _inbox_count()
+        na_n       = _na_count()
         log_exists = (GTD_LOGS / f"{today}.md").exists()
-        use_json  = getattr(args, "json", False)
+        cur        = _read_current()
+        use_json   = getattr(args, "json", False)
         if use_json:
             print(json.dumps({
                 "date":            today,
                 "inbox_count":     inbox_n,
                 "next_actions":    na_n,
                 "daily_log_today": log_exists,
+                "current_task":    cur or None,
             }, ensure_ascii=False, indent=2))
             return 0
         print()
         print(c(f"  [GTD Status  {today}]", BOLD + CYAN))
         print(c("  " + "─" * 40, DIM))
+        if cur:
+            started = cur.get("started_at", "")[:16].replace("T", " ")
+            print(c(f"  🔥 作業中:         {cur['name']}", BOLD + YELLOW))
+            print(c(f"       開始: {started}", DIM))
         print(f"  📥 Inbox:          {inbox_n} 件")
         print(f"  ✅ Next Actions:   {na_n} 件")
         print(f"  📄 今日の日次ログ: {'✓ あり' if log_exists else '✗ なし (manaosctl gtd morning で作成)'}")
@@ -2142,8 +2210,12 @@ def main() -> None:
     p_gtd_do.add_argument("--name",  type=str,  default=None, help="\u30bf\u30b9\u30af\u540d\u3092\u76f4\u63a5\u6307\u5b9a")
     p_gtd_do.add_argument("--timer", type=int,  default=0,    help="N\u5206\u5f8c\u306b\u78ba\u8a8d\u901a\u77e5 (Windows\u30bf\u30b9\u30af\u30b9\u30b1\u30b8\u30e5\u30fc\u30e9\u30fc\u767b\u9332)")
     p_gtd_done = p_gtd_sub.add_parser("done", help="\u300c\u5b8c\u4e86\uff01\u300d\u5ba3\u8a00: Next Action \u3092\u30a2\u30fc\u30ab\u30a4\u30d6\u306b\u79fb\u52d5 + \u30ed\u30b0\u8a18\u9332 + \u901a\u77e5")
-    p_gtd_done.add_argument("--index", type=int,  default=None, help="Next Action \u306e\u756a\u53f7 (1-based)")
-    p_gtd_done.add_argument("--name",  type=str,  default=None, help="\u30bf\u30b9\u30af\u540d\u3092\u76f4\u63a5\u6307\u5b9a")
+    p_gtd_done.add_argument("--index", type=int,  default=None, help="Next Action の番号 (1-based)")
+    p_gtd_done.add_argument("--name",  type=str,  default=None, help="タスク名を直接指定")
+    p_gtd_someday = p_gtd_sub.add_parser("someday", help="Someday リスト表示")
+    p_gtd_someday.add_argument("--json", action="store_true")
+    p_gtd_waiting = p_gtd_sub.add_parser("waiting", help="Waiting リスト表示")
+    p_gtd_waiting.add_argument("--json", action="store_true")
     p_gtd_commit = p_gtd_sub.add_parser("commit", help="GTD 変更を git にコミット")
     p_gtd_commit.add_argument("--push", action="store_true", help="コミット後に git push origin master も実行")
     p_gtd_status = p_gtd_sub.add_parser("status", help="GTD ステータス概要")

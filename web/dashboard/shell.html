@@ -598,6 +598,8 @@ const SLASH_CMDS = [
   { cmd: "/do <N> --timer <min>",desc: "作業開始 + N分後に確認通知  例: /do 1 --timer 25" },
   { cmd: "/done",                 desc: "「完了！」宣言 – Next Action を選んでアーカイブ（インタラクティブ）" },
   { cmd: "/done <N>",             desc: "単作完了: Next Action 番号を指定  例: /done 1" },
+  { cmd: "/someday",              desc: "Someday リスト一覧表示" },
+  { cmd: "/waiting",              desc: "Waiting リスト一覧表示" },
   { cmd: "/process <N> <dest>", desc: "Inbox[N]を振り分け (dest: next/done/someday/waiting/project)" },
   // 通知
   { cmd: "/notify <msg>",     desc: "ntfy / Slack に通知を送信" },
@@ -854,30 +856,53 @@ async function pollGtdStatus() {
     const inbox = d.inbox_count ?? 0;
     const na    = d.next_actions ?? 0;
     const today = d.daily_log_today;
+    const ct    = d.current_task;   // {name, started_at} or null
     // ヘッダーバッジ更新
-    if (inbox > 0) {
-      gtdBadge.textContent = `\uD83D\uDCCB ${inbox}`;
+    if (ct) {
+      gtdBadge.textContent = `🔥`;
+      gtdBadge.style.display = "";
+    } else if (inbox > 0) {
+      gtdBadge.textContent = `📋 ${inbox}`;
       gtdBadge.style.display = "";
     } else if (na > 0) {
-      gtdBadge.textContent = `\u2705 ${na}`;
+      gtdBadge.textContent = `✅ ${na}`;
       gtdBadge.style.display = "";
     } else {
       gtdBadge.style.display = "none";
+    }
+    // 経過時間計算
+    let elapsedStr = "";
+    if (ct && ct.started_at) {
+      const diffMs  = Date.now() - new Date(ct.started_at).getTime();
+      const diffMin = Math.floor(diffMs / 60000);
+      elapsedStr = diffMin < 60
+        ? `${diffMin}分経過`
+        : `${Math.floor(diffMin / 60)}時間${diffMin % 60}分経過`;
     }
     // サイドパネル更新
     const gtdSide = document.getElementById("gtd-side");
     if (gtdSide) {
       const inboxColor = inbox > 0 ? "var(--warn)" : "var(--ok)";
       const naColor    = na > 0    ? "var(--ok)"   : "var(--muted)";
-      const logMark    = today     ? "\u2705" : "\u274C";
-      gtdSide.innerHTML = `
+      const logMark    = today     ? "✅" : "❌";
+      const ctRow = ct
+        ? `<div class="svc-row" style="background:rgba(255,200,0,.08);cursor:pointer" onclick="msgInput.value='/done';send()">
+            <span style="font-size:10px">🔥</span>
+            <span class="svc-name" style="color:var(--warn);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(ct.name)}">${escHtml(ct.name)}</span>
+            <span class="svc-port" style="color:var(--warn);font-size:10px">${elapsedStr}</span>
+          </div>`
+        : `<div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/do';send()">
+            <span style="font-size:10px">▶️</span>
+            <span class="svc-name" style="color:var(--muted)"><em>作業開始</em></span>
+          </div>`;
+      gtdSide.innerHTML = ctRow + `
         <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/inbox';send()">
           <span style="font-size:10px">📥</span>
           <span class="svc-name">Inbox</span>
           <span class="svc-port" style="color:${inboxColor}">${inbox}件</span>
         </div>
         <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/next';send()">
-          <span style="font-size:10px">\u2705</span>
+          <span style="font-size:10px">✅</span>
           <span class="svc-name">Next Actions</span>
           <span class="svc-port" style="color:${naColor}">${na}件</span>
         </div>
@@ -887,7 +912,7 @@ async function pollGtdStatus() {
           <span class="svc-port">${logMark}</span>
         </div>
         <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/memo ';msgInput.focus()">
-          <span style="font-size:10px">\u270F\uFE0F</span>
+          <span style="font-size:10px">✏️</span>
           <span class="svc-name" style="color:var(--muted)"><em>+ Capture</em></span>
         </div>`;
     }
@@ -1387,6 +1412,8 @@ function showHelp() {
     ["/do &lt;N&gt; --timer &lt;min&gt;", "作業開始 + N分後通知  例: /do 1 --timer 25"],
     ["/done",                "「完了！」 – Next Actionを選択しアーカイブ"],
     ["/done &lt;N&gt;",          "番号で直即完了  例: /done 1"],
+    ["/someday",             "Someday リスト一覧表示"],
+    ["/waiting",             "Waiting リスト一覧表示"],
     ["/process &lt;N&gt; &lt;dest&gt;", "Inbox[N]を振り分け (next/done/someday/waiting/project)"],
     // 通知
     ["/notify &lt;msg&gt;", "ntfy / Slack に通知を送信"],
@@ -1511,6 +1538,12 @@ async function send() {
       if (doneIdxM)  doneArgs.push("--index", doneIdxM[1]);
       if (doneNameM) doneArgs.push("--name",  doneNameM[1].trim());
       await sendShellRun("gtd", doneArgs, message); return;
+    }
+    if (cmd === "someday") {
+      await sendShellRun("gtd", ["someday"], message); return;
+    }
+    if (cmd === "waiting") {
+      await sendShellRun("gtd", ["waiting"], message); return;
     }
     if (cmd === "commit") {
       const pushArgs = arg.includes("--push") ? ["commit", "--push"] : ["commit"];
