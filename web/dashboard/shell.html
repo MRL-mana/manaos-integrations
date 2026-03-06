@@ -1923,36 +1923,70 @@ function _btnStyle(color) {
 async function sendInboxRich(label) {
   busy = true; sendBtn.disabled = true; msgInput.disabled = true;
   appendUser(label);
-  appendAgent(`<span style='opacity:.6'>📥 Inbox 取得中…</span>`);
+  const thinkingEl = appendThinking();
   try {
     const r = await fetch("/api/gtd/inbox");
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const items = await r.json(); // ["name1", "name2", ...]
+    const items = await r.json();
+    const el = document.createElement("div"); el.className = "msg agent";
+    const cid = `ibx-${Date.now()}`;
     if (!items.length) {
-      replaceLastAgent(`<span class="intent-tag tag-run_ok">GTD</span> 📥 <strong>Inbox 空!</strong> 🎉 素晴らしい！`);
+      el.innerHTML = `<div class="avatar">OS</div><div class="bubble"><span class="intent-tag tag-run_ok">GTD</span> 📥 <strong>Inbox 空!</strong> 🎉 素晴らしい！${ts()}</div>`;
     } else {
-      const rows = items.map((name, i) => {
-        const idx = i + 1;
-        return `<div id="ibr-${idx}" style="display:flex;align-items:center;gap:4px;padding:3px 2px;border-bottom:1px solid rgba(255,255,255,.04)">
-          <span style="color:var(--muted);font-size:11px;min-width:22px">[${idx}]</span>
-          <span style="flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escHtml(name)}">${escHtml(name)}</span>
-          <button onclick="processInboxItem(${idx},'next','ibr-${idx}')"    style="${_btnStyle('var(--ok)')}">▶ Next</button>
-          <button onclick="processInboxItem(${idx},'someday','ibr-${idx}')" style="${_btnStyle('var(--muted)')}">📦</button>
-          <button onclick="processInboxItem(${idx},'waiting','ibr-${idx}')" style="${_btnStyle('#6882e8')}">⏳</button>
-          <button onclick="processInboxItem(${idx},'project','ibr-${idx}')" style="${_btnStyle('#9d7be8')}">📁</button>
-          <button onclick="processInboxItem(${idx},'done','ibr-${idx}')"    style="${_btnStyle('#666')}">✅</button>
-        </div>`;
-      }).join("");
-      replaceLastAgent(
-        `<span class="intent-tag tag-run_ok">GTD</span> 📥 <strong>Inbox ${items.length}件</strong>` +
-        `<div style="margin:6px 0;max-height:320px;overflow-y:auto">${rows}</div>` +
-        `<span style="font-size:10px;color:var(--muted)">ボタンで即振り分け / /process N dest でも可</span>`
-      );
+      el.innerHTML = `<div class="avatar">OS</div><div class="bubble">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span class="intent-tag tag-run_ok">GTD</span>
+          📥 <strong id="${cid}-cnt">Inbox ${items.length}件</strong>
+          <button onclick="refreshInboxRows('${cid}')" style="${_btnStyle('var(--muted)')}">🔄</button>
+        </div>
+        <div id="${cid}" style="margin:2px 0;max-height:340px;overflow-y:auto">${_buildInboxRows(items, cid)}</div>
+        <span style="font-size:10px;color:var(--muted)">ボタンで即振り分け / 🔄 で番号リセット</span>${ts()}</div>`;
     }
+    thinkingEl.replaceWith(el); scrollEnd();
   } catch(e) {
-    replaceLastAgent(`<span style='color:var(--fail)'>Inbox 取得失敗: ${escHtml(String(e))}</span>`);
+    const errEl = document.createElement("div"); errEl.className = "msg agent";
+    errEl.innerHTML = `<div class="avatar">OS</div><div class="bubble" style="color:var(--fail)">Inbox 取得失敗: ${escHtml(String(e))}${ts()}</div>`;
+    thinkingEl.replaceWith(errEl); scrollEnd();
   }
   busy = false; sendBtn.disabled = false; msgInput.disabled = false;
+}
+
+function _buildInboxRows(items, cid) {
+  return items.map((name, i) => {
+    const idx = i + 1;
+    const rid = `${cid}-r${idx}`;
+    return `<div id="${rid}" style="display:flex;align-items:center;gap:4px;padding:3px 2px;border-bottom:1px solid rgba(255,255,255,.04)">
+      <span style="color:var(--muted);font-size:11px;min-width:22px">[${idx}]</span>
+      <span style="flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escHtml(name)}">${escHtml(name)}</span>
+      <button onclick="processInboxItem(${idx},'next','${rid}')"    style="${_btnStyle('var(--ok)')}">▶ Next</button>
+      <button onclick="processInboxItem(${idx},'someday','${rid}')" style="${_btnStyle('var(--muted)')}">📦</button>
+      <button onclick="processInboxItem(${idx},'waiting','${rid}')" style="${_btnStyle('#6882e8')}">⏳</button>
+      <button onclick="processInboxItem(${idx},'project','${rid}')" style="${_btnStyle('#9d7be8')}">📁</button>
+      <button onclick="processInboxItem(${idx},'done','${rid}')"    style="${_btnStyle('#666')}">✅</button>
+    </div>`;
+  }).join("");
+}
+
+async function refreshInboxRows(cid) {
+  const el    = document.getElementById(cid);
+  const cntEl = document.getElementById(`${cid}-cnt`);
+  if (!el) return;
+  el.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:6px">🔄 再読み込み中…</div>`;
+  try {
+    const r = await fetch("/api/gtd/inbox");
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const items = await r.json();
+    if (!items.length) {
+      el.innerHTML = `<div style="padding:8px;font-size:12px;color:var(--ok)">🎉 Inbox 空！全部処理完了！</div>`;
+      if (cntEl) cntEl.textContent = "Inbox 空!";
+    } else {
+      el.innerHTML = _buildInboxRows(items, cid);
+      if (cntEl) cntEl.textContent = `Inbox ${items.length}件`;
+    }
+    pollGtdStatus();
+  } catch(e) {
+    el.innerHTML = `<span style="color:var(--fail)">取得失敗: ${escHtml(String(e))}</span>`;
+  }
 }
 
 async function processInboxItem(idx, dest, rowId) {
