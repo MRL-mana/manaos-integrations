@@ -534,7 +534,33 @@
       padding: 1px 7px;
       margin-left: 6px;
     }
-    /* Down サービスバナー */
+    /* sidebar capture form */
+    .capture-form {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 4px;
+    }
+    .capture-form input {
+      flex: 1;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      color: var(--fg);
+      font-size: 11px;
+      padding: 3px 6px;
+      outline: none;
+    }
+    .capture-form input:focus { border-color: var(--accent); }
+    .capture-form button {
+      background: var(--accent2);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      padding: 3px 8px;
+      cursor: pointer;
+    }
+    .capture-form button:hover { opacity: .85; }
     #down-banner {
       display: none;
       background: rgba(239,68,68,.12);
@@ -651,6 +677,10 @@
       GTD
       <button class="sidebar-refresh" onclick="pollGtdStatus()">↻</button>
     </div>
+    <form class="capture-form" onsubmit="sidebarCapture(event)">
+      <input id="capture-input" type="text" placeholder="+ Inboxに追加…" autocomplete="off" />
+      <button type="submit">+</button>
+    </form>
     <div id="gtd-side"><div class="svc-loading">loading…</div></div>
     <div class="sidebar-title" style="margin-top:10px">
       Events
@@ -1055,6 +1085,35 @@ setInterval(pollHealth, 15000);
 
 // ── GTD status poll ───────────────────────────────────────────────────────
 const gtdBadge = document.getElementById("gtd-badge");
+
+// サイドバー Inbox クイックキャプチャ
+async function sidebarCapture(e) {
+  e.preventDefault();
+  const inp = document.getElementById("capture-input");
+  const text = inp ? inp.value.trim() : "";
+  if (!text) return;
+  inp.value = "";
+  inp.disabled = true;
+  try {
+    const hdrs = { "Content-Type": "application/json" };
+    const key = apiKeyEl.value.trim();
+    if (key) hdrs["X-API-Key"] = key;
+    const r = await fetch("/api/gtd/capture", { method: "POST", headers: hdrs, body: JSON.stringify({ text }) });
+    if (r.ok) {
+      // 軽量トースト表示
+      showToast(`📥 Inbox: ${text.slice(0,30)}${text.length>30?"…":""}`, 2000);
+      pollGtdStatus();
+    } else {
+      showToast("⚠ capture 失敗", 2000);
+    }
+  } catch(err) {
+    showToast(`⚠ ${err.message}`, 2000);
+  } finally {
+    if (inp) inp.disabled = false;
+    if (inp) inp.focus();
+  }
+}
+
 async function pollGtdStatus() {
   try {
     const r = await fetch("/api/gtd/status");
