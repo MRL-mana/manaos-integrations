@@ -420,6 +420,18 @@
       flex-shrink: 0;
     }
     .svc-restart-btn:hover { background: var(--line2); color: var(--accent); }
+    .svc-log-btn {
+      background: none;
+      border: 1px solid var(--line2);
+      border-radius: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      padding: 0 4px;
+      cursor: pointer;
+      line-height: 17px;
+      flex-shrink: 0;
+    }
+    .svc-log-btn:hover { background: var(--line2); color: var(--accent); }
     #down-badge {
       display: none;
       background: var(--fail);
@@ -586,6 +598,9 @@ const SLASH_CMDS = [
   { cmd: "/logs <svc>",       desc: "サービスのログ末尾30行表示  例: /logs llm_routing" },
   { cmd: "/logs <svc> <n>",   desc: "N行指定  例: /logs memory 50" },
   { cmd: "/logs list",        desc: "ログ対応サービス一覧" },
+  // サービス起動
+  { cmd: "/up <svc>",         desc: "DOWN サービスを起動  例: /up llm_routing" },
+  { cmd: "/up --all",         desc: "auto_restart=true の全サービスを起動" },
 ];
 
 // ── Command history (↑/↓) ─────────────────────────────────────────────────
@@ -1356,6 +1371,9 @@ function showHelp() {
     ["/logs &lt;svc&gt;",       "サービスのログ末尾30行  例: /logs llm_routing"],
     ["/logs &lt;svc&gt; &lt;n&gt;",   "N行指定  例: /logs memory 50"],
     ["/logs list",        "ログ対応サービス一覧"],
+    // サービス起動
+    ["/up &lt;svc&gt;",         "DOWN サービスを起動  例: /up llm_routing"],
+    ["/up --all",         "auto_restart=true の全サービスを起動"],
   ];
   const tBody = rows.map(([c, d]) =>
     `<tr><td style="font-family:monospace;white-space:nowrap;color:var(--accent);padding:2px 14px 2px 0">${c}</td>` +
@@ -1461,6 +1479,10 @@ async function send() {
     if (cmd === "commit") {
       const pushArgs = arg.includes("--push") ? ["commit", "--push"] : ["commit"];
       await sendShellRun("gtd", pushArgs, message); return;
+    }
+    if (cmd === "up") {
+      const upArgs = arg ? arg.split(/\s+/).filter(Boolean) : [];
+      await sendShellRun("up", upArgs, message); return;
     }
     if (cmd === "logs") {
       const parts  = arg.trim().split(/\s+/);
