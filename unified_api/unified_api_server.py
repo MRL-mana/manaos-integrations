@@ -6199,6 +6199,30 @@ def gtd_stats():
     return out, 200, {"Content-Type": "application/json"}
 
 
+@app.route("/api/gtd/edit", methods=["POST"])
+def gtd_edit():
+    """POST /api/gtd/edit
+    Body: {"index": N, "name": "task", "context": "@pc", "due": "2026-03-10"}
+    Next Action の context / due を更新する。
+    """
+    payload = request.get_json(force=True, silent=True) or {}
+    cli_args: list = []
+    if payload.get("index") is not None:
+        cli_args += ["--index", str(int(payload["index"]))]
+    if payload.get("name"):
+        cli_args += ["--name", str(payload["name"])]
+    if payload.get("context"):
+        cli_args += ["--context", str(payload["context"])]
+    if payload.get("due"):
+        cli_args += ["--due", str(payload["due"])]
+    if not cli_args:
+        # 一覧返却
+        out = _gtd_run_cli("edit")
+        return jsonify({"output": out.strip()}), 200
+    out = _gtd_run_cli("edit", *cli_args)
+    return jsonify({"output": out.strip()}), 200
+
+
 @app.route("/api/shell/logs", methods=["GET"])
 def shell_logs():
     """GET /api/shell/logs?service=llm_routing&n=30

@@ -675,6 +675,11 @@ const SLASH_CMDS = [
   { cmd: "/archive",              desc: "完了タスク閲覧 (最新30件)" },
   { cmd: "/archive <n>",          desc: "完了タスク N件表示  例: /archive 50" },
   { cmd: "/stats",                desc: "GTD 完了統計 (今日/今週/累計 + 直近14日トレンド)" },
+  { cmd: "/edit",                 desc: "Next Action の一覧を表示（context/due 確認）" },
+  { cmd: "/edit <N>",             desc: "Next Action[N]を編集 例: /edit 2 --due 2026-03-15" },
+  { cmd: "/edit <N> --context @ctx", desc: "context を変更  例: /edit 3 --context @phone" },
+  { cmd: "/edit <N> --due YYYY-MM-DD", desc: "期限を設定 例: /edit 1 --due 2026-03-10" },
+  { cmd: "/edit <N> --due clear", desc: "期限を削除  例: /edit 2 --due clear" },
   { cmd: "/search <keyword>",     desc: "GTD 全テキスト検索 (next/inbox/someday/waiting/projects)  例: /search 資料作成" },
   { cmd: "/memo <text> --to next",desc: "Inboxをスキップして直接 Next に登録  例: /memo 資料作成 --to next" },
   { cmd: "/process <N> <dest>", desc: "Inbox[N]を振り分け (dest: next/done/someday/waiting/project)" },
@@ -965,23 +970,32 @@ async function pollGtdStatus() {
     const r = await fetch("/api/gtd/status");
     if (!r.ok) return;
     const d = await r.json();
-    const inbox = d.inbox_count ?? 0;
-    const na    = d.next_actions ?? 0;
-    const today = d.daily_log_today;
-    const ct    = d.current_task;   // {name, started_at, timer_min} or null
-    const timerRem = d.timer_remaining_min ?? null;  // int or null
-    const somN  = d.someday_count  ?? 0;
-    const waitN = d.waiting_count  ?? 0;
-    const projN = d.projects_count ?? 0;
+    const inbox      = d.inbox_count ?? 0;
+    const na         = d.next_actions ?? 0;
+    const today      = d.daily_log_today;
+    const ct         = d.current_task;   // {name, started_at, timer_min} or null
+    const timerRem   = d.timer_remaining_min ?? null;  // int or null
+    const somN       = d.someday_count  ?? 0;
+    const waitN      = d.waiting_count  ?? 0;
+    const projN      = d.projects_count ?? 0;
+    const overdueN   = d.overdue_count   ?? 0;
+    const dueTodayN  = d.due_today_count ?? 0;
     // ヘッダー GTD バッジ更新
-    if (ct) {
+    if (overdueN > 0) {
+      gtdBadge.textContent = `⚠️ ${overdueN}`;
+      gtdBadge.style.color = "var(--fail)";
+      gtdBadge.style.display = "";
+    } else if (ct) {
       gtdBadge.textContent = `🔥`;
+      gtdBadge.style.color = "";
       gtdBadge.style.display = "";
     } else if (inbox > 0) {
       gtdBadge.textContent = `📋 ${inbox}`;
+      gtdBadge.style.color = "";
       gtdBadge.style.display = "";
     } else if (na > 0) {
       gtdBadge.textContent = `✅ ${na}`;
+      gtdBadge.style.color = "";
       gtdBadge.style.display = "";
     } else {
       gtdBadge.style.display = "none";
@@ -1024,7 +1038,19 @@ async function pollGtdStatus() {
             <span style="font-size:10px">▶️</span>
             <span class="svc-name" style="color:var(--muted)"><em>作業開始</em></span>
           </div>`;
-      gtdSide.innerHTML = ctRow + `
+      const overdueRow = overdueN > 0
+        ? `<div class="svc-row" style="cursor:pointer;background:rgba(255,60,60,.10)" onclick="msgInput.value='/next --overdue';send()">
+            <span style="font-size:10px">⚠️</span>
+            <span class="svc-name" style="color:var(--fail)">期限超過</span>
+            <span class="svc-port" style="color:var(--fail);font-weight:700">${overdueN}件!</span>
+          </div>` : "";
+      const dueTodayRow = dueTodayN > 0
+        ? `<div class="svc-row" style="cursor:pointer;background:rgba(255,180,0,.10)" onclick="msgInput.value='/next --due-today';send()">
+            <span style="font-size:10px">📅</span>
+            <span class="svc-name" style="color:var(--warn)">今日期限</span>
+            <span class="svc-port" style="color:var(--warn)">${dueTodayN}件</span>
+          </div>` : "";
+      gtdSide.innerHTML = ctRow + overdueRow + dueTodayRow + `
         <div class="svc-row" style="cursor:pointer" onclick="toggleInbox()" id="inbox-toggle-row">
           <span style="font-size:10px">📥</span>
           <span class="svc-name">Inbox</span>
@@ -1057,8 +1083,12 @@ async function pollGtdStatus() {
           <span class="svc-name">今日のログ</span>
           <span class="svc-port">${logMark}</span>
         </div>
-        <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/memo ';msgInput.focus()">
+        <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/edit';msgInput.focus()">
           <span style="font-size:10px">✏️</span>
+          <span class="svc-name" style="color:var(--muted)"><em>Edit Task</em></span>
+        </div>
+        <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/memo ';msgInput.focus()">
+          <span style="font-size:10px">➕</span>
           <span class="svc-name" style="color:var(--muted)"><em>+ Capture</em></span>
         </div>`;
     }
@@ -1986,6 +2016,18 @@ async function send() {
     }
     if (cmd === "stats") {
       await sendShellRun("gtd", ["stats"], message); return;
+    }
+    if (cmd === "edit") {
+      const editArgs = ["edit"];
+      const idxM  = arg.match(/^(\d+)/);
+      const nmM   = arg.match(/--name\s+(\S+)/);
+      const ctxM  = arg.match(/--context\s+(\S+)/);
+      const dueM  = arg.match(/--due\s+(\S+)/);
+      if (idxM) editArgs.push("--index", idxM[1]);
+      if (nmM)  editArgs.push("--name",  nmM[1]);
+      if (ctxM) editArgs.push("--context", ctxM[1]);
+      if (dueM) editArgs.push("--due", dueM[1]);
+      await sendShellRun("gtd", editArgs, message); return;
     }
     if (cmd === "commit") {
       const pushArgs = arg.includes("--push") ? ["commit", "--push"] : ["commit"];

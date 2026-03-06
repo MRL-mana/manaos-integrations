@@ -2139,6 +2139,76 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         print()
         return 0
 
+    elif subcmd == "edit":
+        # Next Action の context / due をCLIで編集
+        na_items  = sorted([f for f in GTD_NA.glob("*.md") if f.name.upper() != "README.MD"]) if GTD_NA.exists() else []
+        task_idx  = getattr(args, "index",   None)
+        task_name = getattr(args, "name",    None)
+        new_ctx   = getattr(args, "context", None)
+        new_due   = getattr(args, "due",     None)
+        if task_idx is None and task_name is None:
+            # 一覧表示のみ
+            if not na_items:
+                print(c("  Next Actions が見つかりません", DIM))
+                return 0
+            print()
+            print(c("  [Next Actions 一覧 (編集対象)]", BOLD + CYAN))
+            for _i, _f in enumerate(na_items, 1):
+                _na = _parse_na(_f)
+                _ctx_s = f"  @{_na['context']}" if _na.get("context") else ""
+                _due_s = f"  due:{_na['due']}" if _na.get("due") else ""
+                print(f"    [{_i:2d}] {_f.stem}{c(_ctx_s, CYAN)}{c(_due_s, YELLOW)}")
+            print()
+            print(c("  使い方: gtd edit --index N [--context @pc] [--due YYYY-MM-DD]", DIM))
+            print()
+            return 0
+        # ファイル特定
+        if task_idx is not None:
+            idx = task_idx - 1
+            if idx < 0 or idx >= len(na_items):
+                print(c(f"[ERROR] 番号 {task_idx} が範囲外です (1-{len(na_items)})", RED), file=sys.stderr)
+                return 1
+            _target_f = na_items[idx]
+        else:
+            matched = [f for f in na_items if task_name.lower() in f.stem.lower()]
+            if not matched:
+                print(c(f"[ERROR] '{task_name}' に一致しません", RED), file=sys.stderr)
+                return 1
+            _target_f = matched[0]
+        # フロントマター書き換え
+        txt   = _target_f.read_text(encoding="utf-8", errors="replace")
+        lines = txt.splitlines()
+        new_lines: list = []
+        ctx_written = False
+        due_written = False
+        for _line in lines:
+            if new_ctx is not None and _line.startswith("- context:"):
+                if new_ctx.lower() == "clear":
+                    pass  # 削除
+                else:
+                    new_lines.append(f"- context: {new_ctx}")
+                ctx_written = True
+            elif new_due is not None and _line.startswith("- due:"):
+                if new_due.lower() == "clear":
+                    pass  # 削除
+                else:
+                    new_lines.append(f"- due: {new_due}")
+                due_written = True
+            else:
+                new_lines.append(_line)
+        # フロントマターに存在しなかった場合は2行目（タイトル行の直後）に追加
+        if new_ctx and not ctx_written and new_ctx.lower() != "clear":
+            new_lines.insert(min(2, len(new_lines)), f"- context: {new_ctx}")
+        if new_due and not due_written and new_due.lower() != "clear":
+            new_lines.insert(min(2, len(new_lines)), f"- due: {new_due}")
+        _target_f.write_text("\n".join(new_lines), encoding="utf-8")
+        print(c(f"  ✅ 更新: {_target_f.stem}", GREEN))
+        if new_ctx:
+            print(c(f"     context: {new_ctx}", CYAN))
+        if new_due:
+            print(c(f"     due:     {new_due}", YELLOW))
+        return 0
+
     else:  # status
         today      = datetime.datetime.now().strftime("%Y-%m-%d")
         inbox_n    = _inbox_count()
@@ -2153,6 +2223,24 @@ def cmd_gtd(args: argparse.Namespace) -> int:
                         if f.name.upper() != "README.MD"]) if (GTD_ROOT / "waiting").exists() else 0
         _proj_n = len([f for f in (GTD_ROOT / "projects" / "items").glob("*.md")
                         if f.name.upper() != "README.MD"]) if (GTD_ROOT / "projects" / "items").exists() else 0
+        # カウンター: overdue / due_today
+        _overdue_n   = 0
+        _due_today_n = 0
+        if GTD_NA.exists():
+            for _naf in GTD_NA.glob("*.md"):
+                if _naf.name.upper() == "README.MD":
+                    continue
+                try:
+                    for _line in _naf.read_text(encoding="utf-8", errors="replace").splitlines():
+                        if _line.startswith("- due:"):
+                            _due_val = _line.split(":", 1)[1].strip()
+                            if _due_val == today:
+                                _due_today_n += 1
+                            elif _due_val and _due_val < today:
+                                _overdue_n += 1
+                            break
+                except Exception:
+                    pass
         if use_json:
             _timer_rem: object = None
             if cur and cur.get("timer_min", 0) > 0:
@@ -2172,6 +2260,8 @@ def cmd_gtd(args: argparse.Namespace) -> int:
                 "someday_count":       _som_n,
                 "waiting_count":       _wait_n,
                 "projects_count":      _proj_n,
+                "overdue_count":       _overdue_n,
+                "due_today_count":     _due_today_n,
             }, ensure_ascii=False, indent=2))
             return 0
         print()
@@ -2181,6 +2271,10 @@ def cmd_gtd(args: argparse.Namespace) -> int:
             started = cur.get("started_at", "")[:16].replace("T", " ")
             print(c(f"  🔥 作業中:         {cur['name']}", BOLD + YELLOW))
             print(c(f"       開始: {started}", DIM))
+        if _overdue_n > 0:
+            print(c(f"  ⚠️  期限超過:       {_overdue_n} 件!", RED))
+        if _due_today_n > 0:
+            print(c(f"  📅 今日期限:       {_due_today_n} 件", YELLOW))
         print(f"  📥 Inbox:          {inbox_n} 件")
         print(f"  ✅ Next Actions:   {na_n} 件")
         print(f"  📦 Someday:        {_som_n} 件")
@@ -2529,6 +2623,11 @@ def main() -> None:
     p_gtd_archive.add_argument("--since", type=str, default=None, help="YYYY-MM-DD 以降のみ表示")
     p_gtd_stats = p_gtd_sub.add_parser("stats", help="GTD 完了統計 (今日/今週/累計 + トレンド)")
     p_gtd_stats.add_argument("--json", action="store_true")
+    p_gtd_edit = p_gtd_sub.add_parser("edit", help="Next Action の context/due を編集")
+    p_gtd_edit.add_argument("--index",   type=int, default=None, help="編集対象の番号 (gtd edit で一覧確認)")
+    p_gtd_edit.add_argument("--name",    type=str, default=None, help="タスク名の部分一致")
+    p_gtd_edit.add_argument("--context", type=str, default=None, help="新しい context タグ (@pc 等 / 'clear'で削除)")
+    p_gtd_edit.add_argument("--due",     type=str, default=None, help="新しい期限 YYYY-MM-DD ('clear'で削除)")
 
     args = parser.parse_args()
 
