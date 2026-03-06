@@ -436,6 +436,31 @@
       outline: none;
     }
     #svc-filter:focus { border-color: var(--accent); }
+    #svc-filter::placeholder { color: var(--muted); }
+    .svc-name mark { background: rgba(148,163,184,.28); color: var(--fg); border-radius: 2px; font-style: normal; }
+    #help-panel {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0,0,0,.65);
+      align-items: center;
+      justify-content: center;
+    }
+    #help-panel.open { display: flex; }
+    #help-panel-inner {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 18px 22px;
+      max-width: 500px;
+      width: 94%;
+      max-height: 82vh;
+      overflow-y: auto;
+    }
+    .help-table { width: 100%; border-collapse: collapse; }
+    .help-table td { padding: 3px 8px 3px 0; font-size: 11px; vertical-align: top; }
+    .help-table td:first-child { color: #94a3b8; white-space: nowrap; font-family: monospace; font-size: 10px; min-width: 130px; }
     .svc-heal-btn {
       background: none;
       border: 1px solid var(--line2);
@@ -646,6 +671,7 @@
       <a class="dash-link" href="/status" target="_blank">Status</a>
       <a class="dash-link" href="/api/shell/history" target="_blank">[log]</a>
       <button class="sidebar-refresh" onclick="clearStorage()" title="チャット履歴をクリア" style="font-size:11px;padding:2px 8px;color:var(--fail)">🗑</button>
+      <button class="sidebar-refresh" onclick="toggleHelp()" title="ショートカット一覧 (? キー)" style="font-size:11px;padding:2px 8px;font-weight:700">?</button>
     </div>
   </header>
 
@@ -994,20 +1020,49 @@ function toggleSvcSection(hdr) {
 }
 
 let _svcFilterVal = '';
+function _fuzzyMatch(text, query) {
+  // char-by-char subsequence match
+  let qi = 0;
+  for (let ci = 0; ci < text.length && qi < query.length; ci++) {
+    if (text[ci] === query[qi]) qi++;
+  }
+  return qi === query.length;
+}
+function _fuzzyHighlight(orig, query) {
+  let out = "", qi = 0;
+  for (let ci = 0; ci < orig.length; ci++) {
+    if (qi < query.length && orig[ci].toLowerCase() === query[qi]) {
+      out += `<mark>${escHtml(orig[ci])}</mark>`;
+      qi++;
+    } else {
+      out += escHtml(orig[ci]);
+    }
+  }
+  return out;
+}
 function filterServices(val) {
   _svcFilterVal = val.toLowerCase();
+  const query = val.toLowerCase().trim();
   const rows = svcList.querySelectorAll('.svc-row, .svc-hint');
   rows.forEach(row => {
-    if (!val) { row.style.display = ''; return; }
-    const name = (row.querySelector('.svc-name') || row).textContent.toLowerCase();
-    row.style.display = name.includes(_svcFilterVal) ? '' : 'none';
+    const nameEl = row.querySelector('.svc-name');
+    if (nameEl && !nameEl.dataset.origName) nameEl.dataset.origName = nameEl.textContent;
+    const origName = nameEl ? nameEl.dataset.origName : row.textContent;
+    const lName = (origName || '').toLowerCase();
+    if (!query) {
+      row.style.display = '';
+      if (nameEl) nameEl.innerHTML = escHtml(origName);
+      return;
+    }
+    const match = _fuzzyMatch(lName, query);
+    row.style.display = match ? '' : 'none';
+    if (nameEl) nameEl.innerHTML = match ? _fuzzyHighlight(origName, query) : escHtml(origName);
   });
-  // セクションヘッダーの表示も調整
   svcList.querySelectorAll('.sidebar-section').forEach(sec => {
     const body = svcList.querySelector(`[data-sec-body="${sec.dataset.sec}"]`);
     if (body && !sec.classList.contains('collapsed')) {
       const visible = [...body.querySelectorAll('.svc-row')].some(r => r.style.display !== 'none');
-      sec.style.display = visible || !val ? '' : 'none';
+      sec.style.display = visible || !query ? '' : 'none';
     }
   });
 }
@@ -1628,6 +1683,7 @@ function _naRenderCtxList(listEl) {
           <span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}${ctx}${due}</span>
           <button onclick="event.stopPropagation();doStart(${idx},null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--ok);color:var(--ok);background:none;border-radius:2px;cursor:pointer">▶</button>
           <button onclick="event.stopPropagation();doStart(${idx},25)" style="padding:1px 4px;font-size:10px;border:none;background:none;cursor:pointer" title="🍅 25分ポモドーロで開始">🍅</button>
+          <button onclick="event.stopPropagation();waitingTask(${idx},null,this)" style="padding:1px 4px;font-size:9px;border:1px solid #6882e8;color:#6882e8;background:none;border-radius:2px;cursor:pointer" title="Waiting に移動">⏳</button>
           <button onclick="event.stopPropagation();doneTask(${idx},null,this)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">✅</button>
         </div>`;
       }).join("")
@@ -3115,6 +3171,70 @@ async function sendRestartCard(svcName, label) {
   }
 }
 
+// ── /stop リッチカード ───────────────────────────────────────────────────
+async function sendStopCard(label) {
+  appendUser(label || "/stop");
+  const thinkingEl = appendThinking();
+  try {
+    const hdrs = { "Content-Type": "application/json" };
+    const key = apiKeyEl.value.trim();
+    if (key) hdrs["X-API-Key"] = key;
+    const r = await fetch("/api/shell/run", {
+      method: "POST", headers: hdrs,
+      body: JSON.stringify({ command: "gtd", args: ["stop"] })
+    });
+    const d = await r.json();
+    const output = (d.output || "").trim();
+    const lines = output.split("\n").filter(Boolean);
+    const stoppedLines = lines.filter(l => /stop|停止|kill|終了|done|complete/i.test(l) && !/fail|error/i.test(l));
+    const errLines     = lines.filter(l => /fail|error/i.test(l));
+    const ok = d.exit_code === 0;
+    const colorHead = ok ? "var(--ok)" : "var(--warn)";
+    const bodyHtml = [
+      ...stoppedLines.map(l => `<div style="font-size:11px;color:var(--muted)">◼ ${escHtml(l.trim())}</div>`),
+      ...errLines.map(l    => `<div style="font-size:11px;color:var(--fail)">✗ ${escHtml(l.trim())}</div>`),
+    ].join("") || (output
+      ? `<pre style="font-size:10px;white-space:pre-wrap;max-height:120px;overflow-y:auto">${escHtml(output.slice(0,600))}</pre>`
+      : `<span style="font-size:11px;color:var(--muted)">（出力なし）</span>`);
+    const html = `<div class="report-section">
+      <h4 style="font-size:12px;margin:0 0 6px;color:${colorHead}">🛑 GTD Stop — exit ${d.exit_code}</h4>
+      ${bodyHtml}
+    </div>`;
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">${html}${ts()}</div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+    setTimeout(pollGtdStatus, 800);
+  } catch(e) {
+    replaceThinking(thinkingEl, { status: "dispatch_error", error: String(e) });
+  }
+}
+
+// ── NA → Waiting 移動 ────────────────────────────────────────────────────
+async function waitingTask(idx, name, btn) {
+  const oldText = btn.textContent;
+  btn.disabled = true; btn.textContent = "…";
+  const headers = { "Content-Type": "application/json" };
+  const key = apiKeyEl.value.trim();
+  if (key) headers["X-API-Key"] = key;
+  try {
+    const r = await fetch("/api/gtd/process", {
+      method: "POST", headers,
+      body: JSON.stringify({ index: idx, dest: "waiting", from: "next" })
+    });
+    const d = await r.json();
+    if (r.ok && d.status !== "error") {
+      const row = btn.closest("div");
+      if (row) { row.style.opacity = "0.4"; row.style.pointerEvents = "none"; }
+      btn.textContent = "✓";
+      setTimeout(() => { _naItems = _naItems.filter((_,i) => (i+1) !== idx); _naRenderCtxList(document.getElementById("na-inline-list")); }, 600);
+    } else {
+      btn.disabled = false; btn.textContent = oldText;
+    }
+  } catch { btn.disabled = false; btn.textContent = oldText; }
+}
+
 // ── /heal ビジュアルカード ────────────────────────────────────────────────
 async function sendHealCard(svcName, label) {
   appendUser(label || (svcName ? `/heal ${svcName}` : "/heal"));
@@ -3577,7 +3697,7 @@ async function send() {
       await sendShellRun("gtd", pushArgs, message); return;
     }
     if (cmd === "stop") {
-      await sendShellRun("gtd", ["stop"], message); return;
+      await sendStopCard(message); return;
     }
     if (cmd === "startup") {
       await sendStartupCard(message); return;
@@ -3750,6 +3870,9 @@ window.addEventListener("keydown", e => {
     if (msgInput.value) { msgInput.value = ""; updateSuggest(); }
     else msgInput.blur();
   }
+  if (e.key === "?" && !e.altKey && !e.ctrlKey && !e.metaKey && document.activeElement !== msgInput) {
+    e.preventDefault(); toggleHelp(); return;
+  }
 });
 
 // ── Key bindings ───────────────────────────────────────────────────────────
@@ -3801,8 +3924,55 @@ function errBubble(err) {
   return el;
 }
 
+// ── キーボードショートカット ヘルプパネル ─────────────────────────────────
+function toggleHelp() {
+  const p = document.getElementById("help-panel");
+  if (p) p.classList.toggle("open");
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 loadStoredMsgs();
 </script>
+
+<!-- ショートカットヘルプパネル -->
+<div id="help-panel" onclick="if(event.target===this)toggleHelp()">
+  <div id="help-panel-inner">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:13px;font-weight:600">⌨️ キーボードショートカット</span>
+      <button onclick="toggleHelp()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <table class="help-table">
+      <tr><td>Alt+K</td><td>入力欄にフォーカス</td></tr>
+      <tr><td>Alt+R</td><td>/report 実行</td></tr>
+      <tr><td>Alt+D</td><td>/dashboard 実行</td></tr>
+      <tr><td>Alt+N</td><td>/next 実行</td></tr>
+      <tr><td>Alt+E</td><td>/events 実行</td></tr>
+      <tr><td>Alt+I</td><td>/inbox 実行</td></tr>
+      <tr><td>Alt+G</td><td>/gtd 実行</td></tr>
+      <tr><td>Alt+M</td><td>/morning 実行</td></tr>
+      <tr><td>Alt+W</td><td>/weekly 実行</td></tr>
+      <tr><td>Alt+S</td><td>/status フォーカス</td></tr>
+      <tr><td>Escape</td><td>入力クリア / フォーカス解除</td></tr>
+      <tr><td>?</td><td>このヘルプ 表示/非表示</td></tr>
+    </table>
+    <div style="margin-top:14px;border-top:1px solid var(--line2);padding-top:10px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:.05em">主要コマンド</div>
+      <table class="help-table">
+        <tr><td>/status [svc]</td><td>サービス状態確認</td></tr>
+        <tr><td>/up [svc|--all]</td><td>サービス起動</td></tr>
+        <tr><td>/startup</td><td>全 Tier 起動 + 状態確認</td></tr>
+        <tr><td>/stop</td><td>GTD 停止</td></tr>
+        <tr><td>/heal [svc]</td><td>DOWN 自動修復</td></tr>
+        <tr><td>/restart svc</td><td>サービス再起動</td></tr>
+        <tr><td>/daily</td><td>日次レポート</td></tr>
+        <tr><td>/tier</td><td>Tier 別サービス一覧</td></tr>
+        <tr><td>/inbox /next /do /done</td><td>GTD フロー</td></tr>
+        <tr><td>/logs [svc] [N]</td><td>ログ最新 N 行</td></tr>
+        <tr><td>/capture &lt;text&gt;</td><td>Inbox キャプチャ</td></tr>
+        <tr><td>/search &lt;kw&gt;</td><td>GTD 全文検索</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
 </body>
 </html>
