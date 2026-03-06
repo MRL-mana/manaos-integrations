@@ -656,11 +656,12 @@ const SLASH_CMDS = [
   { cmd: "/clear",            desc: "チャット履歴クリア" },
   { cmd: "/help",             desc: "コマンド一覧を表示" },
   // GTD
+  { cmd: "/memo",             desc: "GTD キャプチャ インラインフォーム (context/期限/保存先をUIで入力)" },
   { cmd: "/memo <text>",      desc: "Inbox にメモを保存 (GTD キャプチャ)" },
   { cmd: "/memo <text> @ctx", desc: "コンテキストタグ付きで Inbox 保存 例: /memo 在庫確認 @phone" },
   { cmd: "/memo <text> due:YYYY-MM-DD", desc: "期限付きで Inbox 保存 例: /memo 資料作成 due:2026-03-10" },
   { cmd: "/inbox",            desc: "GTD Inbox 一覧表示" },
-  { cmd: "/morning",          desc: "今日の日次ログを表示/作成" },
+  { cmd: "/morning",          desc: "朝のリッチカード（overdue優先 + 対話型日次ログ）" },
   { cmd: "/next",               desc: "Next Actions 一覧（やること確認）" },
   { cmd: "/next @ctx",           desc: "@コンテキストでフィルター  例: /next @pc" },
   { cmd: "/do",                   desc: "「今これをやる」宣言 – Next Action を選んで作業開始（インタラクティブ）" },
@@ -675,7 +676,7 @@ const SLASH_CMDS = [
   { cmd: "/archive",              desc: "完了タスク閲覧 (最新30件)" },
   { cmd: "/archive <n>",          desc: "完了タスク N件表示  例: /archive 50" },
   { cmd: "/stats",                desc: "GTD 完了統計 (今日/今週/累計 + 直近14日トレンド)" },
-  { cmd: "/edit",                 desc: "Next Action の一覧を表示（context/due 確認）" },
+  { cmd: "/edit",                 desc: "Next Actions インライン編集UI (@ctx / 期限をワンクリックで変更)" },
   { cmd: "/edit <N>",             desc: "Next Action[N]を編集 例: /edit 2 --due 2026-03-15" },
   { cmd: "/edit <N> --context @ctx", desc: "context を変更  例: /edit 3 --context @phone" },
   { cmd: "/edit <N> --due YYYY-MM-DD", desc: "期限を設定 例: /edit 1 --due 2026-03-10" },
@@ -687,8 +688,8 @@ const SLASH_CMDS = [
   { cmd: "/notify <msg>",     desc: "ntfy / Slack に通知を送信" },
   { cmd: "/notify <msg> --title <T>", desc: "タイトル付きで通知" },
   // GTD 拡張
-  { cmd: "/gtd",              desc: "GTD ステータス概要（Inbox / Next 件数）" },
-  { cmd: "/weekly",           desc: "GTD 週次レビュー（先週ログ + Inbox 推移）" },
+  { cmd: "/gtd",              desc: "GTD ステータス ビジュアルカード（作業中/overdue/カウンター）" },
+  { cmd: "/weekly",           desc: "週次レビュー リッチカード（Inbox推移バーチャート）" },
   { cmd: "/commit",           desc: "GTD日次ログを git commit（--push で push も）" },
   // ログ表示
   { cmd: "/logs <svc>",       desc: "サービスのログ末尾30行表示  例: /logs llm_routing" },
@@ -1463,9 +1464,9 @@ async function toggleNextActions() {
         return `<div style="display:flex;align-items:center;gap:3px;padding:2px 6px 2px 18px;border-bottom:1px solid rgba(255,255,255,.05);${bg}">
           <span style="font-size:9px;color:var(--muted);min-width:18px">${idx}.</span>
           <span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}${ctx}${due}</span>
-          <button onclick="event.stopPropagation();sendShellRun('gtd',['do','--index','${idx}'],'/do ${idx}')" style="padding:1px 4px;font-size:9px;border:1px solid var(--ok);color:var(--ok);background:none;border-radius:2px;cursor:pointer">▶</button>
-          <button onclick="event.stopPropagation();sendShellRun('gtd',['do','--index','${idx}','--timer','25'],'/do ${idx} --timer 25')" style="padding:1px 4px;font-size:10px;border:none;background:none;cursor:pointer" title="🍅 25分ポモドーロで開始">🍅</button>
-          <button onclick="event.stopPropagation();sendShellRun('gtd',['done','--index','${idx}'],'/done ${idx}')" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">✅</button>
+          <button onclick="event.stopPropagation();doStart(${item.index||idx},null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--ok);color:var(--ok);background:none;border-radius:2px;cursor:pointer">▶</button>
+          <button onclick="event.stopPropagation();doStart(${item.index||idx},25)" style="padding:1px 4px;font-size:10px;border:none;background:none;cursor:pointer" title="🍅 25分ポモドーロで開始">🍅</button>
+          <button onclick="event.stopPropagation();doneTask(${item.index||idx},null,this)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">✅</button>
         </div>`;
       }).join("");
     }
@@ -1903,6 +1904,220 @@ async function sendNextRich(opts, label) {
     replaceLastAgent(`<span style='color:var(--fail)'>Next Actions 取得失敗: ${escHtml(String(e))}</span>`);
   }
   busy = false; sendBtn.disabled = false; msgInput.disabled = false;
+}
+
+// ── someday / waiting / projects リッチカード ───────────────────────────
+async function sendListRich(apiPath, icon, title, label) {
+  // 汎用: Someday/Waiting/Projects 一覧をカード表示
+  appendUser(label);
+  const thinkingEl = appendThinking();
+  try {
+    const r = await fetch(apiPath);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const items = await r.json(); // 文字列[]またはオブジェクト[]
+    if (!items.length) {
+      const el = document.createElement("div"); el.className = "msg agent";
+      el.innerHTML = `<div class="avatar">OS</div><div class="bubble"><span class="intent-tag tag-run_ok">${title}</span> ${icon} <strong>${title}</strong> — 空っぽ 🎉${ts()}</div>`;
+      thinkingEl.replaceWith(el); scrollEnd(); return;
+    }
+    const rows = items.slice(0, 50).map((it, i) => {
+      const name = typeof it === "string" ? it : (it.name || it);
+      // Projects はフォルダ階層付きの場合あり
+      const safeName = escHtml(name);
+      const ctx  = it.context ? ` <span style="font-size:10px;color:#6dd0e8;background:rgba(0,180,220,.10);border-radius:3px;padding:1px 4px">${escHtml(it.context)}</span>` : "";
+      const due  = it.due    ? ` <span style="font-size:10px;color:var(--warn)">📅${escHtml(it.due)}</span>` : "";
+      return `<div style="display:flex;align-items:center;gap:6px;padding:3px 4px;border-bottom:1px solid rgba(255,255,255,.04)">
+        <span style="color:var(--muted);font-size:11px;min-width:22px">[${i+1}]</span>
+        <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeName}">${safeName}${ctx}${due}</span>
+        <button onclick="sendCaptureToNext('${safeName.replace(/'/g,\"\\'\").replace(/\"/g,'&quot;')}')" style="${_btnStyle('var(--ok)')}">→ Next</button>
+      </div>`;
+    }).join("");
+    const more = items.length > 50 ? `<div style="font-size:10px;color:var(--muted);padding:3px 6px">…他 ${items.length-50}件</div>` : "";
+    const el = document.createElement("div"); el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">
+      <span class="intent-tag tag-run_ok">${title}</span> ${icon} <strong>${title} ${items.length}件</strong>
+      <div style="margin:6px 0;max-height:350px;overflow-y:auto">${rows}${more}</div>${ts()}</div>`;
+    thinkingEl.replaceWith(el); scrollEnd();
+  } catch(e) { replaceThinking(thinkingEl, {status:"error", error:String(e)}); }
+}
+
+async function sendCaptureToNext(name) {
+  // Someday/Waiting → Nextに移動（/process の代わりにmemo --to next）
+  try {
+    const r = await fetch("/api/gtd/capture", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({text: name, to: "next"})
+    });
+    const j = await r.json().catch(()=>({}));
+    showToast(r.ok ? `→ Next に移動: ${name.slice(0,20)}` : `失敗: ${j.error||r.status}`, r.ok ? 2500 : 4000);
+    if (r.ok) pollGtdStatus();
+  } catch(e) { showToast(`エラー: ${String(e)}`, 4000); }
+}
+
+// ── Search リッチカード ───────────────────────────────────────────────────
+async function sendSearchRich(query, label) {
+  appendUser(label);
+  const thinkingEl = appendThinking();
+  try {
+    const r = await fetch(`/api/gtd/search?q=${encodeURIComponent(query)}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    const results = d.results || [];
+    if (!results.length) {
+      const el = document.createElement("div"); el.className = "msg agent";
+      el.innerHTML = `<div class="avatar">OS</div><div class="bubble"><span class="intent-tag tag-run_ok">Search</span> 🔍 <strong>"${escHtml(query)}"</strong> — 結果なし${ts()}</div>`;
+      thinkingEl.replaceWith(el); scrollEnd(); return;
+    }
+    const today = new Date().toISOString().slice(0,10);
+    const rows = results.map(r2 => {
+      const isNA = r2.area === "next";
+      const areaBadge = `<span style="font-size:9px;border-radius:3px;padding:1px 4px;background:rgba(255,255,255,.07);color:var(--muted)">${escHtml(r2.area||"?")}</span>`;
+      const ctx  = r2.context ? ` <span style="font-size:10px;color:#6dd0e8">${escHtml(r2.context)}</span>` : "";
+      const isOd = r2.due && r2.due < today;
+      const due  = r2.due ? ` <span style="font-size:10px;color:${isOd?'var(--fail)':'var(--warn)'}">📅${r2.due}${isOd?'⚠️':''}</span>` : "";
+      const doBtn  = isNA && r2.index ? `<button onclick="doStart(${r2.index},null)" style="${_btnStyle('var(--ok)')}">▶</button>` : "";
+      const doneBtn= isNA && r2.index ? `<button onclick="doneTask(${r2.index},null,this)" style="${_btnStyle('var(--muted;)')}">✅</button>` : "";
+      return `<div style="display:flex;align-items:center;gap:5px;padding:3px 4px;border-bottom:1px solid rgba(255,255,255,.04)">
+        ${areaBadge}
+        <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(r2.name||r2)}${ctx}${due}</span>
+        ${doBtn}${doneBtn}
+      </div>`;
+    }).join("");
+    const el = document.createElement("div"); el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">
+      <span class="intent-tag tag-run_ok">Search</span> 🔍 <strong>"${escHtml(query)}"</strong> — ${results.length}件
+      <div style="margin:6px 0;max-height:340px;overflow-y:auto">${rows}</div>${ts()}</div>`;
+    thinkingEl.replaceWith(el); scrollEnd();
+  } catch(e) { replaceThinking(thinkingEl, {status:"error", error:String(e)}); }
+}
+
+// ── Edit リッチフォームUI ─────────────────────────────────────────────────
+async function sendEditRich(preArg, label) {
+  // preArg: "2 --due 2026-03-15" 等、なければ一覧を表示
+  const idxM = preArg ? preArg.match(/^(\d+)/) : null;
+  if (idxM) {
+    // 直接編集: sendShellRun にフォールバック
+    const editArgs = ["edit"];
+    const nmM  = preArg.match(/--name\s+(\S+)/);
+    const ctxM = preArg.match(/--context\s+(\S+)/);
+    const dueM = preArg.match(/--due\s+(\S+)/);
+    editArgs.push("--index", idxM[1]);
+    if (nmM)  editArgs.push("--name",    nmM[1]);
+    if (ctxM) editArgs.push("--context", ctxM[1]);
+    if (dueM) editArgs.push("--due",     dueM[1]);
+    await sendShellRun("gtd", editArgs, label); return;
+  }
+  // インタラクティブ: NA一覧 + インライン編集フォーム
+  appendUser(label);
+  const thinkingEl = appendThinking();
+  try {
+    const r = await fetch("/api/gtd/next");
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    const nas = d.next_actions || [];
+    const today = new Date().toISOString().slice(0,10);
+    if (!nas.length) {
+      const el = document.createElement("div"); el.className = "msg agent";
+      el.innerHTML = `<div class="avatar">OS</div><div class="bubble"><span class="intent-tag tag-run_ok">Edit</span> ✏️ Next Actions が空です${ts()}</div>`;
+      thinkingEl.replaceWith(el); scrollEnd(); return;
+    }
+    const rows = nas.map(na => {
+      const isOd = na.due && na.due < today;
+      const isTd = na.due && na.due === today;
+      const bg   = isOd ? "rgba(255,60,60,.08)" : isTd ? "rgba(255,180,0,.07)" : "transparent";
+      const ctxVal = escHtml(na.context || "");
+      const dueVal = escHtml(na.due || "");
+      return `<div style="display:flex;align-items:center;gap:5px;padding:4px 2px;border-bottom:1px solid rgba(255,255,255,.05);background:${bg};flex-wrap:wrap">
+        <span style="color:var(--muted);font-size:11px;min-width:22px">[${na.index}]</span>
+        <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:80px" title="${escHtml(na.name)}">${escHtml(na.name)}</span>
+        <input id="ectx-${na.index}" type="text" value="${ctxVal}" placeholder="@ctx" title="context" style="width:72px;font-size:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:var(--fg);border-radius:3px;padding:1px 4px">
+        <input id="edue-${na.index}" type="date" value="${dueVal}" title="due date" style="font-size:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:var(--fg);border-radius:3px;padding:1px 3px">
+        <button onclick="applyEdit(${na.index})" style="${_btnStyle('var(--ok)')}">保存</button>
+      </div>`;
+    }).join("");
+    const el = document.createElement("div"); el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">
+      <span class="intent-tag tag-run_ok">Edit</span> ✏️ <strong>Next Actions 編集</strong>
+      <div style="margin:6px 0;max-height:380px;overflow-y:auto">${rows}</div>
+      <div style="font-size:10px;color:var(--muted)">@ctx / 期限を変更して「保存」をクリック</div>${ts()}</div>`;
+    thinkingEl.replaceWith(el); scrollEnd();
+  } catch(e) { replaceThinking(thinkingEl, {status:"error", error:String(e)}); }
+}
+
+async function applyEdit(index) {
+  const ctxEl = document.getElementById(`ectx-${index}`);
+  const dueEl = document.getElementById(`edue-${index}`);
+  const body  = { index };
+  if (ctxEl && ctxEl.value.trim()) body.context = ctxEl.value.trim();
+  if (dueEl && dueEl.value.trim()) body.due     = dueEl.value.trim();
+  if (Object.keys(body).length === 1) { showToast("変更なし", 2000); return; }
+  try {
+    const r = await fetch("/api/gtd/edit", {
+      method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(body)
+    });
+    const j = await r.json().catch(()=>({}));
+    showToast(r.ok ? `✅ [${index}] 保存` : `失敗: ${j.error||r.status}`, r.ok ? 2000 : 4000);
+    if (r.ok) pollGtdStatus();
+  } catch(e) { showToast(`エラー: ${String(e)}`, 4000); }
+}
+
+// ── Capture インラインフォーム ────────────────────────────────────────────
+function sendCaptureForm(prefillText, label) {
+  // インタラクティブなキャプチャフォームをチャットに挿入
+  appendUser(label || "/memo");
+  const DEST_OPTS = [
+    { val: "",         label: "📥 Inbox" },
+    { val: "next",     label: "✅ Next" },
+    { val: "someday",  label: "📦 Someday" },
+    { val: "waiting",  label: "⏳ Waiting" },
+    { val: "projects", label: "📁 Projects" },
+  ];
+  const destOpts = DEST_OPTS.map(o =>
+    `<option value="${o.val}">${o.label}</option>`
+  ).join("");
+  const uid = Date.now();
+  const el = document.createElement("div"); el.className = "msg agent";
+  el.innerHTML = `<div class="avatar">OS</div><div class="bubble">
+    <span class="intent-tag tag-run_ok">Capture</span> ➕ <strong>GTD キャプチャ</strong>
+    <div style="margin:8px 0;display:flex;flex-direction:column;gap:6px">
+      <input id="ct-${uid}" type="text" value="${escHtml(prefillText||'')}" placeholder="タスク/メモを入力…" style="width:100%;font-size:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:var(--fg);border-radius:4px;padding:5px 8px;box-sizing:border-box">
+      <div style="display:flex;gap:6px;align-items:center">
+        <input id="cc-${uid}" type="text" placeholder="@context (任意)" style="flex:1;font-size:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:var(--fg);border-radius:3px;padding:3px 6px">
+        <input id="cd-${uid}" type="date" title="期限 (任意)" style="font-size:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:var(--fg);border-radius:3px;padding:2px 4px">
+        <select id="cs-${uid}" style="font-size:11px;background:rgba(30,30,30,.9);border:1px solid rgba(255,255,255,.15);color:var(--fg);border-radius:3px;padding:2px 4px">${destOpts}</select>
+        <button onclick="submitCapture('${uid}',this)" style="${_btnStyle('var(--ok)')}">保存 ➕</button>
+      </div>
+    </div>${ts()}</div>`;
+  historyEl.appendChild(el); scrollEnd();
+  setTimeout(() => { const inp = document.getElementById(`ct-${uid}`); if (inp) { inp.focus(); inp.select(); } }, 50);
+}
+
+async function submitCapture(uid, btn) {
+  const text = (document.getElementById(`ct-${uid}`)?.value || "").trim();
+  const ctx  = (document.getElementById(`cc-${uid}`)?.value || "").trim();
+  const due  = (document.getElementById(`cd-${uid}`)?.value || "").trim();
+  const to   = (document.getElementById(`cs-${uid}`)?.value || "").trim();
+  if (!text) { showToast("テキストを入力してください", 2500); return; }
+  if (btn) { btn.disabled = true; btn.textContent = "保存中…"; }
+  try {
+    const body = { text };
+    if (ctx) body.context = ctx;
+    if (due) body.due     = due;
+    if (to)  body.to      = to;
+    const r = await fetch("/api/gtd/capture", {
+      method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(body)
+    });
+    const j = await r.json().catch(()=>({}));
+    const destLabel = {"next":"Next","someday":"Someday","waiting":"Waiting","projects":"Projects"}[to] || "Inbox";
+    showToast(r.ok ? `✅ ${destLabel} に保存: ${text.slice(0,24)}` : `失敗: ${j.error||r.status}`, r.ok ? 2500 : 4000);
+    if (r.ok) {
+      if (btn) { btn.textContent = "✅ 保存済"; }
+      pollGtdStatus();
+    } else if (btn) { btn.disabled = false; btn.textContent = "保存 ➕"; }
+  } catch(e) {
+    showToast(`エラー: ${String(e)}`, 4000);
+    if (btn) { btn.disabled = false; btn.textContent = "保存 ➕"; }
+  }
 }
 
 // ── Morning リッチカード ─────────────────────────────────────────────────
@@ -2697,7 +2912,8 @@ async function send() {
     if (cmd === "dashboard") { await sendShellRun("dashboard", [], message); return; }
     // GTD slash commands
     if (cmd === "memo") {
-      if (!arg) { appendAgent("<span style='color:var(--fail)'>/memo の後にテキストを入力してください 例: /memo スタンドの在庫確認</span>"); return; }
+      // 引数なし → インラインキャプチャフォームを表示
+      if (!arg) { sendCaptureForm("", label || message); return; }
       // --to <dest> が含まれる場合は gtd capture --to で直接振り分け
       const toMatch = arg.match(/--to\s+(\S+)/i);
       if (toMatch) {
@@ -2758,17 +2974,17 @@ async function send() {
       await sendDoneRich(doneIdxM ? doneIdxM[1] : null, message); return;
     }
     if (cmd === "someday") {
-      await sendShellRun("gtd", ["someday"], message); return;
+      await sendListRich("/api/gtd/someday", "\ud83d\udce6", "Someday", message); return;
     }
     if (cmd === "waiting") {
-      await sendShellRun("gtd", ["waiting"], message); return;
+      await sendListRich("/api/gtd/waiting", "\u23f3", "Waiting", message); return;
     }
     if (cmd === "projects") {
-      await sendShellRun("gtd", ["projects"], message); return;
+      await sendListRich("/api/gtd/projects", "\ud83d\udcc1", "Projects", message); return;
     }
     if (cmd === "search") {
       if (!arg) { appendAgent("<span style='color:var(--fail)'>/search の後にキーワードを入力してください 例: /search 資料作成</span>"); return; }
-      await sendShellRun("gtd", ["search", ...arg.split(/\s+/).filter(Boolean)], message); return;
+      await sendSearchRich(arg.trim(), message); return;
     }
     if (cmd === "archive") {
       await sendArchiveCard(arg && /^\d+$/.test(arg.trim()) ? arg.trim() : null, message); return;
@@ -2777,16 +2993,7 @@ async function send() {
       await sendStatsCard(message); return;
     }
     if (cmd === "edit") {
-      const editArgs = ["edit"];
-      const idxM  = arg.match(/^(\d+)/);
-      const nmM   = arg.match(/--name\s+(\S+)/);
-      const ctxM  = arg.match(/--context\s+(\S+)/);
-      const dueM  = arg.match(/--due\s+(\S+)/);
-      if (idxM) editArgs.push("--index", idxM[1]);
-      if (nmM)  editArgs.push("--name",  nmM[1]);
-      if (ctxM) editArgs.push("--context", ctxM[1]);
-      if (dueM) editArgs.push("--due", dueM[1]);
-      await sendShellRun("gtd", editArgs, message); return;
+      await sendEditRich(arg, message); return;
     }
     if (cmd === "commit") {
       const pushArgs = arg.includes("--push") ? ["commit", "--push"] : ["commit"];
