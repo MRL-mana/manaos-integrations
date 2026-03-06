@@ -5698,12 +5698,13 @@ def api_shell_services():
                     health_txt = "timeout"
                     summary = "DOWN"
             result.append({
-                "name":    svc_name,
-                "section": section,
-                "enabled": enabled,
-                "port":    port,
-                "health":  health_txt,
-                "summary": summary,
+                "name":       svc_name,
+                "section":    section,
+                "enabled":    enabled,
+                "port":       port,
+                "health":     health_txt,
+                "summary":    summary,
+                "depends_on": list(svc.get("depends_on") or []),
             })
 
     return jsonify({"services": result, "count": len(result)}), 200

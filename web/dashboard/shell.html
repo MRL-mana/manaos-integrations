@@ -590,6 +590,7 @@ const SLASH_CMDS = [
   { cmd: "/events",           desc: "最近のイベント 30件" },
   { cmd: "/events <n>",       desc: "最近のイベント n件" },
   { cmd: "/events <name>",    desc: "サービス名でイベントフィルタ" },
+  { cmd: "/events today",     desc: "今日（日付変わり以降）のイベント" },
   { cmd: "/tier",             desc: "サービス tier 一覧" },
   { cmd: "/watch",            desc: "全サービス 1回ポーリング" },
   { cmd: "/services",         desc: "サービス一覧パネル再読み込み" },
@@ -789,6 +790,9 @@ function svcRow(s) {
     : !s.enabled ? "skip" : "warn";
   const port = s.port ? `:${s.port}` : "";
   const safeName = s.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+  const deps = (s.depends_on || []);
+  const depsTip = deps.length ? `depends: ${deps.join(", ")}` : "no deps";
+  const rowTitle = `${escHtml(s.health)} / ${escHtml(s.summary)} — ${depsTip}`;
   const healBtn = dotClass === "down"
     ? `<button class="svc-heal-btn" onclick="healService('${safeName}')" title="heal ${escHtml(s.name)}">⟳</button>`
     : "";
@@ -798,7 +802,7 @@ function svcRow(s) {
   const logBtn = dotClass !== "skip"
     ? `<button class="svc-log-btn" onclick="msgInput.value='/logs ${safeName}';send()" title="logs ${escHtml(s.name)}">📄</button>`
     : "";
-  return `<div class="svc-row" title="${escHtml(s.health)} / ${escHtml(s.summary)}">
+  return `<div class="svc-row" title="${rowTitle}">
     <span class="svc-dot ${dotClass}"></span>
     <span class="svc-name">${escHtml(s.name)}</span>
     <span class="svc-port">${port}</span>
@@ -927,11 +931,12 @@ async function pollGtdStatus() {
           <span class="svc-name">Inbox</span>
           <span class="svc-port" style="color:${inboxColor}">${inbox}件</span>
         </div>
-        <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/next';send()">
+        <div class="svc-row" style="cursor:pointer" onclick="toggleNextActions()" id="na-toggle-row">
           <span style="font-size:10px">✅</span>
           <span class="svc-name">Next Actions</span>
-          <span class="svc-port" style="color:${naColor}">${na}件</span>
+          <span class="svc-port" style="color:${naColor}">${na}件 <span id="na-toggle-arrow">▶</span></span>
         </div>
+        <div id="na-inline-list" style="display:none"></div>
         <div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/morning';send()">
           <span style="font-size:10px">📅</span>
           <span class="svc-name">今日のログ</span>
@@ -1018,8 +1023,50 @@ function appendUser(text) {
   saveMsg("user", text);
 }
 
-// ── Append agent bubble (SSE streaming) ───────────────────────────────────
-function appendAgent(html) {
+// ── GTD Next Actions inline expand ─────────────────────────────────────────
+let _naExpanded = false;
+async function toggleNextActions() {
+  const listEl  = document.getElementById("na-inline-list");
+  const arrowEl = document.getElementById("na-toggle-arrow");
+  if (!listEl) return;
+  if (_naExpanded) {
+    listEl.style.display = "none";
+    if (arrowEl) arrowEl.textContent = "▶";
+    _naExpanded = false;
+    return;
+  }
+  listEl.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:2px 8px">読み込み中…</div>`;
+  listEl.style.display = "";
+  if (arrowEl) arrowEl.textContent = "▼";
+  try {
+    const r = await fetch("/api/gtd/next");
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    const items = (d.next_actions || d.items || []);
+    if (!items.length) {
+      listEl.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:2px 8px 4px 20px">（なし）</div>`;
+    } else {
+      listEl.innerHTML = items.slice(0, 20).map((item, i) => {
+        const name   = escHtml((item.name || item.stem || String(item)).slice(0, 32));
+        const ctx    = item.context ? `<span style="color:var(--accent);font-size:9px"> ${escHtml(item.context)}</span>` : "";
+        const due    = item.due     ? `<span style="color:var(--warn);font-size:9px"> due:${escHtml(item.due)}</span>` : "";
+        const safeName = (item.name || String(item)).replace(/'/g, "\\'");
+        return `<div class="svc-row" style="padding-left:18px;cursor:pointer"
+          onclick="msgInput.value='/do --name ${safeName}';send()" title="▶ /do --name ${name}">
+          <span style="font-size:9px;color:var(--muted)">${i + 1}.</span>
+          <span class="svc-name" style="font-size:11px">${name}${ctx}${due}</span>
+        </div>`;
+      }).join("");
+    }
+    _naExpanded = true;
+  } catch(e) {
+    listEl.innerHTML = `<div style="font-size:11px;color:var(--fail);padding:2px 8px 4px 20px">取得失敗: ${escHtml(String(e))}</div>`;
+    _naExpanded = true;
+  }
+}
+
+// ── Append user message bubble ────────────────────────────────────────────
+
   hideEmpty();
   const el = document.createElement("div");
   el.className = "msg agent";
@@ -1420,6 +1467,7 @@ function showHelp() {
     ["/analyze",          "ログ分析（LLM 解釈）"],
     ["/deps [svc]",       "依存グラフ表示（省略=全体）"],
     ["/events [n|name]",  "最近のイベント / サービス名フィルタ"],
+    ["/events today",     "今日（日付変わり以降）のイベント"],
     ["/tier",             "サービス tier 一覧"],
     ["/watch",            "全サービス 1回ポーリング"],
     ["/services",         "サービス一覧パネル再読み込み"],
@@ -1614,6 +1662,25 @@ async function send() {
       return;
     }
 
+    // /events → 直接 manaosctl events（LLM 不要）
+    if (cmd === "events") {
+      let evArgs;
+      if (arg === "today") {
+        const minutesMidnight = new Date().getHours() * 60 + new Date().getMinutes();
+        evArgs = ["--since", String(minutesMidnight || 1440)];
+      } else if (/^\d+$/.test(arg)) {
+        evArgs = ["-n", arg];
+      } else if (arg) {
+        evArgs = ["-n", "50", "--filter", arg];
+      } else {
+        evArgs = ["-n", "30"];
+      }
+      await sendShellRun("events", evArgs, message); return;
+    }
+    // /deps → 直接 manaosctl deps（LLM 不要）
+    if (cmd === "deps") {
+      await sendShellRun("deps", arg ? [arg] : [], message); return;
+    }
     const remap = {
       analyze: "ログを分析して",
     };
