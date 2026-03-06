@@ -1012,6 +1012,14 @@ async function pollGtdStatus() {
         timerBadge.style.display = "none";
       }
     }
+    // ローカルカウントダウン用にタイマー終了時刻をキャッシュ
+    if (ct && ct.started_at && ct.timer_min) {
+      _timerEnd = new Date(new Date(ct.started_at).getTime() + ct.timer_min * 60000);
+      _timerTask = ct.name || "";
+    } else if (!ct) {
+      _timerEnd  = null;
+      _timerTask  = "";
+    }
     // 経過時間計算
     let elapsedStr = "";
     if (ct && ct.started_at) {
@@ -1097,6 +1105,29 @@ async function pollGtdStatus() {
 gtdBadge.addEventListener("click", () => { msgInput.value = "/inbox"; send(); });
 pollGtdStatus();
 setInterval(pollGtdStatus, 30000);
+
+// ── タイマーローカルカウントダウン (1分 tick) ─────────────────────────────
+let _timerEnd  = null;
+let _timerTask = "";
+let _timerAlerted = false;
+
+function _updateTimerBadge() {
+  if (!timerBadge || !_timerEnd) return;
+  const remMs  = _timerEnd - Date.now();
+  const remMin = Math.ceil(remMs / 60000);
+  const tCol   = remMin > 5 ? "var(--ok)" : remMin > 0 ? "var(--warn)" : "var(--fail)";
+  const remStr = remMin > 0 ? `残${remMin}分` : `超過${-remMin}分`;
+  timerBadge.textContent = `⏱ ${remStr}`;
+  timerBadge.style.color = tCol;
+  timerBadge.style.display = "";
+  // タイマー期限到達でトースト通知（1回のみ）
+  if (remMin <= 0 && !_timerAlerted) {
+    _timerAlerted = true;
+    showToast(`⏰ タイマー終了: ${_timerTask}`, 6000);
+  }
+  if (remMin > 0) _timerAlerted = false;
+}
+setInterval(_updateTimerBadge, 60000);
 
 // ── Events sidebar widget ─────────────────────────────────────────────────────
 const EV_COLOR = {
