@@ -1047,7 +1047,7 @@ async function pollGtdStatus() {
             <button class="svc-log-btn" style="color:var(--muted);font-size:13px" onclick="msgInput.value='/gtd stop';send()" title="中断">🛑</button>
           </div>
           ${_timerEnd ? `<div style="font-size:10px;padding:1px 6px 4px 22px;color:${Date.now() < _timerEnd.getTime() ? 'var(--ok)' : 'var(--fail)'}">⏱ ${Math.max(0, Math.ceil((_timerEnd.getTime() - Date.now()) / 60000))}分</div>` : ''}`
-        : `<div class="svc-row" style="cursor:pointer" onclick="msgInput.value='/do';send()">
+        : `<div class="svc-row" style="cursor:pointer" onclick="sendDoRich(null,null,'/do')">
             <span style="font-size:10px">▶️</span>
             <span class="svc-name" style="color:var(--muted)"><em>作業開始</em></span>
           </div>`;
@@ -1871,13 +1871,22 @@ async function sendNextRich(opts, label) {
           ? ` <span style="font-size:10px;color:#6dd0e8;background:rgba(0,180,220,.12);padding:1px 4px;border-radius:3px">${escHtml(na.context)}</span>`
           : "";
         const safeName = escHtml(na.name);
+        const naRealIdx = na.index || idx;
         return `<div style="display:flex;align-items:center;gap:4px;padding:3px 2px;${bg};border-bottom:1px solid rgba(255,255,255,.04)">
-          <span style="color:var(--muted);font-size:11px;min-width:22px">[${idx}]</span>
+          <span style="color:var(--muted);font-size:11px;min-width:22px">[${naRealIdx}]</span>
           <span style="flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${safeName}">${safeName}${ctxStr}${dueStr}</span>
-          <button onclick="sendShellRun('gtd',['do','--index','${idx}'],'/do ${idx}')"   style="${_btnStyle('var(--ok)')}">▶ Do</button>
-          <button onclick="sendShellRun('gtd',['done','--index','${idx}'],'/done ${idx}')" style="${_btnStyle('var(--muted)')}">✅</button>
+          <button onclick="doStart(${naRealIdx},null)"   style="${_btnStyle('var(--ok)')}">▶ Do</button>
+          <button onclick="doneTask(${naRealIdx},null,this)" style="${_btnStyle('var(--muted)')}">✅</button>
         </div>`;
       }).join("");
+      // コンテキスト一覧を集計してフィルターボタン生成
+      const ctxSet = [...new Set(nas.filter(n => n.context).map(n => n.context))];
+      const ctxBtns = ctxSet.length
+        ? `<div style="margin-bottom:4px;display:flex;gap:4px;flex-wrap:wrap">${ctxSet.map(c => {
+            const esc = escHtml(c);
+            return `<button onclick="sendNextRich({filter:'${esc.replace(/'/g,\"\\'\")}'}, '/next ${esc}')" style="font-size:10px;padding:1px 6px;border:1px solid rgba(0,180,220,.3);background:rgba(0,180,220,.08);color:#6dd0e8;border-radius:10px;cursor:pointer">${esc}</button>`;
+          }).join('')}</div>`
+        : "";
       const filterLabel = opts.filter
         ? ` <span style="color:#6dd0e8">${escHtml(opts.filter)}</span>`
         : opts.overdue   ? ` <span style="color:var(--fail)">⚠️ 期限超過</span>`
@@ -1886,7 +1895,7 @@ async function sendNextRich(opts, label) {
         ? `<div style="margin-top:4px;font-size:11px;color:var(--warn)">📁 Projects ${projs.length}件</div>` : "";
       replaceLastAgent(
         `<span class="intent-tag tag-run_ok">GTD</span> ✅ <strong>Next Actions ${nas.length}件</strong>${filterLabel}` +
-        `<div style="margin:6px 0;max-height:350px;overflow-y:auto">${rows}</div>` +
+        `<div style="margin:6px 0">${ctxBtns}<div style="max-height:350px;overflow-y:auto">${rows}</div></div>` +
         projInfo
       );
     }
@@ -1894,6 +1903,157 @@ async function sendNextRich(opts, label) {
     replaceLastAgent(`<span style='color:var(--fail)'>Next Actions 取得失敗: ${escHtml(String(e))}</span>`);
   }
   busy = false; sendBtn.disabled = false; msgInput.disabled = false;
+}
+
+// ── GTD Status リッチカード ───────────────────────────────────────────────
+async function sendGtdStatusRich(label) {
+  appendUser(label);
+  const thinkingEl = appendThinking();
+  try {
+    const r = await fetch("/api/gtd/status");
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    const ct = d.current_task;
+    const today = new Date().toISOString().slice(0, 10);
+
+    // 作業中タスク行
+    let ctHtml = "";
+    if (ct && ct.name) {
+      const trem = d.timer_remaining_min;
+      const timerHtml = trem != null
+        ? `<span style="font-size:11px;color:${trem >= 0 ? 'var(--warn)' : 'var(--fail)'}"> ⏱ ${Math.max(0,trem)}分残</span>`
+        : "";
+      const startedStr = ct.started_at ? ct.started_at.slice(0,16).replace("T"," ") : "";
+      ctHtml = `<div style="display:flex;align-items:center;gap:6px;padding:5px 6px;background:rgba(255,200,0,.10);border-radius:4px;border-left:3px solid var(--warn);margin-bottom:4px">
+        <span style="font-size:16px">🔥</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:var(--warn)">${escHtml(ct.name)}</div>
+          <div style="font-size:10px;color:var(--muted)">開始: ${startedStr}${timerHtml}</div>
+        </div>
+        <button onclick="doneTask(null,'${escHtml(ct.name).replace(/'/g,"\\'")}',this)" style="${_btnStyle('var(--ok)')}">✅ 完了</button>
+        <button onclick="sendShellRun('gtd',['stop'],'/gtd stop')" style="${_btnStyle('var(--muted)')}">🛑</button>
+      </div>`;
+    }
+
+    // overdue / due_today 警告行
+    const odHtml = d.overdue_count > 0
+      ? `<div style="display:flex;align-items:center;gap:6px;padding:3px 6px;background:rgba(255,60,60,.12);border-radius:3px;margin-bottom:3px;cursor:pointer" onclick="msgInput.value='/next --overdue';send()">
+          <span>⚠️</span><span style="flex:1;font-size:12px;color:var(--fail)">期限超過</span><span style="font-size:12px;font-weight:700;color:var(--fail)">${d.overdue_count}件!</span>
+        </div>` : "";
+    const tdHtml = d.due_today_count > 0
+      ? `<div style="display:flex;align-items:center;gap:6px;padding:3px 6px;background:rgba(255,180,0,.10);border-radius:3px;margin-bottom:3px;cursor:pointer" onclick="msgInput.value='/next --due-today';send()">
+          <span>📅</span><span style="flex:1;font-size:12px;color:var(--warn)">今日期限</span><span style="font-size:12px;color:var(--warn)">${d.due_today_count}件</span>
+        </div>` : "";
+
+    // カウンター一覧
+    const makeRow = (icon, label, count, color, cmd) =>
+      `<div style="display:flex;align-items:center;gap:6px;padding:3px 6px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer" onclick="msgInput.value='${cmd}';send()">
+        <span style="font-size:11px">${icon}</span>
+        <span style="flex:1;font-size:12px">${label}</span>
+        <span style="font-size:12px;color:${color}">${count}件</span>
+      </div>`;
+    const statsHtml =
+      makeRow("📥","Inbox",      d.inbox_count,    d.inbox_count > 0 ? "var(--warn)" : "var(--muted)", "/inbox") +
+      makeRow("✅","Next Actions",d.next_actions,   d.next_actions > 0 ? "var(--ok)" : "var(--muted)", "/next") +
+      makeRow("📁","Projects",    d.projects_count, "var(--warn)", "/projects") +
+      makeRow("📦","Someday",     d.someday_count,  "var(--muted)", "/someday") +
+      makeRow("⏳","Waiting",     d.waiting_count,  "var(--muted)", "/waiting");
+    const logMark = d.daily_log_today
+      ? `<span style="color:var(--ok)">✅ 今日のログあり</span>`
+      : `<span style="color:var(--muted)">❌ ログなし → <a href="#" onclick="msgInput.value='/morning';send();return false" style="color:var(--accent)">作成</a></span>`;
+
+    // アクションボタン
+    const acHtml = `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+      <button onclick="msgInput.value='/do';send()" style="${_btnStyle('var(--ok)')}">▶ /do</button>
+      <button onclick="msgInput.value='/done';send()" style="${_btnStyle('var(--muted)')}">✅ /done</button>
+      <button onclick="msgInput.value='/inbox';send()" style="${_btnStyle('var(--warn)')}">📥 /inbox</button>
+      <button onclick="msgInput.value='/next';send()" style="${_btnStyle('#3a9');}">📋 /next</button>
+      <button onclick="msgInput.value='/weekly';send()" style="${_btnStyle('var(--accent)')}">📆 /weekly</button>
+    </div>`;
+
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">
+      <span class="intent-tag tag-run_ok">GTD Status</span> 📊 <strong>${d.date}</strong>
+      <div style="margin:8px 0">
+        ${ctHtml}${odHtml}${tdHtml}
+        <div style="margin-top:4px">${statsHtml}</div>
+        <div style="margin-top:6px;font-size:11px;padding:0 6px">${logMark}</div>
+        ${acHtml}
+      </div>${ts()}</div>`;
+    thinkingEl.replaceWith(el); scrollEnd();
+    pollGtdStatus();
+  } catch(e) {
+    replaceThinking(thinkingEl, {status:"error", error: String(e)});
+  }
+}
+
+// ── GTD Weekly リッチカード ───────────────────────────────────────────────
+async function sendWeeklyRich(label) {
+  appendUser(label);
+  const thinkingEl = appendThinking();
+  try {
+    const r = await fetch("/api/gtd/weekly");
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    const logs   = d.week_logs || [];
+    const trend  = d.inbox_trend || [];
+
+    // Inbox推移バーチャート
+    let trendHtml = "";
+    if (trend.length) {
+      const maxInbox = Math.max(...trend.map(t => t.inbox), 1);
+      trendHtml = `<div style="margin-top:8px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">📈 Inbox 推移 (直近ログより)</div>
+        ${trend.map(t => {
+          const pct = Math.round((t.inbox / maxInbox) * 100);
+          return `<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
+            <span style="font-size:10px;color:var(--muted);min-width:72px">${t.date}</span>
+            <div style="flex:1;background:rgba(255,255,255,.06);border-radius:2px;height:8px">
+              <div style="width:${pct}%;height:100%;background:var(--warn);border-radius:2px"></div>
+            </div>
+            <span style="font-size:10px;min-width:28px;text-align:right;color:var(--warn)">${t.inbox}</span>
+          </div>`;
+        }).join("")}
+      </div>`;
+    }
+
+    // ログ日付バッジ
+    const logBadges = logs.slice(0,7).map(s =>
+      `<span style="font-size:10px;background:rgba(0,180,220,.12);color:#6dd0e8;border-radius:3px;padding:1px 5px">${s}</span>`
+    ).join(" ");
+
+    // サマリーカード
+    const cardHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0">
+      <div style="background:rgba(255,255,255,.04);border-radius:5px;padding:8px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:var(--warn)">${d.inbox_now}</div>
+        <div style="font-size:10px;color:var(--muted)">📥 現在のInbox</div>
+      </div>
+      <div style="background:rgba(255,255,255,.04);border-radius:5px;padding:8px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:var(--ok)">${d.next_actions}</div>
+        <div style="font-size:10px;color:var(--muted)">✅ Next Actions</div>
+      </div>
+    </div>`;
+
+    // アクションボタン
+    const acHtml = `<div style="margin-top:8px;display:flex;gap:6px">
+      <button onclick="msgInput.value='/inbox';send()" style="${_btnStyle('var(--warn)')}">📥 Inboxを処理</button>
+      <button onclick="msgInput.value='/next';send()" style="${_btnStyle('var(--ok)')}">✅ Next確認</button>
+    </div>`;
+
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">
+      <span class="intent-tag tag-run_ok">GTD Weekly</span> 📆 <strong>週次レビュー</strong>
+      ${cardHtml}
+      <div style="font-size:11px;color:var(--muted);padding:0 2px">📄 先週のログ ${logs.length}日分:  ${logBadges || '<em>なし</em>'}</div>
+      ${trendHtml}
+      ${acHtml}
+      ${ts()}</div>`;
+    thinkingEl.replaceWith(el); scrollEnd();
+  } catch(e) {
+    replaceThinking(thinkingEl, {status:"error", error: String(e)});
+  }
 }
 
 // ── Do リッチセレクター ───────────────────────────────────────────────────
@@ -2063,6 +2223,154 @@ async function doneTask(index, name, btn) {
   } catch(e) {
     showToast(`done エラー: ${String(e)}`, 4000);
     if (btn) { btn.disabled = false; btn.textContent = "✅"; }
+  }
+}
+
+async function sendStatsCard(label) {
+  appendUser(label || "/stats");
+  const thinkingEl = appendThinking();
+  try {
+    const r = await fetch("/api/gtd/stats");
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    const today    = d.today     || 0;
+    const week     = d.this_week || 0;
+    const total    = d.total     || 0;
+    const trend    = d.daily_trend || [];
+    const maxVal   = Math.max(1, ...trend.map(t => t.count));
+    const barRows  = trend.map(t => {
+      const w    = Math.round(t.count / maxVal * 80);
+      const isToday = t.date === new Date().toISOString().slice(0, 10);
+      const col  = t.count === 0 ? "var(--line2)" : isToday ? "var(--ok)" : "var(--accent)";
+      const mm   = t.date.slice(5); // MM-DD
+      return `<div style="display:flex;align-items:center;gap:4px;font-size:10px;margin:1px 0">
+        <span style="color:var(--muted);min-width:34px;text-align:right">${escHtml(mm)}</span>
+        <div style="height:8px;width:${w}px;background:${col};border-radius:2px;min-width:${t.count?2:0}px"></div>
+        ${t.count ? `<span style="color:var(--muted);font-size:9px">${t.count}</span>` : ""}
+      </div>`;
+    }).join("");
+    const html = `<div class="report-section">
+      <h4 style="font-size:12px;margin:0 0 6px">📊 GTD Stats</h4>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <div style="text-align:center;flex:1;border:1px solid var(--line2);border-radius:4px;padding:4px">
+          <div style="font-size:18px;font-weight:700;color:var(--ok)">${today}</div>
+          <div style="font-size:9px;color:var(--muted)">今日</div>
+        </div>
+        <div style="text-align:center;flex:1;border:1px solid var(--line2);border-radius:4px;padding:4px">
+          <div style="font-size:18px;font-weight:700;color:var(--accent)">${week}</div>
+          <div style="font-size:9px;color:var(--muted)">今週</div>
+        </div>
+        <div style="text-align:center;flex:1;border:1px solid var(--line2);border-radius:4px;padding:4px">
+          <div style="font-size:18px;font-weight:700;color:var(--fg)">${total}</div>
+          <div style="font-size:9px;color:var(--muted)">累計</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:3px">直近14日 完了トレンド</div>
+      ${barRows}
+    </div>`;
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">${html}${ts()}</div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+  } catch(e) {
+    replaceThinking(thinkingEl, { status: "dispatch_error", error: String(e) });
+  }
+}
+
+async function sendWeeklyCard(label) {
+  appendUser(label || "/weekly");
+  const thinkingEl = appendThinking();
+  try {
+    const r = await fetch("/api/gtd/weekly");
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    const logs    = d.week_logs || [];
+    const inbox   = d.inbox_now ?? "?";
+    const nextN   = d.next_actions ?? "?";
+    const trend   = d.inbox_trend || [];
+    const maxInbox = Math.max(1, ...trend.map(t => t.inbox));
+    const trendRows = trend.map(t => {
+      const w = Math.round(t.inbox / maxInbox * 70);
+      return `<div style="display:flex;align-items:center;gap:4px;font-size:10px;margin:1px 0">
+        <span style="color:var(--muted);min-width:40px;text-align:right">${escHtml(t.date.slice(5))}</span>
+        <div style="height:7px;width:${w}px;background:${t.inbox > 0 ? 'var(--warn)' : 'var(--line2)'};border-radius:2px;min-width:${t.inbox?2:0}px"></div>
+        ${t.inbox ? `<span style="color:var(--muted);font-size:9px">${t.inbox}</span>` : ""}
+      </div>`;
+    }).join("");
+    const logList = logs.length
+      ? logs.map(d2 => `<div style="font-size:11px;padding:1px 0">📄 ${escHtml(d2)}</div>`).join("")
+      : `<div style="font-size:11px;color:var(--muted)">（日次ログなし）</div>`;
+    const html = `<div class="report-section">
+      <h4 style="font-size:12px;margin:0 0 6px">📅 週次レビュー</h4>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <div style="text-align:center;flex:1;border:1px solid var(--line2);border-radius:4px;padding:4px">
+          <div style="font-size:18px;font-weight:700;color:${inbox > 5 ? 'var(--warn)' : 'var(--ok)'}">${inbox}</div>
+          <div style="font-size:9px;color:var(--muted)">Inbox</div>
+        </div>
+        <div style="text-align:center;flex:1;border:1px solid var(--line2);border-radius:4px;padding:4px">
+          <div style="font-size:18px;font-weight:700;color:${nextN > 0 ? 'var(--ok)' : 'var(--muted)'}">${nextN}</div>
+          <div style="font-size:9px;color:var(--muted)">Next Actions</div>
+        </div>
+        <div style="text-align:center;flex:1;border:1px solid var(--line2);border-radius:4px;padding:4px">
+          <div style="font-size:18px;font-weight:700;color:var(--fg)">${logs.length}</div>
+          <div style="font-size:9px;color:var(--muted)">日次ログ</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Inbox 推移</div>
+      ${trendRows}
+      <div style="font-size:10px;color:var(--muted);margin:6px 0 3px">今週の日次ログ</div>
+      ${logList}
+    </div>`;
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">${html}${ts()}</div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+  } catch(e) {
+    replaceThinking(thinkingEl, { status: "dispatch_error", error: String(e) });
+  }
+}
+
+async function sendArchiveCard(count, label) {
+  appendUser(label || `/archive ${count || ""}`);
+  const thinkingEl = appendThinking();
+  try {
+    const n = parseInt(count) || 30;
+    const r = await fetch(`/api/gtd/archive?count=${n}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const items = await r.json();
+    if (!Array.isArray(items) || !items.length) {
+      const el = document.createElement("div");
+      el.className = "msg agent";
+      el.innerHTML = `<div class="avatar">OS</div><div class="bubble"><span style="color:var(--muted)">📦 完了タスクなし</span>${ts()}</div>`;
+      thinkingEl.replaceWith(el);
+      scrollEnd(); return;
+    }
+    // 日付グループでまとめる
+    const byDate = {};
+    items.forEach(item => {
+      const k = item.date || "?";
+      if (!byDate[k]) byDate[k] = [];
+      byDate[k].push(item.name || "?");
+    });
+    const rows = Object.entries(byDate).map(([date, names]) =>
+      `<div style="margin-bottom:4px">
+        <div style="font-size:10px;color:var(--muted);border-bottom:1px solid var(--line2);margin-bottom:2px">${escHtml(date)}</div>
+        ${names.map(n2 => `<div style="font-size:11px;padding:1px 0 1px 8px">✅ ${escHtml(n2)}</div>`).join("")}
+      </div>`
+    ).join("");
+    const html = `<div class="report-section" style="max-height:320px;overflow-y:auto">
+      <h4 style="font-size:12px;margin:0 0 6px">📦 完了タスク (${items.length}件)</h4>
+      ${rows}
+    </div>`;
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">${html}${ts()}</div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+  } catch(e) {
+    replaceThinking(thinkingEl, { status: "dispatch_error", error: String(e) });
   }
 }
 
@@ -2363,8 +2671,8 @@ async function send() {
       if (!arg) { appendAgent("<span style='color:var(--fail)'>/notify の後にメッセージを入力してください 例: /notify テスト通知</span>"); return; }
       await sendShellRun("notify", arg.split(/\s+/), message); return;
     }
-    if (cmd === "gtd")    { await sendShellRun("gtd",    ["status"], message); return; }
-    if (cmd === "weekly") { await sendShellRun("gtd",    ["weekly"], message); return; }
+    if (cmd === "gtd")    { await sendGtdStatusRich(message); return; }
+    if (cmd === "weekly") { await sendWeeklyCard(message); return; }
     if (cmd === "do") {
       const idxMatch   = arg.match(/^(\d+)/);
       const timerMatch = arg.match(/--timer\s+(\d+)/);
@@ -2390,12 +2698,10 @@ async function send() {
       await sendShellRun("gtd", ["search", ...arg.split(/\s+/).filter(Boolean)], message); return;
     }
     if (cmd === "archive") {
-      const archArgs = ["archive"];
-      if (arg && /^\d+$/.test(arg.trim())) archArgs.push("--count", arg.trim());
-      await sendShellRun("gtd", archArgs, message); return;
+      await sendArchiveCard(arg && /^\d+$/.test(arg.trim()) ? arg.trim() : null, message); return;
     }
     if (cmd === "stats") {
-      await sendShellRun("gtd", ["stats"], message); return;
+      await sendStatsCard(message); return;
     }
     if (cmd === "edit") {
       const editArgs = ["edit"];
