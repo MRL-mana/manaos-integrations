@@ -5805,7 +5805,7 @@ def api_shell_heal():
 
 
 # manaosctl run コマンドのホワイトリスト（副作用のある操作は除外）
-_SHELL_RUN_WHITELIST = frozenset({"status", "deps", "events", "tier", "report", "cost", "dashboard", "watch", "gtd", "notify"})
+_SHELL_RUN_WHITELIST = frozenset({"status", "deps", "events", "tier", "report", "cost", "dashboard", "watch", "gtd", "notify", "logs"})
 
 _ANSI_RE = __import__("re").compile(r"\x1b\[[0-9;]*m")
 
@@ -5984,6 +5984,58 @@ def gtd_commit_proxy():
         args.append("--push")
     out = _gtd_run_cli(*args)
     return jsonify({"status": "ok", "output": out.strip()}), 200
+
+
+@app.route("/api/gtd/do", methods=["POST"])
+def gtd_do_proxy():
+    """「今これをやる」宣言: {"index": 2} or {"name": "タスク名"} + {"timer": 15}"""
+    payload = request.get_json(force=True, silent=True) or {}
+    args = ["do"]
+    if payload.get("index") is not None:
+        args += ["--index", str(int(payload["index"]))]
+    elif payload.get("name"):
+        args += ["--name", str(payload["name"])]
+    if payload.get("timer"):
+        args += ["--timer", str(int(payload["timer"]))]
+    out = _gtd_run_cli(*args)
+    return jsonify({"status": "ok", "output": out.strip()}), 200
+
+
+@app.route("/api/shell/logs", methods=["GET"])
+def shell_logs():
+    """GET /api/shell/logs?service=llm_routing&n=30
+    サービスのログ末尾 N 行を返す。
+    service=list のときはサービス一覧 JSON を返す。
+    """
+    service = request.args.get("service", "unified_api")
+    try:
+        n = int(request.args.get("n", "30"))
+        n = max(1, min(n, 500))   # 1 <= n <= 500
+    except ValueError:
+        return jsonify({"error": "n must be integer"}), 400
+
+    import subprocess as _sp
+    python_exe = sys.executable
+    manaosctl  = os.path.join(os.path.dirname(__file__), "..", "tools", "manaosctl.py")
+    cmd = [python_exe, manaosctl, "logs", service, "-n", str(n)]
+    try:
+        result = _sp.run(
+            cmd,
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            timeout=10,
+            cwd=os.path.dirname(os.path.dirname(__file__)),
+        )
+        output = result.stdout + (result.stderr if result.returncode != 0 else "")
+        return jsonify({
+            "service":   service,
+            "n":         n,
+            "output":    output.strip(),
+            "exit_code": result.returncode,
+        }), 200
+    except _sp.TimeoutExpired:
+        return jsonify({"error": "timeout"}), 504
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # =============================================================================
 # END ManaOS Shell

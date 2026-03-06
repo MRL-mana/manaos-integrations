@@ -568,7 +568,12 @@ const SLASH_CMDS = [
   { cmd: "/memo <text> due:YYYY-MM-DD", desc: "期限付きで Inbox 保存 例: /memo 資料作成 due:2026-03-10" },
   { cmd: "/inbox",            desc: "GTD Inbox 一覧表示" },
   { cmd: "/morning",          desc: "今日の日次ログを表示/作成" },
-  { cmd: "/next",             desc: "Next Actions 一覧（やること確認）" },
+  { cmd: "/next",               desc: "Next Actions 一覧（やること確認）" },
+  { cmd: "/next @ctx",           desc: "@コンテキストでフィルター  例: /next @pc" },
+  { cmd: "/do",                   desc: "「今これをやる」宣言 – Next Action を選んで作業開始（インタラクティブ）" },
+  { cmd: "/do <N>",              desc: "単作: Next Action の番号を指定  例: /do 2" },
+  { cmd: "/do --name <text>",    desc: "タスク名を直接指定  例: /do --name 資料作成" },
+  { cmd: "/do <N> --timer <min>",desc: "作業開始 + N分後に確認通知  例: /do 1 --timer 25" },
   { cmd: "/process <N> <dest>", desc: "Inbox[N]を振り分け (dest: next/done/someday/waiting/project)" },
   // 通知
   { cmd: "/notify <msg>",     desc: "ntfy / Slack に通知を送信" },
@@ -577,6 +582,10 @@ const SLASH_CMDS = [
   { cmd: "/gtd",              desc: "GTD ステータス概要（Inbox / Next 件数）" },
   { cmd: "/weekly",           desc: "GTD 週次レビュー（先週ログ + Inbox 推移）" },
   { cmd: "/commit",           desc: "GTD日次ログを git commit（--push で push も）" },
+  // ログ表示
+  { cmd: "/logs <svc>",       desc: "サービスのログ末尾30行表示  例: /logs llm_routing" },
+  { cmd: "/logs <svc> <n>",   desc: "N行指定  例: /logs memory 50" },
+  { cmd: "/logs list",        desc: "ログ対応サービス一覧" },
 ];
 
 // ── Command history (↑/↓) ─────────────────────────────────────────────────
@@ -1310,7 +1319,11 @@ function showHelp() {
     ["/memo &lt;text&gt; due:DATE", "期限付き  例: /memo 資料作成 due:2026-03-10"],
     ["/inbox",            "GTD Inbox 一覧"],
     ["/morning",          "今日の日次ログ表示/作成"],
-    ["/next",             "Next Actions 一覧（やること確認）"],
+    ["/next",               "Next Actions 一覧（やること確認）"],
+    ["/next @ctx",           "@コンテキストフィルター  例: /next @pc"],
+    ["/do",                  "「今これをやる」 – Next Actionを選択し作業開始"],
+    ["/do &lt;N&gt;",            "番号で直即開始  例: /do 2"],
+    ["/do &lt;N&gt; --timer &lt;min&gt;", "作業開始 + N分後通知  例: /do 1 --timer 25"],
     ["/process &lt;N&gt; &lt;dest&gt;", "Inbox[N]を振り分け (next/done/someday/waiting/project)"],
     // 通知
     ["/notify &lt;msg&gt;", "ntfy / Slack に通知を送信"],
@@ -1318,6 +1331,10 @@ function showHelp() {
     ["/gtd",              "GTD ステータス概要（Inbox/Next 件数）"],
     ["/weekly",           "GTD 週次レビュー（先週ログ + Inbox 推移）"],
     ["/commit [--push]",  "GTD日次ログ git commit（--push で push も）"],
+    // ログ表示
+    ["/logs &lt;svc&gt;",       "サービスのログ末尾30行  例: /logs llm_routing"],
+    ["/logs &lt;svc&gt; &lt;n&gt;",   "N行指定  例: /logs memory 50"],
+    ["/logs list",        "ログ対応サービス一覧"],
   ];
   const tBody = rows.map(([c, d]) =>
     `<tr><td style="font-family:monospace;white-space:nowrap;color:var(--accent);padding:2px 14px 2px 0">${c}</td>` +
@@ -1383,7 +1400,16 @@ async function send() {
     }
     if (cmd === "inbox")   { await sendShellRun("gtd",    ["inbox"],   message); return; }
     if (cmd === "morning") { await sendShellRun("gtd",    ["morning"], message); return; }
-    if (cmd === "next")    { await sendShellRun("gtd",    ["next"],    message); return; }
+    if (cmd === "next") {
+      const nextArgs = ["next"];
+      if (arg) {
+        const ctxMatch2 = arg.match(/(@\S+)/);
+        if (ctxMatch2)           nextArgs.push("--filter", ctxMatch2[1]);
+        if (/--overdue/i.test(arg))   nextArgs.push("--overdue");
+        if (/--due-today/i.test(arg)) nextArgs.push("--due-today");
+      }
+      await sendShellRun("gtd", nextArgs, message); return;
+    }
     if (cmd === "process") {
       const parts2 = arg.split(/\s+/);
       const n    = parseInt(parts2[0], 10);
@@ -1401,9 +1427,40 @@ async function send() {
     }
     if (cmd === "gtd")    { await sendShellRun("gtd",    ["status"], message); return; }
     if (cmd === "weekly") { await sendShellRun("gtd",    ["weekly"], message); return; }
+    if (cmd === "do") {
+      const doArgs = ["do"];
+      const idxMatch = arg.match(/^(\d+)/);
+      const nmMatch  = arg.match(/--name\s+(\S.*?)(?:\s+--|$)/);
+      const timerMatch = arg.match(/--timer\s+(\d+)/);
+      if (idxMatch)   doArgs.push("--index", idxMatch[1]);
+      if (nmMatch)    doArgs.push("--name",  nmMatch[1].trim());
+      if (timerMatch) doArgs.push("--timer", timerMatch[1]);
+      await sendShellRun("gtd", doArgs, message); return;
+    }
     if (cmd === "commit") {
       const pushArgs = arg.includes("--push") ? ["commit", "--push"] : ["commit"];
       await sendShellRun("gtd", pushArgs, message); return;
+    }
+    if (cmd === "logs") {
+      const parts  = arg.trim().split(/\s+/);
+      const svc    = parts[0] || "unified_api";
+      const nLines = parseInt(parts[1]) || 30;
+      appendUser(message);
+      appendAgent(`<span style='opacity:.6'>📤 ${svc} ログ取得中…</span>`);
+      try {
+        const r = await fetch(`/api/shell/logs?service=${encodeURIComponent(svc)}&n=${nLines}`);
+        const j = await r.json();
+        if (j.error) {
+          replaceLastAgent(`<span style='color:var(--fail)'>エラー: ${j.error}</span>`);
+        } else {
+          const out = (j.output || "(出力なし)").replace(/\n/g, "<br>");
+          replaceLastAgent(`<pre style='margin:0;white-space:pre-wrap;font-size:11px'>${out}</pre>`);
+        }
+      } catch(e) {
+        replaceLastAgent(`<span style='color:var(--fail)'>fetch 失敗: ${e}</span>`);
+      }
+      busy = false; sendBtn.disabled = false; msgInput.disabled = false;
+      return;
     }
 
     const remap = {

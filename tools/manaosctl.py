@@ -1660,6 +1660,109 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         print(c("  ヒント: manaosctl gtd process  → Inbox を振り分けて Next Actions を作る", DIM))
         return 0
 
+    elif subcmd == "do":
+        # 「今これをやる」宣言: Next Actions から選択→ログ記録→通知→タイマー
+        na_items  = sorted(
+            [f for f in GTD_NA.glob("*.md") if f.name.upper() != "README.MD"]
+        )
+        task_name = getattr(args, "name",  None)
+        task_idx  = getattr(args, "index", None)
+        timer_min = getattr(args, "timer", 0)
+
+        # ── タスク選択 ────────────────────────────────────────────────────────
+        if task_name is None and task_idx is None:
+            if not na_items:
+                print(c("  Next Actions にアイテムがありません。", DIM))
+                print(c("  先に: manaosctl gtd process  (Inbox から振り分け)", DIM))
+                return 0
+            print()
+            print(c("  [Next Actions  \u4eca\u4f55\u3092\u3084\u308b\uff1f]", BOLD + GREEN))
+            print(c("  " + "\u2500" * 45, DIM))
+            for i, f in enumerate(na_items, 1):
+                nd = {"name": f.stem}
+                print(f"    [{i}] {nd['name']}")
+            print()
+            try:
+                ans = input("  \u756a\u53f7\u3092\u5165\u529b (0=\u30ad\u30e3\u30f3\u30bb\u30eb): ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                return 0
+            if ans == "0" or ans == "":
+                return 0
+            try:
+                idx = int(ans) - 1
+                task_name = na_items[idx].stem
+            except (ValueError, IndexError):
+                print(c(f"  [ERROR] \u7121\u52b9\u306a\u756a\u53f7: {ans}", RED))
+                return 1
+        elif task_idx is not None:
+            idx = task_idx - 1
+            if idx < 0 or idx >= len(na_items):
+                print(c(f"  [ERROR] \u30a4\u30f3\u30c7\u30c3\u30af\u30b9 {task_idx} \u306f\u7bc4\u56f2\u5916\uff081\uff5e{len(na_items)}\uff09", RED))
+                return 1
+            task_name = na_items[idx].stem
+        # --name で直接指定の場合はそのまま
+
+        # ── 日次ログに記録 ────────────────────────────────────────────────────
+        now_dt  = datetime.datetime.now()
+        now_str = now_dt.strftime("%H:%M")
+        today   = now_dt.strftime("%Y-%m-%d")
+        log_file_path = GTD_LOGS / f"{today}.md"
+        if log_file_path.exists():
+            txt = log_file_path.read_text(encoding="utf-8")
+            if "\n## \u4f5c\u696d\u30ed\u30b0\n" not in txt:
+                txt = txt.rstrip("\n") + "\n\n## \u4f5c\u696d\u30ed\u30b0\n"
+            txt += f"- {now_str} \u25b6\ufe0f \u4f5c\u696d\u958b\u59cb: {task_name}\n"
+            log_file_path.write_text(txt, encoding="utf-8")
+            print(c(f"  \ud83d\udcc4 \u65e5\u6b21\u30ed\u30b0\u306b\u8a18\u9332: {log_file_path.name}", DIM))
+
+        # ── 通知 ──────────────────────────────────────────────────────────────
+        notify_result = send_notify(
+            title="GTD: \u4f5c\u696d\u958b\u59cb",
+            message=f"\u25b6\ufe0f {task_name}",
+            priority="default",
+        )
+        print()
+        print(c(f"  \u25b6\ufe0f \u4f5c\u696d\u958b\u59cb: {task_name}", BOLD + GREEN))
+        print(c(f"  {now_str} \uff5e  (\u901a\u77e5: {notify_result})", DIM))
+
+        # ── タイマー登録 (Windows タスクスケジューラ) ─────────────────────────
+        if timer_min > 0:
+            import platform as _platform
+            if _platform.system() == "Windows":
+                try:
+                    notify_dt   = now_dt + datetime.timedelta(minutes=timer_min)
+                    task_tname  = f"GTD_DO_{now_dt.strftime('%Y%m%d%H%M%S')}"
+                    notify_time = notify_dt.strftime("%H:%M")
+                    py_exe  = sys.executable
+                    ctl_py  = str(Path(__file__).resolve())
+                    cmd_str = (
+                        f'"{py_exe}" "{ctl_py}" notify '
+                        f'--title "GTD\u78ba\u8a8d" '
+                        f'--message "{timer_min}\u5206\u7d4c\u904e\u3002{task_name} \u306e\u9032\u6357\u306f\uff1f"'
+                    )
+                    res = subprocess.run(
+                        [
+                            "schtasks", "/create",
+                            "/tn",  task_tname,
+                            "/tr",  cmd_str,
+                            "/sc",  "ONCE",
+                            "/st",  notify_time,
+                            "/f",
+                        ],
+                        capture_output=True, text=True,
+                    )
+                    if res.returncode == 0:
+                        print(c(f"  \u23f1 {timer_min}\u5206\u5f8c\u30bf\u30a4\u30de\u30fc\u8a2d\u5b9a: {notify_time}", CYAN))
+                    else:
+                        print(c(f"  [WARN] \u30bf\u30a4\u30de\u30fc\u767b\u9332\u5931\u6557: {res.stderr.strip()}", YELLOW))
+                except Exception as _e:
+                    print(c(f"  [WARN] \u30bf\u30a4\u30de\u30fc\u4f8b\u5916: {_e}", YELLOW))
+            else:
+                print(c(f"  [INFO] \u30bf\u30a4\u30de\u30fc\u767b\u9332\u306fWindows\u306e\u307f\u5bfe\u5fdc", DIM))
+        print()
+        return 0
+
     elif subcmd == "commit":
         # GTD 変更を git にコミット（オプションで push も実行）
         do_push = getattr(args, "push", False)
@@ -1948,6 +2051,10 @@ def main() -> None:
     p_gtd_process.add_argument("--to",     type=str, default=None, help="移動先: next/projects/someday/waiting/done")
     p_gtd_weekly = p_gtd_sub.add_parser("weekly", help="週次レビュー（先週ログ + Inbox推移）")
     p_gtd_weekly.add_argument("--json", action="store_true")
+    p_gtd_do = p_gtd_sub.add_parser("do", help="\u300c\u4eca\u3053\u308c\u3092\u3084\u308b\u300d\u5ba3\u8a00: Next Action \u64cd\u4f5c\u958b\u59cb + \u30ed\u30b0\u8a18\u9332 + \u901a\u77e5")
+    p_gtd_do.add_argument("--index", type=int,  default=None, help="Next Action \u306e\u756a\u53f7 (1-based)")
+    p_gtd_do.add_argument("--name",  type=str,  default=None, help="\u30bf\u30b9\u30af\u540d\u3092\u76f4\u63a5\u6307\u5b9a")
+    p_gtd_do.add_argument("--timer", type=int,  default=0,    help="N\u5206\u5f8c\u306b\u78ba\u8a8d\u901a\u77e5 (Windows\u30bf\u30b9\u30af\u30b9\u30b1\u30b8\u30e5\u30fc\u30e9\u30fc\u767b\u9332)")
     p_gtd_commit = p_gtd_sub.add_parser("commit", help="GTD 変更を git にコミット")
     p_gtd_commit.add_argument("--push", action="store_true", help="コミット後に git push origin master も実行")
     p_gtd_status = p_gtd_sub.add_parser("status", help="GTD ステータス概要")
