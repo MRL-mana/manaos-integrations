@@ -108,6 +108,11 @@ print('ntfy OK')
     } catch { Write-Host "[GTD Evening] ntfy: NG ($($_.Exception.Message))" }
 }
 
+# ── GTD日次ログを git commit --push ────────────────────────────────────────
+Write-Host "[GTD Evening] GTD変更を git commit..."
+$commitOut = & python "$PSScriptRoot\tools\manaosctl.py" gtd commit --push 2>&1
+$commitOut | ForEach-Object { Write-Host "[GTD Evening] commit: $_" }
+
 if ($Notify) {
     $title = "ManaOS Evening $Date"
     $body  = "完了: $doneCount 件 ($achievement)`n$doneText`n`n明日Top1: $tomorrowTop`n気づき: $insightTop"

@@ -5907,7 +5907,12 @@ def gtd_capture_proxy():
             text = payload.get("text") or payload.get("content") or ""
             if not text:
                 return _json_error("text field required", 400, namespace="gtd")
-            out = _gtd_run_cli("capture", text)
+            extra_args = []
+            if payload.get("context"):
+                extra_args += ["--context", str(payload["context"])]
+            if payload.get("due"):
+                extra_args += ["--due", str(payload["due"])]
+            out = _gtd_run_cli("capture", text, *extra_args)
             return jsonify({"status": "ok", "source": "fallback_cli", "output": out.strip()}), 200
         except Exception as exc:
             return _json_error(str(exc), 500, namespace="gtd")

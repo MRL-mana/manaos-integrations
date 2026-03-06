@@ -564,6 +564,8 @@ const SLASH_CMDS = [
   { cmd: "/help",             desc: "コマンド一覧を表示" },
   // GTD
   { cmd: "/memo <text>",      desc: "Inbox にメモを保存 (GTD キャプチャ)" },
+  { cmd: "/memo <text> @ctx", desc: "コンテキストタグ付きで Inbox 保存 例: /memo 在庫確認 @phone" },
+  { cmd: "/memo <text> due:YYYY-MM-DD", desc: "期限付きで Inbox 保存 例: /memo 資料作成 due:2026-03-10" },
   { cmd: "/inbox",            desc: "GTD Inbox 一覧表示" },
   { cmd: "/morning",          desc: "今日の日次ログを表示/作成" },
   { cmd: "/next",             desc: "Next Actions 一覧（やること確認）" },
@@ -1237,10 +1239,13 @@ async function sendShellRun(command, args, label) {
 }
 
 // ── GTD Capture (direct POST to port 5130, fallback to unified_api) ────────
-async function sendGtdCapture(text, label) {
+async function sendGtdCapture(text, label, context, due) {
   appendUser(label);
   const thinkingEl = appendThinking();
-  const payload = JSON.stringify({ text, source: "shell", type: "inbox" });
+  const payloadObj = { text, source: "shell", type: "inbox" };
+  if (context) payloadObj.context = context;
+  if (due)     payloadObj.due     = due;
+  const payload = JSON.stringify(payloadObj);
   async function _post(url) {
     return await fetch(url, {
       method: "POST",
@@ -1300,7 +1305,9 @@ function showHelp() {
     ["/clear",            "チャット履歴クリア"],
     ["/help",             "このヘルプを表示"],
     // GTD
-    ["/memo &lt;text&gt;", "Inbox にメモ保存 (GTD キャプチャ)"],
+    ["/memo &lt;text&gt;",          "Inbox にメモ保存 (GTD キャプチャ)"],
+    ["/memo &lt;text&gt; @ctx",     "コンテキストタグ付き  例: /memo 電話 @phone"],
+    ["/memo &lt;text&gt; due:DATE", "期限付き  例: /memo 資料作成 due:2026-03-10"],
     ["/inbox",            "GTD Inbox 一覧"],
     ["/morning",          "今日の日次ログ表示/作成"],
     ["/next",             "Next Actions 一覧（やること確認）"],
@@ -1366,7 +1373,13 @@ async function send() {
     // GTD slash commands
     if (cmd === "memo") {
       if (!arg) { appendAgent("<span style='color:var(--fail)'>/memo の後にテキストを入力してください 例: /memo スタンドの在庫確認</span>"); return; }
-      await sendGtdCapture(arg, message); return;
+      // @context タグと due:YYYY-MM-DD を解析
+      const ctxMatch = arg.match(/(@\S+)/);
+      const dueMatch = arg.match(/\bdue:(\d{4}-\d{2}-\d{2})\b/);
+      const ctxTag   = ctxMatch ? ctxMatch[1] : null;
+      const dueDate  = dueMatch ? dueMatch[1] : null;
+      const cleanText = arg.replace(/@\S+/g, "").replace(/\bdue:\d{4}-\d{2}-\d{2}\b/g, "").trim();
+      await sendGtdCapture(cleanText || arg, message, ctxTag, dueDate); return;
     }
     if (cmd === "inbox")   { await sendShellRun("gtd",    ["inbox"],   message); return; }
     if (cmd === "morning") { await sendShellRun("gtd",    ["morning"], message); return; }

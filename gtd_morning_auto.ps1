@@ -175,6 +175,11 @@ if ($Notify) {
     Send-ManaOSNotify -Title $title -Body $body
 }
 
+# ── GTD日次ログを git commit ────────────────────────────────────────────────
+Write-Host "[GTD Morning] GTD変更を git commit..."
+$commitOut = & python "$PSScriptRoot\tools\manaosctl.py" gtd commit 2>&1
+$commitOut | ForEach-Object { Write-Host "[GTD Morning] commit: $_" }
+
 # ---- サマリ出力 ----
 Write-Host ""
 Write-Host "============================================"

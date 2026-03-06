@@ -1403,20 +1403,30 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         if not text:
             print(c("[ERROR] テキストを指定してください: manaosctl gtd capture <text>", RED), file=sys.stderr)
             return 1
+        context_tag = getattr(args, "context", None) or ""
+        due_date    = getattr(args, "due",     None) or ""
         now  = datetime.datetime.now()
         slug = _re.sub(r"[^\w\s]", "", text)[:25].strip().replace(" ", "_")
         fname = f"{now.strftime('%Y%m%d_%H%M')}_CLI_{slug}.md"
         GTD_INBOX.mkdir(parents=True, exist_ok=True)
         path  = GTD_INBOX / fname
+        meta_lines = [
+            f"- キャプチャ日時: {now.strftime('%Y-%m-%d %H:%M')}",
+            f"- ソース: manaosctl",
+        ]
+        if context_tag:
+            meta_lines.append(f"- context: {context_tag}")
+        if due_date:
+            meta_lines.append(f"- due: {due_date}")
         path.write_text(
-            f"# {text}\n\n"
-            f"- キャプチャ日時: {now.strftime('%Y-%m-%d %H:%M')}\n"
-            f"- ソース: manaosctl\n\n"
-            f"## 内容\n{text}\n",
+            f"# {text}\n\n" + "\n".join(meta_lines) + f"\n\n## 内容\n{text}\n",
             encoding="utf-8",
         )
         count = _inbox_count()
-        print(c(f"✅ Inbox 保存: {fname}  (残 {count} 件)", GREEN))
+        extras = ""
+        if context_tag: extras += f"  [{context_tag}]"
+        if due_date:    extras += f"  due:{due_date}"
+        print(c(f"✅ Inbox 保存: {fname}{extras}  (残 {count} 件)", GREEN))
         return 0
 
     elif subcmd == "inbox":
@@ -1447,18 +1457,49 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         if projects_dir.exists():
             proj_items = sorted([f for f in projects_dir.rglob("*.md") if f.name.upper() != "README.MD"])
         use_json = getattr(args, "json", False)
+
+        # 各 Next Action ファイルから context / due を抽出
+        def _parse_na(f: Path) -> dict:
+            try:
+                txt = f.read_text(encoding="utf-8", errors="replace")
+            except Exception:
+                txt = ""
+            ctx  = ""
+            due  = ""
+            for line in txt.splitlines():
+                if line.startswith("- context:"):
+                    ctx = line.split(":", 1)[1].strip()
+                elif line.startswith("- due:"):
+                    due = line.split(":", 1)[1].strip()
+            return {"name": f.stem, "context": ctx, "due": due}
+
+        na_data = [_parse_na(f) for f in items]
+        today_str = datetime.datetime.now().strftime("%Y-%m-%d")
+
         if use_json:
             print(json.dumps({
-                "next_actions": [f.stem for f in items],
+                "next_actions": na_data,
                 "projects":     [str(f.relative_to(REPO_ROOT)) for f in proj_items],
             }, ensure_ascii=False, indent=2))
             return 0
         print()
         print(c(f"  [Next Actions  {len(items)} 件]", BOLD + GREEN))
         print(c("  " + "─" * 50, DIM))
-        if items:
-            for f in items:
-                print(f"    ✅ {f.stem}")
+        if na_data:
+            for nd in na_data:
+                line = f"    ✅ {nd['name']}"
+                extras = []
+                if nd["context"]:
+                    extras.append(c(nd["context"], CYAN))
+                if nd["due"]:
+                    overdue = nd["due"] < today_str
+                    due_str = c(f"due:{nd['due']}", RED if overdue else YELLOW)
+                    if overdue:
+                        due_str += c(" [期限超過]", RED + BOLD)
+                    extras.append(due_str)
+                if extras:
+                    line += "  " + "  ".join(extras)
+                print(line)
         else:
             print(c("    （なし）", DIM))
         if proj_items:
@@ -1786,6 +1827,8 @@ def main() -> None:
     p_gtd_sub.add_parser("morning", help="今日の日次ログを表示（なければ作成）")
     p_gtd_capture = p_gtd_sub.add_parser("capture", help="Inbox にテキストを保存")
     p_gtd_capture.add_argument("text", nargs="+", help="保存するテキスト")
+    p_gtd_capture.add_argument("--context", type=str, default=None, help="コンテキストタグ (e.g. @pc @phone @outside)")
+    p_gtd_capture.add_argument("--due",     type=str, default=None, help="期限日 YYYY-MM-DD")
     p_gtd_inbox = p_gtd_sub.add_parser("inbox", help="Inbox 一覧表示")
     p_gtd_inbox.add_argument("--json", action="store_true")
     p_gtd_next = p_gtd_sub.add_parser("next", help="Next Actions 一覧表示")
