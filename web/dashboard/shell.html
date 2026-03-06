@@ -1894,6 +1894,176 @@ async function sendNextRich(opts, label) {
   busy = false; sendBtn.disabled = false; msgInput.disabled = false;
 }
 
+// ── Do リッチセレクター ───────────────────────────────────────────────────
+async function sendDoRich(preIndex, preTimer, label) {
+  // preIndex: 番号直指定 (string|null), preTimer: タイマー分 (string|null)
+  // 番号直指定の場合はそのまま /api/gtd/do POST
+  if (preIndex) {
+    const body = { index: parseInt(preIndex, 10) };
+    if (preTimer) body.timer = parseInt(preTimer, 10);
+    appendUser(label);
+    const thinkingEl = appendThinking();
+    try {
+      const r = await fetch("/api/gtd/do", {
+        method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(body)
+      });
+      const j = await r.json().catch(() => ({}));
+      const el = document.createElement("div");
+      el.className = "msg agent";
+      const timerStr = body.timer ? `  <span style="color:var(--warn)">⏱ ${body.timer}分</span>` : "";
+      el.innerHTML = `<div class="avatar">OS</div><div class="bubble">
+        <span class="intent-tag ${r.ok ? 'tag-run_ok' : 'tag-run_err'}">${r.ok ? 'GTD DO' : 'ERR'}</span>
+        <pre class="result-block">${escHtml(j.output || JSON.stringify(j))}</pre>${timerStr}${ts()}</div>`;
+      thinkingEl.replaceWith(el); scrollEnd();
+      if (r.ok) { pollGtdStatus(); _naExpanded = false; }
+    } catch(e) {
+      replaceThinking(thinkingEl, {status:"error", error: String(e)});
+    }
+    return;
+  }
+  // 一覧セレクター表示
+  busy = true; sendBtn.disabled = true; msgInput.disabled = true;
+  appendUser(label);
+  appendAgent(`<span style='opacity:.6'>✅ Next Actions 読み込み中…</span>`);
+  try {
+    const r = await fetch("/api/gtd/next");
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    const nas = d.next_actions || [];
+    const today = new Date().toISOString().slice(0, 10);
+    if (!nas.length) {
+      replaceLastAgent(`<span class="intent-tag tag-run_ok">GTD</span> ✅ Next Actions 空 — <span style="color:var(--muted)">まず /memo でタスクを追加しよう</span>`);
+    } else {
+      const rows = nas.map(na => {
+        const isOd = na.due && na.due < today;
+        const isTd = na.due && na.due === today;
+        const dueStr = na.due ? ` <span style="font-size:10px;color:${isOd?'var(--fail)':'var(--warn)'}">📅${na.due}${isOd?'⚠️':''}</span>` : "";
+        const ctxStr = na.context ? ` <span style="font-size:10px;color:#6dd0e8">${escHtml(na.context)}</span>` : "";
+        const bg = isOd ? "rgba(255,60,60,.10)" : isTd ? "rgba(255,180,0,.08)" : "";
+        return `<div style="display:flex;align-items:center;gap:6px;padding:4px 2px;background:${bg};border-bottom:1px solid rgba(255,255,255,.04)">
+          <span style="color:var(--muted);font-size:11px;min-width:22px">[${na.index}]</span>
+          <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(na.name)}${ctxStr}${dueStr}</span>
+          <input id="timer-${na.index}" type="number" min="1" max="120" placeholder="分" title="タイマー(分)" style="width:40px;font-size:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:var(--fg);border-radius:3px;padding:1px 3px">
+          <button onclick="doStart(${na.index},document.getElementById('timer-${na.index}').value)" style="${_btnStyle('var(--ok)')}">▶ 開始</button>
+        </div>`;
+      }).join("");
+      replaceLastAgent(
+        `<span class="intent-tag tag-run_ok">GTD</span> ▶ <strong>作業を選択</strong> <span style="font-size:11px;color:var(--muted)">タイマー(分)は任意</span>` +
+        `<div style="margin:6px 0;max-height:320px;overflow-y:auto">${rows}</div>`
+      );
+    }
+  } catch(e) {
+    replaceLastAgent(`<span style='color:var(--fail)'>取得失敗: ${escHtml(String(e))}</span>`);
+  }
+  busy = false; sendBtn.disabled = false; msgInput.disabled = false;
+}
+
+async function doStart(index, timerVal) {
+  const body = { index };
+  const t = parseInt(timerVal, 10);
+  if (!isNaN(t) && t > 0) body.timer = t;
+  try {
+    const r = await fetch("/api/gtd/do", {
+      method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(body)
+    });
+    const j = await r.json().catch(() => ({}));
+    const timerStr = body.timer ? ` ⏱ ${body.timer}分` : "";
+    showToast(`▶ ${j.output ? j.output.split("\n")[0] : `[${index}] 開始`}${timerStr}`);
+    if (r.ok) { pollGtdStatus(); _naExpanded = false; }
+    else showToast(`do 失敗: ${j.error || r.status}`, 4000);
+  } catch(e) { showToast(`do エラー: ${String(e)}`, 4000); }
+}
+
+// ── Done リッチセレクター ─────────────────────────────────────────────────
+async function sendDoneRich(preIndex, label) {
+  // 番号直指定の場合はそのまま完了処理
+  if (preIndex) {
+    const body = { index: parseInt(preIndex, 10) };
+    appendUser(label);
+    const thinkingEl = appendThinking();
+    try {
+      const r = await fetch("/api/gtd/done", {
+        method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(body)
+      });
+      const j = await r.json().catch(() => ({}));
+      const el = document.createElement("div");
+      el.className = "msg agent";
+      el.innerHTML = `<div class="avatar">OS</div><div class="bubble">
+        <span class="intent-tag ${r.ok ? 'tag-run_ok' : 'tag-run_err'}">${r.ok ? 'GTD DONE ✅' : 'ERR'}</span>
+        <pre class="result-block">${escHtml(j.output || JSON.stringify(j))}</pre>${ts()}</div>`;
+      thinkingEl.replaceWith(el); scrollEnd();
+      if (r.ok) { pollGtdStatus(); _naExpanded = false; }
+    } catch(e) { replaceThinking(thinkingEl, {status:"error", error: String(e)}); }
+    return;
+  }
+  // current task + 一覧セレクター
+  busy = true; sendBtn.disabled = true; msgInput.disabled = true;
+  appendUser(label);
+  appendAgent(`<span style='opacity:.6'>✅ 完了処理…</span>`);
+  try {
+    const [rCur, rNext] = await Promise.all([
+      fetch("/api/gtd/current"),
+      fetch("/api/gtd/next"),
+    ]);
+    const cur  = rCur.ok  ? (await rCur.json()).current_task  : null;
+    const nd   = rNext.ok ? await rNext.json() : {};
+    const nas  = nd.next_actions || [];
+    const today = new Date().toISOString().slice(0, 10);
+    let html = `<span class="intent-tag tag-run_ok">GTD</span> ✅ <strong>完了するタスクを選択</strong><div style="margin:6px 0;max-height:340px;overflow-y:auto">`;
+    // 作業中タスクを先頭に
+    if (cur) {
+      html += `<div style="display:flex;align-items:center;gap:6px;padding:5px 2px;background:rgba(255,200,0,.10);border-bottom:1px solid rgba(255,255,255,.08)">
+        <span style="font-size:14px">🔥</span>
+        <span style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(cur.name)} <span style="font-size:10px;font-weight:400;color:var(--muted)">作業中</span></span>
+        <button onclick="doneTask(null,'${escHtml(cur.name).replace(/'/g,"\\'")}',this)" style="${_btnStyle('var(--ok)')}">✅ 完了!</button>
+      </div>`;
+    }
+    if (!nas.length && !cur) {
+      html += `<div style="padding:6px;color:var(--muted);font-size:12px">（Next Actions 空）</div>`;
+    } else {
+      nas.forEach(na => {
+        const isOd = na.due && na.due < today;
+        const dueStr = na.due ? ` <span style="font-size:10px;color:${isOd?'var(--fail)':'var(--warn)'}">📅${na.due}</span>` : "";
+        const ctxStr = na.context ? ` <span style="font-size:10px;color:#6dd0e8">${escHtml(na.context)}</span>` : "";
+        html += `<div style="display:flex;align-items:center;gap:6px;padding:3px 2px;border-bottom:1px solid rgba(255,255,255,.04)">
+          <span style="color:var(--muted);font-size:11px;min-width:22px">[${na.index}]</span>
+          <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(na.name)}${ctxStr}${dueStr}</span>
+          <button onclick="doneTask(${na.index},null,this)" style="${_btnStyle('var(--muted)')}">✅</button>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+    replaceLastAgent(html);
+  } catch(e) {
+    replaceLastAgent(`<span style='color:var(--fail)'>取得失敗: ${escHtml(String(e))}</span>`);
+  }
+  busy = false; sendBtn.disabled = false; msgInput.disabled = false;
+}
+
+async function doneTask(index, name, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = "処理中…"; }
+  const body = {};
+  if (index) body.index = index;
+  else if (name) body.name = name;
+  try {
+    const r = await fetch("/api/gtd/done", {
+      method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(body)
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) {
+      showToast(`✅ 完了: ${j.output ? j.output.split("\n")[0] : (name || `[${index}]`)}`);
+      if (btn) btn.closest("div").style.cssText += ";opacity:.3;pointer-events:none";
+      pollGtdStatus(); _naExpanded = false;
+    } else {
+      showToast(`done 失敗: ${j.error || r.status}`, 4000);
+      if (btn) { btn.disabled = false; btn.textContent = "✅"; }
+    }
+  } catch(e) {
+    showToast(`done エラー: ${String(e)}`, 4000);
+    if (btn) { btn.disabled = false; btn.textContent = "✅"; }
+  }
+}
+
 // ── Direct manaosctl runner ──────────────────────────────────────────────
 async function sendShellRun(command, args, label) {
   appendUser(label);
@@ -2144,22 +2314,15 @@ async function send() {
     if (cmd === "gtd")    { await sendShellRun("gtd",    ["status"], message); return; }
     if (cmd === "weekly") { await sendShellRun("gtd",    ["weekly"], message); return; }
     if (cmd === "do") {
-      const doArgs = ["do"];
-      const idxMatch = arg.match(/^(\d+)/);
-      const nmMatch  = arg.match(/--name\s+(\S.*?)(?:\s+--|$)/);
+      const idxMatch   = arg.match(/^(\d+)/);
       const timerMatch = arg.match(/--timer\s+(\d+)/);
-      if (idxMatch)   doArgs.push("--index", idxMatch[1]);
-      if (nmMatch)    doArgs.push("--name",  nmMatch[1].trim());
-      if (timerMatch) doArgs.push("--timer", timerMatch[1]);
-      await sendShellRun("gtd", doArgs, message); return;
+      // 番号直指定なら preIndex 渡し、なしなら一覧セレクター
+      await sendDoRich(idxMatch ? idxMatch[1] : null, timerMatch ? timerMatch[1] : null, message); return;
     }
     if (cmd === "done") {
-      const doneArgs = ["done"];
-      const doneIdxM  = arg.match(/^(\d+)/);
-      const doneNameM = arg.match(/--name\s+(\S.*?)(?:\s+--|$)/);
-      if (doneIdxM)  doneArgs.push("--index", doneIdxM[1]);
-      if (doneNameM) doneArgs.push("--name",  doneNameM[1].trim());
-      await sendShellRun("gtd", doneArgs, message); return;
+      const doneIdxM = arg.match(/^(\d+)/);
+      // 番号直指定なら即完了、なしなら current+一覧セレクター
+      await sendDoneRich(doneIdxM ? doneIdxM[1] : null, message); return;
     }
     if (cmd === "someday") {
       await sendShellRun("gtd", ["someday"], message); return;

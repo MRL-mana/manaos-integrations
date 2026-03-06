@@ -1514,7 +1514,7 @@ def cmd_gtd(args: argparse.Namespace) -> int:
                     due = line.split(":", 1)[1].strip()
             return {"name": f.stem, "context": ctx, "due": due}
 
-        na_data = [_parse_na(f) for f in items]
+        na_data = [{"index": i + 1, **_parse_na(f)} for i, f in enumerate(items)]
         today_str = datetime.datetime.now().strftime("%Y-%m-%d")
 
         # フィルター
