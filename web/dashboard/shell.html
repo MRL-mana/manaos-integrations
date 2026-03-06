@@ -441,6 +441,16 @@
       margin-left: 6px;
       transition: color .4s;
     }
+    #timer-badge {
+      display: none;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 1px 8px;
+      margin-left: 6px;
+      cursor: default;
+      white-space: nowrap;
+    }
     #down-badge {
       display: none;
       background: var(--fail);
@@ -498,6 +508,7 @@
   <header>
     <div class="logo">ManaOS <span>Shell</span></div>
     <span id="score-badge" title="稼働率スコア (UP/全有効サービス)"></span>
+    <span id="timer-badge" title="作業タイマー"></span>
     <span id="down-badge"></span>
     <span id="gtd-badge" title="GTD Inbox件数 (クリックで一覧)"></span>
     <div class="badge" id="status-badge">connecting…</div>
@@ -617,6 +628,7 @@ const SLASH_CMDS = [
   { cmd: "/up <svc>",         desc: "DOWN サービスを起動  例: /up llm_routing" },
   { cmd: "/up --all",         desc: "auto_restart=true の全サービスを起動" },
   { cmd: "/startup",          desc: "全サービス起動 + 状態確認 (= /up --all + /status)" },
+  { cmd: "/daily",            desc: "今日のデイリーブリーフ (サービス + GTD + イベント)"},
 ];
 
 // ── Command history (↑/↓) ─────────────────────────────────────────────────
@@ -857,8 +869,9 @@ async function pollGtdStatus() {
     const inbox = d.inbox_count ?? 0;
     const na    = d.next_actions ?? 0;
     const today = d.daily_log_today;
-    const ct    = d.current_task;   // {name, started_at} or null
-    // ヘッダーバッジ更新
+    const ct    = d.current_task;   // {name, started_at, timer_min} or null
+    const timerRem = d.timer_remaining_min ?? null;  // int or null
+    // ヘッダー GTD バッジ更新
     if (ct) {
       gtdBadge.textContent = `🔥`;
       gtdBadge.style.display = "";
@@ -870,6 +883,18 @@ async function pollGtdStatus() {
       gtdBadge.style.display = "";
     } else {
       gtdBadge.style.display = "none";
+    }
+    // タイマーバッジ更新
+    if (timerBadge) {
+      if (ct && timerRem !== null) {
+        const tCol = timerRem > 5 ? "var(--ok)" : timerRem > 0 ? "var(--warn)" : "var(--fail)";
+        const remStr = timerRem > 0 ? `残${timerRem}分` : `超過${-timerRem}分`;
+        timerBadge.textContent = `⏱ ${remStr}`;
+        timerBadge.style.color = tCol;
+        timerBadge.style.display = "";
+      } else {
+        timerBadge.style.display = "none";
+      }
     }
     // 経過時間計算
     let elapsedStr = "";
@@ -1431,6 +1456,7 @@ function showHelp() {
     ["/up &lt;svc&gt;",         "DOWN サービスを起動  例: /up llm_routing"],
     ["/up --all",         "auto_restart=true の全サービスを起動"],
     ["/startup",          "全サービス起動 + 状態確認（/up --all → /status）"],
+    ["/daily",            "今日のデイリーブリーフ (サービス+GTD+イベント)"],
   ];
   const tBody = rows.map(([c, d]) =>
     `<tr><td style="font-family:monospace;white-space:nowrap;color:var(--accent);padding:2px 14px 2px 0">${c}</td>` +
@@ -1559,6 +1585,7 @@ async function send() {
       setTimeout(() => { sendShellRun("status", [], "/status"); }, 2000);
       return;
     }
+    if (cmd === "daily") { await sendShellRun("daily", [], message); return; }
     if (cmd === "up") {
       const upArgs = arg ? arg.split(/\s+/).filter(Boolean) : [];
       await sendShellRun("up", upArgs, message); return;

@@ -1380,9 +1380,9 @@ def cmd_gtd(args: argparse.Namespace) -> int:
             pass
         return {}
 
-    def _write_current(name: str, started_at: str) -> None:
+    def _write_current(name: str, started_at: str, timer_min: int = 0) -> None:
         GTD_CURRENT.write_text(
-            json.dumps({"name": name, "started_at": started_at}, ensure_ascii=False),
+            json.dumps({"name": name, "started_at": started_at, "timer_min": timer_min}, ensure_ascii=False),
             encoding="utf-8",
         )
 
@@ -1806,7 +1806,7 @@ def cmd_gtd(args: argparse.Namespace) -> int:
                 print(c(f"  [INFO] \u30bf\u30a4\u30de\u30fc\u767b\u9332\u306fWindows\u306e\u307f\u5bfe\u5fdc", DIM))
         print()
         # ── current_task.json に保存 ─────────────────────────────────────────
-        _write_current(task_name, now_dt.isoformat())
+        _write_current(task_name, now_dt.isoformat(), timer_min)
         return 0
 
     elif subcmd == "done":
@@ -2004,12 +2004,21 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         cur        = _read_current()
         use_json   = getattr(args, "json", False)
         if use_json:
+            _timer_rem: object = None
+            if cur and cur.get("timer_min", 0) > 0:
+                try:
+                    _t0 = datetime.datetime.fromisoformat(cur["started_at"])
+                    _t1 = _t0 + datetime.timedelta(minutes=cur["timer_min"])
+                    _timer_rem = int((_t1 - datetime.datetime.now()).total_seconds() / 60)
+                except Exception:
+                    pass
             print(json.dumps({
-                "date":            today,
-                "inbox_count":     inbox_n,
-                "next_actions":    na_n,
-                "daily_log_today": log_exists,
-                "current_task":    cur or None,
+                "date":                today,
+                "inbox_count":         inbox_n,
+                "next_actions":        na_n,
+                "daily_log_today":     log_exists,
+                "current_task":        cur or None,
+                "timer_remaining_min": _timer_rem,
             }, ensure_ascii=False, indent=2))
             return 0
         print()
@@ -2113,6 +2122,87 @@ def cmd_logs(args: argparse.Namespace) -> int:
     print(c("  " + "─" * 70, DIM))
     print()
     return 0
+
+
+def cmd_daily(args: argparse.Namespace) -> int:
+    """今日のデイリーブリーフ: サービス状態 + GTD + 最新イベント。"""
+    now_dt  = datetime.datetime.now()
+    today   = now_dt.strftime("%Y-%m-%d")
+    now_str = now_dt.strftime("%H:%M")
+
+    # ── サービス状態 ──────────────────────────────────────────────────────────
+    services = load_ledger()
+    up, down, disabled = [], [], []
+    for name, svc in services.items():
+        if not svc.get("enabled", False):
+            disabled.append(name)
+        elif is_alive(svc):
+            up.append(name)
+        else:
+            down.append(name)
+    enabled_n = len(up) + len(down)
+    score = int(len(up) / enabled_n * 100) if enabled_n else 100
+    score_col = GREEN if score >= 90 else (YELLOW if score >= 70 else RED)
+
+    # ── GTD ──────────────────────────────────────────────────────────────────
+    gtd_root = REPO_ROOT / "gtd"
+    try:
+        _inbox_dir = gtd_root / "inbox"
+        _na_dir    = gtd_root / "next-actions" / "items"
+        _logs_dir  = gtd_root / "daily-logs"
+        _cur_f     = gtd_root / ".current_task.json"
+        inbox_n    = len([f for f in _inbox_dir.glob("*.md") if f.name.upper() != "README.MD"]) if _inbox_dir.exists() else 0
+        na_n       = len([f for f in _na_dir.glob("*.md")    if f.name.upper() != "README.MD"]) if _na_dir.exists() else 0
+        log_today  = (_logs_dir / f"{today}.md").exists() if _logs_dir.exists() else False
+        cur_task   = json.loads(_cur_f.read_text(encoding="utf-8")) if _cur_f.exists() else {}
+    except Exception:
+        inbox_n, na_n, log_today, cur_task = 0, 0, False, {}
+
+    # ── 最新イベント ──────────────────────────────────────────────────────────
+    events = read_events(n=50)[-7:]
+
+    # ── 出力 ─────────────────────────────────────────────────────────────────
+    bar = "═" * 52
+    print(c(f"\n{bar}", BOLD))
+    print(c(f"  ManaOS Daily Brief  {today}  {now_str}", BOLD + CYAN))
+    print(c(bar, BOLD))
+
+    print(c(f"\n  📡 Services", BOLD))
+    print(c(f"     スコア {score}  (UP: {len(up)} / DOWN: {len(down)} / DISABLED: {len(disabled)})", score_col))
+    if down:
+        for d in sorted(down):
+            hint = services[d].get("recovery_hint", "")
+            print(c(f"     ✗ {d}" + (f"  →  {hint}" if hint else ""), RED))
+
+    print(c(f"\n  📋 GTD", BOLD))
+    if cur_task:
+        started = cur_task.get("started_at", "")[:16].replace("T", " ")
+        timer_m = cur_task.get("timer_min", 0)
+        timer_s = ""
+        if timer_m > 0:
+            try:
+                _end = datetime.datetime.fromisoformat(cur_task["started_at"]) + datetime.timedelta(minutes=timer_m)
+                _rem = int((_end - now_dt).total_seconds() / 60)
+                timer_s = f"  ⏱ 残り {_rem}分" if _rem > 0 else f"  ⏱ 超過 {-_rem}分前"
+            except Exception:
+                pass
+        print(c(f"     🔥 作業中: {cur_task['name']}  (開始 {started}){timer_s}", BOLD + YELLOW))
+    else:
+        print(c(f"     作業タスク: なし", DIM))
+    print(c(f"     Inbox: {inbox_n}件   Next: {na_n}件   日次ログ: {'✅' if log_today else '❌'}", ""))
+
+    if events:
+        print(c(f"\n  🕐 最新イベント ({len(events)}件)", BOLD))
+        for e in reversed(events):
+            t   = e.get("time", "")[:16].replace("T", " ")
+            ev  = e.get("event", "")[:18]
+            svc = e.get("service", "")[:20]
+            col = EVENT_COLORS.get(e.get("event", ""), "")
+            print(c(f"     {t}  {ev:<18} {svc}", col or DIM))
+
+    print(c(f"\n{bar}", BOLD))
+    print()
+    return 0 if not down else 1
 
 
 def cmd_notify(args: argparse.Namespace) -> int:
@@ -2225,6 +2315,9 @@ def main() -> None:
     p_logs.add_argument("service", help="サービス名 (例: llm_routing) または 'list'")
     p_logs.add_argument("-n", type=int, default=30, help="表示行数 (デフォルト: 30)")
 
+    # daily
+    sub.add_parser("daily", help="今日のデイリーブリーフ (サービス状態 + GTD + イベント)")
+
     # notify
     p_notify = sub.add_parser("notify", help="ntfy.sh / Slack に通知を送信する")
     p_notify.add_argument("message", nargs="+", help="送信するメッセージ")
@@ -2291,6 +2384,7 @@ def main() -> None:
         "gtd":       cmd_gtd,
         "notify":    cmd_notify,
         "logs":      cmd_logs,
+        "daily":     cmd_daily,
     }
     sys.exit(dispatch[args.command](args))
 

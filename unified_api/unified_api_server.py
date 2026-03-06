@@ -5805,7 +5805,7 @@ def api_shell_heal():
 
 
 # manaosctl run コマンドのホワイトリスト（副作用のある操作は除外）
-_SHELL_RUN_WHITELIST = frozenset({"status", "deps", "events", "tier", "report", "cost", "dashboard", "watch", "gtd", "notify", "logs", "up", "heal", "restart"})
+_SHELL_RUN_WHITELIST = frozenset({"status", "deps", "events", "tier", "report", "cost", "dashboard", "watch", "gtd", "notify", "logs", "up", "heal", "restart", "daily"})
 
 _ANSI_RE = __import__("re").compile(r"\x1b\[[0-9;]*m")
 
