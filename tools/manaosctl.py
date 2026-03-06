@@ -50,6 +50,7 @@ import sys
 import time
 import urllib.request
 import urllib.error
+from collections import deque
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -1476,6 +1477,18 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         na_data = [_parse_na(f) for f in items]
         today_str = datetime.datetime.now().strftime("%Y-%m-%d")
 
+        # フィルター
+        filter_ctx   = getattr(args, "filter",    None)
+        only_today   = getattr(args, "due_today", False)
+        only_overdue = getattr(args, "overdue",   False)
+        if filter_ctx:
+            fk = filter_ctx.lstrip("@").lower()
+            na_data = [nd for nd in na_data if fk in nd["context"].lstrip("@").lower()]
+        if only_today:
+            na_data = [nd for nd in na_data if nd["due"] == today_str]
+        if only_overdue:
+            na_data = [nd for nd in na_data if nd["due"] and nd["due"] < today_str]
+
         if use_json:
             print(json.dumps({
                 "next_actions": na_data,
@@ -1483,7 +1496,7 @@ def cmd_gtd(args: argparse.Namespace) -> int:
             }, ensure_ascii=False, indent=2))
             return 0
         print()
-        print(c(f"  [Next Actions  {len(items)} 件]", BOLD + GREEN))
+        print(c(f"  [Next Actions  {len(na_data)} 件{' (filtered)' if filter_ctx or only_today or only_overdue else ''}]", BOLD + GREEN))
         print(c("  " + "─" * 50, DIM))
         if na_data:
             for nd in na_data:
@@ -1708,6 +1721,95 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         return 0
 
 
+# ---------------------------------------------------------------------------
+# Service → Log file mapping
+# ---------------------------------------------------------------------------
+_SERVICE_LOG_MAP: dict = {
+    "ollama":              None,
+    "llm_routing":         "logs/llm-router-enhanced.log",
+    "memory":              "logs/memory_unified.log",
+    "unified_api":         "logs/unified.log",
+    "shell_ui":            "logs/unified.log",
+    "autonomy":            "logs/autonomy_system.log",
+    "secretary":           "logs/secretary-system.log",
+    "learning":            "logs/learning_system.log",
+    "personality":         "logs/personality_system.log",
+    "intent_router":       "logs/intent_router.log",
+    "task_queue":          "logs/task-queue-system.log",
+    "trinity":             "logs/trinity_err.log",
+    "pixel7_bridge":       "logs/pixel7_bridge_err.log",
+    "slack_integration":   "logs/slack-integration.log",
+    "gallery":             "logs/gallery_api.log",
+    "step_deep_research":  None,
+    "autostart":           "logs/autostart.log",
+    "comfyui":             None,
+    "video_pipeline":      None,
+    "windows_automation":  None,
+    "pico_hid":            None,
+    "voicevox":            None,
+    "n8n":                 None,
+}
+
+
+def _tail_file(path: Path, n: int) -> list:
+    """ファイル末尾 n 行を返す。"""
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            return list(deque(f, maxlen=n))
+    except Exception:
+        return []
+
+
+def cmd_logs(args: argparse.Namespace) -> int:
+    """サービスのログファイル末尾 N 行を表示する。"""
+    service = args.service
+    n       = getattr(args, "n", 30)
+    repo    = REPO_ROOT
+
+    if service == "list":
+        print(c("\n  サービス ログファイル一覧", BOLD + CYAN))
+        for svc, log in sorted(_SERVICE_LOG_MAP.items()):
+            mark = c("✓", GREEN) if log else c("—", DIM)
+            desc = log if log else c("(ログファイル未設定)", DIM)
+            print(f"    {mark}  {svc:<22} {desc}")
+        print()
+        return 0
+
+    if service not in _SERVICE_LOG_MAP:
+        print(c(f"\n  ⚠  サービス '{service}' はマップ未登録です。", YELLOW))
+        print(c(f"     登録済みサービス: {', '.join(sorted(_SERVICE_LOG_MAP.keys()))}", DIM))
+        print(c( "     'list' を指定すると一覧を表示します。", DIM))
+        return 1
+
+    log_rel = _SERVICE_LOG_MAP[service]
+    if not log_rel:
+        print(c(f"\n  —  {service}: ログファイル未設定（外部プロセスまたは未対応サービス）\n", DIM))
+        return 0
+
+    log_path = repo / log_rel
+    if not log_path.exists():
+        print(c(f"\n  ⚠  ログファイルが見つかりません: {log_path}\n", YELLOW))
+        return 1
+
+    total = sum(1 for _ in open(log_path, encoding="utf-8", errors="replace"))
+    lines = _tail_file(log_path, n)
+    print(c(f"\n  {service} ログ  (末尾 {len(lines)} 行 / 全 {total} 行)", BOLD + CYAN))
+    print(c(f"  {log_path}", DIM))
+    print(c("  " + "─" * 70, DIM))
+    for line in lines:
+        line = line.rstrip("\n")
+        up = line.upper()
+        if any(k in up for k in ("ERROR", "CRITICAL", "EXCEPTION", "TRACEBACK")):
+            print(c(f"  {line}", RED))
+        elif any(k in up for k in ("WARNING", "WARN")):
+            print(c(f"  {line}", YELLOW))
+        else:
+            print(f"  {line}")
+    print(c("  " + "─" * 70, DIM))
+    print()
+    return 0
+
+
 def cmd_notify(args: argparse.Namespace) -> int:
     """Slack → ntfy.sh 自動フォールバック通知を送信する。"""
     title   = getattr(args, "title",    "ManaOS Notify")
@@ -1813,6 +1915,11 @@ def main() -> None:
     p_watch.add_argument("--notify", action="store_true",
                          help="サービスDOWN検出時に ntfy/Slack 通知を自動送信")
 
+    # logs
+    p_logs = sub.add_parser("logs", help="サービスのログ末尾 N 行を表示 (service=list で一覧)")
+    p_logs.add_argument("service", help="サービス名 (例: llm_routing) または 'list'")
+    p_logs.add_argument("-n", type=int, default=30, help="表示行数 (デフォルト: 30)")
+
     # notify
     p_notify = sub.add_parser("notify", help="ntfy.sh / Slack に通知を送信する")
     p_notify.add_argument("message", nargs="+", help="送信するメッセージ")
@@ -1832,7 +1939,10 @@ def main() -> None:
     p_gtd_inbox = p_gtd_sub.add_parser("inbox", help="Inbox 一覧表示")
     p_gtd_inbox.add_argument("--json", action="store_true")
     p_gtd_next = p_gtd_sub.add_parser("next", help="Next Actions 一覧表示")
-    p_gtd_next.add_argument("--json", action="store_true")
+    p_gtd_next.add_argument("--json",      action="store_true")
+    p_gtd_next.add_argument("--filter",    type=str,  default=None, help="@context でフィルタ  例: --filter @pc")
+    p_gtd_next.add_argument("--due-today", action="store_true", help="今日期限のアイテムのみ")
+    p_gtd_next.add_argument("--overdue",   action="store_true", help="期限超過のみ")
     p_gtd_process = p_gtd_sub.add_parser("process", help="Inbox アイテムを振り分ける（インタラクティブ or バッチ）")
     p_gtd_process.add_argument("--target", type=str, default=None, help="対象ファイル名の一部文字列")
     p_gtd_process.add_argument("--to",     type=str, default=None, help="移動先: next/projects/someday/waiting/done")
@@ -1862,6 +1972,7 @@ def main() -> None:
         "watch":     cmd_watch,
         "gtd":       cmd_gtd,
         "notify":    cmd_notify,
+        "logs":      cmd_logs,
     }
     sys.exit(dispatch[args.command](args))
 
