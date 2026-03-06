@@ -105,6 +105,26 @@
     .msg.user  { flex-direction: row-reverse; }
     .msg.user  .bubble { background: var(--accent2); color: #fff; border-radius: 16px 4px 16px 16px; }
     .msg.agent .bubble { background: var(--panel2); border: 1px solid var(--line); border-radius: 4px 16px 16px 16px; }
+    /* bubble コピーボタン */
+    .msg { position: relative; }
+    .bubble-copy {
+      display: none;
+      position: absolute;
+      top: 4px; right: 4px;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      padding: 1px 5px;
+      cursor: pointer;
+      z-index: 2;
+      line-height: 1.6;
+      transition: color .15s;
+    }
+    .msg:hover .bubble-copy { display: block; }
+    .bubble-copy:hover { color: var(--accent); border-color: var(--accent); }
+    .bubble-copy.copied { color: var(--ok); border-color: var(--ok); }
 
     .bubble {
       max-width: 78%;
@@ -514,6 +534,32 @@
       padding: 1px 7px;
       margin-left: 6px;
     }
+    /* Down サービスバナー */
+    #down-banner {
+      display: none;
+      background: rgba(239,68,68,.12);
+      border: 1px solid var(--fail);
+      border-radius: 5px;
+      padding: 5px 8px;
+      margin-bottom: 6px;
+      font-size: 10px;
+    }
+    #down-banner .db-title {
+      font-weight: 700;
+      color: var(--fail);
+      margin-bottom: 3px;
+    }
+    #down-banner .db-row {
+      color: var(--fail);
+      padding: 1px 0;
+      cursor: pointer;
+    }
+    #down-banner .db-row:hover { text-decoration: underline; }
+    #down-banner .db-heal {
+      color: var(--warn);
+      margin-left: 4px;
+      cursor: pointer;
+    }
     #gtd-badge {
       display: none;
       background: #7c3aed;
@@ -598,6 +644,7 @@
       Services
       <button class="sidebar-refresh" id="svc-refresh-btn" onclick="loadServices()">&#8635;</button>
     </div>
+    <div id="down-banner"></div>
     <input id="svc-filter" type="text" placeholder="フィルタ…" oninput="filterServices(this.value)" />
     <div id="svc-list"><div class="svc-loading">loading…</div></div>
     <div class="sidebar-title" style="margin-top:10px">
@@ -795,6 +842,29 @@ const sidebarEl   = document.getElementById("sidebar");
 const svcList     = document.getElementById("svc-list");
 const sidebarBtn  = document.getElementById("sidebar-toggle");
 
+// ── bubble コピーボタン (MutationObserver) ──────────────────────────────────
+function _addCopyBtn(msgEl) {
+  if (msgEl.querySelector(".bubble-copy")) return;
+  const btn = document.createElement("button");
+  btn.className = "bubble-copy";
+  btn.textContent = "⎘";
+  btn.title = "コピー";
+  btn.addEventListener("click", () => {
+    const bubble = msgEl.querySelector(".bubble");
+    const text = bubble ? (bubble.innerText || bubble.textContent || "") : "";
+    navigator.clipboard.writeText(text.trim()).then(() => {
+      btn.textContent = "✓";
+      btn.classList.add("copied");
+      setTimeout(() => { btn.textContent = "⎘"; btn.classList.remove("copied"); }, 1500);
+    }).catch(() => {});
+  });
+  msgEl.appendChild(btn);
+}
+new MutationObserver(muts => {
+  for (const m of muts) for (const n of m.addedNodes)
+    if (n.nodeType === 1 && n.classList && n.classList.contains("msg")) _addCopyBtn(n);
+}).observe(historyEl, { childList: true });
+
 // ── Sidebar toggle ─────────────────────────────────────────────────────────
 let sidebarVisible = true;
 function toggleSidebar() {
@@ -830,6 +900,23 @@ function renderServices(svcs) {
       downBadge.style.display = "inline-block";
     } else {
       downBadge.style.display = "none";
+    }
+  }
+  // サイドバー DOWN バナー更新
+  const downBanner = document.getElementById("down-banner");
+  if (downBanner) {
+    if (down.length) {
+      const rows = down.map(s => {
+        const safe = s.name.replace(/'/g, "\\'");
+        return `<div class="db-row" onclick="sendSvcCard('${safe}','/status ${safe}')">✗ <b>${escHtml(s.name)}</b>
+          <span class="db-heal" onclick="event.stopPropagation();healService('${safe}')" title="heal">↻</span>
+        </div>`;
+      }).join("");
+      downBanner.innerHTML = `<div class="db-title">⚠️ DOWN ${down.length}件</div>${rows}`;
+      downBanner.style.display = "block";
+    } else {
+      downBanner.style.display = "none";
+      downBanner.innerHTML = "";
     }
   }
   // ヘルス・スコア更新
