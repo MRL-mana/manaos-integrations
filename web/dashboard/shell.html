@@ -444,6 +444,16 @@
       margin-bottom: 2px;
     }
     .svc-hint:hover { color: var(--text); white-space: normal; }
+    .ev-item {
+      padding: 3px 6px;
+      font-size: 10px;
+      border-bottom: 1px solid var(--line2);
+      line-height: 1.4;
+      cursor: default;
+    }
+    .ev-item:hover { background: var(--line2); }
+    .ev-item .ev-type { font-weight: 600; }
+    .ev-item .ev-det  { color: var(--muted); font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 14px; }
     #score-badge {
       display: inline-block;
       font-size: 11px;
@@ -563,6 +573,11 @@
       <button class="sidebar-refresh" onclick="pollGtdStatus()">↻</button>
     </div>
     <div id="gtd-side"><div class="svc-loading">loading…</div></div>
+    <div class="sidebar-title" style="margin-top:10px">
+      Events
+      <button class="sidebar-refresh" onclick="pollEventsWidget()">&#8635;</button>
+    </div>
+    <div id="events-side"><div class="svc-loading">loading…</div></div>
   </aside>
 
   <!-- Input bar -->
@@ -993,6 +1008,54 @@ async function pollGtdStatus() {
 gtdBadge.addEventListener("click", () => { msgInput.value = "/inbox"; send(); });
 pollGtdStatus();
 setInterval(pollGtdStatus, 30000);
+
+// ── Events sidebar widget ─────────────────────────────────────────────────────
+const EV_COLOR = {
+  service_down:  "var(--fail)",
+  heal_fail:     "var(--fail)",
+  heal_ok:       "var(--ok)",
+  heal_trigger:  "var(--warn)",
+  analyze:       "var(--muted)",
+  policy:        "var(--warn)",
+};
+const EV_ICON = {
+  service_down:  "🔴",
+  heal_fail:     "🔴",
+  heal_ok:       "🟢",
+  heal_trigger:  "🟡",
+  analyze:       "🔵",
+  policy:        "🟡",
+};
+async function pollEventsWidget() {
+  const container = document.getElementById("events-side");
+  if (!container) return;
+  try {
+    const resp = await fetch("/api/events?n=8");
+    if (!resp.ok) { container.innerHTML = '<div class="svc-loading">ERR</div>'; return; }
+    const data = await resp.json();
+    const evs  = data.events || [];
+    if (!evs.length) {
+      container.innerHTML = '<div class="svc-loading" style="color:var(--muted)">イベントなし</div>';
+      return;
+    }
+    let html = "";
+    for (const e of [...evs].reverse()) {
+      const col  = EV_COLOR[e.event] || "var(--muted)";
+      const icon = EV_ICON[e.event]  || "⚪";
+      const t    = (e.time || "").slice(11, 16);
+      const svc  = e.service ? `&nbsp;<span style="color:var(--accent)">${escHtml(e.service)}</span>` : "";
+      const det  = escHtml((e.detail || "").slice(0, 48));
+      html += `<div class="ev-item" title="${escHtml(e.detail || '')}">`
+            + `<span>${icon}</span> <span class="ev-type" style="color:${col}">${escHtml(e.event)}</span>${svc}`
+            + `&nbsp;<span style="color:var(--muted);font-size:9px">${t}</span>`
+            + (det ? `<div class="ev-det">${det}</div>` : "")
+            + `</div>`;
+    }
+    container.innerHTML = html;
+  } catch { /* silent */ }
+}
+pollEventsWidget();
+setInterval(pollEventsWidget, 30000);
 
 // ── GTD Process (batch) ───────────────────────────────────────────────────
 async function sendGtdProcess(index, dest, label) {

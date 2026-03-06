@@ -5756,6 +5756,60 @@ def api_shell_restart():
         return _json_error(str(exc), 500, namespace="shell_restart")
 
 
+@app.route("/api/events", methods=["GET"])
+def api_events():
+    """
+    ManaOS Shell ─ 直近イベント一覧 (logs/events.jsonl を直読み).
+
+    Params:
+        n      (int): 之数 (default 20, max 200)
+        since  (int): N分前以降に絞り込み
+        filter (str): event または service 名で文字列マッチ
+
+    Response:
+        {"events": [...], "count": N}
+    """
+    import datetime as _dt
+
+    n_raw    = request.args.get("n", "20")
+    filt_raw = request.args.get("filter", "").strip()
+    since_raw = request.args.get("since", "").strip()
+
+    try:
+        n = min(int(n_raw), 200)
+    except ValueError:
+        n = 20
+    filt     = filt_raw or None
+    since_min = int(since_raw) if since_raw.isdigit() else None
+
+    event_log = REPO_ROOT / "logs" / "events.jsonl"
+    if not event_log.exists():
+        return jsonify({"events": [], "count": 0}), 200
+
+    try:
+        lines  = event_log.read_text(encoding="utf-8", errors="replace").splitlines()
+        events = []
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                events.append(json.loads(line))
+            except Exception:
+                pass
+    except Exception as exc:
+        return _json_error(str(exc), 500, namespace="events")
+
+    if filt:
+        events = [e for e in events if filt in e.get("event", "") or filt in e.get("service", "")]
+    if since_min is not None:
+        cutoff = (_dt.datetime.now() - _dt.timedelta(minutes=since_min)).isoformat()[:19]
+        events = [e for e in events if e.get("time", "")[:19] >= cutoff]
+
+    events = events[-n:]
+    return jsonify({"events": events, "count": len(events)}), 200
+
+
 @app.route("/api/shell/heal", methods=["POST"])
 def api_shell_heal():
     """
