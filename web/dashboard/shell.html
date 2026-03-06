@@ -760,6 +760,7 @@ const SLASH_CMDS = [
   { cmd: "/edit <N> --due clear", desc: "期限を削除  例: /edit 2 --due clear" },
   { cmd: "/search <keyword>",     desc: "GTD 全テキスト検索 (next/inbox/someday/waiting/projects)  例: /search 資料作成" },
   { cmd: "/memo <text> --to next",desc: "Inboxをスキップして直接 Next に登録  例: /memo 資料作成 --to next" },
+  { cmd: "/process",            desc: "Inbox 一覧 (全件インタラクティブトリアージモード)" },
   { cmd: "/process <N> <dest>", desc: "Inbox[N]を振り分け (dest: next/done/someday/waiting/project)" },
   // 通知
   { cmd: "/notify <msg>",     desc: "ntfy / Slack に通知を送信" },
@@ -781,8 +782,9 @@ const SLASH_CMDS = [
   { cmd: "/stop",              desc: "現在の作業を中断 (gtd stop)" },
 ];
 
-// ── Command history (↑/↓) ─────────────────────────────────────────────────
-const cmdHist = [];
+// ── Command history (↑/↓) ─ sessionStorage でタブ間永続 ─────────────────────────────
+const _CMD_HIST_KEY = "manaos_cmd_hist";
+const cmdHist = (() => { try { return JSON.parse(sessionStorage.getItem(_CMD_HIST_KEY) || "[]"); } catch(_e) { return []; } })();
 let cmdHistIdx = -1;
 
 // ── Chat persistence (localStorage) ───────────────────────────────────────
@@ -1524,46 +1526,7 @@ async function toggleInbox() {
           <span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(String(name))}">${escHtml(String(name).slice(0, 32))}</span>
           <button onclick="event.stopPropagation();processInboxItem(${idx},'next',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--ok);color:var(--ok);background:none;border-radius:2px;cursor:pointer">▶</button>
           <button onclick="event.stopPropagation();processInboxItem(${idx},'someday',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">📦</button>
-          <button onclick="event.stopPropagation();processInboxItem(${idx},'done',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">✅</button>
-        </div>`;
-      }).join("");
-    }
-    _inboxExpanded = true;
-  } catch(e) {
-    listEl.innerHTML = `<div style="font-size:11px;color:var(--fail);padding:2px 8px 4px 20px">取得失敗: ${escHtml(String(e))}</div>`;
-    _inboxExpanded = true;
-  }
-}
-
-// ── GTD Inbox inline expand ────────────────────────────────────────────────
-let _inboxExpanded = false;
-async function toggleInbox() {
-  const listEl  = document.getElementById("inbox-inline-list");
-  const arrowEl = document.getElementById("inbox-toggle-arrow");
-  if (!listEl) return;
-  if (_inboxExpanded) {
-    listEl.style.display = "none";
-    if (arrowEl) arrowEl.textContent = "▶";
-    _inboxExpanded = false;
-    return;
-  }
-  listEl.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:2px 8px">読み込み中…</div>`;
-  listEl.style.display = "";
-  if (arrowEl) arrowEl.textContent = "▼";
-  try {
-    const r = await fetch("/api/gtd/inbox");
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const items = await r.json(); // ["name1", "name2", ...]
-    if (!items.length) {
-      listEl.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:2px 8px 4px 20px">（なし）</div>`;
-    } else {
-      listEl.innerHTML = items.slice(0, 20).map((name, i) => {
-        const idx = i + 1;
-        return `<div style="display:flex;align-items:center;gap:3px;padding:2px 6px 2px 18px;border-bottom:1px solid rgba(255,255,255,.05)">
-          <span style="font-size:9px;color:var(--muted);min-width:18px">${idx}.</span>
-          <span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(String(name))}">${escHtml(String(name).slice(0, 32))}</span>
-          <button onclick="event.stopPropagation();processInboxItem(${idx},'next',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--ok);color:var(--ok);background:none;border-radius:2px;cursor:pointer">▶</button>
-          <button onclick="event.stopPropagation();processInboxItem(${idx},'someday',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">📦</button>
+          <button onclick="event.stopPropagation();processInboxItem(${idx},'waiting',null)" style="padding:1px 4px;font-size:9px;border:1px solid #6882e8;color:#6882e8;background:none;border-radius:2px;cursor:pointer">⏳</button>
           <button onclick="event.stopPropagation();processInboxItem(${idx},'done',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">✅</button>
         </div>`;
       }).join("");
@@ -1577,6 +1540,9 @@ async function toggleInbox() {
 
 // ── GTD Next Actions inline expand ─────────────────────────────────────────
 let _naExpanded = false;
+let _naItems    = [];  // クライアントサイドフィルタ用キャッシュ
+let _naActiveCtx = "__all__";
+
 async function toggleNextActions() {
   const listEl  = document.getElementById("na-inline-list");
   const arrowEl = document.getElementById("na-toggle-arrow");
@@ -1594,13 +1560,39 @@ async function toggleNextActions() {
     const r = await fetch("/api/gtd/next");
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const d = await r.json();
-    const items = (d.next_actions || d.items || []);
-    if (!items.length) {
-      listEl.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:2px 8px 4px 20px">（なし）</div>`;
-    } else {
-      const todayStr = new Date().toISOString().slice(0, 10);
-      listEl.innerHTML = items.slice(0, 20).map((item, i) => {
-        const idx    = i + 1;
+    _naItems = d.next_actions || d.items || [];
+    _naActiveCtx = "__all__";
+    _naRenderCtxList(listEl);
+    _naExpanded = true;
+  } catch(e) {
+    listEl.innerHTML = `<div style="font-size:11px;color:var(--fail);padding:2px 8px 4px 20px">取得失敗: ${escHtml(String(e))}</div>`;
+    _naExpanded = true;
+  }
+}
+
+function _naRenderCtxList(listEl) {
+  if (!listEl) return;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  // ユニークコンテキスト一覧
+  const ctxSet = new Set(_naItems.map(it => it.context).filter(Boolean));
+  const ctxList = Array.from(ctxSet).slice(0, 8);
+  // フィルタ後アイテム
+  const items = _naActiveCtx === "__all__"
+    ? _naItems
+    : _naItems.filter(it => it.context === _naActiveCtx);
+  // コンテキストタブ (2件以上のコンテキストがある時だけ表示)
+  const _tab = (ctx, label, active) =>
+    `<button onclick="_naFilterCtx('${escHtml(ctx).replace(/'/g,"\\'")}')" style="padding:1px 5px;font-size:9px;border:1px solid rgba(255,255,255,.15);background:${active?'rgba(255,255,255,.12)':'none'};color:${active?'var(--fg)':'var(--muted)'};border-radius:3px;cursor:pointer">${escHtml(label)}</button>`;
+  const tabs = ctxList.length >= 2
+    ? `<div style="display:flex;gap:2px;flex-wrap:wrap;padding:3px 8px 4px;border-bottom:1px solid rgba(255,255,255,.06)">
+        ${_tab("__all__", "全", _naActiveCtx === "__all__")}
+        ${ctxList.map(c => _tab(c, c, _naActiveCtx === c)).join("")}
+       </div>`
+    : "";
+  // アイテム行
+  const rows = items.length
+    ? items.slice(0, 25).map((item, i) => {
+        const idx    = item.index || (i + 1);
         const name   = escHtml((item.name || item.stem || String(item)).slice(0, 28));
         const ctx    = item.context ? ` <span style="color:#6dd0e8;font-size:9px">${escHtml(item.context)}</span>` : "";
         const isOd   = item.due && item.due < todayStr;
@@ -1610,17 +1602,19 @@ async function toggleNextActions() {
         return `<div style="display:flex;align-items:center;gap:3px;padding:2px 6px 2px 18px;border-bottom:1px solid rgba(255,255,255,.05);${bg}">
           <span style="font-size:9px;color:var(--muted);min-width:18px">${idx}.</span>
           <span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}${ctx}${due}</span>
-          <button onclick="event.stopPropagation();doStart(${item.index||idx},null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--ok);color:var(--ok);background:none;border-radius:2px;cursor:pointer">▶</button>
-          <button onclick="event.stopPropagation();doStart(${item.index||idx},25)" style="padding:1px 4px;font-size:10px;border:none;background:none;cursor:pointer" title="🍅 25分ポモドーロで開始">🍅</button>
-          <button onclick="event.stopPropagation();doneTask(${item.index||idx},null,this)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">✅</button>
+          <button onclick="event.stopPropagation();doStart(${idx},null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--ok);color:var(--ok);background:none;border-radius:2px;cursor:pointer">▶</button>
+          <button onclick="event.stopPropagation();doStart(${idx},25)" style="padding:1px 4px;font-size:10px;border:none;background:none;cursor:pointer" title="🍅 25分ポモドーロで開始">🍅</button>
+          <button onclick="event.stopPropagation();doneTask(${idx},null,this)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">✅</button>
         </div>`;
-      }).join("");
-    }
-    _naExpanded = true;
-  } catch(e) {
-    listEl.innerHTML = `<div style="font-size:11px;color:var(--fail);padding:2px 8px 4px 20px">取得失敗: ${escHtml(String(e))}</div>`;
-    _naExpanded = true;
-  }
+      }).join("")
+    : `<div style="font-size:11px;color:var(--muted);padding:2px 8px 4px 20px">（${_naActiveCtx === "__all__" ? "なし" : escHtml(_naActiveCtx) + " なし"}）</div>`;
+  listEl.innerHTML = tabs + rows;
+}
+
+function _naFilterCtx(ctx) {
+  _naActiveCtx = ctx;
+  const listEl = document.getElementById("na-inline-list");
+  if (listEl) _naRenderCtxList(listEl);
 }
 
 // ── Append user message bubble ────────────────────────────────────────────
@@ -2822,6 +2816,65 @@ async function sendArchiveCard(count, label) {
   }
 }
 
+// ── /tier ビジュアルカード ────────────────────────────────────────────────
+async function sendTierCard(label) {
+  appendUser(label || "/tier");
+  const thinkingEl = appendThinking();
+  try {
+    const hdrs = { "Content-Type": "application/json" };
+    const key = apiKeyEl.value.trim();
+    if (key) hdrs["X-API-Key"] = key;
+    const r = await fetch("/api/shell/run", {
+      method: "POST", headers: hdrs,
+      body: JSON.stringify({ command: "tier", args: [] })
+    });
+    const d = await r.json();
+    const output = (d.output || "").trim();
+    // テキストをパース: "Tier N: svc_name [UP/DOWN]" 形式
+    const tierMap = {};
+    output.split("\n").forEach(line => {
+      const m = line.match(/Tier\s*(\d)/i);
+      const tier = m ? m[1] : "?";
+      if (!tierMap[tier]) tierMap[tier] = [];
+      // サービス名と状態をざっくり取得
+      const okMark  = /✓|UP|up|ok|\[up\]/i.test(line) && !/DOWN|fail/i.test(line);
+      const downMark= /✗|DOWN|down|fail|\[down\]/i.test(line);
+      const name = line.replace(/Tier\s*\d[\s:–-]*/i, "").replace(/\s*(✓|✗|UP|DOWN|FAIL|OK)\s*/gi, "").trim();
+      if (name) tierMap[tier].push({ name, ok: okMark, down: downMark, raw: line });
+    });
+    const tiers = Object.keys(tierMap).sort();
+    if (!tiers.length || !output) {
+      // フォールバック: raw 表示
+      const el = document.createElement("div");
+      el.className = "msg agent";
+      el.innerHTML = `<div class="avatar">OS</div><div class="bubble"><div class="report-section"><h4 style="font-size:12px;margin:0 0 6px">📊 Tier</h4><pre style="font-size:10px;white-space:pre-wrap">${escHtml(output.slice(0,2000))}</pre></div>${ts()}</div>`;
+      thinkingEl.replaceWith(el); scrollEnd(); return;
+    }
+    const tiersSections = tiers.map(t => {
+      const items = tierMap[t];
+      const rows = items.map(it => {
+        const col = it.down ? "var(--fail)" : it.ok ? "var(--ok)" : "var(--muted)";
+        const icon = it.down ? "✗" : it.ok ? "●" : "○";
+        return `<div style="font-size:11px;color:${col};padding:1px 0">${icon} ${escHtml(it.raw.replace(/Tier\s*\d[\s:–-]*/i,"").trim().slice(0,60))}</div>`;
+      }).join("");
+      const downCount = items.filter(i => i.down).length;
+      const okCount   = items.filter(i => i.ok).length;
+      const hCol = downCount ? "var(--fail)" : "var(--ok)";
+      return `<div style="margin-bottom:8px">
+        <div style="font-size:11px;font-weight:700;color:${hCol};margin-bottom:3px">Tier ${escHtml(t)} <span style="font-weight:400;color:var(--muted);font-size:10px">↑${okCount} ↓${downCount}</span></div>
+        ${rows}
+      </div>`;
+    }).join("");
+    const html = `<div class="report-section"><h4 style="font-size:12px;margin:0 0 8px">📊 Tier 一覧</h4>${tiersSections}</div>`;
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">${html}${ts()}</div>`;
+    thinkingEl.replaceWith(el); scrollEnd();
+  } catch(e) {
+    replaceThinking(thinkingEl, { status: "dispatch_error", error: String(e) });
+  }
+}
+
 // ── /up ビジュアルカード ──────────────────────────────────────────────────
 async function sendUpCard(svcArgs, label) {
   svcArgs = svcArgs || [];
@@ -3277,7 +3330,7 @@ async function send() {
       }
       await sendShellRun("events", runArgs, message); return;
     }
-    if (cmd === "tier")      { await sendShellRun("tier",      [], message); return; }
+    if (cmd === "tier")      { await sendTierCard(message); return; }
     if (cmd === "watch")     { await sendShellRun("watch",     [], message); return; }
     if (cmd === "report")    { await sendReportCard(message); return; }
     if (cmd === "cost")      { await sendCostCard(message); return; }
@@ -3318,12 +3371,13 @@ async function send() {
       }, message); return;
     }
     if (cmd === "process") {
+      if (!arg.trim()) { await sendInboxRich(message); return; }
       const parts2 = arg.split(/\s+/);
       const n    = parseInt(parts2[0], 10);
       const dest = (parts2[1] || "").toLowerCase();
       const validDests = ["next", "project", "projects", "someday", "waiting", "done"];
       if (!n || n < 1 || !dest || !validDests.includes(dest)) {
-        appendAgent(`<span style='color:var(--fail)'>/process の書式: /process &lt;N&gt; &lt;dest&gt;<br>例: /process 1 next<br>dest: next / done / someday / waiting / project</span>`);
+        appendAgent(`<span style='color:var(--fail)'>/process &lt;N&gt; &lt;dest&gt; (例: /process 1 next)<br>dest: next/done/someday/waiting/project<br>引数なし → Inbox 一覧でインタラクティブ処理</span>`);
         return;
       }
       await sendGtdProcess(n, dest, message); return;
@@ -3452,6 +3506,7 @@ async function send() {
   if (!cmdHist.length || cmdHist[0] !== message) {
     cmdHist.unshift(message);
     if (cmdHist.length > 50) cmdHist.pop();
+    try { sessionStorage.setItem(_CMD_HIST_KEY, JSON.stringify(cmdHist.slice(0, 50))); } catch(_e) {}
   }
   cmdHistIdx = -1;
 
@@ -3536,6 +3591,10 @@ window.addEventListener("keydown", e => {
       case "n": e.preventDefault(); msgInput.value = "/next"; send(); return;
       case "s": e.preventDefault(); msgInput.focus(); msgInput.value = "/status "; return;
       case "e": e.preventDefault(); msgInput.value = "/events"; send(); return;
+      case "i": e.preventDefault(); msgInput.value = "/inbox"; send(); return;
+      case "g": e.preventDefault(); msgInput.value = "/gtd"; send(); return;
+      case "m": e.preventDefault(); msgInput.value = "/morning"; send(); return;
+      case "w": e.preventDefault(); msgInput.value = "/weekly"; send(); return;
     }
   }
   if (e.key === "Escape" && document.activeElement === msgInput) {
