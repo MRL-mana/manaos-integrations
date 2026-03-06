@@ -1426,11 +1426,10 @@ def cmd_gtd(args: argparse.Namespace) -> int:
             return 1
         context_tag = getattr(args, "context", None) or ""
         due_date    = getattr(args, "due",     None) or ""
+        cap_to      = (getattr(args, "to", None) or "").lower().strip()
         now  = datetime.datetime.now()
         slug = _re.sub(r"[^\w\s]", "", text)[:25].strip().replace(" ", "_")
         fname = f"{now.strftime('%Y%m%d_%H%M')}_CLI_{slug}.md"
-        GTD_INBOX.mkdir(parents=True, exist_ok=True)
-        path  = GTD_INBOX / fname
         meta_lines = [
             f"- キャプチャ日時: {now.strftime('%Y-%m-%d %H:%M')}",
             f"- ソース: manaosctl",
@@ -1439,15 +1438,36 @@ def cmd_gtd(args: argparse.Namespace) -> int:
             meta_lines.append(f"- context: {context_tag}")
         if due_date:
             meta_lines.append(f"- due: {due_date}")
-        path.write_text(
-            f"# {text}\n\n" + "\n".join(meta_lines) + f"\n\n## 内容\n{text}\n",
-            encoding="utf-8",
+        file_content = (
+            f"# {text}\n\n" + "\n".join(meta_lines) + f"\n\n## 内容\n{text}\n"
         )
-        count = _inbox_count()
+        # --to オプション: inbox をスキップして直接振り分け
+        _cap_dest_map = {
+            "n": GTD_NA,          "next": GTD_NA,
+            "s": GTD_ROOT / "someday",  "someday": GTD_ROOT / "someday",
+            "w": GTD_ROOT / "waiting",  "waiting": GTD_ROOT / "waiting",
+            "p": GTD_ROOT / "projects" / "items",
+            "project": GTD_ROOT / "projects" / "items",
+            "projects": GTD_ROOT / "projects" / "items",
+        }
+        if cap_to and cap_to not in _cap_dest_map:
+            print(c(f"[ERROR] --to の値が不正: '{cap_to}'  (next/someday/waiting/projects)", RED), file=sys.stderr)
+            return 1
+        dest_dir = _cap_dest_map[cap_to] if cap_to else GTD_INBOX
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        path = dest_dir / fname
+        path.write_text(file_content, encoding="utf-8")
         extras = ""
         if context_tag: extras += f"  [{context_tag}]"
         if due_date:    extras += f"  due:{due_date}"
-        print(c(f"✅ Inbox 保存: {fname}{extras}  (残 {count} 件)", GREEN))
+        if cap_to:
+            _label = {"n": "Next", "next": "Next", "s": "Someday", "someday": "Someday",
+                      "w": "Waiting", "waiting": "Waiting",
+                      "p": "Projects", "project": "Projects", "projects": "Projects"}.get(cap_to, cap_to)
+            print(c(f"✅ {_label} に直接保存: {fname}{extras}", GREEN))
+        else:
+            count = _inbox_count()
+            print(c(f"✅ Inbox 保存: {fname}{extras}  (残 {count} 件)", GREEN))
         return 0
 
     elif subcmd == "inbox":
@@ -1996,6 +2016,85 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         print()
         return 0
 
+    elif subcmd == "archive":
+        # 完了タスク閲覧: archive/done の .md ファイルを一覧表示
+        done_dir   = GTD_ROOT / "archive" / "done"
+        use_json   = getattr(args, "json",  False)
+        count_n    = getattr(args, "count", 30)
+        since_str  = getattr(args, "since", None) or ""
+        items = sorted(
+            [f for f in done_dir.glob("*.md")] if done_dir.exists() else [],
+            reverse=True,
+        )
+        if since_str:
+            items = [f for f in items if f.name[:10] >= since_str]
+        items = items[:count_n]
+        if use_json:
+            print(json.dumps(
+                [{"date": f.name[:10], "name": f.stem[11:] if len(f.stem) > 11 else f.stem}
+                 for f in items],
+                ensure_ascii=False, indent=2
+            ))
+            return 0
+        print()
+        print(c(f"  [GTD Archive (完了タスク)  {len(items)} 件]", BOLD + CYAN))
+        print(c("  " + "─" * 55, DIM))
+        for f in items:
+            date_prefix = f.name[:10]
+            # fname: YYYY-MM-DD_タスク名.md
+            task_disp = f.stem[11:] if len(f.stem) > 11 else f.stem
+            print(f"    ✅ {date_prefix}  {task_disp}")
+        if not items:
+            print(c("    （完了タスクなし）", DIM))
+        print()
+        return 0
+
+    elif subcmd == "stats":
+        # 完了統計: archive/done の件数を集計してトレンド表示
+        done_dir = GTD_ROOT / "archive" / "done"
+        use_json = getattr(args, "json", False)
+        items    = sorted(
+            [f for f in done_dir.glob("*.md")] if done_dir.exists() else []
+        )
+        today_str = datetime.datetime.now().strftime("%Y-%m-%d")
+        week_ago  = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+        today_n   = sum(1 for f in items if f.name[:10] == today_str)
+        week_n    = sum(1 for f in items if f.name[:10] >= week_ago)
+        total_n   = len(items)
+        # 直近14日の日別集計
+        from collections import Counter as _Counter
+        daily_ctr = _Counter(f.name[:10] for f in items)
+        # 過去14日分の日付列を生成
+        days14 = [
+            (datetime.datetime.now() - datetime.timedelta(days=i)).strftime("%Y-%m-%d")
+            for i in range(13, -1, -1)
+        ]
+        daily_trend = [{"date": d, "count": daily_ctr.get(d, 0)} for d in days14]
+        if use_json:
+            print(json.dumps({
+                "total": total_n,
+                "today": today_n,
+                "this_week": week_n,
+                "daily_trend": daily_trend,
+            }, ensure_ascii=False, indent=2))
+            return 0
+        print()
+        print(c(f"  [GTD Stats  {today_str}]", BOLD + CYAN))
+        print(c("  " + "─" * 45, DIM))
+        print(f"  ✅ 今日の完了:    {today_n} 件")
+        print(f"  📊 今週の完了:   {week_n} 件")
+        print(f"  🏆 累計完了:     {total_n} 件")
+        print()
+        if any(d["count"] > 0 for d in daily_trend):
+            print(c("  完了推移 (直近14日)", DIM))
+            _max_c = max(d["count"] for d in daily_trend) or 1
+            for d in daily_trend:
+                bar = "█" * int(d["count"] / _max_c * 15) if d["count"] > 0 else "·"
+                mark = " ←今日" if d["date"] == today_str else ""
+                print(f"    {d['date']}  {bar}  {d['count']}件{mark}")
+        print()
+        return 0
+
     elif subcmd == "search":
         # 全テキスト検索: Next Actions / Inbox / Someday / Waiting / Projects を対象
         query_parts = getattr(args, "query", []) or []
@@ -2391,6 +2490,7 @@ def main() -> None:
     p_gtd_capture.add_argument("text", nargs="+", help="保存するテキスト")
     p_gtd_capture.add_argument("--context", type=str, default=None, help="コンテキストタグ (e.g. @pc @phone @outside)")
     p_gtd_capture.add_argument("--due",     type=str, default=None, help="期限日 YYYY-MM-DD")
+    p_gtd_capture.add_argument("--to",      type=str, default=None, help="直接振り分け先: next/someday/waiting/projects (省略=inbox)")
     p_gtd_inbox = p_gtd_sub.add_parser("inbox", help="Inbox 一覧表示")
     p_gtd_inbox.add_argument("--json", action="store_true")
     p_gtd_next = p_gtd_sub.add_parser("next", help="Next Actions 一覧表示")
@@ -2423,6 +2523,12 @@ def main() -> None:
     p_gtd_search = p_gtd_sub.add_parser("search", help="GTD 全テキスト検索 (next/inbox/someday/waiting/projects)")
     p_gtd_search.add_argument("query", nargs="+", help="検索キーワード")
     p_gtd_search.add_argument("--json", action="store_true")
+    p_gtd_archive = p_gtd_sub.add_parser("archive", help="完了タスク閲覧 (archive/done)")
+    p_gtd_archive.add_argument("--json",  action="store_true")
+    p_gtd_archive.add_argument("--count", type=int, default=30, help="表示件数 (default: 30)")
+    p_gtd_archive.add_argument("--since", type=str, default=None, help="YYYY-MM-DD 以降のみ表示")
+    p_gtd_stats = p_gtd_sub.add_parser("stats", help="GTD 完了統計 (今日/今週/累計 + トレンド)")
+    p_gtd_stats.add_argument("--json", action="store_true")
 
     args = parser.parse_args()
 

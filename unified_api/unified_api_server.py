@@ -5698,13 +5698,14 @@ def api_shell_services():
                     health_txt = "timeout"
                     summary = "DOWN"
             result.append({
-                "name":       svc_name,
-                "section":    section,
-                "enabled":    enabled,
-                "port":       port,
-                "health":     health_txt,
-                "summary":    summary,
-                "depends_on": list(svc.get("depends_on") or []),
+                "name":          svc_name,
+                "section":       section,
+                "enabled":       enabled,
+                "port":          port,
+                "health":        health_txt,
+                "summary":       summary,
+                "depends_on":    list(svc.get("depends_on") or []),
+                "recovery_hint": svc.get("recovery_hint", ""),
             })
 
     return jsonify({"services": result, "count": len(result)}), 200
@@ -6072,6 +6073,29 @@ def gtd_search():
     except Exception:
         results = []
     return jsonify({"query": q, "results": results, "count": len(results)}), 200
+
+
+@app.route("/api/gtd/archive", methods=["GET"])
+def gtd_archive():
+    """GET /api/gtd/archive?count=30&since=YYYY-MM-DD
+    完了タスク一覧を JSON 配列で返す。
+    """
+    count = request.args.get("count", "30")
+    since = request.args.get("since", "")
+    cli_args = ["archive", "--json", "--count", str(count)]
+    if since:
+        cli_args += ["--since", since]
+    out = _gtd_run_cli(*cli_args)
+    return out, 200, {"Content-Type": "application/json"}
+
+
+@app.route("/api/gtd/stats", methods=["GET"])
+def gtd_stats():
+    """GET /api/gtd/stats
+    GTD 完了統計（今日/今週/累計 + 直近14日トレンド）を JSON で返す。
+    """
+    out = _gtd_run_cli("stats", "--json")
+    return out, 200, {"Content-Type": "application/json"}
 
 
 @app.route("/api/shell/logs", methods=["GET"])
