@@ -2538,9 +2538,9 @@ async function sendDoRich(preIndex, preTimer, label) {
         const bg = isOd ? "rgba(255,60,60,.10)" : isTd ? "rgba(255,180,0,.08)" : "";
         return `<div style="display:flex;align-items:center;gap:6px;padding:4px 2px;background:${bg};border-bottom:1px solid rgba(255,255,255,.04)">
           <span style="color:var(--muted);font-size:11px;min-width:22px">[${na.index}]</span>
-          <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(na.name)}${ctxStr}${dueStr}</span>
-          <input id="timer-${na.index}" type="number" min="1" max="120" placeholder="分" title="タイマー(分)" style="width:40px;font-size:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:var(--fg);border-radius:3px;padding:1px 3px">
-          <button onclick="doStart(${na.index},document.getElementById('timer-${na.index}').value)" style="${_btnStyle('var(--ok)')}">▶ 開始</button>
+          <span onclick="doStart(${na.index},document.getElementById('timer-${na.index}').value)" title="クリックで開始" style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;padding:2px 0">${escHtml(na.name)}${ctxStr}${dueStr}</span>
+          <input id="timer-${na.index}" type="number" min="1" max="120" placeholder="分" title="タイマー(分)" style="width:40px;font-size:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:var(--fg);border-radius:3px;padding:1px 3px" onclick="event.stopPropagation()">
+          <button onclick="event.stopPropagation();doStart(${na.index},document.getElementById('timer-${na.index}').value)" style="${_btnStyle('var(--ok)')}">▶</button>
         </div>`;
       }).join("");
       replaceLastAgent(
@@ -2610,8 +2610,8 @@ async function sendDoneRich(preIndex, label) {
     if (cur) {
       html += `<div style="display:flex;align-items:center;gap:6px;padding:5px 2px;background:rgba(255,200,0,.10);border-bottom:1px solid rgba(255,255,255,.08)">
         <span style="font-size:14px">🔥</span>
-        <span style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(cur.name)} <span style="font-size:10px;font-weight:400;color:var(--muted)">作業中</span></span>
-        <button onclick="doneTask(null,'${escHtml(cur.name).replace(/'/g,"\\'")}',this)" style="${_btnStyle('var(--ok)')}">✅ 完了!</button>
+        <span onclick="doneTask(null,'${escHtml(cur.name).replace(/'/g,"\\'")}',this.nextElementSibling)" title="クリックで完了" style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;padding:2px 0">${escHtml(cur.name)} <span style="font-size:10px;font-weight:400;color:var(--muted)">作業中</span></span>
+        <button onclick="event.stopPropagation();doneTask(null,'${escHtml(cur.name).replace(/'/g,"\\'")}',this)" style="${_btnStyle('var(--ok)')}">✅ 完了!</button>
       </div>`;
     }
     if (!nas.length && !cur) {
@@ -2623,8 +2623,8 @@ async function sendDoneRich(preIndex, label) {
         const ctxStr = na.context ? ` <span style="font-size:10px;color:#6dd0e8">${escHtml(na.context)}</span>` : "";
         html += `<div style="display:flex;align-items:center;gap:6px;padding:3px 2px;border-bottom:1px solid rgba(255,255,255,.04)">
           <span style="color:var(--muted);font-size:11px;min-width:22px">[${na.index}]</span>
-          <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(na.name)}${ctxStr}${dueStr}</span>
-          <button onclick="doneTask(${na.index},null,this)" style="${_btnStyle('var(--muted)')}">✅</button>
+          <span onclick="doneTask(${na.index},null,this.nextElementSibling)" title="クリックで完了" style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;padding:2px 0">${escHtml(na.name)}${ctxStr}${dueStr}</span>
+          <button onclick="event.stopPropagation();doneTask(${na.index},null,this)" style="${_btnStyle('var(--muted)')}">✅</button>
         </div>`;
       });
     }
@@ -2803,6 +2803,95 @@ async function sendArchiveCard(count, label) {
     el.innerHTML = `<div class="avatar">OS</div><div class="bubble">${html}${ts()}</div>`;
     thinkingEl.replaceWith(el);
     scrollEnd();
+  } catch(e) {
+    replaceThinking(thinkingEl, { status: "dispatch_error", error: String(e) });
+  }
+}
+
+// ── /up ビジュアルカード ──────────────────────────────────────────────────
+async function sendUpCard(svcArgs, label) {
+  svcArgs = svcArgs || [];
+  appendUser(label || (svcArgs.length ? `/up ${svcArgs.join(" ")}` : "/up --all"));
+  const thinkingEl = appendThinking();
+  try {
+    const hdrs = { "Content-Type": "application/json" };
+    const key = apiKeyEl.value.trim();
+    if (key) hdrs["X-API-Key"] = key;
+    const r = await fetch("/api/shell/run", {
+      method: "POST", headers: hdrs,
+      body: JSON.stringify({ command: "up", args: svcArgs })
+    });
+    const d = await r.json();
+    const ok = d.exit_code === 0;
+    const output = (d.output || "").trim();
+    const lines = output.split("\n");
+    const upOk   = lines.filter(l => /start|起動|already.*up|✓/i.test(l) && !/fail|error/i.test(l));
+    const upFail = lines.filter(l => /fail|error|失敗/i.test(l));
+    const upSkip = lines.filter(l => /skip|disabled/i.test(l));
+    let resultRows;
+    if (upOk.length + upFail.length + upSkip.length > 0) {
+      resultRows = [
+        ...upOk.map(l   => `<div style="font-size:11px;color:var(--ok)">↑ ${escHtml(l.trim())}</div>`),
+        ...upFail.map(l => `<div style="font-size:11px;color:var(--fail)">✗ ${escHtml(l.trim())}</div>`),
+        ...upSkip.map(l => `<div style="font-size:11px;color:var(--muted)">− ${escHtml(l.trim())}</div>`),
+      ].join("");
+    } else if (output) {
+      resultRows = `<pre style="font-size:10px;max-height:200px;overflow-y:auto;white-space:pre-wrap">${escHtml(output.slice(0,1200))}</pre>`;
+    } else {
+      resultRows = `<div style="color:var(--muted);font-size:11px">出力なし</div>`;
+    }
+    const statusLine = ok
+      ? `<span style="color:var(--ok);font-weight:700">↑ up 完了</span> <span style="font-size:10px;color:var(--muted)">(exit ${d.exit_code})</span>`
+      : `<span style="color:var(--warn);font-weight:700">↑ up 実行</span> <span style="font-size:10px;color:var(--muted)">(exit ${d.exit_code})</span>`;
+    const svcLabel = svcArgs.length ? svcArgs.join(" ") : "auto";
+    const html = `<div class="report-section">
+      <h4 style="font-size:12px;margin:0 0 6px">↑ Up: ${escHtml(svcLabel)}</h4>
+      <div style="margin-bottom:6px">${statusLine}</div>
+      ${resultRows}
+    </div>`;
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">${html}${ts()}</div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+    setTimeout(loadServices, 800);
+  } catch(e) {
+    replaceThinking(thinkingEl, { status: "dispatch_error", error: String(e) });
+  }
+}
+
+// ── /restart ビジュアルカード ─────────────────────────────────────────────
+async function sendRestartCard(svcName, label) {
+  appendUser(label || (svcName ? `/restart ${svcName}` : "/restart"));
+  const thinkingEl = appendThinking();
+  try {
+    const hdrs = { "Content-Type": "application/json" };
+    const key = apiKeyEl.value.trim();
+    if (key) hdrs["X-API-Key"] = key;
+    const args = svcName ? [svcName] : [];
+    const r = await fetch("/api/shell/run", {
+      method: "POST", headers: hdrs,
+      body: JSON.stringify({ command: "restart", args })
+    });
+    const d = await r.json();
+    const ok = d.exit_code === 0;
+    const output = (d.output || "").trim();
+    const statusLine = ok
+      ? `<span style="color:var(--ok);font-weight:700">↻ restart 完了</span> <span style="font-size:10px;color:var(--muted)">(exit ${d.exit_code})</span>`
+      : `<span style="color:var(--fail);font-weight:700">↻ restart 失敗</span> <span style="font-size:10px;color:var(--muted)">(exit ${d.exit_code})</span>`;
+    const outHtml = output
+      ? `<pre style="font-size:10px;max-height:180px;overflow-y:auto;white-space:pre-wrap;margin-top:6px">${escHtml(output.slice(0,1200))}</pre>`
+      : "";
+    const html = `<div class="report-section">
+      <h4 style="font-size:12px;margin:0 0 6px">↻ Restart${svcName ? `: ${escHtml(svcName)}` : ""}</h4>
+      ${statusLine}${outHtml}
+    </div>`;
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">${html}${ts()}</div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+    setTimeout(loadServices, 800);
   } catch(e) {
     replaceThinking(thinkingEl, { status: "dispatch_error", error: String(e) });
   }
@@ -3278,7 +3367,7 @@ async function send() {
     if (cmd === "daily") { await sendDailyCard(message); return; }
     if (cmd === "up") {
       const upArgs = arg ? arg.split(/\s+/).filter(Boolean) : [];
-      await sendShellRun("up", upArgs, message); return;
+      await sendUpCard(upArgs, message); return;
     }
     if (cmd === "logs") {
       const parts  = arg.trim().split(/\s+/);
@@ -3336,10 +3425,9 @@ async function send() {
     if (cmd === "heal") {
       await sendHealCard(arg || null, message); return;
     }
-    // /restart → sendShellRun（一貫した表示）
+    // /restart → リッチカード
     if (cmd === "restart") {
-      await sendShellRun("restart", arg ? [arg] : [], message);
-      return;
+      await sendRestartCard(arg || null, message); return;
     }
     message = remap[cmd] ?? message.slice(1).trim();
     if (!message) return;
