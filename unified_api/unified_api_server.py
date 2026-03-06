@@ -5711,6 +5711,68 @@ def api_shell_services():
     return jsonify({"services": result, "count": len(result)}), 200
 
 
+@app.route("/api/shell/service/<string:svc_name>", methods=["GET"])
+def api_shell_service_detail(svc_name: str):
+    """
+    ManaOS Shell ─ 単一サービスの詳細 (services_ledger.yaml + health probe).
+
+    Response:
+        {name, section, enabled, port, tier, health, summary, description,
+         depends_on, recovery_hint, start_cmd, cost_risk, blast_note}
+    """
+    ledger_path = REPO_ROOT / "config" / "services_ledger.yaml"
+    if not ledger_path.exists():
+        return _json_error("services_ledger.yaml not found", 503, namespace="shell_service")
+
+    try:
+        with open(ledger_path, "r", encoding="utf-8") as f:
+            ledger = yaml.safe_load(f) or {}
+    except Exception as exc:
+        return _json_error(str(exc), 500, namespace="shell_service")
+
+    svc: Optional[dict] = None
+    section_found: str = ""
+    for section in ("core", "optional"):
+        sec_svcs = ledger.get(section) or {}
+        if svc_name in sec_svcs:
+            svc = sec_svcs[svc_name]
+            section_found = section
+            break
+
+    if svc is None:
+        return _json_error(f"service '{svc_name}' not found in ledger", 404, namespace="shell_service")
+
+    port = svc.get("port")
+    url = svc.get("url") or (f"http://127.0.0.1:{port}" if port else None)
+    health_url = svc.get("health_url") or (url and f"{url.rstrip('/')}/health")
+    health_txt = "n/a"
+    summary = "NO_URL"
+    if health_url:
+        try:
+            r = requests.get(health_url, timeout=2.5)
+            health_txt = "ok" if r.status_code < 400 else f"http_{r.status_code}"
+            summary = "OK" if r.status_code < 400 else "DOWN"
+        except Exception:
+            health_txt = "timeout"
+            summary = "DOWN"
+
+    return jsonify({
+        "name":          svc_name,
+        "section":       section_found,
+        "enabled":       bool(svc.get("enabled", section_found == "core")),
+        "port":          port,
+        "tier":          svc.get("tier"),
+        "health":        health_txt,
+        "summary":       summary,
+        "description":   svc.get("description", ""),
+        "depends_on":    list(svc.get("depends_on") or []),
+        "recovery_hint": svc.get("recovery_hint", ""),
+        "start_cmd":     svc.get("start_cmd", ""),
+        "cost_risk":     svc.get("cost_risk", ""),
+        "blast_note":    svc.get("blast_note", ""),
+    }), 200
+
+
 @app.route("/api/shell/restart", methods=["POST"])
 def api_shell_restart():
     """

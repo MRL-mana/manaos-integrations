@@ -699,6 +699,8 @@ const SLASH_CMDS = [
   { cmd: "/up --all",         desc: "auto_restart=true の全サービスを起動" },
   { cmd: "/startup",          desc: "全サービス起動 + 状態確認 (= /up --all + /status)" },
   { cmd: "/daily",            desc: "今日のデイリーブリーフ (サービス + GTD + イベント)"},
+  { cmd: "/status <svc>",      desc: "指定サービスの詳細カード表示  例: /status ollama" },
+  { cmd: "/stop",              desc: "現在の作業を中断 (gtd stop)" },
 ];
 
 // ── Command history (↑/↓) ─────────────────────────────────────────────────
@@ -904,7 +906,7 @@ function svcRow(s) {
     : "";
   return `<div class="svc-row" title="${rowTitle}">
     <span class="svc-dot ${dotClass}"></span>
-    <span class="svc-name">${escHtml(s.name)}</span>
+    <span class="svc-name" style="cursor:pointer" onclick="sendSvcCard('${safeName}','/status ${safeName}')">${escHtml(s.name)}</span>
     <span class="svc-port">${port}</span>
     ${healBtn}${restartBtn}${logBtn}
   </div>${hintHtml}`;
@@ -2065,6 +2067,56 @@ async function doneTask(index, name, btn) {
 }
 
 // ── Direct manaosctl runner ──────────────────────────────────────────────
+async function sendSvcCard(svcName, label) {
+  appendUser(label || `/status ${svcName}`);
+  const thinkingEl = appendThinking();
+  try {
+    const r = await fetch(`/api/shell/service/${encodeURIComponent(svcName)}`);
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      replaceThinking(thinkingEl, { status: "dispatch_error", error: j.error || `HTTP ${r.status}` });
+      return;
+    }
+    const d = await r.json();
+    const isUp   = d.summary === "OK";
+    const hBadge = isUp
+      ? `<span class="svc-badge up" style="font-size:10px">🟢 UP</span>`
+      : `<span class="svc-badge down" style="font-size:10px">🔴 ${escHtml(d.summary)}</span>`;
+    const tierBadge = d.tier != null
+      ? `<span style="font-size:10px;color:var(--muted);border:1px solid var(--line2);border-radius:3px;padding:0 4px">T${d.tier}</span>` : "";
+    const portBadge = d.port
+      ? `<span style="font-size:10px;color:var(--accent)">:${d.port}</span>` : "";
+    const secBadge = d.section
+      ? `<span style="font-size:10px;color:var(--muted)">${escHtml(d.section)}</span>` : "";
+    const deps = (d.depends_on || []).length
+      ? `<div style="margin-top:4px;font-size:10px;color:var(--muted)">依存: ${d.depends_on.map(x => `<span style="color:var(--accent)">${escHtml(x)}</span>`).join(", ")}</div>` : "";
+    const hint = (!isUp && d.recovery_hint)
+      ? `<div style="margin-top:4px;font-size:10px;color:var(--warn);border-left:2px solid var(--warn);padding-left:6px">💡 ${escHtml(d.recovery_hint)}</div>` : "";
+    const blast = (!isUp && d.blast_note)
+      ? `<div style="margin-top:4px;font-size:10px;color:var(--fail)">⚠️ ${escHtml(d.blast_note)}</div>` : "";
+    const desc  = d.description ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${escHtml(d.description)}</div>` : "";
+    const startCmd = d.start_cmd ? `<div style="font-size:10px;color:var(--muted);margin-top:4px;font-family:monospace">▶ ${escHtml(d.start_cmd)}</div>` : "";
+    const actBtns = `<div style="margin-top:6px;display:flex;gap:6px">
+      <button onclick="msgInput.value='/logs ${escHtml(svcName)}';send()" style="font-size:10px;padding:2px 7px;border:1px solid var(--line2);background:none;color:var(--fg);border-radius:3px;cursor:pointer">📄 ログ</button>
+      <button onclick="msgInput.value='/restart ${escHtml(svcName)}';send()" style="font-size:10px;padding:2px 7px;border:1px solid var(--line2);background:none;color:var(--fg);border-radius:3px;cursor:pointer">🔄 再起動</button>
+      ${!isUp ? `<button onclick="msgInput.value='/up ${escHtml(svcName)}';send()" style="font-size:10px;padding:2px 7px;border:1px solid var(--ok);background:none;color:var(--ok);border-radius:3px;cursor:pointer">▶ 起動</button>` : ""}
+    </div>`;
+    const html = `<div class="report-section" style="min-width:220px">
+      <h4 style="display:flex;align-items:center;gap:6px;font-size:12px;margin:0 0 4px">
+        ${hBadge} <strong>${escHtml(d.name)}</strong> ${portBadge} ${tierBadge} ${secBadge}
+      </h4>
+      ${desc}${deps}${hint}${blast}${startCmd}${actBtns}
+    </div>`;
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">${html}${ts()}</div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+  } catch(e) {
+    replaceThinking(thinkingEl, { status: "dispatch_error", error: String(e) });
+  }
+}
+
 async function sendShellRun(command, args, label) {
   appendUser(label);
   const thinkingEl = appendThinking();
@@ -2361,6 +2413,9 @@ async function send() {
       const pushArgs = arg.includes("--push") ? ["commit", "--push"] : ["commit"];
       await sendShellRun("gtd", pushArgs, message); return;
     }
+    if (cmd === "stop") {
+      await sendShellRun("gtd", ["stop"], message); return;
+    }
     if (cmd === "startup") {
       await sendShellRun("up", ["--all"], message);
       setTimeout(() => { sendShellRun("status", [], "/status"); }, 2000);
@@ -2417,8 +2472,12 @@ async function send() {
     const remap = {
       analyze: "ログを分析して",
     };
-    // /status → 直接 manaosctl 呼び出し（LLM 不要）
-    if (cmd === "status") { await sendShellRun("status", [], message); return; }
+    // /status → サービス名指定ありなら詳細カード、なしなら全体ステータス
+    if (cmd === "status") {
+      if (arg) { await sendSvcCard(arg, message); }
+      else     { await sendShellRun("status", [], message); }
+      return;
+    }
     // /heal → 専用 API (healService) or sendShellRun
     if (cmd === "heal") {
       if (arg) { await sendShellRun("heal", ["--service", arg], message); }
@@ -2508,6 +2567,27 @@ function moveSuggest(dir) {
 
 msgInput.addEventListener("input", updateSuggest);
 msgInput.addEventListener("blur", () => setTimeout(hideSuggest, 150));
+
+// ── Global keyboard shortcuts ─────────────────────────────────────────────
+window.addEventListener("keydown", e => {
+  // フォームやテキストエリアにフォーカス中は無視
+  const tag = (document.activeElement || {}).tagName || "";
+  if (tag === "TEXTAREA" || (tag === "INPUT" && document.activeElement !== msgInput)) return;
+  if (e.altKey && !e.ctrlKey && !e.metaKey) {
+    switch (e.key.toLowerCase()) {
+      case "k": e.preventDefault(); msgInput.focus(); return;
+      case "r": e.preventDefault(); msgInput.value = "/report"; send(); return;
+      case "d": e.preventDefault(); msgInput.value = "/dashboard"; send(); return;
+      case "n": e.preventDefault(); msgInput.value = "/next"; send(); return;
+      case "s": e.preventDefault(); msgInput.focus(); msgInput.value = "/status "; return;
+      case "e": e.preventDefault(); msgInput.value = "/events"; send(); return;
+    }
+  }
+  if (e.key === "Escape" && document.activeElement === msgInput) {
+    if (msgInput.value) { msgInput.value = ""; updateSuggest(); }
+    else msgInput.blur();
+  }
+});
 
 // ── Key bindings ───────────────────────────────────────────────────────────
 msgInput.addEventListener("keydown", e => {
