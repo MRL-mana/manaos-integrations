@@ -2808,6 +2808,56 @@ async function sendArchiveCard(count, label) {
   }
 }
 
+// ── /heal ビジュアルカード ────────────────────────────────────────────────
+async function sendHealCard(svcName, label) {
+  appendUser(label || (svcName ? `/heal ${svcName}` : "/heal"));
+  const thinkingEl = appendThinking();
+  try {
+    const hdrs = { "Content-Type": "application/json" };
+    const key = apiKeyEl.value.trim();
+    if (key) hdrs["X-API-Key"] = key;
+    const body = svcName ? { service: svcName } : { service: null };
+    const r = await fetch("/api/shell/heal", { method: "POST", headers: hdrs, body: JSON.stringify(body) });
+    const d = await r.json();
+    const ok = d.status === "ok";
+    const stdout = (d.stdout || "").trim();
+
+    // stdout からサービス別 heal 結果を抽出 (heal_ok / heal_fail / skipped)
+    const lines = stdout.split("\n");
+    let resultRows = "";
+    const healOk   = lines.filter(l => /heal.ok|already.*up|健全|起動.*ok/i.test(l));
+    const healFail = lines.filter(l => /fail|error|失敗/i.test(l));
+    const skipped  = lines.filter(l => /skip|disabled/i.test(l));
+    if (healOk.length + healFail.length + skipped.length > 0) {
+      resultRows = [
+        ...healOk.map(l   => `<div style="font-size:11px;color:var(--ok)">✓ ${escHtml(l.replace(/\x1b\[[0-9;]*m/g,"").trim())}</div>`),
+        ...healFail.map(l => `<div style="font-size:11px;color:var(--fail)">✗ ${escHtml(l.replace(/\x1b\[[0-9;]*m/g,"").trim())}</div>`),
+        ...skipped.map(l  => `<div style="font-size:11px;color:var(--muted)">− ${escHtml(l.replace(/\x1b\[[0-9;]*m/g,"").trim())}</div>`),
+      ].join("");
+    } else if (stdout) {
+      // fallback: stdout そのまま
+      resultRows = `<pre style="font-size:10px;max-height:240px;overflow-y:auto;white-space:pre-wrap">${escHtml(stdout.slice(0,1500))}</pre>`;
+    }
+    const statusLine = ok
+      ? `<span style="color:var(--ok);font-weight:700">✓ heal 完了</span> <span style="font-size:10px;color:var(--muted)">(exit ${d.exit_code})</span>`
+      : `<span style="color:var(--fail);font-weight:700">✗ heal 失敗</span> <span style="font-size:10px;color:var(--muted)">(exit ${d.exit_code})</span>`;
+    const html = `<div class="report-section">
+      <h4 style="font-size:12px;margin:0 0 6px">⟳ Heal${d.service ? `: ${escHtml(d.service)}` : " (auto)"}</h4>
+      <div style="margin-bottom:${resultRows?"6px":"0"}">${statusLine}</div>
+      ${resultRows}
+    </div>`;
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">${html}${ts()}</div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+    // サービスリスト更新
+    setTimeout(loadServices, 800);
+  } catch(e) {
+    replaceThinking(thinkingEl, { status: "dispatch_error", error: String(e) });
+  }
+}
+
 // ── /daily ビジュアルカード ────────────────────────────────────────────────
 async function sendDailyCard(label) {
   appendUser(label || "/daily");
@@ -3282,11 +3332,9 @@ async function send() {
       else     { await sendShellRun("status", [], message); }
       return;
     }
-    // /heal → 専用 API (healService) or sendShellRun
+    // /heal → リッチカード
     if (cmd === "heal") {
-      if (arg) { await sendShellRun("heal", ["--service", arg], message); }
-      else     { await sendShellRun("heal", [], message); }
-      return;
+      await sendHealCard(arg || null, message); return;
     }
     // /restart → sendShellRun（一貫した表示）
     if (cmd === "restart") {
