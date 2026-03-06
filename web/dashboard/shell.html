@@ -600,6 +600,7 @@ const SLASH_CMDS = [
   { cmd: "/done <N>",             desc: "単作完了: Next Action 番号を指定  例: /done 1" },
   { cmd: "/someday",              desc: "Someday リスト一覧表示" },
   { cmd: "/waiting",              desc: "Waiting リスト一覧表示" },
+  { cmd: "/projects",             desc: "Projects リスト一覧表示" },
   { cmd: "/process <N> <dest>", desc: "Inbox[N]を振り分け (dest: next/done/someday/waiting/project)" },
   // 通知
   { cmd: "/notify <msg>",     desc: "ntfy / Slack に通知を送信" },
@@ -1414,6 +1415,7 @@ function showHelp() {
     ["/done &lt;N&gt;",          "番号で直即完了  例: /done 1"],
     ["/someday",             "Someday リスト一覧表示"],
     ["/waiting",             "Waiting リスト一覧表示"],
+    ["/projects",            "Projects リスト一覧表示"],
     ["/process &lt;N&gt; &lt;dest&gt;", "Inbox[N]を振り分け (next/done/someday/waiting/project)"],
     // 通知
     ["/notify &lt;msg&gt;", "ntfy / Slack に通知を送信"],
@@ -1544,6 +1546,9 @@ async function send() {
     }
     if (cmd === "waiting") {
       await sendShellRun("gtd", ["waiting"], message); return;
+    }
+    if (cmd === "projects") {
+      await sendShellRun("gtd", ["projects"], message); return;
     }
     if (cmd === "commit") {
       const pushArgs = arg.includes("--push") ? ["commit", "--push"] : ["commit"];

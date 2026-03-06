@@ -1689,6 +1689,24 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         task_idx  = getattr(args, "index", None)
         timer_min = getattr(args, "timer", 0)
 
+        # ── 既存 current_task 警告 ────────────────────────────────────────────
+        prev_task = _read_current()
+        if prev_task.get("name"):
+            started = prev_task.get("started_at", "")[:16].replace("T", " ")
+            print(c(f"  ⚠️  現在作業中: {prev_task['name']}  (開始: {started})", YELLOW))
+            print(c("  先に /done で完了してから /do を使うことを推奨します。", DIM))
+            if task_name is None and task_idx is None:
+                # インタラクティブ時のみ確認
+                try:
+                    confirm = input("  上書きして新しいタスクを開始しますか？ [y/N]: ").strip().lower()
+                except (EOFError, KeyboardInterrupt):
+                    print()
+                    return 0
+                if confirm not in ("y", "yes"):
+                    print(c("  取消しました。", DIM))
+                    return 0
+            print()
+
         # ── タスク選択 ────────────────────────────────────────────────────────
         if task_name is None and task_idx is None:
             if not na_items:
@@ -1696,14 +1714,14 @@ def cmd_gtd(args: argparse.Namespace) -> int:
                 print(c("  先に: manaosctl gtd process  (Inbox から振り分け)", DIM))
                 return 0
             print()
-            print(c("  [Next Actions  \u4eca\u4f55\u3092\u3084\u308b\uff1f]", BOLD + GREEN))
-            print(c("  " + "\u2500" * 45, DIM))
+            print(c("  [Next Actions  今何をやる？]", BOLD + GREEN))
+            print(c("  " + "─" * 45, DIM))
             for i, f in enumerate(na_items, 1):
                 nd = {"name": f.stem}
                 print(f"    [{i}] {nd['name']}")
             print()
             try:
-                ans = input("  \u756a\u53f7\u3092\u5165\u529b (0=\u30ad\u30e3\u30f3\u30bb\u30eb): ").strip()
+                ans = input("  番号を入力 (0=キャンセル): ").strip()
             except (EOFError, KeyboardInterrupt):
                 print()
                 return 0
@@ -1713,33 +1731,39 @@ def cmd_gtd(args: argparse.Namespace) -> int:
                 idx = int(ans) - 1
                 task_name = na_items[idx].stem
             except (ValueError, IndexError):
-                print(c(f"  [ERROR] \u7121\u52b9\u306a\u756a\u53f7: {ans}", RED))
+                print(c(f"  [ERROR] 無効な番号: {ans}", RED))
                 return 1
         elif task_idx is not None:
             idx = task_idx - 1
             if idx < 0 or idx >= len(na_items):
-                print(c(f"  [ERROR] \u30a4\u30f3\u30c7\u30c3\u30af\u30b9 {task_idx} \u306f\u7bc4\u56f2\u5916\uff081\uff5e{len(na_items)}\uff09", RED))
+                print(c(f"  [ERROR] インデックス {task_idx} は範囲外（1〜{len(na_items)}）", RED))
                 return 1
             task_name = na_items[idx].stem
         # --name で直接指定の場合はそのまま
 
-        # ── 日次ログに記録 ────────────────────────────────────────────────────
+        # ── 日次ログに記録 (なければ自動作成) ───────────────────────────────
         now_dt  = datetime.datetime.now()
         now_str = now_dt.strftime("%H:%M")
         today   = now_dt.strftime("%Y-%m-%d")
         log_file_path = GTD_LOGS / f"{today}.md"
-        if log_file_path.exists():
-            txt = log_file_path.read_text(encoding="utf-8")
-            if "\n## \u4f5c\u696d\u30ed\u30b0\n" not in txt:
-                txt = txt.rstrip("\n") + "\n\n## \u4f5c\u696d\u30ed\u30b0\n"
-            txt += f"- {now_str} \u25b6\ufe0f \u4f5c\u696d\u958b\u59cb: {task_name}\n"
-            log_file_path.write_text(txt, encoding="utf-8")
-            print(c(f"  \ud83d\udcc4 \u65e5\u6b21\u30ed\u30b0\u306b\u8a18\u9332: {log_file_path.name}", DIM))
+        GTD_LOGS.mkdir(parents=True, exist_ok=True)
+        if not log_file_path.exists():
+            log_file_path.write_text(
+                f"# {today} 作業ログ\n\n## 作業ログ\n",
+                encoding="utf-8",
+            )
+            print(c(f"  📄 日次ログを自動作成: {log_file_path.name}", DIM))
+        txt = log_file_path.read_text(encoding="utf-8")
+        if "\n## 作業ログ\n" not in txt:
+            txt = txt.rstrip("\n") + "\n\n## 作業ログ\n"
+        txt += f"- {now_str} ▶️ 作業開始: {task_name}\n"
+        log_file_path.write_text(txt, encoding="utf-8")
+        print(c(f"  📄 日次ログに記録: {log_file_path.name}", DIM))
 
         # ── 通知 ──────────────────────────────────────────────────────────────
         notify_result = send_notify(
-            title="GTD: \u4f5c\u696d\u958b\u59cb",
-            message=f"\u25b6\ufe0f {task_name}",
+            title="GTD: 作業開始",
+            message=f"▶️ {task_name}",
             priority="default",
         )
         print()
@@ -1848,15 +1872,21 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         _shutil2.move(str(src_file), str(dst_file))
         print(c(f"  \ud83d\udcc1 \u30a2\u30fc\u30ab\u30a4\u30d6\u306b\u79fb\u52d5: {dst_file.relative_to(GTD_ROOT)}", DIM))
 
-        # ── 日次ログに記録 ────────────────────────────────────────────────────
+        # ── 日次ログに記録 (なければ自動作成) ───────────────────────────────
         log_file_path = GTD_LOGS / f"{today}.md"
-        if log_file_path.exists():
-            txt = log_file_path.read_text(encoding="utf-8")
-            if "\n## \u4f5c\u696d\u30ed\u30b0\n" not in txt:
-                txt = txt.rstrip("\n") + "\n\n## \u4f5c\u696d\u30ed\u30b0\n"
-            txt += f"- {now_str} \u2705 \u5b8c\u4e86: {task_name}\n"
-            log_file_path.write_text(txt, encoding="utf-8")
-            print(c(f"  \ud83d\udcc4 \u65e5\u6b21\u30ed\u30b0\u306b\u8a18\u9332: {log_file_path.name}", DIM))
+        GTD_LOGS.mkdir(parents=True, exist_ok=True)
+        if not log_file_path.exists():
+            log_file_path.write_text(
+                f"# {today} 作業ログ\n\n## 作業ログ\n",
+                encoding="utf-8",
+            )
+            print(c(f"  📄 日次ログを自動作成: {log_file_path.name}", DIM))
+        txt = log_file_path.read_text(encoding="utf-8")
+        if "\n## 作業ログ\n" not in txt:
+            txt = txt.rstrip("\n") + "\n\n## 作業ログ\n"
+        txt += f"- {now_str} ✅ 完了: {task_name}\n"
+        log_file_path.write_text(txt, encoding="utf-8")
+        print(c(f"  📄 日次ログに記録: {log_file_path.name}", DIM))
 
         # ── 通知 ──────────────────────────────────────────────────────────────
         remaining = len([f for f in GTD_NA.glob("*.md") if f.name.upper() != "README.MD"])
@@ -1910,6 +1940,24 @@ def cmd_gtd(args: argparse.Namespace) -> int:
             else:
                 print(c(f"  [ERROR] push: {res_push.stderr.strip()}", RED))
                 return 1
+        return 0
+
+    elif subcmd == "projects":
+        dir_path = GTD_ROOT / "projects" / "items"
+        items    = sorted([f for f in dir_path.glob("*.md")
+                           if f.name.upper() != "README.MD"]) if dir_path.exists() else []
+        use_json = getattr(args, "json", False)
+        if use_json:
+            print(json.dumps([f.stem for f in items], ensure_ascii=False, indent=2))
+            return 0
+        print()
+        print(c(f"  [Projects  {len(items)} 件]", BOLD + CYAN))
+        print(c("  " + "─" * 50, DIM))
+        for i, f in enumerate(items, 1):
+            print(f"    [{i}] {f.stem}")
+        if not items:
+            print(c("    （なし）", DIM))
+        print()
         return 0
 
     elif subcmd == "someday":
@@ -2212,6 +2260,8 @@ def main() -> None:
     p_gtd_done = p_gtd_sub.add_parser("done", help="\u300c\u5b8c\u4e86\uff01\u300d\u5ba3\u8a00: Next Action \u3092\u30a2\u30fc\u30ab\u30a4\u30d6\u306b\u79fb\u52d5 + \u30ed\u30b0\u8a18\u9332 + \u901a\u77e5")
     p_gtd_done.add_argument("--index", type=int,  default=None, help="Next Action の番号 (1-based)")
     p_gtd_done.add_argument("--name",  type=str,  default=None, help="タスク名を直接指定")
+    p_gtd_projects = p_gtd_sub.add_parser("projects", help="Projects リスト表示")
+    p_gtd_projects.add_argument("--json", action="store_true")
     p_gtd_someday = p_gtd_sub.add_parser("someday", help="Someday リスト表示")
     p_gtd_someday.add_argument("--json", action="store_true")
     p_gtd_waiting = p_gtd_sub.add_parser("waiting", help="Waiting リスト表示")

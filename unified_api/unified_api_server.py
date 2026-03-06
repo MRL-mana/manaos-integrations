@@ -6024,6 +6024,38 @@ def gtd_do_proxy():
     return jsonify({"status": "ok", "output": out.strip()}), 200
 
 
+@app.route("/api/gtd/current", methods=["GET"])
+def gtd_current_proxy():
+    """現在作業中タスクを返す。作業中なし → {"current_task": null}"""
+    out = _gtd_run_cli("status", "--json")
+    try:
+        d = json.loads(out)
+        return jsonify({"current_task": d.get("current_task")}), 200
+    except Exception:
+        return jsonify({"current_task": None}), 200
+
+
+@app.route("/api/gtd/someday", methods=["GET"])
+def gtd_someday_proxy():
+    """Someday リストを JSON 配列で返す。"""
+    out = _gtd_run_cli("someday", "--json")
+    return out, 200, {"Content-Type": "application/json"}
+
+
+@app.route("/api/gtd/waiting", methods=["GET"])
+def gtd_waiting_proxy():
+    """Waiting リストを JSON 配列で返す。"""
+    out = _gtd_run_cli("waiting", "--json")
+    return out, 200, {"Content-Type": "application/json"}
+
+
+@app.route("/api/gtd/projects", methods=["GET"])
+def gtd_projects_proxy():
+    """Projects リストを JSON 配列で返す。"""
+    out = _gtd_run_cli("projects", "--json")
+    return out, 200, {"Content-Type": "application/json"}
+
+
 @app.route("/api/shell/logs", methods=["GET"])
 def shell_logs():
     """GET /api/shell/logs?service=llm_routing&n=30
