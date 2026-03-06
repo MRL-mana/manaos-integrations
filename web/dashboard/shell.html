@@ -928,6 +928,27 @@ function appendUser(text) {
 }
 
 // ── Append agent bubble (SSE streaming) ───────────────────────────────────
+function appendAgent(html) {
+  hideEmpty();
+  const el = document.createElement("div");
+  el.className = "msg agent";
+  el.innerHTML = `<div class="avatar">OS</div><div class="bubble">${html}${ts()}</div>`;
+  historyEl.appendChild(el);
+  scrollEnd();
+  saveMsg("agent", stripTags(html));
+  return el;
+}
+
+function replaceLastAgent(html) {
+  const agents = Array.from(historyEl.querySelectorAll(".msg.agent"));
+  const last = agents[agents.length - 1];
+  if (last) {
+    last.querySelector(".bubble").innerHTML = html + ts();
+    saveMsg("agent", stripTags(html));
+    scrollEnd();
+  }
+}
+
 function appendAgentSSE() {
   hideEmpty();
   const el = document.createElement("div");
@@ -1445,21 +1466,23 @@ async function send() {
       const parts  = arg.trim().split(/\s+/);
       const svc    = parts[0] || "unified_api";
       const nLines = parseInt(parts[1]) || 30;
+      busy = true; sendBtn.disabled = true; msgInput.disabled = true;
       appendUser(message);
-      appendAgent(`<span style='opacity:.6'>📤 ${svc} ログ取得中…</span>`);
+      appendAgent(`<span style='opacity:.6'>📄 ${escHtml(svc)} ログ取得中…</span>`);
       try {
         const r = await fetch(`/api/shell/logs?service=${encodeURIComponent(svc)}&n=${nLines}`);
         const j = await r.json();
         if (j.error) {
-          replaceLastAgent(`<span style='color:var(--fail)'>エラー: ${j.error}</span>`);
+          replaceLastAgent(`<span style='color:var(--fail)'>エラー: ${escHtml(j.error)}</span>`);
         } else {
-          const out = (j.output || "(出力なし)").replace(/\n/g, "<br>");
-          replaceLastAgent(`<pre style='margin:0;white-space:pre-wrap;font-size:11px'>${out}</pre>`);
+          const out = escHtml(j.output || "(出力なし)");
+          replaceLastAgent(`<span class="intent-tag tag-run_ok">LOGS</span> <span style="font-size:11px;color:var(--muted)">${escHtml(svc)}</span><br><pre style='margin:4px 0 0;white-space:pre-wrap;font-size:11px'>${out}</pre>`);
         }
       } catch(e) {
-        replaceLastAgent(`<span style='color:var(--fail)'>fetch 失敗: ${e}</span>`);
+        replaceLastAgent(`<span style='color:var(--fail)'>fetch 失敗: ${escHtml(String(e))}</span>`);
+      } finally {
+        busy = false; sendBtn.disabled = false; msgInput.disabled = false;
       }
-      busy = false; sendBtn.disabled = false; msgInput.disabled = false;
       return;
     }
 
