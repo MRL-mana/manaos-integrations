@@ -1366,10 +1366,13 @@ async function toggleInbox() {
       listEl.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:2px 8px 4px 20px">（なし）</div>`;
     } else {
       listEl.innerHTML = items.slice(0, 20).map((name, i) => {
-        return `<div class="svc-row" style="padding-left:18px;cursor:pointer"
-          onclick="msgInput.value='/process ${i + 1} next';send()" title="→ /process ${i + 1} next">
-          <span style="font-size:9px;color:var(--muted)">${i + 1}.</span>
-          <span class="svc-name" style="font-size:11px">${escHtml(String(name).slice(0, 36))}</span>
+        const idx = i + 1;
+        return `<div style="display:flex;align-items:center;gap:3px;padding:2px 6px 2px 18px;border-bottom:1px solid rgba(255,255,255,.05)">
+          <span style="font-size:9px;color:var(--muted);min-width:18px">${idx}.</span>
+          <span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(String(name))}">${escHtml(String(name).slice(0, 32))}</span>
+          <button onclick="event.stopPropagation();processInboxItem(${idx},'next',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--ok);color:var(--ok);background:none;border-radius:2px;cursor:pointer">▶</button>
+          <button onclick="event.stopPropagation();processInboxItem(${idx},'someday',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">📦</button>
+          <button onclick="event.stopPropagation();processInboxItem(${idx},'done',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">✅</button>
         </div>`;
       }).join("");
     }
@@ -1403,10 +1406,13 @@ async function toggleInbox() {
       listEl.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:2px 8px 4px 20px">（なし）</div>`;
     } else {
       listEl.innerHTML = items.slice(0, 20).map((name, i) => {
-        return `<div class="svc-row" style="padding-left:18px;cursor:pointer"
-          onclick="msgInput.value='/process ${i + 1} next';send()" title="→ /process ${i + 1} next">
-          <span style="font-size:9px;color:var(--muted)">${i + 1}.</span>
-          <span class="svc-name" style="font-size:11px">${escHtml(String(name).slice(0, 36))}</span>
+        const idx = i + 1;
+        return `<div style="display:flex;align-items:center;gap:3px;padding:2px 6px 2px 18px;border-bottom:1px solid rgba(255,255,255,.05)">
+          <span style="font-size:9px;color:var(--muted);min-width:18px">${idx}.</span>
+          <span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(String(name))}">${escHtml(String(name).slice(0, 32))}</span>
+          <button onclick="event.stopPropagation();processInboxItem(${idx},'next',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--ok);color:var(--ok);background:none;border-radius:2px;cursor:pointer">▶</button>
+          <button onclick="event.stopPropagation();processInboxItem(${idx},'someday',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">📦</button>
+          <button onclick="event.stopPropagation();processInboxItem(${idx},'done',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">✅</button>
         </div>`;
       }).join("");
     }
@@ -1440,15 +1446,20 @@ async function toggleNextActions() {
     if (!items.length) {
       listEl.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:2px 8px 4px 20px">（なし）</div>`;
     } else {
+      const todayStr = new Date().toISOString().slice(0, 10);
       listEl.innerHTML = items.slice(0, 20).map((item, i) => {
-        const name   = escHtml((item.name || item.stem || String(item)).slice(0, 32));
-        const ctx    = item.context ? `<span style="color:var(--accent);font-size:9px"> ${escHtml(item.context)}</span>` : "";
-        const due    = item.due     ? `<span style="color:var(--warn);font-size:9px"> due:${escHtml(item.due)}</span>` : "";
-        const safeName = (item.name || String(item)).replace(/'/g, "\\'");
-        return `<div class="svc-row" style="padding-left:18px;cursor:pointer"
-          onclick="msgInput.value='/do --name ${safeName}';send()" title="▶ /do --name ${name}">
-          <span style="font-size:9px;color:var(--muted)">${i + 1}.</span>
-          <span class="svc-name" style="font-size:11px">${name}${ctx}${due}</span>
+        const idx    = i + 1;
+        const name   = escHtml((item.name || item.stem || String(item)).slice(0, 28));
+        const ctx    = item.context ? ` <span style="color:#6dd0e8;font-size:9px">${escHtml(item.context)}</span>` : "";
+        const isOd   = item.due && item.due < todayStr;
+        const isTd   = item.due && item.due === todayStr;
+        const due    = item.due ? ` <span style="color:${isOd ? 'var(--fail)' : 'var(--warn)'};font-size:9px">📅${item.due}${isOd ? '⚠️' : ''}</span>` : "";
+        const bg     = isOd ? "background:rgba(255,60,60,.08);" : isTd ? "background:rgba(255,180,0,.06);" : "";
+        return `<div style="display:flex;align-items:center;gap:3px;padding:2px 6px 2px 18px;border-bottom:1px solid rgba(255,255,255,.05);${bg}">
+          <span style="font-size:9px;color:var(--muted);min-width:18px">${idx}.</span>
+          <span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}${ctx}${due}</span>
+          <button onclick="event.stopPropagation();sendShellRun('gtd',['do','--index','${idx}'],'/do ${idx}')" style="padding:1px 4px;font-size:9px;border:1px solid var(--ok);color:var(--ok);background:none;border-radius:2px;cursor:pointer">▶</button>
+          <button onclick="event.stopPropagation();sendShellRun('gtd',['done','--index','${idx}'],'/done ${idx}')" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">✅</button>
         </div>`;
       }).join("");
     }
@@ -1758,6 +1769,127 @@ async function sendFetch(message) {
   }
 }
 
+// ── Inbox リッチカード + インライン process ───────────────────────────────
+function _btnStyle(color) {
+  return `padding:2px 6px;font-size:10px;background:rgba(128,128,128,.12);border:1px solid ${color};color:${color};border-radius:3px;cursor:pointer;white-space:nowrap`;
+}
+async function sendInboxRich(label) {
+  busy = true; sendBtn.disabled = true; msgInput.disabled = true;
+  appendUser(label);
+  appendAgent(`<span style='opacity:.6'>📥 Inbox 取得中…</span>`);
+  try {
+    const r = await fetch("/api/gtd/inbox");
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const items = await r.json(); // ["name1", "name2", ...]
+    if (!items.length) {
+      replaceLastAgent(`<span class="intent-tag tag-run_ok">GTD</span> 📥 <strong>Inbox 空!</strong> 🎉 素晴らしい！`);
+    } else {
+      const rows = items.map((name, i) => {
+        const idx = i + 1;
+        return `<div id="ibr-${idx}" style="display:flex;align-items:center;gap:4px;padding:3px 2px;border-bottom:1px solid rgba(255,255,255,.04)">
+          <span style="color:var(--muted);font-size:11px;min-width:22px">[${idx}]</span>
+          <span style="flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escHtml(name)}">${escHtml(name)}</span>
+          <button onclick="processInboxItem(${idx},'next','ibr-${idx}')"    style="${_btnStyle('var(--ok)')}">▶ Next</button>
+          <button onclick="processInboxItem(${idx},'someday','ibr-${idx}')" style="${_btnStyle('var(--muted)')}">📦</button>
+          <button onclick="processInboxItem(${idx},'waiting','ibr-${idx}')" style="${_btnStyle('#6882e8')}">⏳</button>
+          <button onclick="processInboxItem(${idx},'done','ibr-${idx}')"    style="${_btnStyle('var(--muted)')}">✅</button>
+        </div>`;
+      }).join("");
+      replaceLastAgent(
+        `<span class="intent-tag tag-run_ok">GTD</span> 📥 <strong>Inbox ${items.length}件</strong>` +
+        `<div style="margin:6px 0;max-height:320px;overflow-y:auto">${rows}</div>` +
+        `<span style="font-size:10px;color:var(--muted)">ボタンで即振り分け / /process N dest でも可</span>`
+      );
+    }
+  } catch(e) {
+    replaceLastAgent(`<span style='color:var(--fail)'>Inbox 取得失敗: ${escHtml(String(e))}</span>`);
+  }
+  busy = false; sendBtn.disabled = false; msgInput.disabled = false;
+}
+
+async function processInboxItem(idx, dest, rowId) {
+  const rowEl = rowId ? document.getElementById(rowId) : null;
+  if (rowEl) rowEl.style.opacity = "0.4";
+  const DEST_LABEL = {next:"▶ Next", someday:"📦 Someday", waiting:"⏳ Waiting", done:"✅ Done"};
+  try {
+    const r = await fetch("/api/gtd/process", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({index: idx, to: dest})
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) {
+      if (rowEl) rowEl.style.display = "none";
+      showToast(`[${idx}] → ${DEST_LABEL[dest] || dest}`);
+      pollGtdStatus();
+      _inboxExpanded = false;
+    } else {
+      if (rowEl) rowEl.style.opacity = "1";
+      showToast(`process 失敗: ${j.error || r.status}`, 4000);
+    }
+  } catch(e) {
+    if (rowEl) rowEl.style.opacity = "1";
+    showToast(`process エラー: ${String(e)}`, 4000);
+  }
+}
+
+// ── Next Actions リッチカード ────────────────────────────────────────────
+async function sendNextRich(opts, label) {
+  // opts: {filter, overdue, due_today}
+  busy = true; sendBtn.disabled = true; msgInput.disabled = true;
+  appendUser(label);
+  appendAgent(`<span style='opacity:.6'>✅ Next Actions 取得中…</span>`);
+  try {
+    const params = new URLSearchParams();
+    if (opts.filter)    params.set("filter",    opts.filter);
+    if (opts.overdue)   params.set("overdue",   "1");
+    if (opts.due_today) params.set("due_today", "1");
+    const r = await fetch(`/api/gtd/next?${params}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    const nas   = d.next_actions || [];
+    const projs = d.projects || [];
+    const today = new Date().toISOString().slice(0, 10);
+    if (!nas.length && !projs.length) {
+      replaceLastAgent(`<span class="intent-tag tag-run_ok">GTD</span> ✅ <strong>Next Actions は空!</strong> 🎉`);
+    } else {
+      const rows = nas.map((na, i) => {
+        const idx        = i + 1;
+        const isOverdue  = na.due && na.due < today;
+        const isDueToday = na.due && na.due === today;
+        const bg     = isOverdue ? "rgba(255,60,60,.10)" : isDueToday ? "rgba(255,180,0,.08)" : "";
+        const dueStr = na.due
+          ? ` <span style="font-size:10px;color:${isOverdue ? 'var(--fail)' : 'var(--warn)'}">📅${na.due}${isOverdue ? '⚠️' : ''}</span>`
+          : "";
+        const ctxStr = na.context
+          ? ` <span style="font-size:10px;color:#6dd0e8;background:rgba(0,180,220,.12);padding:1px 4px;border-radius:3px">${escHtml(na.context)}</span>`
+          : "";
+        const safeName = escHtml(na.name);
+        return `<div style="display:flex;align-items:center;gap:4px;padding:3px 2px;${bg};border-bottom:1px solid rgba(255,255,255,.04)">
+          <span style="color:var(--muted);font-size:11px;min-width:22px">[${idx}]</span>
+          <span style="flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${safeName}">${safeName}${ctxStr}${dueStr}</span>
+          <button onclick="sendShellRun('gtd',['do','--index','${idx}'],'/do ${idx}')"   style="${_btnStyle('var(--ok)')}">▶ Do</button>
+          <button onclick="sendShellRun('gtd',['done','--index','${idx}'],'/done ${idx}')" style="${_btnStyle('var(--muted)')}">✅</button>
+        </div>`;
+      }).join("");
+      const filterLabel = opts.filter
+        ? ` <span style="color:#6dd0e8">${escHtml(opts.filter)}</span>`
+        : opts.overdue   ? ` <span style="color:var(--fail)">⚠️ 期限超過</span>`
+        : opts.due_today ? ` <span style="color:var(--warn)">📅 今日期限</span>` : "";
+      const projInfo = projs.length
+        ? `<div style="margin-top:4px;font-size:11px;color:var(--warn)">📁 Projects ${projs.length}件</div>` : "";
+      replaceLastAgent(
+        `<span class="intent-tag tag-run_ok">GTD</span> ✅ <strong>Next Actions ${nas.length}件</strong>${filterLabel}` +
+        `<div style="margin:6px 0;max-height:350px;overflow-y:auto">${rows}</div>` +
+        projInfo
+      );
+    }
+  } catch(e) {
+    replaceLastAgent(`<span style='color:var(--fail)'>Next Actions 取得失敗: ${escHtml(String(e))}</span>`);
+  }
+  busy = false; sendBtn.disabled = false; msgInput.disabled = false;
+}
+
 // ── Direct manaosctl runner ──────────────────────────────────────────────
 async function sendShellRun(command, args, label) {
   appendUser(label);
@@ -1980,17 +2112,15 @@ async function send() {
       const cleanText = arg.replace(/@\S+/g, "").replace(/\bdue:\d{4}-\d{2}-\d{2}\b/g, "").trim();
       await sendGtdCapture(cleanText || arg, message, ctxTag, dueDate); return;
     }
-    if (cmd === "inbox")   { await sendShellRun("gtd",    ["inbox"],   message); return; }
+    if (cmd === "inbox")   { await sendInboxRich(message); return; }
     if (cmd === "morning") { await sendShellRun("gtd",    ["morning"], message); return; }
     if (cmd === "next") {
-      const nextArgs = ["next"];
-      if (arg) {
-        const ctxMatch2 = arg.match(/(@\S+)/);
-        if (ctxMatch2)           nextArgs.push("--filter", ctxMatch2[1]);
-        if (/--overdue/i.test(arg))   nextArgs.push("--overdue");
-        if (/--due-today/i.test(arg)) nextArgs.push("--due-today");
-      }
-      await sendShellRun("gtd", nextArgs, message); return;
+      const _ctxM = arg ? arg.match(/(@\S+)/) : null;
+      await sendNextRich({
+        filter:    _ctxM ? _ctxM[1] : null,
+        overdue:   /--overdue/i.test(arg),
+        due_today: /--due-today/i.test(arg),
+      }, message); return;
     }
     if (cmd === "process") {
       const parts2 = arg.split(/\s+/);
