@@ -6255,6 +6255,26 @@ def gtd_archive():
     return out, 200, {"Content-Type": "application/json"}
 
 
+@app.route("/api/gtd/daily", methods=["GET"])
+def gtd_daily():
+    """GET /api/gtd/daily
+    デイリーブリーフ JSON: score, up/down/disabled, down_services,
+    inbox, next_actions, log_today, current_task, events(7件)
+    """
+    manaosctl = REPO_ROOT / "tools" / "manaosctl.py"
+    if not manaosctl.exists():
+        return _json_error("manaosctl.py not found", 503, namespace="gtd_daily")
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(manaosctl), "daily", "--json"],
+            capture_output=True, text=True, cwd=str(REPO_ROOT), timeout=30,
+        )
+        data = json.loads(proc.stdout)
+        return jsonify(data), 200
+    except Exception as exc:
+        return _json_error(str(exc), 500, namespace="gtd_daily")
+
+
 @app.route("/api/gtd/stats", methods=["GET"])
 def gtd_stats():
     """GET /api/gtd/stats
