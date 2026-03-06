@@ -395,7 +395,27 @@
       letter-spacing: .06em;
       color: var(--line2);
       padding: 4px 6px 2px;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
+    .sidebar-section:hover { color: var(--muted); }
+    .sidebar-section .sec-arrow { font-size: 8px; transition: transform .2s; }
+    .sidebar-section.collapsed .sec-arrow { transform: rotate(-90deg); }
+    #svc-filter {
+      width: calc(100% - 12px);
+      margin: 4px 6px 4px;
+      padding: 3px 6px;
+      font-size: 11px;
+      background: var(--line2);
+      border: 1px solid var(--line2);
+      border-radius: 4px;
+      color: var(--text);
+      outline: none;
+    }
+    #svc-filter:focus { border-color: var(--accent); }
     .svc-heal-btn {
       background: none;
       border: 1px solid var(--line2);
@@ -576,8 +596,9 @@
   <aside id="sidebar">
     <div class="sidebar-title">
       Services
-      <button class="sidebar-refresh" id="svc-refresh-btn" onclick="loadServices()">↻</button>
+      <button class="sidebar-refresh" id="svc-refresh-btn" onclick="loadServices()">&#8635;</button>
     </div>
+    <input id="svc-filter" type="text" placeholder="フィルタ…" oninput="filterServices(this.value)" />
     <div id="svc-list"><div class="svc-loading">loading…</div></div>
     <div class="sidebar-title" style="margin-top:10px">
       GTD
@@ -816,15 +837,42 @@ function renderServices(svcs) {
   const opt  = svcs.filter(s => s.section === "optional");
   let html = "";
   if (core.length) {
-    html += '<div class="sidebar-section">Core</div>';
-    html += core.map(svcRow).join("");
+    html += `<div class="sidebar-section" data-sec="core" onclick="toggleSvcSection(this)"><span class="sec-arrow">&#9660;</span> Core (${core.length})</div>`;
+    html += `<div class="sec-body" data-sec-body="core">${core.map(svcRow).join('')}</div>`;
   }
   const optEnabled = opt.filter(s => s.enabled);
   if (optEnabled.length) {
-    html += '<div class="sidebar-section">Optional</div>';
-    html += optEnabled.map(svcRow).join("");
+    html += `<div class="sidebar-section" data-sec="optional" onclick="toggleSvcSection(this)"><span class="sec-arrow">&#9660;</span> Optional (${optEnabled.length})</div>`;
+    html += `<div class="sec-body" data-sec-body="optional">${optEnabled.map(svcRow).join('')}</div>`;
   }
   svcList.innerHTML = html;
+}
+
+function toggleSvcSection(hdr) {
+  const key  = hdr.dataset.sec;
+  const body = svcList.querySelector(`[data-sec-body="${key}"]`);
+  if (!body) return;
+  const collapsed = hdr.classList.toggle('collapsed');
+  body.style.display = collapsed ? 'none' : '';
+}
+
+let _svcFilterVal = '';
+function filterServices(val) {
+  _svcFilterVal = val.toLowerCase();
+  const rows = svcList.querySelectorAll('.svc-row, .svc-hint');
+  rows.forEach(row => {
+    if (!val) { row.style.display = ''; return; }
+    const name = (row.querySelector('.svc-name') || row).textContent.toLowerCase();
+    row.style.display = name.includes(_svcFilterVal) ? '' : 'none';
+  });
+  // セクションヘッダーの表示も調整
+  svcList.querySelectorAll('.sidebar-section').forEach(sec => {
+    const body = svcList.querySelector(`[data-sec-body="${sec.dataset.sec}"]`);
+    if (body && !sec.classList.contains('collapsed')) {
+      const visible = [...body.querySelectorAll('.svc-row')].some(r => r.style.display !== 'none');
+      sec.style.display = visible || !val ? '' : 'none';
+    }
+  });
 }
 
 function svcRow(s) {
