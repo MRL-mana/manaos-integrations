@@ -1521,11 +1521,21 @@ async function send() {
     }
 
     const remap = {
-      status:  "全サービスの状態を確認して",
-      heal:    arg ? `${arg} を heal して` : "DOWN サービスを全部 heal して",
-      restart: arg ? `${arg} を再起動して` : "サービスを再起動して",
       analyze: "ログを分析して",
     };
+    // /status → 直接 manaosctl 呼び出し（LLM 不要）
+    if (cmd === "status") { await sendShellRun("status", [], message); return; }
+    // /heal → 専用 API (healService) or sendShellRun
+    if (cmd === "heal") {
+      if (arg) { await sendShellRun("heal", ["--service", arg], message); }
+      else     { await sendShellRun("heal", [], message); }
+      return;
+    }
+    // /restart → sendShellRun（一貫した表示）
+    if (cmd === "restart") {
+      await sendShellRun("restart", arg ? [arg] : [], message);
+      return;
+    }
     message = remap[cmd] ?? message.slice(1).trim();
     if (!message) return;
   }
