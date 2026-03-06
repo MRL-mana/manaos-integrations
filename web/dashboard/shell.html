@@ -432,6 +432,15 @@
       flex-shrink: 0;
     }
     .svc-log-btn:hover { background: var(--line2); color: var(--accent); }
+    #score-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 1px 8px;
+      margin-left: 6px;
+      transition: color .4s;
+    }
     #down-badge {
       display: none;
       background: var(--fail);
@@ -488,6 +497,7 @@
   <!-- Header -->
   <header>
     <div class="logo">ManaOS <span>Shell</span></div>
+    <span id="score-badge" title="稼働率スコア (UP/全有効サービス)"></span>
     <span id="down-badge"></span>
     <span id="gtd-badge" title="GTD Inbox件数 (クリックで一覧)"></span>
     <div class="badge" id="status-badge">connecting…</div>
@@ -603,6 +613,7 @@ const SLASH_CMDS = [
   // サービス起動
   { cmd: "/up <svc>",         desc: "DOWN サービスを起動  例: /up llm_routing" },
   { cmd: "/up --all",         desc: "auto_restart=true の全サービスを起動" },
+  { cmd: "/startup",          desc: "全サービス起動 + 状態確認 (= /up --all + /status)" },
 ];
 
 // ── Command history (↑/↓) ─────────────────────────────────────────────────
@@ -733,6 +744,15 @@ function renderServices(svcs) {
       downBadge.style.display = "none";
     }
   }
+  // ヘルス・スコア更新
+  if (scoreBadge) {
+    const enabled = svcs.filter(s => s.enabled !== false);
+    const upCount = enabled.filter(s => s.summary === "OK").length;
+    const score   = enabled.length ? Math.round(upCount / enabled.length * 100) : 100;
+    scoreBadge.textContent = `⚡ ${score}`;
+    scoreBadge.title = `稼働率: ${upCount}/${enabled.length} UP`;
+    scoreBadge.style.color = score >= 90 ? "var(--ok)" : score >= 70 ? "var(--warn)" : "var(--fail)";
+  }
   const core = svcs.filter(s => s.section === "core");
   const opt  = svcs.filter(s => s.section === "optional");
   let html = "";
@@ -760,11 +780,14 @@ function svcRow(s) {
   const restartBtn = dotClass !== "skip"
     ? `<button class="svc-restart-btn" onclick="restartService('${safeName}')" title="restart ${escHtml(s.name)}">↺</button>`
     : "";
+  const logBtn = dotClass !== "skip"
+    ? `<button class="svc-log-btn" onclick="msgInput.value='/logs ${safeName}';send()" title="logs ${escHtml(s.name)}">📄</button>`
+    : "";
   return `<div class="svc-row" title="${escHtml(s.health)} / ${escHtml(s.summary)}">
     <span class="svc-dot ${dotClass}"></span>
     <span class="svc-name">${escHtml(s.name)}</span>
     <span class="svc-port">${port}</span>
-    ${healBtn}${restartBtn}
+    ${healBtn}${restartBtn}${logBtn}
   </div>`;
 }
 
@@ -1378,6 +1401,7 @@ function showHelp() {
     // サービス起動
     ["/up &lt;svc&gt;",         "DOWN サービスを起動  例: /up llm_routing"],
     ["/up --all",         "auto_restart=true の全サービスを起動"],
+    ["/startup",          "全サービス起動 + 状態確認（/up --all → /status）"],
   ];
   const tBody = rows.map(([c, d]) =>
     `<tr><td style="font-family:monospace;white-space:nowrap;color:var(--accent);padding:2px 14px 2px 0">${c}</td>` +
@@ -1491,6 +1515,11 @@ async function send() {
     if (cmd === "commit") {
       const pushArgs = arg.includes("--push") ? ["commit", "--push"] : ["commit"];
       await sendShellRun("gtd", pushArgs, message); return;
+    }
+    if (cmd === "startup") {
+      await sendShellRun("up", ["--all"], message);
+      setTimeout(() => { sendShellRun("status", [], "/status"); }, 2000);
+      return;
     }
     if (cmd === "up") {
       const upArgs = arg ? arg.split(/\s+/).filter(Boolean) : [];
