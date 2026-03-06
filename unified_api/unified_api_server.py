@@ -6096,7 +6096,10 @@ def gtd_status_proxy():
 
 @app.route("/api/gtd/morning", methods=["GET"])
 def gtd_morning_proxy():
-    """今日のモーニングログを取得・作成。"""
+    """今日のモーニングログを取得・作成。?json=1 で構造化 JSON を返す。"""
+    if request.args.get("json"):
+        out = _gtd_run_cli("morning", "--json")
+        return out, 200, {"Content-Type": "application/json"}
     out = _gtd_run_cli("morning")
     return jsonify({"status": "ok", "output": out.strip()}), 200
 

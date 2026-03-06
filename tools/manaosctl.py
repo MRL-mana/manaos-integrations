@@ -1395,7 +1395,32 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         log     = GTD_LOGS / f"{today}.md"
         inbox_n = _inbox_count()
         na_items = sorted([f for f in GTD_NA.glob("*.md") if f.name.upper() != "README.MD"])
-        na_lines = "\n".join(f"  - {f.stem}" for f in na_items) or "  （Next Actions なし）"
+
+        # overdue / due_today を先頭に表示
+        def _na_read_due(f: "Path") -> str:
+            try:
+                for line in f.read_text(encoding="utf-8", errors="replace").splitlines():
+                    if line.startswith("- due:"):
+                        return line.split(":", 1)[1].strip()
+            except Exception:
+                pass
+            return ""
+        _na_pairs = [(f, _na_read_due(f)) for f in na_items]
+        _overdue_m  = [(f, d) for f, d in _na_pairs if d and d < today]
+        _due_today_m= [(f, d) for f, d in _na_pairs if d and d == today]
+        _rest_m     = [(f, d) for f, d in _na_pairs if not d or d > today]
+        def _na_line(f: "Path", d: str, mark: str = "") -> str:
+            return f"  - {f.stem}{(' 📅'+d if d else '')}{mark}"
+        _ordered_lines: list[str] = []
+        for f, d in _overdue_m:
+            _ordered_lines.append(_na_line(f, d, "  ⚠️期限超過"))
+        for f, d in _due_today_m:
+            _ordered_lines.append(_na_line(f, d, "  📅今日"))
+        for f, d in _rest_m:
+            _ordered_lines.append(_na_line(f, d))
+        _overdue_n   = len(_overdue_m)
+        _due_today_n = len(_due_today_m)
+        na_lines = "\n".join(_ordered_lines) or "  （Next Actions なし）"
 
         if not log.exists():
             GTD_LOGS.mkdir(parents=True, exist_ok=True)
@@ -1409,13 +1434,38 @@ def cmd_gtd(args: argparse.Namespace) -> int:
                 f"## 明日への申し送り\n- \n",
                 encoding="utf-8",
             )
+            _created = True
+        else:
+            _created = False
+
+        use_json = getattr(args, "json", False)
+        if use_json:
+            _na_json = []
+            for f, d in (_overdue_m + _due_today_m + _rest_m):
+                _na_json.append({"name": f.stem, "due": d, "overdue": d and d < today, "due_today": d == today})
+            print(json.dumps({
+                "date":         today,
+                "log_created":  _created,
+                "log_path":     str(log),
+                "inbox_count":  inbox_n,
+                "na_count":     _na_count(),
+                "overdue_count":  _overdue_n,
+                "due_today_count": _due_today_n,
+                "next_actions": _na_json,
+            }, ensure_ascii=False, indent=2))
+            return 0
+
+        if _created:
             print(c(f"✅ 日次ログ作成: {log}", GREEN))
         else:
             print(c(f"  📄 今日のログ: {log}", DIM))
 
         print()
         print(log.read_text(encoding="utf-8"))
-        print(c(f"  📥 Inbox: {inbox_n} 件  |  ✅ Next Actions: {_na_count()} 件", CYAN))
+        _status_parts = [f"📥 Inbox: {inbox_n} 件", f"✅ Next Actions: {_na_count()} 件"]
+        if _overdue_n:   _status_parts.append(c(f"⚠️ 期限超過: {_overdue_n}件!", RED))
+        if _due_today_n: _status_parts.append(c(f"📅 今日期限: {_due_today_n}件", YELLOW))
+        print(c("  " + "  |  ".join(_status_parts), CYAN))
         return 0
 
     elif subcmd == "capture":
@@ -2456,6 +2506,29 @@ def cmd_daily(args: argparse.Namespace) -> int:
     events = read_events(n=50)[-7:]
 
     # ── 出力 ─────────────────────────────────────────────────────────────────
+    if getattr(args, "json_out", False):
+        # JSON モード
+        cur_json: dict = {}
+        if cur_task:
+            cur_json = {"name": cur_task.get("name", ""),
+                        "started_at": cur_task.get("started_at", ""),
+                        "timer_min": cur_task.get("timer_min", 0)}
+        ev_json = [{"time": e.get("time", "")[:16].replace("T", " "),
+                    "event":   e.get("event", ""),
+                    "service": e.get("service", "")} for e in reversed(events)]
+        down_json = [{"name": d, "hint": services[d].get("recovery_hint", "")} for d in sorted(down)]
+        print(json.dumps({
+            "date": today, "time": now_str,
+            "score": score,
+            "up": len(up), "down": len(down), "disabled": len(disabled),
+            "down_services": down_json,
+            "inbox": inbox_n, "next_actions": na_n,
+            "log_today": log_today,
+            "current_task": cur_json or None,
+            "events": ev_json,
+        }, ensure_ascii=False))
+        return 0 if not down else 1
+
     bar = "═" * 52
     print(c(f"\n{bar}", BOLD))
     print(c(f"  ManaOS Daily Brief  {today}  {now_str}", BOLD + CYAN))
@@ -2610,7 +2683,8 @@ def main() -> None:
     p_logs.add_argument("-n", type=int, default=30, help="表示行数 (デフォルト: 30)")
 
     # daily
-    sub.add_parser("daily", help="今日のデイリーブリーフ (サービス状態 + GTD + イベント)")
+    p_daily = sub.add_parser("daily", help="今日のデイリーブリーフ (サービス状態 + GTD + イベント)")
+    p_daily.add_argument("--json", action="store_true", help="JSON で出力", dest="json_out")
 
     # notify
     p_notify = sub.add_parser("notify", help="ntfy.sh / Slack に通知を送信する")
@@ -2623,7 +2697,7 @@ def main() -> None:
     # gtd
     p_gtd = sub.add_parser("gtd", help="GTD 操作 (morning / capture / inbox / next / process / weekly / status)")
     p_gtd_sub = p_gtd.add_subparsers(dest="subcmd")
-    p_gtd_sub.add_parser("morning", help="今日の日次ログを表示（なければ作成）")
+    p_gtd_sub.add_parser("morning", help="今日の日次ログを表示（なければ作成）").add_argument("--json", action="store_true")
     p_gtd_capture = p_gtd_sub.add_parser("capture", help="Inbox にテキストを保存")
     p_gtd_capture.add_argument("text", nargs="+", help="保存するテキスト")
     p_gtd_capture.add_argument("--context", type=str, default=None, help="コンテキストタグ (e.g. @pc @phone @outside)")
