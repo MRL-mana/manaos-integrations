@@ -676,6 +676,7 @@
         <option value="60">60s</option>
         <option value="0">OFF</option>
       </select>
+      <span id="svc-last-updated" title="最終更新" style="font-size:9px;color:var(--muted);margin-left:4px;vertical-align:middle"></span>
     </div>
     <div id="down-banner"></div>
     <input id="svc-filter" type="text" placeholder="フィルタ…" oninput="filterServices(this.value)" />
@@ -924,6 +925,8 @@ async function loadServices() {
     if (!r.ok) { svcList.innerHTML = `<div class="svc-loading" style="color:var(--fail)">HTTP ${r.status}</div>`; return; }
     const data = await r.json();
     renderServices(data.services || []);
+    const _updEl = document.getElementById("svc-last-updated");
+    if (_updEl) { const _n = new Date(); _updEl.textContent = _n.getHours().toString().padStart(2,'0')+':'+_n.getMinutes().toString().padStart(2,'0')+':'+_n.getSeconds().toString().padStart(2,'0'); }
   } catch (e) {
     svcList.innerHTML = `<div class="svc-loading" style="color:var(--fail)">${escHtml(e.message)}</div>`;
   }
@@ -1533,16 +1536,23 @@ async function toggleInbox() {
       listEl.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:2px 8px 4px 20px">（なし）</div>`;
     } else {
       listEl.innerHTML = items.slice(0, 20).map((name, i) => {
-        const idx = i + 1;
-        return `<div style="display:flex;align-items:center;gap:3px;padding:2px 6px 2px 18px;border-bottom:1px solid rgba(255,255,255,.05)">
-          <span style="font-size:9px;color:var(--muted);min-width:18px">${idx}.</span>
-          <span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(String(name))}">${escHtml(String(name).slice(0, 32))}</span>
-          <button onclick="event.stopPropagation();processInboxItem(${idx},'next',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--ok);color:var(--ok);background:none;border-radius:2px;cursor:pointer">▶</button>
-          <button onclick="event.stopPropagation();processInboxItem(${idx},'someday',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">📦</button>
-          <button onclick="event.stopPropagation();processInboxItem(${idx},'waiting',null)" style="padding:1px 4px;font-size:9px;border:1px solid #6882e8;color:#6882e8;background:none;border-radius:2px;cursor:pointer">⏳</button>
-          <button onclick="event.stopPropagation();processInboxItem(${idx},'project',null)" style="padding:1px 4px;font-size:9px;border:1px solid #9d7be8;color:#9d7be8;background:none;border-radius:2px;cursor:pointer">📁</button>
-          <button onclick="event.stopPropagation();processInboxItem(${idx},'done',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">✅</button>
-        </div>`;
+        const idx     = i + 1;
+        const safeName = escHtml(String(name));
+        const trName   = escHtml(String(name).slice(0, 38));
+        return `<details style="border-bottom:1px solid rgba(255,255,255,.05);padding:0 4px">
+          <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:4px;padding:3px 2px 3px 14px;-webkit-appearance:none" onclick="event.stopPropagation()">
+            <span style="font-size:9px;color:var(--muted);min-width:16px">${idx}.</span>
+            <span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeName}">${trName}</span>
+            <span style="font-size:9px;color:var(--muted)">▸</span>
+          </summary>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;padding:3px 4px 6px 24px">
+            <button onclick="event.stopPropagation();processInboxItem(${idx},'next',null)" style="padding:2px 6px;font-size:9px;border:1px solid var(--ok);color:var(--ok);background:none;border-radius:3px;cursor:pointer">▶ Next</button>
+            <button onclick="event.stopPropagation();processInboxItem(${idx},'project',null)" style="padding:2px 6px;font-size:9px;border:1px solid #9d7be8;color:#9d7be8;background:none;border-radius:3px;cursor:pointer">📁 Project</button>
+            <button onclick="event.stopPropagation();processInboxItem(${idx},'someday',null)" style="padding:2px 6px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:3px;cursor:pointer">📦 Someday</button>
+            <button onclick="event.stopPropagation();processInboxItem(${idx},'waiting',null)" style="padding:2px 6px;font-size:9px;border:1px solid #6882e8;color:#6882e8;background:none;border-radius:3px;cursor:pointer">⏳ Waiting</button>
+            <button onclick="event.stopPropagation();processInboxItem(${idx},'done',null)" style="padding:2px 6px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:3px;cursor:pointer">✅ Done</button>
+          </div>
+        </details>`;
       }).join("");
     }
     _inboxExpanded = true;
@@ -2923,7 +2933,7 @@ async function sendTierCard(label) {
   }
 }
 
-// ── /startup リッチカード ──────────────────────────────────────────────────
+// ── /startup tier順起動進捗カード ───────────────────────────────────────
 async function sendStartupCard(label) {
   appendUser(label || "/startup");
   const thinkingEl = appendThinking();
@@ -2931,33 +2941,78 @@ async function sendStartupCard(label) {
     const hdrs = { "Content-Type": "application/json" };
     const key = apiKeyEl.value.trim();
     if (key) hdrs["X-API-Key"] = key;
-    // Step1: up --all
-    const r1 = await fetch("/api/shell/run", {
-      method: "POST", headers: hdrs,
-      body: JSON.stringify({ command: "up", args: ["--all"] })
+    const post = (cmd, args) => fetch("/api/shell/run", {
+      method: "POST", headers: hdrs, body: JSON.stringify({ command: cmd, args })
+    }).then(r => r.json());
+
+    // Step1: tier構造取得
+    const dt = await post("tier", []);
+    const tierOut = (dt.output || "").trim();
+    // tier→[svc,...] マップ構築
+    const tierSvcMap = {};
+    let curTier = "?";
+    tierOut.split("\n").forEach(line => {
+      const tm = line.match(/Tier\s*(\d)/i);
+      if (tm) { curTier = tm[1]; if (!tierSvcMap[curTier]) tierSvcMap[curTier] = []; return; }
+      const nm = line.match(/\b([a-z][a-z0-9_-]{2,30})\b/g);
+      if (nm && curTier !== "?") nm.forEach(n => {
+        if (!tierSvcMap[curTier]) tierSvcMap[curTier] = [];
+        if (!tierSvcMap[curTier].includes(n)) tierSvcMap[curTier].push(n);
+      });
     });
-    const d1 = await r1.json();
+
+    // Step2: up --all
+    const d1 = await post("up", ["--all"]);
     const output1 = (d1.output || "").trim();
-    const lines1  = output1.split("\n").filter(Boolean);
-    const startedLines = lines1.filter(l => /start|起動|running|OK/i.test(l) && !/fail|error|skip/i.test(l));
-    const skippedLines = lines1.filter(l => /skip|already|disabled/i.test(l));
-    const failedLines  = lines1.filter(l => /fail|error/i.test(l));
-    // Step2: status after short delay
-    await new Promise(r => setTimeout(r, 1500));
-    const r2 = await fetch("/api/shell/run", {
-      method: "POST", headers: hdrs,
-      body: JSON.stringify({ command: "status", args: [] })
+    const lines1 = output1.split("\n").filter(Boolean);
+    // サービス名→状態マップ
+    const svcStatus = {};
+    lines1.forEach(l => {
+      const isFail = /fail|error/i.test(l);
+      const isSkip = /skip|already|disabled/i.test(l);
+      const isOk   = !isFail && !isSkip && /start|起動|running|OK|\[up\]/i.test(l);
+      const nm = l.match(/\b([a-z][a-z0-9_-]{2,30})\b/g);
+      if (nm) nm.forEach(n => { if (!svcStatus[n]) svcStatus[n] = isFail ? "fail" : isSkip ? "skip" : isOk ? "ok" : "unknown"; });
     });
-    const d2 = await r2.json();
+
+    // Tier グループ別 HTML 生成
+    const hasTiers = Object.keys(tierSvcMap).length > 0;
+    let bodyHtml = "";
+    if (hasTiers) {
+      bodyHtml = Object.keys(tierSvcMap).sort().map(t => {
+        const svcs = [...new Set(tierSvcMap[t])].filter(s => s.length > 2);
+        const rows = svcs.map(s => {
+          const st = svcStatus[s];
+          if (!st || st === "unknown") return "";
+          const col  = st === "fail" ? "var(--fail)" : st === "skip" ? "var(--muted)" : "var(--ok)";
+          const icon = st === "fail" ? "✗" : st === "skip" ? "−" : "↑";
+          return `<div style="font-size:11px;color:${col};padding:1px 0">${icon} ${escHtml(s)}</div>`;
+        }).filter(Boolean).join("");
+        if (!rows) return "";
+        const fc = svcs.some(s => svcStatus[s] === "fail") ? "var(--fail)" : "var(--muted)";
+        return `<div style="margin-bottom:7px"><div style="font-size:10px;font-weight:600;color:${fc};margin-bottom:2px;letter-spacing:.05em">TIER ${escHtml(t)}</div>${rows}</div>`;
+      }).filter(Boolean).join("");
+    }
+    // フォールバック: 分類行をフラット表示
+    if (!bodyHtml.trim()) {
+      const okL   = lines1.filter(l => /start|起動|running|OK/i.test(l) && !/fail|error|skip/i.test(l));
+      const skipL = lines1.filter(l => /skip|already|disabled/i.test(l));
+      const failL = lines1.filter(l => /fail|error/i.test(l));
+      bodyHtml = [
+        ...failL.map(l  => `<div style="font-size:11px;color:var(--fail)">✗ ${escHtml(l.trim())}</div>`),
+        ...okL.map(l   => `<div style="font-size:11px;color:var(--ok)">↑ ${escHtml(l.trim())}</div>`),
+        ...skipL.map(l => `<div style="font-size:11px;color:var(--muted)">− ${escHtml(l.trim())}</div>`),
+      ].join("") || `<pre style="font-size:10px;white-space:pre-wrap;max-height:120px;overflow-y:auto">${escHtml(output1.slice(0,600))}</pre>`;
+    }
+
+    // Step3: status
+    await new Promise(r => setTimeout(r, 1500));
+    const d2 = await post("status", []);
     const statusOut = (d2.output || "").trim();
     const colorExit = d1.exit_code === 0 ? "var(--ok)" : "var(--warn)";
     const html = `<div class="report-section">
       <h4 style="font-size:12px;margin:0 0 6px;color:${colorExit}">🚀 Startup — exit ${d1.exit_code}</h4>
-      ${startedLines.map(l => `<div style="font-size:11px;color:var(--ok)">↑ ${escHtml(l.trim())}</div>`).join("")}
-      ${skippedLines.map(l => `<div style="font-size:11px;color:var(--muted)">− ${escHtml(l.trim())}</div>`).join("")}
-      ${failedLines.map(l  => `<div style="font-size:11px;color:var(--fail)">✗ ${escHtml(l.trim())}</div>`).join("")}
-      ${(!startedLines.length && !skippedLines.length && !failedLines.length && output1)
-        ? `<pre style="font-size:10px;white-space:pre-wrap;max-height:120px;overflow-y:auto;margin:4px 0">${escHtml(output1.slice(0,600))}</pre>` : ""}
+      ${bodyHtml}
       ${statusOut ? `<pre style="font-size:10px;max-height:150px;overflow-y:auto;white-space:pre-wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--line2)">${escHtml(statusOut.slice(0,900))}</pre>` : ""}
     </div>`;
     const el = document.createElement("div");
