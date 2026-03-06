@@ -1945,7 +1945,8 @@ async function sendInboxRich(label) {
           <button onclick="processInboxItem(${idx},'next','ibr-${idx}')"    style="${_btnStyle('var(--ok)')}">▶ Next</button>
           <button onclick="processInboxItem(${idx},'someday','ibr-${idx}')" style="${_btnStyle('var(--muted)')}">📦</button>
           <button onclick="processInboxItem(${idx},'waiting','ibr-${idx}')" style="${_btnStyle('#6882e8')}">⏳</button>
-          <button onclick="processInboxItem(${idx},'done','ibr-${idx}')"    style="${_btnStyle('var(--muted)')}">✅</button>
+          <button onclick="processInboxItem(${idx},'project','ibr-${idx}')" style="${_btnStyle('#9d7be8')}">📁</button>
+          <button onclick="processInboxItem(${idx},'done','ibr-${idx}')"    style="${_btnStyle('#666')}">✅</button>
         </div>`;
       }).join("");
       replaceLastAgent(
@@ -2075,7 +2076,8 @@ async function sendListRich(apiPath, icon, title, label) {
       return `<div style="display:flex;align-items:center;gap:6px;padding:3px 4px;border-bottom:1px solid rgba(255,255,255,.04)">
         <span style="color:var(--muted);font-size:11px;min-width:22px">[${i+1}]</span>
         <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeName}">${safeName}${ctx}${due}</span>
-        <button onclick="sendCaptureToNext('${safeName.replace(/'/g,\"\\'\").replace(/\"/g,'&quot;')}')" style="${_btnStyle('var(--ok)')}">→ Next</button>
+        <button data-name="${safeName}" onclick="sendCaptureToNext(this.dataset.name)" style="${_btnStyle('var(--ok)')}">→ Next</button>
+        <button data-name="${safeName}" onclick="sendListDone(this.dataset.name)" style="${_btnStyle('#666')}">✅</button>
       </div>`;
     }).join("");
     const more = items.length > 50 ? `<div style="font-size:10px;color:var(--muted);padding:3px 6px">…他 ${items.length-50}件</div>` : "";
@@ -2096,6 +2098,18 @@ async function sendCaptureToNext(name) {
     });
     const j = await r.json().catch(()=>({}));
     showToast(r.ok ? `→ Next に移動: ${name.slice(0,20)}` : `失敗: ${j.error||r.status}`, r.ok ? 2500 : 4000);
+    if (r.ok) pollGtdStatus();
+  } catch(e) { showToast(`エラー: ${String(e)}`, 4000); }
+}
+
+async function sendListDone(name) {
+  try {
+    const r = await fetch("/api/gtd/done", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({name})
+    });
+    const j = await r.json().catch(()=>({}));
+    showToast(r.ok ? `✅ 完了: ${name.slice(0,20)}` : `失敗: ${j.error||r.status}`, r.ok ? 2500 : 4000);
     if (r.ok) pollGtdStatus();
   } catch(e) { showToast(`エラー: ${String(e)}`, 4000); }
 }
@@ -2969,8 +2983,9 @@ async function sendDailyCard(label) {
     let downRows = "";
     if (d.down_services && d.down_services.length) {
       downRows = d.down_services.map(s =>
-        `<div style="font-size:10px;padding:2px 0 2px 8px;color:var(--fail)">
-          ✗ <b>${escHtml(s.name)}</b>${s.hint ? `<span style="color:var(--muted)"> — ${escHtml(s.hint.slice(0,60))}${s.hint.length>60?"…":""}</span>` : ""}
+        `<div style="font-size:10px;padding:2px 0 2px 8px;color:var(--fail);display:flex;align-items:center;gap:6px">
+          <span style="flex:1">✗ <b>${escHtml(s.name)}</b>${s.hint ? `<span style="color:var(--muted)"> — ${escHtml(s.hint.slice(0,60))}${s.hint.length>60?"…":""}</span>` : ""}</span>
+          <button data-svc="${escHtml(s.name)}" onclick="sendHealCard(this.dataset.svc,'/heal '+this.dataset.svc)" style="font-size:10px;padding:1px 6px;cursor:pointer;background:rgba(255,180,0,.12);border:1px solid rgba(255,180,0,.35);color:var(--warn);border-radius:3px">⟳</button>
         </div>`
       ).join("");
       downRows = `<div style="border-left:2px solid var(--fail);margin-bottom:6px">${downRows}</div>`;
