@@ -1925,6 +1925,50 @@ def cmd_gtd(args: argparse.Namespace) -> int:
             _clear_current()
         return 0
 
+    elif subcmd == "stop":
+        # 「中断」宣言: current_task をクリアして一時停止ログを記録
+        cur = _read_current()
+        if not cur:
+            print(c("  現在アクティブな作業はありません。", DIM))
+            return 0
+        task_name  = cur.get("name", "（不明）")
+        now_dt     = datetime.datetime.now()
+        today      = now_dt.strftime("%Y-%m-%d")
+        now_str    = now_dt.strftime("%H:%M")
+        # 作業時間を計算
+        elapsed_str = ""
+        if cur.get("started_at"):
+            try:
+                t0 = datetime.datetime.fromisoformat(cur["started_at"])
+                mins = int((now_dt - t0).total_seconds() / 60)
+                elapsed_str = f" ({mins}分経過)"
+            except Exception:
+                pass
+        # 日次ログに中断記録
+        log_file_path = GTD_LOGS / f"{today}.md"
+        GTD_LOGS.mkdir(parents=True, exist_ok=True)
+        if not log_file_path.exists():
+            log_file_path.write_text(
+                f"# {today} 作業ログ\n\n## 作業ログ\n",
+                encoding="utf-8",
+            )
+        txt = log_file_path.read_text(encoding="utf-8")
+        if "\n## 作業ログ\n" not in txt:
+            txt = txt.rstrip("\n") + "\n\n## 作業ログ\n"
+        txt += f"- {now_str} ⏸ 中断: {task_name}{elapsed_str}\n"
+        log_file_path.write_text(txt, encoding="utf-8")
+        _clear_current()
+        notify_result = send_notify(
+            title="GTD: 中断",
+            message=f"⏸ {task_name}{elapsed_str}",
+            priority="low",
+        )
+        print()
+        print(c(f"  ⏸ 中断: {task_name}{elapsed_str}", BOLD))
+        print(c(f"  {now_str}  (通知: {notify_result})", DIM))
+        print()
+        return 0
+
     elif subcmd == "commit":
         # GTD 変更を git にコミット（オプションで push も実行）
         do_push = getattr(args, "push", False)
@@ -2604,6 +2648,7 @@ def main() -> None:
     p_gtd_done = p_gtd_sub.add_parser("done", help="\u300c\u5b8c\u4e86\uff01\u300d\u5ba3\u8a00: Next Action \u3092\u30a2\u30fc\u30ab\u30a4\u30d6\u306b\u79fb\u52d5 + \u30ed\u30b0\u8a18\u9332 + \u901a\u77e5")
     p_gtd_done.add_argument("--index", type=int,  default=None, help="Next Action の番号 (1-based)")
     p_gtd_done.add_argument("--name",  type=str,  default=None, help="タスク名を直接指定")
+    p_gtd_sub.add_parser("stop", help="「中断」宣言: 現在の作業を一時停止 (アーカイブへは移動しない)")
     p_gtd_projects = p_gtd_sub.add_parser("projects", help="Projects リスト表示")
     p_gtd_projects.add_argument("--json", action="store_true")
     p_gtd_someday = p_gtd_sub.add_parser("someday", help="Someday リスト表示")
