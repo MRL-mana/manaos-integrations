@@ -669,6 +669,13 @@
     <div class="sidebar-title">
       Services
       <button class="sidebar-refresh" id="svc-refresh-btn" onclick="loadServices()">&#8635;</button>
+      <select id="svc-interval-sel" title="自動更新間隔" onchange="setSvcRefreshInterval(this.value)"
+        style="font-size:9px;padding:1px 3px;border:1px solid var(--line2);background:var(--bg2);color:var(--fg);border-radius:3px;cursor:pointer;margin-left:2px">
+        <option value="15">15s</option>
+        <option value="30" selected>30s</option>
+        <option value="60">60s</option>
+        <option value="0">OFF</option>
+      </select>
     </div>
     <div id="down-banner"></div>
     <input id="svc-filter" type="text" placeholder="フィルタ…" oninput="filterServices(this.value)" />
@@ -1032,9 +1039,15 @@ function svcRow(s) {
   </div>${hintHtml}`;
 }
 
-// Auto-load + refresh every 30s
+// Auto-load + refresh (interval controlled by sidebar select)
+let _svcRefreshTimer = null;
+function setSvcRefreshInterval(secs) {
+  if (_svcRefreshTimer) { clearInterval(_svcRefreshTimer); _svcRefreshTimer = null; }
+  const s = parseInt(secs);
+  if (s > 0) _svcRefreshTimer = setInterval(loadServices, s * 1000);
+}
 loadServices();
-setInterval(loadServices, 30000);
+setSvcRefreshInterval(30);
 
 // ── Restart service (direct API) ─────────────────────────────────────────
 function restartService(name) {
@@ -1527,6 +1540,7 @@ async function toggleInbox() {
           <button onclick="event.stopPropagation();processInboxItem(${idx},'next',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--ok);color:var(--ok);background:none;border-radius:2px;cursor:pointer">▶</button>
           <button onclick="event.stopPropagation();processInboxItem(${idx},'someday',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">📦</button>
           <button onclick="event.stopPropagation();processInboxItem(${idx},'waiting',null)" style="padding:1px 4px;font-size:9px;border:1px solid #6882e8;color:#6882e8;background:none;border-radius:2px;cursor:pointer">⏳</button>
+          <button onclick="event.stopPropagation();processInboxItem(${idx},'project',null)" style="padding:1px 4px;font-size:9px;border:1px solid #9d7be8;color:#9d7be8;background:none;border-radius:2px;cursor:pointer">📁</button>
           <button onclick="event.stopPropagation();processInboxItem(${idx},'done',null)" style="padding:1px 4px;font-size:9px;border:1px solid var(--muted);color:var(--muted);background:none;border-radius:2px;cursor:pointer">✅</button>
         </div>`;
       }).join("");
@@ -2909,6 +2923,54 @@ async function sendTierCard(label) {
   }
 }
 
+// ── /startup リッチカード ──────────────────────────────────────────────────
+async function sendStartupCard(label) {
+  appendUser(label || "/startup");
+  const thinkingEl = appendThinking();
+  try {
+    const hdrs = { "Content-Type": "application/json" };
+    const key = apiKeyEl.value.trim();
+    if (key) hdrs["X-API-Key"] = key;
+    // Step1: up --all
+    const r1 = await fetch("/api/shell/run", {
+      method: "POST", headers: hdrs,
+      body: JSON.stringify({ command: "up", args: ["--all"] })
+    });
+    const d1 = await r1.json();
+    const output1 = (d1.output || "").trim();
+    const lines1  = output1.split("\n").filter(Boolean);
+    const startedLines = lines1.filter(l => /start|起動|running|OK/i.test(l) && !/fail|error|skip/i.test(l));
+    const skippedLines = lines1.filter(l => /skip|already|disabled/i.test(l));
+    const failedLines  = lines1.filter(l => /fail|error/i.test(l));
+    // Step2: status after short delay
+    await new Promise(r => setTimeout(r, 1500));
+    const r2 = await fetch("/api/shell/run", {
+      method: "POST", headers: hdrs,
+      body: JSON.stringify({ command: "status", args: [] })
+    });
+    const d2 = await r2.json();
+    const statusOut = (d2.output || "").trim();
+    const colorExit = d1.exit_code === 0 ? "var(--ok)" : "var(--warn)";
+    const html = `<div class="report-section">
+      <h4 style="font-size:12px;margin:0 0 6px;color:${colorExit}">🚀 Startup — exit ${d1.exit_code}</h4>
+      ${startedLines.map(l => `<div style="font-size:11px;color:var(--ok)">↑ ${escHtml(l.trim())}</div>`).join("")}
+      ${skippedLines.map(l => `<div style="font-size:11px;color:var(--muted)">− ${escHtml(l.trim())}</div>`).join("")}
+      ${failedLines.map(l  => `<div style="font-size:11px;color:var(--fail)">✗ ${escHtml(l.trim())}</div>`).join("")}
+      ${(!startedLines.length && !skippedLines.length && !failedLines.length && output1)
+        ? `<pre style="font-size:10px;white-space:pre-wrap;max-height:120px;overflow-y:auto;margin:4px 0">${escHtml(output1.slice(0,600))}</pre>` : ""}
+      ${statusOut ? `<pre style="font-size:10px;max-height:150px;overflow-y:auto;white-space:pre-wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--line2)">${escHtml(statusOut.slice(0,900))}</pre>` : ""}
+    </div>`;
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `<div class="avatar">OS</div><div class="bubble">${html}${ts()}</div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+    setTimeout(loadServices, 800);
+  } catch(e) {
+    replaceThinking(thinkingEl, { status: "dispatch_error", error: String(e) });
+  }
+}
+
 // ── /up ビジュアルカード ──────────────────────────────────────────────────
 async function sendUpCard(svcArgs, label) {
   svcArgs = svcArgs || [];
@@ -3463,9 +3525,7 @@ async function send() {
       await sendShellRun("gtd", ["stop"], message); return;
     }
     if (cmd === "startup") {
-      await sendShellRun("up", ["--all"], message);
-      setTimeout(() => { sendShellRun("status", [], "/status"); }, 2000);
-      return;
+      await sendStartupCard(message); return;
     }
     if (cmd === "daily") { await sendDailyCard(message); return; }
     if (cmd === "up") {
