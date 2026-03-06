@@ -454,6 +454,17 @@
     .ev-item:hover { background: var(--line2); }
     .ev-item .ev-type { font-weight: 600; }
     .ev-item .ev-det  { color: var(--muted); font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 14px; }
+    .report-section { margin-bottom: 8px; }
+    .report-section h4 { font-size: 11px; font-weight: 700; margin: 4px 0 2px; padding-bottom: 2px; border-bottom: 1px solid var(--line2); }
+    .svc-badge { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 8px; margin: 1px 2px; }
+    .svc-badge.up   { background: rgba(0,200,100,.15); color: var(--ok); }
+    .svc-badge.down { background: rgba(220,50,50,.15);  color: var(--fail); }
+    .svc-badge.dis  { background: var(--line2); color: var(--muted); }
+    .cost-row { font-size: 11px; padding: 2px 0; display: flex; gap: 6px; align-items: center; }
+    .cost-row .svc-name-c { flex: 1; }
+    .cost-badge { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 6px; }
+    .cost-badge.high { background: rgba(220,50,50,.2); color: var(--fail); }
+    .cost-badge.med  { background: rgba(220,160,0,.2); color: var(--warn); }
     #score-badge {
       display: inline-block;
       font-size: 11px;
@@ -1056,6 +1067,102 @@ async function pollEventsWidget() {
 }
 pollEventsWidget();
 setInterval(pollEventsWidget, 30000);
+
+// ── /report ビジュアルカード ────────────────────────────────────────────
+async function sendReportCard(label) {
+  appendUser(label);
+  const thinkingEl = appendThinking();
+  try {
+    const resp = await fetch("/api/report");
+    const d    = await resp.json();
+    const s    = d.summary || {};
+    const up   = s.up   || [];
+    const down = s.down || [];
+    const dis  = s.disabled || [];
+    const gen  = (d.generated_at || "").slice(0, 19).replace("T", " ");
+
+    const badge = (name, cls) => `<span class="svc-badge ${cls}">${escHtml(name)}</span>`;
+    const upHtml   = up.map(n => badge(n, "up")).join("")   || '<span style="color:var(--muted)">なし</span>';
+    const downHtml = down.map(n => badge(n, "down")).join("") || '<span style="color:var(--ok)">なし ✓</span>';
+    const disHtml  = dis.map(n => badge(n, "dis")).join("")  || '<span style="color:var(--muted)">なし</span>';
+
+    const scoreColor = down.length === 0 ? "var(--ok)" : (down.length <= 2 ? "var(--warn)" : "var(--fail)");
+    const healHtml = d.heal_log_tail && d.heal_log_tail.length
+      ? `<div class="report-section"><h4>📜 heal.log (末尾)</h4><pre style="font-size:9px;max-height:80px;overflow-y:auto;color:var(--muted)">${escHtml(d.heal_log_tail.slice(-5).join("\n"))}</pre></div>`
+      : "";
+
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `
+      <div class="avatar">OS</div>
+      <div class="bubble">
+        <div style="margin-bottom:6px">
+          <span class="intent-tag tag-run_ok">REPORT</span>
+          <span style="font-size:11px;color:var(--muted);margin-left:6px">${gen}</span>
+          <span style="margin-left:10px;font-size:12px;font-weight:700;color:${scoreColor}">⬆️ ${up.length} UP / 🔴 ${down.length} DOWN</span>
+        </div>
+        <div class="report-section"><h4>✅ UP (${up.length})</h4>${upHtml}</div>
+        <div class="report-section"><h4>🔴 DOWN (${down.length})</h4>${downHtml}</div>
+        <div class="report-section"><h4>⏸️ Disabled (${dis.length})</h4>${disHtml}</div>
+        ${healHtml}
+        ${ts()}
+      </div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+    saveMsg("agent", `[report] UP:${up.length} DOWN:${down.length}`);
+  } catch (err) {
+    thinkingEl.replaceWith(errBubble(err));
+    scrollEnd();
+  }
+}
+
+// ── /cost ビジュアルカード ─────────────────────────────────────────────
+async function sendCostCard(label) {
+  appendUser(label);
+  const thinkingEl = appendThinking();
+  try {
+    const resp = await fetch("/api/cost");
+    const d    = await resp.json();
+    const high = d.high || [];
+    const med  = d.med  || [];
+
+    function costRows(arr, cls) {
+      if (!arr.length) return '<div style="color:var(--muted);font-size:10px">なし</div>';
+      return arr.map(r => {
+        const stColor = r.status === "UP" ? "var(--ok)" : "var(--fail)";
+        return `<div class="cost-row">`
+          + `<span class="cost-badge ${cls}">${cls.toUpperCase()}</span>`
+          + `<span class="svc-name-c">${escHtml(r.service)}</span>`
+          + `<span style="color:var(--muted);font-size:10px">Tier${r.tier}</span>`
+          + `<span style="color:${stColor};font-size:10px">${escHtml(r.status)}</span>`
+          + `</div>`;
+      }).join("");
+    }
+
+    const runningHigh = high.filter(r => r.status === "UP").length;
+    const total = high.length + med.length;
+    const el = document.createElement("div");
+    el.className = "msg agent";
+    el.innerHTML = `
+      <div class="avatar">OS</div>
+      <div class="bubble">
+        <div style="margin-bottom:6px">
+          <span class="intent-tag ${runningHigh ? 'tag-run_err' : 'tag-run_ok'}">COST</span>
+          <span style="font-size:11px;color:var(--muted);margin-left:6px">${total}件監視対象</span>
+          ${runningHigh ? `<span style="margin-left:8px;color:var(--fail);font-size:11px">⚠️ HIGH ${runningHigh}件稼働中</span>` : ''}
+        </div>
+        <div class="report-section"><h4>🔴 HIGH COST (${high.length})</h4>${costRows(high, "high")}</div>
+        <div class="report-section"><h4>🟡 MED COST (${med.length})</h4>${costRows(med, "med")}</div>
+        ${ts()}
+      </div>`;
+    thinkingEl.replaceWith(el);
+    scrollEnd();
+    saveMsg("agent", `[cost] HIGH:${high.length} MED:${med.length}`);
+  } catch (err) {
+    thinkingEl.replaceWith(errBubble(err));
+    scrollEnd();
+  }
+}
 
 // ── GTD Process (batch) ───────────────────────────────────────────────────
 async function sendGtdProcess(index, dest, label) {
@@ -1737,8 +1844,8 @@ async function send() {
     }
     if (cmd === "tier")      { await sendShellRun("tier",      [], message); return; }
     if (cmd === "watch")     { await sendShellRun("watch",     [], message); return; }
-    if (cmd === "report")    { await sendShellRun("report",    [], message); return; }
-    if (cmd === "cost")      { await sendShellRun("cost",      [], message); return; }
+    if (cmd === "report")    { await sendReportCard(message); return; }
+    if (cmd === "cost")      { await sendCostCard(message); return; }
     if (cmd === "dashboard") { await sendShellRun("dashboard", [], message); return; }
     // GTD slash commands
     if (cmd === "memo") {
@@ -2025,6 +2132,12 @@ function escHtml(s) {
   return String(s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;")
     .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function errBubble(err) {
+  const el = document.createElement("div");
+  el.className = "msg agent";
+  el.innerHTML = `<div class="avatar">OS</div><div class="bubble" style="color:var(--fail)">${escHtml(String(err))}${ts()}</div>`;
+  return el;
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────

@@ -5810,6 +5810,53 @@ def api_events():
     return jsonify({"events": events, "count": len(events)}), 200
 
 
+@app.route("/api/report", methods=["GET"])
+def api_report():
+    """
+    ManaOS Shell ─ サービスステータスレポート (manaosctl report --json ラッパー).
+
+    Response:
+        {"generated_at": str, "summary": {"up": [...], "down": [...], "disabled": [...],
+                                          "total_up": N, "total_down": N},
+         "heal_log_tail": [...]}
+    """
+    manaosctl = REPO_ROOT / "tools" / "manaosctl.py"
+    if not manaosctl.exists():
+        return _json_error("manaosctl.py not found", 503, namespace="report")
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(manaosctl), "report", "--json"],
+            capture_output=True, text=True, cwd=str(REPO_ROOT), timeout=60,
+        )
+        data = json.loads(proc.stdout)
+        return jsonify(data), 200
+    except Exception as exc:
+        return _json_error(str(exc), 500, namespace="report")
+
+
+@app.route("/api/cost", methods=["GET"])
+def api_cost():
+    """
+    ManaOS Shell ─ コストリスクサービス一覧 (manaosctl cost --json ラッパー).
+
+    Response:
+        {"high": [{"service":str, "tier":int, "port":any, "cost_risk":str, "status":str}, ...],
+         "med":  [...]}
+    """
+    manaosctl = REPO_ROOT / "tools" / "manaosctl.py"
+    if not manaosctl.exists():
+        return _json_error("manaosctl.py not found", 503, namespace="cost")
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(manaosctl), "cost", "--json"],
+            capture_output=True, text=True, cwd=str(REPO_ROOT), timeout=60,
+        )
+        data = json.loads(proc.stdout)
+        return jsonify(data), 200
+    except Exception as exc:
+        return _json_error(str(exc), 500, namespace="cost")
+
+
 @app.route("/api/shell/heal", methods=["POST"])
 def api_shell_heal():
     """
