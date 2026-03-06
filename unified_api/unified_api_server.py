@@ -5968,6 +5968,18 @@ def gtd_process_proxy():
     out = _gtd_run_cli("process", "--target", target, "--to", str(to))
     return jsonify({"status": "ok", "target": target, "to": to, "output": out.strip()}), 200
 
+
+@app.route("/api/gtd/commit", methods=["POST"])
+def gtd_commit_proxy():
+    """GTD 変更を git commit: {"push": true} で push も実行。"""
+    payload = request.get_json(force=True, silent=True) or {}
+    push = payload.get("push", False)
+    args = ["commit"]
+    if push:
+        args.append("--push")
+    out = _gtd_run_cli(*args)
+    return jsonify({"status": "ok", "output": out.strip()}), 200
+
 # =============================================================================
 # END ManaOS Shell
 # =============================================================================

@@ -1606,6 +1606,43 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         print(c("  ヒント: manaosctl gtd process  → Inbox を振り分けて Next Actions を作る", DIM))
         return 0
 
+    elif subcmd == "commit":
+        # GTD 変更を git にコミット（オプションで push も実行）
+        do_push = getattr(args, "push", False)
+        today   = datetime.datetime.now().strftime("%Y-%m-%d")
+        res_add = subprocess.run(
+            ["git", "add", "gtd/"],
+            capture_output=True, text=True, cwd=str(REPO_ROOT)
+        )
+        if res_add.returncode != 0:
+            print(c(f"  [ERROR] git add: {res_add.stderr.strip()}", RED))
+            return 1
+        commit_msg = f"gtd(auto): {today} daily log + GTD update"
+        res_commit = subprocess.run(
+            ["git", "commit", "-m", commit_msg],
+            capture_output=True, text=True, cwd=str(REPO_ROOT)
+        )
+        if res_commit.returncode != 0:
+            combined = res_commit.stdout + res_commit.stderr
+            _no_change = ("nothing to commit", "Changes not staged", "no changes added")
+            if any(x in combined for x in _no_change):
+                print(c("  変更なし（コミット不要）", DIM))
+                return 0
+            print(c(f"  [ERROR] git commit: {res_commit.stderr.strip()}", RED))
+            return 1
+        print(c(f"  ✅ コミット: {commit_msg}", GREEN))
+        if do_push:
+            res_push = subprocess.run(
+                ["git", "push", "origin", "master"],
+                capture_output=True, text=True, cwd=str(REPO_ROOT)
+            )
+            if res_push.returncode == 0:
+                print(c("  ✅ Push 完了", GREEN))
+            else:
+                print(c(f"  [ERROR] push: {res_push.stderr.strip()}", RED))
+                return 1
+        return 0
+
     else:  # status
         today     = datetime.datetime.now().strftime("%Y-%m-%d")
         inbox_n   = _inbox_count()
@@ -1758,6 +1795,8 @@ def main() -> None:
     p_gtd_process.add_argument("--to",     type=str, default=None, help="移動先: next/projects/someday/waiting/done")
     p_gtd_weekly = p_gtd_sub.add_parser("weekly", help="週次レビュー（先週ログ + Inbox推移）")
     p_gtd_weekly.add_argument("--json", action="store_true")
+    p_gtd_commit = p_gtd_sub.add_parser("commit", help="GTD 変更を git にコミット")
+    p_gtd_commit.add_argument("--push", action="store_true", help="コミット後に git push origin master も実行")
     p_gtd_status = p_gtd_sub.add_parser("status", help="GTD ステータス概要")
     p_gtd_status.add_argument("--json", action="store_true")
 

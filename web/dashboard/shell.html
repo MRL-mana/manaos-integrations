@@ -574,6 +574,7 @@ const SLASH_CMDS = [
   // GTD 拡張
   { cmd: "/gtd",              desc: "GTD ステータス概要（Inbox / Next 件数）" },
   { cmd: "/weekly",           desc: "GTD 週次レビュー（先週ログ + Inbox 推移）" },
+  { cmd: "/commit",           desc: "GTD日次ログを git commit（--push で push も）" },
 ];
 
 // ── Command history (↑/↓) ─────────────────────────────────────────────────
@@ -1309,6 +1310,7 @@ function showHelp() {
     // GTD 拡張
     ["/gtd",              "GTD ステータス概要（Inbox/Next 件数）"],
     ["/weekly",           "GTD 週次レビュー（先週ログ + Inbox 推移）"],
+    ["/commit [--push]",  "GTD日次ログ git commit（--push で push も）"],
   ];
   const tBody = rows.map(([c, d]) =>
     `<tr><td style="font-family:monospace;white-space:nowrap;color:var(--accent);padding:2px 14px 2px 0">${c}</td>` +
@@ -1386,6 +1388,10 @@ async function send() {
     }
     if (cmd === "gtd")    { await sendShellRun("gtd",    ["status"], message); return; }
     if (cmd === "weekly") { await sendShellRun("gtd",    ["weekly"], message); return; }
+    if (cmd === "commit") {
+      const pushArgs = arg.includes("--push") ? ["commit", "--push"] : ["commit"];
+      await sendShellRun("gtd", pushArgs, message); return;
+    }
 
     const remap = {
       status:  "全サービスの状態を確認して",

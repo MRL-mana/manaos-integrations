@@ -319,6 +319,15 @@
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "shell: ManaOS: GTD Commit (daily log)",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "gtd", "commit", "--push"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
     }
   ]
 }
