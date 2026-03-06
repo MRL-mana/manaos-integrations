@@ -586,6 +586,8 @@ const SLASH_CMDS = [
   { cmd: "/do <N>",              desc: "単作: Next Action の番号を指定  例: /do 2" },
   { cmd: "/do --name <text>",    desc: "タスク名を直接指定  例: /do --name 資料作成" },
   { cmd: "/do <N> --timer <min>",desc: "作業開始 + N分後に確認通知  例: /do 1 --timer 25" },
+  { cmd: "/done",                 desc: "「完了！」宣言 – Next Action を選んでアーカイブ（インタラクティブ）" },
+  { cmd: "/done <N>",             desc: "単作完了: Next Action 番号を指定  例: /done 1" },
   { cmd: "/process <N> <dest>", desc: "Inbox[N]を振り分け (dest: next/done/someday/waiting/project)" },
   // 通知
   { cmd: "/notify <msg>",     desc: "ntfy / Slack に通知を送信" },
@@ -1360,6 +1362,8 @@ function showHelp() {
     ["/do",                  "「今これをやる」 – Next Actionを選択し作業開始"],
     ["/do &lt;N&gt;",            "番号で直即開始  例: /do 2"],
     ["/do &lt;N&gt; --timer &lt;min&gt;", "作業開始 + N分後通知  例: /do 1 --timer 25"],
+    ["/done",                "「完了！」 – Next Actionを選択しアーカイブ"],
+    ["/done &lt;N&gt;",          "番号で直即完了  例: /done 1"],
     ["/process &lt;N&gt; &lt;dest&gt;", "Inbox[N]を振り分け (next/done/someday/waiting/project)"],
     // 通知
     ["/notify &lt;msg&gt;", "ntfy / Slack に通知を送信"],
@@ -1475,6 +1479,14 @@ async function send() {
       if (nmMatch)    doArgs.push("--name",  nmMatch[1].trim());
       if (timerMatch) doArgs.push("--timer", timerMatch[1]);
       await sendShellRun("gtd", doArgs, message); return;
+    }
+    if (cmd === "done") {
+      const doneArgs = ["done"];
+      const doneIdxM  = arg.match(/^(\d+)/);
+      const doneNameM = arg.match(/--name\s+(\S.*?)(?:\s+--|$)/);
+      if (doneIdxM)  doneArgs.push("--index", doneIdxM[1]);
+      if (doneNameM) doneArgs.push("--name",  doneNameM[1].trim());
+      await sendShellRun("gtd", doneArgs, message); return;
     }
     if (cmd === "commit") {
       const pushArgs = arg.includes("--push") ? ["commit", "--push"] : ["commit"];

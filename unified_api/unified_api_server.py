@@ -5943,9 +5943,32 @@ def gtd_inbox_proxy():
 
 @app.route("/api/gtd/next", methods=["GET"])
 def gtd_next_proxy():
-    """Next Actions + Projects 一覧 JSON を返す。"""
-    out = _gtd_run_cli("next", "--json")
+    """Next Actions + Projects 一覧 JSON を返す。
+    Query params: filter=@ctx, overdue=1, due_today=1
+    """
+    extra: list[str] = []
+    flt = request.args.get("filter")
+    if flt:
+        extra += ["--filter", flt]
+    if request.args.get("overdue"):
+        extra.append("--overdue")
+    if request.args.get("due_today"):
+        extra.append("--due-today")
+    out = _gtd_run_cli("next", "--json", *extra)
     return out, 200, {"Content-Type": "application/json"}
+
+
+@app.route("/api/gtd/done", methods=["POST"])
+def gtd_done_proxy():
+    """「完了！」宣言: {"index": 2} or {"name": "タスク名"}"""
+    payload = request.get_json(force=True, silent=True) or {}
+    args_list = ["done"]
+    if payload.get("index") is not None:
+        args_list += ["--index", str(int(payload["index"]))]
+    elif payload.get("name"):
+        args_list += ["--name", str(payload["name"])]
+    out = _gtd_run_cli(*args_list)
+    return jsonify({"status": "ok", "output": out.strip()}), 200
 
 @app.route("/api/gtd/weekly", methods=["GET"])
 def gtd_weekly_proxy():

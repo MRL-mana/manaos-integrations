@@ -328,6 +328,24 @@
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+    },
+    {
+      "label": "shell: ManaOS: GTD Do（今これをやる）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "gtd", "do"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "echo": true, "focus": true }
+    },
+    {
+      "label": "shell: ManaOS: GTD Done（完了！）",
+      "type": "shell",
+      "command": "python",
+      "args": ["tools/manaosctl.py", "gtd", "done"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "echo": true, "focus": true }
     }
   ]
 }

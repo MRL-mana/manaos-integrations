@@ -1763,6 +1763,92 @@ def cmd_gtd(args: argparse.Namespace) -> int:
         print()
         return 0
 
+    elif subcmd == "done":
+        # 「完了！」宣言: Next Action をアーカイブに移動 + 日次ログ記録 + 通知
+        import shutil as _shutil2
+        na_items = sorted(
+            [f for f in GTD_NA.glob("*.md") if f.name.upper() != "README.MD"]
+        )
+        task_name = getattr(args, "name",  None)
+        task_idx  = getattr(args, "index", None)
+
+        # ── タスク選択 ────────────────────────────────────────────────────────
+        if task_name is None and task_idx is None:
+            if not na_items:
+                print(c("  Next Actions にアイテムがありません。", DIM))
+                return 0
+            print()
+            print(c("  [Next Actions  \u5b8c\u4e86\u3057\u305f\u30bf\u30b9\u30af\u306f\uff1f]", BOLD + GREEN))
+            print(c("  " + "\u2500" * 45, DIM))
+            for i, f in enumerate(na_items, 1):
+                print(f"    [{i}] {f.stem}")
+            print()
+            try:
+                ans = input("  \u756a\u53f7\u3092\u5165\u529b (0=\u30ad\u30e3\u30f3\u30bb\u30eb): ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                return 0
+            if ans == "0" or ans == "":
+                return 0
+            try:
+                idx = int(ans) - 1
+                src_file = na_items[idx]
+            except (ValueError, IndexError):
+                print(c(f"  [ERROR] \u7121\u52b9\u306a\u756a\u53f7: {ans}", RED))
+                return 1
+        elif task_idx is not None:
+            idx = task_idx - 1
+            if idx < 0 or idx >= len(na_items):
+                print(c(f"  [ERROR] \u30a4\u30f3\u30c7\u30c3\u30af\u30b9 {task_idx} \u306f\u7bc4\u56f2\u5916\uff081\uff5e{len(na_items)}\uff09", RED))
+                return 1
+            src_file = na_items[idx]
+        else:
+            # --name: 部分一致で検索
+            matched = [f for f in na_items if task_name.lower() in f.stem.lower()]
+            if not matched:
+                print(c(f"  [ERROR] \"{task_name}\" に一致する Next Action が見つかりません", RED))
+                return 1
+            src_file = matched[0]
+
+        task_name = src_file.stem
+
+        # ── アーカイブに移動 ──────────────────────────────────────────────────
+        done_dir = GTD_ROOT / "archive" / "done"
+        done_dir.mkdir(parents=True, exist_ok=True)
+        now_dt  = datetime.datetime.now()
+        today   = now_dt.strftime("%Y-%m-%d")
+        now_str = now_dt.strftime("%H:%M")
+        # 同名ファイルが既にある場合はタイムスタンプ付きで保存
+        dst_name = f"{today}_{task_name}.md"
+        dst_file = done_dir / dst_name
+        if dst_file.exists():
+            dst_file = done_dir / f"{today}_{now_dt.strftime('%H%M%S')}_{task_name}.md"
+        _shutil2.move(str(src_file), str(dst_file))
+        print(c(f"  \ud83d\udcc1 \u30a2\u30fc\u30ab\u30a4\u30d6\u306b\u79fb\u52d5: {dst_file.relative_to(GTD_ROOT)}", DIM))
+
+        # ── 日次ログに記録 ────────────────────────────────────────────────────
+        log_file_path = GTD_LOGS / f"{today}.md"
+        if log_file_path.exists():
+            txt = log_file_path.read_text(encoding="utf-8")
+            if "\n## \u4f5c\u696d\u30ed\u30b0\n" not in txt:
+                txt = txt.rstrip("\n") + "\n\n## \u4f5c\u696d\u30ed\u30b0\n"
+            txt += f"- {now_str} \u2705 \u5b8c\u4e86: {task_name}\n"
+            log_file_path.write_text(txt, encoding="utf-8")
+            print(c(f"  \ud83d\udcc4 \u65e5\u6b21\u30ed\u30b0\u306b\u8a18\u9332: {log_file_path.name}", DIM))
+
+        # ── 通知 ──────────────────────────────────────────────────────────────
+        remaining = len([f for f in GTD_NA.glob("*.md") if f.name.upper() != "README.MD"])
+        notify_result = send_notify(
+            title="GTD: \u5b8c\u4e86\uff01",
+            message=f"\u2705 {task_name}  (\u6b8b\u308a {remaining} \u4ef6)",
+            priority="default",
+        )
+        print()
+        print(c(f"  \u2705 \u5b8c\u4e86\uff01: {task_name}", BOLD + GREEN))
+        print(c(f"  {now_str}  \u6b8b\u308a {remaining} \u4ef6  (\u901a\u77e5: {notify_result})", DIM))
+        print()
+        return 0
+
     elif subcmd == "commit":
         # GTD 変更を git にコミット（オプションで push も実行）
         do_push = getattr(args, "push", False)
@@ -2055,6 +2141,9 @@ def main() -> None:
     p_gtd_do.add_argument("--index", type=int,  default=None, help="Next Action \u306e\u756a\u53f7 (1-based)")
     p_gtd_do.add_argument("--name",  type=str,  default=None, help="\u30bf\u30b9\u30af\u540d\u3092\u76f4\u63a5\u6307\u5b9a")
     p_gtd_do.add_argument("--timer", type=int,  default=0,    help="N\u5206\u5f8c\u306b\u78ba\u8a8d\u901a\u77e5 (Windows\u30bf\u30b9\u30af\u30b9\u30b1\u30b8\u30e5\u30fc\u30e9\u30fc\u767b\u9332)")
+    p_gtd_done = p_gtd_sub.add_parser("done", help="\u300c\u5b8c\u4e86\uff01\u300d\u5ba3\u8a00: Next Action \u3092\u30a2\u30fc\u30ab\u30a4\u30d6\u306b\u79fb\u52d5 + \u30ed\u30b0\u8a18\u9332 + \u901a\u77e5")
+    p_gtd_done.add_argument("--index", type=int,  default=None, help="Next Action \u306e\u756a\u53f7 (1-based)")
+    p_gtd_done.add_argument("--name",  type=str,  default=None, help="\u30bf\u30b9\u30af\u540d\u3092\u76f4\u63a5\u6307\u5b9a")
     p_gtd_commit = p_gtd_sub.add_parser("commit", help="GTD 変更を git にコミット")
     p_gtd_commit.add_argument("--push", action="store_true", help="コミット後に git push origin master も実行")
     p_gtd_status = p_gtd_sub.add_parser("status", help="GTD ステータス概要")
