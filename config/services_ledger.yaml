@@ -243,11 +243,11 @@ optional:
     depends_on: [comfyui]
     description: "ギャラリー API"
     health_url: "http://127.0.0.1:5559/health"
-    start_cmd: "python -m gallery_api_mcp_server.server"
+    start_cmd: "python gallery_api.py"
     stop_cmd: null
     auto_restart: false
     cost_risk: "low"
-    recovery_hint: "comfyui が UP していることを確認してから起動。comfyui より先には起動不可。"
+    recovery_hint: "comfyui が UP していることを確認してから起動。comfyui より先には起動不可。gallery_api_mcp_server.server は stdio MCP サーバーなので使用不可。"
 
   castle_ex_layer2:
     port: 9520
