@@ -14,6 +14,9 @@ sys.modules.setdefault("unified_logging", MagicMock(
     get_service_logger=MagicMock(return_value=MagicMock())
 ))
 
+# 他のテストがモックを注入している可能性があるので強制リロード
+sys.modules.pop("config_validator_enhanced", None)
+
 sys.path.insert(0, "scripts/misc")
 from config_validator_enhanced import (
     ValidationError,

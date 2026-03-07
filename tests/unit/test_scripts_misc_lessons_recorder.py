@@ -11,6 +11,9 @@ sys.modules.setdefault("manaos_logger", MagicMock(
     get_service_logger=MagicMock(return_value=MagicMock())
 ))
 
+# 他のテストがモックを注入している可能性があるので強制リロード
+sys.modules.pop("lessons_recorder", None)
+
 sys.path.insert(0, "scripts/misc")
 from lessons_recorder import (
     Lesson,
