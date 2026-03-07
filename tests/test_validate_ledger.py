@@ -37,6 +37,7 @@ def _svc(
     enabled: bool = True,
     depends_on: list[str] | None = None,
     tier: int = 1,
+    start_cmd: str | None = "python server.py",
 ) -> ServiceRef:
     return ServiceRef(
         name=name,
@@ -46,6 +47,7 @@ def _svc(
         enabled=enabled,
         depends_on=depends_on or [],
         tier=tier,
+        start_cmd=start_cmd,
     )
 
 
