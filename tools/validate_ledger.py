@@ -40,6 +40,7 @@ class ServiceRef:
     enabled: bool
     depends_on: List[str]
     tier: int = 0
+    start_cmd: str | None = None
 
 
 def eprint(*args: Any) -> None:
@@ -84,6 +85,7 @@ def parse_services(ledger: Dict[str, Any]) -> Dict[str, ServiceRef]:
                 enabled=enabled,
                 depends_on=[str(dep) for dep in depends_on],
                 tier=tier_raw,
+                start_cmd=config.get("start_cmd"),
             )
 
     add_group("core")
@@ -97,6 +99,10 @@ def validate_basic(services: Dict[str, ServiceRef]) -> List[str]:
     used_ports: Dict[int, str] = {}
     for service in services.values():
         if service.port is None:
+            continue
+        # skip port-conflict check for virtual services (start_cmd=null means
+        # they are sub-routes co-hosted inside another service's process)
+        if service.start_cmd is None:
             continue
         if service.port in used_ports:
             errors.append(
