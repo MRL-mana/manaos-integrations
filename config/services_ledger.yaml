@@ -38,7 +38,7 @@ core:
     description: "Ollama LLMエンジン (外部プロセス)"
     health_url: "http://127.0.0.1:11434/api/tags"
     start_cmd: "ollama serve"
-    stop_cmd: null
+    stop_cmd: "pkill ollama || true"
     auto_restart: true
     cost_risk: "low"
     recovery_hint: "ollama serve を手動実行。GPU/VRAM不足の場合は他の推論を先に停止。"
@@ -53,7 +53,7 @@ core:
     description: "LLM ルーティング MCP サーバー"
     health_url: "http://127.0.0.1:5111/health"
     start_cmd: "python scripts/misc/manaos_llm_routing_api.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f manaos_llm_routing_api || true"
     auto_restart: true
     cost_risk: "low"
     recovery_hint: "ollama が先に UP していることを確認してから起動。ポート5111が使用中なら lsof -i:5111 で確認。"
@@ -68,7 +68,7 @@ core:
     description: "MRL Memory 記憶管理システム (SSOT)"
     health_url: "http://127.0.0.1:5105/health"
     start_cmd: "python mrl_memory_integration.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f mrl_memory_integration || true"
     auto_restart: true
     cost_risk: "low"
     recovery_hint: "rag_memory.db が存在するか確認。破損時はバックアップから復元: backups/rag_memory.db.bak"
@@ -83,7 +83,7 @@ core:
     description: "Unified API サーバー (統合ゲートウェイ)"
     health_url: "http://127.0.0.1:9502/health"
     start_cmd: "python unified_api/unified_api_server.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f unified_api_server || true"
     auto_restart: true
     cost_risk: "low"
     recovery_hint: "memory と llm_routing の両方が UP してから起動。ポート9502競合時は再起動: restart_unified_api_port9502.ps1"
@@ -102,7 +102,7 @@ core:
     description: "学習・自動改善システム"
     health_url: "http://127.0.0.1:5126/health"
     start_cmd: "python learning_system_api.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f learning_system_api || true"
     auto_restart: true
     cost_risk: "low"
     recovery_hint: "learning_system_api.py の存在確認。memory / unified_api が先に UP していることを確認してから再起動。"
@@ -117,7 +117,7 @@ core:
     description: "AI 人格システム"
     health_url: "http://127.0.0.1:5123/health"
     start_cmd: "python -m scripts.misc.personality_system"
-    stop_cmd: null
+    stop_cmd: "pkill -f personality_system || true"
     auto_restart: true
     cost_risk: "low"
     recovery_hint: "scripts/misc/personality_system.py の存在確認。memory / learning が UP してから起動。"
@@ -132,7 +132,7 @@ core:
     description: "自律エージェントシステム"
     health_url: "http://127.0.0.1:5124/health"
     start_cmd: "python scripts/misc/autonomy_system.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f autonomy_system || true"
     auto_restart: true
     cost_risk: "low"
     recovery_hint: "scripts/misc/autonomy_system.py の存在確認。memory / learning / personality が全て UP してから起動。"
@@ -147,7 +147,7 @@ core:
     description: "秘書システム (スケジュール / GTD)"
     health_url: "http://127.0.0.1:5125/health"
     start_cmd: "python scripts/misc/secretary_system.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f secretary_system || true"
     auto_restart: true
     cost_risk: "low"
     recovery_hint: "scripts/misc/secretary_system.py の存在確認。unified_api / memory が UP していることを確認。"
@@ -162,7 +162,7 @@ core:
     description: "Trinity エージェントシステム (MCP ヘルスポート)"
     health_url: "http://127.0.0.1:5146/health"
     start_cmd: "python trinity_mcp_server/server.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f trinity_mcp_server || true"
     auto_restart: true
     cost_risk: "low"
     recovery_hint: "trinity_mcp_server/server.py の存在確認。unified_api / memory / personality が全て UP してから起動。"
@@ -177,7 +177,7 @@ core:
     description: "意図ルーター"
     health_url: "http://127.0.0.1:5100/health"
     start_cmd: "python scripts/misc/intent_router.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f intent_router || true"
     auto_restart: true
     cost_risk: "low"
     recovery_hint: "scripts/misc/intent_router.py の存在確認。llm_routing が UP していることを確認。"
@@ -192,7 +192,7 @@ core:
     description: "タスクキューシステム"
     health_url: "http://127.0.0.1:5104/health"
     start_cmd: "python scripts/misc/task_queue_system.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f task_queue_system || true"
     auto_restart: true
     cost_risk: "low"
     recovery_hint: "scripts/misc/task_queue_system.py の存在確認。unified_api が UP していることを確認。"
@@ -214,7 +214,7 @@ optional:
     description: "動画生成パイプライン MCP サーバー"
     health_url: "http://127.0.0.1:5112/health"
     start_cmd: "python -m video_pipeline_mcp_server.server"
-    stop_cmd: null
+    stop_cmd: "pkill -f video_pipeline_mcp_server || true"
     auto_restart: false
     cost_risk: "med"
     recovery_hint: "python -m video_pipeline_mcp_server.server を手動起動。unified_api が UP していることを確認。"
@@ -229,7 +229,7 @@ optional:
     description: "ComfyUI 画像生成エンジン"
     health_url: "http://127.0.0.1:8188/"
     start_cmd: "python C:/mana_workspace/storage500/ComfyUI/main.py --port 8188 --listen 127.0.0.1"
-    stop_cmd: null
+    stop_cmd: "pkill -f ComfyUI/main.py || true"
     auto_restart: false
     cost_risk: "high"
     recovery_hint: "GPU VRAM を確認してから起動。他の高 VRAM プロセス（ollama の大モデル等）を先に停止。C:/mana_workspace/storage500/ComfyUI の存在確認。"
@@ -244,7 +244,7 @@ optional:
     description: "ギャラリー API"
     health_url: "http://127.0.0.1:5559/health"
     start_cmd: "python gallery_api.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f gallery_api || true"
     auto_restart: false
     cost_risk: "low"
     recovery_hint: "comfyui が UP していることを確認してから起動。comfyui より先には起動不可。gallery_api_mcp_server.server は stdio MCP サーバーなので使用不可。"
@@ -274,7 +274,7 @@ optional:
     description: "n8n ワークフロー自動化"
     health_url: "http://127.0.0.1:5678/healthz"
     start_cmd: null
-    stop_cmd: null
+    stop_cmd: "pkill -f n8n || true"
     auto_restart: false
     cost_risk: "low"
 
@@ -288,7 +288,7 @@ optional:
     description: "Windows 自動化 MCP サーバー"
     health_url: "http://127.0.0.1:5115/health"
     start_cmd: "python windows_automation_mcp_server/server.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f windows_automation_mcp_server || true"
     auto_restart: false
     cost_risk: "low"
     recovery_hint: "windows_automation_mcp_server/server.py の存在確認。依存パッケージ確認: pip install pyautogui pywin32。"
@@ -303,7 +303,7 @@ optional:
     description: "Pico HID マウス / キーボード MCP サーバー"
     health_url: "http://127.0.0.1:5136/health"
     start_cmd: "python -m pico_hid_mcp_server"
-    stop_cmd: null
+    stop_cmd: "pkill -f pico_hid_mcp_server || true"
     auto_restart: false
     cost_risk: "low"
     recovery_hint: "Pico HID デバイスの USB 接続を確認。デバイスマネージャーで COM ポートが認識されているか確認してから起動。"
@@ -318,7 +318,7 @@ optional:
     description: "Pixel7 ブリッジ (ADB / scrcpy)"
     health_url: "http://127.0.0.1:5122/health"
     start_cmd: "python pixel7_api_gateway.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f pixel7_api_gateway || true"
     auto_restart: false
     cost_risk: "low"
     recovery_hint: "ADB デバイス接続確認: adb devices。pixel7_api_gateway.py の存在確認。unified_api が UP していることを確認。"
@@ -334,7 +334,7 @@ optional:
     description: "Slack 統合"
     health_url: "http://127.0.0.1:5590/health"
     start_cmd: "python mcp-servers/slack_integration/slack_manaos_service.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f slack_manaos_service || true"
     auto_restart: false
     cost_risk: "low"
     recovery_hint: "SLACK_WEBHOOK_URL 環境変数の設定確認。mcp-servers/slack_integration/slack_manaos_service.py の存在確認。"
@@ -349,7 +349,7 @@ optional:
     description: "Step Deep Research / File Secretary"
     health_url: "http://127.0.0.1:5120/health"
     start_cmd: "python step_deep_research/run_server.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f step_deep_research || true"
     auto_restart: false
     cost_risk: "med"
     recovery_hint: "step_deep_research/run_server.py の存在確認。llm_routing が UP していることを確認。"
@@ -380,7 +380,7 @@ optional:
     description: "VOICEVOX TTS エンジン"
     health_url: "http://127.0.0.1:50021/version"
     start_cmd: null
-    stop_cmd: null
+    stop_cmd: "pkill -f VOICEVOX || true"
     auto_restart: false
     cost_risk: "low"
 
@@ -410,7 +410,7 @@ optional:
     description: "GTD キャプチャサーバー (Pixel7 → Inbox / 日次ログ管理)"
     health_url: "http://127.0.0.1:5130/health"
     start_cmd: "python gtd_capture_server.py"
-    stop_cmd: null
+    stop_cmd: "pkill -f gtd_capture_server || true"
     auto_restart: false
     cost_risk: "low"
     recovery_hint: "python gtd_capture_server.py を手動起動。gtd/ ディレクトリが存在するか確認。"

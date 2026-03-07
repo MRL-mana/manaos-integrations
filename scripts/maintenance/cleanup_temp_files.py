@@ -72,7 +72,7 @@ EXCLUDE_PATHS = [
 
 def should_exclude(path: Path) -> bool:
     """パスを除外すべきかチェック"""
-    path_str = str(path)
+    path_str = str(path).replace("\\", "/")  # Windows バックスラッシュを正規化
     for exclude in EXCLUDE_PATHS:
         if exclude in path_str:
             return True

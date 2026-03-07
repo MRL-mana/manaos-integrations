@@ -4,8 +4,20 @@ Trinity Service Manager - オンデマンドサービス管理
 """
 import subprocess
 import sys
+import shutil
+import logging
 import argparse
 from typing import List, Dict
+
+logger = logging.getLogger(__name__)
+
+# systemctl が存在しない環境 (Windows) ではサービス操作を無効化
+_SYSTEMCTL = shutil.which("systemctl")
+
+
+def _systemctl_available() -> bool:
+    """systemctl が使用可能かどうかを返す"""
+    return _SYSTEMCTL is not None
 
 class TrinityServiceManager:
     def __init__(self):
@@ -19,64 +31,74 @@ class TrinityServiceManager:
     
     def start_service(self, service_name: str) -> bool:
         """サービスを起動"""
+        if not _systemctl_available():
+            logger.error("systemctl が見つかりません。Linux/systemd 環境でのみ利用可能です。")
+            return False
         try:
             if service_name in self.on_demand_services:
                 actual_service = self.on_demand_services[service_name]
             else:
                 actual_service = service_name
-            
+
             result = subprocess.run(
-                ['systemctl', 'start', actual_service],
+                [_SYSTEMCTL, 'start', actual_service],
                 capture_output=True,
                 text=True
             )
-            
+
             if result.returncode == 0:
                 print(f"✅ {service_name} を起動しました")
                 return True
             else:
-                print(f"❌ {service_name} の起動に失敗: {result.stderr}")
+                logger.error("%s の起動に失敗: %s", service_name, result.stderr)
                 return False
         except Exception as e:
-            print(f"❌ エラー: {e}")
+            logger.error("start_service error: %s", e)
             return False
-    
+
     def stop_service(self, service_name: str) -> bool:
         """サービスを停止"""
+        if not _systemctl_available():
+            logger.error("systemctl が見つかりません。Linux/systemd 環境でのみ利用可能です。")
+            return False
         try:
             if service_name in self.on_demand_services:
                 actual_service = self.on_demand_services[service_name]
             else:
                 actual_service = service_name
-            
+
             result = subprocess.run(
-                ['systemctl', 'stop', actual_service],
+                [_SYSTEMCTL, 'stop', actual_service],
                 capture_output=True,
                 text=True
             )
-            
+
             if result.returncode == 0:
                 print(f"✅ {service_name} を停止しました")
                 return True
             else:
-                print(f"❌ {service_name} の停止に失敗: {result.stderr}")
+                logger.error("%s の停止に失敗: %s", service_name, result.stderr)
                 return False
         except Exception as e:
-            print(f"❌ エラー: {e}")
+            logger.error("stop_service error: %s", e)
             return False
-    
+
     def status_service(self, service_name: str) -> Dict:
         """サービスの状態を確認"""
+        if not _systemctl_available():
+            return {
+                'name': service_name,
+                'status': False,
+                'error': 'systemctl unavailable (non-Linux environment)',
+            }
         try:
             if service_name in self.on_demand_services:
                 actual_service = self.on_demand_services[service_name]
             else:
                 actual_service = service_name
-            
+
             result = subprocess.run(
-                ['systemctl', 'status', actual_service],
-                capture_output=True,
-                text=True
+                [_SYSTEMCTL, 'status', actual_service],
             )
             
             return {

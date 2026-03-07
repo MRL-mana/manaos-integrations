@@ -4,9 +4,16 @@ Trinity System Optimizer - システム最適化ダッシュボード
 """
 import subprocess
 import json
+import shutil
+import logging
 import time
 from datetime import datetime
 from typing import Dict, List
+
+logger = logging.getLogger(__name__)
+
+# systemctl が存在しない環境 (Windows) ではサービス操作を無効化
+_SYSTEMCTL = shutil.which("systemctl")
 
 class TrinitySystemOptimizer:
     def __init__(self):
@@ -31,19 +38,27 @@ class TrinitySystemOptimizer:
     
     def get_service_status(self, service_name: str) -> Dict:
         """サービスの状態を取得"""
+        if _SYSTEMCTL is None:
+            return {
+                'name': service_name,
+                'active': False,
+                'enabled': False,
+                'status': 'unavailable',
+                'error': 'systemctl not found (non-Linux environment)',
+            }
         try:
             result = subprocess.run(
-                ['systemctl', 'is-active', service_name],
+                [_SYSTEMCTL, 'is-active', service_name],
                 capture_output=True,
                 text=True
             )
-            
+
             enabled_result = subprocess.run(
-                ['systemctl', 'is-enabled', service_name],
+                [_SYSTEMCTL, 'is-enabled', service_name],
                 capture_output=True,
                 text=True
             )
-            
+
             return {
                 'name': service_name,
                 'active': result.stdout.strip() == 'active',
@@ -51,6 +66,7 @@ class TrinitySystemOptimizer:
                 'status': result.stdout.strip()
             }
         except Exception as e:
+            logger.error("get_service_status error for %s: %s", service_name, e)
             return {
                 'name': service_name,
                 'active': False,

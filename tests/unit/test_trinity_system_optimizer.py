@@ -10,7 +10,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "tools"))
+import trinity_system_optimizer
 from trinity_system_optimizer import TrinitySystemOptimizer
+
+
+@pytest.fixture(autouse=True)
+def _patch_systemctl(monkeypatch):
+    """Windows 環境でも _SYSTEMCTL が非山 None となるようにパッチ。"""
+    monkeypatch.setattr(trinity_system_optimizer, "_SYSTEMCTL", "/usr/bin/systemctl")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
