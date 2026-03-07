@@ -382,3 +382,5 @@ vite.config.js.timestamp-*
 # Audio test outputs
 *.wav
 *.mp3
+
+status_now.txt
