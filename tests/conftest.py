@@ -27,6 +27,7 @@ _EXTRA_ROOTS = [
     _ROOT / "file_secretary",
     _ROOT / "mrl_memory",
     _ROOT / "step_deep_research",
+    _ROOT / "tools",           # validate_ledger 等のツール群
 ]
 for _p in _EXTRA_ROOTS:
     _s = str(_p)
