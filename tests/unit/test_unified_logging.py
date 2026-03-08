@@ -9,6 +9,12 @@ import sys
 
 # プロジェクトルートをパスに追加
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+# unified_api パスを追加（実モジュールの場所）
+_unified_api = str(Path(__file__).parent.parent.parent / "unified_api")
+if _unified_api not in sys.path:
+    sys.path.insert(0, _unified_api)
+# 他テストが差し込んだモックを除去して実モジュールをロード
+sys.modules.pop("unified_logging", None)
 
 from unified_logging import (
     get_logger,

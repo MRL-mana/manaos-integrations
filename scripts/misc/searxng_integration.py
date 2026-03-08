@@ -56,7 +56,6 @@ class SearXNGIntegration(BaseIntegration):
         # 環境変数から読み込む
         try:
             from dotenv import load_dotenv
-            from pathlib import Path
             env_file = Path(__file__).parent / '.env'
             if env_file.exists():
                 load_dotenv(env_file)

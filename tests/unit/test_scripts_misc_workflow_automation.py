@@ -37,13 +37,13 @@ _m0 = MagicMock()
 _m0_inst = MagicMock()
 _m0_inst.is_available.return_value = False
 _m0.Mem0Integration = MagicMock(return_value=_m0_inst)
-sys.modules.setdefault("mem0_integration", _m0)
+sys.modules["mem0_integration"] = _m0
 
 _oi = MagicMock()
 _oi_inst = MagicMock()
 _oi_inst.is_available.return_value = False
 _oi.ObsidianIntegration = MagicMock(return_value=_oi_inst)
-sys.modules.setdefault("obsidian_integration", _oi)
+sys.modules["obsidian_integration"] = _oi
 
 import pytest
 from scripts.misc.workflow_automation import (
