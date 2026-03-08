@@ -205,14 +205,21 @@ class TestExecuteIntelligentWorkflow:
         assert isinstance(result["steps"], list)
 
     def test_security_check_passes(self):
+        from unittest.mock import MagicMock
         obj = _make_system()
+        obj.security = MagicMock()
         obj.security.check_request_security.return_value = {"allowed": True}
+        obj.security.get_security_status.return_value = {}
         result = obj.execute_intelligent_workflow("test")
         assert result.get("error") is None
 
     def test_security_check_blocks(self):
+        from unittest.mock import MagicMock
         obj = _make_system()
+        obj.security = MagicMock()
         obj.security.check_request_security.return_value = {"allowed": False}
+        obj.security.get_security_status.return_value = {}
+        obj.langchain = MagicMock()
         obj.langchain.is_available.return_value = False
         result = obj.execute_intelligent_workflow("attack")
         assert "error" in result

@@ -22,6 +22,8 @@ sys.modules["manaos_process_manager"] = _pm
 _eh = MagicMock()
 _err_obj = MagicMock()
 _err_obj.message = "error"
+_err_obj.user_message = "test error"
+_err_obj.to_json_response.return_value = {"error": "test error", "message": "error"}
 _eh.ManaOSErrorHandler.return_value.handle_exception.return_value = _err_obj
 sys.modules["manaos_error_handler"] = _eh
 
@@ -35,6 +37,9 @@ sys.modules.setdefault("manaos_config_validator", _cv)
 
 _paths_mod = MagicMock()
 _paths_mod.N8N_PORT = 5678
+_paths_mod.UNIFIED_API_URL = "http://127.0.0.1:9502"
+_paths_mod.MRL_MEMORY_URL = "http://127.0.0.1:9507"
+_paths_mod.LEARNING_SYSTEM_URL = "http://127.0.0.1:9508"
 sys.modules["_paths"] = _paths_mod
 
 # ── SUT import ─────────────────────────────────────────────────────────

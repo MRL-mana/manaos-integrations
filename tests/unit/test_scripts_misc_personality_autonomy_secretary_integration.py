@@ -160,29 +160,34 @@ class TestExecuteWithPersonality:
 # ── TestExecuteAutonomousTask ─────────────────────────────────────────────────
 class TestExecuteAutonomousTask:
     def test_disabled_level_returns_disabled(self, integration):
-        integration.autonomy.autonomy_level.value = "disabled"
+        from unittest.mock import MagicMock
+        integration.autonomy = MagicMock()
+        integration.autonomy.autonomy_level = MagicMock(value="disabled")
         result = integration.execute_autonomous_task("check", {}, {})
         assert result["status"] == "disabled"
-        # Restore
-        integration.autonomy.autonomy_level.value = "semi_auto"
 
     def test_enabled_level_returns_success(self, integration):
-        integration.autonomy.autonomy_level.value = "semi_auto"
+        from unittest.mock import MagicMock
+        integration.autonomy = MagicMock()
+        integration.autonomy.autonomy_level = MagicMock(value="semi_auto")
         result = integration.execute_autonomous_task("check", {"cond": True}, {"action": "run"})
         assert result["status"] == "success"
 
     def test_task_type_in_result(self, integration):
-        integration.autonomy.autonomy_level.value = "full_auto"
+        from unittest.mock import MagicMock
+        integration.autonomy = MagicMock()
+        integration.autonomy.autonomy_level = MagicMock(value="full_auto")
         result = integration.execute_autonomous_task("file_scan", {}, {})
         assert result["task_type"] == "file_scan"
-        integration.autonomy.autonomy_level.value = "semi_auto"
 
     def test_timestamp_present(self, integration):
         result = integration.execute_autonomous_task("check", {}, {})
         assert "timestamp" in result
 
     def test_record_and_learn_called(self, integration):
-        integration.autonomy.autonomy_level.value = "semi_auto"
+        from unittest.mock import MagicMock
+        integration.autonomy = MagicMock()
+        integration.autonomy.autonomy_level = MagicMock(value="semi_auto")
         integration.learning_memory.record_and_learn.reset_mock()
         integration.execute_autonomous_task("ping", {}, {})
         integration.learning_memory.record_and_learn.assert_called_once()

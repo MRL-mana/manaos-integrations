@@ -190,7 +190,9 @@ class TestLoadTestRunnerInit:
         assert runner.all_results == {}
 
     def test_service_urls_set(self):
-        runner = LoadTestRunner()
+        with patch.object(_sut, "UNIFIED_API_URL", "http://127.0.0.1:9502"), \
+             patch.object(_sut, "MRL_MEMORY_URL", "http://127.0.0.1:9507"):
+            runner = LoadTestRunner()
         assert "http" in runner.services["Unified API"]
         assert "http" in runner.services["MRL Memory"]
 

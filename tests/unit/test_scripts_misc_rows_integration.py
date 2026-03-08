@@ -72,7 +72,8 @@ class TestIsAvailable:
         monkeypatch.delenv("ROWS_API_KEY", raising=False)
         assert RowsIntegration().is_available() is False
 
-    def test_empty_key(self):
+    def test_empty_key(self, monkeypatch):
+        monkeypatch.delenv("ROWS_API_KEY", raising=False)
         ri = RowsIntegration(api_key="")
         assert ri.is_available() is False
 

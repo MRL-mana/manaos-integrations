@@ -161,7 +161,7 @@ class TestGetCompleteStatus:
 
 class TestOptimizeAllSystems:
     def test_returns_dict_with_optimizations_and_timestamp(self, integration):
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             integration.optimize_all_systems()
         )
         assert "optimizations" in result
@@ -173,7 +173,7 @@ class TestOptimizeAllSystems:
         integration.pas_integration = None
         integration.llm_optimization = None
         integration.github = None
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             integration.optimize_all_systems()
         )
         assert isinstance(result["optimizations"], dict)
@@ -186,7 +186,7 @@ class TestOptimizeAllSystems:
         integration.pas_integration = None
         integration.llm_optimization = None
         integration.github = None
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             integration.optimize_all_systems()
         )
         assert "learning_system" in result["optimizations"]
@@ -200,7 +200,7 @@ class TestOptimizeAllSystems:
         integration.llm_optimization = None
         integration.github = None
         try:
-            result = asyncio.get_event_loop().run_until_complete(
+            result = asyncio.run(
                 integration.optimize_all_systems()
             )
             assert "optimizations" in result
@@ -232,20 +232,20 @@ class TestExecuteWithFullIntegration:
         return ci
 
     def test_returns_dict(self, integration_with_mock_orch):
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             integration_with_mock_orch.execute_with_full_integration("テスト入力")
         )
         assert isinstance(result, dict)
 
     def test_result_has_required_keys(self, integration_with_mock_orch):
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             integration_with_mock_orch.execute_with_full_integration("テスト入力")
         )
         for key in ("result", "personality", "related_memories", "predictions", "duration_seconds", "timestamp"):
             assert key in result
 
     def test_duration_seconds_is_positive(self, integration_with_mock_orch):
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             integration_with_mock_orch.execute_with_full_integration("テスト入力")
         )
         assert result["duration_seconds"] >= 0
@@ -267,7 +267,7 @@ class TestExecuteWithFullIntegration:
         ci.metrics = None
         ci.learning_memory = None
         ci.secretary = None
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             ci.execute_with_full_integration("テスト入力")
         )
         mock_personality.get_personality_response.assert_called_once()
@@ -289,7 +289,7 @@ class TestExecuteWithFullIntegration:
         ci.metrics = mock_metrics
         ci.learning_memory = None
         ci.secretary = None
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             ci.execute_with_full_integration("テスト入力")
         )
         assert mock_metrics.record_metric.call_count >= 2  # response_time + success_rate
