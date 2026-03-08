@@ -39,13 +39,14 @@ class TestOpenGeneratedImages:
         _, mock_subp = self._do_import(monkeypatch, files_exist=False)
         assert not mock_subp.Popen.called
 
-    def test_subprocess_called_when_files_exist(self, monkeypatch):
+    def test_startfile_called_when_files_exist(self, monkeypatch):
         sys.modules.pop("open_generated_images", None)
         monkeypatch.syspath_prepend(str(_MISC))
         mock_subp = MagicMock()
         monkeypatch.setitem(sys.modules, "subprocess", mock_subp)
         with patch("pathlib.Path.exists", return_value=True), \
+             patch("os.startfile") as mock_startfile, \
              patch("builtins.print"):
             import open_generated_images  # noqa
-        # subprocess.Popen should be called for up to 5 files
-        assert mock_subp.Popen.called
+        # os.startfile should be called for up to 5 existing files
+        assert mock_startfile.called

@@ -11,10 +11,22 @@ import pytest
 # ---------------------------------------------------------------------------
 @pytest.fixture(scope="module")
 def _mod():
+    # Stub manaos_core_api so the module-level sys.exit(1) is avoided
+    manaos_stub = types.ModuleType("manaos_core_api")
+    manaos_stub.ManaOSCoreAPI = MagicMock()
+    sys.modules["manaos_core_api"] = manaos_stub
+
+    # Stub dotenv if needed
+    if "dotenv" not in sys.modules:
+        dotenv_stub = types.ModuleType("dotenv")
+        dotenv_stub.load_dotenv = lambda *a, **kw: None
+        sys.modules["dotenv"] = dotenv_stub
+
     sys.path.insert(0, "scripts/misc")
-    if "smart_prompt_generator" in sys.modules:
-        return sys.modules["smart_prompt_generator"]
-    return importlib.import_module("smart_prompt_generator")
+    sys.modules.pop("smart_prompt_generator", None)
+    with patch("builtins.print"):
+        mod = importlib.import_module("smart_prompt_generator")
+    return mod
 
 
 # ---------------------------------------------------------------------------

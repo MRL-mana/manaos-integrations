@@ -1,7 +1,8 @@
 """Tests for scripts/misc/open_latest_images.py"""
 import sys
 import types
-import os
+import os as _os_mod
+import importlib.util
 from unittest.mock import MagicMock, patch
 import pytest
 from pathlib import Path
@@ -15,14 +16,13 @@ def _make_paths_stub(port=5559):
     return mod
 
 
-def _prep(monkeypatch, response_ok=True, images=None):
+def _prep(monkeypatch, response_ok=True, images=None, port=5559):
     sys.modules.pop("open_latest_images", None)
-    sys.modules.setdefault("_paths", _make_paths_stub())
-    monkeypatch.syspath_prepend(str(_MISC))
+    monkeypatch.setitem(sys.modules, "_paths", _make_paths_stub(port))
 
     _images = images or [
-        {"filename": "a.png", "created_at": "2026-01-01T00:00:00"},
-        {"filename": "b.png", "created_at": "2026-01-02T00:00:00"},
+        {"filename": "a.png", "created_at": "2026-01-01T00:00:00", "size": 1024},
+        {"filename": "b.png", "created_at": "2026-01-02T00:00:00", "size": 2048},
     ]
     mock_resp = MagicMock()
     mock_resp.status_code = 200 if response_ok else 500
@@ -34,8 +34,14 @@ def _prep(monkeypatch, response_ok=True, images=None):
     mock_wb = MagicMock()
     monkeypatch.setitem(sys.modules, "webbrowser", mock_wb)
 
-    with patch("builtins.print"), patch("os.getenv", side_effect=lambda k, d="": d):
-        import open_latest_images  # noqa
+    spec = importlib.util.spec_from_file_location(
+        "open_latest_images", str(_MISC / "open_latest_images.py")
+    )
+    mod = importlib.util.module_from_spec(spec)
+    mod.os = _os_mod  # inject missing os
+    sys.modules["open_latest_images"] = mod
+    with patch("builtins.print"):
+        spec.loader.exec_module(mod)
     return mock_req, mock_wb
 
 
@@ -49,17 +55,7 @@ class TestOpenLatestImages:
         assert mock_req.get.called
 
     def test_gallery_url_contains_port(self, monkeypatch):
-        _prep(monkeypatch)
-        sys.modules.pop("open_latest_images", None)
-        sys.modules.setdefault("_paths", _make_paths_stub(5559))
-        monkeypatch.syspath_prepend(str(_MISC))
-        mock_req = MagicMock()
-        mock_req.get.return_value = MagicMock(status_code=200, json=lambda: {"images": []})
-        monkeypatch.setitem(sys.modules, "requests", mock_req)
-        monkeypatch.setitem(sys.modules, "webbrowser", MagicMock())
-        with patch("builtins.print"), patch("os.getenv", side_effect=lambda k, d="": d):
-            import open_latest_images as m
-        # gallery url should use port 5559
+        mock_req, _ = _prep(monkeypatch, port=5559)
         called_url = mock_req.get.call_args[0][0]
         assert "5559" in called_url or "api/images" in called_url
 

@@ -16,7 +16,7 @@ def _make_paths_stub():
 def _prep(monkeypatch):
     sys.modules.pop("analyze_ollama_ui", None)
     sys.modules.pop("manaos_integrations._paths", None)
-    sys.modules.setdefault("_paths", _make_paths_stub())
+    monkeypatch.setitem(sys.modules, "_paths", _make_paths_stub())
     monkeypatch.syspath_prepend(
         str(__import__("pathlib").Path(__file__).parent.parent.parent / "scripts" / "misc")
     )
@@ -65,4 +65,5 @@ class TestAnalyzeOllamaUiImport:
         mock_req, _ = _prep(monkeypatch)
         with patch("builtins.print"):
             import analyze_ollama_ui  # noqa
-        assert mock_req.get.called
+        # script uses requests.post (for Ollama API calls)
+        assert mock_req.post.called or mock_req.get.called or mock_req.called

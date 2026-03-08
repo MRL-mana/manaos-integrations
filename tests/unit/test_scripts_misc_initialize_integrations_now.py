@@ -25,7 +25,7 @@ def _make_unified_api_stub(status="ready"):
 def _prep(monkeypatch, status="ready"):
     sys.modules.pop("initialize_integrations_now", None)
     sys.modules.pop("manaos_integrations._paths", None)
-    sys.modules.setdefault("_paths", _make_paths_stub())
+    monkeypatch.setitem(sys.modules, "_paths", _make_paths_stub())
     monkeypatch.setitem(sys.modules, "unified_api_server", _make_unified_api_stub(status))
     monkeypatch.syspath_prepend(str(_MISC))
     with patch("builtins.print"), patch("time.sleep"):
@@ -45,7 +45,7 @@ class TestInitializeIntegrationsNow:
     def test_n8n_base_url_set_when_missing(self, monkeypatch):
         sys.modules.pop("initialize_integrations_now", None)
         monkeypatch.delenv("N8N_BASE_URL", raising=False)
-        sys.modules.setdefault("_paths", _make_paths_stub())
+        monkeypatch.setitem(sys.modules, "_paths", _make_paths_stub())
         monkeypatch.setitem(sys.modules, "unified_api_server", _make_unified_api_stub())
         monkeypatch.syspath_prepend(str(_MISC))
         with patch("builtins.print"), patch("time.sleep"):

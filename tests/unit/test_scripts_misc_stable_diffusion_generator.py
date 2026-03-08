@@ -1,6 +1,7 @@
 """Tests for scripts/misc/stable_diffusion_generator.py"""
 import importlib
 import sys
+import types
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -8,10 +9,22 @@ import pytest
 
 @pytest.fixture(scope="module")
 def _mod():
+    # Stub heavy dependencies so the module can be imported cleanly
+    for mod_name in ("torch", "PIL", "PIL.Image", "diffusers", "diffusers.utils"):
+        if mod_name not in sys.modules:
+            sys.modules[mod_name] = MagicMock()
+
+    # Stub manaos_logger
+    logger_stub = types.ModuleType("manaos_logger")
+    logger_stub.get_logger = lambda *a, **kw: MagicMock()
+    logger_stub.get_service_logger = lambda *a, **kw: MagicMock()
+    sys.modules["manaos_logger"] = logger_stub
+
     sys.path.insert(0, "scripts/misc")
-    if "stable_diffusion_generator" in sys.modules:
-        return sys.modules["stable_diffusion_generator"]
-    return importlib.import_module("stable_diffusion_generator")
+    sys.modules.pop("stable_diffusion_generator", None)
+    with patch("builtins.print"):
+        mod = importlib.import_module("stable_diffusion_generator")
+    return mod
 
 
 def _make_instance(_mod):
@@ -33,9 +46,8 @@ class TestStableDiffusionGeneratorInit:
     def test_raises_runtime_error_when_pipeline_load_fails(self, _mod, monkeypatch):
         """パイプラインのロードが失敗したとき RuntimeError が発生すること"""
         monkeypatch.setattr(_mod, "DIFFUSERS_AVAILABLE", True)
-        mock_pipeline_cls = MagicMock(
-            side_effect=RuntimeError("model download failed")
-        )
+        mock_pipeline_cls = MagicMock()
+        mock_pipeline_cls.from_pretrained.side_effect = RuntimeError("model download failed")
         monkeypatch.setattr(_mod, "StableDiffusionPipeline", mock_pipeline_cls)
         with pytest.raises(RuntimeError):
             _mod.StableDiffusionGenerator(model_id="fake/model")

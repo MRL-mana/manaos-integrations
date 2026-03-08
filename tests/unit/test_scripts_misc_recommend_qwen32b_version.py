@@ -17,7 +17,7 @@ def _make_paths_stub(port=1234):
 def _prep(monkeypatch, request_ok=True):
     sys.modules.pop("recommend_qwen32b_version", None)
     sys.modules.pop("manaos_integrations._paths", None)
-    sys.modules.setdefault("_paths", _make_paths_stub())
+    monkeypatch.setitem(sys.modules, "_paths", _make_paths_stub())
     monkeypatch.syspath_prepend(str(_MISC))
 
     mock_resp = MagicMock()

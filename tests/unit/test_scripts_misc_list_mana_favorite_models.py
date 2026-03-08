@@ -18,7 +18,7 @@ def _make_paths_stub(port=8188):
 
 def _prep(monkeypatch, models=None, request_ok=True):
     sys.modules.pop("list_mana_favorite_models", None)
-    sys.modules.setdefault("_paths", _make_paths_stub())
+    monkeypatch.setitem(sys.modules, "_paths", _make_paths_stub())
     monkeypatch.syspath_prepend(str(_MISC))
 
     _models = models or ["realisian_v60.safetensors", "dreamshaper.safetensors"]
@@ -27,6 +27,13 @@ def _prep(monkeypatch, models=None, request_ok=True):
     mock_resp.json.return_value = _models
     mock_req = MagicMock()
     mock_req.get.return_value = mock_resp
+    # Provide real exception classes so `except requests.exceptions.X:` works
+    mock_exceptions = types.SimpleNamespace(
+        ConnectionError=ConnectionError,
+        Timeout=TimeoutError,
+        RequestException=Exception,
+    )
+    mock_req.exceptions = mock_exceptions
     monkeypatch.setitem(sys.modules, "requests", mock_req)
 
     with patch("builtins.print"), \
@@ -67,4 +74,4 @@ class TestListManaFavoriteModels:
         sys.modules.pop("list_mana_favorite_models", None)
         with patch("builtins.print"), patch("pathlib.Path.exists", return_value=False):
             import list_mana_favorite_models as m
-        assert "/custom/models" in str(m.COMFYUI_MODELS_DIR)
+        assert "custom" in str(m.COMFYUI_MODELS_DIR) and "models" in str(m.COMFYUI_MODELS_DIR)

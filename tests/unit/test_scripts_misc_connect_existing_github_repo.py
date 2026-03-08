@@ -70,9 +70,12 @@ class TestConnectExistingGithubRepoMain:
     def test_main_available_calls_subprocess(self, monkeypatch):
         ga_mod, inst, subp = _prep(monkeypatch, available=True)
         inst.github.is_available.return_value = True
+        inst.github.github = MagicMock()
+        inst.github.github.get_user.return_value = MagicMock(login="testuser")
         # stub repo list
         inst.github.list_repos = MagicMock(return_value=[])
         import connect_existing_github_repo as m
-        with patch("builtins.print"):
+        # patch input to avoid reading from stdin during test
+        with patch("builtins.print"), patch("builtins.input", side_effect=["manaos-integrations", "n"]):
             m.main()
         # function runs without exception

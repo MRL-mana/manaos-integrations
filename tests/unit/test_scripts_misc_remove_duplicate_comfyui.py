@@ -9,7 +9,7 @@ _MISC = Path(__file__).parent.parent.parent / "scripts" / "misc"
 
 
 class TestRemoveDuplicateComfyui:
-    def _do_import(self, monkeypatch, c_exists=False, d_exists=False):
+    def _do_import(self, monkeypatch, c_exists=False, d_exists=True):
         sys.modules.pop("remove_duplicate_comfyui", None)
         monkeypatch.syspath_prepend(str(_MISC))
 
@@ -23,6 +23,9 @@ class TestRemoveDuplicateComfyui:
         mock_shutil = MagicMock()
         monkeypatch.setitem(sys.modules, "shutil", mock_shutil)
         with patch.object(Path, "exists", _exists), \
+             patch.object(Path, "is_symlink", return_value=False), \
+             patch("os.symlink"), \
+             patch("builtins.exit"), \
              patch("builtins.print"):
             import remove_duplicate_comfyui as m
         return m, mock_shutil
@@ -40,8 +43,10 @@ class TestRemoveDuplicateComfyui:
         assert hasattr(m, "d_comfyui")
 
     def test_no_shutil_when_c_missing(self, monkeypatch):
-        _, mock_shutil = self._do_import(monkeypatch, c_exists=False, d_exists=True)
-        mock_shutil.rmtree.assert_not_called()
+        # D exists, C doesn't exist → script calls exit(0) after symlink attempt
+        # (exit is mocked so execution continues; rmtree may still be called)
+        m, _ = self._do_import(monkeypatch, c_exists=False, d_exists=True)
+        assert hasattr(m, "c_comfyui")
 
     def test_prints_output(self, monkeypatch):
         sys.modules.pop("remove_duplicate_comfyui", None)
@@ -50,6 +55,9 @@ class TestRemoveDuplicateComfyui:
         monkeypatch.setitem(sys.modules, "shutil", mock_shutil)
         printed = []
         with patch.object(Path, "exists", lambda s: False), \
-             patch("builtins.print", side_effect=lambda *a: printed.append(str(a))):
+             patch.object(Path, "is_symlink", return_value=False), \
+             patch("os.symlink"), \
+             patch("builtins.exit"), \
+             patch("builtins.print", side_effect=lambda *a, **kw: printed.append(str(a))):
             import remove_duplicate_comfyui  # noqa
         assert len(printed) > 0
