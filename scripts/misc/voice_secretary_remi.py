@@ -498,8 +498,36 @@ def _run_pixel7_loop(
         if audio_data:
             out = Path(tempfile.gettempdir()) / f"remi_tts_{int(time.time())}.wav"
             out.write_bytes(audio_data)
-            return out
+            return _apply_voice_filter(out)
         return None
+
+    def _apply_voice_filter(wav_path: "Path") -> "Path":
+        """So-VITS-SVC による声質変換（torch + so_vits_svc_fork が必要）
+        未インストールなら原音声をそのまま返す。
+        モデルパスは VOICE_SVC_MODEL 環境変数で指定。
+        """
+        model_path = os.getenv("VOICE_SVC_MODEL", "")
+        if not model_path:
+            return wav_path
+        try:
+            import so_vits_svc_fork.inference.main as _svc  # type: ignore
+            out_path = wav_path.with_suffix(".svc.wav")
+            _svc.infer(
+                input_path=wav_path,
+                output_path=out_path,
+                model_path=model_path,
+                transpose=int(os.getenv("VOICE_SVC_TRANSPOSE", "0")),
+                auto_predict_f0=True,
+                cluster_infer_ratio=0.0,
+            )
+            if out_path.exists() and out_path.stat().st_size > 1000:
+                logger.debug("🎤 SVC 変換完了")
+                return out_path
+        except ImportError:
+            pass  # torch/so_vits_svc_fork 未インストール → スキップ
+        except Exception as e:
+            logger.debug(f"SVC 変換失敗（スキップ）: {e}")
+        return wav_path
 
     def _run_ssh_cmd(cmd: str, timeout: int = 3) -> None:
         """SSH コマンドをサイレント実行（失敗は無視）"""
@@ -624,10 +652,14 @@ def main() -> None:
             record_duration=args.record_sec,
             use_front_camera=args.pixel7_camera,
             auto_ensure_sshd=True,
+            reconnect_retries=int(os.getenv("PIXEL7_RECONNECT_RETRIES", "5")),
+            reconnect_wait=float(os.getenv("PIXEL7_RECONNECT_WAIT", "10")),
         )
 
         if not pixel7_io.is_connected():
-            logger.error("❌ Pixel7 に ADB 接続できません。adb connect を確認してください")
+            logger.warning("⚠️  Pixel7 未接続。接続を待機します（最大50秒）...")
+            if not pixel7_io.wait_for_connection():
+                logger.error("❌ Pixel7 に接続できませんでした。adb connect / Tailscale を確認してください")
             return
 
         logger.info(f"✅ Pixel7 接続確認 OK (record={args.record_sec}秒, camera={args.pixel7_camera})")

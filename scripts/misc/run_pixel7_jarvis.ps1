@@ -29,7 +29,22 @@ param(
 )
 
 $RepoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$Python   = "$RepoRoot\.venv\Scripts\python.exe"
+
+# .venv310 (Python 3.10) を優先: so-vits-svc-fork + torch が利用可能
+# .venv (Python 3.14) はフォールバック
+$Python310 = "$RepoRoot\.venv310\Scripts\python.exe"
+$Python314 = "$RepoRoot\.venv\Scripts\python.exe"
+
+if (Test-Path $Python310) {
+    $Python = $Python310
+    $svcAvail = $true
+} elseif (Test-Path $Python314) {
+    $Python = $Python314
+    $svcAvail = $false
+} else {
+    $Python = (Get-Command python -ErrorAction SilentlyContinue)?.Source ?? "python"
+    $svcAvail = $false
+}
 
 # Python 環境確認
 if (-not (Test-Path $Python)) {
@@ -38,6 +53,8 @@ if (-not (Test-Path $Python)) {
 }
 
 Write-Host "🐍 Python: $Python" -ForegroundColor Cyan
+if ($svcAvail) { Write-Host "🎤 So-VITS-SVC: 使用可能" -ForegroundColor Green }
+else           { Write-Host "🎤 So-VITS-SVC: 未使用（.venv310 なし）" -ForegroundColor Yellow }
 Write-Host "📁 Repo  : $RepoRoot" -ForegroundColor Cyan
 
 # PYTHONPATH 設定

@@ -1,10 +1,14 @@
 {
   "device_ip": "100.84.2.125",
-  "device_port": 34417,
+  "device_port": 5555,
   "screenshot_dir": "./screenshots",
   "battery_low_threshold": 20,
   "battery_critical_threshold": 10,
   "battery_full_threshold": 95,
   "battery_monitor_interval": 300,
-  "adb_path": null
+  "adb_path": "C:\\Users\\mana4\\Desktop\\scrcpy\\scrcpy-win64-v3.3.4\\adb.exe",
+  "ssh_port": 8022,
+  "ssh_key_path": "~/.ssh/id_ed25519",
+  "ssh_host": "100.84.2.125",
+  "ssh_user": ""
 }

@@ -73,18 +73,25 @@ def _get_device_serial() -> str:
 
 
 def _get_ssh_params() -> tuple:
-    """SSH 接続パラメータ: (host, port, key_path) を返す"""
+    """SSH 接続パラメータ: (user_at_host, port, key_path) を返す"""
     cfg = _load_adb_config()
-    host = cfg.get("device_ip", os.getenv("ADB_DEVICE_IP", "100.84.2.125"))
-    port = cfg.get("ssh_port", 8022)
-    raw_key = cfg.get("ssh_key_path", "~/.ssh/id_ed25519")
+    # ssh_host が設定されていればそちら優先、なければ device_ip を使う
+    host = (
+        cfg.get("ssh_host")
+        or cfg.get("device_ip")
+        or os.getenv("ADB_DEVICE_IP", "100.84.2.125")
+    )
+    user = cfg.get("ssh_user") or os.getenv("TERMUX_SSH_USER", "")
+    user_at_host = f"{user}@{host}" if user else host
+    port = int(cfg.get("ssh_port") or os.getenv("TERMUX_SSH_PORT", "8022"))
+    raw_key = cfg.get("ssh_key_path") or os.getenv("TERMUX_SSH_KEY", "~/.ssh/id_ed25519")
     key_path = os.path.expanduser(raw_key)
-    return host, port, key_path
+    return user_at_host, port, key_path
 
 
 def _run_ssh(cmd: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Termux SSH 経由でコマンドを実行する"""
-    host, port, key_path = _get_ssh_params()
+    user_at_host, port, key_path = _get_ssh_params()
     ssh_cmd = [
         "ssh",
         "-i", key_path,
@@ -92,7 +99,7 @@ def _run_ssh(cmd: str, timeout: int = 30) -> subprocess.CompletedProcess:
         "-o", "StrictHostKeyChecking=no",
         "-o", "BatchMode=yes",
         "-o", "ConnectTimeout=10",
-        host,
+        user_at_host,
         cmd,
     ]
     logger.debug(f"SSH: {' '.join(ssh_cmd)}")
@@ -131,7 +138,7 @@ def _check_ssh_connection() -> bool:
 
 def _scp_push(local_path: Path, remote_path: str, timeout: int = 30) -> bool:
     """SCP でファイルを Pixel7 へ転送する"""
-    host, port, key_path = _get_ssh_params()
+    user_at_host, port, key_path = _get_ssh_params()
     cmd = [
         "scp",
         "-i", key_path,
@@ -139,7 +146,7 @@ def _scp_push(local_path: Path, remote_path: str, timeout: int = 30) -> bool:
         "-o", "StrictHostKeyChecking=no",
         "-o", "BatchMode=yes",
         str(local_path),
-        f"{host}:{remote_path}",
+        f"{user_at_host}:{remote_path}",
     ]
     logger.debug(f"SCP push: {' '.join(cmd)}")
     r = subprocess.run(cmd, capture_output=True, timeout=timeout, encoding="utf-8", errors="ignore")
@@ -150,14 +157,14 @@ def _scp_push(local_path: Path, remote_path: str, timeout: int = 30) -> bool:
 
 def _scp_pull(remote_path: str, local_path: Path, timeout: int = 30) -> bool:
     """SCP で Pixel7 からファイルを取得する"""
-    host, port, key_path = _get_ssh_params()
+    user_at_host, port, key_path = _get_ssh_params()
     cmd = [
         "scp",
         "-i", key_path,
         "-P", str(port),
         "-o", "StrictHostKeyChecking=no",
         "-o", "BatchMode=yes",
-        f"{host}:{remote_path}",
+        f"{user_at_host}:{remote_path}",
         str(local_path),
     ]
     logger.debug(f"SCP pull: {' '.join(cmd)}")
@@ -573,14 +580,33 @@ class Pixel7JarvisIO:
         record_duration: int = 5,
         use_front_camera: bool = False,
         auto_ensure_sshd: bool = True,
+        reconnect_retries: int = 3,
+        reconnect_wait: float = 5.0,
     ):
         self.record_duration = record_duration
         self.use_front_camera = use_front_camera
+        self.reconnect_retries = reconnect_retries
+        self.reconnect_wait = reconnect_wait
         if auto_ensure_sshd and check_connection():
             ensure_sshd_running()
 
     def is_connected(self) -> bool:
         return check_connection()
+
+    def wait_for_connection(self, retries: Optional[int] = None, wait: Optional[float] = None) -> bool:
+        """接続を待機してリトライする（Tailscale 再接続等に対応）"""
+        max_retries = retries if retries is not None else self.reconnect_retries
+        wait_sec = wait if wait is not None else self.reconnect_wait
+        for attempt in range(max_retries):
+            if check_connection():
+                return True
+            if attempt < max_retries - 1:
+                logger.info(
+                    f"🔄 Pixel7 接続待機中... ({attempt + 1}/{max_retries})"
+                    f" {wait_sec:.0f}秒後に再試行"
+                )
+                time.sleep(wait_sec)
+        return False
 
     def listen(self) -> Optional[Path]:
         """Pixel7 マイクで録音して WAV パスを返す"""
@@ -615,7 +641,9 @@ class Pixel7JarvisIO:
             {"user": ..., "assistant": ..., "success": bool}
         """
         if not self.is_connected():
-            return {"user": "", "assistant": "Pixel7 に接続されていません", "success": False}
+            logger.warning("⚠️  Pixel7 接続なし → 再接続を試みます")
+            if not self.wait_for_connection():
+                return {"user": "", "assistant": "Pixel7 に接続されていません", "success": False}
 
         # 録音
         wav_in = self.listen()
