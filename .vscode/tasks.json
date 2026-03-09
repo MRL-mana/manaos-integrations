@@ -346,6 +346,42 @@
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "dedicated", "echo": true, "focus": true }
+    },
+    {
+      "label": "🎤 JARVIS: Pixel7 起動",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-NoExit", "-File", "${workspaceFolder}/scripts/misc/run_pixel7_jarvis.ps1"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true, "clear": true }
+    },
+    {
+      "label": "🎤 JARVIS: Pixel7 起動（カメラ有効）",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-NoExit", "-File", "${workspaceFolder}/scripts/misc/run_pixel7_jarvis.ps1", "-Camera"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true, "clear": true }
+    },
+    {
+      "label": "⛔ JARVIS: Pixel7 停止",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "Get-Process python -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match 'voice_secretary_remi' } | Stop-Process -Force; Write-Host '✅ JARVIS 停止しました'"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "focus": false }
+    },
+    {
+      "label": "🔌 JARVIS: Pixel7 接続テスト",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-Command", "$adb = 'C:\\Users\\mana4\\Desktop\\scrcpy\\scrcpy-win64-v3.3.4\\adb.exe'; Write-Host '--- ADB devices ---'; & $adb devices; Write-Host ''; Write-Host '--- SSH ping ---'; ssh -i ~/.ssh/id_ed25519 -p 8022 -o StrictHostKeyChecking=no -o ConnectTimeout=5 100.84.2.125 'echo OK' 2>&1 | ForEach-Object { Write-Host $_ }"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "focus": true }
     }
   ]
 }

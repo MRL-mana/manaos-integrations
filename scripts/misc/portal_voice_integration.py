@@ -76,9 +76,10 @@ def execute_via_orchestrator(text: str, source: str = "portal", user: str = "por
                 context={"service": "Unified Orchestrator", "url": ORCHESTRATOR_URL},
                 user_message="コマンドの実行に失敗しました"
             )
+            _msg = error.user_message
             return {
                 "status": "error",
-                "error": error.user_message or f"HTTP {response.status_code}"
+                "error": _msg if isinstance(_msg, str) else f"HTTP {response.status_code}"
             }
     except Exception as e:
         error = error_handler.handle_exception(
@@ -87,9 +88,12 @@ def execute_via_orchestrator(text: str, source: str = "portal", user: str = "por
             user_message="コマンドの実行に失敗しました"
         )
         logger.error(f"実行エラー: {error.message}")
+        _msg = error.user_message if isinstance(error.user_message, str) else (
+            error.message if isinstance(error.message, str) else str(e)
+        )
         return {
             "status": "error",
-            "error": error.user_message or error.message
+            "error": _msg
         }
 
 @app.route('/health', methods=['GET'])

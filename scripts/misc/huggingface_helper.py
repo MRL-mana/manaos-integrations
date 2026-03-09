@@ -10,7 +10,7 @@ from pathlib import Path
 logger = get_service_logger("huggingface-helper")
 try:
     from huggingface_hub import HfApi, snapshot_download
-    from huggingface_hub.utils import HfHubHTTPError
+    from huggingface_hub.utils import HfHubHTTPError  # type: ignore
     HF_HUB_AVAILABLE = True
 except ImportError:
     HF_HUB_AVAILABLE = False
@@ -30,7 +30,7 @@ class HuggingFaceHelper:
         if not HF_HUB_AVAILABLE:
             raise ImportError("huggingface_hubライブラリが必要です。pip install huggingface_hub を実行してください。")
         
-        self.api = HfApi(token=token)
+        self.api = HfApi(token=token)  # type: ignore[possibly-unbound]
         self.token = token
         logger.info("HuggingFaceHelperを初期化しました")
     
@@ -54,17 +54,19 @@ class HuggingFaceHelper:
         try:
             models = self.api.list_models(
                 search=query,
-                task=task,
+                pipeline_tag=task,
                 limit=limit
             )
             
             results = []
             for model in models:
+                downloads = model.downloads
+                likes = model.likes
                 results.append({
                     "id": model.id,
                     "author": model.author,
-                    "downloads": model.downloads,
-                    "likes": model.likes,
+                    "downloads": downloads if isinstance(downloads, int) else 0,
+                    "likes": likes if isinstance(likes, int) else 0,
                     "tags": model.tags,
                     "pipeline_tag": model.pipeline_tag
                 })
@@ -94,7 +96,7 @@ class HuggingFaceHelper:
         try:
             logger.info(f"モデルをダウンロード: {model_id}")
             
-            download_path = snapshot_download(
+            download_path = snapshot_download(  # type: ignore[possibly-unbound]
                 repo_id=model_id,
                 cache_dir=cache_dir,
                 token=self.token
@@ -127,7 +129,7 @@ class HuggingFaceHelper:
                 "likes": model_info.likes,
                 "tags": model_info.tags,
                 "pipeline_tag": model_info.pipeline_tag,
-                "siblings": [sibling.rfilename for sibling in model_info.siblings]
+                "siblings": [sibling.rfilename for sibling in model_info.siblings]  # type: ignore[misc]
             }
             
         except Exception as e:
