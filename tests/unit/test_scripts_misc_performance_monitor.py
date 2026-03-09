@@ -2,18 +2,17 @@
 Unit tests for scripts/misc/performance_monitor.py
 """
 import sys
-import asyncio
 from collections import deque
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 # ── external module mocks ──────────────────────────────────────────────────
 _ml = MagicMock()
 _ml.get_service_logger.return_value = MagicMock()
 sys.modules.setdefault("unified_logging", _ml)
 
-import pytest
-from scripts.misc.performance_monitor import (
+import pytest  # noqa: E402
+from scripts.misc.performance_monitor import (  # noqa: E402
     PerformanceMetric,
     PerformanceMonitor,
     get_performance_monitor,

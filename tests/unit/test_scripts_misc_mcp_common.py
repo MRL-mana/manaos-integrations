@@ -14,8 +14,7 @@ sys.modules.setdefault("manaos_logger", MagicMock(
     get_service_logger=MagicMock(return_value=MagicMock()),
 ))
 
-import pytest
-from scripts.misc.mcp_common import (
+from scripts.misc.mcp_common import (  # noqa: E402
     MCPHealthServer,
     check_mcp_available,
     get_mcp_logger,

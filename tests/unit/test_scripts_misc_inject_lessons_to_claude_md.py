@@ -3,8 +3,7 @@ Unit tests for scripts/misc/inject_lessons_to_claude_md.py
 """
 import sys
 from datetime import datetime
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 # ── external module mocks ──────────────────────────────────────────────────
 _mock_recorder = MagicMock()
@@ -14,8 +13,8 @@ _lr_mod = MagicMock()
 _lr_mod.get_lessons_recorder.return_value = _mock_recorder
 sys.modules.setdefault("lessons_recorder", _lr_mod)
 
-import pytest
-from scripts.misc.inject_lessons_to_claude_md import (
+import pytest  # noqa: E402
+from scripts.misc.inject_lessons_to_claude_md import (  # noqa: E402
     build_lessons_section,
     inject,
     MARKER_START,

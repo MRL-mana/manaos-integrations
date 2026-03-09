@@ -3,7 +3,6 @@ Unit tests for scripts/misc/episodic_memory.py
 Uses :memory: SQLite to avoid disk I/O.
 """
 import sys
-import time
 import pytest
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock
@@ -14,11 +13,13 @@ sys.modules.setdefault("manaos_logger", MagicMock(
 ))
 
 sys.path.insert(0, "scripts/misc")
-from episodic_memory import (
+# test_mrl_memory_mcp_server.py が収集時に episodic_memory スタブを注入するため、
+# 本物のモジュールをインポートする前にスタブをリセットする
+sys.modules.pop("episodic_memory", None)
+from episodic_memory import (  # noqa: E402
     EpisodicEntry,
     EpisodicMemory,
     get_episodic_memory,
-    DEFAULT_TTL_HOURS,
 )
 
 
@@ -218,7 +219,7 @@ class TestEpisodicMemorySearch:
         self.em.store("x", session_id="s1")
         # search requires non-empty content LIKE
         results = self.em.search("")
-        # Empty query matches % → should match all  
+        # Empty query matches % → should match all
         assert isinstance(results, list)
 
     def test_search_filters_by_session(self):
@@ -318,7 +319,6 @@ class TestCleanupExpired:
     def test_cleanup_removes_expired_entries(self):
         e = self.em.store("old", session_id="s1")
         # Force expiry
-        from episodic_memory import sqlite3, json
         with self.em._conn() as conn:
             past = (datetime.utcnow() - timedelta(seconds=10)).isoformat()
             conn.execute(

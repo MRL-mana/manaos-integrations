@@ -1,11 +1,9 @@
 """
 Unit tests for scripts/misc/brave_search_integration.py
 """
-import sys
-import json
 from unittest.mock import MagicMock, patch
 
-import pytest
+import pytest  # noqa: F401
 from scripts.misc.brave_search_integration import BraveSearchIntegration, BraveSearchResult
 
 

@@ -23,8 +23,8 @@ sys.modules.setdefault("manaos_timeout_config", _mtc)
 
 sys.modules.setdefault("httpx", MagicMock())
 
-import pytest
-from scripts.misc.intelligent_retry import (
+import pytest  # noqa: E402, F401
+from scripts.misc.intelligent_retry import (  # noqa: E402
     RetryStrategy,
     CircuitState,
     RetryConfig,
@@ -137,7 +137,6 @@ class TestCircuitBreakerOpen:
         # timeout_seconds=0.0 means it transitions to HALF_OPEN immediately
         # The first call to can_execute transitions to HALF_OPEN and returns True
         # Let's use a future timeout to stay OPEN
-        from datetime import timedelta
         cfg = CircuitBreakerConfig(failure_threshold=1, timeout_seconds=9999.0)
         cb = CircuitBreaker(cfg)
         cb.record_failure()

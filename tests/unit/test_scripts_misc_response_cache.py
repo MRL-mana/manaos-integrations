@@ -2,10 +2,7 @@
 Unit tests for scripts/misc/response_cache.py
 """
 import sys
-import json
-import hashlib
 from datetime import datetime, timedelta
-from pathlib import Path
 from unittest.mock import MagicMock
 
 # ── external module mocks ──────────────────────────────────────────────────
@@ -24,8 +21,8 @@ _mtc = MagicMock()
 _mtc.get_timeout_config.return_value = MagicMock()
 sys.modules.setdefault("manaos_timeout_config", _mtc)
 
-import pytest
-from scripts.misc.response_cache import (
+import pytest  # noqa: E402, F401
+from scripts.misc.response_cache import (  # noqa: E402
     CacheEntry,
     ResponseCache,
     response_cache,
@@ -183,7 +180,7 @@ class TestCleanupExpired:
     def test_removes_expired_entries(self, tmp_path):
         rc = make_cache(tmp_path)
         rc.set("llm", "old", "p_old", ttl_seconds=-1)
-        cleaned = rc.cleanup_expired()
+        rc.cleanup_expired()
         # At least memory entries cleaned
         key = rc._generate_key("llm", "p_old")
         assert key not in rc.memory_cache

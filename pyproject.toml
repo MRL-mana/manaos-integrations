@@ -97,3 +97,25 @@ warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
 
+[tool.pycodestyle]
+max_line_length = 100
+
+[tool.pylint.MASTER]
+ignored-modules = ["fastapi", "pydantic", "starlette", "stripe", "uvicorn"]
+
+[tool.pylint."messages control"]
+disable = [
+    "C0114",
+    "C0115",
+    "C0116",
+    "W0603",
+    "W0613",
+    "W0703",
+    "W0212",
+    "E0401",
+    "broad-exception-caught",
+    "global-statement",
+    "unused-argument",
+    "import-error",
+    "protected-access",
+]

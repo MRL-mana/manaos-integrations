@@ -13,7 +13,6 @@ from __future__ import annotations
 import argparse
 import json
 from collections import Counter
-from datetime import datetime
 from pathlib import Path
 
 NG_LOG_DIR = Path(__file__).parent / "logs" / "ng_cases"
@@ -68,7 +67,7 @@ def summarize(cases: list[dict]) -> None:
             repeat_cases.append(c)
 
     print(f"\n{'='*50}")
-    print(f"  V1.1.7 運用NG集計")
+    print("  V1.1.7 運用NG集計")
     print(f"  期間: {min(by_date)} ~ {max(by_date)}" if by_date else "")
     print(f"{'='*50}")
     print(f"  total NG         : {total}")
@@ -80,7 +79,7 @@ def summarize(cases: list[dict]) -> None:
         bar = "█" * n
         print(f"    {d} : {bar} ({n})")
     print()
-    print(f"  template別 NG (top5):")
+    print("  template別 NG (top5):")
     for tmpl, n in by_tmpl.most_common(5):
         print(f"    {tmpl:30s}: {n}")
     print()
@@ -89,7 +88,7 @@ def summarize(cases: list[dict]) -> None:
     ng_threshold = 5
     if total >= ng_threshold:
         print(f"  [HINT] NG={total} >= {ng_threshold}件 → V1.1.8 開始条件を満たしています")
-        print(f"    → nogo_A_inject_and_retrain.ps1 を実行してretrainデータを生成")
+        print("    → nogo_A_inject_and_retrain.ps1 を実行してretrainデータを生成")
     else:
         remain = ng_threshold - total
         print(f"  [INFO] まだ観察継続。あと {remain} 件たまったら V1.1.8 候補")
@@ -99,9 +98,12 @@ def summarize(cases: list[dict]) -> None:
 def show_top(cases: list[dict], n: int) -> None:
     print(f"\n最新 NG {min(n, len(cases))} 件:\n")
     for c in cases[-n:]:
-        print(f"  [{c.get('ts','')[:16]}] pair={c.get('pair_id','?')} tmpl={c.get('template_id','?')}")
-        print(f"    GOLD: {c.get('gold','')}")
-        print(f"    PRED: {c.get('pred','')}")
+        print(
+            f"  [{c.get('ts', '')[:16]}]"
+            f" pair={c.get('pair_id', '?')} tmpl={c.get('template_id', '?')}"
+        )
+        print(f"    GOLD: {c.get('gold', '')}")
+        print(f"    PRED: {c.get('pred', '')}")
         print()
 
 

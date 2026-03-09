@@ -2,7 +2,6 @@
 Unit tests for scripts/misc/dynamic_rate_limiter.py
 """
 import sys
-import types
 from unittest.mock import MagicMock, patch
 from datetime import datetime
 
@@ -27,9 +26,8 @@ _mtc = MagicMock()
 _mtc.get_timeout_config.return_value = MagicMock()
 sys.modules.setdefault("manaos_timeout_config", _mtc)
 
-import pytest
-from unittest.mock import patch
-from scripts.misc.dynamic_rate_limiter import (
+import pytest  # noqa: E402
+from scripts.misc.dynamic_rate_limiter import (  # noqa: E402
     Priority,
     RateLimitConfig,
     RateLimitInfo,

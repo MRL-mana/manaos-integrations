@@ -10,8 +10,7 @@ _ml.get_logger.return_value = MagicMock()
 _ml.get_service_logger.return_value = MagicMock()
 sys.modules.setdefault("manaos_logger", _ml)
 
-import pytest
-from scripts.misc.prompt_optimizer_simple import (
+from scripts.misc.prompt_optimizer_simple import (  # noqa: E402
     SimplePromptOptimizer,
     optimize_prompt,
 )

@@ -9,11 +9,10 @@ scripts/maintenance/cleanup_temp_files.py の純粋関数テスト
 import sys
 import time
 from pathlib import Path
-import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "maintenance"))
 
-from cleanup_temp_files import should_exclude, get_file_age_days  # type: ignore
+from cleanup_temp_files import should_exclude, get_file_age_days  # type: ignore  # noqa: E402
 
 
 # ─── should_exclude ───────────────────────────────────────────────────────────

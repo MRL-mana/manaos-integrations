@@ -19,8 +19,8 @@ _eh_mod.ErrorCategory = MagicMock()
 _eh_mod.ErrorSeverity = MagicMock()
 sys.modules.setdefault("manaos_error_handler", _eh_mod)
 
-import pytest
-from scripts.misc.database_connection_pool import (
+import pytest  # noqa: E402
+from scripts.misc.database_connection_pool import (  # noqa: E402
     DatabaseConnectionPool,
     get_pool,
 )

@@ -6,13 +6,8 @@
 """
 
 import logging
-from pathlib import Path
-
-import pytest
 
 from manaos_logger import setup_logger, get_logger, LOG_DIR
-
-
 
 
 class TestSetupLogger:

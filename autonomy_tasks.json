@@ -1,0 +1,96 @@
+{
+  "tasks": [
+    {
+      "task_id": "t1",
+      "task_type": "notify",
+      "priority": "normal",
+      "condition": {},
+      "action": {},
+      "schedule": null,
+      "enabled": true,
+      "last_executed": null,
+      "execution_count": 0,
+      "success_count": 0,
+      "created_at": "2026-03-08T08:13:33.748028"
+    },
+    {
+      "task_id": "task1",
+      "task_type": "notify",
+      "priority": "normal",
+      "condition": {},
+      "action": {},
+      "schedule": null,
+      "enabled": true,
+      "last_executed": null,
+      "execution_count": 0,
+      "success_count": 0,
+      "created_at": "2026-03-08T08:13:33.741299"
+    },
+    {
+      "task_id": "task2",
+      "task_type": "notify",
+      "priority": "normal",
+      "condition": {},
+      "action": {},
+      "schedule": null,
+      "enabled": true,
+      "last_executed": null,
+      "execution_count": 0,
+      "success_count": 0,
+      "created_at": "2026-03-08T08:13:33.744401"
+    },
+    {
+      "task_id": "t0",
+      "task_type": "notify",
+      "priority": "normal",
+      "condition": {},
+      "action": {},
+      "schedule": null,
+      "enabled": true,
+      "last_executed": null,
+      "execution_count": 0,
+      "success_count": 0,
+      "created_at": "2026-03-08T08:13:33.747506"
+    },
+    {
+      "task_id": "t2",
+      "task_type": "notify",
+      "priority": "normal",
+      "condition": {},
+      "action": {},
+      "schedule": null,
+      "enabled": true,
+      "last_executed": null,
+      "execution_count": 0,
+      "success_count": 0,
+      "created_at": "2026-03-08T08:13:33.748028"
+    },
+    {
+      "task_id": "dup",
+      "task_type": "updated",
+      "priority": "high",
+      "condition": {},
+      "action": {},
+      "schedule": null,
+      "enabled": true,
+      "last_executed": null,
+      "execution_count": 0,
+      "success_count": 0,
+      "created_at": "2026-03-08T08:13:33.755066"
+    },
+    {
+      "task_id": "x",
+      "task_type": "t",
+      "priority": "low",
+      "condition": {},
+      "action": {},
+      "schedule": null,
+      "enabled": true,
+      "last_executed": null,
+      "execution_count": 0,
+      "success_count": 0,
+      "created_at": "2026-03-08T08:13:33.770470"
+    }
+  ],
+  "last_updated": "2026-03-08T08:13:33.770983"
+}

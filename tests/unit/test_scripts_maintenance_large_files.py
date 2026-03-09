@@ -10,14 +10,15 @@ scripts/maintenance/find_large_files_c_drive.py の純粋関数テスト
 """
 import sys
 from pathlib import Path
-import pytest
 
 sys.path.insert(
     0,
     str(Path(__file__).parent.parent.parent / "scripts" / "maintenance"),
 )
 
-from find_large_files_c_drive import format_size, should_exclude, is_ai_related, get_directory_size  # type: ignore
+from find_large_files_c_drive import (  # type: ignore  # noqa: E402
+    format_size, should_exclude, is_ai_related, get_directory_size
+)
 
 
 # ─── format_size ──────────────────────────────────────────────────────────────

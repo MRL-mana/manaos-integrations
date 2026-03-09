@@ -1,6 +1,7 @@
 """ManaOS RPG API – slim entrypoint.
 
-All endpoint logic lives under routers/ ; shared helpers under core/ and services/.
+All endpoint logic lives under routers/ ; shared helpers under
+core/ and services/.
 Start with:  uvicorn app:app --host 0.0.0.0 --port 9510
 """
 
@@ -36,14 +37,16 @@ def _prewarm_snapshot() -> None:
     try:
         from routers.snapshot import _snapshot_cached
         _snapshot_cached(force_refresh=True)
-    except Exception:
+    except Exception:  # noqa: BLE001  # pylint: disable=W0703
         pass
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):  # noqa: ARG001
     # 起動時: バックグラウンドスレッドでスナップショットをプリウォーム
-    t = threading.Thread(target=_prewarm_snapshot, daemon=True, name="snapshot-prewarm")
+    t = threading.Thread(
+        target=_prewarm_snapshot, daemon=True, name="snapshot-prewarm"
+    )
     t.start()
     yield
     # シャットダウン時: 特になし
@@ -52,7 +55,7 @@ app = FastAPI(title="ManaOS RPG API", version="0.1", lifespan=lifespan)
 
 _CORS_ORIGIN_REGEX = os.getenv(
     "MANAOS_CORS_ORIGIN_REGEX",
-    r"^https?://(localhost|127\.0\.0\.1|100(?:\.\d{1,3}){3}|10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?::\d+)?$",
+    r"^https?://(localhost|127\.0\.0\.1|100(?:\.\d{1,3}){3}|10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?::\d+)?$",  # noqa: E501
 )
 
 app.add_middleware(

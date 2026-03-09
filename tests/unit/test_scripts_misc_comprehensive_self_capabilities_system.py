@@ -1,13 +1,12 @@
-"""
-tests/unit/test_scripts_misc_comprehensive_self_capabilities_system.py
+"""tests/unit/test_scripts_misc_comprehensive_self_capabilities_system.py
 
 comprehensive_self_capabilities_system.py の単体テスト
 """
+# pylint: disable=redefined-outer-name,protected-access
 import sys
-import json
+from collections import deque
 import pytest
-from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 
 # ── mock setup (before import) ──────────────────────────────────────────
 _ml = MagicMock()
@@ -23,7 +22,9 @@ _eh = MagicMock()
 _err_obj = MagicMock()
 _err_obj.message = "error"
 _err_obj.user_message = "test error"
-_err_obj.to_json_response.return_value = {"error": "test error", "message": "error"}
+_err_obj.to_json_response.return_value = {
+    "error": "test error", "message": "error"
+}
 _eh.ManaOSErrorHandler.return_value.handle_exception.return_value = _err_obj
 sys.modules["manaos_error_handler"] = _eh
 
@@ -43,8 +44,8 @@ _paths_mod.LEARNING_SYSTEM_URL = "http://127.0.0.1:9508"
 sys.modules["_paths"] = _paths_mod
 
 # ── SUT import ─────────────────────────────────────────────────────────
-import scripts.misc.comprehensive_self_capabilities_system as _sut
-from scripts.misc.comprehensive_self_capabilities_system import (
+import scripts.misc.comprehensive_self_capabilities_system as _sut  # noqa: E402,E501
+from scripts.misc.comprehensive_self_capabilities_system import (  # noqa: E402
     ErrorPattern,
     RepairAction,
     ComprehensiveSelfCapabilitiesSystem,
@@ -59,12 +60,13 @@ from scripts.misc.comprehensive_self_capabilities_system import (
 def system(tmp_path):
     """No-filesystem side-effects ComprehensiveSelfCapabilitiesSystem"""
     cfg_file = tmp_path / "cfg.json"
-    # Patch error_patterns_storage to a non-existent path → _load_error_patterns is no-op
-    with patch.object(_sut.ComprehensiveSelfCapabilitiesSystem, "_load_error_patterns"):
-        with patch.object(_sut.ComprehensiveSelfCapabilitiesSystem, "_save_error_patterns"):
+    # Patch _load/_save so no filesystem side-effects occur
+    _cls = _sut.ComprehensiveSelfCapabilitiesSystem
+    with patch.object(_cls, "_load_error_patterns"):
+        with patch.object(_cls, "_save_error_patterns"):
             s = ComprehensiveSelfCapabilitiesSystem(config_path=cfg_file)
     # Provide repair_history attribute
-    s.repair_history = []
+    s.repair_history = deque()  # type: ignore[assignment]
     s.on_repair_success = None
     return s
 
@@ -178,7 +180,9 @@ class TestLearnErrorPattern:
 class TestSelectRepairAction:
     def test_returns_action_with_previous_success(self, system):
         ep = ErrorPattern("ValueError", "err", {})
-        ep.successful_fixes.append({"action": "clear_cache", "timestamp": "2026-01-01"})
+        ep.successful_fixes.append(
+            {"action": "clear_cache", "timestamp": "2026-01-01"}
+        )
         action = system.select_repair_action(ep)
         assert action is not None
         assert action.name == "clear_cache"
@@ -219,8 +223,12 @@ class TestAutoRepair:
         with patch.object(system, "_save_error_patterns"):
             # First call: learn + above threshold
             mock_action = MagicMock()
-            mock_action.execute.return_value = {"success": True, "message": "fixed"}
-            with patch.object(system, "select_repair_action", return_value=mock_action):
+            mock_action.execute.return_value = {
+                "success": True, "message": "fixed"
+            }
+            with patch.object(
+                system, "select_repair_action", return_value=mock_action
+            ):
                 result = system.auto_repair(err, {})
         assert result.get("success") is True
 
@@ -287,9 +295,17 @@ class TestGetRepairStatistics:
 class TestGetRepairHistory:
     def _add_records(self, system, n_success, n_fail):
         for i in range(n_success):
-            system.repair_history.append({"result": {"success": True}, "repair_action": "clear_cache", "timestamp": f"2026-01-0{i+1}"})
+            system.repair_history.append(
+                {"result": {"success": True},
+                 "repair_action": "clear_cache",
+                 "timestamp": f"2026-01-0{i+1}"}
+            )
         for i in range(n_fail):
-            system.repair_history.append({"result": {"success": False}, "repair_action": "kill_process", "timestamp": f"2026-02-0{i+1}"})
+            system.repair_history.append(
+                {"result": {"success": False},
+                 "repair_action": "kill_process",
+                 "timestamp": f"2026-02-0{i+1}"}
+            )
 
     def test_returns_all_when_no_filter(self, system):
         self._add_records(system, 2, 2)
@@ -319,7 +335,11 @@ class TestGetRepairHistory:
 class TestAnalyzeRepairPatterns:
     def test_returns_expected_keys(self, system):
         analysis = system.analyze_repair_patterns()
-        for key in ("most_common_errors", "most_effective_actions", "least_effective_actions", "recommendations"):
+        expected = (
+            "most_common_errors", "most_effective_actions",
+            "least_effective_actions", "recommendations",
+        )
+        for key in expected:
             assert key in analysis
 
     def test_most_common_errors_sorted_descending(self, system):
@@ -328,8 +348,11 @@ class TestAnalyzeRepairPatterns:
                 system.learn_error_pattern(ValueError("frequent"), {})
             system.learn_error_pattern(RuntimeError("rare"), {})
         analysis = system.analyze_repair_patterns()
-        if len(analysis["most_common_errors"]) >= 2:
-            assert analysis["most_common_errors"][0]["occurrence_count"] >= analysis["most_common_errors"][1]["occurrence_count"]
+        errors = analysis["most_common_errors"]
+        if len(errors) >= 2:
+            c0 = errors[0]["occurrence_count"]
+            c1 = errors[1]["occurrence_count"]
+            assert c0 >= c1
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -340,54 +363,61 @@ class TestRepairClearCache:
     def test_returns_success_when_cache_dir_exists(self, system, tmp_path):
         cache_dir = tmp_path / "cache"
         cache_dir.mkdir()
-        result = system._repair_clear_cache({"cache_path": str(cache_dir)})
+        result = system._repair_clear_cache(  # type: ignore
+            {"cache_path": str(cache_dir)}
+        )
         assert result.get("success") is True
 
     def test_returns_error_when_cache_dir_missing(self, system):
-        result = system._repair_clear_cache({"cache_path": "/nonexistent/cache"})
+        result = system._repair_clear_cache(  # type: ignore
+            {"cache_path": "/nonexistent/cache"}
+        )
         assert "error" in result
 
 
 class TestRepairAdjustTimeout:
     def test_increases_timeout_by_1_5x(self, system, tmp_path):
         cfg_file = tmp_path / "timeout_cfg.json"
-        result = system._repair_adjust_timeout({
-            "service_name": "test_svc",
-            "current_timeout": 20,
-            "timeout_config_path": str(cfg_file),
-        })
+        result = system._repair_adjust_timeout(  # type: ignore
+            {
+                "service_name": "test_svc",
+                "current_timeout": 20,
+                "timeout_config_path": str(cfg_file),
+            }
+        )
         assert result.get("success") is True
         assert result["new_timeout"] == 30  # 20 * 1.5
 
     def test_caps_at_300_seconds(self, system, tmp_path):
         cfg_file = tmp_path / "timeout_cfg.json"
-        result = system._repair_adjust_timeout({
-            "current_timeout": 250,
-            "timeout_config_path": str(cfg_file),
-        })
+        result = system._repair_adjust_timeout(  # type: ignore
+            {
+                "current_timeout": 250,
+                "timeout_config_path": str(cfg_file),
+            }
+        )
         assert result["new_timeout"] == 300
 
 
 class TestRepairSwitchNetworkPath:
     def test_returns_error_when_no_urls_given(self, system):
-        result = system._repair_switch_network_path({})
+        fn = system._repair_switch_network_path  # type: ignore
+        result = fn({})
         assert "error" in result
 
     def test_returns_success_when_primary_ok(self, system):
-        import requests as _req
+        requests = pytest.importorskip("requests")
         mock_resp = MagicMock()
         mock_resp.status_code = 200
-        with patch.object(_sut, "requests") if hasattr(_sut, "requests") else patch("requests.get", return_value=mock_resp):
-            try:
-                import requests
-                with patch.object(requests, "get", return_value=mock_resp):
-                    result = system._repair_switch_network_path({
-                        "primary_url": "http://primary",
-                        "fallback_urls": ["http://fallback"],
-                    })
-                    assert result.get("success") is True
-            except Exception:
-                pass  # network-dependent, just ensure no crash
+        fn = system._repair_switch_network_path  # type: ignore
+        with patch.object(requests, "get", return_value=mock_resp):
+            result = fn(
+                {
+                    "primary_url": "http://primary",
+                    "fallback_urls": ["http://fallback"],
+                }
+            )
+            assert result.get("success") is True
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -397,7 +427,11 @@ class TestRepairSwitchNetworkPath:
 class TestGetStatus:
     def test_returns_expected_top_level_keys(self, system):
         status = system.get_status()
-        for key in ("error_patterns_count", "repair_actions_count", "repair_history_count", "config"):
+        expected = (
+            "error_patterns_count", "repair_actions_count",
+            "repair_history_count", "config",
+        )
+        for key in expected:
             assert key in status
 
     def test_error_patterns_count_matches(self, system):

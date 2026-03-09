@@ -4,38 +4,55 @@ Unit tests for scripts/misc/realtime_dashboard.py
 """
 import sys
 import types
+from typing import Any
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 # ---------------------------------------------------------------------------
 # Stub hard dependencies before module import
 # ---------------------------------------------------------------------------
 
+# flask が MagicMock に汚染されていた場合のみ本物に差し替える
+# (collection order: content_generation_loop(c) < realtime_dashboard(r) なので
+#  content_generation_loop の setdefault("flask", MagicMock()) が先に実行される)
+_cur_flask = sys.modules.get("flask")
+if (
+    _cur_flask is None
+    or not hasattr(_cur_flask, "Flask")
+    or isinstance(_cur_flask.Flask, MagicMock)
+):
+    # MagicMock 汚染を除去して本物をロード
+    sys.modules.pop("flask", None)
+    sys.modules.pop("flask_cors", None)
+    import flask as _real_flask  # noqa: F401
+
 # unified_api_server
-_uas_mock = types.ModuleType("unified_api_server")
+_uas_mock: Any = types.ModuleType("unified_api_server")
 _fake_integrations = {}
 _uas_mock.initialize_integrations = MagicMock()
 _uas_mock.integrations = _fake_integrations
-sys.modules.setdefault("unified_api_server", _uas_mock)
+sys.modules["unified_api_server"] = _uas_mock  # setdefault ではなく強制上書き
 
 # flask_socketio
-_fsi = types.ModuleType("flask_socketio")
+_fsi: Any = types.ModuleType("flask_socketio")
 _socketio_instance = MagicMock()
 _fsi.SocketIO = MagicMock(return_value=_socketio_instance)
 _fsi.emit = MagicMock()
 sys.modules.setdefault("flask_socketio", _fsi)
 
 # manaos_service_bridge (optional, already guarded by try/except in source)
-_msb = types.ModuleType("manaos_service_bridge")
+_msb: Any = types.ModuleType("manaos_service_bridge")
 _msb.ManaOSServiceBridge = MagicMock(side_effect=ImportError("stub"))
 sys.modules.setdefault("manaos_service_bridge", _msb)
 
 # ai_agent_autonomous (optional, guarded by try/except)
-_aaa = types.ModuleType("ai_agent_autonomous")
+_aaa: Any = types.ModuleType("ai_agent_autonomous")
 _aaa.AutonomousAgent = MagicMock(side_effect=ImportError("stub"))
 sys.modules.setdefault("ai_agent_autonomous", _aaa)
 
-import scripts.misc.realtime_dashboard as _sut
+# realtime_dashboard を強制再ロード（flask がモック状態でロードされていた場合を修正）
+sys.modules.pop("scripts.misc.realtime_dashboard", None)
+import scripts.misc.realtime_dashboard as _sut  # noqa: E402, F811
 
 
 @pytest.fixture(autouse=True)
@@ -47,7 +64,6 @@ def reset_globals():
     _sut.agent = None
     # reset integrations dict
     _uas_mock.integrations.clear()
-    _sut_integrations = getattr(_sut, "__dict__", {})
     yield
     _sut.bridge = orig_bridge
     _sut.agent = orig_agent

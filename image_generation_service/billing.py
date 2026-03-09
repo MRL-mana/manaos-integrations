@@ -17,7 +17,6 @@ Billing — 課金 & 使用量管理 (SQLite バックエンド)
 from __future__ import annotations
 
 import enum
-import json
 import logging
 import os
 import secrets
@@ -26,7 +25,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 _log = logging.getLogger("manaos.billing")
 
@@ -170,7 +169,10 @@ class BillingManager:
                        VALUES (?, ?, ?, ?)""",
                     (api_key, plan.value, label, datetime.now().isoformat()),
                 )
-            _log.info("Created API key: %s (plan=%s)", api_key[:8] + "...", plan.value)
+            _log.info(
+                "Created API key: %s (plan=%s)",
+                api_key[:8] + "...", plan.value,
+            )
             return True
         except sqlite3.IntegrityError:
             _log.warning("API key already exists: %s", api_key[:8])
@@ -185,7 +187,8 @@ class BillingManager:
         """ユーザー登録してAPIキーを発行（既存ユーザーは再利用）"""
         with _get_db() as conn:
             existing = conn.execute(
-                "SELECT email, api_key, plan, active FROM user_signups WHERE email = ?",
+                "SELECT email, api_key, plan, active"
+                " FROM user_signups WHERE email = ?",
                 (email,),
             ).fetchone()
 
@@ -218,7 +221,8 @@ class BillingManager:
         now = datetime.now().isoformat()
         with _get_db() as conn:
             conn.execute(
-                """INSERT INTO user_signups (email, api_key, plan, label, created_at, active)
+                """INSERT INTO user_signups
+                   (email, api_key, plan, label, created_at, active)
                    VALUES (?, ?, ?, ?, ?, 1)
                    ON CONFLICT(email) DO UPDATE SET
                        api_key = excluded.api_key,
@@ -343,7 +347,8 @@ class BillingManager:
         with _get_db() as conn:
             # 日次カウンター (UPSERT)
             conn.execute(
-                """INSERT INTO usage_daily (api_key, usage_date, count, total_cost)
+                """INSERT INTO usage_daily
+                   (api_key, usage_date, count, total_cost)
                    VALUES (?, ?, 1, ?)
                    ON CONFLICT(api_key, usage_date)
                    DO UPDATE SET count = count + 1,
@@ -353,12 +358,16 @@ class BillingManager:
             # 使用ログ
             conn.execute(
                 """INSERT INTO usage_log
-                   (api_key, job_id, cost_yen, width, height, steps, created_at)
+                   (api_key, job_id, cost_yen,
+                    width, height, steps, created_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?)""",
                 (api_key, job_id, cost_yen, width, height, steps, now),
             )
 
-        _log.debug("Recorded usage: %s job=%s cost=¥%.4f", api_key[:8], job_id[:8], cost_yen)
+        _log.debug(
+            "Recorded usage: %s job=%s cost=¥%.4f",
+            api_key[:8], job_id[:8], cost_yen,
+        )
 
     # ─── Cost Estimation ──────────────────────────────
 
@@ -390,7 +399,8 @@ class BillingManager:
         secret_key = os.getenv("STRIPE_SECRET_KEY", "")
         success_url = os.getenv(
             "STRIPE_SUCCESS_URL",
-            "http://localhost:5560/api/v1/images/payment/callback?session_id={CHECKOUT_SESSION_ID}",
+            "http://localhost:5560/api/v1/images/payment/callback"
+            "?session_id={CHECKOUT_SESSION_ID}",
         )
         cancel_url = os.getenv(
             "STRIPE_CANCEL_URL", "http://localhost:5560/"
@@ -401,7 +411,9 @@ class BillingManager:
                 "provider": "stripe",
                 "plan": plan,
                 "user_id": user_id,
-                "payment_url": f"https://checkout.stripe.com/pay/test_{plan}_{user_id}",
+                "payment_url": (
+                    f"https://checkout.stripe.com/pay/test_{plan}_{user_id}"
+                ),
                 "status": "stub",
                 "hint": "Set STRIPE_SECRET_KEY to enable real payments",
             }
@@ -437,9 +449,12 @@ class BillingManager:
                 "status": "created",
             }
         except ImportError:
-            return {"provider": "stripe", "status": "error",
-                    "detail": "stripe package not installed (pip install stripe)"}
-        except Exception as e:
+            return {
+                "provider": "stripe",
+                "status": "error",
+                "detail": "stripe package not installed (pip install stripe)",
+            }
+        except Exception as e:  # noqa: BLE001  # pylint: disable=W0703
             _log.error("Stripe session creation failed: %s", e)
             return {"provider": "stripe", "status": "error", "detail": str(e)}
 
@@ -464,13 +479,16 @@ class BillingManager:
                 "provider": "komoju",
                 "plan": plan,
                 "user_id": user_id,
-                "payment_url": f"https://checkout.komoju.com/pay/test_{plan}_{user_id}",
+                "payment_url": (
+                    f"https://checkout.komoju.com/pay/test_{plan}_{user_id}"
+                ),
                 "status": "stub",
                 "hint": "Set KOMOJU_SECRET_KEY to enable real payments",
             }
 
         try:
-            import urllib.request, json as _json
+            import json as _json
+            import urllib.request
             payload = _json.dumps({
                 "amount": price_yen,
                 "currency": "JPY",
@@ -484,13 +502,20 @@ class BillingManager:
                 data=payload,
                 headers={
                     "Content-Type": "application/json",
-                    "Authorization": f"Basic {__import__('base64').b64encode(f'{secret_key}:'.encode()).decode()}",
+                    "Authorization": (
+                        "Basic "
+                        + __import__("base64").b64encode(
+                            f"{secret_key}:".encode()
+                        ).decode()
+                    ),
                 },
                 method="POST",
             )
             with urllib.request.urlopen(req, timeout=15) as resp:
                 data = _json.loads(resp.read())
-            _log.info("KOMOJU session created: %s plan=%s", data.get("id"), plan)
+            _log.info(
+                "KOMOJU session created: %s plan=%s", data.get("id"), plan
+            )
             return {
                 "provider": "komoju",
                 "plan": plan,
@@ -499,7 +524,7 @@ class BillingManager:
                 "payment_url": data.get("session_url", ""),
                 "status": "created",
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001  # pylint: disable=W0703
             _log.error("KOMOJU session creation failed: %s", e)
             return {"provider": "komoju", "status": "error", "detail": str(e)}
 
@@ -516,13 +541,15 @@ class BillingManager:
 
         with _get_db() as conn:
             row = conn.execute(
-                "SELECT api_key FROM user_signups WHERE email = ? AND active = 1",
+                "SELECT api_key FROM user_signups"
+                " WHERE email = ? AND active = 1",
                 (user_id,),
             ).fetchone()
             if not row:
                 # email ではなく api_key で検索
                 row = conn.execute(
-                    "SELECT api_key FROM api_keys WHERE api_key = ? AND active = 1",
+                    "SELECT api_key FROM api_keys"
+                    " WHERE api_key = ? AND active = 1",
                     (user_id,),
                 ).fetchone()
 
@@ -619,7 +646,9 @@ class BillingManager:
             "today": {
                 "used": today_row["count"] if today_row else 0,
                 "remaining": remaining,
-                "cost_yen": round(today_row["total_cost"], 4) if today_row else 0,
+                "cost_yen": (
+                    round(today_row["total_cost"], 4) if today_row else 0
+                ),
             },
             "month": {
                 "total_generations": thirty_days["total"] or 0,

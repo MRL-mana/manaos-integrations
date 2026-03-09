@@ -3,7 +3,6 @@ Unit tests for scripts/misc/streaming_processing.py
 """
 import queue
 import asyncio
-from pathlib import Path
 import pytest
 from scripts.misc.streaming_processing import StreamingProcessor, DataStream
 

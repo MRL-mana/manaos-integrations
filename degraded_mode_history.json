@@ -1,0 +1,218 @@
+[
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T11:31:27.891843",
+    "context": {
+      "cpu_percent": 12.4,
+      "memory_percent": 98.5
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T11:31:37.500170",
+    "context": {
+      "cpu_percent": 7.2,
+      "memory_percent": 98.6
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T12:22:26.343486",
+    "context": {
+      "cpu_percent": 6.8,
+      "memory_percent": 95.9
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T12:22:38.984613",
+    "context": {
+      "cpu_percent": 18.9,
+      "memory_percent": 97.4
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T12:25:00.751170",
+    "context": {
+      "cpu_percent": 23.4,
+      "memory_percent": 99.1
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T12:25:13.471223",
+    "context": {
+      "cpu_percent": 13.3,
+      "memory_percent": 99.4
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T12:27:37.375074",
+    "context": {
+      "cpu_percent": 10.8,
+      "memory_percent": 99.0
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T12:27:50.000118",
+    "context": {
+      "cpu_percent": 11.6,
+      "memory_percent": 99.2
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T12:31:52.312742",
+    "context": {
+      "cpu_percent": 20.9,
+      "memory_percent": 98.8
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T12:32:04.971174",
+    "context": {
+      "cpu_percent": 12.0,
+      "memory_percent": 99.2
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T12:35:10.017960",
+    "context": {
+      "cpu_percent": 6.4,
+      "memory_percent": 99.1
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T12:35:22.704438",
+    "context": {
+      "cpu_percent": 9.0,
+      "memory_percent": 99.2
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T12:39:25.517559",
+    "context": {
+      "cpu_percent": 11.5,
+      "memory_percent": 98.4
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T12:39:38.203654",
+    "context": {
+      "cpu_percent": 10.1,
+      "memory_percent": 98.0
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "degraded",
+    "timestamp": "2026-03-08T15:50:45.798448",
+    "context": {
+      "cpu_percent": 14.1,
+      "memory_percent": 92.1
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "degraded",
+    "timestamp": "2026-03-08T15:50:58.516265",
+    "context": {
+      "cpu_percent": 34.5,
+      "memory_percent": 92.6
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "degraded",
+    "timestamp": "2026-03-08T16:58:05.187193",
+    "context": {
+      "cpu_percent": 28.8,
+      "memory_percent": 94.0
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "degraded",
+    "timestamp": "2026-03-08T16:58:17.875018",
+    "context": {
+      "cpu_percent": 18.4,
+      "memory_percent": 94.4
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T17:06:52.250816",
+    "context": {
+      "cpu_percent": 7.8,
+      "memory_percent": 95.7
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T17:07:05.127527",
+    "context": {
+      "cpu_percent": 26.5,
+      "memory_percent": 97.9
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T18:16:55.953055",
+    "context": {
+      "cpu_percent": 24.8,
+      "memory_percent": 98.4
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T18:17:08.688468",
+    "context": {
+      "cpu_percent": 11.4,
+      "memory_percent": 98.5
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T18:22:27.828756",
+    "context": {
+      "cpu_percent": 10.9,
+      "memory_percent": 98.8
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-08T18:22:40.594486",
+    "context": {
+      "cpu_percent": 38.1,
+      "memory_percent": 98.9
+    }
+  }
+]

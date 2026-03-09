@@ -2,7 +2,6 @@
 Unit tests for scripts/misc/service_monitor.py
 """
 import sys
-from collections import deque
 from datetime import datetime
 from dataclasses import asdict
 from unittest.mock import MagicMock, patch
@@ -21,8 +20,8 @@ sys.modules.setdefault("flask", _flask)
 _flask_cors = MagicMock()
 sys.modules.setdefault("flask_cors", _flask_cors)
 
-import pytest
-from scripts.misc.service_monitor import ServiceStatus, ServiceMonitor
+import pytest  # noqa: E402
+from scripts.misc.service_monitor import ServiceStatus, ServiceMonitor  # noqa: E402
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
@@ -86,7 +85,7 @@ class TestServiceStatus:
 
     def test_asdict_works(self):
         ss = ServiceStatus(name="X", port=1, status="running",
-                          last_check="", restart_count=0)
+                           last_check="", restart_count=0)
         d = asdict(ss)
         assert "name" in d
         assert "port" in d

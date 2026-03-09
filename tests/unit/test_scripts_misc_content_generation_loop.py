@@ -2,7 +2,6 @@
 Unit tests for scripts/misc/content_generation_loop.py
 """
 import sys
-import json
 from datetime import datetime
 from unittest.mock import MagicMock
 
@@ -41,8 +40,8 @@ _flask_mod.jsonify = MagicMock(side_effect=lambda x: x)
 sys.modules.setdefault("flask", _flask_mod)
 sys.modules.setdefault("flask_cors", MagicMock())
 
-import pytest
-from scripts.misc.content_generation_loop import (
+import pytest  # noqa: E402
+from scripts.misc.content_generation_loop import (  # noqa: E402
     ContentGenerationLoop,
     GeneratedContent,
 )

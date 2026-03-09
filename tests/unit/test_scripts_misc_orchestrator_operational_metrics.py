@@ -2,7 +2,6 @@
 Unit tests for scripts/misc/orchestrator_operational_metrics.py
 """
 import sys
-import time
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -12,8 +11,8 @@ _ml.get_logger.return_value = MagicMock()
 _ml.get_service_logger.return_value = MagicMock()
 sys.modules.setdefault("manaos_logger", _ml)
 
-import pytest
-import scripts.misc.orchestrator_operational_metrics as oom
+import pytest  # noqa: E402
+import scripts.misc.orchestrator_operational_metrics as oom  # noqa: E402
 
 
 # ── fixtures ────────────────────────────────────────────────────────────────

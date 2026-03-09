@@ -22,8 +22,8 @@ _eh_mod.ErrorCategory = MagicMock()
 _eh_mod.ErrorSeverity = MagicMock()
 sys.modules.setdefault("manaos_error_handler", _eh_mod)
 
-import pytest
-from scripts.misc.redis_cache import RedisCache, redis_cache
+import pytest  # noqa: E402
+from scripts.misc.redis_cache import RedisCache, redis_cache  # noqa: E402
 
 
 # ── helpers ────────────────────────────────────────────────────────────────

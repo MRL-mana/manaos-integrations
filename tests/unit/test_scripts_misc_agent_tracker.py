@@ -9,14 +9,10 @@ _ml = MagicMock()
 _ml.get_service_logger.return_value = MagicMock()
 sys.modules.setdefault("manaos_logger", _ml)
 
-import pytest
-from scripts.misc.agent_tracker import (
+from scripts.misc.agent_tracker import (  # noqa: E402
     AgentTracker,
     AuditResult,
-    AgentStats,
     UsageRecord,
-    RANK_THRESHOLDS,
-    QUALITY_CRITERIA,
 )
 
 

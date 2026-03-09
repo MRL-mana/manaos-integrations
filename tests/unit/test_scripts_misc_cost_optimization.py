@@ -4,15 +4,14 @@ Unit tests for scripts/misc/cost_optimization.py
 import sys
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
-from pathlib import Path
 
 # ── external module mocks ──────────────────────────────────────────────────
 _ul = MagicMock()
 _ul.get_service_logger.return_value = MagicMock()
 sys.modules.setdefault("unified_logging", _ul)
 
-import pytest
-from scripts.misc.cost_optimization import CostOptimization
+import pytest  # noqa: E402
+from scripts.misc.cost_optimization import CostOptimization  # noqa: E402
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────
@@ -147,7 +146,7 @@ class TestRecordUsage:
             p.virtual_memory.return_value = MagicMock(total=8 * 1024**3)
             p.disk_usage.return_value = MagicMock(used=100 * 1024**3)
             p.net_io_counters.return_value = MagicMock(bytes_sent=1024**3,
-                                                        bytes_recv=1024**3)
+                                                       bytes_recv=1024**3)
             result = co.record_usage(duration_hours=1.0)
         assert isinstance(result, dict)
 
@@ -158,7 +157,7 @@ class TestRecordUsage:
             p.virtual_memory.return_value = MagicMock(total=8 * 1024**3)
             p.disk_usage.return_value = MagicMock(used=100 * 1024**3)
             p.net_io_counters.return_value = MagicMock(bytes_sent=1024**3,
-                                                        bytes_recv=1024**3)
+                                                       bytes_recv=1024**3)
             co.record_usage(duration_hours=1.0)
         assert len(co.usage_history) == 1
         assert len(co.cost_history) == 1
@@ -170,7 +169,7 @@ class TestRecordUsage:
             p.virtual_memory.return_value = MagicMock(total=8 * 1024**3)
             p.disk_usage.return_value = MagicMock(used=100 * 1024**3)
             p.net_io_counters.return_value = MagicMock(bytes_sent=1024**3,
-                                                        bytes_recv=1024**3)
+                                                       bytes_recv=1024**3)
             result = co.record_usage(duration_hours=1.0)
         assert "costs" in result
 

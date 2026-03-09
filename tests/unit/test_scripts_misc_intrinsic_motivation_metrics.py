@@ -5,7 +5,6 @@ import sys
 import types
 from unittest.mock import MagicMock
 from datetime import date, timedelta
-from pathlib import Path
 
 # ── external module mocks ──────────────────────────────────────────────────
 _ml = MagicMock()
@@ -17,16 +16,16 @@ sys.modules.setdefault("httpx", MagicMock())
 
 # Flask mocks
 _flask = types.ModuleType("flask")
-_flask.Flask = MagicMock(return_value=MagicMock())
-_flask.jsonify = MagicMock(return_value=MagicMock())
+setattr(_flask, "Flask", MagicMock(return_value=MagicMock()))
+setattr(_flask, "jsonify", MagicMock(return_value=MagicMock()))
 sys.modules.setdefault("flask", _flask)
 
 _flask_cors = types.ModuleType("flask_cors")
-_flask_cors.CORS = MagicMock()
+setattr(_flask_cors, "CORS", MagicMock())
 sys.modules.setdefault("flask_cors", _flask_cors)
 
-import pytest
-from scripts.misc.intrinsic_motivation_metrics import (
+import pytest  # noqa: E402
+from scripts.misc.intrinsic_motivation_metrics import (  # noqa: E402
     MotivationMetrics,
     IntrinsicMotivationMetrics,
 )

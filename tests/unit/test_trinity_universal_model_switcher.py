@@ -10,6 +10,12 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "tools"))
 
+# torch / psutil が未インストールの場合にスタブを注入
+if "torch" not in sys.modules:
+    sys.modules["torch"] = MagicMock()
+if "psutil" not in sys.modules:
+    sys.modules.setdefault("psutil", MagicMock())
+
 # __init__ の副作用（mkdir / scan/psutil）を避けてクラスだけロード
 import trinity_universal_model_switcher as ums_mod
 UniversalModelSwitcher = ums_mod.UniversalModelSwitcher

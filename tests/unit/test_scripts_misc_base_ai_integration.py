@@ -2,7 +2,6 @@
 Unit tests for scripts/misc/base_ai_integration.py
 """
 import sys
-import json
 from unittest.mock import MagicMock, patch
 
 # manaos_logger mock (module level import)
@@ -11,13 +10,13 @@ _ml.get_logger.return_value = MagicMock()
 _ml.get_service_logger.return_value = MagicMock()
 sys.modules.setdefault("manaos_logger", _ml)
 
-import pytest
-from scripts.misc.base_ai_integration import BaseAIIntegration, BaseAIResponse
+import pytest  # noqa: E402
+from scripts.misc.base_ai_integration import BaseAIIntegration, BaseAIResponse  # noqa: E402
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
 def make_mock_response(content: str = "hello", model: str = "base-ai",
-                        usage: dict = None) -> MagicMock:
+                       usage: dict = None) -> MagicMock:
     resp = MagicMock()
     resp.json.return_value = {
         "choices": [{"message": {"content": content}}],

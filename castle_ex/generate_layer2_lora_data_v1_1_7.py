@@ -24,8 +24,8 @@ from typing import Any, Dict, List
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # ─── 出力パス ─────────────────────────────────────────────────────────────────
-PATCH_OUT  = REPO_ROOT / "castle_ex_dataset_layer2_lora_v1_1_7_patch.jsonl"
-TRAIN_OUT  = REPO_ROOT / "castle_ex_dataset_layer2_lora_v1_1_7_train.jsonl"
+PATCH_OUT = REPO_ROOT / "castle_ex_dataset_layer2_lora_v1_1_7_patch.jsonl"
+TRAIN_OUT = REPO_ROOT / "castle_ex_dataset_layer2_lora_v1_1_7_train.jsonl"
 BASE_TRAIN = REPO_ROOT / "castle_ex_dataset_layer2_lora_v1_1_6_posonly_train.jsonl"
 
 # ─── 乱数シード ───────────────────────────────────────────────────────────────
@@ -88,6 +88,7 @@ _ATTR_VALUES_MAP: Dict[str, List[str]] = {
     "色":     ["低い", "中", "高い"],   # 意味的には変だが元データに合わせる
 }
 
+
 def _build_attribute_patch() -> List[Dict[str, Any]]:
     recs: List[Dict[str, Any]] = []
     for obj, attr, val in _ATTR_NG_PAIRS:
@@ -131,7 +132,8 @@ _PART_WHOLE_NG_PAIRS = [
 
 # 抽象語 whole の追加セット（反転しやすい）
 _ABSTRACT_WHOLES = ["文脈", "システム", "管理", "構成", "環境", "設計"]
-_CONCRETE_OBJS   = ["ピット", "レジ", "エンジン", "洗車機", "オイル", "車"]
+_CONCRETE_OBJS = ["ピット", "レジ", "エンジン", "洗車機", "オイル", "車"]
+
 
 def _build_part_whole_patch() -> List[Dict[str, Any]]:
     recs: List[Dict[str, Any]] = []
@@ -142,10 +144,10 @@ def _build_part_whole_patch() -> List[Dict[str, Any]]:
         user_q = f"{obj} は {whole} の一部？"
         if is_yes:
             ans_yes = f"はい。{obj}は{whole}に含まれます。"
-            ans_no  = f"いいえ。{obj}は{whole}に含まれません。"
+            ans_no = f"いいえ。{obj}は{whole}に含まれません。"
         else:
             ans_yes = f"はい。{obj}は{whole}に含まれます。"
-            ans_no  = f"いいえ。{obj}は{whole}に含まれません。"
+            ans_no = f"いいえ。{obj}は{whole}に含まれません。"
         # 正解をパターンA / B×補強2件
         correct_ans, wrong_ans = (ans_yes, ans_no) if is_yes else (ans_no, ans_yes)
         # パターンA (短)
@@ -160,7 +162,8 @@ def _build_part_whole_patch() -> List[Dict[str, Any]]:
     abstract_combos = [(o, w)
                        for o in _CONCRETE_OBJS
                        for w in _ABSTRACT_WHOLES
-                       if (o, w) not in [("洗車機","感情"),("エンジン","作業"),("ピット","構成")]]
+                       if (o, w) not in [
+                           ("洗車機", "感情"), ("エンジン", "作業"), ("ピット", "構成")]]
     rng.shuffle(abstract_combos)
     for obj, whole in abstract_combos[:9]:   # 9件追加
         user_q = f"{obj} は {whole} の一部？"
@@ -217,7 +220,10 @@ def main() -> None:
 
         combined = base_rows + patch
         _write_jsonl(TRAIN_OUT, combined)
-        print(f"[v1.1.7] train: base={len(base_rows)} + patch={len(patch)} = {len(combined)} → {TRAIN_OUT}")
+        print(
+            f"[v1.1.7] train: base={len(base_rows)} + patch={len(patch)}"
+            f" = {len(combined)} → {TRAIN_OUT}"
+        )
 
 
 if __name__ == "__main__":

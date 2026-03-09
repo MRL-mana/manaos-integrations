@@ -36,8 +36,8 @@ _paths_mod = MagicMock()
 _paths_mod.OLLAMA_PORT = 11434
 sys.modules.setdefault("_paths", _paths_mod)
 
-import pytest
-from scripts.misc.task_critic import (
+import pytest  # noqa: E402
+from scripts.misc.task_critic import (  # noqa: E402
     EvaluationResult,
     FailureReason,
     CriticResult,
@@ -188,7 +188,8 @@ class TestIsSimpleEvaluation:
         assert critic._is_simple_evaluation("file_search", "completed", None, {}) is True
 
     def test_completed_with_output_is_simple(self, critic):
-        assert critic._is_simple_evaluation("complex_task", "completed", None, {"result": "ok"}) is True
+        result = critic._is_simple_evaluation("complex_task", "completed", None, {"result": "ok"})
+        assert result is True
 
     def test_failed_is_simple(self, critic):
         assert critic._is_simple_evaluation("complex_task", "failed", "error!", None) is True

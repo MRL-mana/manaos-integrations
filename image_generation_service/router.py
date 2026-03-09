@@ -42,7 +42,7 @@ from .models import (
 )
 from .prompt_enhancer import PromptEnhancer
 from .service import ImageGenerationService
-from .api_auth import AuthContext, require_auth, optional_auth
+from .api_auth import AuthContext, require_auth
 from .billing import BillingManager, Plan
 from .queue import JobQueue
 from .feedback import FeedbackManager
@@ -62,28 +62,28 @@ _queue: Optional[JobQueue] = None
 
 
 def get_service() -> ImageGenerationService:
-    global _service
+    global _service  # pylint: disable=global-statement
     if _service is None:
         _service = ImageGenerationService()
     return _service
 
 
 def get_enhancer() -> PromptEnhancer:
-    global _enhancer
+    global _enhancer  # pylint: disable=global-statement
     if _enhancer is None:
         _enhancer = PromptEnhancer()
     return _enhancer
 
 
 def get_billing() -> BillingManager:
-    global _billing
+    global _billing  # pylint: disable=global-statement
     if _billing is None:
         _billing = BillingManager()
     return _billing
 
 
 def get_queue() -> JobQueue:
-    global _queue
+    global _queue  # pylint: disable=global-statement
     if _queue is None:
         _queue = JobQueue()
     return _queue
@@ -95,21 +95,21 @@ _revenue: Optional[RevenueWriter] = None
 
 
 def get_feedback() -> FeedbackManager:
-    global _feedback
+    global _feedback  # pylint: disable=global-statement
     if _feedback is None:
         _feedback = FeedbackManager()
     return _feedback
 
 
 def get_batch_generator() -> BatchGenerator:
-    global _batch
+    global _batch  # pylint: disable=global-statement
     if _batch is None:
         _batch = BatchGenerator(get_service())
     return _batch
 
 
 def get_revenue() -> RevenueWriter:
-    global _revenue
+    global _revenue  # pylint: disable=global-statement
     if _revenue is None:
         _revenue = RevenueWriter()
     return _revenue
@@ -153,7 +153,10 @@ async def payment_callback(
         user_id=user_id, plan=plan, session_id=session_id,
     )
     if not result.get("ok"):
-        raise HTTPException(status_code=400, detail=result.get("detail", "activation failed"))
+        raise HTTPException(
+            status_code=400,
+            detail=result.get("detail", "activation failed"),
+        )
     return {"status": "ok", "message": "Subscription activated", **result}
 
 
@@ -162,22 +165,21 @@ async def payment_callback(
     summary="Stripe Webhook 受信",
     description="Stripe から checkout.session.completed イベントを受信しプランをアクティベート",
 )
-async def webhook_stripe(
-    billing: BillingManager = Depends(get_billing),
-):
+async def webhook_stripe():
     """
     Stripe Webhook: checkout.session.completed を処理。
     本番では署名検証 (STRIPE_WEBHOOK_SECRET) を追加する。
     署名検証は将来 middleware で実装予定。今は payload だけ処理。
     """
-    import json as _json
-    from starlette.requests import Request
     # NOTE: FastAPI の Depends で Request を注入するのではなく
     # この関数自体は billing のみ依存。body は手動で取得。
     # → 将来の署名検証移行を容易にするため
     return {
         "status": "ok",
-        "message": "Stripe webhook endpoint ready (signature verification pending)",
+        "message": (
+            "Stripe webhook endpoint ready"
+            " (signature verification pending)"
+        ),
         "hint": "Set STRIPE_WEBHOOK_SECRET for production",
     }
 
@@ -192,8 +194,11 @@ async def signup(
 
     try:
         plan = Plan(req.plan)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid plan (free/pro/enterprise)")
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid plan (free/pro/enterprise)",
+        ) from exc
 
     result = await billing.register_user(
         email=req.email.strip().lower(),
@@ -215,7 +220,8 @@ async def signup(
     responses={
         400: {"model": ErrorResponse},
         401: {"model": ErrorResponse, "description": "Invalid API key"},
-        429: {"model": ErrorResponse, "description": "Rate limit / quota exceeded"},
+        429: {"model": ErrorResponse,
+              "description": "Rate limit / quota exceeded"},
         503: {"model": ErrorResponse, "description": "ComfyUI unavailable"},
     },
     summary="画像生成リクエスト",
@@ -240,9 +246,11 @@ async def generate_image(
     try:
         return await svc.submit_generation(req)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except ConnectionError:
-        raise HTTPException(status_code=503, detail="ComfyUI is not available")
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except ConnectionError as exc:
+        raise HTTPException(
+            status_code=503, detail="ComfyUI is not available"
+        ) from exc
 
 
 @router.get(
@@ -331,13 +339,17 @@ async def batch_generate(
     req: ImageGenerateRequest,
     count: int = Query(3, ge=1, le=8, description="生成枚数"),
     strategy: str = Query("quality", description="選択戦略: quality/speed"),
-    auth: AuthContext = Depends(require_auth),
+    _auth: AuthContext = Depends(require_auth),
     bg: BatchGenerator = Depends(get_batch_generator),
 ):
     result = await bg.generate_batch(req, count=count, strategy=strategy)
     return {
         "best_job_id": result.best.job_id if result.best else None,
-        "best_score": result.best.quality_score.overall if result.best and result.best.quality_score else None,
+        "best_score": (
+            result.best.quality_score.overall
+            if result.best and result.best.quality_score
+            else None
+        ),
         "total_generated": len(result.all_results),
         "total_cost_yen": result.total_cost_yen,
         "total_time_ms": result.total_time_ms,
@@ -353,7 +365,7 @@ async def batch_generate(
 async def ab_compare(
     req_a: ImageGenerateRequest,
     req_b: ImageGenerateRequest,
-    auth: AuthContext = Depends(require_auth),
+    _auth: AuthContext = Depends(require_auth),
     bg: BatchGenerator = Depends(get_batch_generator),
 ):
     return await bg.ab_compare(req_a, req_b)
@@ -379,9 +391,13 @@ async def submit_feedback(
     quality_overall = None
     prompt = ""
     if job:
-        quality_overall = job.quality_score.overall if job.quality_score else None
+        quality_overall = (
+            job.quality_score.overall if job.quality_score else None
+        )
         prompt = job.prompt or ""
-    tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+    tag_list = (
+        [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+    )
     return await fb.submit_feedback(
         job_id=job_id,
         rating=rating,
@@ -450,15 +466,24 @@ async def revenue_kpi(
             "plan": bill_data.get("plan", "unknown"),
         },
         "quality": {
-            "avg_rating": fb_stats.get("avg_rating") if isinstance(fb_stats, dict) else None,
-            "total_feedback": fb_stats.get("total_feedback", 0) if isinstance(fb_stats, dict) else 0,
+            "avg_rating": (
+                fb_stats.get("avg_rating")
+                if isinstance(fb_stats, dict) else None
+            ),
+            "total_feedback": (
+                fb_stats.get("total_feedback", 0)
+                if isinstance(fb_stats, dict) else 0
+            ),
         },
         "rl": {
             "enabled": rl_data.get("enabled", False),
             "total_cycles": rl_data.get("total_cycles", 0),
             "success_rate": rl_data.get("success_rate"),
             "avg_score": rl_data.get("avg_score"),
-            "skills_count": len(rl_data.get("skills", [])) if "skills" in rl_data else 0,
+            "skills_count": (
+                len(rl_data.get("skills", []))
+                if "skills" in rl_data else 0
+            ),
         },
         "loop_health": _compute_loop_health(bill_data, fb_stats, rl_data),
     }
@@ -492,7 +517,14 @@ def _compute_loop_health(bill: dict, fb, rl: dict) -> dict:
     scores.append(min(20, cycles * 0.2))  # 100サイクルで20点
 
     total = sum(scores)
-    level = "critical" if total < 20 else "building" if total < 50 else "growing" if total < 80 else "thriving"
+    if total < 20:
+        level = "critical"
+    elif total < 50:
+        level = "building"
+    elif total < 80:
+        level = "growing"
+    else:
+        level = "thriving"
 
     return {
         "score": round(total, 1),
@@ -514,7 +546,7 @@ def _compute_loop_health(bill: dict, fb, rl: dict) -> dict:
 )
 async def revenue_history(
     days: int = 30,
-    auth: AuthContext = Depends(require_auth),
+    _auth: AuthContext = Depends(require_auth),
 ):
     """Revenue Tracker DB から日次推移を取得"""
     writer = RevenueWriter()
@@ -587,13 +619,14 @@ def _send_loop_health_slack(health: dict, alerts: list) -> bool:
             return False
 
         lines = [
-            f"🚨 *Loop Health Alert* — スコア: {health['score']}/100 ({health['level']})",
+            f"🚨 *Loop Health Alert* — スコア: "
+            f"{health['score']}/100 ({health['level']})",
             "",
         ]
         for a in alerts:
             emoji = "🔴" if a["severity"] == "critical" else "🟡"
             lines.append(f"{emoji} {a['dimension']}: {a['message']}")
-        lines.append(f"\n_自動検知 by ManaOS revenue-loop_")
+        lines.append("\n_自動検知 by ManaOS revenue-loop_")
 
         payload = json.dumps({"text": "\n".join(lines)}).encode("utf-8")
         req = urllib.request.Request(
@@ -606,7 +639,7 @@ def _send_loop_health_slack(health: dict, alerts: list) -> bool:
             pass
         _log.info("Slack loop health alert sent")
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001  # pylint: disable=W0703
         _log.warning("Slack alert failed: %s", e)
         return False
 
@@ -620,7 +653,7 @@ def _send_loop_health_slack(health: dict, alerts: list) -> bool:
 )
 async def revenue_anomaly(
     days: int = 30,
-    auth: AuthContext = Depends(require_auth),
+    _auth: AuthContext = Depends(require_auth),
 ):
     """RLAnything AnomalyDetector × 収益データ"""
     from .revenue_anomaly import analyze_revenue_anomalies
@@ -651,13 +684,17 @@ def _get_current_rl_params() -> dict:
             params["temperature"] = getattr(pg, "temperature", 1.0)
         if hasattr(rl, "curriculum"):
             cur = rl.curriculum
-            params["curriculum_up_threshold"] = getattr(cur, "up_threshold", 0.75)
-            params["curriculum_down_threshold"] = getattr(cur, "down_threshold", 0.30)
+            params["curriculum_up_threshold"] = getattr(
+                cur, "up_threshold", 0.75
+            )
+            params["curriculum_down_threshold"] = getattr(
+                cur, "down_threshold", 0.30
+            )
         if hasattr(rl, "anomaly_detector"):
             ad = rl.anomaly_detector
             params["anomaly_z_threshold"] = getattr(ad, "z_threshold", 2.0)
         return params
-    except Exception:
+    except Exception:  # noqa: BLE001  # pylint: disable=W0703
         return {}
 
 
@@ -688,7 +725,9 @@ async def revenue_auto_tune(
     # 2) 異常検知
     anomaly_result = analyze_revenue_anomalies(daily_data)
     alerts = anomaly_result.get("alerts", [])
-    trend = anomaly_result.get("trend", {"direction": "unknown", "change_pct": 0})
+    trend = anomaly_result.get(
+        "trend", {"direction": "unknown", "change_pct": 0}
+    )
 
     # 3) ループ健全度 (既存の _compute_loop_health を再利用)
     bill_data = await billing.get_billing_dashboard(auth.api_key)
@@ -785,7 +824,7 @@ async def get_job_status(
 async def get_job_result(
     job_id: str,
     svc: ImageGenerationService = Depends(get_service),
-) -> ImageGenerateResponse:
+) -> ImageGenerateResponse | JSONResponse:
     """完了済みジョブの結果を取得。未完了なら 202。"""
     result = await svc.get_result(job_id)
     if result is None:
@@ -828,7 +867,7 @@ def create_app() -> FastAPI:
             "status": "healthy",
             "service": "image_generation",
             "version": "0.4.0",
-            "stats": svc._stats,
+            "stats": svc._stats,  # pylint: disable=protected-access
             "queue": await queue.get_stats(),
             "timestamp": datetime.now().isoformat(),
         }
@@ -854,7 +893,10 @@ def create_app() -> FastAPI:
         """ランディングページを表示"""
         if _LANDING_HTML.exists():
             return HTMLResponse(_LANDING_HTML.read_text(encoding="utf-8"))
-        return HTMLResponse("<h1>ManaOS Image Generation API</h1><p><a href='/docs'>API Docs</a></p>")
+        return HTMLResponse(
+            "<h1>ManaOS Image Generation API</h1>"
+            "<p><a href='/docs'>API Docs</a></p>"
+        )
 
     return app
 

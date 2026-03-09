@@ -13,6 +13,14 @@ _mock_core = MagicMock()
 sys.modules.setdefault("core", _mock_core)
 sys.modules.setdefault("core.db_manager", _mock_core.db_manager)
 
+# tabulate と click が未インストールの場合にスタブを注入
+if "tabulate" not in sys.modules:
+    _tabulate_mod = MagicMock()
+    _tabulate_mod.tabulate = MagicMock(return_value="")
+    sys.modules["tabulate"] = _tabulate_mod
+if "click" not in sys.modules:
+    sys.modules.setdefault("click", MagicMock())
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "tools"))
 from trinity_mana_tasks_cli import (
     Colors,

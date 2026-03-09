@@ -42,8 +42,8 @@ sys.modules.setdefault("flask", _flask)
 _flask_cors = MagicMock()
 sys.modules.setdefault("flask_cors", _flask_cors)
 
-import pytest
-from scripts.misc.task_queue_system import (
+import pytest  # noqa: E402
+from scripts.misc.task_queue_system import (  # noqa: E402
     Task,
     TaskPriority,
     TaskStatus,
@@ -92,7 +92,7 @@ def make_task(**kwargs) -> Task:
         priority=TaskPriority.MEDIUM,
     )
     defaults.update(kwargs)
-    return Task(**defaults)
+    return Task(**defaults)  # type: ignore[arg-type]
 
 
 # ── TestTaskPriority ───────────────────────────────────────────────────────
@@ -197,12 +197,14 @@ class TestCheckRateLimit:
 # ── TestRegisterHandler ────────────────────────────────────────────────────
 class TestRegisterHandler:
     def test_handler_registered(self, tqs):
-        handler = lambda p: {"done": True}
+        def handler(p):
+            return {"done": True}
         tqs.register_handler("my_task", handler)
         assert "my_task" in tqs.task_handlers
 
     def test_correct_handler_stored(self, tqs):
-        handler = lambda p: {"result": "ok"}
+        def handler(p):
+            return {"result": "ok"}
         tqs.register_handler("my_task", handler)
         assert tqs.task_handlers["my_task"] is handler
 

@@ -29,8 +29,8 @@ _mj.derive_hs256_signing_key = MagicMock(return_value=_SIGNING_KEY)
 _mj.get_or_create_jwt_secret = MagicMock(return_value="test-jwt-secret")
 sys.modules.setdefault("manaos_jwt", _mj)
 
-import pytest
-from scripts.misc.auth_system import AuthSystem, Role, User, APIKey
+import pytest  # noqa: E402
+from scripts.misc.auth_system import AuthSystem, Role, User, APIKey  # noqa: E402
 
 
 # ── fixtures ────────────────────────────────────────────────────────────────

@@ -48,7 +48,10 @@ _log = logging.getLogger("manaos.rpg.lessons")
 async def lessons_stats() -> Dict[str, Any]:
     """教訓の統計情報。lessons_recorder が無ければ degraded を返す。"""
     if not _HAS_LESSONS:
-        return {"status": "unavailable", "detail": "lessons_recorder not found"}
+        return {
+            "status": "unavailable",
+            "detail": "lessons_recorder not found",
+        }
     try:
         recorder = get_lessons_recorder()
         return {"status": "ok", **recorder.stats()}
@@ -68,7 +71,9 @@ async def lessons_search(
         return {"status": "unavailable", "items": []}
     try:
         recorder = get_lessons_recorder()
-        results = recorder.search_lessons(query=q or "", category=category, limit=limit)
+        results = recorder.search_lessons(
+            query=q or "", category=category, limit=limit
+        )
         items = [
             {
                 "id": r.id,
@@ -151,14 +156,20 @@ async def agents_parking() -> Dict[str, Any]:
 
 @router.get("/agents/audit")
 async def agents_audit(
-    agents_dir: Optional[str] = Query(None, description="監査対象ディレクトリ（省略時: REPO_ROOTの.claude/agents）")
+    agents_dir: Optional[str] = Query(
+        None,
+        description="監査対象ディレクトリ（省略時: REPO_ROOTの.claude/agents）",
+    ),
 ) -> Dict[str, Any]:
     """エージェントディレクトリを品質スコアで監査。"""
     if not _HAS_AGENTS:
         return {"status": "unavailable", "items": []}
     try:
         tracker = get_agent_tracker()
-        target = Path(agents_dir) if agents_dir else REPO_ROOT / ".claude" / "agents"
+        target = (
+            Path(agents_dir) if agents_dir
+            else REPO_ROOT / ".claude" / "agents"
+        )
         if not target.exists():
             return {"status": "ok", "items": [], "note": f"{target} が存在しません"}
         results: List[Any] = tracker.audit_agents_dir(str(target))

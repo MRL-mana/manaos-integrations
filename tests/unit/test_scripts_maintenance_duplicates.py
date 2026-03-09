@@ -9,14 +9,13 @@ scripts/maintenance/find_duplicate_files.py の純粋関数テスト
 import sys
 import hashlib
 from pathlib import Path
-import pytest
 
 sys.path.insert(
     0,
     str(Path(__file__).parent.parent.parent / "scripts" / "maintenance"),
 )
 
-from find_duplicate_files import should_exclude, calculate_file_hash  # type: ignore
+from find_duplicate_files import should_exclude, calculate_file_hash  # type: ignore  # noqa: E402
 
 
 # ─── should_exclude ───────────────────────────────────────────────────────────

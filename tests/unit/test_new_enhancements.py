@@ -9,23 +9,32 @@
 
 import os
 import pytest
-import json
 import time
-from datetime import datetime
 from unittest.mock import patch
 
 
 @pytest.fixture(scope="module")
 def client():
     """テスト用 Flask クライアント（モジュール共有・レートリミット無効）"""
+    import sys
+    # pytest の収集フェーズで他テストファイルがモジュールレベルで注入したスタブ/モックを
+    # リセットし、本物の unified_api_server と flask を使えるようにする。
+    # (例: test_scripts_misc_realtime_dashboard.py が unified_api_server の空スタブを
+    #       setdefault で注入し、test_scripts_misc_content_generation_loop.py が
+    #       flask を MagicMock でsetdefault で注入する)
+    _mods_to_refresh = ["unified_api_server", "flask", "flask_cors"]
+    _saved = {k: sys.modules.pop(k) for k in _mods_to_refresh if k in sys.modules}
     try:
         from unified_api_server import app
         app.config["TESTING"] = True
         # テスト中はレートリミットを無効化
         with patch.dict(os.environ, {"MANAOS_RATE_LIMIT_ENABLED": "false"}):
             yield app.test_client()
-    except ImportError:
-        pytest.skip("unified_api_server not available")
+    except ImportError as e:
+        pytest.skip(f"unified_api_server not available: {e}")
+    finally:
+        # 後続テストへの影響を防ぐため元の状態を復元
+        sys.modules.update(_saved)
 
 
 class TestOpenAPIGeneration:
@@ -194,14 +203,10 @@ class TestPerformance:
     def test_openapi_caching(self, client):
         """OpenAPI スペックのキャッシング"""
         # 最初のリクエスト
-        start1 = time.time()
         response1 = client.get("/api/openapi.json")
-        time1 = time.time() - start1
         
         # 2番目のリクエスト（キャッシュ）
-        start2 = time.time()
         response2 = client.get("/api/openapi.json")
-        time2 = time.time() - start2
         
         # 両方成功
         assert response1.status_code == 200

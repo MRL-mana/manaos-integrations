@@ -31,20 +31,20 @@ function Get-NotifySummary {
 
     $result.log_exists = $true
 
-    $matches = Get-Content -Path $Path -Tail $TailLines | Where-Object { $_ -match "notify=" }
-    if (-not $matches -or $matches.Count -eq 0) {
+    $matchedLines = Get-Content -Path $Path -Tail $TailLines | Where-Object { $_ -match "notify=" }
+    if (-not $matchedLines -or $matchedLines.Count -eq 0) {
         return [pscustomobject]$result
     }
 
-    $result.count = $matches.Count
-    $result.last_entry = $matches[-1]
+    $result.count = $matchedLines.Count
+    $result.last_entry = $matchedLines[-1]
 
-    $statusMatch = [regex]::Match($matches[-1], "notify=([^\s]+)")
+    $statusMatch = [regex]::Match($matchedLines[-1], "notify=([^\s]+)")
     if ($statusMatch.Success) {
         $result.last_status = $statusMatch.Groups[1].Value
     }
 
-    $result.recent = @($matches | Select-Object -Last $LastItems)
+    $result.recent = @($matchedLines | Select-Object -Last $LastItems)
     return [pscustomobject]$result
 }
 

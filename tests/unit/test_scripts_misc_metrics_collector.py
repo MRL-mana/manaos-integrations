@@ -2,22 +2,19 @@
 Unit tests for scripts/misc/metrics_collector.py
 """
 import sys
-import json
 from collections import deque, defaultdict
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
-from pathlib import Path
 
 # ── external module mocks ──────────────────────────────────────────────────
 _ul = MagicMock()
 _ul.get_service_logger.return_value = MagicMock()
 sys.modules.setdefault("unified_logging", _ul)
 
-import pytest
-from scripts.misc.metrics_collector import (
+import pytest  # noqa: E402, F401
+from scripts.misc.metrics_collector import (  # noqa: E402
     Metric,
     MetricsCollector,
-    get_metrics_collector,
 )
 
 
@@ -305,10 +302,8 @@ class TestGetSummary:
 # ── get_metrics_collector singleton ──────────────────────────────────────
 class TestGetMetricsCollector:
     def test_returns_instance(self):
-        import importlib
         import scripts.misc.metrics_collector as mod
         mod._metrics_collector = None  # reset singleton
         with patch.object(MetricsCollector, "__init__", return_value=None):
-            mc = mod.get_metrics_collector()
-            # just check it doesn't raise
+            mod.get_metrics_collector()  # just check it doesn't raise
         mod._metrics_collector = None  # cleanup

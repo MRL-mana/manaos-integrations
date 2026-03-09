@@ -3,7 +3,7 @@ ManaOS統合APIサーバー（修正版）
 すべての外部システム統合を管理する統合API
 """
 
-from flask import Flask, request, jsonify, send_from_directory, g, Response, stream_with_context
+from flask import Flask, request, jsonify, send_from_directory, g
 from flask_cors import CORS
 import os
 import sys
@@ -35,16 +35,18 @@ except ImportError:
     REQUESTS_AVAILABLE = False
 
 # 統一モジュールのインポート
-from manaos_logger import get_logger, get_service_logger
-from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
-from manaos_timeout_config import get_timeout_config
+from manaos_logger import get_service_logger  # noqa: E402
+from manaos_error_handler import ManaOSErrorHandler  # noqa: E402
+from manaos_timeout_config import get_timeout_config  # noqa: E402
 try:
     from api_auth import get_auth_manager
 except ImportError:
     class DummyAuthManager:
         def require_api_key(self, func):
             return func
-    get_auth_manager = lambda: DummyAuthManager()
+
+    def get_auth_manager():  # type: ignore[misc]
+        return DummyAuthManager()
 
 try:
     from openapi_generator import OpenAPISpecBuilder
@@ -128,7 +130,8 @@ def _is_active_job(payload: Any) -> bool:
 def _job_sort_dt(payload: Any) -> datetime:
     if not isinstance(payload, dict):
         return datetime.min
-    return _parse_iso_datetime(payload.get("updated_at") or payload.get("created_at")) or datetime.min
+    ts = payload.get("updated_at") or payload.get("created_at")
+    return _parse_iso_datetime(ts) or datetime.min
 
 
 def _trim_jobs(namespace: str, jobs: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
@@ -151,11 +154,23 @@ def _trim_jobs(namespace: str, jobs: Dict[str, Dict[str, Any]]) -> Dict[str, Dic
                 trimmed.pop(job_id, None)
 
     if max_jobs > 0 and len(trimmed) > max_jobs:
-        active_items = [(job_id, payload) for job_id, payload in trimmed.items() if _is_active_job(payload)]
-        terminal_items = [(job_id, payload) for job_id, payload in trimmed.items() if not _is_active_job(payload)]
+        active_items = [
+            (job_id, payload)
+            for job_id, payload in trimmed.items()
+            if _is_active_job(payload)
+        ]
+        terminal_items = [
+            (job_id, payload)
+            for job_id, payload in trimmed.items()
+            if not _is_active_job(payload)
+        ]
 
-        active_items = sorted(active_items, key=lambda item: _job_sort_dt(item[1]), reverse=True)
-        terminal_items = sorted(terminal_items, key=lambda item: _job_sort_dt(item[1]), reverse=True)
+        active_items = sorted(
+            active_items, key=lambda item: _job_sort_dt(item[1]), reverse=True
+        )
+        terminal_items = sorted(
+            terminal_items, key=lambda item: _job_sort_dt(item[1]), reverse=True
+        )
 
         if len(active_items) >= max_jobs:
             trimmed = dict(active_items[:max_jobs])
@@ -244,7 +259,9 @@ def _service_url(name: str, env_key: str, default_port: int) -> str:
     return os.getenv(env_key, f"http://127.0.0.1:{default_port}")
 
 
-TASK_PLANNER_BASE_URL = _service_url("task_planner", "TASK_PLANNER_URL", _env_int("TASK_PLANNER_PORT", 5101))
+TASK_PLANNER_BASE_URL = _service_url(
+    "task_planner", "TASK_PLANNER_URL", _env_int("TASK_PLANNER_PORT", 5101)
+)
 EXECUTOR_ENHANCED_BASE_URL = _service_url(
     "task_executor_enhanced", "EXECUTOR_ENHANCED_URL", _env_int("EXECUTOR_ENHANCED_PORT", 5107)
 )
@@ -303,7 +320,7 @@ try:
 
         # Transformersキャッシュ警告対応: TRANSFORMERS_CACHEが設定されている場合はHF_HOMEに移行
         if os.getenv("TRANSFORMERS_CACHE") and not os.getenv("HF_HOME"):
-            transformers_cache = os.getenv("TRANSFORMERS_CACHE")
+            transformers_cache = os.getenv("TRANSFORMERS_CACHE") or ""
             os.environ["HF_HOME"] = transformers_cache
             logger.info(f"✅ TRANSFORMERS_CACHEをHF_HOMEに移行しました: {transformers_cache}")
             # 警告を抑制するために古い環境変数を削除（オプション）
@@ -330,7 +347,6 @@ STEP_DEEP_RESEARCH_AVAILABLE = False
 # Step-Deep-Research統合（オプション）
 try:
     from step_deep_research.orchestrator import StepDeepResearchOrchestrator
-    import json
 
     STEP_DEEP_RESEARCH_AVAILABLE = True
 except ImportError:
@@ -428,7 +444,7 @@ except ImportError:
 # Redisキャッシュ統合（オプション）
 REDIS_CACHE_AVAILABLE = False
 try:
-    from llm_redis_cache import get_redis_cache
+    from llm_redis_cache import get_redis_cache as _get_redis_cache  # noqa: F401
 
     REDIS_CACHE_AVAILABLE = True
 except ImportError:
@@ -500,7 +516,7 @@ except ImportError:
 # フェーズ1 自己観察実験フック（入口1枚噛ませ。env: PHASE1_REFLECTION=on で有効）
 try:
     import phase1_hooks
-    from phase1_reflection import REFLECTION_PROMPT, parse_reflection_answer
+    from phase1_reflection import REFLECTION_PROMPT, parse_reflection_answer  # noqa: F401
 
     PHASE1_HOOKS_AVAILABLE = True
 except ImportError:
@@ -570,7 +586,7 @@ except ImportError:
 # Brave Search統合（オプション）
 BRAVE_SEARCH_AVAILABLE = False
 try:
-    from brave_search_integration import BraveSearchIntegration
+    from brave_search_integration import BraveSearchIntegration  # noqa: F401
 
     BRAVE_SEARCH_AVAILABLE = True
 except ImportError:
@@ -579,7 +595,7 @@ except ImportError:
 # Base AI統合（オプション）
 BASE_AI_AVAILABLE = False
 try:
-    from base_ai_integration import BaseAIIntegration
+    from base_ai_integration import BaseAIIntegration  # noqa: F401
 
     BASE_AI_AVAILABLE = True
 except ImportError:
@@ -607,7 +623,7 @@ except ImportError:
 # 音声機能統合（オプション）
 VOICE_INTEGRATION_AVAILABLE = False
 try:
-    from voice_integration import (
+    from voice_integration import (  # noqa: F401
         STTEngine,
         TTSEngine,
         VoiceConversationLoop,
@@ -1211,7 +1227,8 @@ def _api_auth_guard():
                 {
                     "error": "unauthorized",
                     "message": (
-                        "Missing or invalid API key. Provide `X-API-Key` or `Authorization: Bearer ...`. "
+                        "Missing or invalid API key. "
+                        "Provide `X-API-Key` or `Authorization: Bearer ...`. "
                         f"Required scope: {scope}"
                     ),
                 }
@@ -1234,9 +1251,11 @@ def _api_auth_guard():
             {
                 "error": "unauthorized",
                 "message": (
-                    "This server is running without API keys. Requests are restricted to localhost. "
+                    "This server is running without API keys. "
+                    "Requests are restricted to localhost. "
                     "Set `MANAOS_INTEGRATION_API_KEY` (admin) or "
-                    "`MANAOS_INTEGRATION_OPS_API_KEY` / `MANAOS_INTEGRATION_READONLY_API_KEY` to enable remote access."
+                    "`MANAOS_INTEGRATION_OPS_API_KEY` / "
+                    "`MANAOS_INTEGRATION_READONLY_API_KEY` to enable remote access."
                 ),
             }
         ),
@@ -1271,8 +1290,6 @@ _openapi_cache_ttl = 3600  # Cache for 1 hour
 
 def _build_openapi_spec() -> Dict[str, Any]:
     """OpenAPI 仕様を構築（キャッシュ機能付き）"""
-    global _openapi_spec_cache
-    
     if OpenAPISpecBuilder is None:
         logger.warning("⚠️ OpenAPI Generator not available")
         return {}
@@ -1631,7 +1648,10 @@ def api_sd_prompt_generate():
     data = request.get_json(silent=True) or {}
     description = (data.get("description") or data.get("prompt") or "").strip()
     if not description:
-        return _json_error("description or prompt is required", 400, error="bad_request", namespace="sd_prompt")
+        return _json_error(
+            "description or prompt is required",
+            400, error="bad_request", namespace="sd_prompt",
+        )
 
     try:
         from manaos_core_api import ManaOSCoreAPI
@@ -1690,7 +1710,11 @@ def api_comfyui_generate():
         try:
             from mufufu_config_lab import LAB_NEGATIVE_PROMPT
             from mufufu_config import ANATOMY_POSITIVE_TAGS, OPTIMIZED_PARAMS
-            negative_prompt = f"{negative_prompt}, {LAB_NEGATIVE_PROMPT}".strip(", ") if negative_prompt else LAB_NEGATIVE_PROMPT
+            negative_prompt = (
+                f"{negative_prompt}, {LAB_NEGATIVE_PROMPT}".strip(", ")
+                if negative_prompt
+                else LAB_NEGATIVE_PROMPT
+            )
             if ANATOMY_POSITIVE_TAGS:
                 prompt = f"{ANATOMY_POSITIVE_TAGS}, {prompt}"
             if OPTIMIZED_PARAMS and (not steps or steps < 30):
@@ -1707,8 +1731,14 @@ def api_comfyui_generate():
     # ムフフモード: 身体崩れ対策強化（lab_mode でないとき）
     elif mufufu_mode:
         try:
-            from mufufu_config import MUFUFU_NEGATIVE_PROMPT, ANATOMY_POSITIVE_TAGS, OPTIMIZED_PARAMS
-            negative_prompt = f"{negative_prompt}, {MUFUFU_NEGATIVE_PROMPT}".strip(", ") if negative_prompt else MUFUFU_NEGATIVE_PROMPT
+            from mufufu_config import (
+                MUFUFU_NEGATIVE_PROMPT, ANATOMY_POSITIVE_TAGS, OPTIMIZED_PARAMS
+            )
+            negative_prompt = (
+                f"{negative_prompt}, {MUFUFU_NEGATIVE_PROMPT}".strip(", ")
+                if negative_prompt
+                else MUFUFU_NEGATIVE_PROMPT
+            )
             if ANATOMY_POSITIVE_TAGS:
                 prompt = f"{ANATOMY_POSITIVE_TAGS}, {prompt}"
             if OPTIMIZED_PARAMS and (not steps or steps < 30):
@@ -1738,7 +1768,9 @@ def api_comfyui_generate():
         )
     except Exception as e:
         logger.warning(f"ComfyUI generate error: {e}")
-        return _json_error("image_generation_failed", 500, error="internal_error", namespace="comfyui")
+        return _json_error(
+            "image_generation_failed", 500, error="internal_error", namespace="comfyui",
+        )
 
     if prompt_id:
         # n8n Webhookに通知（オプション）
@@ -1884,7 +1916,9 @@ def api_llm_analyze():
     try:
         analyzer = getattr(router, "analyzer", None)
         if analyzer is None:
-            return _json_error("difficulty_analyzer_unavailable", 503, error="unavailable", namespace="llm")
+            return _json_error(
+                "difficulty_analyzer_unavailable", 503, error="unavailable", namespace="llm",
+            )
 
         score = float(analyzer.calculate_difficulty(prompt, context))
         level = str(analyzer.get_difficulty_level(score))
@@ -1943,7 +1977,9 @@ def api_llm_route():
 def api_memory_store():
     """記憶への保存（互換エンドポイント）"""
     if not MEMORY_BRIDGE_AVAILABLE or bridge_memory_store is None:
-        return _json_error("memory_bridge_unavailable", 503, error="unavailable", namespace="memory")
+        return _json_error(
+            "memory_bridge_unavailable", 503, error="unavailable", namespace="memory",
+        )
 
     data = request.get_json(silent=True) or {}
     content = data.get("content") or data
@@ -1967,7 +2003,9 @@ def api_memory_store():
 def memory_write_blueprint():
     """Blueprint互換: 記憶への書き込み"""
     if not MEMORY_BRIDGE_AVAILABLE or bridge_memory_store is None:
-        return _json_error("memory_bridge_unavailable", 503, error="unavailable", namespace="memory")
+        return _json_error(
+            "memory_bridge_unavailable", 503, error="unavailable", namespace="memory",
+        )
 
     data = request.get_json(silent=True) or {}
     text = (data.get("text") or "").strip()
@@ -2005,7 +2043,9 @@ def memory_write_blueprint():
 def api_memory_recall():
     """記憶からの検索（互換エンドポイント）"""
     if not MEMORY_BRIDGE_AVAILABLE or bridge_memory_recall is None:
-        return _json_error("memory_bridge_unavailable", 503, error="unavailable", namespace="memory")
+        return _json_error(
+            "memory_bridge_unavailable", 503, error="unavailable", namespace="memory",
+        )
 
     query = (request.args.get("query") or "").strip()
     if not query:
@@ -2034,7 +2074,9 @@ def api_memory_recall():
 def memory_search_blueprint():
     """Blueprint互換: 記憶検索"""
     if not MEMORY_BRIDGE_AVAILABLE or bridge_memory_recall is None:
-        return _json_error("memory_bridge_unavailable", 503, error="unavailable", namespace="memory")
+        return _json_error(
+            "memory_bridge_unavailable", 503, error="unavailable", namespace="memory",
+        )
 
     data = request.get_json(silent=True) or {}
     query = (data.get("query") or "").strip()
@@ -2112,7 +2154,9 @@ def _ops_get_job(job_id: str) -> Optional[Dict[str, Any]]:
 
 def _ops_http_post_json(url: str, payload: Dict[str, Any], timeout: float = 30.0):
     if not REQUESTS_AVAILABLE:
-        return None, _json_error("requests_module_unavailable", 503, error="unavailable", namespace="ops")
+        return None, _json_error(
+            "requests_module_unavailable", 503, error="unavailable", namespace="ops",
+        )
 
     try:
         response = requests.post(url, json=payload, timeout=timeout)
@@ -2123,12 +2167,16 @@ def _ops_http_post_json(url: str, payload: Dict[str, Any], timeout: float = 30.0
         return (response.status_code, body), None
     except Exception as e:
         logger.warning(f"OPS POST error ({url}): {e}")
-        return None, _json_error("ops_upstream_unreachable", 503, error="unavailable", namespace="ops")
+        return None, _json_error(
+            "ops_upstream_unreachable", 503, error="unavailable", namespace="ops",
+        )
 
 
 def _ops_http_get_json(url: str, timeout: float = 15.0):
     if not REQUESTS_AVAILABLE:
-        return None, _json_error("requests_module_unavailable", 503, error="unavailable", namespace="ops")
+        return None, _json_error(
+            "requests_module_unavailable", 503, error="unavailable", namespace="ops",
+        )
 
     try:
         response = requests.get(url, timeout=timeout)
@@ -2139,7 +2187,9 @@ def _ops_http_get_json(url: str, timeout: float = 15.0):
         return (response.status_code, body), None
     except Exception as e:
         logger.warning(f"OPS GET error ({url}): {e}")
-        return None, _json_error("ops_upstream_unreachable", 503, error="unavailable", namespace="ops")
+        return None, _json_error(
+            "ops_upstream_unreachable", 503, error="unavailable", namespace="ops",
+        )
 
 
 def _ops_build_fallback_plan(text: str) -> Dict[str, Any]:
@@ -2175,7 +2225,9 @@ def ops_plan_blueprint():
     data = request.get_json(silent=True) or {}
     text = (data.get("text") or data.get("goal") or data.get("input") or "").strip()
     if not text:
-        return _json_error("text (or goal/input) is required", 400, error="bad_request", namespace="ops")
+        return _json_error(
+            "text (or goal/input) is required", 400, error="bad_request", namespace="ops",
+        )
 
     planner_url = f"{TASK_PLANNER_BASE_URL}/api/plan"
     upstream, error_response = _ops_http_post_json(planner_url, {"text": text})
@@ -2356,7 +2408,8 @@ def ops_exec_blueprint():
 
     with ops_jobs_lock:
         total_jobs = len(ops_jobs)
-    return jsonify({"job_id": job_id, "status": final_status, "_meta": _job_response_meta("ops", total_jobs)}), 202
+    meta = _job_response_meta("ops", total_jobs)
+    return jsonify({"job_id": job_id, "status": final_status, "_meta": meta}), 202
 
 
 @app.route("/ops/job/<job_id>", methods=["GET"])
@@ -2366,7 +2419,9 @@ def ops_job_blueprint(job_id: str):
         job = ops_jobs.get(job_id)
         total_jobs = len(ops_jobs)
     if not job:
-        return _json_error("job not found", 404, error="not_found", namespace="ops", total_jobs=total_jobs)
+        return _json_error(
+            "job not found", 404, error="not_found", namespace="ops", total_jobs=total_jobs,
+        )
     return jsonify(_job_payload_with_meta("ops", job, total_jobs)), 200
 
 
@@ -2520,7 +2575,9 @@ def dev_patch_blueprint():
     """Blueprint互換: パッチ作業を受理して実行（またはdry-run）"""
     data = request.get_json(silent=True) or {}
     if not ((data.get("instruction") or "").strip() or (data.get("patch") or "").strip()):
-        return _json_error("instruction or patch is required", 400, error="bad_request", namespace="dev")
+        return _json_error(
+            "instruction or patch is required", 400, error="bad_request", namespace="dev",
+        )
     return _dev_submit_job("patch", data)
 
 
@@ -2545,7 +2602,9 @@ def dev_job_blueprint(job_id: str):
         job = dev_jobs.get(job_id)
         total_jobs = len(dev_jobs)
     if not job:
-        return _json_error("job not found", 404, error="not_found", namespace="dev", total_jobs=total_jobs)
+        return _json_error(
+            "job not found", 404, error="not_found", namespace="dev", total_jobs=total_jobs,
+        )
     return jsonify(_job_payload_with_meta("dev", job, total_jobs)), 200
 
 
@@ -2576,7 +2635,9 @@ def _notify_get_hub_instance() -> Optional[Any]:
     return notification_hub
 
 
-def _notify_call_with_timeout(notification_hub: Any, message: str, priority: str, timeout_sec: int) -> Dict[str, Any]:
+def _notify_call_with_timeout(
+    notification_hub: Any, message: str, priority: str, timeout_sec: int
+) -> Dict[str, Any]:
     bucket: Dict[str, Any] = {"done": False, "result": None, "error": None}
 
     def _worker() -> None:
@@ -2696,7 +2757,9 @@ def notify_send_blueprint():
         async_mode = True
 
     if not message:
-        return _json_error("message (or text) is required", 400, error="bad_request", namespace="notify")
+        return _json_error(
+            "message (or text) is required", 400, error="bad_request", namespace="notify",
+        )
 
     job_id = data.get("job_id") or f"notifyjob_{uuid.uuid4().hex[:12]}"
 
@@ -2714,7 +2777,11 @@ def notify_send_blueprint():
             },
         )
         timeout_sec = int(data.get("timeout_sec", 20))
-        t = threading.Thread(target=_notify_run_job, args=(job_id, message, priority, timeout_sec), daemon=True)
+        t = threading.Thread(
+            target=_notify_run_job,
+            args=(job_id, message, priority, timeout_sec),
+            daemon=True,
+        )
         t.start()
         with notify_jobs_lock:
             total_jobs = len(notify_jobs)
@@ -2752,7 +2819,9 @@ def notify_job_blueprint(job_id: str):
         job = notify_jobs.get(job_id)
         total_jobs = len(notify_jobs)
     if not job:
-        return _json_error("job not found", 404, error="not_found", namespace="notify", total_jobs=total_jobs)
+        return _json_error(
+            "job not found", 404, error="not_found", namespace="notify", total_jobs=total_jobs,
+        )
     return jsonify(_job_payload_with_meta("notify", job, total_jobs)), 200
 
 
@@ -2941,7 +3010,7 @@ def initialize_integrations():
                     f"⚠️ 設定検証システム統合完了（{error_count}個の設定ファイルにエラー）"
                 )
                 if error_files:
-                    logger.info(f"エラーがある設定ファイル:\n" + "\n".join(error_files))
+                    logger.info("エラーがある設定ファイル:\n" + "\n".join(error_files))
         except Exception as e:
             logger.warning(f"⚠️ 設定検証システム統合エラー: {e}")
 
@@ -2958,7 +3027,7 @@ def initialize_integrations():
             (
                 "comfyui",
                 lambda: ComfyUIIntegration(
-            base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
+                    base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
                 ),
             )
         )
@@ -2969,7 +3038,7 @@ def initialize_integrations():
             (
                 "svi_wan22",
                 lambda: SVIWan22VideoIntegration(
-            base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
+                    base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
                 ),
             )
         )
@@ -2980,7 +3049,7 @@ def initialize_integrations():
             (
                 "ltx2",
                 lambda: LTX2VideoIntegration(
-            base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
+                    base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
                 ),
             )
         )
@@ -3006,7 +3075,7 @@ def initialize_integrations():
             (
                 "google_drive",
                 lambda: GoogleDriveIntegration(
-            credentials_path=os.getenv("GOOGLE_DRIVE_CREDENTIALS", "credentials.json"),
+                    credentials_path=os.getenv("GOOGLE_DRIVE_CREDENTIALS", "credentials.json"),
                     token_path=os.getenv("GOOGLE_DRIVE_TOKEN", "token.json"),
                 ),
             )
@@ -3024,7 +3093,7 @@ def initialize_integrations():
             (
                 "langchain",
                 lambda: LangChainIntegration(
-            ollama_url=get_ollama_url(),
+                    ollama_url=get_ollama_url(),
                     model_name=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
                 ),
             )
@@ -3033,7 +3102,7 @@ def initialize_integrations():
             (
                 "langgraph",
                 lambda: LangGraphIntegration(
-            ollama_url=get_ollama_url(),
+                    ollama_url=get_ollama_url(),
                     model_name=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
                 ),
             )
@@ -3075,7 +3144,7 @@ def initialize_integrations():
             (
                 "enhanced_llm_routing",
                 lambda: EnhancedLLMRouter(
-            lm_studio_url=get_lm_studio_url(),
+                    lm_studio_url=get_lm_studio_url(),
                     ollama_url=get_ollama_url(),
                 ),
             )
@@ -3122,10 +3191,10 @@ def initialize_integrations():
             (
                 "n8n",
                 lambda: N8NIntegration(
-            base_url=os.getenv(
-                "N8N_BASE_URL",
-                f"http://127.0.0.1:{N8N_PORT}",
-            ),
+                    base_url=os.getenv(
+                        "N8N_BASE_URL",
+                        f"http://127.0.0.1:{N8N_PORT}",
+                    ),
                     api_key=os.getenv("N8N_API_KEY"),
                 ),
             )
@@ -3137,7 +3206,7 @@ def initialize_integrations():
             (
                 "excel_llm",
                 lambda: ExcelLLMIntegration(
-            ollama_url=get_ollama_url(),
+                    ollama_url=get_ollama_url(),
                     model=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
                 ),
             )
@@ -3152,7 +3221,7 @@ def initialize_integrations():
                     (
                         "step_deep_research",
                         lambda: StepDeepResearchOrchestrator(
-                    json.load(open(config_path, "r", encoding="utf-8"))
+                            json.load(open(config_path, "r", encoding="utf-8"))
                         ),
                     )
                 )
@@ -3316,7 +3385,9 @@ def initialize_integrations():
             initialization_status["status"] = "starting"  # まだ準備中
 
     logger.info(
-        f"初期化完了: 完了={len(initialization_status['completed'])}, 失敗={len(initialization_status['failed'])}, ready={all_required_ok}, 統合数={len(integrations)}"
+        f"初期化完了: 完了={len(initialization_status['completed'])}, "
+        f"失敗={len(initialization_status['failed'])}, "
+        f"ready={all_required_ok}, 統合数={len(integrations)}"
     )
 
 
@@ -3517,8 +3588,11 @@ def swagger_ui():
         <title>ManaOS API Documentation</title>
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.js"></script>
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css">
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.js">
+        </script>
     </head>
     <body>
         <div id="swagger-ui"></div>
@@ -3543,18 +3617,26 @@ def swagger_ui():
 @app.route("/companion", methods=["GET"])
 def companion_page():
     """Pixel 7 コンパニオンモード用クライアントページ（同一オリジンでAPI利用可）"""
-    companion_path = Path(__file__).resolve().parent / "scripts" / "voice" / "pixel7_companion_client.html"
+    companion_path = (
+        Path(__file__).resolve().parent / "scripts" / "voice" / "pixel7_companion_client.html"
+    )
     if companion_path.exists():
-        return send_from_directory(companion_path.parent, companion_path.name, mimetype="text/html; charset=utf-8")
+        return send_from_directory(
+            companion_path.parent, companion_path.name, mimetype="text/html; charset=utf-8"
+        )
     return "Companion page not found", 404
 
 
 @app.route("/companion/manifest.json", methods=["GET"])
 def companion_manifest():
     """PWA manifest for コンパニオン"""
-    manifest_path = Path(__file__).resolve().parent / "scripts" / "voice" / "companion_manifest.json"
+    manifest_path = (
+        Path(__file__).resolve().parent / "scripts" / "voice" / "companion_manifest.json"
+    )
     if manifest_path.exists():
-        return send_from_directory(manifest_path.parent, manifest_path.name, mimetype="application/json")
+        return send_from_directory(
+            manifest_path.parent, manifest_path.name, mimetype="application/json"
+        )
     return "Manifest not found", 404
 
 
@@ -3644,8 +3726,8 @@ def ready():
         return (
             jsonify(
                 {
-            "status": "ready",
-            "integrations": integration_status,
+                    "status": "ready",
+                    "integrations": integration_status,
                     "initialization": {"completed": completed, "failed": failed},
                     "readiness_checks": checks,
                 }
@@ -3656,10 +3738,10 @@ def ready():
         # 初期化中またはエラー
         return jsonify(
             {
-            "status": status,
-            "pending": pending,
-            "completed": completed,
-            "failed": failed,
+                "status": status,
+                "pending": pending,
+                "completed": completed,
+                "failed": failed,
                 "readiness_checks": checks,
             }
         ), (503 if status == "starting" else 500)
@@ -3784,22 +3866,22 @@ def status():
     return (
         jsonify(
             {
-        "status": status_val,
-        "initialization": {
-            "pending": pending,
-            "completed": completed,
-            "failed": failed,
-            "progress": {
-                "total": len(pending) + len(completed) + len(failed),
-                "completed": len(completed),
-                "failed": len(failed),
+                "status": status_val,
+                "initialization": {
+                    "pending": pending,
+                    "completed": completed,
+                    "failed": failed,
+                    "progress": {
+                        "total": len(pending) + len(completed) + len(failed),
+                        "completed": len(completed),
+                        "failed": len(failed),
                         "pending": len(pending),
                     },
-        },
-        "readiness_checks": checks,
-        "check_summary": check_summary,
-        "integrations": integrations_status,
-        "missing_dependencies": missing_dependencies,
+                },
+                "readiness_checks": checks,
+                "check_summary": check_summary,
+                "integrations": integrations_status,
+                "missing_dependencies": missing_dependencies,
                 "ready": (status_val == "ready"),
             }
         ),

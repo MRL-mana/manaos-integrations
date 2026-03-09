@@ -1,12 +1,9 @@
 """
 Unit tests for scripts/misc/predictive_maintenance.py
 """
-import sys
-import json
 import time
 from collections import deque
 from unittest.mock import MagicMock, patch
-from datetime import datetime
 
 import pytest
 from scripts.misc.predictive_maintenance import PredictiveMaintenance, SKLEARN_AVAILABLE
@@ -63,13 +60,19 @@ class TestCheckThresholds:
     def test_memory_high_alert(self, pm):
         metrics = {"cpu": 50.0, "memory": 90.0, "disk": 70.0}
         alerts = pm.check_thresholds(metrics)
-        exceeded = [a for a in alerts if a["type"] == "threshold_exceeded" and a["metric"] == "memory"]
+        exceeded = [
+            a for a in alerts
+            if a["type"] == "threshold_exceeded" and a["metric"] == "memory"
+        ]
         assert len(exceeded) == 1
 
     def test_disk_high_alert(self, pm):
         metrics = {"cpu": 50.0, "memory": 60.0, "disk": 95.0}
         alerts = pm.check_thresholds(metrics)
-        exceeded = [a for a in alerts if a["type"] == "threshold_exceeded" and a["metric"] == "disk"]
+        exceeded = [
+            a for a in alerts
+            if a["type"] == "threshold_exceeded" and a["metric"] == "disk"
+        ]
         assert len(exceeded) == 1
 
     def test_severity_high_when_120pct(self, pm):

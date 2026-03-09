@@ -1,0 +1,14 @@
+{
+  "hour_start": "2026-03-08T08:00:00",
+  "day_start": "2026-03-08T00:00:00",
+  "per_hour": {
+    "llm_calls": 2,
+    "image_jobs": 0,
+    "video_jobs": 0
+  },
+  "per_day": {
+    "llm_calls": 0,
+    "image_jobs": 1,
+    "video_jobs": 0
+  }
+}

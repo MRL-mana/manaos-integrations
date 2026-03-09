@@ -1,5 +1,5 @@
 {
-  "include": ["manaos_integrations"],
+  "include": ["."],
   "exclude": [
     "**/.venv/**",
     "**/venv/**",
@@ -11,5 +11,6 @@
     "**/snapshots/**"
   ],
   "reportMissingImports": "none",
-  "reportMissingTypeStubs": "none"
+  "reportMissingTypeStubs": "none",
+  "reportMissingModuleSource": "none"
 }

@@ -3,7 +3,7 @@ Unit tests for scripts/misc/http_session_pool.py
 """
 import sys
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 # ── external module mocks ──────────────────────────────────────────────────
 _ml = MagicMock()
@@ -21,9 +21,9 @@ _tc_mod = MagicMock()
 _tc_mod.get_timeout_config = MagicMock(return_value={"api_call": 10.0})
 sys.modules.setdefault("manaos_timeout_config", _tc_mod)
 
-import pytest
-import requests
-from scripts.misc.http_session_pool import (
+import pytest  # noqa: E402
+import requests  # noqa: E402
+from scripts.misc.http_session_pool import (  # noqa: E402
     HTTPSessionPool,
     get_http_session_pool,
 )

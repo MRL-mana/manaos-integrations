@@ -10,8 +10,7 @@ _paths_mod = MagicMock()
 _paths_mod.COMFYUI_PORT = 8188
 sys.modules.setdefault("_paths", _paths_mod)
 
-import pytest
-from scripts.misc.comfyui_monitor import check_comfyui_status, send_slack
+from scripts.misc.comfyui_monitor import check_comfyui_status, send_slack  # noqa: E402
 
 
 # ── helpers ────────────────────────────────────────────────────────────────

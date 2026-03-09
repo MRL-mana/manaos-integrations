@@ -7,13 +7,12 @@ scripts/checks/check_environment_variables.py の純粋関数テスト
 """
 import sys
 from pathlib import Path
-import pytest
 
 # scripts/checks を sys.path に追加
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "checks"))
 
 # 'os' や requests が必要な関数だけテスト (check_path_exists は純粋)
-from check_environment_variables import check_path_exists  # type: ignore
+from check_environment_variables import check_path_exists  # type: ignore  # noqa: E402
 
 
 # ─── check_path_exists ────────────────────────────────────────────────────────
