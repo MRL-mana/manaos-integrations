@@ -19,6 +19,8 @@ _hf_hub_mod.HfApi = _hf_api_cls
 _hf_hub_mod.snapshot_download = MagicMock(return_value="/cache/model")
 _hf_hub_mod.utils = MagicMock()
 _hf_hub_mod.utils.HfHubHTTPError = Exception  # use base Exception for easy raising
+_orig_hf_hub = sys.modules.pop("huggingface_hub", None)
+_orig_hf_utils = sys.modules.pop("huggingface_hub.utils", None)
 sys.modules["huggingface_hub"] = _hf_hub_mod
 # utils sub-module
 sys.modules["huggingface_hub.utils"] = MagicMock()
@@ -27,6 +29,16 @@ sys.modules["huggingface_hub.utils"] = MagicMock()
 sys.modules.pop("scripts.misc.huggingface_helper", None)
 
 from scripts.misc.huggingface_helper import HuggingFaceHelper  # noqa: E402
+
+# Restore real huggingface_hub so integration tests are not polluted
+if _orig_hf_hub is not None:
+    sys.modules["huggingface_hub"] = _orig_hf_hub
+else:
+    sys.modules.pop("huggingface_hub", None)
+if _orig_hf_utils is not None:
+    sys.modules["huggingface_hub.utils"] = _orig_hf_utils
+else:
+    sys.modules.pop("huggingface_hub.utils", None)
 
 
 def _make_helper(token=None):
@@ -62,7 +74,7 @@ class TestSearchModels:
         fake_model.likes = 10
         fake_model.tags = ["text-to-image"]
         fake_model.pipeline_tag = "text-to-image"
-        helper.api.list_models.return_value = [fake_model]
+        helper.api.list_models.return_value = [fake_model]  # type: ignore
 
         result = helper.search_models("stable-diffusion", task="text-to-image", limit=5)
 
@@ -72,16 +84,16 @@ class TestSearchModels:
 
     def test_returns_empty_list_on_error(self):
         helper = _make_helper()
-        helper.api.list_models.side_effect = RuntimeError("API error")
+        helper.api.list_models.side_effect = RuntimeError("API error")  # type: ignore
         result = helper.search_models("query")
         assert result == []
 
     def test_passes_query_and_task_to_api(self):
         helper = _make_helper()
-        helper.api.list_models.return_value = []
+        helper.api.list_models.return_value = []  # type: ignore
         helper.search_models("diffusion", task="text-to-image", limit=3)
-        helper.api.list_models.assert_called_once_with(
-            search="diffusion", task="text-to-image", limit=3
+        helper.api.list_models.assert_called_once_with(  # type: ignore
+            search="diffusion", pipeline_tag="text-to-image", limit=3
         )
 
 
@@ -130,16 +142,16 @@ class TestGetModelInfo:
         fake_info.pipeline_tag = "text-generation"
         sib = MagicMock(); sib.rfilename = "model.safetensors"
         fake_info.siblings = [sib]
-        helper.api.model_info.return_value = fake_info
+        helper.api.model_info.return_value = fake_info  # type: ignore
 
         result = helper.get_model_info("org/model")
 
-        assert result["id"] == "org/model"
-        assert result["downloads"] == 500
-        assert "model.safetensors" in result["siblings"]
+        assert result["id"] == "org/model"  # type: ignore[index]
+        assert result["downloads"] == 500  # type: ignore[index]
+        assert "model.safetensors" in result["siblings"]  # type: ignore[index]
 
     def test_returns_none_on_error(self):
         helper = _make_helper()
-        helper.api.model_info.side_effect = RuntimeError("not found")
+        helper.api.model_info.side_effect = RuntimeError("not found")  # type: ignore
         result = helper.get_model_info("nonexistent/model")
         assert result is None
