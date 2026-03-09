@@ -8476,5 +8476,361 @@
     },
     "issues": [],
     "recommendations": []
+  },
+  {
+    "timestamp": "2026-03-09T09:24:58.135805",
+    "checks": {
+      "health": {
+        "overall": "healthy",
+        "components": {
+          "cpu": {
+            "status": "healthy",
+            "usage_percent": 67.1
+          },
+          "memory": {
+            "status": "healthy",
+            "usage_percent": 53.8,
+            "available_gb": 58.03738021850586
+          },
+          "disk": {
+            "status": "healthy",
+            "usage_percent": 64.5,
+            "free_gb": 660.0910301208496
+          }
+        }
+      },
+      "performance": {
+        "metrics": {
+          "cpu_percent": 84.6,
+          "memory_percent": 53.8,
+          "disk_read_mb": 30131.0966796875,
+          "disk_write_mb": 22617.9814453125,
+          "network_sent_mb": 103.24163341522217,
+          "network_recv_mb": 340.6607942581177
+        },
+        "bottlenecks": []
+      },
+      "resources": {
+        "resource_usage": {
+          "cpu": {
+            "current": 67.7,
+            "threshold": 85,
+            "status": "ok"
+          },
+          "memory": {
+            "current": 53.9,
+            "threshold": 85,
+            "status": "ok",
+            "available_gb": 57.92584991455078
+          },
+          "disk": {
+            "current": 64.5,
+            "threshold": 85,
+            "status": "ok",
+            "free_gb": 660.0896186828613
+          }
+        },
+        "warnings": []
+      },
+      "configuration": {
+        "config_files": [
+          {
+            "file": "manaos_integration_config.json",
+            "status": "valid",
+            "size_kb": 4.248046875
+          },
+          {
+            "file": "comprehensive_self_capabilities_config.json",
+            "status": "valid",
+            "size_kb": 0.34765625
+          },
+          {
+            "file": "self_evolution_config.json",
+            "status": "valid",
+            "size_kb": 0.1494140625
+          },
+          {
+            "file": "self_protection_config.json",
+            "status": "valid",
+            "size_kb": 0.166015625
+          },
+          {
+            "file": "self_management_config.json",
+            "status": "valid",
+            "size_kb": 0.2021484375
+          }
+        ],
+        "issues": []
+      }
+    },
+    "issues": [],
+    "recommendations": []
+  },
+  {
+    "timestamp": "2026-03-09T09:25:10.570105",
+    "checks": {
+      "health": {
+        "overall": "healthy",
+        "components": {
+          "cpu": {
+            "status": "healthy",
+            "usage_percent": 76.0
+          },
+          "memory": {
+            "status": "healthy",
+            "usage_percent": 54.5,
+            "available_gb": 57.22188949584961
+          },
+          "disk": {
+            "status": "healthy",
+            "usage_percent": 64.5,
+            "free_gb": 660.0997581481934
+          }
+        }
+      },
+      "performance": {
+        "metrics": {
+          "cpu_percent": 63.5,
+          "memory_percent": 54.4,
+          "disk_read_mb": 30325.9716796875,
+          "disk_write_mb": 22809.134765625,
+          "network_sent_mb": 103.3053150177002,
+          "network_recv_mb": 340.7446575164795
+        },
+        "bottlenecks": []
+      },
+      "resources": {
+        "resource_usage": {
+          "cpu": {
+            "current": 56.9,
+            "threshold": 85,
+            "status": "ok"
+          },
+          "memory": {
+            "current": 54.4,
+            "threshold": 85,
+            "status": "ok",
+            "available_gb": 57.243221282958984
+          },
+          "disk": {
+            "current": 64.5,
+            "threshold": 85,
+            "status": "ok",
+            "free_gb": 660.0997123718262
+          }
+        },
+        "warnings": []
+      },
+      "configuration": {
+        "config_files": [
+          {
+            "file": "manaos_integration_config.json",
+            "status": "valid",
+            "size_kb": 4.248046875
+          },
+          {
+            "file": "comprehensive_self_capabilities_config.json",
+            "status": "valid",
+            "size_kb": 0.34765625
+          },
+          {
+            "file": "self_evolution_config.json",
+            "status": "valid",
+            "size_kb": 0.1494140625
+          },
+          {
+            "file": "self_protection_config.json",
+            "status": "valid",
+            "size_kb": 0.166015625
+          },
+          {
+            "file": "self_management_config.json",
+            "status": "valid",
+            "size_kb": 0.2021484375
+          }
+        ],
+        "issues": []
+      }
+    },
+    "issues": [],
+    "recommendations": []
+  },
+  {
+    "timestamp": "2026-03-09T09:35:02.917495",
+    "checks": {
+      "health": {
+        "overall": "healthy",
+        "components": {
+          "cpu": {
+            "status": "healthy",
+            "usage_percent": 60.6
+          },
+          "memory": {
+            "status": "healthy",
+            "usage_percent": 58.5,
+            "available_gb": 52.1898307800293
+          },
+          "disk": {
+            "status": "healthy",
+            "usage_percent": 64.3,
+            "free_gb": 665.6046371459961
+          }
+        }
+      },
+      "performance": {
+        "metrics": {
+          "cpu_percent": 33.9,
+          "memory_percent": 58.4,
+          "disk_read_mb": 56318.66796875,
+          "disk_write_mb": 65494.283203125,
+          "network_sent_mb": 167.69374561309814,
+          "network_recv_mb": 697.9604511260986
+        },
+        "bottlenecks": []
+      },
+      "resources": {
+        "resource_usage": {
+          "cpu": {
+            "current": 48.7,
+            "threshold": 85,
+            "status": "ok"
+          },
+          "memory": {
+            "current": 58.5,
+            "threshold": 85,
+            "status": "ok",
+            "available_gb": 52.18918991088867
+          },
+          "disk": {
+            "current": 64.3,
+            "threshold": 85,
+            "status": "ok",
+            "free_gb": 665.604362487793
+          }
+        },
+        "warnings": []
+      },
+      "configuration": {
+        "config_files": [
+          {
+            "file": "manaos_integration_config.json",
+            "status": "valid",
+            "size_kb": 4.248046875
+          },
+          {
+            "file": "comprehensive_self_capabilities_config.json",
+            "status": "valid",
+            "size_kb": 0.34765625
+          },
+          {
+            "file": "self_evolution_config.json",
+            "status": "valid",
+            "size_kb": 0.1494140625
+          },
+          {
+            "file": "self_protection_config.json",
+            "status": "valid",
+            "size_kb": 0.166015625
+          },
+          {
+            "file": "self_management_config.json",
+            "status": "valid",
+            "size_kb": 0.2021484375
+          }
+        ],
+        "issues": []
+      }
+    },
+    "issues": [],
+    "recommendations": []
+  },
+  {
+    "timestamp": "2026-03-09T09:35:15.228467",
+    "checks": {
+      "health": {
+        "overall": "healthy",
+        "components": {
+          "cpu": {
+            "status": "healthy",
+            "usage_percent": 41.5
+          },
+          "memory": {
+            "status": "healthy",
+            "usage_percent": 58.6,
+            "available_gb": 52.08329391479492
+          },
+          "disk": {
+            "status": "healthy",
+            "usage_percent": 64.3,
+            "free_gb": 665.5958633422852
+          }
+        }
+      },
+      "performance": {
+        "metrics": {
+          "cpu_percent": 40.3,
+          "memory_percent": 58.6,
+          "disk_read_mb": 56324.0673828125,
+          "disk_write_mb": 65545.4287109375,
+          "network_sent_mb": 168.8966884613037,
+          "network_recv_mb": 703.8700637817383
+        },
+        "bottlenecks": []
+      },
+      "resources": {
+        "resource_usage": {
+          "cpu": {
+            "current": 24.2,
+            "threshold": 85,
+            "status": "ok"
+          },
+          "memory": {
+            "current": 58.6,
+            "threshold": 85,
+            "status": "ok",
+            "available_gb": 52.064666748046875
+          },
+          "disk": {
+            "current": 64.3,
+            "threshold": 85,
+            "status": "ok",
+            "free_gb": 665.5954742431641
+          }
+        },
+        "warnings": []
+      },
+      "configuration": {
+        "config_files": [
+          {
+            "file": "manaos_integration_config.json",
+            "status": "valid",
+            "size_kb": 4.248046875
+          },
+          {
+            "file": "comprehensive_self_capabilities_config.json",
+            "status": "valid",
+            "size_kb": 0.34765625
+          },
+          {
+            "file": "self_evolution_config.json",
+            "status": "valid",
+            "size_kb": 0.1494140625
+          },
+          {
+            "file": "self_protection_config.json",
+            "status": "valid",
+            "size_kb": 0.166015625
+          },
+          {
+            "file": "self_management_config.json",
+            "status": "valid",
+            "size_kb": 0.2021484375
+          }
+        ],
+        "issues": []
+      }
+    },
+    "issues": [],
+    "recommendations": []
   }
 ]

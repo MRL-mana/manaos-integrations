@@ -4,7 +4,7 @@ Unit tests for scripts/misc/realtime_dashboard.py
 """
 import sys
 import types
-from typing import Any
+from typing import Any, cast
 import pytest
 from unittest.mock import MagicMock
 
@@ -27,26 +27,26 @@ if (
     import flask as _real_flask  # noqa: F401
 
 # unified_api_server
-_uas_mock: Any = types.ModuleType("unified_api_server")
-_fake_integrations = {}
+_uas_mock: Any = cast(Any, types.ModuleType("unified_api_server"))
+_fake_integrations: dict[str, Any] = {}
 _uas_mock.initialize_integrations = MagicMock()
 _uas_mock.integrations = _fake_integrations
 sys.modules["unified_api_server"] = _uas_mock  # setdefault ではなく強制上書き
 
 # flask_socketio
-_fsi: Any = types.ModuleType("flask_socketio")
+_fsi: Any = cast(Any, types.ModuleType("flask_socketio"))
 _socketio_instance = MagicMock()
 _fsi.SocketIO = MagicMock(return_value=_socketio_instance)
 _fsi.emit = MagicMock()
 sys.modules.setdefault("flask_socketio", _fsi)
 
 # manaos_service_bridge (optional, already guarded by try/except in source)
-_msb: Any = types.ModuleType("manaos_service_bridge")
+_msb: Any = cast(Any, types.ModuleType("manaos_service_bridge"))
 _msb.ManaOSServiceBridge = MagicMock(side_effect=ImportError("stub"))
 sys.modules.setdefault("manaos_service_bridge", _msb)
 
 # ai_agent_autonomous (optional, guarded by try/except)
-_aaa: Any = types.ModuleType("ai_agent_autonomous")
+_aaa: Any = cast(Any, types.ModuleType("ai_agent_autonomous"))
 _aaa.AutonomousAgent = MagicMock(side_effect=ImportError("stub"))
 sys.modules.setdefault("ai_agent_autonomous", _aaa)
 

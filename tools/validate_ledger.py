@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List
 
 try:
-    import yaml
+    import yaml  # type: ignore[import-untyped]
 except ImportError:
     print("Missing dependency: pyyaml. Install with: pip install pyyaml", file=sys.stderr)
     sys.exit(1)
@@ -106,7 +106,8 @@ def validate_basic(services: Dict[str, ServiceRef]) -> List[str]:
             continue
         if service.port in used_ports:
             errors.append(
-                f"Port conflict: {service.port} used by {used_ports[service.port]} and {service.name}"
+                f"Port conflict: {service.port} used by "
+                f"{used_ports[service.port]} and {service.name}"
             )
         else:
             used_ports[service.port] = service.name
@@ -115,7 +116,8 @@ def validate_basic(services: Dict[str, ServiceRef]) -> List[str]:
         for dependency in service.depends_on:
             if dependency not in services:
                 errors.append(
-                    f"Unknown depends_on: {service.name} depends on '{dependency}' which is not defined in ledger"
+                    f"Unknown depends_on: {service.name} depends on "
+                    f"'{dependency}' which is not defined in ledger"
                 )
 
     required_core_services = ["memory", "learning", "llm_routing", "unified_api"]
@@ -124,7 +126,8 @@ def validate_basic(services: Dict[str, ServiceRef]) -> List[str]:
             errors.append(f"Missing core service '{service_name}' in ledger")
         elif services[service_name].group != "core":
             errors.append(
-                f"Service '{service_name}' must be under core, but found under {services[service_name].group}"
+                f"Service '{service_name}' must be under core, "
+                f"but found under {services[service_name].group}"
             )
 
     for service in services.values():
@@ -213,7 +216,10 @@ def validate_readme(readme_path: str) -> List[str]:
     text = open(readme_path, "r", encoding="utf-8").read()
 
     if "unified_api_server.py" in text:
-        errors.append("README still mentions 'unified_api_server.py' (should reference current structure)")
+        errors.append(
+            "README still mentions 'unified_api_server.py' "
+            "(should reference current structure)"
+        )
 
     if re.search(r"services_ledger\.ya?ml", text) is None:
         errors.append("README does not mention services_ledger.yaml (SSOT reference missing)")
