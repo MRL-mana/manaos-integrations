@@ -98,7 +98,7 @@ class OptimizedBatchGenerator:
             return False
 
     def generate_single_image(self, prompt: str, width: int = 512, height: int = 512, 
-                            num_inference_steps: int = 20, seed: int = None) -> Tuple[str, float]:
+                            num_inference_steps: int = 20, seed: int = None) -> Tuple[str, float]:  # type: ignore
         """単一画像を生成する"""
         if not self.pipeline:
             raise RuntimeError("モデルが読み込まれていません。")
@@ -128,10 +128,10 @@ class OptimizedBatchGenerator:
             return filepath, generation_time
         except Exception as e:
             logger.error(f"❌ 画像生成エラー: {e}")
-            return None, 0
+            return None, 0  # type: ignore
 
     def generate_batch(self, prompts: List[str], width: int = 512, height: int = 512,
-                      num_inference_steps: int = 20, seeds: List[int] = None) -> Dict:
+                      num_inference_steps: int = 20, seeds: List[int] = None) -> Dict:  # type: ignore
         """バッチ画像生成を実行する"""
         if not self.pipeline:
             raise RuntimeError("モデルが読み込まれていません。")
@@ -159,7 +159,7 @@ class OptimizedBatchGenerator:
                 seed = seeds[i] if seeds and i < len(seeds) else None
                 future = executor.submit(
                     self.generate_single_image,
-                    prompt, width, height, num_inference_steps, seed
+                    prompt, width, height, num_inference_steps, seed  # type: ignore
                 )
                 futures.append((i, future))
 
@@ -244,9 +244,9 @@ class OptimizedBatchGenerator:
         
         # CPU使用率とメモリ使用率に基づいて最適なワーカー数を決定
         if status["cpu_percent"] < 50 and status["memory_percent"] < 70:
-            optimal_workers = min(4, psutil.cpu_count())
+            optimal_workers = min(4, psutil.cpu_count())  # type: ignore
         elif status["cpu_percent"] < 80 and status["memory_percent"] < 85:
-            optimal_workers = min(2, psutil.cpu_count())
+            optimal_workers = min(2, psutil.cpu_count())  # type: ignore
         else:
             optimal_workers = 1
             

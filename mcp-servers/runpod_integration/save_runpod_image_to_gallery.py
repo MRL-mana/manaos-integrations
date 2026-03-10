@@ -14,7 +14,7 @@ from runpod_serverless_client import RunPodServerlessClient
 GALLERY_DIR = Path('/root/trinity_workspace/generated_images')
 GALLERY_DIR.mkdir(parents=True, exist_ok=True)
 
-def save_runpod_image_to_gallery(prompt: str = None, result: dict = None):
+def save_runpod_image_to_gallery(prompt: str = None, result: dict = None):  # type: ignore
     """
     RunPod Serverlessで生成した画像をギャラリーに保存
 

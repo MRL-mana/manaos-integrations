@@ -182,10 +182,10 @@ class IntelligentCache:
             
             # アクセス頻度が高い場合はTTLを延長
             if access_freq > 10:
-                entry.ttl = min(entry.ttl * 1.5, 86400)  # 最大24時間
+                entry.ttl = min(entry.ttl * 1.5, 86400)  # 最大24時間  # type: ignore
             # アクセス頻度が低い場合はTTLを短縮
             elif access_freq < 3:
-                entry.ttl = max(entry.ttl * 0.8, 300)  # 最小5分
+                entry.ttl = max(entry.ttl * 0.8, 300)  # 最小5分  # type: ignore
         
         logger.info("✅ キャッシュを最適化しました")
     
@@ -242,7 +242,7 @@ def cached(ttl: int = 3600, key_func: Optional[Callable] = None):
             
             return result
         
-        wrapper.cache = cache
+        wrapper.cache = cache  # type: ignore
         return wrapper
     return decorator
 

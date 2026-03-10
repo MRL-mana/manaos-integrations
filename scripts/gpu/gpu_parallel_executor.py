@@ -210,7 +210,7 @@ class GPUParallelExecutor:
                                 data = json.loads(line)
                                 if callback:
                                     await callback(request.request_id, data)
-                            except json.JSONDecodeError:
+                            except json.JSONDecodeError:  # type: ignore[possibly-unbound]
                                 pass
         except Exception as e:
             logger.error(f"ストリーミング実行エラー: {e}")

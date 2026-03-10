@@ -731,7 +731,7 @@ async def get_tasks(user_id: str):
                 "description": task.description,
                 "status": task.status,
                 "priority": task.priority,
-                "due_date": task.due_date.isoformat() if task.due_date else None,
+                "due_date": task.due_date.isoformat() if task.due_date else None,  # type: ignore
                 "created_at": task.created_at.isoformat()
             })
         
@@ -781,7 +781,7 @@ async def get_schedules(user_id: str):
                 "title": schedule.title,
                 "description": schedule.description,
                 "start_time": schedule.start_time.isoformat(),
-                "end_time": schedule.end_time.isoformat() if schedule.end_time else None,
+                "end_time": schedule.end_time.isoformat() if schedule.end_time else None,  # type: ignore
                 "is_recurring": schedule.is_recurring,
                 "recurrence_pattern": schedule.recurrence_pattern,
                 "created_at": schedule.created_at.isoformat()

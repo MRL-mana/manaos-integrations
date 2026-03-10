@@ -92,12 +92,12 @@ def _start_health_server():
 
 # ── MCP サーバー ────────────────────────────────────
 if MCP_AVAILABLE:
-    server = Server("secretary-system")
+    server = Server("secretary-system")  # type: ignore[possibly-unbound]
 
     @server.list_tools()
     async def list_tools() -> list[Tool]:
         return [
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="secretary_add_reminder",
                 description="リマインダーを追加する。タイトル・説明・実行時刻・繰り返しタイプを指定。",
                 inputSchema={
@@ -124,12 +124,12 @@ if MCP_AVAILABLE:
                     "required": ["title", "scheduled_time"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="secretary_list_reminders",
                 description="期限切れ（未完了）のリマインダー一覧を返す。",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="secretary_complete_reminder",
                 description="指定IDのリマインダーを完了済みマークする。",
                 inputSchema={
@@ -143,7 +143,7 @@ if MCP_AVAILABLE:
                     "required": ["reminder_id"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="secretary_daily_report",
                 description="今日の日次レポートを生成する（タスク・イベント・メモのサマリー）。",
                 inputSchema={
@@ -156,7 +156,7 @@ if MCP_AVAILABLE:
                     },
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="secretary_get_reports",
                 description="過去の秘書レポート一覧を返す。",
                 inputSchema={
@@ -203,7 +203,7 @@ if MCP_AVAILABLE:
         else:
             result = {"error": f"Unknown tool: {name}"}
 
-        return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]
+        return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]  # type: ignore[possibly-unbound]
 
 
 async def main():
@@ -214,7 +214,7 @@ async def main():
     health_thread = threading.Thread(target=_start_health_server, daemon=True)
     health_thread.start()
 
-    async with stdio_server() as (read_stream, write_stream):
+    async with stdio_server() as (read_stream, write_stream):  # type: ignore[possibly-unbound]
         await server.run(
             read_stream,
             write_stream,

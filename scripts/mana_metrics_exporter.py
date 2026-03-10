@@ -298,7 +298,7 @@ def calculate_autonomy_metrics():
 
         # 信頼度キャリブレーション（Remi Autonomy Engineから）
         try:
-            calib_file = Path('/root/.mana_autonomy_data/confidence_calibration.json')
+            calib_file = Path('/root/.mana_autonomy_data/confidence_calibration.json')  # type: ignore[name-defined]
             if calib_file.exists():
                 with open(calib_file, 'r') as f:
                     calibration = json.load(f)
@@ -310,7 +310,7 @@ def calculate_autonomy_metrics():
 
         # 回避コスト計算（簡易版：自動実行回数 × 平均時間節約）
         try:
-            history_file = Path('/root/.mana_autonomy_data/autonomy_history.json')
+            history_file = Path('/root/.mana_autonomy_data/autonomy_history.json')  # type: ignore[name-defined]
             if history_file.exists():
                 with open(history_file, 'r') as f:
                     history = json.load(f)
@@ -406,11 +406,11 @@ def send_slack_notification(message: str, channel: str = "#manaos"):
         def _send():
             try:
                 httpx.post(webhook_url, json={"text": message, "channel": channel}, timeout=5.0)
-            except requests.RequestException:
+            except requests.RequestException:  # type: ignore[name-defined]
                 pass  # 通知失敗はログに出力しない
 
         threading.Thread(target=_send, daemon=True).start()
-    except requests.RequestException:
+    except requests.RequestException:  # type: ignore[name-defined]
         pass
 
 
@@ -431,7 +431,7 @@ def check_autonomy_alerts():
                 current_autonomy = stats.get('autonomy_level', 0.0)
 
                 # 過去24時間の自律率を取得（簡易版：履歴から計算）
-                history_file = Path('/root/.mana_autonomy_data/autonomy_history.json')
+                history_file = Path('/root/.mana_autonomy_data/autonomy_history.json')  # type: ignore[name-defined]
                 if history_file.exists():
                     with open(history_file, 'r') as f:
                         history = json.load(f)
@@ -482,7 +482,7 @@ def check_disk_alert():
         disk = psutil.disk_usage('/root')
         if disk.percent >= 85:
             # トップ10容量ファイルを取得
-            top_files = subprocess.run(
+            top_files = subprocess.run(  # type: ignore[name-defined]
                 ['find', '/root', '-type', 'f', '-exec', 'du', '-h', '{}', '+'],
                 capture_output=True, text=True, timeout=30
             )

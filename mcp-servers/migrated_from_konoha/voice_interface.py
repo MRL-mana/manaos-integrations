@@ -48,7 +48,7 @@ class VoiceInterface:
     def __init__(self):
         """初期化"""
         self.db = DatabaseManager()
-        self.recognizer = sr.Recognizer() if SPEECH_RECOGNITION_AVAILABLE else None
+        self.recognizer = sr.Recognizer() if SPEECH_RECOGNITION_AVAILABLE else None  # type: ignore[possibly-unbound]
         self.running = False
         
         # コマンドパターン
@@ -96,20 +96,20 @@ class VoiceInterface:
     
     async def _listen_and_process(self):
         """音声を聞いて処理"""
-        with sr.Microphone() as source:
+        with sr.Microphone() as source:  # type: ignore[possibly-unbound]
             print("🎤 聞いています... (話してください)")
             
             # ノイズ調整
-            self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
+            self.recognizer.adjust_for_ambient_noise(source, duration=0.5)  # type: ignore[union-attr]
             
             try:
                 # 音声録音
-                audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=10)
+                audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=10)  # type: ignore[union-attr]
                 
                 print("🔄 認識中...")
                 
                 # Google Speech Recognition
-                text = self.recognizer.recognize_google(audio, language='ja-JP')
+                text = self.recognizer.recognize_google(audio, language='ja-JP')  # type: ignore[union-attr]
                 
                 print(f"✅ 認識結果: {text}")
                 print()
@@ -117,11 +117,11 @@ class VoiceInterface:
                 # コマンド処理
                 await self._process_command(text)
                 
-            except sr.WaitTimeoutError:
+            except sr.WaitTimeoutError:  # type: ignore[possibly-unbound]
                 print("⏰ タイムアウト（音声が聞こえませんでした）")
-            except sr.UnknownValueError:
+            except sr.UnknownValueError:  # type: ignore[possibly-unbound]
                 print("❓ 音声を認識できませんでした")
-            except sr.RequestError as e:
+            except sr.RequestError as e:  # type: ignore[possibly-unbound]
                 print(f"❌ 音声認識サービスエラー: {e}")
     
     async def _process_command(self, text: str):

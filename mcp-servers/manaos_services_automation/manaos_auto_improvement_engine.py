@@ -69,14 +69,14 @@ class SystemAnalyzer:
             for container in running:
                 try:
                     stats = container.stats(stream=False)
-                    cpu_delta = stats['cpu_stats']['cpu_usage']['total_usage'] - \
-                               stats['precpu_stats']['cpu_usage']['total_usage']
-                    system_delta = stats['cpu_stats']['system_cpu_usage'] - \
-                                  stats['precpu_stats']['system_cpu_usage']
+                    cpu_delta = stats['cpu_stats']['cpu_usage']['total_usage'] - \  # type: ignore[index]
+                               stats['precpu_stats']['cpu_usage']['total_usage']  # type: ignore[index]
+                    system_delta = stats['cpu_stats']['system_cpu_usage'] - \  # type: ignore[index]
+                                  stats['precpu_stats']['system_cpu_usage']  # type: ignore[index]
                     cpu_percent = (cpu_delta / system_delta) * 100.0 if system_delta > 0 else 0
                     
-                    mem_usage = stats['memory_stats']['usage']
-                    mem_limit = stats['memory_stats']['limit']
+                    mem_usage = stats['memory_stats']['usage']  # type: ignore[index]
+                    mem_limit = stats['memory_stats']['limit']  # type: ignore[index]
                     mem_percent = (mem_usage / mem_limit) * 100.0
                     
                     if cpu_percent > 80:
@@ -91,7 +91,7 @@ class SystemAnalyzer:
                 "running": len(running),
                 "stopped": len(stopped),
                 "resource_issues": resource_issues,
-                "containers": [{"name": c.name, "status": c.status, "image": c.image.tags[0] if c.image.tags else "unknown"} for c in running]
+                "containers": [{"name": c.name, "status": c.status, "image": c.image.tags[0] if c.image.tags else "unknown"} for c in running]  # type: ignore[union-attr]
             }
         except Exception as e:
             logger.error(f"Docker analysis error: {e}")

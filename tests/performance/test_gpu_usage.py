@@ -10,7 +10,7 @@ import requests
 
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 print("=" * 60)
 print("GPU使用状況テスト")

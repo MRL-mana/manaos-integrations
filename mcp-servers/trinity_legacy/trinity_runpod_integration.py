@@ -446,7 +446,7 @@ print("✅ Trinity Transformers完了")
         logger.info(f"🌉 Trinity-RunPodブリッジサーバー起動中 (ポート {self.bridge_port})")
         
         server = await websockets.serve(
-            self.trinity_websocket_handler,
+            self.trinity_websocket_handler,  # type: ignore[misc]
             "0.0.0.0",
             self.bridge_port
         )

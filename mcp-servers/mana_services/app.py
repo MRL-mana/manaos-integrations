@@ -121,7 +121,7 @@ SERVICES = {
 def check_port_status(port):
     """ポートが開いているかチェック"""
     for conn in psutil.net_connections(kind='inet'):
-        if conn.laddr.port == int(port) and conn.status == 'LISTEN':
+        if conn.laddr.port == int(port) and conn.status == 'LISTEN':  # type: ignore
             return True
     return False
 
@@ -297,7 +297,7 @@ def restart_service(port):
             "port": port
         }), 500
 
-@app.route('/api/tasks', methods=['GET', 'POST'])
+@app.route('/api/tasks', methods=['GET', 'POST'])  # type: ignore
 def tasks():
     """タスク管理API"""
     conn = sqlite3.connect(DB_PATH)
@@ -352,7 +352,7 @@ def tasks():
         return jsonify({"success": True, "task_id": task_id}), 201
 
 
-@app.route('/api/tasks/<int:task_id>', methods=['GET', 'PUT', 'DELETE'])
+@app.route('/api/tasks/<int:task_id>', methods=['GET', 'PUT', 'DELETE'])  # type: ignore
 def task_detail(task_id):
     """タスク詳細API"""
     conn = sqlite3.connect(DB_PATH)
@@ -444,7 +444,7 @@ def task_detail(task_id):
         return jsonify({"success": True})
 
 
-@app.route('/api/inventory', methods=['GET', 'POST'])
+@app.route('/api/inventory', methods=['GET', 'POST'])  # type: ignore
 def inventory():
     """在庫管理API"""
     conn = sqlite3.connect(DB_PATH)
@@ -498,7 +498,7 @@ def inventory():
         return jsonify({"success": True, "item_id": item_id}), 201
 
 
-@app.route('/api/schedule', methods=['GET', 'POST'])
+@app.route('/api/schedule', methods=['GET', 'POST'])  # type: ignore
 def schedule():
     """スケジュール管理API"""
     conn = sqlite3.connect(DB_PATH)
@@ -656,7 +656,7 @@ def pdf_excel_convert():
         if 'file' in request.files:
             file = request.files['file']
             files = {'file': (file.filename, file.stream, file.content_type)}
-            response = requests.post(api_url, files=files, timeout=300)
+            response = requests.post(api_url, files=files, timeout=300)  # type: ignore
         else:
             data = request.get_json()
             response = requests.post(api_url, json=data, timeout=300)
@@ -978,7 +978,7 @@ def _execute_intent(intent: Dict[str, Any], message: str, user_id: str) -> Dict[
         }
 
 
-@app.route('/api/achievements', methods=['GET', 'POST'])
+@app.route('/api/achievements', methods=['GET', 'POST'])  # type: ignore
 def achievements():
     """実績管理API"""
     conn = sqlite3.connect(DB_PATH)
@@ -1266,7 +1266,7 @@ def export_achievements():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/api/notifications', methods=['GET', 'POST'])
+@app.route('/api/notifications', methods=['GET', 'POST'])  # type: ignore
 def notifications():
     """通知管理API"""
     try:
@@ -1353,7 +1353,7 @@ def notifications():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/api/notifications/<int:notification_id>', methods=['PUT', 'DELETE'])
+@app.route('/api/notifications/<int:notification_id>', methods=['PUT', 'DELETE'])  # type: ignore
 def notification_detail(notification_id):
     """通知詳細API"""
     try:
@@ -1491,7 +1491,7 @@ def global_search():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/api/backup', methods=['GET', 'POST'])
+@app.route('/api/backup', methods=['GET', 'POST'])  # type: ignore
 def backup_data():
     """データバックアップAPI"""
     try:
@@ -1545,7 +1545,7 @@ def backup_data():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/api/backup/<filename>', methods=['GET', 'DELETE'])
+@app.route('/api/backup/<filename>', methods=['GET', 'DELETE'])  # type: ignore
 def backup_detail(filename):
     """バックアップ詳細API"""
     try:

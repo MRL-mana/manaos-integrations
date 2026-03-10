@@ -38,7 +38,7 @@ class BackupInfo:
     created_at: str
     size_bytes: int
     checksum: str
-    metadata: Dict[str, Any] = None
+    metadata: Dict[str, Any] = None  # type: ignore
     
     def __post_init__(self):
         if self.metadata is None:

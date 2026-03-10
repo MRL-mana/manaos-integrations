@@ -77,9 +77,9 @@ class RunPodTrinityWorker:
         if "stable_diffusion_xl" not in self.models:
             self._log("📦 Stable Diffusion XLモデル読み込み中...")
             try:
-                pipe = StableDiffusionXLPipeline.from_pretrained(
+                pipe = StableDiffusionXLPipeline.from_pretrained(  # type: ignore[possibly-unbound]
                     'stabilityai/stable-diffusion-xl-base-1.0', 
-                    torch_dtype=torch.float16,
+                    torch_dtype=torch.float16,  # type: ignore[possibly-unbound]
                     use_safetensors=True
                 )
                 pipe = pipe.to('cuda')
@@ -90,9 +90,9 @@ class RunPodTrinityWorker:
                 self._log(f"❌ Stable Diffusion XLモデル読み込みエラー: {e}", "ERROR")
                 # フォールバック: 古いモデル
                 self._log("🔄 フォールバック: SD 2.1を使用...")
-                pipe = StableDiffusionPipeline.from_pretrained(
+                pipe = StableDiffusionPipeline.from_pretrained(  # type: ignore[possibly-unbound]
                     'stabilityai/stable-diffusion-2-1', 
-                    torch_dtype=torch.float16
+                    torch_dtype=torch.float16  # type: ignore[possibly-unbound]
                 )
                 pipe = pipe.to('cuda')
                 self.models["stable_diffusion_xl"] = pipe
@@ -164,8 +164,8 @@ class RunPodTrinityWorker:
                     "volume_path": self.persistent_dir
                 },
                 "gpu_info": {
-                    "name": torch.cuda.get_device_name(0),
-                    "memory_gb": torch.cuda.get_device_properties(0).total_memory / 1024**3
+                    "name": torch.cuda.get_device_name(0),  # type: ignore[possibly-unbound]
+                    "memory_gb": torch.cuda.get_device_properties(0).total_memory / 1024**3  # type: ignore[possibly-unbound]
                 }
             }
             
@@ -178,9 +178,9 @@ class RunPodTrinityWorker:
         if "stable_diffusion" not in self.models:
             self._log("📦 Stable Diffusion 2.1モデル読み込み中...")
             try:
-                pipe = StableDiffusionPipeline.from_pretrained(
+                pipe = StableDiffusionPipeline.from_pretrained(  # type: ignore[possibly-unbound]
                     'stabilityai/stable-diffusion-2-1', 
-                    torch_dtype=torch.float16
+                    torch_dtype=torch.float16  # type: ignore[possibly-unbound]
                 )
                 pipe = pipe.to('cuda')
                 self.models["stable_diffusion"] = pipe

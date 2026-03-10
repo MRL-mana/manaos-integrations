@@ -33,7 +33,7 @@ class StorageMigrator:
             return False
         
         # 空き容量確認
-        stat = os.statvfs(str(self.storage_dir))
+        stat = os.statvfs(str(self.storage_dir))  # type: ignore[attr-defined]
         free_gb = (stat.f_bavail * stat.f_frsize) / (1024**3)
         
         self.log(f"✅ /mnt/storage500 available: {free_gb:.1f} GB free")
@@ -203,7 +203,7 @@ class StorageMigrator:
         self.log("\n💾 Checking disk usage...")
         
         for mount in ["/", "/mnt/storage500"]:
-            stat = os.statvfs(mount)
+            stat = os.statvfs(mount)  # type: ignore[attr-defined]
             total_gb = (stat.f_blocks * stat.f_frsize) / (1024**3)
             used_gb = ((stat.f_blocks - stat.f_bavail) * stat.f_frsize) / (1024**3)
             free_gb = (stat.f_bavail * stat.f_frsize) / (1024**3)

@@ -37,8 +37,8 @@ from _paths import (
 
 # WindowsのコンソールエンコーディングをUTF-8に設定
 if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 # チェック対象サービス
 SERVICES = {

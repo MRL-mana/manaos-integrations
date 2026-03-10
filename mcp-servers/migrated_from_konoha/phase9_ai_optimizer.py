@@ -275,7 +275,7 @@ class Phase9AIOptimizer:
             
             # 予測実行
             prediction = self.model.predict(features_scaled)[0]
-            confidence = self.model.predict_proba(features_scaled)[0].max() if hasattr(self.model, 'predict_proba') else 0.5
+            confidence = self.model.predict_proba(features_scaled)[0].max() if hasattr(self.model, 'predict_proba') else 0.5  # type: ignore
             
             # 予測結果を履歴に追加
             self.prediction_history.append({
@@ -495,7 +495,7 @@ class Phase9AIOptimizer:
             import psutil
             
             cpu_count = psutil.cpu_count()
-            for i in range(cpu_count):
+            for i in range(cpu_count):  # type: ignore
                 governor_file = f'/sys/devices/system/cpu/cpu{i}/cpufreq/scaling_governor'
                 if os.path.exists(governor_file):
                     with open(governor_file, 'w') as f:

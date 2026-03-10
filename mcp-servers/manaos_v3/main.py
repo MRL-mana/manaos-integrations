@@ -158,7 +158,7 @@ async def search_with_anthropic(query: str) -> Dict[str, Any]:
             max_tokens=1000,
             messages=[{"role": "user", "content": query}]
         )
-        answer = message.content[0].text
+        answer = message.content[0].text  # type: ignore
         processing_time = int((time.time() - start_time) * 1000)
 
         return {

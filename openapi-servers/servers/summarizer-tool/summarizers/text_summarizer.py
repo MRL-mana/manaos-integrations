@@ -37,7 +37,7 @@ class TextSummarizer(BaseSummarizer):
                 "temperature":0.5
             }
         }
-        url = MODEL_URL + '/api/generate'
+        url = MODEL_URL + '/api/generate'  # type: ignore[operator]
         result = requests.post(url=url, json=payload)
         if result.status_code == 200:
             json_data = result.json()

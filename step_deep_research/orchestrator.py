@@ -121,7 +121,7 @@ class StepDeepResearchOrchestrator:
         )
         
         # 予算ガードをジョブ状態に追加（動的属性として）
-        job_state.budget_guard = budget_guard
+        job_state.budget_guard = budget_guard  # type: ignore
         
         self.jobs[job_id] = job_state
         
@@ -188,7 +188,7 @@ class StepDeepResearchOrchestrator:
             self.trinity.log_agent_activity(agent, "Planning completed", {"tasks": len(plan.todo)})
             
             # 予算ガードチェック
-            budget_guard = job_state.budget_guard
+            budget_guard = job_state.budget_guard  # type: ignore
             can_continue, stop_reason, stop_message = budget_guard.check_budget(job_state.budget)
             if not can_continue:
                 raise Exception(f"Budget guard triggered: {stop_message} (reason: {stop_reason.value})")
@@ -292,7 +292,7 @@ class StepDeepResearchOrchestrator:
             if final_critique.is_passed:
                 job_state.status = JobStatus.COMPLETED
                 report_path = self._save_final_report(job_id, report)
-                job_state.final_report_path = str(report_path)
+                job_state.final_report_path = str(report_path)  # type: ignore
                 
                 # キャッシュ保存（合格レポートのみ）
                 if use_cache:
@@ -317,7 +317,7 @@ class StepDeepResearchOrchestrator:
             else:
                 job_state.status = JobStatus.COMPLETED  # 不合格でも完了とする
                 report_path = self._save_final_report(job_id, report)
-                job_state.final_report_path = str(report_path)
+                job_state.final_report_path = str(report_path)  # type: ignore
                 logger.warning(f"[{job_id}] Report did not pass critique: {final_critique.score}")
             
             # 予算更新

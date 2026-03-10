@@ -27,8 +27,8 @@ except Exception:
 # Windowsでのエンコーディング修正
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 try:
     from ocr_multi_provider import MultiProviderOCR
@@ -53,14 +53,14 @@ class EnsembleOCR:
     def __init__(self):
         """初期化"""
         if OCR_AVAILABLE:
-            self.ocr = MultiProviderOCR()
+            self.ocr = MultiProviderOCR()  # type: ignore[possibly-unbound]
             self.available_providers = self.ocr.get_available_providers()
             logger.info(f"利用可能なOCRプロバイダー: {self.available_providers}")
         else:
             self.ocr = None
             self.available_providers = []
     
-    def recognize_ensemble(self, image_path: str, providers: List[str] = None) -> Dict[str, Any]:
+    def recognize_ensemble(self, image_path: str, providers: List[str] = None) -> Dict[str, Any]:  # type: ignore
         """
         複数OCRプロバイダーで認識して統合
         
@@ -263,7 +263,7 @@ OCR結果（ページ {page_num}, チャンク {chunk_num}/{total_chunks}）:
 修正後のテキストのみを返してください（説明は不要）:"""
         
         try:
-            result = generate("qwen2.5:7b", prompt, timeout=60)
+            result = generate("qwen2.5:7b", prompt, timeout=60)  # type: ignore[possibly-unbound]
             if result and result.get('response'):
                 corrected = result['response'].strip()
                 # プロンプトの繰り返しを削除

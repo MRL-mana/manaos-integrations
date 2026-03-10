@@ -12,9 +12,9 @@ import io
 if sys.platform == "win32":
     try:
         if hasattr(sys.stdout, "buffer"):
-            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
         if hasattr(sys.stderr, "buffer"):
-            sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+            sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
     except Exception:
         pass
 

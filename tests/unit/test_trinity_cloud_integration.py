@@ -52,12 +52,12 @@ class TestGetCloudStatus:
         assert status["total_enabled"] == 0
 
     def test_one_service_enabled(self):
-        cis = _make_cis(enabled={"google_drive"})
+        cis = _make_cis(enabled={"google_drive"})  # type: ignore
         status = cis.get_cloud_status()
         assert status["total_enabled"] == 1
 
     def test_two_services_enabled(self):
-        cis = _make_cis(enabled={"google_drive", "aws_s3"})
+        cis = _make_cis(enabled={"google_drive", "aws_s3"})  # type: ignore
         status = cis.get_cloud_status()
         assert status["total_enabled"] == 2
 
@@ -67,7 +67,7 @@ class TestGetCloudStatus:
         assert status["services"]["google_drive"]["status"] == "disabled"
 
     def test_enabled_service_status_is_connected(self):
-        cis = _make_cis(enabled={"dropbox"})
+        cis = _make_cis(enabled={"dropbox"})  # type: ignore
         status = cis.get_cloud_status()
         assert status["services"]["dropbox"]["status"] == "connected"
 

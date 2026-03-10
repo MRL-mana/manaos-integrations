@@ -66,7 +66,7 @@ except ImportError:
 # ========================================
 
 if MCP_AVAILABLE:
-    server = Server("video-pipeline")
+    server = Server("video-pipeline")  # type: ignore[possibly-unbound]
 else:
     server = None
 
@@ -75,7 +75,7 @@ _pipeline = None
 _llm = None
 
 
-def _get_pipeline() -> "VideoPipeline":
+def _get_pipeline() -> "VideoPipeline":  # type: ignore[valid-type]
     global _pipeline
     if _pipeline is None and VideoPipeline is not None:
         config_path = Path(__file__).parent.parent / "video_pipeline_config.json"
@@ -87,7 +87,7 @@ def _get_pipeline() -> "VideoPipeline":
     return _pipeline
 
 
-def _get_llm() -> "LocalLLMClient":
+def _get_llm() -> "LocalLLMClient":  # type: ignore[valid-type]
     global _llm
     if _llm is None and LocalLLMClient is not None:
         _llm = LocalLLMClient()
@@ -100,10 +100,10 @@ def _get_llm() -> "LocalLLMClient":
 
 if MCP_AVAILABLE:
 
-    @server.list_tools()
+    @server.list_tools()  # type: ignore[union-attr]
     async def list_tools() -> list[Tool]:
         return [
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="generate_narration",
                 description=(
                     "ローカルLLM（dolphin-llama3:8b）でナレーション原稿を生成。"
@@ -130,7 +130,7 @@ if MCP_AVAILABLE:
                     "required": ["topic"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="generate_titles",
                 description=(
                     "ローカルLLM（dolphin-mistral:7b）でタイトル・テロップ・ハッシュタグを高速生成。"
@@ -156,7 +156,7 @@ if MCP_AVAILABLE:
                     "required": ["topic"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="analyze_image",
                 description=(
                     "ローカルLLM（llava）で画像を解析し、説明文とSEO用ALTテキストを生成。"
@@ -177,7 +177,7 @@ if MCP_AVAILABLE:
                     "required": ["image_path"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="create_promo_video",
                 description=(
                     "画像 + LLMナレーション + VOICEVOX音声合成 → MoviePyでプロモーション動画を全自動生成。"
@@ -214,7 +214,7 @@ if MCP_AVAILABLE:
                     "required": ["images", "topic"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="create_slideshow",
                 description=(
                     "画像からシンプルなスライドショー動画を生成（LLM不使用、高速）。"
@@ -246,7 +246,7 @@ if MCP_AVAILABLE:
                     "required": ["images"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="uncensored_generate",
                 description=(
                     "無検閲ローカルLLMで自由にテキスト生成。"
@@ -283,25 +283,25 @@ if MCP_AVAILABLE:
                     "required": ["prompt"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="list_models",
                 description="Ollamaで利用可能なローカルLLMモデル一覧を取得",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="system_check",
                 description="動画パイプラインの依存関係・外部サービス接続状態を診断",
                 inputSchema={"type": "object", "properties": {}},
             ),
         ]
 
-    @server.call_tool()
+    @server.call_tool()  # type: ignore[union-attr]
     async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         try:
             result = await _dispatch(name, arguments)
-            return [TextContent(type="text", text=result)]
+            return [TextContent(type="text", text=result)]  # type: ignore[possibly-unbound]
         except Exception as e:
-            return [TextContent(type="text", text=f"エラー: {e}")]
+            return [TextContent(type="text", text=f"エラー: {e}")]  # type: ignore[possibly-unbound]
 
 
 # ========================================
@@ -475,7 +475,7 @@ async def _list_models() -> str:
         loop = asyncio.get_running_loop()
 
         def _fetch():
-            r = requests.get(f"{DEFAULT_OLLAMA_URL}/api/tags", timeout=5)
+            r = requests.get(f"{DEFAULT_OLLAMA_URL}/api/tags", timeout=5)  # type: ignore[union-attr]
             return r.json().get("models", [])
 
         models = await loop.run_in_executor(None, _fetch)
@@ -517,7 +517,7 @@ async def _system_check() -> str:
 
     # Ollama
     try:
-        r = requests.get(f"{DEFAULT_OLLAMA_URL}/api/tags", timeout=3)
+        r = requests.get(f"{DEFAULT_OLLAMA_URL}/api/tags", timeout=3)  # type: ignore[union-attr]
         models = [m["name"] for m in r.json().get("models", [])]
         checks["ollama"] = {"connected": True, "models": models}
     except Exception:
@@ -525,7 +525,7 @@ async def _system_check() -> str:
 
     # VOICEVOX
     try:
-        r = requests.get(f"{DEFAULT_VOICEVOX_URL}/version", timeout=3)
+        r = requests.get(f"{DEFAULT_VOICEVOX_URL}/version", timeout=3)  # type: ignore[union-attr]
         checks["voicevox"] = {"connected": True, "version": r.text.strip('"')}
     except Exception:
         checks["voicevox"] = {"connected": False}
@@ -598,9 +598,9 @@ async def main():
             await asyncio.sleep(3600)
 
     # MCPサーバーを起動（stdio通信）
-    async with stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream, write_stream, server.create_initialization_options()
+    async with stdio_server() as (read_stream, write_stream):  # type: ignore[possibly-unbound]
+        await server.run(  # type: ignore[union-attr]
+            read_stream, write_stream, server.create_initialization_options()  # type: ignore[union-attr]
         )
 
 

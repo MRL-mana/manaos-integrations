@@ -27,7 +27,7 @@ except ImportError as e:
     DEPENDENCIES_OK = False
 
 
-class LoRADataset(Dataset):
+class LoRADataset(Dataset):  # type: ignore[possibly-unbound]
     """LoRA学習用データセット"""
 
     def __init__(self, dataset_path: Path, tokenizer, resolution: int = 512):
@@ -64,11 +64,11 @@ class LoRADataset(Dataset):
         image_path = self.dataset_path / item["file_name"]
 
         # 画像読み込み・前処理
-        image = Image.open(image_path).convert("RGB")
-        image = image.resize((self.resolution, self.resolution), Image.Resampling.LANCZOS)
+        image = Image.open(image_path).convert("RGB")  # type: ignore[possibly-unbound]
+        image = image.resize((self.resolution, self.resolution), Image.Resampling.LANCZOS)  # type: ignore[possibly-unbound]
 
         # PIL Imageをnumpy配列に変換
-        image_array = np.array(image).astype(np.float32) / 255.0
+        image_array = np.array(image).astype(np.float32) / 255.0  # type: ignore[possibly-unbound]
         image_tensor = torch.from_numpy(image_array).permute(2, 0, 1)  # HWC -> CHW
 
         # テキストエンコード
@@ -119,7 +119,7 @@ class LoRATrainer:
         print(f"📦 モデル読み込み中: {self.model_name}")
 
         try:
-            self.pipe = StableDiffusionPipeline.from_pretrained(
+            self.pipe = StableDiffusionPipeline.from_pretrained(  # type: ignore[possibly-unbound]
                 self.model_name,
                 torch_dtype=torch.float16 if self.device.type == "cuda" else torch.float32
             )
@@ -141,16 +141,16 @@ class LoRATrainer:
         """LoRA設定"""
         print(f"🔧 LoRA設定: rank={self.lora_rank}, alpha={self.lora_alpha}")
 
-        lora_config = LoraConfig(
+        lora_config = LoraConfig(  # type: ignore[possibly-unbound]
             r=self.lora_rank,
             lora_alpha=self.lora_alpha,
             target_modules=["to_k", "to_q", "to_v", "to_out.0"],
             lora_dropout=0.1,
-            task_type=TaskType.FEATURE_EXTRACTION
+            task_type=TaskType.FEATURE_EXTRACTION  # type: ignore[possibly-unbound]
         )
 
         # LoRA適用
-        self.unet = get_peft_model(self.unet, lora_config)
+        self.unet = get_peft_model(self.unet, lora_config)  # type: ignore[possibly-unbound]
         self.unet = self.unet.to(self.device)
 
         print("✅ LoRA設定完了")
@@ -164,14 +164,14 @@ class LoRATrainer:
         save_steps: int = 100
     ):
         """学習実行"""
-        dataset_path = Path(dataset_path)
+        dataset_path = Path(dataset_path)  # type: ignore
 
-        if not dataset_path.exists():
+        if not dataset_path.exists():  # type: ignore
             print(f"❌ データセットが見つかりません: {dataset_path}")
             return False
 
         print(f"📊 データセット準備: {dataset_path}")
-        dataset = LoRADataset(dataset_path, self.tokenizer, self.resolution)
+        dataset = LoRADataset(dataset_path, self.tokenizer, self.resolution)  # type: ignore
 
         if len(dataset) == 0:
             print("❌ データセットが空です")
@@ -179,7 +179,7 @@ class LoRATrainer:
 
         print(f"   データ数: {len(dataset)}件")
 
-        dataloader = DataLoader(
+        dataloader = DataLoader(  # type: ignore[possibly-unbound]
             dataset,
             batch_size=batch_size,
             shuffle=True,
@@ -221,12 +221,12 @@ class LoRATrainer:
             if (epoch + 1) % save_steps == 0:
                 checkpoint_dir = self.output_dir / f"checkpoint-{epoch+1}"
                 checkpoint_dir.mkdir(exist_ok=True)
-                self.unet.save_pretrained(checkpoint_dir)
+                self.unet.save_pretrained(checkpoint_dir)  # type: ignore
                 print(f"      💾 チェックポイント保存: {checkpoint_dir}")
 
         # 最終モデル保存
         print(f"\n💾 最終モデル保存中...")
-        self.unet.save_pretrained(self.output_dir)
+        self.unet.save_pretrained(self.output_dir)  # type: ignore
 
         print(f"✅ 学習完了: {self.output_dir}")
         return True

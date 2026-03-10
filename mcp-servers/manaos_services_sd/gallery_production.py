@@ -72,7 +72,7 @@ except Exception as e:
 
 # 後方互換性のため
 if not use_enhanced_queue:
-    job_queue = queue.Queue(maxsize=JOB_QUEUE_SIZE)
+    job_queue = queue.Queue(maxsize=JOB_QUEUE_SIZE)  # type: ignore[possibly-unbound]
 
 job_results = {}
 job_counter = 0
@@ -157,7 +157,7 @@ class JobProcessor:
             except queue.Empty:
                 continue
             except Exception as e:
-                job_id_local = job_id if 'job_id' in locals() else 'unknown'
+                job_id_local = job_id if 'job_id' in locals() else 'unknown'  # type: ignore[possibly-unbound]
                 logger.error(f"❌ ジョブエラー: {job_id_local} - {e}", exc_info=True)
 
                 if 'job_id' in locals():
@@ -167,14 +167,14 @@ class JobProcessor:
                         "error": str(e),
                         "completed_at": datetime.now().isoformat()
                     }
-                    if job_id in job_results:
-                        error_info["request_data"] = job_results[job_id].get("request_data")
-                        error_info["job_type"] = job_results[job_id].get("job_type")
-                    job_results[job_id] = error_info
+                    if job_id in job_results:  # type: ignore[possibly-unbound]
+                        error_info["request_data"] = job_results[job_id].get("request_data")  # type: ignore[possibly-unbound]
+                        error_info["job_type"] = job_results[job_id].get("job_type")  # type: ignore[possibly-unbound]
+                    job_results[job_id] = error_info  # type: ignore[possibly-unbound]
 
                     # 強化されたキューに失敗を記録
                     if use_enhanced_queue:
-                        enhanced_queue.fail_job(job_id, str(e))
+                        enhanced_queue.fail_job(job_id, str(e))  # type: ignore[possibly-unbound]
 
     def execute_job(self, job_type, data):
         if job_type == "generate":
@@ -680,7 +680,7 @@ class GalleryAPI:
                 if lora_name is None:
                     lora_name = "ClothingAdjuster"  # 部分一致で検索
                 payload["lora_name"] = lora_name
-                payload["lora_weight"] = 0.8
+                payload["lora_weight"] = 0.8  # type: ignore
 
             response = self.session.post(f"{self.api_base_url}/enhance", json=payload)
             response.raise_for_status()
@@ -907,7 +907,7 @@ def api_generate():
 
         if use_enhanced_queue:
             # 優先度を決定（mufufu_modeは通常優先度、その他は標準）
-            priority = JobPriority.NORMAL
+            priority = JobPriority.NORMAL  # type: ignore[possibly-unbound]
             success = enhanced_queue.put(job_id, "generate", job_data, priority=priority)
             if not success:
                 logger.warning(f"⚠️ ジョブキューが満杯: {job_id}")
@@ -954,7 +954,7 @@ def api_inpaint():
     }
 
     if use_enhanced_queue:
-        priority = JobPriority.NORMAL
+        priority = JobPriority.NORMAL  # type: ignore[possibly-unbound]
         success = enhanced_queue.put(job_id, "inpaint", job_data, priority=priority)
         if not success:
             return jsonify({
@@ -992,7 +992,7 @@ def api_enhance():
     }
 
     if use_enhanced_queue:
-        priority = JobPriority.NORMAL
+        priority = JobPriority.NORMAL  # type: ignore[possibly-unbound]
         success = enhanced_queue.put(job_id, "enhance", job_data, priority=priority)
         if not success:
             return jsonify({
@@ -1202,7 +1202,7 @@ def api_metrics():
     """生成メトリクス: 件数、平均時間、直近の完了ジョブ情報"""
     try:
         completed = [v for v in job_results.values() if isinstance(v, dict) and v.get("status") == "completed"]
-        durations = [float(v.get("duration_sec")) for v in completed if isinstance(v.get("duration_sec"), (int, float))]
+        durations = [float(v.get("duration_sec")) for v in completed if isinstance(v.get("duration_sec"), (int, float))]  # type: ignore
         last5 = completed[-5:]
         return jsonify({
             "success": True,
@@ -1275,7 +1275,7 @@ def api_presets():
         face_stable_keywords = ["realistic", "real", "face", "portrait", "beauty", "pro", "lux", "写实"]
         recommended_models = []
         for m in model_names:
-            m_lower = m.lower()
+            m_lower = m.lower()  # type: ignore[union-attr]
             if any(kw in m_lower for kw in face_stable_keywords):
                 recommended_models.append(m)
 
@@ -1337,7 +1337,7 @@ def api_job_estimate(job_id):
 
         # 平均処理時間から推定
         completed = [v for v in job_results.values() if isinstance(v, dict) and v.get("status") == "completed"]
-        durations = [float(v.get("duration_sec")) for v in completed if isinstance(v.get("duration_sec"), (int, float))]
+        durations = [float(v.get("duration_sec")) for v in completed if isinstance(v.get("duration_sec"), (int, float))]  # type: ignore
         avg_duration = sum(durations) / len(durations) if durations else 300.0  # デフォルト5分
 
         # 開始からの経過時間
@@ -1393,7 +1393,7 @@ if __name__ == '__main__':
     try:
         logger.info(
             "⚙️ 設定: JOB_QUEUE_SIZE=%s, SD_TIMEOUT=%ss, SD_RETRIES=%s",
-            JOB_QUEUE_SIZE,
+            JOB_QUEUE_SIZE,  # type: ignore[possibly-unbound]
             getattr(gallery_api, 'generate_timeout_sec', 'n/a'),
             getattr(gallery_api, 'generate_retries', 'n/a')
         )

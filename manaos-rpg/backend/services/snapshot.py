@@ -390,7 +390,7 @@ def _build_google_status(repo_root: Path) -> dict[str, Any]:
         )
         if drive_res.get("ok"):
             data = drive_res.get("data") if isinstance(drive_res.get("data"), dict) else {}
-            files_list = data.get("files") if isinstance(data.get("files"), list) else []
+            files_list = data.get("files") if isinstance(data.get("files"), list) else []  # type: ignore[union-attr]
             live_preview["drive_files"] = {
                 "ok": True,
                 "reason": "ready",
@@ -401,7 +401,7 @@ def _build_google_status(repo_root: Path) -> dict[str, Any]:
                         "mimeType": str(x.get("mimeType") or ""),
                         "modifiedTime": str(x.get("modifiedTime") or ""),
                     }
-                    for x in files_list
+                    for x in files_list  # type: ignore[misc]
                     if isinstance(x, dict)
                 ],
             }
@@ -436,8 +436,8 @@ def _build_google_status(repo_root: Path) -> dict[str, Any]:
             )
             if unread_list_res.get("ok"):
                 list_data = unread_list_res.get("data") if isinstance(unread_list_res.get("data"), dict) else {}
-                msgs = list_data.get("messages") if isinstance(list_data.get("messages"), list) else []
-                for msg in msgs:
+                msgs = list_data.get("messages") if isinstance(list_data.get("messages"), list) else []  # type: ignore[union-attr]
+                for msg in msgs:  # type: ignore[misc]
                     if not isinstance(msg, dict):
                         continue
                     msg_id = str(msg.get("id") or "").strip()
@@ -451,12 +451,12 @@ def _build_google_status(repo_root: Path) -> dict[str, Any]:
                     if not detail_res.get("ok"):
                         continue
                     detail = detail_res.get("data") if isinstance(detail_res.get("data"), dict) else {}
-                    payload = detail.get("payload") if isinstance(detail.get("payload"), dict) else {}
-                    headers = payload.get("headers") if isinstance(payload.get("headers"), list) else []
+                    payload = detail.get("payload") if isinstance(detail.get("payload"), dict) else {}  # type: ignore[union-attr]
+                    headers = payload.get("headers") if isinstance(payload.get("headers"), list) else []  # type: ignore[union-attr]
                     subject = ""
                     sender = ""
                     date_raw = ""
-                    for header in headers:
+                    for header in headers:  # type: ignore[misc]
                         if not isinstance(header, dict):
                             continue
                         name = str(header.get("name") or "").lower()
@@ -479,9 +479,9 @@ def _build_google_status(repo_root: Path) -> dict[str, Any]:
                 "ok": True,
                 "reason": "ready",
                 "can_mark_read": gmail_modify_scope_ready is True,
-                "email": str(data.get("emailAddress") or ""),
-                "messages_total": data.get("messagesTotal"),
-                "threads_total": data.get("threadsTotal"),
+                "email": str(data.get("emailAddress") or ""),  # type: ignore[union-attr]
+                "messages_total": data.get("messagesTotal"),  # type: ignore[union-attr]
+                "threads_total": data.get("threadsTotal"),  # type: ignore[union-attr]
                 "unread_messages": unread_messages,
             }
         else:
@@ -516,7 +516,7 @@ def _build_google_status(repo_root: Path) -> dict[str, Any]:
         )
         if calendar_res.get("ok"):
             data = calendar_res.get("data") if isinstance(calendar_res.get("data"), dict) else {}
-            event_items = data.get("items") if isinstance(data.get("items"), list) else []
+            event_items = data.get("items") if isinstance(data.get("items"), list) else []  # type: ignore[union-attr]
             live_preview["calendar_events"] = {
                 "ok": True,
                 "reason": "ready",
@@ -526,7 +526,7 @@ def _build_google_status(repo_root: Path) -> dict[str, Any]:
                         "summary": str(x.get("summary") or ""),
                         "start": str(((x.get("start") or {}).get("dateTime") or (x.get("start") or {}).get("date") or "")),
                     }
-                    for x in event_items
+                    for x in event_items  # type: ignore[misc]
                     if isinstance(x, dict)
                 ],
             }
@@ -553,7 +553,7 @@ def _build_google_status(repo_root: Path) -> dict[str, Any]:
         )
         if lists_res.get("ok"):
             data = lists_res.get("data") if isinstance(lists_res.get("data"), dict) else {}
-            task_lists = data.get("items") if isinstance(data.get("items"), list) else []
+            task_lists = data.get("items") if isinstance(data.get("items"), list) else []  # type: ignore[union-attr]
             task_list_id = ""
             if task_lists and isinstance(task_lists[0], dict):
                 task_list_id = str(task_lists[0].get("id") or "")
@@ -566,7 +566,7 @@ def _build_google_status(repo_root: Path) -> dict[str, Any]:
                 )
                 if tasks_res.get("ok"):
                     tdata = tasks_res.get("data") if isinstance(tasks_res.get("data"), dict) else {}
-                    task_items = tdata.get("items") if isinstance(tdata.get("items"), list) else []
+                    task_items = tdata.get("items") if isinstance(tdata.get("items"), list) else []  # type: ignore[union-attr]
                     live_preview["tasks_open"] = {
                         "ok": True,
                         "reason": "ready",
@@ -577,7 +577,7 @@ def _build_google_status(repo_root: Path) -> dict[str, Any]:
                                 "title": str(x.get("title") or ""),
                                 "due": str(x.get("due") or ""),
                             }
-                            for x in task_items
+                            for x in task_items  # type: ignore[misc]
                             if isinstance(x, dict)
                         ],
                     }
@@ -740,7 +740,7 @@ def _build_autonomy_status() -> dict[str, Any]:
 
     llm_data = llm_health.get("data") if isinstance(llm_health.get("data"), dict) else {}
     policy_data = policy_status.get("data") if isinstance(policy_status.get("data"), dict) else {}
-    models = llm_data.get("models") if isinstance(llm_data.get("models"), list) else []
+    models = llm_data.get("models") if isinstance(llm_data.get("models"), list) else []  # type: ignore[union-attr]
     status_summary = lifecycle_latest.get("status_summary") if isinstance(lifecycle_latest.get("status_summary"), list) else []
 
     chain_ok = bool(chain_latest.get("ok"))
@@ -781,14 +781,14 @@ def _build_autonomy_status() -> dict[str, Any]:
             "ok": bool(llm_health.get("ok")),
             "status": llm_health.get("status"),
             "error": llm_health.get("error"),
-            "llm_server": llm_data.get("llm_server"),
-            "available_models": llm_data.get("available_models"),
+            "llm_server": llm_data.get("llm_server"),  # type: ignore[union-attr]
+            "available_models": llm_data.get("available_models"),  # type: ignore[union-attr]
             "models": models,
             "policy_ok": bool(policy_status.get("ok")),
             "policy_status": policy_status.get("status"),
             "policy_error": policy_status.get("error"),
-            "policy_fail_closed": policy_data.get("fail_closed"),
-            "policy_guard_enabled": policy_data.get("guard_enabled"),
+            "policy_fail_closed": policy_data.get("fail_closed"),  # type: ignore[union-attr]
+            "policy_guard_enabled": policy_data.get("guard_enabled"),  # type: ignore[union-attr]
         },
         "overall": {
             "ok": overall_ok,
@@ -1013,7 +1013,7 @@ def snapshot() -> dict[str, Any]:
                 root = str(d.get("root") or "")
                 used_pct_raw = d.get("used_percent")
                 try:
-                    used_pct = float(used_pct_raw)
+                    used_pct = float(used_pct_raw)  # type: ignore
                 except Exception:
                     continue
                 if used_pct >= 90:
@@ -1190,7 +1190,7 @@ def snapshot() -> dict[str, Any]:
     restart_loop = [
         str(s.get("id"))
         for s in services_status
-        if ("always_on" in (s.get("tags") or [])) and isinstance(s.get("restart_count"), int) and int(s.get("restart_count")) >= 5
+        if ("always_on" in (s.get("tags") or [])) and isinstance(s.get("restart_count"), int) and int(s.get("restart_count")) >= 5  # type: ignore
     ]
     if restart_loop:
         next_actions.append(f"再起動多い：{', '.join(restart_loop)}（設定変更/依存/ログを確認）")
@@ -1252,8 +1252,8 @@ def snapshot() -> dict[str, Any]:
             openapi_paths_count = None
             if isinstance(unified_integrations, dict):
                 od = unified_integrations.get("data") if isinstance(unified_integrations.get("data"), dict) else {}
-                oo = od.get("openapi") if isinstance(od.get("openapi"), dict) else {}
-                pc = oo.get("paths_count")
+                oo = od.get("openapi") if isinstance(od.get("openapi"), dict) else {}  # type: ignore[union-attr]
+                pc = oo.get("paths_count")  # type: ignore[union-attr]
                 if isinstance(pc, int):
                     openapi_paths_count = pc
                 else:
@@ -1292,8 +1292,8 @@ def snapshot() -> dict[str, Any]:
                         get_no_params_cnt = None
                         if isinstance(unified_integrations, dict):
                             od2 = unified_integrations.get("data") if isinstance(unified_integrations.get("data"), dict) else {}
-                            oo2 = od2.get("openapi") if isinstance(od2.get("openapi"), dict) else {}
-                            get_no_params_cnt = oo2.get("get_paths_no_params_count")
+                            oo2 = od2.get("openapi") if isinstance(od2.get("openapi"), dict) else {}  # type: ignore[union-attr]
+                            get_no_params_cnt = oo2.get("get_paths_no_params_count")  # type: ignore[union-attr]
                         try:
                             get_no_params_cnt_i = int(get_no_params_cnt) if get_no_params_cnt is not None else 0
                         except Exception:

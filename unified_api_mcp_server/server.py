@@ -12,8 +12,8 @@ from pathlib import Path
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -44,7 +44,7 @@ ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", f"http://127.0.0.1:{ORCHESTRATO
 
 # MCPサーバーの初期化
 if MCP_AVAILABLE:
-    app = Server("unified-api")
+    app = Server("unified-api")  # type: ignore[possibly-unbound]
 else:
     app = None
 
@@ -95,7 +95,7 @@ def call_orchestrator(query: str) -> Dict[str, Any]:
 
 if MCP_AVAILABLE:
 
-    @app.list_tools()
+    @app.list_tools()  # type: ignore[union-attr]
     async def list_tools() -> List[Tool]:
         """利用可能なツール一覧を返す"""
         tools = []
@@ -105,7 +105,7 @@ if MCP_AVAILABLE:
         # ========================================
         tools.extend(
             [
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="ask_orchestrator",
                     description="室温・湿度・天気・照明操作など、ローカル環境に関する情報取得や操作を自然文で依頼する。知らないことはこのツールに投げる。一般的な知識や検索はこのツールを使わず検索で対応する。",
                     inputSchema={
@@ -124,17 +124,17 @@ if MCP_AVAILABLE:
         # ========================================
         tools.extend(
             [
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="unified_api_health",
                     description="Unified API Serverのヘルスチェック",
                     inputSchema={"type": "object", "properties": {}},
                 ),
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="unified_api_status",
                     description="Unified API Serverの詳細ステータスを取得",
                     inputSchema={"type": "object", "properties": {}},
                 ),
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="unified_api_integrations_status",
                     description="統合モジュールの状態を取得",
                     inputSchema={"type": "object", "properties": {}},
@@ -147,7 +147,7 @@ if MCP_AVAILABLE:
         # ========================================
         tools.extend(
             [
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="comfyui_generate_image",
                     description="ComfyUIで画像を生成します。ムフフ・裏モード対応。",
                     inputSchema={
@@ -192,7 +192,7 @@ if MCP_AVAILABLE:
                         "required": ["prompt"],
                     },
                 ),
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="generate_sd_prompt",
                     description="日本語の説明からStable Diffusion用の英語プロンプトを生成します（Ollama llama3-uncensored使用）。画像生成前に日本語→英語変換に使う。",
                     inputSchema={
@@ -233,7 +233,7 @@ if MCP_AVAILABLE:
         # ========================================
         tools.extend(
             [
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="svi_generate_video",
                     description="SVI × Wan 2.2で動画を生成します",
                     inputSchema={
@@ -266,7 +266,7 @@ if MCP_AVAILABLE:
                         "required": ["start_image_path", "prompt"],
                     },
                 ),
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="svi_extend_video",
                     description="既存の動画を延長します",
                     inputSchema={
@@ -289,12 +289,12 @@ if MCP_AVAILABLE:
                         "required": ["previous_video_path", "prompt"],
                     },
                 ),
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="svi_get_queue_status",
                     description="ComfyUIのキュー状態を取得します",
                     inputSchema={"type": "object", "properties": {}},
                 ),
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="svi_get_history",
                     description="SVI動画生成履歴を取得します",
                     inputSchema={
@@ -316,7 +316,7 @@ if MCP_AVAILABLE:
         # ========================================
         tools.extend(
             [
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="google_drive_upload",
                     description="Google Driveにファイルをアップロードします",
                     inputSchema={
@@ -346,7 +346,7 @@ if MCP_AVAILABLE:
         # ========================================
         tools.extend(
             [
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="civitai_search",
                     description="CivitAIでモデルを検索します",
                     inputSchema={
@@ -370,7 +370,7 @@ if MCP_AVAILABLE:
         # ========================================
         tools.extend(
             [
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="searxng_search",
                     description="SearXNGで検索します",
                     inputSchema={
@@ -394,7 +394,7 @@ if MCP_AVAILABLE:
                         "required": ["query"],
                     },
                 ),
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="brave_search",
                     description="Brave Searchで検索します",
                     inputSchema={
@@ -428,7 +428,7 @@ if MCP_AVAILABLE:
         # ========================================
         tools.extend(
             [
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="base_ai_chat",
                     description="Base AIでチャットします",
                     inputSchema={
@@ -451,7 +451,7 @@ if MCP_AVAILABLE:
         # ========================================
         tools.extend(
             [
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="obsidian_create_note",
                     description="Obsidianにノートを作成します",
                     inputSchema={
@@ -475,7 +475,7 @@ if MCP_AVAILABLE:
         # ========================================
         tools.extend(
             [
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="memory_store",
                     description="統一記憶システムに情報を保存します",
                     inputSchema={
@@ -495,7 +495,7 @@ if MCP_AVAILABLE:
                         "required": ["content"],
                     },
                 ),
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="memory_recall",
                     description="統一記憶システムから情報を検索します",
                     inputSchema={
@@ -524,7 +524,7 @@ if MCP_AVAILABLE:
         # ========================================
         tools.extend(
             [
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="notification_send",
                     description="通知を送信します",
                     inputSchema={
@@ -548,17 +548,17 @@ if MCP_AVAILABLE:
         # ========================================
         tools.extend(
             [
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="secretary_morning_routine",
                     description="朝のルーチンを実行します",
                     inputSchema={"type": "object", "properties": {}},
                 ),
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="secretary_noon_routine",
                     description="昼のルーチンを実行します",
                     inputSchema={"type": "object", "properties": {}},
                 ),
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="secretary_evening_routine",
                     description="夜のルーチンを実行します",
                     inputSchema={"type": "object", "properties": {}},
@@ -571,12 +571,12 @@ if MCP_AVAILABLE:
         # ========================================
         tools.extend(
             [
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="cache_stats",
                     description="キャッシュ統計を取得します",
                     inputSchema={"type": "object", "properties": {}},
                 ),
-                Tool(
+                Tool(  # type: ignore[possibly-unbound]
                     name="performance_stats",
                     description="パフォーマンス統計を取得します",
                     inputSchema={"type": "object", "properties": {}},
@@ -586,7 +586,7 @@ if MCP_AVAILABLE:
 
         return tools
 
-    @app.call_tool()
+    @app.call_tool()  # type: ignore[union-attr]
     async def call_tool(name: str, arguments: Any) -> List[TextContent]:
         """ツールを実行"""
         try:
@@ -687,7 +687,7 @@ if MCP_AVAILABLE:
             else:
                 result = {"error": f"Unknown tool: {name}"}
 
-            return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]
+            return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]  # type: ignore[possibly-unbound]
 
         except Exception as e:
             logger.error(f"ツール実行エラー ({name}): {e}")
@@ -695,7 +695,7 @@ if MCP_AVAILABLE:
 
             logger.error(traceback.format_exc())
             return [
-                TextContent(type="text", text=json.dumps({"error": str(e)}, ensure_ascii=False))
+                TextContent(type="text", text=json.dumps({"error": str(e)}, ensure_ascii=False))  # type: ignore[possibly-unbound]
             ]
 
 
@@ -705,8 +705,8 @@ async def main():
         logger.error("MCP SDKが利用できません")
         sys.exit(1)
 
-    async with stdio_server() as (read_stream, write_stream):
-        await app.run(read_stream, write_stream, app.create_initialization_options())
+    async with stdio_server() as (read_stream, write_stream):  # type: ignore[possibly-unbound]
+        await app.run(read_stream, write_stream, app.create_initialization_options())  # type: ignore[union-attr]
 
 
 if __name__ == "__main__":

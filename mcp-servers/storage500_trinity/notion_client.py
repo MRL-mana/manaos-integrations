@@ -22,7 +22,7 @@ NOTION_VERSION = "2022-06-28"
 BASE_URL = "https://api.notion.com/v1"
 
 class NotionClient:
-    def __init__(self, token: str = None):
+    def __init__(self, token: str = None):  # type: ignore
         self.token = token or NOTION_TOKEN
         self.headers = {
             "Authorization": f"Bearer {self.token}",

@@ -56,8 +56,8 @@ from typing import Any, Dict, List, Optional
 
 if sys.platform == "win32":
     try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
     except AttributeError:
         pass
 
@@ -1660,9 +1660,9 @@ def cmd_gtd(args: argparse.Namespace) -> int:
                 return 1
             for f in matched:
                 dest_dir = DEST_MAP.get(dest_key.rstrip("s"), DEST_MAP.get(dest_key))
-                dest_dir.mkdir(parents=True, exist_ok=True)
-                _shutil.move(str(f), str(dest_dir / f.name))
-                print(c(f"  ✅ {f.name}  →  {dest_dir.name}/", GREEN))
+                dest_dir.mkdir(parents=True, exist_ok=True)  # type: ignore[union-attr]
+                _shutil.move(str(f), str(dest_dir / f.name))  # type: ignore[operator]
+                print(c(f"  ✅ {f.name}  →  {dest_dir.name}/", GREEN))  # type: ignore[union-attr]
             print(c(f"  {len(matched)} 件処理完了", CYAN))
             return 0
 
@@ -1876,7 +1876,7 @@ def cmd_gtd(args: argparse.Namespace) -> int:
                 print(c(f"  [INFO] \u30bf\u30a4\u30de\u30fc\u767b\u9332\u306fWindows\u306e\u307f\u5bfe\u5fdc", DIM))
         print()
         # ── current_task.json に保存 ─────────────────────────────────────────
-        _write_current(task_name, now_dt.isoformat(), timer_min)
+        _write_current(task_name, now_dt.isoformat(), timer_min)  # type: ignore
         return 0
 
     elif subcmd == "done":
@@ -1920,7 +1920,7 @@ def cmd_gtd(args: argparse.Namespace) -> int:
             src_file = na_items[idx]
         else:
             # --name: 部分一致で検索
-            matched = [f for f in na_items if task_name.lower() in f.stem.lower()]
+            matched = [f for f in na_items if task_name.lower() in f.stem.lower()]  # type: ignore[union-attr]
             if not matched:
                 print(c(f"  [ERROR] \"{task_name}\" に一致する Next Action が見つかりません", RED))
                 return 1
@@ -2248,7 +2248,7 @@ def cmd_gtd(args: argparse.Namespace) -> int:
             print()
             print(c("  [Next Actions 一覧 (編集対象)]", BOLD + CYAN))
             for _i, _f in enumerate(na_items, 1):
-                _na = _parse_na(_f)
+                _na = _parse_na(_f)  # type: ignore[misc]
                 _ctx_s = f"  @{_na['context']}" if _na.get("context") else ""
                 _due_s = f"  due:{_na['due']}" if _na.get("due") else ""
                 print(f"    [{_i:2d}] {_f.stem}{c(_ctx_s, CYAN)}{c(_due_s, YELLOW)}")
@@ -2264,7 +2264,7 @@ def cmd_gtd(args: argparse.Namespace) -> int:
                 return 1
             _target_f = na_items[idx]
         else:
-            matched = [f for f in na_items if task_name.lower() in f.stem.lower()]
+            matched = [f for f in na_items if task_name.lower() in f.stem.lower()]  # type: ignore[union-attr]
             if not matched:
                 print(c(f"[ERROR] '{task_name}' に一致しません", RED), file=sys.stderr)
                 return 1

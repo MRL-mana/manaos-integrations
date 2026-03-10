@@ -291,7 +291,7 @@ class HierarchicalPolicy:
                 self._option_switches += 1
 
         # 3. ワーカー行動
-        option = self._options[self._active_option_id]
+        option = self._options[self._active_option_id]  # type: ignore
         option.times_selected += 1
         self._active_steps += 1
 
@@ -299,13 +299,13 @@ class HierarchicalPolicy:
 
         # Option選択確率の計算
         total_w = sum(self._manager_weights.get(oid, 1.0) for oid in self._options)
-        option_prob = self._manager_weights.get(self._active_option_id, 1.0) / max(1.0, total_w)
+        option_prob = self._manager_weights.get(self._active_option_id, 1.0) / max(1.0, total_w)  # type: ignore[call-arg]
 
         # 信頼度 = option_prob * action_prob
         confidence = option_prob * action_prob
 
         decision = HierarchicalDecision(
-            option_id=self._active_option_id,
+            option_id=self._active_option_id,  # type: ignore
             option_name=option.name,
             action=action,
             option_prob=round(option_prob, 4),

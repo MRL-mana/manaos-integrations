@@ -72,7 +72,7 @@ def test_server_start():
         print(f"   App: {app}")
 
         # ルート確認
-        routes = [r.path for r in app.routes if hasattr(r, 'path')]
+        routes = [r.path for r in app.routes if hasattr(r, 'path')]  # type: ignore
         remi_routes = [r for r in routes if 'remi' in r]
         print(f"✅ Total routes: {len(routes)}")
         print(f"✅ Remi routes: {remi_routes}")

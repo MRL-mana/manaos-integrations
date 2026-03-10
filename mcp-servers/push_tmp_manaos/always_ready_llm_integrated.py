@@ -88,16 +88,16 @@ class IntegratedLLMClient:
         
         if auto_save_obsidian and OBSIDIAN_AVAILABLE:
             vault_path = os.getenv("OBSIDIAN_VAULT_PATH", str(Path.home() / "Documents" / "Obsidian Vault"))
-            self.obsidian = ObsidianIntegration(vault_path)
+            self.obsidian = ObsidianIntegration(vault_path)  # type: ignore[possibly-unbound]
         
         if auto_notify_slack and SLACK_AVAILABLE:
-            self.slack = NotificationSystem()
+            self.slack = NotificationSystem()  # type: ignore[possibly-unbound]
         
         if auto_save_drive and GOOGLE_DRIVE_AVAILABLE:
-            self.drive = GoogleDriveIntegration()
+            self.drive = GoogleDriveIntegration()  # type: ignore[possibly-unbound]
         
         if auto_save_memory and MEM0_AVAILABLE:
-            self.mem0 = Mem0Integration()
+            self.mem0 = Mem0Integration()  # type: ignore[possibly-unbound]
     
     def chat(
         self,

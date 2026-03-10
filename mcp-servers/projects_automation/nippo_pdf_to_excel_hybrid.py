@@ -102,7 +102,7 @@ class NippoPDFToExcelHybrid:
         """フォルダ取得/作成"""
         try:
             query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
-            results = self.drive_service.files().list(q=query, spaces='drive', fields='files(id)').execute()
+            results = self.drive_service.files().list(q=query, spaces='drive', fields='files(id)').execute()  # type: ignore[union-attr]
             files = results.get('files', [])
             
             if files:
@@ -112,7 +112,7 @@ class NippoPDFToExcelHybrid:
                 'name': folder_name,
                 'mimeType': 'application/vnd.google-apps.folder'
             }
-            folder = self.drive_service.files().create(body=file_metadata, fields='id').execute()
+            folder = self.drive_service.files().create(body=file_metadata, fields='id').execute()  # type: ignore[union-attr]
             return folder.get('id')
             
         except Exception as e:
@@ -130,7 +130,7 @@ class NippoPDFToExcelHybrid:
             
             media = MediaFileUpload(pdf_path, mimetype='application/pdf', resumable=True)
             
-            file = self.drive_service.files().create(
+            file = self.drive_service.files().create(  # type: ignore[union-attr]
                 body=file_metadata,
                 media_body=media,
                 fields='id',
@@ -147,7 +147,7 @@ class NippoPDFToExcelHybrid:
     def export_text(self, file_id: str):
         """Google Docsからテキストエクスポート"""
         try:
-            request = self.drive_service.files().export_media(fileId=file_id, mimeType='text/plain')
+            request = self.drive_service.files().export_media(fileId=file_id, mimeType='text/plain')  # type: ignore[union-attr]
             fh = io.BytesIO()
             downloader = MediaIoBaseDownload(fh, request)
             
@@ -164,7 +164,7 @@ class NippoPDFToExcelHybrid:
     def delete_temp_file(self, file_id: str):
         """一時ファイル削除"""
         try:
-            self.drive_service.files().delete(fileId=file_id).execute()
+            self.drive_service.files().delete(fileId=file_id).execute()  # type: ignore[union-attr]
         except IOError:
             pass
     
@@ -226,7 +226,7 @@ JSON配列のみを出力：
             
         except json.JSONDecodeError as e:
             logger.error(f"JSON解析エラー: {e}")
-            logger.error(f"レスポンス: {response_text[:500]}")
+            logger.error(f"レスポンス: {response_text[:500]}")  # type: ignore[possibly-unbound]
             return None
         except Exception as e:
             logger.error(f"Gemini構造化エラー: {e}")
@@ -237,11 +237,11 @@ JSON配列のみを出力：
         try:
             wb = openpyxl.Workbook()
             ws = wb.active
-            ws.title = '日報データ'
+            ws.title = '日報データ'  # type: ignore[union-attr]
             
             # ヘッダー
             for c_idx, col_name in enumerate(df.columns, start=1):
-                cell = ws.cell(row=1, column=c_idx, value=col_name)
+                cell = ws.cell(row=1, column=c_idx, value=col_name)  # type: ignore[union-attr]
                 cell.font = Font(name='メイリオ', size=11, bold=True, color='FFFFFF')
                 cell.fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
                 cell.alignment = Alignment(horizontal='center', vertical='center')
@@ -253,7 +253,7 @@ JSON配列のみを出力：
             # データ
             for r_idx, row in enumerate(df.itertuples(index=False), start=2):
                 for c_idx, value in enumerate(row, start=1):
-                    cell = ws.cell(row=r_idx, column=c_idx, value=value)
+                    cell = ws.cell(row=r_idx, column=c_idx, value=value)  # type: ignore[union-attr]
                     cell.font = Font(name='メイリオ', size=11)
                     cell.alignment = Alignment(wrap_text=True, vertical='top')
                     cell.border = Border(
@@ -264,9 +264,9 @@ JSON配列のみを出力：
                         cell.fill = PatternFill(start_color='F2F2F2', end_color='F2F2F2', fill_type='solid')
             
             # 列幅調整
-            for col in ws.columns:
+            for col in ws.columns:  # type: ignore[union-attr]
                 max_length = max((len(str(cell.value or '')) for cell in col), default=0)
-                ws.column_dimensions[col[0].column_letter].width = min(max_length + 2, 50)
+                ws.column_dimensions[col[0].column_letter].width = min(max_length + 2, 50)  # type: ignore[union-attr]
             
             # サマリーシート
             summary_ws = wb.create_sheet('変換情報', 0)
@@ -306,13 +306,13 @@ JSON配列のみを出力：
     
     def convert_pdf(self, pdf_path: str):
         """PDFをExcelに変換"""
-        pdf_path = Path(pdf_path)
+        pdf_path = Path(pdf_path)  # type: ignore
         
-        if not pdf_path.exists():
+        if not pdf_path.exists():  # type: ignore
             return {'success': False, 'error': 'File not found'}
         
         print(f"\n{'='*60}")
-        print(f"📄 変換: {pdf_path.name}")
+        print(f"📄 変換: {pdf_path.name}")  # type: ignore
         print(f"{'='*60}")
         
         file_id = None
@@ -345,10 +345,10 @@ JSON配列のみを出力：
             
             # 5. Excel作成
             print("📝 STEP 5: Excel作成...")
-            output_filename = f"{pdf_path.stem}_hybrid_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            output_filename = f"{pdf_path.stem}_hybrid_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"  # type: ignore
             output_path = self.output_dir / output_filename
             
-            if self.create_excel(df, str(output_path), pdf_path.name):
+            if self.create_excel(df, str(output_path), pdf_path.name):  # type: ignore
                 print("\n✅ 変換完了！")
                 print(f"📁 出力: {output_path}")
                 print(f"{'='*60}\n")
@@ -370,10 +370,10 @@ JSON配列のみを出力：
                 print("🗑️  一時ファイル削除...")
                 self.delete_temp_file(file_id)
     
-    def batch_convert(self, pdf_dir: str, limit: int = None):
+    def batch_convert(self, pdf_dir: str, limit: int = None):  # type: ignore
         """一括変換"""
-        pdf_dir = Path(pdf_dir)
-        pdf_files = list(pdf_dir.glob('*.pdf')) + list(pdf_dir.glob('*.PDF'))
+        pdf_dir = Path(pdf_dir)  # type: ignore
+        pdf_files = list(pdf_dir.glob('*.pdf')) + list(pdf_dir.glob('*.PDF'))  # type: ignore
         
         if limit:
             pdf_files = pdf_files[:limit]
@@ -428,7 +428,7 @@ def main():
         converter.convert_pdf(str(target))
     elif target.is_dir():
         limit = int(sys.argv[2]) if len(sys.argv) > 2 else None
-        converter.batch_convert(str(target), limit=limit)
+        converter.batch_convert(str(target), limit=limit)  # type: ignore
     else:
         print(f"❌ パスが見つかりません: {target}")
         sys.exit(1)

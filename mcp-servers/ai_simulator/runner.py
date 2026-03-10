@@ -287,7 +287,7 @@ def run_evolution_cycle(
                 register_blocked_variant(
                     variant_id=selected.id,
                     task=selected.task,
-                    reason=safety_reason,
+                    reason=safety_reason,  # type: ignore
                     failure_details=metrics
                 )
                 bandit.update(selected.id, 0.0)  # 失敗として記録

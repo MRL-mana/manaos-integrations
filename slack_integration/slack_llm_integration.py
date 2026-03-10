@@ -40,7 +40,7 @@ LLM_CLIENT = None
 # LLMクライアント初期化
 if LLM_CLIENT_AVAILABLE:
     try:
-        LLM_CLIENT = IntegratedLLMClient(
+        LLM_CLIENT = IntegratedLLMClient(  # type: ignore[possibly-unbound]
             auto_save_obsidian=True,
             auto_notify_slack=False,  # 無限ループ防止
             auto_save_memory=True
@@ -87,26 +87,26 @@ def parse_slack_message(text: str) -> Dict[str, Any]:
         解析結果（モデル、タスクタイプなど）
     """
     # デフォルト設定
-    model = ModelType.LIGHT
-    task_type = TaskType.CONVERSATION
+    model = ModelType.LIGHT  # type: ignore[possibly-unbound]
+    task_type = TaskType.CONVERSATION  # type: ignore[possibly-unbound]
     
     # モデル指定をチェック
     text_lower = text.lower()
     if "heavy" in text_lower or "高品質" in text_lower:
-        model = ModelType.HEAVY
+        model = ModelType.HEAVY  # type: ignore[possibly-unbound]
     elif "medium" in text_lower or "中型" in text_lower:
-        model = ModelType.MEDIUM
+        model = ModelType.MEDIUM  # type: ignore[possibly-unbound]
     elif "reasoning" in text_lower or "推論" in text_lower:
-        model = ModelType.REASONING
-        task_type = TaskType.REASONING
+        model = ModelType.REASONING  # type: ignore[possibly-unbound]
+        task_type = TaskType.REASONING  # type: ignore[possibly-unbound]
     
     # タスクタイプをチェック
     if "コード" in text or "code" in text_lower or "生成" in text:
-        task_type = TaskType.AUTOMATION
+        task_type = TaskType.AUTOMATION  # type: ignore[possibly-unbound]
     elif "推論" in text or "分析" in text or "reasoning" in text_lower:
-        task_type = TaskType.REASONING
+        task_type = TaskType.REASONING  # type: ignore[possibly-unbound]
     elif "生成" in text or "generate" in text_lower:
-        task_type = TaskType.GENERATION
+        task_type = TaskType.GENERATION  # type: ignore[possibly-unbound]
     
     # メンションやコマンドを除去
     cleaned_text = text

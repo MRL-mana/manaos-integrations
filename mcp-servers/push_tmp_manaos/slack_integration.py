@@ -55,7 +55,7 @@ try:
     # n8n Webhookが設定されていない場合は、直接Ollama呼び出しを使用
     # n8n_webhook_urlをNoneに設定すると、直接Ollama呼び出しにフォールバック
     LLM_CLIENT = AlwaysReadyLLMClient(
-        n8n_webhook_url=None,  # n8n Webhook未設定の場合は直接LLM呼び出し
+        n8n_webhook_url=None,  # n8n Webhook未設定の場合は直接LLM呼び出し  # type: ignore
         ollama_url=DEFAULT_OLLAMA_URL,
         lm_studio_url=DEFAULT_LM_STUDIO_URL,  # LM Studioを優先使用
         use_cache=False,  # キャッシュAPIが未設定の可能性があるため無効化
@@ -260,15 +260,15 @@ def execute_command(text: str, user: str = "unknown", channel: str = "general", 
                         # バランス型モデルを使用（高品質応答）
                         response = LLM_CLIENT.chat(
                             text,
-                            model=ModelType.MEDIUM,  # qwen2.5-coder-14b-instruct（LM Studio 14Bモデル）
-                            task_type=TaskType.CONVERSATION
+                            model=ModelType.MEDIUM,  # qwen2.5-coder-14b-instruct（LM Studio 14Bモデル）  # type: ignore[possibly-unbound]
+                            task_type=TaskType.CONVERSATION  # type: ignore[possibly-unbound]
                         )
                         
                         # LLMResponseオブジェクトからテキストを取得
                         if hasattr(response, 'response'):
                             answer = response.response
                         elif hasattr(response, 'text'):
-                            answer = response.text
+                            answer = response.text  # type: ignore
                         else:
                             answer = str(response)
                         
@@ -444,20 +444,20 @@ def slack_events():
         event = data.get("event", {})
         
         # Botメッセージは無視
-        if event.get("bot_id"):
+        if event.get("bot_id"):  # type: ignore
             return jsonify({"status": "ignored"})
         
         # メンションまたはDMのみ処理
-        event_type = event.get("type")
-        channel_type = event.get("channel_type", "")
+        event_type = event.get("type")  # type: ignore
+        channel_type = event.get("channel_type", "")  # type: ignore
         
         # DMまたはメンションを処理
         if event_type == "app_mention" or (event_type == "message" and channel_type == "im"):
-            text = event.get("text", "")
-            user = event.get("user", "unknown")
-            channel = event.get("channel", "general")
-            thread_ts = event.get("thread_ts") or event.get("ts")  # スレッドIDまたはタイムスタンプ
-            files = event.get("files", [])
+            text = event.get("text", "")  # type: ignore
+            user = event.get("user", "unknown")  # type: ignore
+            channel = event.get("channel", "general")  # type: ignore
+            thread_ts = event.get("thread_ts") or event.get("ts")  # スレッドIDまたはタイムスタンプ  # type: ignore
+            files = event.get("files", [])  # type: ignore
             
             # Botメンションを除去
             if "<@" in text:

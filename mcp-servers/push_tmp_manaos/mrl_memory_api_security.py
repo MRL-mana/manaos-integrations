@@ -67,7 +67,7 @@ class APISecurity:
         self.max_input_size = int(os.getenv("MAX_INPUT_CHARS", str(max_input_size)))
         
         # レート制限の追跡
-        self.rate_limit_tracker: Dict[str, List[float]] = defaultdict(list)
+        self.rate_limit_tracker: Dict[str, List[float]] = defaultdict(list)  # type: ignore[name-defined]
         
         # 起動時にセキュリティ設定をログ出力（本番運用の証拠）
         logger.info(

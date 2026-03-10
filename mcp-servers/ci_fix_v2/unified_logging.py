@@ -17,7 +17,7 @@ from pathlib import Path
 from datetime import datetime
 import json
 from typing import Optional
-from manaos_logger import get_service_logger
+from manaos_logger import get_service_logger  # type: ignore
 
 
 class ManaOSLogFormatter(logging.Formatter):
@@ -88,9 +88,9 @@ class ManaOSLogFormatter(logging.Formatter):
         
         # カスタムフィールドを追加
         if hasattr(record, 'service_name'):
-            log_data["service_name"] = record.service_name
+            log_data["service_name"] = record.service_name  # type: ignore
         if hasattr(record, 'request_id'):
-            log_data["request_id"] = record.request_id
+            log_data["request_id"] = record.request_id  # type: ignore
         
         return json.dumps(log_data, ensure_ascii=False)
 
@@ -118,7 +118,7 @@ class UnifiedLoggingConfig:
         if os.getenv("MANAOS_LOG_DIR"):
             self.config["log_dir"] = os.getenv("MANAOS_LOG_DIR")
         if os.getenv("MANAOS_LOG_JSON"):
-            self.config["json_format"] = os.getenv("MANAOS_LOG_JSON").lower() in ("1", "true", "yes")
+            self.config["json_format"] = os.getenv("MANAOS_LOG_JSON").lower() in ("1", "true", "yes")  # type: ignore[union-attr]
         
         # 設定ファイルから読み込み
         if config_file and Path(config_file).exists():
@@ -130,7 +130,7 @@ class UnifiedLoggingConfig:
                 print(f"⚠️ ログ設定ファイル読み込みエラー: {e}", file=sys.stderr)
         
         # ログディレクトリを作成
-        Path(self.config["log_dir"]).mkdir(parents=True, exist_ok=True)
+        Path(self.config["log_dir"]).mkdir(parents=True, exist_ok=True)  # type: ignore
     
     def get_log_level(self) -> int:
         """ログレベルを取得"""
@@ -231,20 +231,20 @@ def get_logger(
         return logger
     
     # ログレベルを設定
-    logger.setLevel(_config.get_log_level())
+    logger.setLevel(_config.get_log_level())  # type: ignore[union-attr]
     logger.propagate = False  # 親ロガーに伝播しない
     
     # ハンドラーを追加
-    should_console = console if console is not None else _config.config["console_output"]
-    should_file = file_output if file_output is not None else _config.config["file_output"]
+    should_console = console if console is not None else _config.config["console_output"]  # type: ignore[union-attr]
+    should_file = file_output if file_output is not None else _config.config["file_output"]  # type: ignore[union-attr]
     
     if should_console:
-        logger.addHandler(_config.create_console_handler())
+        logger.addHandler(_config.create_console_handler())  # type: ignore[union-attr]
     
     if should_file:
         # サービス名からログファイル名を決定
         log_name = service_name or name.split('.')[-1]
-        logger.addHandler(_config.create_file_handler(log_name))
+        logger.addHandler(_config.create_file_handler(log_name))  # type: ignore[union-attr]
     
     _configured_loggers.add(name)
     
@@ -263,8 +263,8 @@ def set_log_level(level: str):
     if _config is None:
         configure_logging()
     
-    _config.config["log_level"] = level.upper()
-    new_level = _config.get_log_level()
+    _config.config["log_level"] = level.upper()  # type: ignore[union-attr]
+    new_level = _config.get_log_level()  # type: ignore[union-attr]
     
     # 既存の全ロガーのレベルを更新
     for logger_name in _configured_loggers:

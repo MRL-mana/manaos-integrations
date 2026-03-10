@@ -34,7 +34,7 @@ class LTX2VideoIntegration:
         self.base_url = (self.base_url or os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")).rstrip("/")
 
     def is_available(self) -> bool:
-        return check_comfyui(self.base_url)
+        return check_comfyui(self.base_url)  # type: ignore
 
     def get_queue_status(self) -> Dict[str, Any]:
         try:
@@ -160,17 +160,17 @@ class LTX2VideoIntegration:
                             node["inputs"][k] = image
 
         # ノード検証（接続できない場合はスキップ）
-        val = validate_workflow_nodes(self.base_url, wf)
+        val = validate_workflow_nodes(self.base_url, wf)  # type: ignore
         if val is not None:
             ok, missing = val
             if not ok:
                 return {"success": False, "error": "missing_nodes", "missing": missing}
 
-        prompt_id = submit_workflow(self.base_url, wf, client_id="manaos_ltx2")
+        prompt_id = submit_workflow(self.base_url, wf, client_id="manaos_ltx2")  # type: ignore
         if not prompt_id:
             return {"success": False, "error": "submit_failed"}
 
-        hist = wait_for_completion(self.base_url, prompt_id, timeout=timeout)
+        hist = wait_for_completion(self.base_url, prompt_id, timeout=timeout)  # type: ignore
         if not hist:
             return {"success": False, "error": "no_history", "prompt_id": prompt_id}
 

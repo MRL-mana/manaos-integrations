@@ -51,7 +51,7 @@ async def generate_mufufu_nsfw_explicit_30():
                 print(f"  [{current}/{total}] 生成中...")
                 
                 try:
-                    images = generator.sd_generator.generate(
+                    images = generator.sd_generator.generate(  # type: ignore[union-attr]
                         prompt=base_prompt,
                         negative_prompt=negative_prompt,
                         width=512,

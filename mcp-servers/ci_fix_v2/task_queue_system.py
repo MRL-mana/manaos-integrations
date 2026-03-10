@@ -69,7 +69,7 @@ class Task:
     error: Optional[str] = None
     retry_count: int = 0
     max_retries: int = 3
-    metadata: Dict[str, Any] = None
+    metadata: Dict[str, Any] = None  # type: ignore
     
     def __post_init__(self):
         if not self.created_at:
@@ -615,7 +615,7 @@ def register_handler_endpoint():
     # Webhookハンドラーを作成
     def webhook_handler(payload):
         import httpx
-        response = httpx.post(handler_url, json=payload, timeout=30)
+        response = httpx.post(handler_url, json=payload, timeout=30)  # type: ignore
         response.raise_for_status()
         return response.json()
     

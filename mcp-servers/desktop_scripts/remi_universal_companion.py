@@ -89,7 +89,7 @@ class MemoInput(BaseModel):
     query: Optional[str] = None
 
 
-async def call_ollama_chat(messages: List[Dict], model: str = None) -> str:
+async def call_ollama_chat(messages: List[Dict], model: str = None) -> str:  # type: ignore
     """Ollama Chat API呼び出し"""
     model = model or OLLAMA_MODEL
     
@@ -109,7 +109,7 @@ async def call_ollama_chat(messages: List[Dict], model: str = None) -> str:
         return ""
 
 
-async def get_remi_response(user_input: str, context: Dict = None) -> str:
+async def get_remi_response(user_input: str, context: Dict = None) -> str:  # type: ignore
     """レミの返事を生成"""
     messages = [{"role": "system", "content": REMI_PERSONALITY_PROMPT}]
     
@@ -405,7 +405,7 @@ async def search(request: dict):
 
 
 @app.post("/remi/news")
-async def get_news(request: dict = None):
+async def get_news(request: dict = None):  # type: ignore
     """ニュース取得"""
     try:
         topic = None
@@ -427,7 +427,7 @@ async def get_news(request: dict = None):
 
 
 @app.post("/remi/weather")
-async def get_weather(request: dict = None):
+async def get_weather(request: dict = None):  # type: ignore
     """天気情報"""
     try:
         location = None

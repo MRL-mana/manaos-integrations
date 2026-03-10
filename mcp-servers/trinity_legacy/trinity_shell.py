@@ -59,7 +59,7 @@ class TrinityShell:
         print(f"📁 Workspace: {self.workspace}")
         print(f"📊 Current Directory: {os.getcwd()}")
         print(f"👤 User: {os.getenv('USER', 'unknown')}")
-        print(f"🖥️  System: {os.uname().sysname}")
+        print(f"🖥️  System: {os.uname().sysname}")  # type: ignore[attr-defined]
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         
         tasks_file = f"{self.shared}/tasks.json"

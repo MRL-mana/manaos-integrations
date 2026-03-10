@@ -152,7 +152,7 @@ class ManaOSSystemInspector:
                 'memory_used_gb': round(mem.used / 1024**3, 1),
                 'disk_percent': round(disk.percent, 1),
                 'process_count': len(psutil.pids()),
-                'load_avg': round(os.getloadavg()[0], 2)
+                'load_avg': round(os.getloadavg()[0], 2)  # type: ignore[attr-defined]
             }
         except Exception as e:
             logger.error(f"  ❌ Metrics collection failed: {e}")
@@ -174,7 +174,7 @@ class ManaOSSystemInspector:
                     try:
                         response = await client.get(url)
                         status_code = response.status_code
-                    except requests.RequestException:
+                    except requests.RequestException:  # type: ignore[name-defined]
                         # /health がなければ / で試す
                         url = f"http://localhost:{service_info['port']}/"
                         response = await client.get(url)

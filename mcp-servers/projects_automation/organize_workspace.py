@@ -118,7 +118,7 @@ class WorkspaceOrganizer:
                 print(f"✅ {filename:50s} → {category}")
                 
             except Exception as e:
-                error_msg = f"{filename}: {str(e)}"
+                error_msg = f"{filename}: {str(e)}"  # type: ignore[possibly-unbound]
                 self.report['errors'].append(error_msg)
                 print(f"❌ エラー: {error_msg}")
     

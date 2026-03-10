@@ -172,7 +172,7 @@ class AutoImprovement:
         conn.commit()
         conn.close()
         
-        return cycle_id
+        return cycle_id  # type: ignore
         
     def _mina_analyze_problems(self) -> Dict:
         """Mina: 問題分析"""
@@ -350,7 +350,7 @@ class AutoImprovement:
             'description': action['description']
         })
         
-        config['last_updated'] = datetime.now().isoformat()
+        config['last_updated'] = datetime.now().isoformat()  # type: ignore
         
         # 保存
         with open(config_file, 'w', encoding='utf-8') as f:

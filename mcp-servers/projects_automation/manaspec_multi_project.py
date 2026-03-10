@@ -32,9 +32,9 @@ class ManaSpecMultiProject:
     
     def add_project(self, name: str, path: str, description: str = ""):
         """プロジェクトを追加"""
-        path = Path(path).resolve()
+        path = Path(path).resolve()  # type: ignore
         
-        if not (path / "openspec").exists():
+        if not (path / "openspec").exists():  # type: ignore[operator]
             print(f"❌ Not a valid OpenSpec project: {path}")
             return False
         

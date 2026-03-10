@@ -8,7 +8,7 @@ import pytest
 
 def _make_paths_stub():
     mod = types.ModuleType("_paths")
-    mod.COMFYUI_PORT = 8188
+    mod.COMFYUI_PORT = 8188  # type: ignore
     return mod
 
 

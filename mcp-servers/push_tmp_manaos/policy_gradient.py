@@ -270,7 +270,7 @@ class PolicyGradient:
         現在の方策で最良アクション (greedy) を返す。
         """
         probs = self.get_action_probs(state)
-        best_action = max(probs, key=probs.get)
+        best_action = max(probs, key=probs.get)  # type: ignore[call-arg]
         return {
             "action": best_action,
             "probs": probs,

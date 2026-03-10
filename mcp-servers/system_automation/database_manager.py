@@ -209,7 +209,7 @@ class DatabaseManager:
             logger.error(f"アラート挿入エラー: {e}")
     
     def insert_maintenance_log(self, task_type: str, status: str, 
-                              duration: int, details: dict = None):
+                              duration: int, details: dict = None):  # type: ignore
         """メンテナンスログ挿入"""
         conn = self.get_sqlite_connection()
         
@@ -280,7 +280,7 @@ class DatabaseManager:
             logger.error(f"メトリクスクエリエラー: {e}")
             return []
     
-    def query_alerts(self, severity: str = None, unresolved: bool = True, 
+    def query_alerts(self, severity: str = None, unresolved: bool = True,  # type: ignore
                     limit: int = 100) -> List[Dict]:
         """アラートクエリ"""
         conn = self.get_sqlite_connection()
@@ -307,7 +307,7 @@ class DatabaseManager:
             logger.error(f"アラートクエリエラー: {e}")
             return []
     
-    def query_maintenance_log(self, task_type: str = None, 
+    def query_maintenance_log(self, task_type: str = None,  # type: ignore
                              limit: int = 100) -> List[Dict]:
         """メンテナンスログクエリ"""
         conn = self.get_sqlite_connection()
@@ -331,7 +331,7 @@ class DatabaseManager:
             logger.error(f"メンテナンスログクエリエラー: {e}")
             return []
     
-    def query_backup_history(self, backup_type: str = None, 
+    def query_backup_history(self, backup_type: str = None,  # type: ignore
                            limit: int = 100) -> List[Dict]:
         """バックアップ履歴クエリ"""
         conn = self.get_sqlite_connection()
@@ -355,7 +355,7 @@ class DatabaseManager:
             logger.error(f"バックアップ履歴クエリエラー: {e}")
             return []
     
-    def execute_custom_query(self, query: str, params: tuple = None) -> List[Dict]:
+    def execute_custom_query(self, query: str, params: tuple = None) -> List[Dict]:  # type: ignore
         """カスタムクエリ実行"""
         conn = self.get_sqlite_connection()
         

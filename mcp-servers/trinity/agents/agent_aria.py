@@ -13,7 +13,7 @@ from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from agent_manager import BaseAgent, TrinityDB
+from agent_manager import BaseAgent, TrinityDB  # type: ignore[attr-defined]
 
 logger = logging.getLogger(__name__)
 
@@ -180,7 +180,7 @@ Markdown形式で出力してください。
                 messages=[{"role": "user", "content": prompt}]
             )
             
-            answer = message.content[0].text
+            answer = message.content[0].text  # type: ignore
             self.add_to_context("user", prompt)
             self.add_to_context("assistant", answer)
             

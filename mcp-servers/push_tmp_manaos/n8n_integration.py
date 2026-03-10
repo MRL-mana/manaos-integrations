@@ -78,7 +78,7 @@ class N8NIntegration(BaseIntegration):
         
         # 接続テスト
         try:
-            response = self.session.get(f"{self.base_url}/api/v1/workflows", timeout=5)
+            response = self.session.get(f"{self.base_url}/api/v1/workflows", timeout=5)  # type: ignore[union-attr]
             if response.status_code == 200:
                 self.logger.info(f"n8nサーバーに接続しました: {self.base_url}")
                 return True
@@ -109,7 +109,7 @@ class N8NIntegration(BaseIntegration):
             return []
         
         try:
-            response = self.session.get(f"{self.base_url}/api/v1/workflows", timeout=10)
+            response = self.session.get(f"{self.base_url}/api/v1/workflows", timeout=10)  # type: ignore[union-attr]
             if response.status_code == 200:
                 workflows = response.json()
                 self.logger.info(f"ワークフロー一覧を取得しました: {len(workflows)}件")
@@ -146,7 +146,7 @@ class N8NIntegration(BaseIntegration):
         
         try:
             payload = data or {}
-            response = self.session.post(
+            response = self.session.post(  # type: ignore[union-attr]
                 f"{self.base_url}/api/v1/workflows/{workflow_id}/execute",
                 json=payload,
                 timeout=60
@@ -182,7 +182,7 @@ class N8NIntegration(BaseIntegration):
             return None
         
         try:
-            response = self.session.get(
+            response = self.session.get(  # type: ignore[union-attr]
                 f"{self.base_url}/api/v1/workflows/{workflow_id}",
                 timeout=10
             )
@@ -214,7 +214,7 @@ class N8NIntegration(BaseIntegration):
             return False
         
         try:
-            response = self.session.post(
+            response = self.session.post(  # type: ignore[union-attr]
                 f"{self.base_url}/api/v1/workflows/{workflow_id}/activate",
                 timeout=10
             )
@@ -247,7 +247,7 @@ class N8NIntegration(BaseIntegration):
             return False
         
         try:
-            response = self.session.post(
+            response = self.session.post(  # type: ignore[union-attr]
                 f"{self.base_url}/api/v1/workflows/{workflow_id}/deactivate",
                 timeout=10
             )

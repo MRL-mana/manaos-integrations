@@ -16,7 +16,7 @@ NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID", "")
 class ManaSpecNotionSync:
     """Notion同期クラス（スケルトン実装）"""
     
-    def __init__(self, api_key: str = None, database_id: str = None):
+    def __init__(self, api_key: str = None, database_id: str = None):  # type: ignore
         self.api_key = api_key or NOTION_API_KEY
         self.database_id = database_id or NOTION_DATABASE_ID
         

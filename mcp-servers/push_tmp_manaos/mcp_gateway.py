@@ -116,7 +116,7 @@ async def mcp_request(request: MCPRequest):
         elif request.method == "tools/call":
             tool_name = request.params.get("name") if request.params else None
             if tool_name in mcp_tools:
-                result = await execute_tool(tool_name, request.params)
+                result = await execute_tool(tool_name, request.params)  # type: ignore
                 return MCPResponse(
                     result=result,
                     id=request.id
@@ -198,7 +198,7 @@ async def execute_tool(tool_name: str, params: Dict) -> Dict:
     elif tool_name == "github_operations" and GITHUB_BRIDGE_AVAILABLE:
         method = params.get("method", "")
         try:
-            bridge = GitHubBridge()
+            bridge = GitHubBridge()  # type: ignore[possibly-unbound]
 
             if method == "push_file":
                 path = params.get("path", "")
@@ -284,7 +284,7 @@ async def github_push_api(request: GitHubPushRequest):
         return {"success": False, "error": "GitHub Bridge not available"}
 
     try:
-        bridge = GitHubBridge()
+        bridge = GitHubBridge()  # type: ignore[possibly-unbound]
         result = bridge.push_file(
             path=request.path,
             content=request.content,
@@ -304,7 +304,7 @@ async def github_get_api(request: GitHubGetRequest):
         return {"success": False, "error": "GitHub Bridge not available"}
 
     try:
-        bridge = GitHubBridge()
+        bridge = GitHubBridge()  # type: ignore[possibly-unbound]
         result = bridge.get_file(
             path=request.path,
             branch=request.branch
@@ -322,7 +322,7 @@ async def github_list_api(path: str = "", branch: str = "main"):
         return {"success": False, "error": "GitHub Bridge not available"}
 
     try:
-        bridge = GitHubBridge()
+        bridge = GitHubBridge()  # type: ignore[possibly-unbound]
         result = bridge.list_files(path=path, branch=branch)
         return result
     except Exception as e:
@@ -337,7 +337,7 @@ async def github_test_api():
         return {"success": False, "error": "GitHub Bridge not available"}
 
     try:
-        bridge = GitHubBridge()
+        bridge = GitHubBridge()  # type: ignore[possibly-unbound]
         result = bridge.test_connection()
         return result
     except Exception as e:

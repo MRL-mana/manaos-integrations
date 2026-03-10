@@ -30,7 +30,7 @@ from scripts.misc.intrinsic_todo_queue import (
 def _todo(
     todo_id: str = "t1",
     title: str = "テストToDo",
-    tags: list = None,
+    tags: list = None,  # type: ignore
     state: TodoState = TodoState.PROPOSED,
     created_at: str = "",
 ) -> IntrinsicTodo:

@@ -18,7 +18,7 @@ def _prep(monkeypatch, drive_available=True, upload_success=True):
 
     mock_drive_class = MagicMock(return_value=mock_drive_instance)
     gdrive_mod = types.ModuleType("google_drive_integration")
-    gdrive_mod.GoogleDriveIntegration = mock_drive_class
+    gdrive_mod.GoogleDriveIntegration = mock_drive_class  # type: ignore
     monkeypatch.setitem(sys.modules, "google_drive_integration", gdrive_mod)
 
     with patch("builtins.print"):
@@ -49,7 +49,7 @@ class TestUploadLmStudioResult:
 
         mock_drive_class = MagicMock(return_value=mock_drive_instance)
         gdrive_mod = types.ModuleType("google_drive_integration")
-        gdrive_mod.GoogleDriveIntegration = mock_drive_class
+        gdrive_mod.GoogleDriveIntegration = mock_drive_class  # type: ignore
         monkeypatch.setitem(sys.modules, "google_drive_integration", gdrive_mod)
 
         with patch("builtins.print"):

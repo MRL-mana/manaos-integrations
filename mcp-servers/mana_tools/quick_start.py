@@ -24,7 +24,7 @@ class ManaOSPolicy:
         self.detector = ConflictDetector()
         self.checker = PolicyChecker()
 
-    def propose_action(self, agent: str, resource: str, intent: str, files: List[str], data: Dict = None) -> Dict:
+    def propose_action(self, agent: str, resource: str, intent: str, files: List[str], data: Dict = None) -> Dict:  # type: ignore
         """
         アクションを提案（エージェント用）
 

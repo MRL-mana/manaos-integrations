@@ -10,8 +10,8 @@ _MISC = Path(__file__).parent.parent.parent / "scripts" / "misc"
 
 def _make_paths_stub():
     mod = types.ModuleType("_paths")
-    mod.OLLAMA_PORT = 11434
-    mod.SEARXNG_PORT = 8080
+    mod.OLLAMA_PORT = 11434  # type: ignore
+    mod.SEARXNG_PORT = 8080  # type: ignore
     return mod
 
 
@@ -21,9 +21,9 @@ def _make_searxng_stub():
     inst.search_with_llm.return_value = {"results": [], "llm_summary": "test"}
     inst.create_rag_context.return_value = "rag context"
     inst.collect_training_data.return_value = []
-    mod.SearXNGLLMIntegration = MagicMock(return_value=inst)
-    mod.search_for_ollama = MagicMock(return_value={"results": []})
-    mod.create_searxng_tool_for_ollama = MagicMock(return_value=lambda q: {})
+    mod.SearXNGLLMIntegration = MagicMock(return_value=inst)  # type: ignore
+    mod.search_for_ollama = MagicMock(return_value={"results": []})  # type: ignore
+    mod.create_searxng_tool_for_ollama = MagicMock(return_value=lambda q: {})  # type: ignore
     return mod, inst
 
 

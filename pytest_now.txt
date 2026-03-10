@@ -1,0 +1,48 @@
+[1m============================= test session starts =============================[0m
+2026-03-09 14:33:58 [    INFO] [          mrl-memory-extractor] 笨・MRL Memory Extractor蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-09 14:33:58 [    INFO] [          mrl-memory-extractor] 笨・MRL Memory Extractor蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-09 14:33:58 [    INFO] [        mrl-memory-kill-switch] 笨・Kill Switch蛻晄悄蛹・ FWPKM=True, Write=True
+2026-03-09 14:33:58 [    INFO] [         mrl-memory-quarantine] 笨・Memory Quarantine蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 14:33:58 [    INFO] [        mrl-memory-ttl-manager] 笨・TTL Manager蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 14:33:58 [    INFO] [             mrl-memory-system] 笨・MRL Memory System蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-09 14:33:58 [    INFO] [            mrl-memory-metrics] [OK] MRL Memory Metrics蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory\metrics
+2026-03-09 14:33:58 [    INFO] [       mrl-memory-api-security] SECURITY: auth=disabled, rate_limit=enabled, max_input=200000, pii_mask=enabled
+2026-03-09 14:33:58 [    INFO] [       mrl-memory-api-security] [OK] API Security蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 14:33:58 [    INFO] [        mrl-memory-integration] Security initialized: require_auth=False, api_key=SET
+2026-03-09 14:33:58 [    INFO] [    mrl-memory-rollout-manager] 笨・Rollout Manager蛻晄悄蛹・ enabled=True, write_mode=full, sample_rate=1.0, review_effect=True
+2026-03-09 14:33:59 [    INFO] [               learning_system] 笨・API隱崎ｨｼ繧ｷ繧ｹ繝・Β繧貞・譛溷喧縺励∪縺励◆
+collected 6101 items
+
+tests\e2e\test_all_features.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[33m                                      [  0%][0m
+tests\e2e\test_final_checklist.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[33ms[0m[33m                                  [  0%][0m
+tests\e2e\test_final_checklist_stable.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[33m                           [  0%][0m
+tests\e2e\test_full_workflow.py [33ms[0m[33ms[0m[33ms[0m[33ms[0m[33ms[0m[33ms[0m[33ms[0m[33ms[0m[33m                                 [  0%][0m
+tests\e2e\test_service_health_checks.py [32m.[0m[32m.[0m[32m.[0m[33m                              [  0%][0m
+tests\e2e\test_ultimate.py [32m.[0m[33m                                             [  0%][0m
+tests\e2e\test_ultra_integrated.py [31mF[0m[31m                                     [  0%][0m
+tests\e2e\test_unified_workflow.py [33ms[0m[33ms[0m[33ms[0m[32m.[0m[32m.[0m[32m.[0m[33ms[0m[33ms[0m[33ms[0m[33ms[0m[31m                            [  0%][0m
+tests\integration\test_all_apis.py [32m.[0m[32m.[0m[31m                                    [  0%][0m
+tests\integration\test_all_enhancements.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                         [  0%][0m
+tests\integration\test_all_integrations.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                       [  0%][0m
+tests\integration\test_all_mcp_tools.py [32m.[0m[32m.[0m[32m.[0m[31m                              [  0%][0m
+tests\integration\test_all_services.py [32m.[0m[31m                                 [  0%][0m
+tests\integration\test_all_systems.py [32m.[0m[32m.[0m[31m                                 [  0%][0m
+tests\integration\test_always_ready_llm.py [32m.[0m[31m                             [  0%][0m
+tests\integration\test_api_endpoints.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                             [  1%][0m
+tests\integration\test_api_endpoints_extension.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                 [  1%][0m
+tests\integration\test_api_key_auth.py [32m.[0m[31m                                 [  1%][0m
+tests\integration\test_api_server_auth.py [32m.[0m[32m.[0m[31m                             [  1%][0m
+tests\integration\test_apis_working.py [32m.[0m[32m.[0m[31m                                [  1%][0m
+tests\integration\test_auto_reflection.py [32m.[0m[31mF[0m[32m.[0m[32m.[0m[31m                           [  1%][0m
+tests\integration\test_auto_save.py [32m.[0m[31m                                    [  1%][0m
+tests\integration\test_brave_search.py [32m.[0m[31m                                 [  1%][0m
+tests\integration\test_comfyui_civitai.py [32m.[0m[32m.[0m[31m                             [  1%][0m
+tests\integration\test_cross_chat_reflection.py [32m.[0m[31m                        [  1%][0m
+tests\integration\test_drive_indexer.py [31mF[0m
+
+[36m[1m=========================== short test summary info ===========================[0m
+[31mFAILED[0m tests/e2e/test_ultra_integrated.py::[1mtest_ultra_integrated_chat_smoke[0m - ImportError: cannot import name 'LLMResponse' from 'always_ready_llm_client...
+[31mFAILED[0m tests/integration/test_auto_reflection.py::[1mtest_statistics[0m - AssertionError: assert False
+[31mFAILED[0m tests/integration/test_drive_indexer.py::[1mtest_drive_indexer_smoke[0m - AttributeError: '_GoogleDriveIntegration' object has no attribute 'is_avail...
+[31m!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 3 failures !!!!!!!!!!!!!!!!!!!!!!!!!![0m
+[31m====== [31m[1m3 failed[0m, [32m64 passed[0m, [33m16 skipped[0m, [33m23 warnings[0m[31m in 125.11s (0:02:05)[0m[31m ======[0m

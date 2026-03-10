@@ -159,7 +159,7 @@ async def get_logs(
 ):
     """ログを取得"""
     try:
-        logs = adb_helper.get_logcat(lines=lines, filter_tag=filter_tag)
+        logs = adb_helper.get_logcat(lines=lines, filter_tag=filter_tag)  # type: ignore
         if logs is None:
             raise HTTPException(status_code=500, detail="Failed to get logs")
         
@@ -184,7 +184,7 @@ async def send_notification(request: NotificationRequest):
         success = adb_helper.send_notification(
             title=request.title,
             text=request.text,
-            package=request.package
+            package=request.package  # type: ignore
         )
         
         if not success:

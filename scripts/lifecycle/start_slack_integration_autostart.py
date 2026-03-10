@@ -28,7 +28,7 @@ sys.path.insert(0, str(script_dir))
 
 # slack_integration.pyをインポートして実行
 if __name__ == '__main__':
-    from slack_integration import app
+    from slack_integration import app  # type: ignore[attr-defined]
     
     port = int(os.getenv("PORT", 5114))
     print(f"Slack統合サーバーを起動中... (ポート: {port})")

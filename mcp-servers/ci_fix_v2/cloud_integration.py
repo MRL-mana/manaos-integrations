@@ -28,7 +28,7 @@ except ImportError:
     print("インストール: pip install azure-identity azure-storage-blob")
 
 try:
-    from google.cloud import storage
+    from google.cloud import storage  # type: ignore[attr-defined]
     GCP_AVAILABLE = True
 except ImportError:
     GCP_AVAILABLE = False
@@ -56,8 +56,8 @@ class AWSIntegration:
     def _initialize_clients(self):
         """クライアントを初期化"""
         try:
-            self.s3_client = boto3.client('s3', region_name=self.region_name)
-            self.ec2_client = boto3.client('ec2', region_name=self.region_name)
+            self.s3_client = boto3.client('s3', region_name=self.region_name)  # type: ignore[possibly-unbound]
+            self.ec2_client = boto3.client('ec2', region_name=self.region_name)  # type: ignore[possibly-unbound]
         except Exception as e:
             print(f"AWSクライアント初期化エラー: {e}")
     
@@ -89,9 +89,9 @@ class AWSIntegration:
             object_name = Path(file_path).name
         
         try:
-            self.s3_client.upload_file(file_path, bucket_name, object_name)
+            self.s3_client.upload_file(file_path, bucket_name, object_name)  # type: ignore[union-attr]
             return True
-        except ClientError as e:
+        except ClientError as e:  # type: ignore[possibly-unbound]
             print(f"S3アップロードエラー: {e}")
             return False
     
@@ -116,9 +116,9 @@ class AWSIntegration:
             return False
         
         try:
-            self.s3_client.download_file(bucket_name, object_name, file_path)
+            self.s3_client.download_file(bucket_name, object_name, file_path)  # type: ignore[union-attr]
             return True
-        except ClientError as e:
+        except ClientError as e:  # type: ignore[possibly-unbound]
             print(f"S3ダウンロードエラー: {e}")
             return False
     
@@ -137,7 +137,7 @@ class AWSIntegration:
             return []
         
         try:
-            response = self.s3_client.list_objects_v2(
+            response = self.s3_client.list_objects_v2(  # type: ignore[union-attr]
                 Bucket=bucket_name,
                 Prefix=prefix
             )
@@ -151,7 +151,7 @@ class AWSIntegration:
                 })
             
             return objects
-        except ClientError as e:
+        except ClientError as e:  # type: ignore[possibly-unbound]
             print(f"S3一覧取得エラー: {e}")
             return []
 
@@ -176,8 +176,8 @@ class AzureIntegration:
         """クライアントを初期化"""
         try:
             if self.account_url:
-                credential = DefaultAzureCredential()
-                self.blob_service_client = BlobServiceClient(
+                credential = DefaultAzureCredential()  # type: ignore[possibly-unbound]
+                self.blob_service_client = BlobServiceClient(  # type: ignore[possibly-unbound]
                     account_url=self.account_url,
                     credential=credential
                 )
@@ -186,8 +186,8 @@ class AzureIntegration:
                 account_name = os.getenv("AZURE_STORAGE_ACCOUNT_NAME")
                 if account_name:
                     account_url = f"https://{account_name}.blob.core.windows.net"
-                    credential = DefaultAzureCredential()
-                    self.blob_service_client = BlobServiceClient(
+                    credential = DefaultAzureCredential()  # type: ignore[possibly-unbound]
+                    self.blob_service_client = BlobServiceClient(  # type: ignore[possibly-unbound]
                         account_url=account_url,
                         credential=credential
                     )
@@ -222,7 +222,7 @@ class AzureIntegration:
             blob_name = Path(file_path).name
         
         try:
-            blob_client = self.blob_service_client.get_blob_client(
+            blob_client = self.blob_service_client.get_blob_client(  # type: ignore[union-attr]
                 container=container_name,
                 blob=blob_name
             )
@@ -256,7 +256,7 @@ class AzureIntegration:
             return False
         
         try:
-            blob_client = self.blob_service_client.get_blob_client(
+            blob_client = self.blob_service_client.get_blob_client(  # type: ignore[union-attr]
                 container=container_name,
                 blob=blob_name
             )
@@ -297,10 +297,10 @@ class GCPIntegration:
                 logger.debug("GCP認証情報が設定されていません。ローカル環境では問題ありません。")
                 return
             
-            self.storage_client = storage.Client(project=self.project_id)
+            self.storage_client = storage.Client(project=self.project_id)  # type: ignore[possibly-unbound]
         except Exception as e:
             # ローカル環境では警告のみ
-            logger = get_logger(__name__)
+            logger = get_logger(__name__)  # type: ignore[name-defined]
             logger.debug(f"GCPクライアント初期化エラー（ローカル環境では問題ありません）: {e}")
     
     def is_available(self) -> bool:
@@ -331,7 +331,7 @@ class GCPIntegration:
             blob_name = Path(file_path).name
         
         try:
-            bucket = self.storage_client.bucket(bucket_name)
+            bucket = self.storage_client.bucket(bucket_name)  # type: ignore[union-attr]
             blob = bucket.blob(blob_name)
             blob.upload_from_filename(file_path)
             return True
@@ -360,7 +360,7 @@ class GCPIntegration:
             return False
         
         try:
-            bucket = self.storage_client.bucket(bucket_name)
+            bucket = self.storage_client.bucket(bucket_name)  # type: ignore[union-attr]
             blob = bucket.blob(blob_name)
             blob.download_to_filename(file_path)
             return True
@@ -383,7 +383,7 @@ class GCPIntegration:
             return []
         
         try:
-            bucket = self.storage_client.bucket(bucket_name)
+            bucket = self.storage_client.bucket(bucket_name)  # type: ignore[union-attr]
             blobs = bucket.list_blobs(prefix=prefix)
             
             objects = []

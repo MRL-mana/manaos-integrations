@@ -65,7 +65,7 @@ class StreamingProcessor:
                     import time
                     time.sleep(0.1 * (attempt + 1))
     
-    def register_processor(self, processor: Callable, name: str = None):
+    def register_processor(self, processor: Callable, name: str = None):  # type: ignore
         """
         プロセッサを登録
         

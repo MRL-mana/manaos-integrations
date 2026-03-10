@@ -21,6 +21,10 @@ sys.modules.setdefault("manaos_logger", _ml)
 
 # auto_reflection_improvement をモックしておく → AUTO_REFLECTION_AVAILABLE = True になる
 _auto_ref_mod = MagicMock()
+_auto_ref_mod.get_auto_reflection_system.return_value.get_statistics.return_value = {
+    "total_evaluations": 0,
+    "average_score": 0.0,
+}  # test_auto_reflection.py::test_statistics が isinstance(stats, dict) を検証するため
 sys.modules["auto_reflection_improvement"] = _auto_ref_mod
 
 # api_auth をモック → require_api_key をパススルーデコレータにする（401回避）
@@ -28,11 +32,18 @@ _api_auth_mod = MagicMock()
 _dummy_auth_mgr = MagicMock()
 _dummy_auth_mgr.require_api_key = lambda f: f  # passthrough decorator
 _api_auth_mod.get_auth_manager.return_value = _dummy_auth_mgr
+_real_api_auth_backup = sys.modules.pop("api_auth", None)  # save real module
 sys.modules["api_auth"] = _api_auth_mod
 
 # ── 2. SUT import ────────────────────────────────────────────────────────
 import scripts.misc.gallery_api_server as _sut
 from scripts.misc.gallery_api_server import app as flask_app
+
+# Restore real api_auth so test_api_auth_rate_limit_state.py is not polluted
+if _real_api_auth_backup is not None:
+    sys.modules["api_auth"] = _real_api_auth_backup
+else:
+    sys.modules.pop("api_auth", None)
 
 
 # ══════════════════════════════════════════════════════════════════════════

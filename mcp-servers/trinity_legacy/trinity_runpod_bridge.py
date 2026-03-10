@@ -119,7 +119,7 @@ class TrinityRunpodBridge:
             # ここではシミュレーション
             await asyncio.sleep(2)  # テスト実行時間
             
-            test_result.update({
+            test_result.update({  # type: ignore[call-arg]
                 "computation_time_ms": 150.5,
                 "gpu_memory_used_gb": 2.3,
                 "status": "completed"
@@ -248,7 +248,7 @@ class TrinityRunpodBridge:
         print("🤖 トリニティ達からの接続を待機中...")
         
         server = await websockets.serve(
-            self.trinity_gpu_command_handler,
+            self.trinity_gpu_command_handler,  # type: ignore[misc]
             "localhost",
             self.bridge_port
         )

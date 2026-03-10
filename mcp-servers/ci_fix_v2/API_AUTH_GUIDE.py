@@ -35,7 +35,7 @@ ManaOS統一認証システムは以下の機能を提供します：
 
 # --- 基本的な統合例 ---
 from flask import Flask, jsonify
-from api_auth import get_auth_manager
+from api_auth import get_auth_manager  # type: ignore[attr-defined]
 
 app = Flask(__name__)
 auth_manager = get_auth_manager()
@@ -56,7 +56,7 @@ def public_endpoint():
 @auth_manager.optional_api_key
 def optional_auth_endpoint():
     from flask import request
-    if request.api_key_validated:
+    if request.api_key_validated:  # type: ignore
         return jsonify({"message": "Authenticated user", "premium": True})
     else:
         return jsonify({"message": "Anonymous user", "premium": False})
@@ -91,7 +91,7 @@ def optional_auth_endpoint():
 # --- FastAPI統合例 ---
 try:
     from fastapi import FastAPI, Depends, HTTPException
-    from api_auth import require_api_key_fastapi
+    from api_auth import require_api_key_fastapi  # type: ignore[attr-defined]
     
     app_fastapi = FastAPI()
     verify_api_key = require_api_key_fastapi()
@@ -136,7 +136,7 @@ MANAOS_ENV=development
 # ================================================
 
 # --- 新しいAPIキーの生成 ---
-from api_auth import APIAuthManager
+from api_auth import APIAuthManager  # type: ignore[attr-defined]
 
 auth_manager = APIAuthManager()
 

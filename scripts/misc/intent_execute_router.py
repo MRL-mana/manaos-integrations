@@ -12,11 +12,11 @@ from typing import Dict, Any, Optional
 from _paths import INTENT_ROUTER_PORT, ORCHESTRATOR_PORT, UNIFIED_API_PORT
 
 try:
-    from manaos_logger import get_logger, get_service_logger
+    from manaos_logger import get_logger, get_service_logger  # type: ignore
 except ImportError:
     import logging
     def get_logger(n): return logging.getLogger(n)
-logger = get_service_logger("intent-execute-router")
+logger = get_service_logger("intent-execute-router")  # type: ignore[possibly-unbound]
 
 DEFAULT_UNIFIED_API_URL = f"http://127.0.0.1:{UNIFIED_API_PORT}"
 DEFAULT_INTENT_ROUTER_URL = f"http://127.0.0.1:{INTENT_ROUTER_PORT}"

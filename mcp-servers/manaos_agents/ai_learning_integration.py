@@ -24,7 +24,7 @@ class AgentLearningBridge:
     """エージェントとAI Learning Systemを繋ぐブリッジ"""
     
     def __init__(self):
-        self.learning_system = KnowledgeManager() if AI_LEARNING_AVAILABLE else None
+        self.learning_system = KnowledgeManager() if AI_LEARNING_AVAILABLE else None  # type: ignore[possibly-unbound]
         self.db_path = self.learning_system.db_path if self.learning_system else None
         
     def save_agent_knowledge(
@@ -132,7 +132,7 @@ class AgentLearningBridge:
             return {}
             
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = sqlite3.connect(self.db_path)  # type: ignore
             cursor = conn.cursor()
             
             # エージェント別のタスク数を取得

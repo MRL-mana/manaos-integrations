@@ -106,7 +106,7 @@ def main():
 
     # 標準出力のエンコーディングを設定
     if sys.stdout.encoding != "utf-8":
-        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
     print("n8n workflow import started")
     print()
@@ -124,14 +124,14 @@ def main():
         print("OK: Import completed!")
         print()
         print("Next steps:")
-        print(f"1. Check workflow in n8n: {n8n_url}")
+        print(f"1. Check workflow in n8n: {n8n_url}")  # type: ignore[name-defined]
         print("2. Activate workflow")
-        print(f"3. Check webhook URL: {n8n_url}/webhook/browse-ai-webhook")
+        print(f"3. Check webhook URL: {n8n_url}/webhook/browse-ai-webhook")  # type: ignore[name-defined]
     else:
         print("WARNING: Auto import failed")
         print()
         print("Manual import method:")
-        print(f"1. Open browser: {n8n_url}")
+        print(f"1. Open browser: {n8n_url}")  # type: ignore[name-defined]
         print("2. Login if needed")
         print("3. Workflows -> Import from File")
         print(f"4. Select file: {workflow_path}")

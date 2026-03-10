@@ -225,7 +225,7 @@ class WorkflowAutomationOptimized:
         file_path = params.get("file_path")
         folder_id = params.get("folder_id")
         
-        result = self.drive.upload_file(file_path, folder_id)
+        result = self.drive.upload_file(file_path, folder_id)  # type: ignore
         return {"file_id": result} if result else {"error": "アップロードに失敗"}
     
     def _execute_obsidian_create(self, params: Dict[str, Any]) -> Dict[str, Any]:

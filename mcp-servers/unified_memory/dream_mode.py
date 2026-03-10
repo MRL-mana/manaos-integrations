@@ -121,7 +121,7 @@ class DreamMode:
         
         return result
     
-    async def simulate_scenarios(self, scenarios: List[str] = None) -> Dict:
+    async def simulate_scenarios(self, scenarios: List[str] = None) -> Dict:  # type: ignore
         """
         仮想シミュレーション
         

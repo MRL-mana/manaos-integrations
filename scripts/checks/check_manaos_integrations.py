@@ -177,7 +177,7 @@ def check_slack_integration():
         else:
             # execute_command内でFile Secretaryを使用しているか確認
             import inspect
-            source = inspect.getsource(slack_integration.execute_command)
+            source = inspect.getsource(slack_integration.execute_command)  # type: ignore[attr-defined]
             if 'file_secretary' in source.lower():
                 print("✅ File Secretary: 統合済み（execute_command内）")
             else:

@@ -31,8 +31,8 @@ DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 # Windowsでのエンコーディング修正
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 logger = get_service_logger("pdf-to-excel-wsl2-vision")
 
@@ -52,7 +52,7 @@ class WSL2VisionLLM:
         # WSL2内で動いているOllamaでも、APIはlocalhostで叩ける（Windows→WSL2転送）
         self.ollama_url = DEFAULT_OLLAMA_URL
     
-    def _call_wsl2_ollama_api(self, endpoint: str, method: str = "GET", json_data: dict = None) -> Optional[Dict]:
+    def _call_wsl2_ollama_api(self, endpoint: str, method: str = "GET", json_data: dict = None) -> Optional[Dict]:  # type: ignore
         """Ollama APIを呼び出す（Windows側から直接HTTP）"""
         url = f"{self.ollama_url}{endpoint}"
         try:

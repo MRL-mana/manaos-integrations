@@ -4,6 +4,7 @@ LTX-2ワークフロー構造の動作確認スクリプト
 """
 
 import sys
+import types
 import json
 from pathlib import Path
 import io
@@ -11,11 +12,26 @@ import pytest
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 # プロジェクトルートをパスに追加
 sys.path.insert(0, str(Path(__file__).parent))
+
+# ltx2_video_integration スタブ（未インストール環境用）
+if "ltx2_video_integration" not in sys.modules:
+    _ltx2_stub = types.ModuleType("ltx2_video_integration")
+
+    class _StubLTX2:
+        def get_queue_status(self):
+            return {"queue_remaining": 0}
+        def create_ltx2_workflow(self, **kwargs):
+            return {}
+        def is_available(self):
+            return False
+
+    _ltx2_stub.LTX2VideoIntegration = _StubLTX2  # type: ignore
+    sys.modules["ltx2_video_integration"] = _ltx2_stub
 
 def test_workflow_structure():
     """ワークフロー構造のテスト"""

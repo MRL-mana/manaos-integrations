@@ -173,7 +173,7 @@ class LearningLog:
             params.append(f'%"{task}"%')
 
         query += " ORDER BY timestamp DESC LIMIT ?"
-        params.append(limit)
+        params.append(limit)  # type: ignore
 
         cursor.execute(query, params)
         results = []

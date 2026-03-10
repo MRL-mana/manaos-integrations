@@ -35,9 +35,7 @@ def test_comfyui_integration_smoke():
 
 def test_civitai_integration_smoke():
     _load_dotenv_if_exists()
-    civitai_key = os.getenv("CIVITAI_API_KEY")
-    if not civitai_key:
-        pytest.skip("CIVITAI_API_KEY 未設定のためスキップ")
+    civitai_key = os.getenv("CIVITAI_API_KEY", "test-civitai-key")
 
     try:
         from civitai_integration import CivitAIIntegration

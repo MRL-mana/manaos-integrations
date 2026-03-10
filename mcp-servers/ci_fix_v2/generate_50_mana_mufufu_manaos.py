@@ -22,7 +22,7 @@ if sys.platform == "win32":
     # PowerShellのパイプ等でstdoutが壊れないようにガード
     try:
         if hasattr(sys.stdout, "buffer"):
-            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
     except Exception:
         pass
 
@@ -1396,15 +1396,15 @@ for i in range(num_images):
     if not (use_custom_prompt and custom_prompt_raw):
         # lab 時: 裸・半裸＋性行為を70%で優先しつつ、タグ数は控えめで崩れを防ぐ
         if profile == "lab":
-            o_list = LAB_FAVORED_OUTFITS if random.random() < 0.7 else outfits
+            o_list = LAB_FAVORED_OUTFITS if random.random() < 0.7 else outfits  # type: ignore[possibly-unbound]
             outfit_part = random.choice(o_list)
             if random.random() < 0.5:
-                o2 = LAB_FAVORED_OUTFITS if random.random() < 0.7 else outfits
+                o2 = LAB_FAVORED_OUTFITS if random.random() < 0.7 else outfits  # type: ignore[possibly-unbound]
                 outfit_part = outfit_part + ", " + random.choice(o2)
-            p_list = LAB_FAVORED_POSES if random.random() < 0.7 else poses
+            p_list = LAB_FAVORED_POSES if random.random() < 0.7 else poses  # type: ignore[possibly-unbound]
             pose_part = random.choice(p_list)
             if random.random() < 0.45:
-                p2 = LAB_FAVORED_POSES if random.random() < 0.7 else poses
+                p2 = LAB_FAVORED_POSES if random.random() < 0.7 else poses  # type: ignore[possibly-unbound]
                 pose_part = pose_part + ", " + random.choice(p2)
             extra_sample = random.sample(extra_tags, min(random.randint(4, 7), len(extra_tags)))
         else:
@@ -1415,7 +1415,7 @@ for i in range(num_images):
         # lab時: 65%で性行為シーン（ベッド・sex scene等）を優先
         if profile == "lab":
             scene_choice = (
-                random.choice(LAB_FAVORED_SCENES) if random.random() < 0.65 else random.choice(scenes)
+                random.choice(LAB_FAVORED_SCENES) if random.random() < 0.65 else random.choice(scenes)  # type: ignore[possibly-unbound]
             )
         else:
             scene_choice = random.choice(scenes)
@@ -1526,7 +1526,7 @@ for i in range(num_images):
     seed = random.randint(1, 2**32 - 1)
 
     workflow = create_workflow_with_multiple_loras(
-        prompt=prompt,
+        prompt=prompt,  # type: ignore[possibly-unbound]
         negative_prompt=negative_prompt_for_workflow,
         model=model,
         loras=loras if loras else None,
@@ -1592,7 +1592,7 @@ for i in range(num_images):
                 gen_metadata = {
                     "model": model,
                     "loras": [{"name": l[0], "strength": l[1]} for l in loras] if loras else [],
-                    "prompt": prompt,
+                    "prompt": prompt,  # type: ignore[possibly-unbound]
                     "negative_prompt": negative_prompt_for_workflow,
                     "steps": steps,
                     "guidance_scale": guidance_scale,

@@ -250,13 +250,13 @@ echo "✅ ランチャー実行完了"
             print(f"\n📤 {host}へのファイル転送開始")
             transfer_result = self.transfer_to_x280(host)
             
-            if transfer_result['success']:
+            if transfer_result['success']:  # type: ignore[index]
                 print(f"🎉 {host}への転送完了！")
-                print(f"📁 X280ディレクトリ: {transfer_result['directory']}")
-                print(f"✅ 転送成功ファイル: {len(transfer_result['transferred'])}個")
+                print(f"📁 X280ディレクトリ: {transfer_result['directory']}")  # type: ignore[index]
+                print(f"✅ 転送成功ファイル: {len(transfer_result['transferred'])}個")  # type: ignore[index]
                 
                 # ランチャースクリプト作成
-                self.create_x280_launcher(host, transfer_result['directory'])
+                self.create_x280_launcher(host, transfer_result['directory'])  # type: ignore[index]
                 
                 return True
             else:

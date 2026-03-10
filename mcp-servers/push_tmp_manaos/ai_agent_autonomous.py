@@ -185,7 +185,7 @@ class AutonomousAgent:
         if not goal:
             return []
         
-        if not self.langchain.is_available():
+        if not self.langchain.is_available():  # type: ignore[union-attr]
             return []
         
         # LangChainでタスクを計画
@@ -202,11 +202,11 @@ class AutonomousAgent:
 ...
 """
         
-        response = self.langchain.chat(prompt, system_prompt="あなたは優秀なタスクプランナーです。")
+        response = self.langchain.chat(prompt, system_prompt="あなたは優秀なタスクプランナーです。")  # type: ignore[union-attr]
         
         # レスポンスを解析してタスクを作成
         planned_tasks = []
-        lines = response.split('\n')
+        lines = response.split('\n')  # type: ignore[union-attr]
         
         for line in lines:
             line = line.strip()
@@ -269,8 +269,8 @@ class AutonomousAgent:
     def _execute_image_generation_task(self, description: str) -> Dict[str, Any]:
         """画像生成タスクを実行"""
         # プロンプトを抽出
-        if self.langchain.is_available():
-            prompt = self.langchain.chat(
+        if self.langchain.is_available():  # type: ignore[union-attr]
+            prompt = self.langchain.chat(  # type: ignore[union-attr]
                 f"以下のタスクから画像生成のプロンプトを抽出してください: {description}",
                 system_prompt="画像生成プロンプトを抽出してください。"
             )
@@ -288,8 +288,8 @@ class AutonomousAgent:
     def _execute_search_task(self, description: str) -> Dict[str, Any]:
         """検索タスクを実行"""
         # 検索クエリを抽出
-        if self.langchain.is_available():
-            query = self.langchain.chat(
+        if self.langchain.is_available():  # type: ignore[union-attr]
+            query = self.langchain.chat(  # type: ignore[union-attr]
                 f"以下のタスクから検索クエリを抽出してください: {description}",
                 system_prompt="検索クエリを抽出してください。"
             )
@@ -319,8 +319,8 @@ class AutonomousAgent:
     
     def _execute_general_task(self, description: str) -> Dict[str, Any]:
         """一般的なタスクを実行"""
-        if self.langchain.is_available():
-            response = self.langchain.chat(
+        if self.langchain.is_available():  # type: ignore[union-attr]
+            response = self.langchain.chat(  # type: ignore[union-attr]
                 f"以下のタスクを実行してください: {description}",
                 system_prompt="タスクを実行し、結果を報告してください。"
             )

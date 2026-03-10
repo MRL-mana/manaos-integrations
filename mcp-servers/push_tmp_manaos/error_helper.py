@@ -21,7 +21,7 @@ except ImportError:
     timeout_config = None
 
 
-def format_error_response(error: Exception, tool_name: str = None) -> Sequence[TextContent]:
+def format_error_response(error: Exception, tool_name: str = None) -> Sequence[TextContent]:  # type: ignore
     """
     エラーをTextContent形式に変換
     

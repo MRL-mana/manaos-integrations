@@ -50,7 +50,7 @@ class TestSyncRule:
             conflict_resolution="newest", enabled=True,
         )
         defaults.update(kw)
-        return SyncRule(**defaults)
+        return SyncRule(**defaults)  # type: ignore
 
     def test_create(self):
         r = self._rule()
@@ -74,7 +74,7 @@ class TestFileVersion:
             timestamp="2026-01-01T00:00:00", device="mothership", size=1024,
         )
         defaults.update(kw)
-        return FileVersion(**defaults)
+        return FileVersion(**defaults)  # type: ignore
 
     def test_create(self):
         v = self._ver()

@@ -278,7 +278,7 @@ def get_error_count() -> dict:
     return {"http_5xx_last_60min": error_count}
 
 
-def create_snapshot(output_path: Path = None, baseline_path: Path = None) -> dict:
+def create_snapshot(output_path: Path = None, baseline_path: Path = None) -> dict:  # type: ignore
     """
     スナップショットを作成
 
@@ -376,7 +376,7 @@ def main():
         output_path = Path("phase1_metrics_snapshot.json")
 
     # スナップショットを作成
-    snapshot = create_snapshot(output_path, baseline_path)
+    snapshot = create_snapshot(output_path, baseline_path)  # type: ignore
 
     # 標準出力にもJSONを出力（判定スクリプト用）
     print(json.dumps(snapshot, ensure_ascii=False, indent=2))

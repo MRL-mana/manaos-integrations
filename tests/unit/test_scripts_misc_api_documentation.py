@@ -57,7 +57,7 @@ class TestHealthResponse:
 
 class TestMemoryStoreRequest:
     def test_basic_fields(self):
-        r = MemoryStoreRequest(key="mykey", value={"x": 1})
+        r = MemoryStoreRequest(key="mykey", value={"x": 1})  # type: ignore[call-arg]
         assert r.key == "mykey"
         assert r.value == {"x": 1}
         assert r.ttl is None
@@ -71,20 +71,20 @@ class TestMemoryStoreRequest:
 
 class TestLearningEventRequest:
     def test_valid_event_type(self):
-        r = LearningEventRequest(
+        r = LearningEventRequest(  # type: ignore[call-arg]
             event_type="success",
             context={"task": "test"},
         )
         assert r.event_type == "success"
 
     def test_metadata_optional(self):
-        r = LearningEventRequest(event_type="failure", context={})
+        r = LearningEventRequest(event_type="failure", context={})  # type: ignore[call-arg]
         assert r.metadata is None
 
 
 class TestLLMRoutingRequest:
     def test_required_fields(self):
-        r = LLMRoutingRequest(prompt="Hello")
+        r = LLMRoutingRequest(prompt="Hello")  # type: ignore[call-arg]
         assert r.prompt == "Hello"
         assert r.temperature == 0.7
 
@@ -101,7 +101,7 @@ class TestLLMRoutingRequest:
 
 class TestErrorResponse:
     def test_required_fields(self):
-        e = ErrorResponse(
+        e = ErrorResponse(  # type: ignore[call-arg]
             error="NotFound",
             message="Resource not found",
             timestamp=datetime.utcnow(),

@@ -68,7 +68,7 @@ except Exception as e:
 try:
     # 認証情報があれば使用
     cred_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-    engines['vision_api'] = VisionAPIEngine(cred_path)
+    engines['vision_api'] = VisionAPIEngine(cred_path)  # type: ignore[operator]
     logger.info("Vision API engine initialized")
 except Exception as e:
     logger.error(f"Vision API initialization failed: {e}")
@@ -163,7 +163,7 @@ def extract_text():
         }), 400
     
     # ファイル保存
-    filename = secure_filename(file.filename)
+    filename = secure_filename(file.filename)  # type: ignore
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f"{timestamp}_{filename}"
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -229,7 +229,7 @@ def compare_engines():
         return jsonify({'error': 'Invalid file'}), 400
     
     # ファイル保存
-    filename = secure_filename(file.filename)
+    filename = secure_filename(file.filename)  # type: ignore
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f"{timestamp}_{filename}"
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)

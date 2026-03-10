@@ -139,7 +139,7 @@ class PDFExcelAgent:
 
         if command == "convert_pdf":
             return self.convert_pdf(
-                pdf_path=params.get('pdf_path'),
+                pdf_path=params.get('pdf_path'),  # type: ignore
                 use_ocr=params.get('use_ocr', False),
                 upload_to_drive=params.get('upload_to_drive', False)
             )

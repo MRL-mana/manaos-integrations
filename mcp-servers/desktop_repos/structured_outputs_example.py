@@ -95,7 +95,7 @@ def structured_output_tool_call():
             query_result = (
                 completion.choices[0].message.tool_calls[0].function.parsed_arguments
             )
-            mock_query_function(query_result)
+            mock_query_function(query_result)  # type: ignore
         else:
             print(f"{completion.choices and completion.choices[0].message.content}")
     else:

@@ -65,7 +65,7 @@ class SmartPromptTemplates:
             }
         }
     
-    def generate_prompt(self, category: str, custom_elements: Dict = None) -> str:
+    def generate_prompt(self, category: str, custom_elements: Dict = None) -> str:  # type: ignore
         """プロンプトを生成する"""
         if category not in self.templates:
             logger.warning(f"未知のカテゴリ: {category}")

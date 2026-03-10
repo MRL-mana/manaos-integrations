@@ -370,8 +370,8 @@ def generate_with_auto_prompt_100steps(num_images=50):
         print(f"   ⚙️ ステップ数: {num_inference_steps} (100ステップ)")
         
         # モデルが変わったら再読み込み
-        if current_model_name != model_name or current_pipeline is None:
-            if current_pipeline:
+        if current_model_name != model_name or current_pipeline is None:  # type: ignore[possibly-unbound]
+            if current_pipeline:  # type: ignore[possibly-unbound]
                 del current_pipeline
                 gc.collect()
                 if device == "cuda":
@@ -407,27 +407,27 @@ def generate_with_auto_prompt_100steps(num_images=50):
                     height = 768
                 
                 # 生成（60ステップ）
-                generator = torch.Generator(device=current_pipeline.device)
+                generator = torch.Generator(device=current_pipeline.device)  # type: ignore[possibly-unbound]
                 seed = random.randint(0, 2**32)
                 generator.manual_seed(seed)
                 
                 # tokenizerがNoneでないことを確認（生成前に再チェック）
-                if hasattr(current_pipeline, 'tokenizer') and current_pipeline.tokenizer is None:
+                if hasattr(current_pipeline, 'tokenizer') and current_pipeline.tokenizer is None:  # type: ignore[possibly-unbound]
                     from transformers import CLIPTokenizer
-                    current_pipeline.tokenizer = CLIPTokenizer.from_pretrained('openai/clip-vit-large-patch14')
+                    current_pipeline.tokenizer = CLIPTokenizer.from_pretrained('openai/clip-vit-large-patch14')  # type: ignore[possibly-unbound]
                 
                 # SDXLの場合はtokenizer_2とtext_encoderも確認
                 if current_is_sdxl:
-                    if hasattr(current_pipeline, 'tokenizer_2') and current_pipeline.tokenizer_2 is None:
+                    if hasattr(current_pipeline, 'tokenizer_2') and current_pipeline.tokenizer_2 is None:  # type: ignore[possibly-unbound]
                         from transformers import CLIPTokenizer
-                        current_pipeline.tokenizer_2 = CLIPTokenizer.from_pretrained('laion/CLIP-ViT-bigG-14-laion2B-39B-b160k')
+                        current_pipeline.tokenizer_2 = CLIPTokenizer.from_pretrained('laion/CLIP-ViT-bigG-14-laion2B-39B-b160k')  # type: ignore[possibly-unbound]
                     
                     # text_encoderがNoneの場合はSDXLとして扱わない（誤検出の可能性）
-                    if hasattr(current_pipeline, 'text_encoder') and current_pipeline.text_encoder is None:
+                    if hasattr(current_pipeline, 'text_encoder') and current_pipeline.text_encoder is None:  # type: ignore[possibly-unbound]
                         print(f"   ⚠️ text_encoderがNoneのため、SDXLとして扱わずにスキップします")
                         failed_count += 1
                         continue
-                    if hasattr(current_pipeline, 'text_encoder_2') and current_pipeline.text_encoder_2 is None:
+                    if hasattr(current_pipeline, 'text_encoder_2') and current_pipeline.text_encoder_2 is None:  # type: ignore[possibly-unbound]
                         print(f"   ⚠️ text_encoder_2がNoneのため、SDXLとして扱わずにスキップします")
                         failed_count += 1
                         continue
@@ -444,10 +444,10 @@ def generate_with_auto_prompt_100steps(num_images=50):
                 
                 # SDXLモデルの場合
                 if current_is_sdxl:
-                    if hasattr(current_pipeline.unet.config, 'addition_embed_type'):
+                    if hasattr(current_pipeline.unet.config, 'addition_embed_type'):  # type: ignore[possibly-unbound]
                         call_kwargs["added_cond_kwargs"] = {}
                 
-                image = current_pipeline(**call_kwargs).images[0]
+                image = current_pipeline(**call_kwargs).images[0]  # type: ignore[possibly-unbound]
                 
                 # 画像の整合性チェック
                 if image is None or image.size[0] == 0 or image.size[1] == 0:
@@ -539,7 +539,7 @@ def generate_with_auto_prompt_100steps(num_images=50):
         time.sleep(0.5)
     
     # クリーンアップ
-    if current_pipeline:
+    if current_pipeline:  # type: ignore[possibly-unbound]
         del current_pipeline
         gc.collect()
         if device == "cuda":

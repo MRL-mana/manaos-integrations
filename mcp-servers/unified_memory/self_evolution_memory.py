@@ -66,7 +66,7 @@ class SelfEvolutionMemory:
         except Exception as e:
             logger.error(f"行動データ保存エラー: {e}")
     
-    async def track_action(self, action: str, context: Dict = None,
+    async def track_action(self, action: str, context: Dict = None,  # type: ignore
                           success: bool = True) -> Dict:
         """
         行動追跡

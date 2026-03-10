@@ -133,7 +133,7 @@ class MaintenanceScheduler:
                     log_file.unlink()
                     self.log(f"古いログ削除: {log_file.name}")
                     results["deleted"] += 1
-                    results["freed_space_mb"] += size_mb
+                    results["freed_space_mb"] += size_mb  # type: ignore
             
             except Exception as e:
                 self.log(f"ログローテーションエラー {log_file}: {e}", "ERROR")
@@ -170,7 +170,7 @@ class MaintenanceScheduler:
                             size_mb = file_path.stat().st_size / (1024 * 1024)
                             file_path.unlink()
                             results["deleted"] += 1
-                            results["freed_space_mb"] += size_mb
+                            results["freed_space_mb"] += size_mb  # type: ignore
                     
                     except Exception as e:
                         self.log(f"クリーンアップエラー {file_path}: {e}", "ERROR")

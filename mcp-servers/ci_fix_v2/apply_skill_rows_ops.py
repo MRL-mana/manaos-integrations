@@ -134,7 +134,7 @@ def query_rows(data: Dict[str, Any]) -> Dict[str, Any]:
         result = rows.ai_query(
             spreadsheet_id=spreadsheet_id,
             query=query,
-            sheet_name=sheet_name
+            sheet_name=sheet_name  # type: ignore[call-arg]
         )
         
         if result:

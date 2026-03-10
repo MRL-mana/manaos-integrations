@@ -10,7 +10,7 @@ from pathlib import Path
 
 # 標準出力のエンコーディングを設定
 if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 # .envファイルの読み込み
 try:
@@ -41,7 +41,7 @@ if token:
     
     # GitHub接続テスト
     try:
-        github = Github(token)
+        github = Github(token)  # type: ignore[possibly-unbound]
         user = github.get_user()
         print(f"[OK] GitHub接続成功: {user.login}")
     except Exception as e:

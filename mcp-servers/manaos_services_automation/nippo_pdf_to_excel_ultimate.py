@@ -95,14 +95,14 @@ class NippoPDFToExcelUltimate:
         """フォルダ取得/作成"""
         try:
             query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
-            results = self.drive_service.files().list(q=query, fields='files(id)').execute()
+            results = self.drive_service.files().list(q=query, fields='files(id)').execute()  # type: ignore[union-attr]
             files = results.get('files', [])
             
             if files:
                 return files[0]['id']
             
             file_metadata = {'name': folder_name, 'mimeType': 'application/vnd.google-apps.folder'}
-            folder = self.drive_service.files().create(body=file_metadata, fields='id').execute()
+            folder = self.drive_service.files().create(body=file_metadata, fields='id').execute()  # type: ignore[union-attr]
             return folder.get('id')
             
         except Exception as e:
@@ -119,7 +119,7 @@ class NippoPDFToExcelUltimate:
             }
             
             media = MediaFileUpload(pdf_path, mimetype='application/pdf', resumable=True)
-            file = self.drive_service.files().create(
+            file = self.drive_service.files().create(  # type: ignore[union-attr]
                 body=file_metadata, media_body=media, fields='id', ocrLanguage='ja'
             ).execute()
             
@@ -133,7 +133,7 @@ class NippoPDFToExcelUltimate:
     def extract_document_content(self, doc_id: str):
         """Google Docsのコンテンツを取得（表含む）"""
         try:
-            document = self.docs_service.documents().get(documentId=doc_id).execute()
+            document = self.docs_service.documents().get(documentId=doc_id).execute()  # type: ignore[union-attr]
             
             # テキストと表を抽出
             content = document.get('body', {}).get('content', [])
@@ -200,7 +200,7 @@ class NippoPDFToExcelUltimate:
     def delete_temp_file(self, file_id: str):
         """一時ファイル削除"""
         try:
-            self.drive_service.files().delete(fileId=file_id).execute()
+            self.drive_service.files().delete(fileId=file_id).execute()  # type: ignore[union-attr]
         except IOError:
             pass
     
@@ -268,14 +268,14 @@ JSON配列のみ出力（説明不要）：
                 for i, table_data in enumerate(tables, 1):
                     if i == 1:
                         ws = wb.active
-                        ws.title = f'表{i}'
+                        ws.title = f'表{i}'  # type: ignore[union-attr]
                     else:
                         ws = wb.create_sheet(f'表{i}')
                     
                     # 表データをそのまま書き込み
                     for r_idx, row_data in enumerate(table_data, start=1):
                         for c_idx, cell_value in enumerate(row_data, start=1):
-                            cell = ws.cell(row=r_idx, column=c_idx, value=cell_value)
+                            cell = ws.cell(row=r_idx, column=c_idx, value=cell_value)  # type: ignore[union-attr]
                             cell.font = Font(name='メイリオ', size=10)
                             cell.alignment = Alignment(wrap_text=True, vertical='top')
                             cell.border = Border(
@@ -292,9 +292,9 @@ JSON配列のみ出力（説明不要）：
                                 cell.fill = PatternFill(start_color='F2F2F2', end_color='F2F2F2', fill_type='solid')
                     
                     # 列幅自動調整
-                    for col in ws.columns:
+                    for col in ws.columns:  # type: ignore[union-attr]
                         max_length = max((len(str(cell.value or '')) for cell in col), default=0)
-                        ws.column_dimensions[col[0].column_letter].width = min(max_length + 2, 60)
+                        ws.column_dimensions[col[0].column_letter].width = min(max_length + 2, 60)  # type: ignore[union-attr]
             
             # Gemini整形データも追加
             if not df.empty:
@@ -302,11 +302,11 @@ JSON配列のみ出力（説明不要）：
                 ws = ws_gemini
             else:
                 ws = wb.active
-                ws.title = '日報データ'
+                ws.title = '日報データ'  # type: ignore[union-attr]
             
             # ヘッダー
             for c_idx, col_name in enumerate(df.columns, start=1):
-                cell = ws.cell(row=1, column=c_idx, value=col_name)
+                cell = ws.cell(row=1, column=c_idx, value=col_name)  # type: ignore[union-attr]
                 cell.font = Font(name='メイリオ', size=12, bold=True, color='FFFFFF')
                 cell.fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
                 cell.alignment = Alignment(horizontal='center', vertical='center')
@@ -318,7 +318,7 @@ JSON配列のみ出力（説明不要）：
             # データ
             for r_idx, row in enumerate(df.itertuples(index=False), start=2):
                 for c_idx, value in enumerate(row, start=1):
-                    cell = ws.cell(row=r_idx, column=c_idx, value=value)
+                    cell = ws.cell(row=r_idx, column=c_idx, value=value)  # type: ignore[union-attr]
                     cell.font = Font(name='メイリオ', size=11)
                     cell.alignment = Alignment(wrap_text=True, vertical='top')
                     cell.border = Border(
@@ -329,9 +329,9 @@ JSON配列のみ出力（説明不要）：
                         cell.fill = PatternFill(start_color='F2F2F2', end_color='F2F2F2', fill_type='solid')
             
             # 列幅調整
-            for col in ws.columns:
+            for col in ws.columns:  # type: ignore[union-attr]
                 max_length = max((len(str(cell.value or '')) for cell in col), default=0)
-                ws.column_dimensions[col[0].column_letter].width = min(max_length + 3, 60)
+                ws.column_dimensions[col[0].column_letter].width = min(max_length + 3, 60)  # type: ignore[union-attr]
             
             # サマリーシート
             summary_ws = wb.create_sheet('変換情報', 0)
@@ -372,13 +372,13 @@ JSON配列のみ出力（説明不要）：
     
     def convert_pdf(self, pdf_path: str):
         """PDFをExcelに変換"""
-        pdf_path = Path(pdf_path)
+        pdf_path = Path(pdf_path)  # type: ignore
         
-        if not pdf_path.exists():
+        if not pdf_path.exists():  # type: ignore
             return {'success': False, 'error': 'File not found'}
         
         print(f"\n{'='*70}")
-        print(f"📄 【究極版】変換: {pdf_path.name}")
+        print(f"📄 【究極版】変換: {pdf_path.name}")  # type: ignore
         print(f"{'='*70}")
         
         file_id = None
@@ -430,10 +430,10 @@ JSON配列のみ出力（説明不要）：
             
             # 5. Excel作成
             print("📝 STEP 5: Excel作成...")
-            output_filename = f"{pdf_path.stem}_ultimate_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            output_filename = f"{pdf_path.stem}_ultimate_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"  # type: ignore
             output_path = self.output_dir / output_filename
             
-            if self.create_excel_from_tables(tables, df, str(output_path), pdf_path.name):
+            if self.create_excel_from_tables(tables, df, str(output_path), pdf_path.name):  # type: ignore
                 print("\n✅ 変換完了！")
                 print(f"📁 {output_path}")
                 print(f"{'='*70}\n")
@@ -451,10 +451,10 @@ JSON配列のみ出力（説明不要）：
                 print("🗑️  一時ファイル削除...")
                 self.delete_temp_file(file_id)
     
-    def batch_convert(self, pdf_dir: str, limit: int = None):
+    def batch_convert(self, pdf_dir: str, limit: int = None):  # type: ignore
         """一括変換"""
-        pdf_dir = Path(pdf_dir)
-        pdf_files = list(pdf_dir.glob('*.pdf')) + list(pdf_dir.glob('*.PDF'))
+        pdf_dir = Path(pdf_dir)  # type: ignore
+        pdf_files = list(pdf_dir.glob('*.pdf')) + list(pdf_dir.glob('*.PDF'))  # type: ignore
         
         if limit:
             pdf_files = pdf_files[:limit]
@@ -502,7 +502,7 @@ def main():
         converter.convert_pdf(str(target))
     elif target.is_dir():
         limit = int(sys.argv[2]) if len(sys.argv) > 2 else None
-        converter.batch_convert(str(target), limit=limit)
+        converter.batch_convert(str(target), limit=limit)  # type: ignore
 
 
 if __name__ == '__main__':

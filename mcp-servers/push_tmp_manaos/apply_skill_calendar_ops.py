@@ -93,19 +93,19 @@ def get_calendar_service() -> Any:
     # トークンファイルから認証情報を読み込む
     if TOKEN_FILE.exists():
         try:
-            creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), GOOGLE_CALENDAR_SCOPES)
+            creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), GOOGLE_CALENDAR_SCOPES)  # type: ignore[possibly-unbound]
         except Exception as e:
             print(f"⚠️  トークンファイルの読み込みエラー: {e}")
     
     # 認証情報がない、または無効な場合は認証フローを実行
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+            creds.refresh(Request())  # type: ignore[possibly-unbound]
         else:
             if not CREDENTIALS_FILE.exists():
                 print(f"❌ credentials.jsonが見つかりません: {CREDENTIALS_FILE}")
                 return None
-            flow = InstalledAppFlow.from_client_secrets_file(
+            flow = InstalledAppFlow.from_client_secrets_file(  # type: ignore[possibly-unbound]
                 str(CREDENTIALS_FILE), GOOGLE_CALENDAR_SCOPES
             )
             creds = flow.run_local_server(port=0)
@@ -114,7 +114,7 @@ def get_calendar_service() -> Any:
         with open(TOKEN_FILE, 'w', encoding='utf-8') as token:
             token.write(creds.to_json())
     
-    return build('calendar', 'v3', credentials=creds)
+    return build('calendar', 'v3', credentials=creds)  # type: ignore[possibly-unbound]
 
 
 def create_event(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -166,7 +166,7 @@ def create_event(data: Dict[str, Any]) -> Dict[str, Any]:
             "event_id": event.get('id'),
             "html_link": event.get('htmlLink')
         }
-    except HttpError as e:
+    except HttpError as e:  # type: ignore[possibly-unbound]
         return {"success": False, "error": f"Google Calendar APIエラー: {e}"}
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -226,7 +226,7 @@ def update_event(data: Dict[str, Any]) -> Dict[str, Any]:
             "event_id": updated_event.get('id'),
             "html_link": updated_event.get('htmlLink')
         }
-    except HttpError as e:
+    except HttpError as e:  # type: ignore[possibly-unbound]
         return {"success": False, "error": f"Google Calendar APIエラー: {e}"}
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -280,7 +280,7 @@ def list_events(data: Dict[str, Any]) -> Dict[str, Any]:
             "events": event_list,
             "count": len(event_list)
         }
-    except HttpError as e:
+    except HttpError as e:  # type: ignore[possibly-unbound]
         return {"success": False, "error": f"Google Calendar APIエラー: {e}"}
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -311,7 +311,7 @@ def delete_event(data: Dict[str, Any]) -> Dict[str, Any]:
             "success": True,
             "event_id": event_id
         }
-    except HttpError as e:
+    except HttpError as e:  # type: ignore[possibly-unbound]
         return {"success": False, "error": f"Google Calendar APIエラー: {e}"}
     except Exception as e:
         return {"success": False, "error": str(e)}

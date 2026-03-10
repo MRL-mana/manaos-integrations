@@ -30,7 +30,7 @@ def example_obsidian_auto_save():
     )
     
     print(f"レスポンス: {response.response[:100]}...")
-    print(f"Obsidian保存: {response.integration_results.get('obsidian', {})}")
+    print(f"Obsidian保存: {response.integration_results.get('obsidian', {})}")  # type: ignore[union-attr]
 
 
 # ========================================
@@ -53,7 +53,7 @@ def example_slack_notification():
     )
     
     print(f"レスポンス: {response.response}")
-    print(f"Slack通知: {response.integration_results.get('slack', {})}")
+    print(f"Slack通知: {response.integration_results.get('slack', {})}")  # type: ignore[union-attr]
 
 
 # ========================================
@@ -74,7 +74,7 @@ def example_drive_save():
     )
     
     print(f"レスポンス: {response.response[:100]}...")
-    print(f"Drive保存: {response.integration_results.get('drive', {})}")
+    print(f"Drive保存: {response.integration_results.get('drive', {})}")  # type: ignore[union-attr]
 
 
 # ========================================
@@ -95,7 +95,7 @@ def example_memory_save():
     )
     
     print(f"レスポンス: {response.response}")
-    print(f"メモリ保存: {response.integration_results.get('memory', {})}")
+    print(f"メモリ保存: {response.integration_results.get('memory', {})}")  # type: ignore[union-attr]
 
 
 # ========================================
@@ -122,7 +122,7 @@ def example_full_integration():
     
     print(f"レスポンス: {response.response[:100]}...")
     print(f"\n統合結果:")
-    for service, result in response.integration_results.items():
+    for service, result in response.integration_results.items():  # type: ignore[union-attr]
         print(f"  {service}: {result.get('success', False)}")
 
 
@@ -169,7 +169,7 @@ def example_batch_integration():
     
     for i, result in enumerate(results):
         print(f"{i+1}. {result.response[:50]}...")
-        print(f"   Obsidian: {result.integration_results.get('obsidian', {}).get('success', False)}")
+        print(f"   Obsidian: {result.integration_results.get('obsidian', {}).get('success', False)}")  # type: ignore[union-attr]
 
 
 # ========================================

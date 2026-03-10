@@ -418,7 +418,7 @@ class SecretaryIntelligence:
                 if isinstance(event_end, str):
                     event_end = datetime.fromisoformat(event_end)
                 
-                if not (slot_end <= event_start or slot_start >= event_end):
+                if not (slot_end <= event_start or slot_start >= event_end):  # type: ignore
                     conflict = True
                     break
             

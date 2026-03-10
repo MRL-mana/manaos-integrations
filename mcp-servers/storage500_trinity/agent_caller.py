@@ -40,15 +40,15 @@ class AgentCaller:
         # 再利用モジュールがあれば使う
         if USE_API_WRAPPER:
             provider_map = {
-                "openai": APIProvider.OPENAI,
-                "claude": APIProvider.CLAUDE,
-                "anthropic": APIProvider.CLAUDE,
-                "gemini": APIProvider.GEMINI,
-                "google": APIProvider.GEMINI
+                "openai": APIProvider.OPENAI,  # type: ignore[possibly-unbound]
+                "claude": APIProvider.CLAUDE,  # type: ignore[possibly-unbound]
+                "anthropic": APIProvider.CLAUDE,  # type: ignore[possibly-unbound]
+                "gemini": APIProvider.GEMINI,  # type: ignore[possibly-unbound]
+                "google": APIProvider.GEMINI  # type: ignore[possibly-unbound]
             }
             
-            api_provider = provider_map.get(provider.lower(), APIProvider.OPENAI)
-            self.api_wrapper = APIWrapper(api_provider, api_key, model)
+            api_provider = provider_map.get(provider.lower(), APIProvider.OPENAI)  # type: ignore[possibly-unbound]
+            self.api_wrapper = APIWrapper(api_provider, api_key, model)  # type: ignore[possibly-unbound]
             self.use_wrapper = True
         else:
             # Fallback: OpenAI直接
@@ -56,7 +56,7 @@ class AgentCaller:
             if not self.api_key:
                 raise ValueError("OpenAI API key not found. Set OPENAI_API_KEY environment variable.")
             
-            self.client = OpenAI(api_key=self.api_key)
+            self.client = OpenAI(api_key=self.api_key)  # type: ignore[possibly-unbound]
             self.use_wrapper = False
     
     def call_agent(self, role: str, action: str, **kwargs) -> Dict[str, Any]:
@@ -106,16 +106,16 @@ class AgentCaller:
                 )
                 
                 content = response.choices[0].message.content
-                result = json.loads(content)
+                result = json.loads(content)  # type: ignore
                 
                 return {
                     "success": True,
                     "result": result,
                     "raw_response": content,
                     "usage": {
-                        "prompt_tokens": response.usage.prompt_tokens,
-                        "completion_tokens": response.usage.completion_tokens,
-                        "total_tokens": response.usage.total_tokens
+                        "prompt_tokens": response.usage.prompt_tokens,  # type: ignore[union-attr]
+                        "completion_tokens": response.usage.completion_tokens,  # type: ignore[union-attr]
+                        "total_tokens": response.usage.total_tokens  # type: ignore[union-attr]
                     },
                     "provider": "openai"
                 }
@@ -124,7 +124,7 @@ class AgentCaller:
             return {
                 "success": False,
                 "error": f"JSON parse error: {str(e)}",
-                "raw_response": content if 'content' in locals() else None
+                "raw_response": content if 'content' in locals() else None  # type: ignore[possibly-unbound]
             }
         except Exception as e:
             return {

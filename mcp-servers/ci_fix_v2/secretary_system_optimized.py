@@ -79,7 +79,7 @@ class Report:
     title: str
     content: str
     generated_at: str
-    metadata: Dict[str, Any] = None
+    metadata: Dict[str, Any] = None  # type: ignore
     
     def __post_init__(self):
         if self.metadata is None:

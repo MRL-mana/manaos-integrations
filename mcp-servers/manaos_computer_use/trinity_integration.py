@@ -12,7 +12,7 @@ from typing import Dict, Any
 # パス追加
 sys.path.insert(0, str(Path("/root")))
 
-from manaos_computer_use import ComputerUseOrchestrator
+from manaos_computer_use import ComputerUseOrchestrator  # type: ignore[attr-defined]
 
 
 class TrinityComputerUseIntegration:

@@ -112,7 +112,7 @@ class GoogleCalendarIntegration:
                 }
             
             # イベント作成
-            result = self.service.events().insert(
+            result = self.service.events().insert(  # type: ignore[union-attr]
                 calendarId=self.calendar_id,
                 body=event
             ).execute()
@@ -165,7 +165,7 @@ Trinity統合秘書システム
         
         try:
             # 既存イベント取得
-            event = self.service.events().get(
+            event = self.service.events().get(  # type: ignore[union-attr]
                 calendarId=self.calendar_id,
                 eventId=event_id
             ).execute()
@@ -181,7 +181,7 @@ Trinity統合秘書システム
                 event['end']['dateTime'] = end_time.isoformat()
             
             # 保存
-            self.service.events().update(
+            self.service.events().update(  # type: ignore[union-attr]
                 calendarId=self.calendar_id,
                 eventId=event_id,
                 body=event
@@ -200,7 +200,7 @@ Trinity統合秘書システム
             return False
         
         try:
-            self.service.events().delete(
+            self.service.events().delete(  # type: ignore[union-attr]
                 calendarId=self.calendar_id,
                 eventId=event_id
             ).execute()
@@ -221,7 +221,7 @@ Trinity統合秘書システム
             now = datetime.utcnow().isoformat() + 'Z'
             max_time = (datetime.utcnow() + timedelta(days=days)).isoformat() + 'Z'
             
-            events_result = self.service.events().list(
+            events_result = self.service.events().list(  # type: ignore[union-attr]
                 calendarId=self.calendar_id,
                 timeMin=now,
                 timeMax=max_time,

@@ -43,7 +43,7 @@ class FileSecretarySheets:
             try:
                 api_key = os.getenv("ROWS_API_KEY")
                 if api_key:
-                    self.rows_integration = RowsIntegration(api_key=api_key)
+                    self.rows_integration = RowsIntegration(api_key=api_key)  # type: ignore[possibly-unbound]
                     if self.rows_integration.is_available():
                         logger.info("✅ Rows統合初期化完了")
                     else:
@@ -172,7 +172,7 @@ class FileSecretarySheets:
             成功したかどうか
         """
         try:
-            from slack_integration import send_to_slack
+            from slack_integration import send_to_slack  # type: ignore[attr-defined]
             
             report_text = f"""📊 週報 ({report_data['週開始日']} 〜 {report_data['週終了日']})
 

@@ -114,7 +114,7 @@ def train_sft_lora(
 
     # トークナイザー読み込み
     print("📦 トークナイザー読み込み中...")
-    tokenizer = AutoTokenizer.from_pretrained(base_model)
+    tokenizer = AutoTokenizer.from_pretrained(base_model)  # type: ignore[possibly-unbound]
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -122,14 +122,14 @@ def train_sft_lora(
     print("📦 モデル読み込み中（4bit量子化）...")
     bnb_config = None
     if use_4bit:
-        bnb_config = bnb.config.BitsAndBytesConfig(
+        bnb_config = bnb.config.BitsAndBytesConfig(  # type: ignore[attr-defined, possibly-unbound]
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
             bnb_4bit_compute_dtype=torch.float16,
             bnb_4bit_use_double_quant=True
         )
 
-    model = AutoModelForCausalLM.from_pretrained(
+    model = AutoModelForCausalLM.from_pretrained(  # type: ignore[possibly-unbound]
         base_model,
         quantization_config=bnb_config,
         device_map="auto",
@@ -137,9 +137,9 @@ def train_sft_lora(
     )
 
     # QLoRA設定
-    model = prepare_model_for_kbit_training(model)
+    model = prepare_model_for_kbit_training(model)  # type: ignore[possibly-unbound]
 
-    lora_config = LoraConfig(
+    lora_config = LoraConfig(  # type: ignore[possibly-unbound]
         r=rank,
         lora_alpha=lora_alpha,
         target_modules=["q_proj", "v_proj", "k_proj", "o_proj"],
@@ -148,7 +148,7 @@ def train_sft_lora(
         task_type="CAUSAL_LM"
     )
 
-    model = get_peft_model(model, lora_config)
+    model = get_peft_model(model, lora_config)  # type: ignore[possibly-unbound]
     model.print_trainable_parameters()
 
     # データセット作成
@@ -156,7 +156,7 @@ def train_sft_lora(
     dataset = SFTDataset(data, tokenizer, max_length=max_length)
 
     # 学習設定
-    training_args = TrainingArguments(
+    training_args = TrainingArguments(  # type: ignore[possibly-unbound]
         output_dir=output_dir,
         num_train_epochs=num_epochs,
         per_device_train_batch_size=batch_size,
@@ -172,11 +172,11 @@ def train_sft_lora(
     )
 
     # Trainer作成
-    trainer = Trainer(
+    trainer = Trainer(  # type: ignore[possibly-unbound]
         model=model,
         args=training_args,
         train_dataset=dataset,
-        data_collator=DataCollatorForLanguageModeling(
+        data_collator=DataCollatorForLanguageModeling(  # type: ignore[possibly-unbound]
             tokenizer=tokenizer,
             mlm=False
         )

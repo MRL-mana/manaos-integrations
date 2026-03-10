@@ -67,14 +67,14 @@ class NippoToGSheet:
     def get_or_create_folder(self, folder_name: str):
         """フォルダ取得/作成"""
         query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
-        results = self.drive_service.files().list(q=query, fields='files(id)').execute()
+        results = self.drive_service.files().list(q=query, fields='files(id)').execute()  # type: ignore[union-attr]
         files = results.get('files', [])
         
         if files:
             return files[0]['id']
         
         file_metadata = {'name': folder_name, 'mimeType': 'application/vnd.google-apps.folder'}
-        folder = self.drive_service.files().create(body=file_metadata, fields='id').execute()
+        folder = self.drive_service.files().create(body=file_metadata, fields='id').execute()  # type: ignore[union-attr]
         return folder.get('id')
     
     def pdf_to_images(self, pdf_path: str):
@@ -85,7 +85,7 @@ class NippoToGSheet:
         for page_num in range(len(doc)):
             page = doc[page_num]
             pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore
             images.append(img)
         
         doc.close()
@@ -154,11 +154,11 @@ class NippoToGSheet:
             'sheets': sheets
         }
         
-        sheet = self.sheets_service.spreadsheets().create(body=spreadsheet).execute()
+        sheet = self.sheets_service.spreadsheets().create(body=spreadsheet).execute()  # type: ignore[union-attr]
         spreadsheet_id = sheet['spreadsheetId']
         
         # フォルダに移動
-        self.drive_service.files().update(
+        self.drive_service.files().update(  # type: ignore[union-attr]
             fileId=spreadsheet_id,
             addParents=self.folder_id,
             fields='id, parents'
@@ -167,7 +167,7 @@ class NippoToGSheet:
         # 各ページのデータ書き込み
         for i, table_data in enumerate(all_tables_data, 1):
             body = {'values': table_data}
-            self.sheets_service.spreadsheets().values().update(
+            self.sheets_service.spreadsheets().values().update(  # type: ignore[union-attr]
                 spreadsheetId=spreadsheet_id,
                 range=f'ページ{i}!A1',
                 valueInputOption='RAW',
@@ -177,7 +177,7 @@ class NippoToGSheet:
         # フォーマット適用（1行目を強調）
         try:
             # シートIDを取得
-            sheet_metadata = self.sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+            sheet_metadata = self.sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()  # type: ignore[union-attr]
             sheet_id = sheet_metadata['sheets'][0]['properties']['sheetId']
             
             requests = [{
@@ -198,15 +198,15 @@ class NippoToGSheet:
                 }
             }]
             
-            self.sheets_service.spreadsheets().batchUpdate(
+            self.sheets_service.spreadsheets().batchUpdate(  # type: ignore[union-attr]
                 spreadsheetId=spreadsheet_id,
                 body={'requests': requests}
             ).execute()
-        except requests.RequestException:
+        except requests.RequestException:  # type: ignore[possibly-unbound]
             pass  # フォーマット失敗しても続行
         
         # リンク取得
-        file = self.drive_service.files().get(
+        file = self.drive_service.files().get(  # type: ignore[union-attr]
             fileId=spreadsheet_id,
             fields='webViewLink'
         ).execute()
@@ -218,9 +218,9 @@ class NippoToGSheet:
     
     def convert(self, pdf_path: str):
         """PDF→Googleスプレッドシート変換（複数ページ対応）"""
-        pdf_path = Path(pdf_path)
+        pdf_path = Path(pdf_path)  # type: ignore
         
-        print(f"\n📄 {pdf_path.name}")
+        print(f"\n📄 {pdf_path.name}")  # type: ignore
         
         try:
             # 1. 全ページ画像化
@@ -244,7 +244,7 @@ class NippoToGSheet:
             
             # 3. Googleスプレッドシート作成（複数シート）
             print(f"   ☁️  スプレッドシート作成中（{len(all_tables_data)}シート）...")
-            result = self.create_spreadsheet(all_tables_data, pdf_path.stem)
+            result = self.create_spreadsheet(all_tables_data, pdf_path.stem)  # type: ignore
             
             print("   ✅ 完了！")
             print(f"   🔗 {result['link']}\n")
@@ -255,10 +255,10 @@ class NippoToGSheet:
             print(f"   ❌ エラー: {e}\n")
             return {'success': False}
     
-    def batch(self, pdf_dir: str, limit: int = None):
+    def batch(self, pdf_dir: str, limit: int = None):  # type: ignore
         """一括変換"""
-        pdf_dir = Path(pdf_dir)
-        pdfs = list(pdf_dir.glob('*.pdf'))[:limit] if limit else list(pdf_dir.glob('*.pdf'))
+        pdf_dir = Path(pdf_dir)  # type: ignore
+        pdfs = list(pdf_dir.glob('*.pdf'))[:limit] if limit else list(pdf_dir.glob('*.pdf'))  # type: ignore
         
         print(f"\n{'='*60}")
         print("📁 日報PDF→Googleスプレッドシート一括変換")
@@ -302,7 +302,7 @@ def main():
         converter.convert(str(target))
     elif target.is_dir():
         limit = int(sys.argv[2]) if len(sys.argv) > 2 else None
-        converter.batch(str(target), limit=limit)
+        converter.batch(str(target), limit=limit)  # type: ignore
 
 
 if __name__ == '__main__':

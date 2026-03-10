@@ -231,7 +231,7 @@ class SlackClient:
             params: Dict[str, Any] = {
                 "types": "public_channel",
                 "exclude_archived": "true",
-                "limit": min(args.limit, 200),
+                "limit": min(args.limit, 200),  # type: ignore
                 "team_id": self.team_id,
             }
             if args.cursor:
@@ -271,7 +271,7 @@ class SlackClient:
         return await self._request("GET", "conversations.replies", params={"channel": args.channel_id, "ts": args.thread_ts})
 
     async def get_users(self, args: GetUsersArgs) -> Dict[str, Any]:
-        params = {"limit": min(args.limit, 200), "team_id": self.team_id}
+        params = {"limit": min(args.limit, 200), "team_id": self.team_id}  # type: ignore
         if args.cursor:
             params["cursor"] = args.cursor
         return await self._request("GET", "users.list", params=params)
@@ -341,10 +341,10 @@ TOOL_MAPPING = {
 
 
 def create_endpoint_handler(tool_name: str, method: Callable, args_model: Type[BaseModel]):
-    async def handler(args: args_model = Body(...), api_key: str = Depends(get_api_key)) -> ToolResponse:  # noqa: ANN001
+    async def handler(args: args_model = Body(...), api_key: str = Depends(get_api_key)) -> ToolResponse:  # noqa: ANN001  # type: ignore[valid-type]
         try:
             result = await method(args=args)
-            return {"content": result}
+            return {"content": result}  # type: ignore[return-value]
         except HTTPException:
             raise  # re‑raise untouched
         except Exception as exc:  # noqa: BLE001

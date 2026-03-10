@@ -39,7 +39,7 @@ from manaos_logger import get_service_logger  # noqa: E402
 from manaos_error_handler import ManaOSErrorHandler  # noqa: E402
 from manaos_timeout_config import get_timeout_config  # noqa: E402
 try:
-    from api_auth import get_auth_manager
+    from api_auth import get_auth_manager  # type: ignore
 except ImportError:
     class DummyAuthManager:
         def require_api_key(self, func):
@@ -1777,7 +1777,7 @@ def api_comfyui_generate():
         n8n_webhook_url = (os.getenv("N8N_WEBHOOK_URL") or "").strip()
         if n8n_webhook_url and REQUESTS_AVAILABLE:
             try:
-                requests.post(
+                requests.post(  # type: ignore[possibly-unbound]
                     n8n_webhook_url,
                     json={
                         "prompt_id": prompt_id,
@@ -1841,7 +1841,7 @@ def _get_or_init_enhanced_llm_router() -> Optional["EnhancedLLMRouter"]:
         return None
 
     try:
-        router = EnhancedLLMRouter(
+        router = EnhancedLLMRouter(  # type: ignore[possibly-unbound]
             lm_studio_url=get_lm_studio_url(),
             ollama_url=get_ollama_url(),
         )
@@ -2159,7 +2159,7 @@ def _ops_http_post_json(url: str, payload: Dict[str, Any], timeout: float = 30.0
         )
 
     try:
-        response = requests.post(url, json=payload, timeout=timeout)
+        response = requests.post(url, json=payload, timeout=timeout)  # type: ignore[possibly-unbound]
         try:
             body = response.json()
         except Exception:
@@ -2179,7 +2179,7 @@ def _ops_http_get_json(url: str, timeout: float = 15.0):
         )
 
     try:
-        response = requests.get(url, timeout=timeout)
+        response = requests.get(url, timeout=timeout)  # type: ignore[possibly-unbound]
         try:
             body = response.json()
         except Exception:
@@ -2248,7 +2248,7 @@ def ops_plan_blueprint():
             200,
         )
 
-    status_code, body = upstream
+    status_code, body = upstream  # type: ignore
     if status_code >= 400:
         return (
             jsonify(
@@ -2303,7 +2303,7 @@ def ops_exec_blueprint():
         upstream_get, error_response = _ops_http_get_json(plan_url)
         if error_response:
             return error_response
-        get_status, get_body = upstream_get
+        get_status, get_body = upstream_get  # type: ignore
         if get_status >= 400:
             return (
                 jsonify(
@@ -2386,7 +2386,7 @@ def ops_exec_blueprint():
             202,
         )
 
-    exec_status_code, exec_body = upstream_post
+    exec_status_code, exec_body = upstream_post  # type: ignore
     final_status = "completed"
     if exec_status_code >= 400:
         final_status = "failed"
@@ -2627,7 +2627,7 @@ def _notify_get_hub_instance() -> Optional[Any]:
     notification_hub = integrations.get("notification_hub")
     if not notification_hub and NOTIFICATION_HUB_AVAILABLE:
         try:
-            notification_hub = NotificationHub()
+            notification_hub = NotificationHub()  # type: ignore[possibly-unbound]
             integrations["notification_hub"] = notification_hub
         except Exception as e:
             logger.warning(f"NotificationHub lazy init error: {e}")
@@ -3026,7 +3026,7 @@ def initialize_integrations():
         init_tasks.append(
             (
                 "comfyui",
-                lambda: ComfyUIIntegration(
+                lambda: ComfyUIIntegration(  # type: ignore[possibly-unbound]
                     base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
                 ),
             )
@@ -3037,7 +3037,7 @@ def initialize_integrations():
         init_tasks.append(
             (
                 "svi_wan22",
-                lambda: SVIWan22VideoIntegration(
+                lambda: SVIWan22VideoIntegration(  # type: ignore[possibly-unbound]
                     base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
                 ),
             )
@@ -3048,7 +3048,7 @@ def initialize_integrations():
         init_tasks.append(
             (
                 "ltx2",
-                lambda: LTX2VideoIntegration(
+                lambda: LTX2VideoIntegration(  # type: ignore[possibly-unbound]
                     base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
                 ),
             )
@@ -3059,22 +3059,22 @@ def initialize_integrations():
         init_tasks.append(
             (
                 "ltx2_infinity",
-                lambda: LTX2InfinityIntegration(
+                lambda: LTX2InfinityIntegration(  # type: ignore[possibly-unbound]
                     base_url=os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
                 ),
             )
         )
-        init_tasks.append(("ltx2_workflow_generator", lambda: LTX2WorkflowGenerator()))
-        init_tasks.append(("ltx2_template_manager", lambda: LTX2TemplateManager()))
-        init_tasks.append(("ltx2_nsfw_config", lambda: LTX2NSFWConfig()))
-        init_tasks.append(("ltx2_storage_manager", lambda: LTX2StorageManager()))
+        init_tasks.append(("ltx2_workflow_generator", lambda: LTX2WorkflowGenerator()))  # type: ignore[possibly-unbound]
+        init_tasks.append(("ltx2_template_manager", lambda: LTX2TemplateManager()))  # type: ignore[possibly-unbound]
+        init_tasks.append(("ltx2_nsfw_config", lambda: LTX2NSFWConfig()))  # type: ignore[possibly-unbound]
+        init_tasks.append(("ltx2_storage_manager", lambda: LTX2StorageManager()))  # type: ignore[possibly-unbound]
 
     # Google Drive統合（オプション）
     if GOOGLE_DRIVE_AVAILABLE:
         init_tasks.append(
             (
                 "google_drive",
-                lambda: GoogleDriveIntegration(
+                lambda: GoogleDriveIntegration(  # type: ignore[possibly-unbound]
                     credentials_path=os.getenv("GOOGLE_DRIVE_CREDENTIALS", "credentials.json"),
                     token_path=os.getenv("GOOGLE_DRIVE_TOKEN", "token.json"),
                 ),
@@ -3084,7 +3084,7 @@ def initialize_integrations():
     # CivitAI統合（オプション）
     if CIVITAI_AVAILABLE:
         init_tasks.append(
-            ("civitai", lambda: CivitAIIntegration(api_key=os.getenv("CIVITAI_API_KEY")))
+            ("civitai", lambda: CivitAIIntegration(api_key=os.getenv("CIVITAI_API_KEY")))  # type: ignore[possibly-unbound]
         )
 
     # LangChain統合（オプション）
@@ -3092,7 +3092,7 @@ def initialize_integrations():
         init_tasks.append(
             (
                 "langchain",
-                lambda: LangChainIntegration(
+                lambda: LangChainIntegration(  # type: ignore[possibly-unbound]
                     ollama_url=get_ollama_url(),
                     model_name=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
                 ),
@@ -3101,7 +3101,7 @@ def initialize_integrations():
         init_tasks.append(
             (
                 "langgraph",
-                lambda: LangGraphIntegration(
+                lambda: LangGraphIntegration(  # type: ignore[possibly-unbound]
                     ollama_url=get_ollama_url(),
                     model_name=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
                 ),
@@ -3110,14 +3110,14 @@ def initialize_integrations():
 
     # Mem0統合（オプション）
     if MEM0_AVAILABLE:
-        init_tasks.append(("mem0", lambda: Mem0Integration()))
+        init_tasks.append(("mem0", lambda: Mem0Integration()))  # type: ignore[possibly-unbound]
 
     # Obsidian統合（オプション）
     if OBSIDIAN_AVAILABLE:
         init_tasks.append(
             (
                 "obsidian",
-                lambda: ObsidianIntegration(
+                lambda: ObsidianIntegration(  # type: ignore[possibly-unbound]
                     vault_path=os.getenv(
                         "OBSIDIAN_VAULT_PATH",
                         str(Path.home() / "Documents" / "Obsidian Vault"),
@@ -3128,7 +3128,7 @@ def initialize_integrations():
 
     # ローカルLLM統合
     if LOCAL_LLM_AVAILABLE:
-        init_tasks.append(("local_llm", lambda: LocalLLMUnified()))
+        init_tasks.append(("local_llm", lambda: LocalLLMUnified()))  # type: ignore[possibly-unbound]
 
     # ========================================
     # 拡張フェーズ統合
@@ -3136,14 +3136,14 @@ def initialize_integrations():
 
     # LLMルーティング統合（オプション）
     if LLM_ROUTING_AVAILABLE:
-        init_tasks.append(("llm_routing", lambda: LLMRouter()))
+        init_tasks.append(("llm_routing", lambda: LLMRouter()))  # type: ignore[possibly-unbound]
 
     # 拡張LLMルーティング統合（難易度判定対応）
     if ENHANCED_LLM_ROUTING_AVAILABLE:
         init_tasks.append(
             (
                 "enhanced_llm_routing",
-                lambda: EnhancedLLMRouter(
+                lambda: EnhancedLLMRouter(  # type: ignore[possibly-unbound]
                     lm_studio_url=get_lm_studio_url(),
                     ollama_url=get_ollama_url(),
                 ),
@@ -3152,30 +3152,30 @@ def initialize_integrations():
 
     # 統一記憶システム統合（オプション）
     if MEMORY_UNIFIED_AVAILABLE:
-        init_tasks.append(("memory_unified", lambda: UnifiedMemory()))
+        init_tasks.append(("memory_unified", lambda: UnifiedMemory()))  # type: ignore[possibly-unbound]
 
     # 通知ハブ統合（オプション）
     if NOTIFICATION_HUB_AVAILABLE:
-        init_tasks.append(("notification_hub", lambda: NotificationHub()))
+        init_tasks.append(("notification_hub", lambda: NotificationHub()))  # type: ignore[possibly-unbound]
 
     # 秘書機能統合（オプション）
     if SECRETARY_AVAILABLE:
-        init_tasks.append(("secretary", lambda: SecretaryRoutines()))
+        init_tasks.append(("secretary", lambda: SecretaryRoutines()))  # type: ignore[possibly-unbound]
 
     # 画像ストック統合（オプション）
     if IMAGE_STOCK_AVAILABLE:
-        init_tasks.append(("image_stock", lambda: ImageStock()))
+        init_tasks.append(("image_stock", lambda: ImageStock()))  # type: ignore[possibly-unbound]
 
     # OH MY OPENCODE統合（オプション）
     if OH_MY_OPENCODE_AVAILABLE:
-        init_tasks.append(("oh_my_opencode", lambda: OHMyOpenCodeIntegration()))
+        init_tasks.append(("oh_my_opencode", lambda: OHMyOpenCodeIntegration()))  # type: ignore[possibly-unbound]
 
     # Rows統合（オプション）
     if ROWS_AVAILABLE:
         init_tasks.append(
             (
                 "rows",
-                lambda: RowsIntegration(
+                lambda: RowsIntegration(  # type: ignore[possibly-unbound]
                     api_key=os.getenv("ROWS_API_KEY"), webhook_url=os.getenv("ROWS_WEBHOOK_URL")
                 ),
             )
@@ -3183,14 +3183,14 @@ def initialize_integrations():
 
     # GitHub統合（オプション）
     if GITHUB_AVAILABLE:
-        init_tasks.append(("github", lambda: GitHubIntegration(token=os.getenv("GITHUB_TOKEN"))))
+        init_tasks.append(("github", lambda: GitHubIntegration(token=os.getenv("GITHUB_TOKEN"))))  # type: ignore[possibly-unbound]
 
     # n8n統合（オプション）
     if N8N_AVAILABLE:
         init_tasks.append(
             (
                 "n8n",
-                lambda: N8NIntegration(
+                lambda: N8NIntegration(  # type: ignore[possibly-unbound]
                     base_url=os.getenv(
                         "N8N_BASE_URL",
                         f"http://127.0.0.1:{N8N_PORT}",
@@ -3205,7 +3205,7 @@ def initialize_integrations():
         init_tasks.append(
             (
                 "excel_llm",
-                lambda: ExcelLLMIntegration(
+                lambda: ExcelLLMIntegration(  # type: ignore[possibly-unbound]
                     ollama_url=get_ollama_url(),
                     model=os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
                 ),
@@ -3220,7 +3220,7 @@ def initialize_integrations():
                 init_tasks.append(
                     (
                         "step_deep_research",
-                        lambda: StepDeepResearchOrchestrator(
+                        lambda: StepDeepResearchOrchestrator(  # type: ignore[possibly-unbound]
                             json.load(open(config_path, "r", encoding="utf-8"))
                         ),
                     )
@@ -3279,7 +3279,7 @@ def initialize_integrations():
                 stt_model_size = os.getenv("VOICE_STT_MODEL", "large-v3")
                 stt_device = os.getenv("VOICE_STT_DEVICE", "cuda")
                 stt_compute_type = os.getenv("VOICE_STT_COMPUTE_TYPE", "float16")
-                stt_engine = create_stt_engine(
+                stt_engine = create_stt_engine(  # type: ignore[possibly-unbound]
                     model_size=stt_model_size, device=stt_device, compute_type=stt_compute_type
                 )
                 logger.info("✅ STTエンジン初期化完了")
@@ -3292,7 +3292,7 @@ def initialize_integrations():
                 tts_engine_name = os.getenv("VOICE_TTS_ENGINE", "voicevox")
                 voicevox_url = os.getenv("VOICEVOX_URL", "http://127.0.0.1:50021")
                 speaker_id = int(os.getenv("VOICEVOX_SPEAKER_ID", "3"))
-                tts_engine = create_tts_engine(
+                tts_engine = create_tts_engine(  # type: ignore[possibly-unbound]
                     engine=tts_engine_name, voicevox_url=voicevox_url, speaker_id=speaker_id
                 )
                 logger.info("✅ TTSエンジン初期化完了")
@@ -3310,20 +3310,20 @@ def initialize_integrations():
             voice_integration = {
                 "stt_engine": stt_engine,
                 "tts_engine": tts_engine,
-                "available": available,
+                "available": available,  # type: ignore[possibly-unbound]
             }
             init_tasks.append(("voice", lambda vi=voice_integration: vi))
-            logger.info(f"✅ 音声機能統合を初期化タスクに追加しました（available={available}）")
+            logger.info(f"✅ 音声機能統合を初期化タスクに追加しました（available={available}）")  # type: ignore[possibly-unbound]
         except Exception as e:
             logger.warning(f"⚠️ 音声機能統合の初期化準備エラー: {e}")
 
     # 統一キャッシュシステム（オプション）
     if UNIFIED_CACHE_AVAILABLE:
-        init_tasks.append(("unified_cache", lambda: get_unified_cache()))
+        init_tasks.append(("unified_cache", lambda: get_unified_cache()))  # type: ignore[possibly-unbound]
 
     # パフォーマンス最適化システム（オプション）
     if PERFORMANCE_OPTIMIZER_AVAILABLE:
-        init_tasks.append(("performance_optimizer", lambda: PerformanceOptimizer()))
+        init_tasks.append(("performance_optimizer", lambda: PerformanceOptimizer()))  # type: ignore[possibly-unbound]
 
     # 初期化タスクを実行
     initialization_status["pending"] = [name for name, _ in init_tasks]

@@ -27,7 +27,7 @@ class EnvironmentSetup:
         self.project_root = self.base_dir.parent      # Desktop
         self.setup_steps: List[Tuple[str, bool]] = []
     
-    def run_command(self, command: List[str], description: str, cwd: Path = None) -> bool:
+    def run_command(self, command: List[str], description: str, cwd: Path = None) -> bool:  # type: ignore
         """コマンド実行"""
         try:
             print(f"  → {description}...", end=" ", flush=True)

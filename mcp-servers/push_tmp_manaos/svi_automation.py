@@ -84,7 +84,7 @@ class SVIAutomation:
             svi_integration: SVI統合インスタンス
             api_base_url: 統合APIサーバーのベースURL
         """
-        self.svi = svi_integration or (SVIWan22VideoIntegration() if SVI_AVAILABLE else None)
+        self.svi = svi_integration or (SVIWan22VideoIntegration() if SVI_AVAILABLE else None)  # type: ignore[possibly-unbound]
         self.api_base_url = api_base_url
         self.observer = None
         self.scheduled_tasks = []
@@ -206,7 +206,7 @@ class SVIAutomation:
         try:
             prompt_id = self.svi.generate_video(
                 start_image_path=image_path,
-                prompt=prompt,
+                prompt=prompt,  # type: ignore
                 video_length_seconds=video_length_seconds,
                 steps=steps,
                 motion_strength=motion_strength

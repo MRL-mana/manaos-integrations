@@ -660,7 +660,7 @@ async def mobile_upload_file(file: UploadFile = File(...)):
         task_id = str(uuid.uuid4())
         
         # ファイル保存
-        upload_dir = Path("/tmp/mobile_uploads")
+        upload_dir = Path("/tmp/mobile_uploads")  # type: ignore[name-defined]
         upload_dir.mkdir(exist_ok=True)
         
         file_path = upload_dir / f"{task_id}_{file.filename}"
@@ -731,7 +731,7 @@ async def mobile_convert_pdf_to_excel(pdf_path: str, task_id: str):
         mobile_interface.logger.info(f"🔄 モバイル変換処理開始: {pdf_path}")
         
         # 出力ディレクトリ
-        output_dir = Path("/tmp/mobile_outputs")
+        output_dir = Path("/tmp/mobile_outputs")  # type: ignore[name-defined]
         output_dir.mkdir(exist_ok=True)
         
         # 変換実行

@@ -223,7 +223,7 @@ class DistributedImageGenerator:
             }
         finally:
             if 'generator' in locals():
-                generator.cleanup()
+                generator.cleanup()  # type: ignore[possibly-unbound]
     
     def generate_distributed_collection(self, count=6, use_both=True):
         """分散画像コレクション生成"""

@@ -53,7 +53,7 @@ class ManaOSModalClient:
         negative_prompt: str = "",
         steps: int = 30,
         output_path: Optional[str] = None
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Any]:  # type: ignore
         """
         画像生成
 

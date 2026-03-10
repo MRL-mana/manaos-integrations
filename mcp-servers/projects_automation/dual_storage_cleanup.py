@@ -46,7 +46,7 @@ class DualStorageCleanup:
         
         for mount in ["/", "/mnt/storage500"]:
             try:
-                stat = os.statvfs(mount)
+                stat = os.statvfs(mount)  # type: ignore[attr-defined]
                 total_gb = (stat.f_blocks * stat.f_frsize) / (1024**3)
                 used_gb = ((stat.f_blocks - stat.f_bavail) * stat.f_frsize) / (1024**3)
                 free_gb = (stat.f_bavail * stat.f_frsize) / (1024**3)

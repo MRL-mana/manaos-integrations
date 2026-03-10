@@ -499,7 +499,7 @@ class TrinityAIMonitoringSystem:
     async def start_async_tasks(self):
         """非同期タスク開始"""
         # WebSocketサーバーを開始
-        start_server = websockets.serve(self.websocket_handler, "localhost", 9002)
+        start_server = websockets.serve(self.websocket_handler, "localhost", 9002)  # type: ignore[misc]
         
         # 監視ループを開始
         monitoring_task = asyncio.create_task(self.start_monitoring_loop())

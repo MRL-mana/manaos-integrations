@@ -87,8 +87,8 @@ def execute_query_postgresql(connection_string: str, query: str, params: Optiona
         return {"success": False, "error": "psycopg2-binaryがインストールされていません"}
     
     try:
-        conn = psycopg2.connect(connection_string)
-        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+        conn = psycopg2.connect(connection_string)  # type: ignore[possibly-unbound]
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:  # type: ignore[possibly-unbound]
             cursor.execute(query, params)
             if cursor.description:
                 results = [dict(row) for row in cursor.fetchall()]
@@ -100,7 +100,7 @@ def execute_query_postgresql(connection_string: str, query: str, params: Optiona
         return {"success": False, "error": str(e)}
     finally:
         if 'conn' in locals():
-            conn.close()
+            conn.close()  # type: ignore[possibly-unbound]
 
 
 def execute_query_sqlite(connection_string: str, query: str, params: Optional[tuple] = None) -> Dict[str, Any]:
@@ -123,7 +123,7 @@ def execute_query_sqlite(connection_string: str, query: str, params: Optional[tu
         return {"success": False, "error": str(e)}
     finally:
         if 'conn' in locals():
-            conn.close()
+            conn.close()  # type: ignore[possibly-unbound]
 
 
 def insert_postgresql(connection_string: str, table: str, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -136,7 +136,7 @@ def insert_postgresql(connection_string: str, table: str, data: Dict[str, Any]) 
         placeholders = ", ".join(["%s"] * len(data))
         query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
         
-        conn = psycopg2.connect(connection_string)
+        conn = psycopg2.connect(connection_string)  # type: ignore[possibly-unbound]
         cursor = conn.cursor()
         cursor.execute(query, tuple(data.values()))
         conn.commit()
@@ -145,7 +145,7 @@ def insert_postgresql(connection_string: str, table: str, data: Dict[str, Any]) 
         return {"success": False, "error": str(e)}
     finally:
         if 'conn' in locals():
-            conn.close()
+            conn.close()  # type: ignore[possibly-unbound]
 
 
 def insert_mongodb(connection_string: str, database_name: str, collection: str, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -154,7 +154,7 @@ def insert_mongodb(connection_string: str, database_name: str, collection: str, 
         return {"success": False, "error": "pymongoがインストールされていません"}
     
     try:
-        client = MongoClient(connection_string)
+        client = MongoClient(connection_string)  # type: ignore[possibly-unbound]
         db = client[database_name]
         result = db[collection].insert_one(data)
         return {"success": True, "inserted_id": str(result.inserted_id)}
@@ -162,7 +162,7 @@ def insert_mongodb(connection_string: str, database_name: str, collection: str, 
         return {"success": False, "error": str(e)}
     finally:
         if 'client' in locals():
-            client.close()
+            client.close()  # type: ignore[possibly-unbound]
 
 
 def send_slack_notification(action: str, result: Dict[str, Any]) -> bool:

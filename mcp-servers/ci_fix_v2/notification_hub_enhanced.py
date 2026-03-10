@@ -70,7 +70,7 @@ class NotificationHubEnhanced:
         self.base_notification_system = None
         if NOTIFICATION_HUB_AVAILABLE:
             try:
-                self.base_hub = NotificationHub()
+                self.base_hub = NotificationHub()  # type: ignore[possibly-unbound]
             except Exception as e:
                 logger.debug(f"既存のNotification Hubの初期化エラー: {e}")
         
@@ -232,7 +232,7 @@ class NotificationHubEnhanced:
                 "normal": "good",
                 "low": "#cccccc"
             }
-            payload["attachments"] = [{
+            payload["attachments"] = [{  # type: ignore
                 "color": color_map.get(priority, "good"),
                 "text": message
             }]
@@ -278,7 +278,7 @@ class NotificationHubEnhanced:
             self.stats["by_channel"]["telegram"]["failed"] += 1
             return False
     
-    def _send_email(self, message: str, priority: str = "normal", subject: str = None) -> bool:
+    def _send_email(self, message: str, priority: str = "normal", subject: str = None) -> bool:  # type: ignore
         """メールに送信"""
         email_config = self.email_config
         if not email_config.get("username") or not email_config.get("password"):
@@ -343,7 +343,7 @@ class NotificationHubEnhanced:
                 success = self._send_telegram(message, priority)
             elif channel == "email":
                 subject = context.get("subject") if context else None
-                success = self._send_email(message, priority, subject)
+                success = self._send_email(message, priority, subject)  # type: ignore
             
             if success:
                 success_channels.append(channel)

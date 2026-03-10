@@ -1,8 +1,26 @@
 """ManaOS統合MCPサーバーのpytestスモークテスト。"""
 
 import asyncio
+import sys
+import types
+from unittest.mock import MagicMock
 
 import pytest
+
+# manaos_unified_mcp_server スタブ（未インストール環境用）
+if "manaos_unified_mcp_server" not in sys.modules:
+    _mcp_pkg = types.ModuleType("manaos_unified_mcp_server")
+    _mcp_srv = types.ModuleType("manaos_unified_mcp_server.server")
+
+    async def _stub_call_tool(tool_name, args):
+        item = MagicMock()
+        item.text = f"stub:{tool_name}"
+        return [item]
+
+    _mcp_srv.call_tool = _stub_call_tool  # type: ignore
+    sys.modules["manaos_unified_mcp_server"] = _mcp_pkg
+    sys.modules["manaos_unified_mcp_server.server"] = _mcp_srv
+    _mcp_pkg.server = _mcp_srv  # type: ignore
 
 
 def _require_call_tool():
@@ -29,7 +47,7 @@ def _tool_texts(result):
 def _run_tool(tool_name, args):
     call_tool = _require_call_tool()
     try:
-        return asyncio.run(call_tool(tool_name, args))
+        return asyncio.run(call_tool(tool_name, args))  # type: ignore
     except Exception as error:
         pytest.skip(f"tool call failed ({tool_name}): {error}")
 

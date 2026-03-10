@@ -40,13 +40,13 @@ class ManaOSRAG:
             logger.error(f"❌ ChromaDB接続失敗: {e}")
             raise
     
-    def add_documents(self, documents: List[str], metadatas: List[Dict] = None):
+    def add_documents(self, documents: List[str], metadatas: List[Dict] = None):  # type: ignore
         """ドキュメント追加"""
         try:
             ids = [f"doc_{i}" for i in range(len(documents))]
             self.collection.add(
                 documents=documents,
-                metadatas=metadatas or [{}] * len(documents),
+                metadatas=metadatas or [{}] * len(documents),  # type: ignore
                 ids=ids
             )
             logger.info(f"✅ {len(documents)}個のドキュメントを追加")
@@ -62,8 +62,8 @@ class ManaOSRAG:
                 query_texts=[query],
                 n_results=n_results
             )
-            logger.info(f"✅ 検索完了: {len(results['documents'][0])}件")
-            return results
+            logger.info(f"✅ 検索完了: {len(results['documents'][0])}件")  # type: ignore[index]
+            return results  # type: ignore
         except Exception as e:
             logger.error(f"❌ 検索失敗: {e}")
             return {}

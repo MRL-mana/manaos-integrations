@@ -22,9 +22,9 @@ DEFAULT_OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
-def call_wsl2_ollama_api(endpoint: str, method: str = "GET", json_data: dict = None):
+def call_wsl2_ollama_api(endpoint: str, method: str = "GET", json_data: dict = None):  # type: ignore
     """WSL2内のOllama APIを呼び出す"""
     url = f"{DEFAULT_OLLAMA_URL}{endpoint}"
     
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     result = call_wsl2_ollama_api("/api/tags")
     if result:
         print("✅ WSL2内のOllamaに接続できました")
-        models = result.get('models', [])
+        models = result.get('models', [])  # type: ignore
         print(f"利用可能なモデル: {len(models)}個")
         for m in models:
             print(f"  - {m.get('name', 'unknown')}")

@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import sys
 
 try:
-    from _paths import UNIFIED_API_URL, MRL_MEMORY_URL, LEARNING_SYSTEM_URL
+    from _paths import UNIFIED_API_URL, MRL_MEMORY_URL, LEARNING_SYSTEM_URL  # type: ignore[attr-defined]
 except ImportError:
     UNIFIED_API_URL = "http://127.0.0.1:9502"
     MRL_MEMORY_URL = "http://127.0.0.1:9507"
@@ -355,7 +355,7 @@ class LoadTestRunner:
         
         print("\n" + "=" * 80)
     
-    def save_report(self, filename: str = None):
+    def save_report(self, filename: str = None):  # type: ignore
         """レポート保存"""
         if filename is None:
             filename = f"load_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"

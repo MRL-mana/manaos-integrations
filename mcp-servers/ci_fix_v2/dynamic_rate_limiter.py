@@ -48,7 +48,7 @@ class RateLimitConfig:
     min_rate: int  # 最小レート
     cpu_threshold: float = 0.8  # CPU使用率閾値
     memory_threshold: float = 0.8  # メモリ使用率閾値
-    priority_multiplier: Dict[str, float] = None  # 優先度別の倍率
+    priority_multiplier: Dict[str, float] = None  # 優先度別の倍率  # type: ignore
     
     def __post_init__(self):
         if self.priority_multiplier is None:

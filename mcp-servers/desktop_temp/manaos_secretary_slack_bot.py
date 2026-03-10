@@ -34,8 +34,8 @@ flask_app = Flask(__name__)
 
 # Slackアプリ
 if HAS_SLACK and SLACK_BOT_TOKEN and SLACK_SIGNING_SECRET:
-    slack_app = App(token=SLACK_BOT_TOKEN, signing_secret=SLACK_SIGNING_SECRET)
-    handler = SlackRequestHandler(slack_app)
+    slack_app = App(token=SLACK_BOT_TOKEN, signing_secret=SLACK_SIGNING_SECRET)  # type: ignore[possibly-unbound]
+    handler = SlackRequestHandler(slack_app)  # type: ignore[possibly-unbound]
 else:
     slack_app = None
     handler = None
@@ -152,7 +152,7 @@ def _handle_mention(event, say):
     text = event["text"]
     
     # ボット自身のメンションを除去
-    bot_user_id = slack_app.client.auth_test()["user_id"]
+    bot_user_id = slack_app.client.auth_test()["user_id"]  # type: ignore[union-attr]
     text = text.replace(f"<@{bot_user_id}>", "").strip()
     
     if not text:

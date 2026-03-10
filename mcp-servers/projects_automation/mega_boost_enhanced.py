@@ -143,7 +143,7 @@ class EnhancedMegaBoost:
                 futures = [executor.submit(self.retry_task, func, *args, **kwargs) 
                           for func, args, kwargs in tasks]
                 
-                with tqdm(total=len(tasks), desc=description, unit="task") as pbar:
+                with tqdm(total=len(tasks), desc=description, unit="task") as pbar:  # type: ignore[possibly-unbound]
                     for future in concurrent.futures.as_completed(futures):
                         result = future.result()
                         results.append(result)

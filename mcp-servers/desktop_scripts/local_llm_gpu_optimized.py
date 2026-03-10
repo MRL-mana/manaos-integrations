@@ -21,16 +21,16 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
 class LocalLLMGPU:
     """GPU最適化版ローカルLLM"""
     
-    def __init__(self, url: str = None, default_model: str = None):
+    def __init__(self, url: str = None, default_model: str = None):  # type: ignore
         self.url = url or OLLAMA_URL
         self.default_model = default_model or OLLAMA_MODEL
     
     async def chat(
         self,
         messages: List[Dict],
-        model: str = None,
+        model: str = None,  # type: ignore
         num_gpu: int = -1,  # -1: すべてのGPUを使用
-        num_thread: int = None,  # None: 自動
+        num_thread: int = None,  # None: 自動  # type: ignore
         temperature: float = 0.7,
         top_p: float = 0.9
     ) -> str:
@@ -58,7 +58,7 @@ class LocalLLMGPU:
                 if num_thread:
                     options["num_thread"] = num_thread
                 
-                response = ollama.chat(
+                response = ollama.chat(  # type: ignore[possibly-unbound]
                     model=model,
                     messages=messages,
                     options=options
@@ -66,7 +66,7 @@ class LocalLLMGPU:
                 return response['message']['content']
             else:
                 # httpxフォールバック
-                async with httpx.AsyncClient(timeout=120.0) as client:
+                async with httpx.AsyncClient(timeout=120.0) as client:  # type: ignore[possibly-unbound]
                     response = await client.post(
                         f"{self.url}/api/chat",
                         json={
@@ -91,7 +91,7 @@ class LocalLLMGPU:
     async def chat_stream(
         self,
         messages: List[Dict],
-        model: str = None,
+        model: str = None,  # type: ignore
         num_gpu: int = -1
     ):
         """GPUを使用してストリーミングチャット"""
@@ -99,7 +99,7 @@ class LocalLLMGPU:
         
         try:
             if HAS_OLLAMA_LIB:
-                stream = ollama.chat(
+                stream = ollama.chat(  # type: ignore[possibly-unbound]
                     model=model,
                     messages=messages,
                     stream=True,

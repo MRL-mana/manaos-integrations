@@ -16,8 +16,8 @@ logger = get_service_logger("excel-to-google-sheets")
 # Windowsでのエンコーディング修正（cp932で落ちるのを防ぐ）
 if sys.platform == "win32":
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 try:
     from google.oauth2.credentials import Credentials
@@ -31,7 +31,7 @@ except ImportError:
     logger.warning("Google Sheets APIライブラリがインストールされていません")
 
 
-def excel_to_google_sheets(excel_path: str, spreadsheet_title: str = None) -> str:
+def excel_to_google_sheets(excel_path: str, spreadsheet_title: str = None) -> str:  # type: ignore
     """
     ExcelファイルをGoogle Sheetsに変換してアップロード
     
@@ -53,24 +53,24 @@ def excel_to_google_sheets(excel_path: str, spreadsheet_title: str = None) -> st
     credentials_path = Path("credentials.json")
     
     if token_path.exists():
-        creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
+        creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)  # type: ignore[possibly-unbound]
     
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+            creds.refresh(Request())  # type: ignore[possibly-unbound]
         else:
             if not credentials_path.exists():
                 raise FileNotFoundError(f"認証情報ファイルが見つかりません: {credentials_path}")
             
-            flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), SCOPES)  # type: ignore[possibly-unbound]
             creds = flow.run_local_server(port=0)
         
         with open(token_path, 'w') as token:
             token.write(creds.to_json())
     
     # サービスを構築
-    sheets_service = build('sheets', 'v4', credentials=creds)
-    drive_service = build('drive', 'v3', credentials=creds)
+    sheets_service = build('sheets', 'v4', credentials=creds)  # type: ignore[possibly-unbound]
+    drive_service = build('drive', 'v3', credentials=creds)  # type: ignore[possibly-unbound]
     
     # Excelファイルを読み込む
     excel_file = Path(excel_path)
@@ -229,7 +229,7 @@ if __name__ == "__main__":
     spreadsheet_title = sys.argv[2] if len(sys.argv) > 2 else None
     
     try:
-        url = excel_to_google_sheets(excel_path, spreadsheet_title)
+        url = excel_to_google_sheets(excel_path, spreadsheet_title)  # type: ignore
         print("\n[OK] 完了！Google Sheetsで確認できます:")
         print(f"{url}")
     except Exception as e:

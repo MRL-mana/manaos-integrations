@@ -23,7 +23,7 @@ from mcp.types import (
 import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
-from pipeline import SuperOCRPipeline
+from pipeline import SuperOCRPipeline  # type: ignore[attr-defined]
 from upscale import upscale_image
 from preprocess import preprocess_image
 from ocr_to_excel import ocr_to_excel
@@ -44,7 +44,7 @@ class SuperOCRPipelineMCPServer:
     def setup_tools(self):
         """MCPツールをセットアップ"""
 
-        @self.server.list_tools()
+        @self.server.list_tools()  # type: ignore[misc]
         async def list_tools() -> ListToolsResult:
             """利用可能なツール一覧"""
             return ListToolsResult(
@@ -187,8 +187,8 @@ class SuperOCRPipelineMCPServer:
         @self.server.call_tool()
         async def call_tool(request: CallToolRequest) -> CallToolResult:
             """ツール実行"""
-            tool_name = request.name
-            args = request.arguments or {}
+            tool_name = request.name  # type: ignore
+            args = request.arguments or {}  # type: ignore
 
             try:
                 if tool_name == "ocr_pipeline_process":

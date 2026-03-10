@@ -83,12 +83,12 @@ def _get(path: str, timeout: int = 10) -> Dict[str, Any]:
 # ─── MCP ─────────────────────────────────────────────────────────────────────
 
 if MCP_AVAILABLE:
-    app = Server("castle-ex-layer2")
+    app = Server("castle-ex-layer2")  # type: ignore[possibly-unbound]
 
     @app.list_tools()
     async def list_tools() -> List[Tool]:
         return [
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="castle_ex_layer2_generate",
                 description=(
                     "CASTLE-EX Layer2 スタイル矯正 LoRA (v1.1.6) で短文生成する。\n"
@@ -136,7 +136,7 @@ if MCP_AVAILABLE:
                     "required": ["prompt"]
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="castle_ex_layer2_status",
                 description="Layer2 推論サーバーの状態（モデルロード済み/LoRA アクティブ）を確認する。",
                 inputSchema={"type": "object", "properties": {}},
@@ -163,11 +163,11 @@ if MCP_AVAILABLE:
             else:
                 result = {"error": f"未知のツール: {name}"}
 
-            return [TextContent(type="text", text=json.dumps(result, indent=2, ensure_ascii=False))]
+            return [TextContent(type="text", text=json.dumps(result, indent=2, ensure_ascii=False))]  # type: ignore[possibly-unbound]
 
         except Exception as exc:
             logger.exception("call_tool error")
-            return [TextContent(type="text", text=json.dumps({"error": str(exc)}, ensure_ascii=False))]
+            return [TextContent(type="text", text=json.dumps({"error": str(exc)}, ensure_ascii=False))]  # type: ignore[possibly-unbound]
 
 
 async def main() -> None:
@@ -178,7 +178,7 @@ async def main() -> None:
     health_port = int(os.getenv("PORT", "5140"))
     start_health_thread("castle-ex-layer2", health_port)
 
-    async with stdio_server() as (rs, ws):
+    async with stdio_server() as (rs, ws):  # type: ignore[possibly-unbound]
         await app.run(rs, ws, app.create_initialization_options())
 
 

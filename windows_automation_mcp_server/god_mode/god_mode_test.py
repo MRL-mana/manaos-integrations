@@ -29,8 +29,8 @@ def test_thinking_audit():
         
         analysis = system.end_session("完了", True)
         
-        assert analysis['total_steps'] == 1
-        assert analysis['success'] == True
+        assert analysis['total_steps'] == 1  # type: ignore[index]
+        assert analysis['success'] == True  # type: ignore[index]
         
         print("  ✅ 思考ログ監査システム: OK")
         return True

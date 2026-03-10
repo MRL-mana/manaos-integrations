@@ -108,7 +108,7 @@ def calculate_summary(snapshots: List[Path], baseline: Optional[Path] = None) ->
     # 集計計算
     summary = {
         "snapshot_count": len(snapshots),
-        "time_range_hours": hours,
+        "time_range_hours": hours,  # type: ignore[name-defined]
         "metrics": {
             "p95": {
                 "max": max(p95_values) if p95_values else 0,

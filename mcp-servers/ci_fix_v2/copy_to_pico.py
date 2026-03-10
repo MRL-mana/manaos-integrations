@@ -27,11 +27,11 @@ def get_bundle_download_urls():
     """10.x-mpy バンドル ZIP の URL を、試す順で列挙する。"""
     # releases/latest にアクセスすると tag/YYYYMMDD にリダイレクトされる
     try:
-        req = urllib.request.Request(
+        req = urllib.request.Request(  # type: ignore[possibly-unbound]
             BUNDLE_RELEASES_LATEST,
             headers={"User-Agent": "Mozilla/5.0"},
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=15) as resp:  # type: ignore[possibly-unbound]
             final_url = resp.geturl()
         tag = final_url.rstrip("/").split("/")[-1]
         yield (
@@ -87,8 +87,8 @@ def ensure_adafruit_hid(circuitpy_root: Path) -> bool:
             tmp_path = Path(tmp)
             zip_path = tmp_path / "bundle.zip"
             try:
-                req = urllib.request.Request(bundle_url, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=90) as resp:
+                req = urllib.request.Request(bundle_url, headers={"User-Agent": "Mozilla/5.0"})  # type: ignore[possibly-unbound]
+                with urllib.request.urlopen(req, timeout=90) as resp:  # type: ignore[possibly-unbound]
                     zip_path.write_bytes(resp.read())
                 with zipfile.ZipFile(zip_path, "r") as zf:
                     for name in zf.namelist():

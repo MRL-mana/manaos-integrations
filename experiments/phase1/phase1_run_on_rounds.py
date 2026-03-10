@@ -31,7 +31,7 @@ TIMEOUT = int(os.environ.get("PHASE1_API_TIMEOUT", "300"))
 def chat(messages: list, thread_id: str | None = None) -> dict:
     body = {"messages": messages}
     if thread_id:
-        body["thread_id"] = thread_id
+        body["thread_id"] = thread_id  # type: ignore
     r = requests.post(CHAT_URL, json=body, timeout=TIMEOUT)
     r.raise_for_status()
     return r.json()

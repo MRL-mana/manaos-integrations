@@ -81,7 +81,7 @@ def train_dpo(
 
     # トークナイザー読み込み
     print("📦 トークナイザー読み込み中...")
-    tokenizer = AutoTokenizer.from_pretrained(base_model)
+    tokenizer = AutoTokenizer.from_pretrained(base_model)  # type: ignore[possibly-unbound]
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -89,14 +89,14 @@ def train_dpo(
     print("📦 モデル読み込み中（4bit量子化）...")
     bnb_config = None
     if use_4bit:
-        bnb_config = bnb.config.BitsAndBytesConfig(
+        bnb_config = bnb.config.BitsAndBytesConfig(  # type: ignore[attr-defined, possibly-unbound]
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
             bnb_4bit_compute_dtype=torch.float16,
             bnb_4bit_use_double_quant=True
         )
 
-    model = AutoModelForCausalLM.from_pretrained(
+    model = AutoModelForCausalLM.from_pretrained(  # type: ignore[possibly-unbound]
         base_model,
         quantization_config=bnb_config,
         device_map="auto",
@@ -106,18 +106,18 @@ def train_dpo(
     # SFT adapter読み込み
     if adapter_path and Path(adapter_path).exists():
         print(f"📦 SFT adapter読み込み中: {adapter_path}")
-        model = PeftModel.from_pretrained(model, adapter_path)
+        model = PeftModel.from_pretrained(model, adapter_path)  # type: ignore[possibly-unbound]
         model = model.merge_and_unload()  # adapterをマージ
 
     # DPO用にrefモデルも作成
-    ref_model = AutoModelForCausalLM.from_pretrained(
+    ref_model = AutoModelForCausalLM.from_pretrained(  # type: ignore[possibly-unbound]
         base_model,
         quantization_config=bnb_config,
         device_map="auto",
         trust_remote_code=True
     )
     if adapter_path and Path(adapter_path).exists():
-        ref_model = PeftModel.from_pretrained(ref_model, adapter_path)
+        ref_model = PeftModel.from_pretrained(ref_model, adapter_path)  # type: ignore[possibly-unbound]
         ref_model = ref_model.merge_and_unload()
 
     # データセット準備
@@ -143,10 +143,10 @@ def train_dpo(
             "rejected": rejected
         })
 
-    dataset = Dataset.from_list(dpo_data)
+    dataset = Dataset.from_list(dpo_data)  # type: ignore[possibly-unbound]
 
     # DPO学習設定
-    training_args = DPOTrainingArguments(
+    training_args = DPOTrainingArguments(  # type: ignore[possibly-unbound]
         output_dir=output_dir,
         num_train_epochs=num_epochs,
         per_device_train_batch_size=batch_size,
@@ -161,7 +161,7 @@ def train_dpo(
     )
 
     # DPO Trainer作成
-    dpo_trainer = DPOTrainer(
+    dpo_trainer = DPOTrainer(  # type: ignore[possibly-unbound]
         model=model,
         ref_model=ref_model,
         args=training_args,

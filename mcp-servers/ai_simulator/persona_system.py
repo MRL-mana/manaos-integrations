@@ -401,7 +401,7 @@ class PersonaManager:
         
         decision = ConsensusDecision(
             decision=consensus_proposal,
-            consensus_score=np.mean(list(avg_scores.values())),
+            consensus_score=np.mean(list(avg_scores.values())),  # type: ignore
             participant_count=len(self.personas),
             dissenting_views=dissenting_views,
             consensus_method="weighted_average"

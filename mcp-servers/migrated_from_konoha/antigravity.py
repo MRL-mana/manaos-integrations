@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 
 
-def antigravity_status():
+def antigravity_status():  # type: ignore[misc]
     """Antigravity IDEの状態を確認"""
     try:
         result = subprocess.run(
@@ -30,7 +30,7 @@ def antigravity_status():
         }
 
 
-def antigravity_start(project_path="~"):
+def antigravity_start(project_path="~"):  # type: ignore[misc]
     """Antigravity IDEを起動"""
     try:
         result = subprocess.run(
@@ -51,7 +51,7 @@ def antigravity_start(project_path="~"):
         }
 
 
-def antigravity_workflow(workflow_type="new_project"):
+def antigravity_workflow(workflow_type="new_project"):  # type: ignore[misc]
     """Antigravity IDEワークフローを実行"""
     try:
         result = subprocess.run(
@@ -73,7 +73,7 @@ def antigravity_workflow(workflow_type="new_project"):
         }
 
 
-def antigravity_connect():
+def antigravity_connect():  # type: ignore[misc]
     """Antigravity IDEに接続"""
     try:
         result = subprocess.run(

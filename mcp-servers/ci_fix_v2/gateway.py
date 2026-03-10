@@ -75,7 +75,7 @@ class MoltbotGatewayClient:
             headers[PLAN_SIGNATURE_HEADER] = sign_plan_body(body_bytes, self.secret)
 
         try:
-            r = requests.post(
+            r = requests.post(  # type: ignore[possibly-unbound]
                 url,
                 data=body_bytes,
                 timeout=self.timeout_seconds,
@@ -93,7 +93,7 @@ class MoltbotGatewayClient:
 
         url = f"{self.base_url}/moltbot/plan/{plan_id}/result"
         try:
-            r = requests.get(url, timeout=self.timeout_seconds)
+            r = requests.get(url, timeout=self.timeout_seconds)  # type: ignore[possibly-unbound]
             r.raise_for_status()
             return {"ok": True, "data": r.json()}
         except Exception as e:
@@ -106,7 +106,7 @@ class MoltbotGatewayClient:
 
         url = f"{self.base_url}/moltbot/plan/{plan_id}/cancel"
         try:
-            r = requests.post(url, timeout=self.timeout_seconds)
+            r = requests.post(url, timeout=self.timeout_seconds)  # type: ignore[possibly-unbound]
             r.raise_for_status()
             return {"ok": True, "data": r.json() if r.content else {}}
         except Exception as e:

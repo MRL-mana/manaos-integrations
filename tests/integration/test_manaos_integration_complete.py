@@ -14,8 +14,8 @@ from pathlib import Path
 # Windowsでの文字エンコーディング問題を回避
 if sys.platform == "win32":
     import io
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 # 統合システムのインポート
 try:
@@ -71,7 +71,7 @@ def test_orchestrator():
         return False
     
     try:
-        orchestrator = ManaOSIntegrationOrchestrator()
+        orchestrator = ManaOSIntegrationOrchestrator()  # type: ignore[possibly-unbound]
         print_result("統合オーケストレーター初期化", True)
         
         # 全サービスの状態をチェック
@@ -119,7 +119,7 @@ def test_service_bridge():
         return False
     
     try:
-        bridge = ManaOSServiceBridge()
+        bridge = ManaOSServiceBridge()  # type: ignore[possibly-unbound]
         print_result("サービスブリッジ初期化", True)
         
         # マナOSサービスの状態をチェック
@@ -154,7 +154,7 @@ def test_complete_integration():
         return False
     
     try:
-        integration = ManaOSCompleteIntegration()
+        integration = ManaOSCompleteIntegration()  # type: ignore[possibly-unbound]
         print_result("完全統合システム初期化", True)
         
         # 完全統合状態を取得
@@ -189,7 +189,7 @@ def test_optimizer():
         return False
     
     try:
-        optimizer = get_optimizer()
+        optimizer = get_optimizer()  # type: ignore[possibly-unbound]
         print_result("最適化システム初期化", True)
         
         # キャッシュ統計を取得
@@ -219,7 +219,7 @@ def test_performance():
         return False
     
     try:
-        orchestrator = ManaOSIntegrationOrchestrator()
+        orchestrator = ManaOSIntegrationOrchestrator()  # type: ignore[possibly-unbound]
         
         # 並列チェックのパフォーマンステスト
         print("\n並列チェックのパフォーマンステスト...")

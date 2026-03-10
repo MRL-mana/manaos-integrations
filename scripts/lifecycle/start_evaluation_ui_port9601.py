@@ -10,7 +10,7 @@ from pathlib import Path
 if sys.platform == "win32" and hasattr(sys.stdout, "buffer"):
     import io
 
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 # 起動ログ（デバッグ用：eval_ui_debug.log に追記）
 _debug_log = Path(__file__).parent / "eval_ui_debug.log"
@@ -1080,14 +1080,14 @@ if not evaluation_web_file.exists():
                     if "lab" in key.lower() and ("lab" + os.sep in key or "lab/" in key):
                         p2m[_norm(full + "lab" + os.sep + base)] = meta
                 for fname in ofns:
-                    base = os.path.basename(fname) if "/" in fname or "\\" in fname else fname
+                    base = os.path.basename(fname) if "/" in fname or "\\" in fname else fname  # type: ignore[call-arg]
                     p2m[base] = meta
                     p2m[fname] = meta
-                    p2m[fname.replace("\\", "/")] = meta
-                    p2m[fname.replace("/", "\\")] = meta
-                    if "lab" in fname.lower():
-                        p2m["lab/" + base] = meta
-                        p2m["lab\\" + base] = meta
+                    p2m[fname.replace("\\", "/")] = meta  # type: ignore[union-attr]
+                    p2m[fname.replace("/", "\\")] = meta  # type: ignore[union-attr]
+                    if "lab" in fname.lower():  # type: ignore[union-attr]
+                        p2m["lab/" + base] = meta  # type: ignore
+                        p2m["lab\\" + base] = meta  # type: ignore
             if dirty:
                 try:
                     GENERATION_METADATA_DB.parent.mkdir(parents=True, exist_ok=True)

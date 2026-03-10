@@ -74,7 +74,7 @@ def test_organizer():
     org = FileOrganizer(db)
     result = org.organize_files([files[0].id], user='test')
     
-    if result.get('status') == 'success' and result.get('organized_count') > 0:
+    if result.get('status') == 'success' and result.get('organized_count') > 0:  # type: ignore[operator]
         print(f"✅ 整理完了: {result.get('organized_count')}件")
         db.close()
         return True
@@ -98,7 +98,7 @@ def test_restore():
     org = FileOrganizer(db)
     result = org.restore_files([files[0].id], user='test')
     
-    if result.get('status') == 'success' and result.get('restored_count') > 0:
+    if result.get('status') == 'success' and result.get('restored_count') > 0:  # type: ignore[operator]
         print(f"✅ 復元完了: {result.get('restored_count')}件")
         db.close()
         return True

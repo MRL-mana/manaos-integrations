@@ -43,7 +43,7 @@ class ManaAdvancedImageGenerator:
     def execute_command(self, command, timeout=180):
         """コマンド実行"""
         try:
-            stdin, stdout, stderr = self.ssh_client.exec_command(command, timeout=timeout)
+            stdin, stdout, stderr = self.ssh_client.exec_command(command, timeout=timeout)  # type: ignore[union-attr]
             
             # リアルタイム出力
             while True:
@@ -248,7 +248,7 @@ python3 /workspace/mana_gen_{idx}.py
         
         try:
             # SFTP接続
-            sftp = self.ssh_client.open_sftp()
+            sftp = self.ssh_client.open_sftp()  # type: ignore[union-attr]
             
             # ファイル一覧取得
             remote_files = sftp.listdir("/workspace/mana_images/")

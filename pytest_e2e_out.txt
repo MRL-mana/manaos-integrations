@@ -1,0 +1,60 @@
+.....................................                                    [100%]
+============================== warnings summary ===============================
+api_auth.py:27
+  C:\Users\mana4\Desktop\manaos_integrations\api_auth.py:27: UserWarning: MANAOS_API_KEYS が未設定です。APIキーを環境変数で設定してください。
+    self._load_api_keys()
+
+tests/e2e/test_final_checklist_stable.py::test_1_server_restart_stability
+  C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/e2e/test_final_checklist_stable.py::test_1_server_restart_stability returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/e2e/test_final_checklist_stable.py::test_2_gpu_fallback
+  C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/e2e/test_final_checklist_stable.py::test_2_gpu_fallback returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/e2e/test_final_checklist_stable.py::test_3_notification_retry
+  C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/e2e/test_final_checklist_stable.py::test_3_notification_retry returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/e2e/test_final_checklist_stable.py::test_4_memory_consistency
+  C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/e2e/test_final_checklist_stable.py::test_4_memory_consistency returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/e2e/test_final_checklist_stable.py::test_5_safety_guard
+  C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/e2e/test_final_checklist_stable.py::test_5_safety_guard returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/e2e/test_service_health_checks.py::test_core_services
+  C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/e2e/test_service_health_checks.py::test_core_services returned <class 'list'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/e2e/test_service_health_checks.py::test_optional_services
+  C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/e2e/test_service_health_checks.py::test_optional_services returned <class 'list'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/e2e/test_service_health_checks.py::test_environment_variable_usage
+  C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/e2e/test_service_health_checks.py::test_environment_variable_usage returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/e2e/test_ultra_integrated.py::test_ultra_integrated_chat_smoke
+  C:\Users\mana4\Desktop\.venv\Lib\site-packages\chromadb\config.py:20: UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
+    from pydantic.v1 import BaseSettings
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+37 passed, 10 warnings in 12.15s

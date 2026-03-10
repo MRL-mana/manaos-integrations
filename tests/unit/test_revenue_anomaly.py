@@ -40,39 +40,39 @@ class TestComputeTrend:
     def test_rising_trend(self):
         """前半低い→後半高い → rising"""
         data = [100] * 7 + [500] * 7
-        result = self.mod._compute_trend(data)
+        result = self.mod._compute_trend(data)  # type: ignore
         assert result["direction"] == "rising"
         assert result["change_pct"] > 5
 
     def test_falling_trend(self):
         """前半高い→後半低い → falling"""
         data = [500] * 7 + [100] * 7
-        result = self.mod._compute_trend(data)
+        result = self.mod._compute_trend(data)  # type: ignore
         assert result["direction"] == "falling"
         assert result["change_pct"] < -5
 
     def test_stable_trend(self):
         """全部同じ → stable"""
         data = [1000] * 14
-        result = self.mod._compute_trend(data)
+        result = self.mod._compute_trend(data)  # type: ignore
         assert result["direction"] == "stable"
         assert abs(result["change_pct"]) <= 5
 
     def test_zero_to_positive(self):
         """0→正 → change=100%"""
         data = [0] * 7 + [1000] * 7
-        result = self.mod._compute_trend(data)
+        result = self.mod._compute_trend(data)  # type: ignore
         assert result["change_pct"] == 100.0
 
     def test_all_zero(self):
         data = [0] * 14
-        result = self.mod._compute_trend(data)
+        result = self.mod._compute_trend(data)  # type: ignore
         assert result["direction"] == "stable"
         assert result["change_pct"] == 0
 
     def test_avg_fields_present(self):
         data = [200] * 7 + [400] * 7
-        result = self.mod._compute_trend(data)
+        result = self.mod._compute_trend(data)  # type: ignore
         assert "avg_recent_7d" in result
         assert "avg_previous_7d" in result
         assert result["avg_recent_7d"] == 400.0

@@ -5,7 +5,7 @@
 import sys
 import io
 if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 try:
     from flask import Flask, render_template_string, jsonify, request, send_from_directory

@@ -361,5 +361,445 @@
     "result": {
       "success": true
     }
+  },
+  {
+    "action_id": "rate_limit_1773020995",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 100.0%, メモリ: 72.8%",
+    "executed_at": "2026-03-09T10:49:55.848075",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773021012",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 98.5%, メモリ: 74.2%",
+    "executed_at": "2026-03-09T10:50:12.836979",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773035239",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 95.7%, メモリ: 49.3%",
+    "executed_at": "2026-03-09T14:47:19.497240",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773036331",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 76.6%, メモリ: 93.6%",
+    "executed_at": "2026-03-09T15:05:31.596153",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773036346",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 75.8%, メモリ: 90.8%",
+    "executed_at": "2026-03-09T15:05:46.335678",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773036483",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 96.8%, メモリ: 84.2%",
+    "executed_at": "2026-03-09T15:08:03.683748",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773037080",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 100.0%, メモリ: 72.3%",
+    "executed_at": "2026-03-09T15:18:00.524705",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773037094",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 100.0%, メモリ: 72.4%",
+    "executed_at": "2026-03-09T15:18:14.982793",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773037127",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 100.0%, メモリ: 65.2%",
+    "executed_at": "2026-03-09T15:18:47.355516",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773037780",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 100.0%, メモリ: 56.3%",
+    "executed_at": "2026-03-09T15:29:40.763283",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773037803",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 100.0%, メモリ: 55.4%",
+    "executed_at": "2026-03-09T15:30:03.796195",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773039031",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 72.6%, メモリ: 88.0%",
+    "executed_at": "2026-03-09T15:50:31.159019",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773047193",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 120.0,
+    "reason": "CPU: 10.5%, メモリ: 38.3%",
+    "executed_at": "2026-03-09T18:06:33.384366",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773060202",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 120.0,
+    "reason": "CPU: 25.5%, メモリ: 44.5%",
+    "executed_at": "2026-03-09T21:43:22.204288",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773060224",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 120.0,
+    "reason": "CPU: 11.3%, メモリ: 44.5%",
+    "executed_at": "2026-03-09T21:43:44.754662",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773098288",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 93.4%, メモリ: 56.8%",
+    "executed_at": "2026-03-10T08:18:08.613192",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773098806",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 54.3%, メモリ: 96.3%",
+    "executed_at": "2026-03-10T08:26:46.554592",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773098819",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 46.7%, メモリ: 97.4%",
+    "executed_at": "2026-03-10T08:26:59.168025",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773099074",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 31.9%, メモリ: 92.8%",
+    "executed_at": "2026-03-10T08:31:14.286307",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773099086",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 51.4%, メモリ: 92.3%",
+    "executed_at": "2026-03-10T08:31:26.908957",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773101619",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 30.0%, メモリ: 85.9%",
+    "executed_at": "2026-03-10T09:13:39.100266",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773101631",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 20.5%, メモリ: 85.7%",
+    "executed_at": "2026-03-10T09:13:51.758966",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773103058",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 12.9%, メモリ: 86.2%",
+    "executed_at": "2026-03-10T09:37:38.482944",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773103163",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 16.7%, メモリ: 93.2%",
+    "executed_at": "2026-03-10T09:39:23.443761",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773103175",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 11.1%, メモリ: 96.3%",
+    "executed_at": "2026-03-10T09:39:35.912878",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773103319",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 16.0%, メモリ: 99.4%",
+    "executed_at": "2026-03-10T09:41:59.042858",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773103331",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 27.6%, メモリ: 99.0%",
+    "executed_at": "2026-03-10T09:42:11.687471",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773103747",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 13.0%, メモリ: 99.0%",
+    "executed_at": "2026-03-10T09:49:07.651399",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773103760",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 22.0%, メモリ: 99.3%",
+    "executed_at": "2026-03-10T09:49:20.327060",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773103936",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 63.5%, メモリ: 89.5%",
+    "executed_at": "2026-03-10T09:52:16.564219",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773103949",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 48.3%, メモリ: 88.8%",
+    "executed_at": "2026-03-10T09:52:29.034214",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773106071",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 18.1%, メモリ: 94.3%",
+    "executed_at": "2026-03-10T10:27:51.201654",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773106085",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 66.7%, メモリ: 94.3%",
+    "executed_at": "2026-03-10T10:28:05.761164",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773106658",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 11.2%, メモリ: 87.0%",
+    "executed_at": "2026-03-10T10:37:38.248474",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773106672",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 42.1%, メモリ: 85.3%",
+    "executed_at": "2026-03-10T10:37:52.777522",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773108260",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 8.7%, メモリ: 86.3%",
+    "executed_at": "2026-03-10T11:04:20.397048",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773108864",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 8.3%, メモリ: 98.2%",
+    "executed_at": "2026-03-10T11:14:24.169422",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773108878",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 12.3%, メモリ: 98.1%",
+    "executed_at": "2026-03-10T11:14:38.723452",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773115211",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 14.5%, メモリ: 99.0%",
+    "executed_at": "2026-03-10T13:00:11.975077",
+    "result": {
+      "success": true
+    }
+  },
+  {
+    "action_id": "rate_limit_1773115234",
+    "parameter_name": "default_rate_limit",
+    "old_value": 100.0,
+    "new_value": 70.0,
+    "reason": "CPU: 26.7%, メモリ: 98.6%",
+    "executed_at": "2026-03-10T13:00:34.660207",
+    "result": {
+      "success": true
+    }
   }
 ]

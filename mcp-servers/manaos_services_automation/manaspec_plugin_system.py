@@ -69,15 +69,15 @@ class PluginManager:
     def load_plugin(self, plugin_path: str) -> bool:
         """プラグインをロード"""
         try:
-            plugin_path = Path(plugin_path)
+            plugin_path = Path(plugin_path)  # type: ignore
             
             # プラグインモジュールをロード
             spec = importlib.util.spec_from_file_location(
-                plugin_path.stem,
+                plugin_path.stem,  # type: ignore
                 plugin_path
             )
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+            module = importlib.util.module_from_spec(spec)  # type: ignore
+            spec.loader.exec_module(module)  # type: ignore[union-attr]
             
             # プラグインクラスを探す
             for item_name in dir(module):
@@ -146,7 +146,7 @@ class PluginManager:
             for hook_name in self.hooks.keys():
                 hook_method = getattr(plugin, hook_name, None)
                 if hook_method in self.hooks[hook_name]:
-                    self.hooks[hook_name].remove(hook_method)
+                    self.hooks[hook_name].remove(hook_method)  # type: ignore
             
             del self.plugins[plugin_name]
             print(f"✅ Plugin unloaded: {plugin_name}")
@@ -237,13 +237,13 @@ class MetricsCollectorPlugin(ManaSpecPlugin):
         print(f"  📊 Metrics: Total archives = {self.metrics['archives']}")
 
 
-def create_plugin_template(plugin_name: str, output_path: str = None):
+def create_plugin_template(plugin_name: str, output_path: str = None):  # type: ignore
     """プラグインテンプレートを作成"""
     if output_path is None:
         output_path = f"~/.manaspec/plugins/{plugin_name}.py"
     
-    output_path = Path(output_path).expanduser()
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path = Path(output_path).expanduser()  # type: ignore
+    output_path.parent.mkdir(parents=True, exist_ok=True)  # type: ignore
     
     template = f'''#!/usr/bin/env python3
 """
@@ -278,7 +278,7 @@ class {plugin_name.title().replace('-', '')}Plugin(ManaSpecPlugin):
         # TODO: 実装
 '''
     
-    output_path.write_text(template)
+    output_path.write_text(template)  # type: ignore
     print(f"✅ Plugin template created: {output_path}")
 
 

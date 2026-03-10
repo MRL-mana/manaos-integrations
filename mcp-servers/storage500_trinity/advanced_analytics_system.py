@@ -81,7 +81,7 @@ class AdvancedAnalyticsSystem:
         
         self._append_to_log(self.performance_log, entry)
     
-    def log_user_behavior(self, action: str, details: Dict = None):
+    def log_user_behavior(self, action: str, details: Dict = None):  # type: ignore
         """ユーザー行動ログを記録"""
         entry = {
             "timestamp": datetime.now().isoformat(),

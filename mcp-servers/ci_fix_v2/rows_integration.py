@@ -113,7 +113,7 @@ class RowsIntegration:
         for attempt in range(max_retries):
             try:
                 url = f"{self.base_url}/{endpoint.lstrip('/')}"
-                response = self.session.request(
+                response = self.session.request(  # type: ignore[union-attr]
                     method=method,
                     url=url,
                     json=data,
@@ -163,37 +163,37 @@ class RowsIntegration:
                     return None
                     
             except requests.exceptions.HTTPError as e:
-                status_code = getattr(response, "status_code", None)
+                status_code = getattr(response, "status_code", None)  # type: ignore[possibly-unbound]
                 try:
-                    error_json = response.json()
+                    error_json = response.json()  # type: ignore[possibly-unbound]
                 except Exception:
                     error_json = None
 
                 self.last_error = {
                     "type": "http_error",
                     "status_code": status_code,
-                    "url": getattr(response, "url", None),
+                    "url": getattr(response, "url", None),  # type: ignore[possibly-unbound]
                     "message": (error_json.get("message") if isinstance(error_json, dict) else None)
                     or str(e),
                     "code": (error_json.get("code") if isinstance(error_json, dict) else None),
-                    "body_head": (response.text or "")[:400] if getattr(response, "text", None) else None,
+                    "body_head": (response.text or "")[:400] if getattr(response, "text", None) else None,  # type: ignore[possibly-unbound]
                 }
 
                 # 4xxエラーはリトライしない
-                if 400 <= response.status_code < 500:
-                    logger.error(f"HTTPエラー {response.status_code}: {e}")
-                    if response.status_code == 401:
+                if 400 <= response.status_code < 500:  # type: ignore[possibly-unbound]
+                    logger.error(f"HTTPエラー {response.status_code}: {e}")  # type: ignore[possibly-unbound]
+                    if response.status_code == 401:  # type: ignore[possibly-unbound]
                         logger.error("認証エラー: APIキーを確認してください")
                         if isinstance(error_json, dict) and error_json.get("message"):
                             logger.error(f"Rows API message: {error_json.get('message')}")
-                    elif response.status_code == 404:
+                    elif response.status_code == 404:  # type: ignore[possibly-unbound]
                         logger.error("リソースが見つかりません")
                         if isinstance(error_json, dict) and error_json.get("message"):
                             logger.error(f"Rows API message: {error_json.get('message')}")
                     return None
                 # 5xxエラーのみリトライ
                 elif attempt < max_retries - 1:
-                    logger.warning(f"サーバーエラー {response.status_code}（試行 {attempt + 1}/{max_retries}）: {e}")
+                    logger.warning(f"サーバーエラー {response.status_code}（試行 {attempt + 1}/{max_retries}）: {e}")  # type: ignore[possibly-unbound]
                     time.sleep(retry_delay * (attempt + 1))
                     continue
                 else:
@@ -278,7 +278,7 @@ class RowsIntegration:
 
         # 現行形式(例): [{"items": [...], "next_page_results": "..."}]
         if isinstance(result, list) and result:
-            first = result[0]
+            first = result[0]  # type: ignore
             if isinstance(first, dict) and isinstance(first.get("items"), list):
                 return first["items"]
 
@@ -379,7 +379,7 @@ class RowsIntegration:
         )
         if result and "values" in result:
             return result["values"]
-        return result
+        return result  # type: ignore
     
     def update_range(
         self,
@@ -439,7 +439,7 @@ class RowsIntegration:
             "spreadsheet_id": spreadsheet_id
         }
         if context:
-            data["context"] = context
+            data["context"] = context  # type: ignore
         
         return self._make_request("POST", "/ai/query", data=data)
     
@@ -892,7 +892,7 @@ class RowsIntegration:
             
             if not existing_data:
                 # データがない場合は新規作成
-                return self.send_to_rows(spreadsheet_id, source_data, sheet_name, append=False)
+                return self.send_to_rows(spreadsheet_id, source_data, sheet_name, append=False)  # type: ignore
             
             # ヘッダーを取得
             headers = existing_data[0] if existing_data else []
@@ -921,12 +921,12 @@ class RowsIntegration:
             
             # 新規データを追加
             if new_rows:
-                self.send_to_rows(spreadsheet_id, new_rows, sheet_name, append=True)
+                self.send_to_rows(spreadsheet_id, new_rows, sheet_name, append=True)  # type: ignore
             
             # 更新データを処理（既存の行を更新）
             if updated_rows:
                 # 更新処理（簡易版：全データを再送信）
-                self.send_to_rows(spreadsheet_id, source_data, sheet_name, append=False)
+                self.send_to_rows(spreadsheet_id, source_data, sheet_name, append=False)  # type: ignore
             
             return {
                 "status": "success",

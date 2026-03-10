@@ -1,5 +1,5 @@
 import requests, json, sys
-sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 r = requests.get('http://127.0.0.1:8188/queue', timeout=5)
 q = r.json()
 

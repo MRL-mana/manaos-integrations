@@ -94,22 +94,22 @@ def _start_health_server():
 
 # ── MCP サーバー ────────────────────────────────────
 if MCP_AVAILABLE:
-    server = Server("autonomy-system")
+    server = Server("autonomy-system")  # type: ignore[possibly-unbound]
 
     @server.list_tools()
     async def list_tools() -> list[Tool]:
         return [
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="autonomy_status",
                 description="自律システムの現在の状態（レベル・実行中タスク数・予算消費など）を返す。",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="autonomy_get_level",
                 description="現在の自律実行レベルを取得。0=完全手動 〜 4=完全自律。",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="autonomy_set_level",
                 description="自律実行レベルを変更する。level: 0（完全手動）〜 4（完全自律）。",
                 inputSchema={
@@ -129,7 +129,7 @@ if MCP_AVAILABLE:
                     "required": ["level"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="autonomy_check_tool",
                 description="指定ツールが現在の自律レベルで実行可能か確認する。",
                 inputSchema={
@@ -147,7 +147,7 @@ if MCP_AVAILABLE:
                     "required": ["tool_name"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="autonomy_add_task",
                 description="自律タスクをキューに追加する。",
                 inputSchema={
@@ -174,12 +174,12 @@ if MCP_AVAILABLE:
                     "required": ["task_type", "action"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="autonomy_list_tasks",
                 description="自律タスク一覧を取得する。",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="autonomy_dashboard",
                 description="自律システムの全体ダッシュボード情報（タスク・履歴・統計）を返す。",
                 inputSchema={"type": "object", "properties": {}},
@@ -212,7 +212,7 @@ if MCP_AVAILABLE:
         else:
             result = {"error": f"Unknown tool: {name}"}
 
-        return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]
+        return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]  # type: ignore[possibly-unbound]
 
 
 async def main():
@@ -223,7 +223,7 @@ async def main():
     health_thread = threading.Thread(target=_start_health_server, daemon=True)
     health_thread.start()
 
-    async with stdio_server() as (read_stream, write_stream):
+    async with stdio_server() as (read_stream, write_stream):  # type: ignore[possibly-unbound]
         await server.run(
             read_stream,
             write_stream,

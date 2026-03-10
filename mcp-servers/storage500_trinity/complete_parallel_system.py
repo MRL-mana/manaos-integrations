@@ -23,7 +23,7 @@ from distributed_image_generator import DistributedImageGenerator
 class CompleteParallelSystem:
     def __init__(self, max_workers=None):
         """完全並列画像生成システム初期化"""
-        self.max_workers = max_workers or min(os.cpu_count(), 8)
+        self.max_workers = max_workers or min(os.cpu_count(), 8)  # type: ignore
         
         # 各Phaseシステム初期化
         self.phase1_system = Phase1BasicParallel(self.max_workers)

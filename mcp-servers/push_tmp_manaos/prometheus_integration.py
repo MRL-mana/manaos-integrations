@@ -26,60 +26,60 @@ class PrometheusMetrics:
             raise ImportError("prometheus_clientが必要です")
         
         # カウンター
-        self.request_count = Counter(
+        self.request_count = Counter(  # type: ignore[possibly-unbound]
             'manaos_requests_total',
             'Total number of requests',
             ['method', 'endpoint', 'status']
         )
         
-        self.error_count = Counter(
+        self.error_count = Counter(  # type: ignore[possibly-unbound]
             'manaos_errors_total',
             'Total number of errors',
             ['error_type', 'service']
         )
         
         # ヒストグラム
-        self.request_duration = Histogram(
+        self.request_duration = Histogram(  # type: ignore[possibly-unbound]
             'manaos_request_duration_seconds',
             'Request duration in seconds',
             ['method', 'endpoint'],
             buckets=[0.1, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0]
         )
         
-        self.llm_call_duration = Histogram(
+        self.llm_call_duration = Histogram(  # type: ignore[possibly-unbound]
             'manaos_llm_call_duration_seconds',
             'LLM call duration in seconds',
             ['model', 'task_type']
         )
         
         # ゲージ
-        self.active_connections = Gauge(
+        self.active_connections = Gauge(  # type: ignore[possibly-unbound]
             'manaos_active_connections',
             'Number of active connections'
         )
         
-        self.gpu_usage = Gauge(
+        self.gpu_usage = Gauge(  # type: ignore[possibly-unbound]
             'manaos_gpu_usage_percent',
             'GPU usage percentage',
             ['gpu_id']
         )
         
-        self.cpu_usage = Gauge(
+        self.cpu_usage = Gauge(  # type: ignore[possibly-unbound]
             'manaos_cpu_usage_percent',
             'CPU usage percentage'
         )
         
-        self.memory_usage = Gauge(
+        self.memory_usage = Gauge(  # type: ignore[possibly-unbound]
             'manaos_memory_usage_bytes',
             'Memory usage in bytes'
         )
         
-        self.cache_hit_rate = Gauge(
+        self.cache_hit_rate = Gauge(  # type: ignore[possibly-unbound]
             'manaos_cache_hit_rate',
             'Cache hit rate (0-1)'
         )
         
-        self.service_health = Gauge(
+        self.service_health = Gauge(  # type: ignore[possibly-unbound]
             'manaos_service_health',
             'Service health status (1=healthy, 0=unhealthy)',
             ['service_name']
@@ -118,7 +118,7 @@ class PrometheusMetrics:
     
     def get_metrics(self) -> bytes:
         """メトリクスを取得（Prometheus形式）"""
-        return generate_latest()
+        return generate_latest()  # type: ignore[possibly-unbound]
 
 
 # Flask統合
@@ -133,12 +133,12 @@ def setup_prometheus_endpoint(app, prometheus_metrics: PrometheusMetrics):
         """Prometheusメトリクスエンドポイント"""
         return Response(
             prometheus_metrics.get_metrics(),
-            mimetype=CONTENT_TYPE_LATEST
+            mimetype=CONTENT_TYPE_LATEST  # type: ignore[possibly-unbound]
         )
 
 
 # シングルトンインスタンス
-_prometheus_metrics: PrometheusMetrics = None
+_prometheus_metrics: PrometheusMetrics = None  # type: ignore
 
 
 def get_prometheus_metrics() -> PrometheusMetrics:

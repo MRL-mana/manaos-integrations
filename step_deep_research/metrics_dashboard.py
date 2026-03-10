@@ -137,7 +137,7 @@ class MetricsDashboard:
             }
         }
     
-    def _load_job_data(self, log_file: Path) -> Optional[Dict[str, Any]]:
+    def _load_job_data(self, log_file: Path) -> Optional[Dict[str, Any]]:  # type: ignore[name-defined]
         """
         ジョブログからデータを読み込む
         

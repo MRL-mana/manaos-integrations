@@ -10,8 +10,8 @@ from pathlib import Path
 # Windows環境でのエンコーディング問題を回避
 if sys.platform == "win32":
     import io
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent))
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     print("=" * 60)
     
     try:
-        from unified_api_server import app, start_initialization_background
+        from unified_api_server import app, start_initialization_background  # type: ignore[attr-defined]
         
         # 初期化をバックグラウンドで開始
         print("\n統合システムをバックグラウンドで初期化中...")

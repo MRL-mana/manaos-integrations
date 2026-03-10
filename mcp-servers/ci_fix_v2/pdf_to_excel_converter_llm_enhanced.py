@@ -19,8 +19,8 @@ import json
 # Windowsでのエンコーディング修正
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 # 既存システムのインポート
 try:
@@ -55,7 +55,7 @@ class PDFToExcelConverterLLMEnhanced:
         self,
         use_llm_correction: bool = True,
         llm_model: str = "qwen2.5:7b",
-        ocr_providers: List[str] = None,
+        ocr_providers: List[str] = None,  # type: ignore
         use_super_ocr: bool = False
     ):
         """
@@ -74,7 +74,7 @@ class PDFToExcelConverterLLMEnhanced:
         
         # OCR初期化
         if OCR_AVAILABLE:
-            self.ocr = MultiProviderOCR()
+            self.ocr = MultiProviderOCR()  # type: ignore[possibly-unbound]
             available = self.ocr.get_available_providers()
             logger.info(f"利用可能なOCRプロバイダー: {available}")
         else:
@@ -93,7 +93,7 @@ class PDFToExcelConverterLLMEnhanced:
         if not self.ocr:
             raise RuntimeError("OCRが利用できません")
         
-        doc = fitz.open(pdf_path)
+        doc = fitz.open(pdf_path)  # type: ignore[possibly-unbound]
         total_pages = len(doc)
         logger.info(f"PDFページ数: {total_pages}")
         
@@ -106,7 +106,7 @@ class PDFToExcelConverterLLMEnhanced:
             
             # 高解像度で画像に変換（DPI 300）
             zoom = 3.0  # 300 DPI相当
-            mat = fitz.Matrix(zoom, zoom)
+            mat = fitz.Matrix(zoom, zoom)  # type: ignore[possibly-unbound]
             pix = page.get_pixmap(matrix=mat)
             
             # 一時画像ファイルに保存
@@ -233,7 +233,7 @@ OCR結果（ページ {page_num}, チャンク {chunk_num}/{total_chunks}）:
 修正後のテキストのみを返してください（説明は不要）:"""
         
         try:
-            result = generate(self.llm_model, prompt, timeout=60)
+            result = generate(self.llm_model, prompt, timeout=60)  # type: ignore[possibly-unbound]
             if result and result.get('response'):
                 corrected = result['response'].strip()
                 # プロンプトの繰り返しを削除

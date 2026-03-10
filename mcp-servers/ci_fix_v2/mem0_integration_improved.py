@@ -84,7 +84,7 @@ class Mem0Integration(BaseIntegration):
             # ユーザー設定で上書き
             config = {**default_config, **self.config}
             
-            self.memory = Memory.from_config(config)
+            self.memory = Memory.from_config(config)  # type: ignore[possibly-unbound]
             self.logger.info("Mem0メモリシステムを初期化しました")
             return True
             
@@ -120,7 +120,7 @@ class Mem0Integration(BaseIntegration):
             return None
         
         try:
-            result = self.memory.add(
+            result = self.memory.add(  # type: ignore[union-attr]
                 memory_text,
                 user_id=user_id or "default",
                 metadata=metadata
@@ -128,7 +128,7 @@ class Mem0Integration(BaseIntegration):
             
             memory_id = result.get("memory_id") if isinstance(result, dict) else str(result)
             self.logger.info(f"メモリを追加しました: {memory_id}")
-            return memory_id
+            return memory_id  # type: ignore
             
         except Exception as e:
             error = self.error_handler.handle_exception(
@@ -160,7 +160,7 @@ class Mem0Integration(BaseIntegration):
             return []
         
         try:
-            results = self.memory.search(
+            results = self.memory.search(  # type: ignore[union-attr]
                 query,
                 user_id=user_id or "default",
                 limit=limit
@@ -191,7 +191,7 @@ class Mem0Integration(BaseIntegration):
             return []
         
         try:
-            results = self.memory.get_all(user_id=user_id or "default")
+            results = self.memory.get_all(user_id=user_id or "default")  # type: ignore[union-attr]
             return results if isinstance(results, list) else []
             
         except Exception as e:

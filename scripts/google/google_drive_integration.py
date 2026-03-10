@@ -93,21 +93,21 @@ class GoogleDriveIntegration(BaseIntegration):
         try:
             # 既存のトークンを確認
             if self.token_path.exists():
-                self.creds = Credentials.from_authorized_user_file(
+                self.creds = Credentials.from_authorized_user_file(  # type: ignore[possibly-unbound]
                     str(self.token_path), self.SCOPES
                 )
             
             # トークンが無効または存在しない場合、再認証
             if not self.creds or not self.creds.valid:
                 if self.creds and self.creds.expired and self.creds.refresh_token:
-                    self.creds.refresh(Request())
+                    self.creds.refresh(Request())  # type: ignore[possibly-unbound]
                 else:
                     if not self.credentials_path.exists():
                         error_msg = f"認証情報ファイルが見つかりません: {self.credentials_path}"
                         self.logger.warning(error_msg)
                         return False
                     
-                    flow = InstalledAppFlow.from_client_secrets_file(
+                    flow = InstalledAppFlow.from_client_secrets_file(  # type: ignore[possibly-unbound]
                         str(self.credentials_path), self.SCOPES
                     )
                     self.creds = flow.run_local_server(port=0)
@@ -117,7 +117,7 @@ class GoogleDriveIntegration(BaseIntegration):
                     token.write(self.creds.to_json())
             
             # サービスを構築
-            self.service = build('drive', 'v3', credentials=self.creds)
+            self.service = build('drive', 'v3', credentials=self.creds)  # type: ignore[possibly-unbound]
             self.logger.info("Google Drive認証が完了しました")
             return True
             
@@ -168,14 +168,14 @@ class GoogleDriveIntegration(BaseIntegration):
             # 上書きチェック
             if overwrite and target_folder_id:
                 query = f"name='{final_name}' and '{target_folder_id}' in parents and trashed=false"
-                results = self.service.files().list(q=query, fields="files(id)").execute()
+                results = self.service.files().list(q=query, fields="files(id)").execute()  # type: ignore[union-attr]
                 existing_files = results.get('files', [])
                 
                 if existing_files:
                     # 既存ファイルを更新
                     file_id = existing_files[0]['id']
-                    media = MediaFileUpload(str(file_path_obj), resumable=True)
-                    updated_file = self.service.files().update(
+                    media = MediaFileUpload(str(file_path_obj), resumable=True)  # type: ignore[possibly-unbound]
+                    updated_file = self.service.files().update(  # type: ignore[union-attr]
                         fileId=file_id,
                         media_body=media,
                         fields='id'
@@ -188,15 +188,15 @@ class GoogleDriveIntegration(BaseIntegration):
             }
             
             if target_folder_id:
-                file_metadata['parents'] = [target_folder_id]
+                file_metadata['parents'] = [target_folder_id]  # type: ignore
             
-            media = MediaFileUpload(
+            media = MediaFileUpload(  # type: ignore[possibly-unbound]
                 str(file_path_obj),
                 resumable=True
             )
             
             timeout = self.get_timeout("file_upload")
-            file = self.service.files().create(
+            file = self.service.files().create(  # type: ignore[union-attr]
                 body=file_metadata,
                 media_body=media,
                 fields='id'
@@ -234,7 +234,7 @@ class GoogleDriveIntegration(BaseIntegration):
                 query += f" and '{folder_id}' in parents"
             
             timeout = self.get_timeout("api_call")
-            results = self.service.files().list(
+            results = self.service.files().list(  # type: ignore[union-attr]
                 q=query,
                 pageSize=max_results,
                 fields="files(id, name, mimeType, size, modifiedTime)"
@@ -283,7 +283,7 @@ class GoogleDriveIntegration(BaseIntegration):
                         file_id = file_id.split("id=")[1].split("&")[0]
             
             # ファイル情報を取得
-            file_metadata = self.service.files().get(
+            file_metadata = self.service.files().get(  # type: ignore[union-attr]
                 fileId=file_id,
                 fields='id, name, mimeType'
             ).execute()
@@ -317,18 +317,18 @@ class GoogleDriveIntegration(BaseIntegration):
                     else:
                         export_mime_type = 'application/pdf'
                 
-                request = self.service.files().export_media(
+                request = self.service.files().export_media(  # type: ignore[union-attr]
                     fileId=file_id,
                     mimeType=export_mime_type
                 )
             else:
                 # 通常のファイルは直接ダウンロード
-                request = self.service.files().get_media(fileId=file_id)
+                request = self.service.files().get_media(fileId=file_id)  # type: ignore[union-attr]
             
             # ファイルをダウンロード
             output_file.parent.mkdir(parents=True, exist_ok=True)
             with open(output_file, 'wb') as f:
-                downloader = MediaIoBaseDownload(f, request)
+                downloader = MediaIoBaseDownload(f, request)  # type: ignore[operator]
                 done = False
                 while done is False:
                     status, done = downloader.next_chunk()
@@ -362,7 +362,7 @@ class GoogleDriveIntegration(BaseIntegration):
                 
                 # フォルダを検索
                 query = f"mimeType='application/vnd.google-apps.folder' and name='{part}' and '{parent_id}' in parents and trashed=false"
-                results = self.service.files().list(q=query, fields="files(id)").execute()
+                results = self.service.files().list(q=query, fields="files(id)").execute()  # type: ignore[union-attr]
                 files = results.get('files', [])
                 
                 if not files:
@@ -372,7 +372,7 @@ class GoogleDriveIntegration(BaseIntegration):
                         'mimeType': 'application/vnd.google-apps.folder',
                         'parents': [parent_id]
                     }
-                    created = self.service.files().create(body=metadata, fields='id').execute()
+                    created = self.service.files().create(body=metadata, fields='id').execute()  # type: ignore[union-attr]
                     parent_id = created.get('id')
                 else:
                     parent_id = files[0]['id']

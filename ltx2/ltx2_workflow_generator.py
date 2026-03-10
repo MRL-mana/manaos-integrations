@@ -25,12 +25,12 @@ class LTX2WorkflowGenerator:
     def load(self, path: str | Path) -> Dict[str, Any]:
         p = Path(path)
         if not p.is_absolute():
-            p = (self.workflows_dir / p).resolve()
+            p = (self.workflows_dir / p).resolve()  # type: ignore[operator]
         with p.open("r", encoding="utf-8") as f:
             return json.load(f)
 
     def save(self, name: str, workflow: Dict[str, Any]) -> str:
-        out_path = (self.workflows_dir / name).with_suffix(".json")
+        out_path = (self.workflows_dir / name).with_suffix(".json")  # type: ignore[operator]
         with out_path.open("w", encoding="utf-8") as f:
             json.dump(workflow, f, ensure_ascii=False)
         return str(out_path)

@@ -234,7 +234,7 @@ notifications:
             """)
         
         # 安全フレームワーク初期化
-        from main import AISimulatorSafetyFramework
+        from main import AISimulatorSafetyFramework  # type: ignore[attr-defined]
         
         framework = AISimulatorSafetyFramework(config_path)
         
@@ -257,11 +257,11 @@ def run_tests():
     test_suite = unittest.TestSuite()
     
     # テストケース追加
-    test_suite.addTest(unittest.makeSuite(TestSecurityPolicy))
-    test_suite.addTest(unittest.makeSuite(TestResourceMonitor))
-    test_suite.addTest(unittest.makeSuite(TestAlertSystem))
-    test_suite.addTest(unittest.makeSuite(TestContainerManager))
-    test_suite.addTest(unittest.makeSuite(TestIntegration))
+    test_suite.addTest(unittest.makeSuite(TestSecurityPolicy))  # type: ignore[attr-defined]
+    test_suite.addTest(unittest.makeSuite(TestResourceMonitor))  # type: ignore[attr-defined]
+    test_suite.addTest(unittest.makeSuite(TestAlertSystem))  # type: ignore[attr-defined]
+    test_suite.addTest(unittest.makeSuite(TestContainerManager))  # type: ignore[attr-defined]
+    test_suite.addTest(unittest.makeSuite(TestIntegration))  # type: ignore[attr-defined]
     
     # テスト実行
     runner = unittest.TextTestRunner(verbosity=2)

@@ -146,9 +146,9 @@ class AdaptiveCoreSystem:
             if new_workers != self.current_workers:
                 print(f"🔧 CPU使用率調整: {self.current_workers} → {new_workers} ワーカー (CPU: {cpu_percent:.1f}%)")
                 self.current_workers = new_workers
-        elif cpu_percent < 70 and self.current_workers < self.max_workers:
+        elif cpu_percent < 70 and self.current_workers < self.max_workers:  # type: ignore
             # CPU使用率が低い場合はワーカー数を増やす
-            new_workers = min(self.max_workers, self.current_workers + 1)
+            new_workers = min(self.max_workers, self.current_workers + 1)  # type: ignore
             if new_workers != self.current_workers:
                 print(f"🔧 CPU使用率調整: {self.current_workers} → {new_workers} ワーカー (CPU: {cpu_percent:.1f}%)")
                 self.current_workers = new_workers

@@ -12,7 +12,7 @@ _MISC = Path(__file__).parent.parent.parent / "scripts" / "misc"
 
 def _make_paths_stub(port=8188):
     mod = types.ModuleType("_paths")
-    mod.COMFYUI_PORT = port
+    mod.COMFYUI_PORT = port  # type: ignore
     return mod
 
 

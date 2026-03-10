@@ -48,7 +48,7 @@ class GoogleDriveIndexer:
             token_path = os.getenv("GOOGLE_DRIVE_TOKEN", "token.json")
             
             try:
-                self.drive_integration = GoogleDriveIntegration(
+                self.drive_integration = GoogleDriveIntegration(  # type: ignore[possibly-unbound]
                     credentials_path=credentials_path,
                     token_path=token_path
                 )
@@ -76,7 +76,7 @@ class GoogleDriveIndexer:
         try:
             # 既存フォルダを検索
             service = self.drive_integration.service
-            results = service.files().list(
+            results = service.files().list(  # type: ignore[union-attr]
                 q=f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false",
                 fields="files(id, name)"
             ).execute()
@@ -90,7 +90,7 @@ class GoogleDriveIndexer:
                 'name': folder_name,
                 'mimeType': 'application/vnd.google-apps.folder'
             }
-            folder = service.files().create(body=file_metadata, fields='id').execute()
+            folder = service.files().create(body=file_metadata, fields='id').execute()  # type: ignore[union-attr]
             logger.info(f"✅ Google Driveフォルダ作成: {folder_name} ({folder.get('id')})")
             return folder.get('id')
             
@@ -134,11 +134,11 @@ class GoogleDriveIndexer:
             service = self.drive_integration.service
             
             # ファイルメタデータ取得
-            file_metadata = service.files().get(fileId=file_id).execute()
+            file_metadata = service.files().get(fileId=file_id).execute()  # type: ignore[union-attr]
             file_name = file_metadata.get('name', 'unknown')
             
             # 一時ファイルにダウンロード
-            request = service.files().get_media(fileId=file_id)
+            request = service.files().get_media(fileId=file_id)  # type: ignore[union-attr]
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=Path(file_name).suffix)
             temp_path = Path(temp_file.name)
             
@@ -199,7 +199,7 @@ class GoogleDriveIndexer:
             
             # フォルダ内のファイルを検索
             query = f"'{self.drive_folder_id}' in parents and trashed=false"
-            results = service.files().list(
+            results = service.files().list(  # type: ignore[union-attr]
                 q=query,
                 fields="files(id, name, mimeType, size, createdTime, modifiedTime)",
                 orderBy="createdTime desc"
@@ -240,7 +240,7 @@ class GoogleDriveIndexer:
             service = self.drive_integration.service
             
             # ファイルメタデータ取得
-            file_metadata = service.files().get(fileId=file_id).execute()
+            file_metadata = service.files().get(fileId=file_id).execute()  # type: ignore[union-attr]
             file_name = file_metadata.get('name', 'unknown')
             mime_type = file_metadata.get('mimeType', '')
             size = int(file_metadata.get('size', 0))

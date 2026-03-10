@@ -28,9 +28,9 @@ def test_chat_completions_passes_generation_options(monkeypatch):
             "response": "ok",
         }
 
-    monkeypatch.setattr(api.router, "route", fake_route)
+    monkeypatch.setattr(api.router, "route", fake_route)  # type: ignore[attr-defined]
 
-    with api.app.test_client() as client:
+    with api.app.test_client() as client:  # type: ignore[attr-defined]
         response = client.post(
             "/v1/chat/completions",
             json={
@@ -61,9 +61,9 @@ def test_chat_completions_applies_max_tokens_soft_cap(monkeypatch):
             "response": "x" * 1000,
         }
 
-    monkeypatch.setattr(api.router, "route", fake_route)
+    monkeypatch.setattr(api.router, "route", fake_route)  # type: ignore[attr-defined]
 
-    with api.app.test_client() as client:
+    with api.app.test_client() as client:  # type: ignore[attr-defined]
         response = client.post(
             "/v1/chat/completions",
             json={
@@ -86,9 +86,9 @@ def test_chat_completions_streaming_returns_done(monkeypatch):
             "response": "stream-ok",
         }
 
-    monkeypatch.setattr(api.router, "route", fake_route)
+    monkeypatch.setattr(api.router, "route", fake_route)  # type: ignore[attr-defined]
 
-    with api.app.test_client() as client:
+    with api.app.test_client() as client:  # type: ignore[attr-defined]
         response = client.post(
             "/v1/chat/completions",
             json={

@@ -19,7 +19,7 @@ class RetrievalQueryInput(BaseModel):
     queries: List[str] = Field(
         ..., description="List of queries to retrieve from the vectorstore"
     )
-    k: int = Field(3, description="Number of results per query", example=3)
+    k: int = Field(3, description="Number of results per query", example=3)  # type: ignore
 
 
 class RetrievedDoc(BaseModel):

@@ -34,7 +34,7 @@ def load_yaml(path: Path) -> dict[str, Any]:
 def normalize_triggers(doc: dict[str, Any]) -> Any:
     triggers = doc.get('on')
     if not triggers and True in doc:
-        triggers = doc.get(True)
+        triggers = doc.get(True)  # type: ignore
     if isinstance(triggers, str):
         return {triggers: {}}
     if isinstance(triggers, list):

@@ -325,7 +325,7 @@ class SQLiteFeedStore:
             loop_id=row["loop_id"],
             task_context=task_context,
             candidates=candidates_raw,
-            selected=selected_raw,
+            selected=selected_raw,  # type: ignore
             priority_vector=priority_vector,
             selected_metric=row["selected_metric"],
             trade_offs=trade_offs,

@@ -25,7 +25,7 @@ class ContainerManager:
     
     def __init__(self):
         self.client = docker.from_env()
-        self.containers: Dict[str, docker.models.containers.Container] = {}
+        self.containers: Dict[str, docker.models.containers.Container] = {}  # type: ignore[attr-defined]
         self.logger = self._setup_logger()
     
     def _setup_logger(self) -> logging.Logger:

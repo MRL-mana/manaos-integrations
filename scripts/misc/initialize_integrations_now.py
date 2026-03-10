@@ -18,8 +18,8 @@ except Exception:  # pragma: no cover
 # Windows環境でのエンコーディング問題を回避
 if sys.platform == "win32":
     import io
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -51,7 +51,7 @@ try:
     max_wait = 30
     waited = 0
     while waited < max_wait:
-        with initialization_status.get("_lock", type('obj', (object,), {'__enter__': lambda x: x, '__exit__': lambda x, *args: None})()) if hasattr(initialization_status, '_lock') else type('obj', (object,), {'__enter__': lambda x: x, '__exit__': lambda x, *args: None})():
+        with initialization_status.get("_lock", type('obj', (object,), {'__enter__': lambda x: x, '__exit__': lambda x, *args: None})()) if hasattr(initialization_status, '_lock') else type('obj', (object,), {'__enter__': lambda x: x, '__exit__': lambda x, *args: None})():  # type: ignore
             status = initialization_status.get('status', 'unknown')
             completed = len(initialization_status.get('completed', []))
             failed = len(initialization_status.get('failed', []))

@@ -219,8 +219,8 @@ echo "✅ ランチャー実行完了"
         # 2. ファイルコピー
         copy_result = self.copy_files_to_x280()
         
-        if not copy_result['success']:
-            print(f"❌ ファイルコピーに失敗: {copy_result['failed']}")
+        if not copy_result['success']:  # type: ignore[index]
+            print(f"❌ ファイルコピーに失敗: {copy_result['failed']}")  # type: ignore[index]
             return False
         
         # 3. ZIPファイル作成
@@ -241,8 +241,8 @@ echo "✅ ランチャー実行完了"
         print("\n🎉 X280代替ダウンロード完了！")
         print("=" * 60)
         print(f"📁 X280ダウンロード先: {self.download_dir}")
-        print(f"✅ コピー成功ファイル: {len(copy_result['copied'])}個")
-        print(f"📋 コピーファイル一覧: {copy_result['copied']}")
+        print(f"✅ コピー成功ファイル: {len(copy_result['copied'])}個")  # type: ignore[index]
+        print(f"📋 コピーファイル一覧: {copy_result['copied']}")  # type: ignore[index]
         print(f"🚀 ランチャー: {self.download_dir}/PDF変換結果を開く.sh")
         print(f"📋 README: {self.download_dir}/README_X280用.md")
         

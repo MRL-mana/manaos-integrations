@@ -165,7 +165,7 @@ class EnsemblePolicy:
 
     def _select_action(self, probs: Dict[str, float]) -> str:
         """確率分布からアクションを選択 (argmax)"""
-        return max(probs, key=probs.get)
+        return max(probs, key=probs.get)  # type: ignore[call-arg]
 
     # ───────────────── アンサンブル決定 ─────────────────
 
@@ -267,7 +267,7 @@ class EnsemblePolicy:
             for a in ACTIONS:
                 avg_probs[a] += probs.get(a, 0) * (w / total_w)
 
-        action = max(avg_probs, key=avg_probs.get)
+        action = max(avg_probs, key=avg_probs.get)  # type: ignore[call-arg]
         return avg_probs, action
 
     def _majority_vote(
@@ -282,7 +282,7 @@ class EnsemblePolicy:
 
         total = len(member_actions)
         vote_probs = {a: counts[a] / max(1, total) for a in ACTIONS}
-        action = max(counts, key=counts.get)
+        action = max(counts, key=counts.get)  # type: ignore[call-arg]
         return vote_probs, action
 
     def _boltzmann_mix(
@@ -302,7 +302,7 @@ class EnsemblePolicy:
             for a in ACTIONS:
                 mix[a] += probs.get(a, 0) * (w / total_w)
 
-        action = max(mix, key=mix.get)
+        action = max(mix, key=mix.get)  # type: ignore[call-arg]
         return mix, action
 
     def _best_of_n(
@@ -318,7 +318,7 @@ class EnsemblePolicy:
                 best_idx = i
 
         probs = member_probs[best_idx]
-        action = max(probs, key=probs.get)
+        action = max(probs, key=probs.get)  # type: ignore[call-arg]
         return probs, action
 
     # ───────────────── 学習 ─────────────────

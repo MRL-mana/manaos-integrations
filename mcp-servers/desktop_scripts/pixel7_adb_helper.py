@@ -113,8 +113,8 @@ class Pixel7ADBHelper:
             info = {}
             
             # モデル名
-            result = subprocess.run(
-                [self.adb_path, "-s", self.device_id, "shell", "getprop", "ro.product.model"],
+            result = subprocess.run(  # type: ignore[call-arg]
+                [self.adb_path, "-s", self.device_id, "shell", "getprop", "ro.product.model"],  # type: ignore
                 capture_output=True,
                 text=True,
                 timeout=5
@@ -122,8 +122,8 @@ class Pixel7ADBHelper:
             info["model"] = result.stdout.strip() if result.returncode == 0 else "unknown"
             
             # Android バージョン
-            result = subprocess.run(
-                [self.adb_path, "-s", self.device_id, "shell", "getprop", "ro.build.version.release"],
+            result = subprocess.run(  # type: ignore[call-arg]
+                [self.adb_path, "-s", self.device_id, "shell", "getprop", "ro.build.version.release"],  # type: ignore
                 capture_output=True,
                 text=True,
                 timeout=5
@@ -131,8 +131,8 @@ class Pixel7ADBHelper:
             info["android_version"] = result.stdout.strip() if result.returncode == 0 else "unknown"
             
             # ビルド番号
-            result = subprocess.run(
-                [self.adb_path, "-s", self.device_id, "shell", "getprop", "ro.build.id"],
+            result = subprocess.run(  # type: ignore[call-arg]
+                [self.adb_path, "-s", self.device_id, "shell", "getprop", "ro.build.id"],  # type: ignore
                 capture_output=True,
                 text=True,
                 timeout=5
@@ -140,8 +140,8 @@ class Pixel7ADBHelper:
             info["build_id"] = result.stdout.strip() if result.returncode == 0 else "unknown"
             
             # シリアル番号
-            result = subprocess.run(
-                [self.adb_path, "-s", self.device_id, "shell", "getprop", "ro.serialno"],
+            result = subprocess.run(  # type: ignore[call-arg]
+                [self.adb_path, "-s", self.device_id, "shell", "getprop", "ro.serialno"],  # type: ignore
                 capture_output=True,
                 text=True,
                 timeout=5
@@ -182,11 +182,11 @@ class Pixel7ADBHelper:
             battery_info = {}
             for line in result.stdout.split('\n'):
                 if 'level:' in line:
-                    battery_info["level"] = int(re.search(r'level:\s*(\d+)', line).group(1))
+                    battery_info["level"] = int(re.search(r'level:\s*(\d+)', line).group(1))  # type: ignore[union-attr]
                 elif 'status:' in line:
-                    battery_info["status"] = int(re.search(r'status:\s*(\d+)', line).group(1))
+                    battery_info["status"] = int(re.search(r'status:\s*(\d+)', line).group(1))  # type: ignore[union-attr]
                 elif 'temperature:' in line:
-                    battery_info["temperature"] = int(re.search(r'temperature:\s*(\d+)', line).group(1)) / 10.0
+                    battery_info["temperature"] = int(re.search(r'temperature:\s*(\d+)', line).group(1)) / 10.0  # type: ignore[union-attr]
             
             return battery_info
         except Exception as e:
@@ -232,7 +232,7 @@ class Pixel7ADBHelper:
             logger.error(f"Failed to get storage info: {e}")
             return None
     
-    def take_screenshot(self, output_path: str = None) -> Optional[str]:
+    def take_screenshot(self, output_path: str = None) -> Optional[str]:  # type: ignore
         """スクリーンショットを取得"""
         if not self.device_id:
             return None
@@ -288,7 +288,7 @@ class Pixel7ADBHelper:
             logger.error(f"Failed to send notification: {e}")
             return False
     
-    def get_logcat(self, lines: int = 100, filter_tag: str = None) -> Optional[str]:
+    def get_logcat(self, lines: int = 100, filter_tag: str = None) -> Optional[str]:  # type: ignore
         """ログを取得"""
         if not self.device_id:
             return None

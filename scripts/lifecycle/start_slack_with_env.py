@@ -21,7 +21,7 @@ os.environ['ORCHESTRATOR_URL'] = f'http://127.0.0.1:{ORCHESTRATOR_PORT}'
 
 # Slack統合サーバーを起動
 print("\nSlack統合サーバーを起動中...")
-from slack_integration import app
+from slack_integration import app  # type: ignore[attr-defined]
 
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5114))

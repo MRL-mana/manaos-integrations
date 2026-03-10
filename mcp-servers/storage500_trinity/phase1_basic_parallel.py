@@ -24,7 +24,7 @@ class Phase1BasicParallel:
         """Phase 1 基本並列処理システム初期化"""
         # CPUコア数に基づいてワーカー数決定
         cpu_count = os.cpu_count()
-        self.max_workers = max_workers or min(cpu_count, 4)  # 最大4並列
+        self.max_workers = max_workers or min(cpu_count, 4)  # 最大4並列  # type: ignore
         
         # 出力ディレクトリ
         self.output_dir = Path("/root/trinity_workspace/generated_images/phase1_parallel")
@@ -234,7 +234,7 @@ class Phase1BasicParallel:
         # 並列処理テスト
         print(f"\n🚀 並列処理テスト開始")
         parallel_results = self.generate_phase1_parallel_collection(count)
-        parallel_time = time.time() - start_time if 'start_time' in locals() else 0
+        parallel_time = time.time() - start_time if 'start_time' in locals() else 0  # type: ignore[name-defined]
         parallel_success = sum(1 for r in parallel_results if r["success"])
         
         # 比較結果

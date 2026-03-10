@@ -98,5 +98,5 @@ class TestSendSlack:
 
     def test_none_webhook_uses_global(self):
         # webhook_url=None → SLACK_WEBHOOK_URL (empty by default) → False
-        result = send_slack("msg", webhook_url=None)
+        result = send_slack("msg", webhook_url=None)  # type: ignore
         assert result is False

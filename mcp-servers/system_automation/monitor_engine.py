@@ -126,7 +126,7 @@ class MonitorEngine:
         cpu_count = psutil.cpu_count()
         cpu_freq = psutil.cpu_freq()
         
-        load_avg = os.getloadavg()
+        load_avg = os.getloadavg()  # type: ignore[attr-defined]
         
         return {
             "cpu_percent": cpu_percent,
@@ -154,7 +154,7 @@ class MonitorEngine:
     
     def collect_disk_metrics(self) -> Dict:
         """ディスクメトリクス収集"""
-        disk = psutil.disk_usage(self.base_path)
+        disk = psutil.disk_usage(self.base_path)  # type: ignore
         
         return {
             "disk_total_gb": round(disk.total / (1024**3), 2),

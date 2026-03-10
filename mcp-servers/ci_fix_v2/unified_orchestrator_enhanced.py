@@ -160,7 +160,7 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
         
         logger.info("✅ Unified Orchestrator Enhanced初期化完了")
     
-    async def execute(
+    async def execute(  # type: ignore
         self,
         text: str,
         mode: str = "auto",
@@ -198,7 +198,7 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
         related_memories = []
         if self.rag_memory_enhanced:
             try:
-                related_memories = self.rag_memory_enhanced.search_memories(text, limit=5)
+                related_memories = self.rag_memory_enhanced.search_memories(text, limit=5)  # type: ignore
             except Exception as e:
                 logger.warning(f"記憶検索エラー: {e}")
         
@@ -214,8 +214,8 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
                 logger.warning(f"予測取得エラー: {e}")
         
         # 基本オーケストレーターで実行
-        result = await super().execute(
-            text=text,
+        result = await super().execute(  # type: ignore[call-arg]
+            text=text,  # type: ignore[call-arg]
             mode=mode,
             auto_evaluate=auto_evaluate,
             save_to_memory=save_to_memory
@@ -269,7 +269,7 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
         # 記憶系・学習系の状態
         if self.rag_memory_enhanced:
             try:
-                stats = self.rag_memory_enhanced.get_statistics()
+                stats = self.rag_memory_enhanced.get_statistics()  # type: ignore
                 base_status["enhanced_systems"]["rag_memory"] = {
                     "available": True,
                     "total_entries": stats.get("total_entries", 0)

@@ -109,7 +109,7 @@ class MegaBoostGPUProcessor:
             # 統計更新
             self.gpu_stats["total_tasks"] += 1
             self.gpu_stats["completed_tasks"] += 1
-            self.gpu_stats["average_execution_time"] = (
+            self.gpu_stats["average_execution_time"] = (  # type: ignore
                 (self.gpu_stats["average_execution_time"] * (self.gpu_stats["completed_tasks"] - 1) + execution_time) 
                 / self.gpu_stats["completed_tasks"]
             )

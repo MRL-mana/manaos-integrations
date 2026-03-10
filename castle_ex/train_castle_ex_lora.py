@@ -20,7 +20,7 @@ if "--no-cuda" in sys.argv:
 # Windows環境対策
 if sys.platform == "win32":
     try:
-        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
     except (AttributeError, ValueError, TypeError):
         pass
 
@@ -392,7 +392,7 @@ def main():
     # GPUに移動（device_mapを使わずに明示的に移動）
     if torch.cuda.is_available() and not args.no_cuda:
         logger.info("モデルをGPUに移動中...")
-        base_model = base_model.to("cuda")
+        base_model = base_model.to("cuda")  # type: ignore
         logger.info(f"GPU移動完了: {torch.cuda.get_device_name(0)}")
     
     logger.info(f"モデルロード完了: {base_model.config.model_type}")
@@ -546,9 +546,9 @@ def main():
         tokenizer.save_pretrained(ckpt_dir)
         trainer.state.save_to_json(os.path.join(ckpt_dir, "trainer_state.json"))
         if trainer.optimizer is not None and hasattr(trainer.optimizer, "state_dict"):
-            torch.save(trainer.optimizer.state_dict(), os.path.join(ckpt_dir, "optimizer.pt"))
+            torch.save(trainer.optimizer.state_dict(), os.path.join(ckpt_dir, "optimizer.pt"))  # type: ignore
         if hasattr(trainer, "lr_scheduler") and trainer.lr_scheduler is not None:
-            torch.save(trainer.lr_scheduler.state_dict(), os.path.join(ckpt_dir, "scheduler.pt"))
+            torch.save(trainer.lr_scheduler.state_dict(), os.path.join(ckpt_dir, "scheduler.pt"))  # type: ignore
         logger.info(f"保存完了: {ckpt_dir} (step {step})")
 
     try:

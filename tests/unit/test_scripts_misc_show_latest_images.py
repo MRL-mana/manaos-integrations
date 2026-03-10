@@ -16,7 +16,7 @@ def _prep(monkeypatch, status=200, images=None):
 
     # _paths stub
     paths_mod = types.ModuleType("_paths")
-    paths_mod.GALLERY_PORT = 5559
+    paths_mod.GALLERY_PORT = 5559  # type: ignore
     monkeypatch.setitem(sys.modules, "_paths", paths_mod)
 
     monkeypatch.setenv("GALLERY_API_URL", "")
@@ -41,13 +41,13 @@ def _prep(monkeypatch, status=200, images=None):
     spec = importlib.util.spec_from_file_location(
         "show_latest_images", str(_MISC / "show_latest_images.py")
     )
-    mod = importlib.util.module_from_spec(spec)
-    mod.os = _os_mod  # inject missing os
-    mod.requests = mock_req
-    mod.webbrowser = mock_wb
+    mod = importlib.util.module_from_spec(spec)  # type: ignore
+    mod.os = _os_mod  # inject missing os  # type: ignore
+    mod.requests = mock_req  # type: ignore
+    mod.webbrowser = mock_wb  # type: ignore
     sys.modules["show_latest_images"] = mod
     with patch("builtins.print"):
-        spec.loader.exec_module(mod)
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
     return mod, mock_req, mock_wb
 
 

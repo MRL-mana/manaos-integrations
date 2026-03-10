@@ -131,7 +131,7 @@ class ReminderSystem:
             if match:
                 return parser(match)
         
-        return None
+        return None  # type: ignore
     
     async def create_reminder(
         self, user_id: str, message: str, trigger_time: datetime, repeat: Optional[str] = None

@@ -217,7 +217,7 @@ class NotionSync:
         """有効かチェック"""
         return self.config.get('enabled', False) and self.config.get('api_token', '')
     
-    def sync_to_notion(self, title: str, content: str, tags: List[str] = None) -> Optional[str]:
+    def sync_to_notion(self, title: str, content: str, tags: List[str] = None) -> Optional[str]:  # type: ignore
         """Notionへ同期"""
         if not self.is_enabled():
             print("⚠️  Notion未設定（スキップ）")

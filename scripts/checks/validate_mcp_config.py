@@ -52,7 +52,7 @@ OPTIONAL_ENV_VARS = [
 ]
 
 
-def check_env_var(name: str, required: bool, default: str = None) -> Tuple[bool, str, str]:
+def check_env_var(name: str, required: bool, default: str = None) -> Tuple[bool, str, str]:  # type: ignore
     """
     環境変数をチェック
     
@@ -66,9 +66,9 @@ def check_env_var(name: str, required: bool, default: str = None) -> Tuple[bool,
     elif default:
         return (False, default, f"⚠️  {name}: 未設定（デフォルト値: {default} を使用）")
     elif required:
-        return (False, None, f"❌ {name}: 未設定（必須）")
+        return (False, None, f"❌ {name}: 未設定（必須）")  # type: ignore
     else:
-        return (False, None, f"⚠️  {name}: 未設定（オプション）")
+        return (False, None, f"⚠️  {name}: 未設定（オプション）")  # type: ignore
 
 
 def validate_mcp_server_config(server_name: str) -> Tuple[bool, List[str]]:

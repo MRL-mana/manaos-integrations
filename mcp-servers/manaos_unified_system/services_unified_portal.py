@@ -28,9 +28,9 @@ CORS(app)
 
 # アンチグラビティBlueprint登録
 if ANTIGRAVITY_AVAILABLE:
-    app.register_blueprint(antigravity_bp)
-    app.register_blueprint(antigravity_adv_bp)
-    app.register_blueprint(antigravity_auto_bp)
+    app.register_blueprint(antigravity_bp)  # type: ignore[possibly-unbound]
+    app.register_blueprint(antigravity_adv_bp)  # type: ignore[possibly-unbound]
+    app.register_blueprint(antigravity_auto_bp)  # type: ignore[possibly-unbound]
     print("✅ アンチグラビティAPIを統合しました")
 
 FEED_BASE_URL = os.getenv("MACHI_FEED_BASE_URL", "http://127.0.0.1:5057")

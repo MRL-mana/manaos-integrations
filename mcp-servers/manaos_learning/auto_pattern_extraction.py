@@ -7,7 +7,7 @@
 import sys
 sys.path.insert(0, '/root')
 
-from manaos_learning import get_pattern_extractor
+from manaos_learning import get_pattern_extractor  # type: ignore[attr-defined]
 
 
 def example_extract_patterns():

@@ -106,7 +106,7 @@ class ManaPDFExcelAIUltimate:
         except Exception as e:
             logger.warning(f"⚠️ EasyOCR初期化エラー: {e}")
 
-    async def analyze_with_gemini(self, text: str, context: str = "", max_retries: int = 3) -> Dict[str, Any]:
+    async def analyze_with_gemini(self, text: str, context: str = "", max_retries: int = 3) -> Dict[str, Any]:  # type: ignore
         """Gemini AIでテキスト解析（リトライ対応）"""
         if not self.gemini_model:
             return {"success": False, "error": "Gemini API未設定"}
@@ -162,7 +162,7 @@ class ManaPDFExcelAIUltimate:
                     logger.error(f"❌ Gemini解析エラー（全{max_retries}回リトライ失敗）: {e}")
                     return {"success": False, "error": str(e)}
 
-    async def analyze_with_openai(self, text: str, context: str = "", max_retries: int = 3) -> Dict[str, Any]:
+    async def analyze_with_openai(self, text: str, context: str = "", max_retries: int = 3) -> Dict[str, Any]:  # type: ignore
         """OpenAI GPTでテキスト解析（リトライ対応）"""
         if not self.openai_api_key:
             return {"success": False, "error": "OpenAI API未設定"}
@@ -281,7 +281,7 @@ class ManaPDFExcelAIUltimate:
             zoom = 300 / 72
             mat = fitz.Matrix(zoom, zoom)
             pix = page.get_pixmap(matrix=mat)
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore
 
             # EasyOCRでテキスト抽出
             img_array = np.array(img)
@@ -487,7 +487,7 @@ class ManaPDFExcelAIUltimate:
 
         # 概要シート
         ws_summary = wb.active
-        ws_summary.title = "📊 AI解析概要"
+        ws_summary.title = "📊 AI解析概要"  # type: ignore[union-attr]
 
         summary_data = [
             ["🎯 文書情報", ""],
@@ -509,14 +509,14 @@ class ManaPDFExcelAIUltimate:
         ]
 
         for row_idx, (label, value) in enumerate(summary_data, 1):
-            ws_summary[f"A{row_idx}"] = label
-            ws_summary[f"B{row_idx}"] = value
+            ws_summary[f"A{row_idx}"] = label  # type: ignore[index]
+            ws_summary[f"B{row_idx}"] = value  # type: ignore[index]
 
             # ヘッダースタイル
             if label.endswith("情報") or label.endswith("結果"):
-                ws_summary[f"A{row_idx}"].font = header_font
-                ws_summary[f"A{row_idx}"].fill = header_fill
-                ws_summary[f"B{row_idx}"].fill = ai_fill
+                ws_summary[f"A{row_idx}"].font = header_font  # type: ignore[index]
+                ws_summary[f"A{row_idx}"].fill = header_fill  # type: ignore[index]
+                ws_summary[f"B{row_idx}"].fill = ai_fill  # type: ignore[index]
 
         # AI解析結果シート
         if ai_analysis.get("ai_results"):
@@ -579,7 +579,7 @@ class ManaPDFExcelAIUltimate:
         for ws in wb.worksheets:
             for column in ws.columns:
                 max_length = 0
-                column_letter = column[0].column_letter
+                column_letter = column[0].column_letter  # type: ignore
                 for cell in column:
                     try:
                         if len(str(cell.value)) > max_length:

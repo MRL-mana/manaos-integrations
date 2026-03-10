@@ -48,8 +48,8 @@ class ChatGPTMCPIntegrationServer:
             version="1.0.0",
         )
 
-        self.trinity_url = os.getenv("TRINITY_URL", "http://127.0.0.1:8097")
-        self.manaos_url = os.getenv("MANAOS_URL", "http://127.0.0.1:9200")
+        self.trinity_url = os.getenv("TRINITY_URL", "http://127.0.0.1:8097")  # type: ignore[name-defined]
+        self.manaos_url = os.getenv("MANAOS_URL", "http://127.0.0.1:9200")  # type: ignore[name-defined]
 
         logger.info("🤖 ChatGPT MCP Integration Server 初期化")
 

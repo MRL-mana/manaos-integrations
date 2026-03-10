@@ -117,9 +117,9 @@ async def propose_with_llm(request: ProposalRequest):
     try:
         if USE_GEMINI:
             # Google Gemini
-            response = client.generate_content(
+            response = client.generate_content(  # type: ignore
                 PROPOSAL_PROMPT.format(feature=feature),
-                generation_config=genai.types.GenerationConfig(
+                generation_config=genai.types.GenerationConfig(  # type: ignore[possibly-unbound]
                     temperature=0.7,
                     response_mime_type="application/json"
                 )
@@ -130,7 +130,7 @@ async def propose_with_llm(request: ProposalRequest):
             
         elif USE_OPENAI:
             # OpenAI GPT-4
-            response = client.chat.completions.create(
+            response = client.chat.completions.create(  # type: ignore
                 model="gpt-4o-mini",  # コスト削減
                 messages=[
                     {"role": "system", "content": "You are Remi, a strategic AI for spec-driven development."},
@@ -141,11 +141,11 @@ async def propose_with_llm(request: ProposalRequest):
             )
             
             import json
-            analysis = json.loads(response.choices[0].message.content)
+            analysis = json.loads(response.choices[0].message.content)  # type: ignore
             
         elif USE_CLAUDE:
             # Claude
-            response = client.messages.create(
+            response = client.messages.create(  # type: ignore
                 model="claude-3-5-sonnet-20241022",
                 max_tokens=2000,
                 messages=[
@@ -154,13 +154,13 @@ async def propose_with_llm(request: ProposalRequest):
             )
             
             import json
-            analysis = json.loads(response.content[0].text)
+            analysis = json.loads(response.content[0].text)  # type: ignore
         
         return {
             "status": "success",
             "actor": "remi",
             "llm": LLM_NAME,
-            "analysis": analysis,
+            "analysis": analysis,  # type: ignore[possibly-unbound]
             "message": f"Remi（{LLM_NAME}）が戦略分析を完了しました"
         }
         

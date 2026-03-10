@@ -477,10 +477,10 @@ def export_tasks(format, output, status):
     # 出力
     if output:
         with open(output, 'w', encoding='utf-8') as f:
-            f.write(content)
+            f.write(content)  # type: ignore[possibly-unbound]
         click.echo(colorize(f"✅ エクスポート完了: {output}", Colors.OKGREEN))
     else:
-        click.echo(content)
+        click.echo(content)  # type: ignore[possibly-unbound]
 
 
 # ===== メイン実行 =====

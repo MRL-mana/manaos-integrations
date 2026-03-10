@@ -52,7 +52,7 @@ def convert(graph):
 class LoopbackDispatcher:
     def __getattr__(self, item):
         try:
-            return nx.utils.backends._registered_algorithms[item].orig_func
+            return nx.utils.backends._registered_algorithms[item].orig_func  # type: ignore[attr-defined]
         except KeyError:
             raise AttributeError(item) from None
 
@@ -128,14 +128,14 @@ class LoopbackDispatcher:
         if graph.is_multigraph():
             if preserve_edge_attrs:
                 G.add_edges_from(
-                    (u, v, key, datadict)
-                    for u, nbrs in graph._adj.items()
+                    (u, v, key, datadict)  # type: ignore
+                    for u, nbrs in graph._adj.items()  # type: ignore
                     for v, keydict in nbrs.items()
                     for key, datadict in keydict.items()
                 )
             elif edge_attrs:
                 G.add_edges_from(
-                    (
+                    (  # type: ignore
                         u,
                         v,
                         key,
@@ -145,14 +145,14 @@ class LoopbackDispatcher:
                             if default is not None or k in datadict
                         },
                     )
-                    for u, nbrs in graph._adj.items()
+                    for u, nbrs in graph._adj.items()  # type: ignore
                     for v, keydict in nbrs.items()
                     for key, datadict in keydict.items()
                 )
             else:
                 G.add_edges_from(
-                    (u, v, key, {})
-                    for u, nbrs in graph._adj.items()
+                    (u, v, key, {})  # type: ignore
+                    for u, nbrs in graph._adj.items()  # type: ignore
                     for v, keydict in nbrs.items()
                     for key, datadict in keydict.items()
                 )

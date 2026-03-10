@@ -103,7 +103,7 @@ class TestMemorySystemIntegration:
     def test_memory_workflow(self):
         """メモリシステム全体のワークフロー"""
         try:
-            from mrl_memory_integration import ManaOSMemoryManager
+            from mrl_memory_integration import ManaOSMemoryManager  # type: ignore[attr-defined]
         except ImportError:
             pytest.skip("Memory integration not available")
         
@@ -135,7 +135,7 @@ class TestLLMRoutingIntegration:
     def test_llm_routing_workflow(self):
         """LLM ルーティング全体のワークフロー"""
         try:
-            from llm_routing_mcp_server import LLMRouter
+            from llm_routing_mcp_server import LLMRouter  # type: ignore[attr-defined]
         except ImportError:
             pytest.skip("LLM routing not available")
         
@@ -160,7 +160,7 @@ class TestLearningSystemIntegration:
     def test_learning_workflow(self):
         """学習システム全体のワークフロー"""
         try:
-            from learning_system_api import LearningManager
+            from learning_system_api import LearningManager  # type: ignore[attr-defined]
         except ImportError:
             pytest.skip("Learning system not available")
         

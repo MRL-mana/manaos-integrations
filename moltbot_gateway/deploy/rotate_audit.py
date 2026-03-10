@@ -42,7 +42,7 @@ def main():
             shutil.rmtree(path)
             print(f"削除: {path}")
         else:
-            dest = archive_dir / path.name
+            dest = archive_dir / path.name  # type: ignore[operator]
             if dest.exists():
                 shutil.rmtree(dest)
             shutil.move(str(path), str(dest))

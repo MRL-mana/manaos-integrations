@@ -19,7 +19,7 @@ if sys.platform == "win32":
         import io
 
         if hasattr(sys.stdout, "buffer"):
-            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
     except Exception:
         pass
 
@@ -60,7 +60,7 @@ def check_comfyui_status():
         return False, str(e), 0
 
 
-def send_slack(message: str, webhook_url: str = None):
+def send_slack(message: str, webhook_url: str = None):  # type: ignore
     """Slack Incoming Webhook にメッセージ送信"""
     url = webhook_url or SLACK_WEBHOOK_URL
     if not url:

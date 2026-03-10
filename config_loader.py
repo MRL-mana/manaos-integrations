@@ -35,7 +35,7 @@ def load_config(force_reload: bool = False) -> Dict[str, Any]:
         with open(_CONFIG_FILE, 'r', encoding='utf-8') as f:
             _config_cache = json.load(f)
     
-    return _config_cache
+    return _config_cache  # type: ignore
 
 
 def get_config() -> Dict[str, Any]:

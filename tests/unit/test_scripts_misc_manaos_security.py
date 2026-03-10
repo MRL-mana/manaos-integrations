@@ -22,19 +22,26 @@ _mj = MagicMock()
 _mj.accept_legacy_short_key.return_value = False
 _mj.derive_hs256_signing_key.return_value = b"x" * 32
 _mj.get_or_create_jwt_secret.return_value = "a" * 32
-sys.modules.setdefault("manaos_jwt", _mj)
+_orig_mj = sys.modules.pop("manaos_jwt", None)
+sys.modules["manaos_jwt"] = _mj
 
 # ── Flask mock ────────────────────────────────────────────────────────────────
 sys.modules.setdefault("flask", MagicMock())
 sys.modules.setdefault("flask_cors", MagicMock())
 
 # ── Import target ─────────────────────────────────────────────────────────────
+sys.modules.pop("scripts.misc.manaos_security", None)
 from scripts.misc.manaos_security import (  # noqa: E402
     APIKeyManager,
     RateLimiter,
     InputValidator,
     JWTManager,
 )
+# Restore real manaos_jwt; security module already captured _mj's function references
+if _orig_mj is not None:
+    sys.modules["manaos_jwt"] = _orig_mj
+else:
+    sys.modules.pop("manaos_jwt", None)
 
 
 # ── TestAPIKeyManager ─────────────────────────────────────────────────────────
@@ -210,7 +217,7 @@ class TestInputValidator:
     def test_validate_json_missing_field(self):
         ok, err = InputValidator.validate_json({"name": "Alice"}, {"name": str, "age": int})
         assert ok is False
-        assert "age" in err
+        assert "age" in err  # type: ignore
 
     def test_validate_json_wrong_type(self):
         ok, err = InputValidator.validate_json({"name": 42}, {"name": str})
@@ -231,10 +238,9 @@ class TestJWTManager:
         assert mgr._algorithm == "HS256"
 
     def test_init_without_key_calls_mock(self):
-        mj = sys.modules["manaos_jwt"]
-        mj.get_or_create_jwt_secret.reset_mock()
+        _mj.get_or_create_jwt_secret.reset_mock()
         JWTManager()
-        mj.get_or_create_jwt_secret.assert_called_once()
+        _mj.get_or_create_jwt_secret.assert_called_once()
 
     def test_signing_key_set(self):
         mgr = JWTManager(secret_key="a" * 32)

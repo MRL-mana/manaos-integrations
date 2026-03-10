@@ -83,7 +83,7 @@ class FileChangeHandler(FileSystemEventHandler):
     
     def _handle_change(self, file_path: str, event_type: str):
         """変更を処理（デバウンス付き）"""
-        file_path = Path(file_path)
+        file_path = Path(file_path)  # type: ignore
         current_time = time.time()
         
         if file_path in self.pending_changes:

@@ -66,7 +66,7 @@ class TrafficRampUpController:
         """プロセス出力を監視"""
         try:
             while True:
-                line = self.process.stdout.readline()
+                line = self.process.stdout.readline()  # type: ignore[union-attr]
                 if line:
                     print(line.rstrip())
                 else:

@@ -29,7 +29,7 @@ class TicketManager:
             decode_responses=True
         )
         
-    def create_ticket(self, goal: str, context: List[str] = None, budget_turns: int = 12) -> str:
+    def create_ticket(self, goal: str, context: List[str] = None, budget_turns: int = 12) -> str:  # type: ignore
         """
         新規チケット作成
         
@@ -174,7 +174,7 @@ class TicketManager:
         ticket["artifacts"].append(artifact)
         return self.update_ticket(ticket_id, ticket)
     
-    def update_status(self, ticket_id: str, stage: str = None, confidence: float = None) -> bool:
+    def update_status(self, ticket_id: str, stage: str = None, confidence: float = None) -> bool:  # type: ignore
         """
         ステータス更新
         

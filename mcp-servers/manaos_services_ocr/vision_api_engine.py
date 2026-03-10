@@ -5,7 +5,7 @@ Google Vision API Engine
 精度最高（99%+）、無料枠1000回/月
 """
 
-from google.cloud import vision
+from google.cloud import vision  # type: ignore[attr-defined]
 import time
 import os
 import json

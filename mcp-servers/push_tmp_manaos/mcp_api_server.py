@@ -22,8 +22,8 @@ from manaos_logger import get_logger, get_service_logger
 from _paths import COMFYUI_PORT, UNIFIED_API_PORT
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent))
@@ -666,7 +666,7 @@ def openapi_spec():
         tools = []
         if MCP_SERVER_AVAILABLE and server:
             try:
-                tools = asyncio.run(server.list_tools())
+                tools = asyncio.run(server.list_tools())  # type: ignore[misc]
                 logger.info(f"MCPサーバーから {len(tools)} 個のツールを取得しました")
             except Exception as e:
                 logger.warning(f"MCPサーバーからツール一覧を取得できませんでした: {e}")

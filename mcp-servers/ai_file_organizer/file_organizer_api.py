@@ -199,7 +199,7 @@ def organize_execute():
                         log(f"移動: {current_path.name} → {suggested_folder}")
                     moved_count += 1
             except Exception as e:
-                errors.append({"file": str(current_path), "error": str(e)})
+                errors.append({"file": str(current_path), "error": str(e)})  # type: ignore[possibly-unbound]
         
         return jsonify({
             "success": True,

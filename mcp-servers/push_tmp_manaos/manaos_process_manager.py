@@ -35,7 +35,7 @@ except ImportError:
         import logging
         logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)  # type: ignore[possibly-unbound]
 
 try:
     from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
@@ -149,7 +149,7 @@ class ProcessManager:
                 except psutil.NoSuchProcess:
                     logger.debug(f"プロセスは既に終了しています: {script_name} (PID: {pid})")
                 except psutil.TimeoutExpired:
-                    proc.kill()
+                    proc.kill()  # type: ignore[possibly-unbound]
                     logger.warning(f"プロセスを強制終了: {script_name} (PID: {pid})")
             
             # プロセス情報から削除
@@ -241,7 +241,7 @@ class ProcessManager:
         """
         try:
             for conn in psutil.net_connections(kind='inet'):
-                if conn.laddr.port == port and conn.status == psutil.CONN_LISTEN:
+                if conn.laddr.port == port and conn.status == psutil.CONN_LISTEN:  # type: ignore
                     return True
             return False
         except Exception as e:
@@ -261,7 +261,7 @@ class ProcessManager:
         try:
             processes = []
             for conn in psutil.net_connections(kind='inet'):
-                if conn.laddr.port == port and conn.status == psutil.CONN_LISTEN:
+                if conn.laddr.port == port and conn.status == psutil.CONN_LISTEN:  # type: ignore
                     try:
                         proc = psutil.Process(conn.pid)
                         processes.append({
@@ -279,7 +279,7 @@ class ProcessManager:
             logger.error(f"ポートプロセス取得エラー: {e}")
             return []
     
-    def kill_processes_by_port(self, port: int, script_name: str = None) -> int:
+    def kill_processes_by_port(self, port: int, script_name: str = None) -> int:  # type: ignore
         """
         指定ポートを使用しているプロセスを終了
         
@@ -311,7 +311,7 @@ class ProcessManager:
                 except psutil.NoSuchProcess:
                     logger.debug(f"プロセスは既に終了しています: PID {pid}")
                 except psutil.TimeoutExpired:
-                    proc.kill()
+                    proc.kill()  # type: ignore[possibly-unbound]
                     logger.warning(f"プロセスを強制終了: PID {pid} (Port: {port})")
                     killed_count += 1
                 except Exception as e:
@@ -346,8 +346,8 @@ class ProcessManager:
                 except psutil.NoSuchProcess:
                     continue
                 except psutil.TimeoutExpired:
-                    proc_obj.kill()
-                    logger.warning(f"プロセスを強制終了: {script_name} (PID: {pid})")
+                    proc_obj.kill()  # type: ignore[possibly-unbound]
+                    logger.warning(f"プロセスを強制終了: {script_name} (PID: {pid})")  # type: ignore[possibly-unbound]
                     killed_count += 1
                 except (psutil.AccessDenied, Exception) as e:
                     logger.debug(f"プロセス終了スキップ (PID {proc.info.get('pid')}): {e}")

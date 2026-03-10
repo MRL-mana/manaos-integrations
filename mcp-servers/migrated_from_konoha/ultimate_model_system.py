@@ -180,8 +180,8 @@ class UltimateModelSystem:
             # 統計更新
             self.generation_stats["total_generations"] += 1
             self.generation_stats["successful_generations"] += 1
-            self.generation_stats["total_time"] += generation_time
-            self.generation_stats["average_time"] = (
+            self.generation_stats["total_time"] += generation_time  # type: ignore
+            self.generation_stats["average_time"] = (  # type: ignore
                 self.generation_stats["total_time"] / 
                 self.generation_stats["successful_generations"]
             )

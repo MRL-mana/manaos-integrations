@@ -46,7 +46,7 @@ class ExcelLLMIntegration:
         
         if EXCEL_LLM_PROCESSOR_AVAILABLE:
             try:
-                self.processor = ExcelLLMProcessor(
+                self.processor = ExcelLLMProcessor(  # type: ignore[operator]
                     ollama_url=self.ollama_url,
                     model=self.model
                 )
@@ -103,10 +103,10 @@ class ExcelLLMIntegration:
         
         try:
             # ファイルを読み込む
-            df = self.processor.load_file(file_path)
+            df = self.processor.load_file(file_path)  # type: ignore[union-attr]
             
             # LLMで処理
-            result = self.processor.process_with_llm(df, task)
+            result = self.processor.process_with_llm(df, task)  # type: ignore[union-attr]
             
             if result["success"]:
                 # 結果をファイルに保存
@@ -153,8 +153,8 @@ class ExcelLLMIntegration:
             }
         
         try:
-            df = self.processor.load_file(file_path)
-            summary = self.processor.get_summary(df)
+            df = self.processor.load_file(file_path)  # type: ignore[union-attr]
+            summary = self.processor.get_summary(df)  # type: ignore[union-attr]
             
             return {
                 "success": True,

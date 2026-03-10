@@ -223,7 +223,7 @@ class Llama3GuruImageGenerator:
             if disable_safety_checker:
                 print("安全フィルター: 無効化（ローカル環境用）")
             print(f"{'='*60}\n")
-            self.sd_generator = StableDiffusionGenerator(
+            self.sd_generator = StableDiffusionGenerator(  # type: ignore[operator]
                 model_id=self.sd_model_id,
                 disable_safety_checker=disable_safety_checker
             )
@@ -268,7 +268,7 @@ class Llama3GuruImageGenerator:
         print(f"Stable Diffusionで画像生成中...")
         print(f"{'='*60}\n")
         
-        images = self.sd_generator.generate(
+        images = self.sd_generator.generate(  # type: ignore[union-attr]
             prompt=prompt,
             negative_prompt=negative_prompt,
             width=width,

@@ -22,7 +22,7 @@ RUNPOD_PORTS = {
 class RunPodProxy:
     def __init__(self):
         self.session = requests.Session()
-        self.session.timeout = 30
+        self.session.timeout = 30  # type: ignore
         self.connection_status = {
             "web_terminal": False,
             "jupyter": False,
@@ -296,7 +296,7 @@ def main():
     print("📡 ローカルURL: http://localhost:3000")
     
     # サーバー起動
-    app.run(host="0.0.0.0", port=port, debug=os.getenv("DEBUG", "False").lower() == "true")
+    app.run(host="0.0.0.0", port=port, debug=os.getenv("DEBUG", "False").lower() == "true")  # type: ignore[name-defined]
 
 if __name__ == "__main__":
     main()

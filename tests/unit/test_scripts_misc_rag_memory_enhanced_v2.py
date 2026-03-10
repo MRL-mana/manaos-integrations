@@ -74,7 +74,7 @@ class TestMemoryEntry:
             related_entries=[], temporal_context={}, metadata={},
         )
         defaults.update(kw)
-        return MemoryEntry(**defaults)
+        return MemoryEntry(**defaults)  # type: ignore
 
     def test_create(self):
         e = self._entry()
@@ -87,7 +87,7 @@ class TestMemoryEntry:
 
     def test_embedding_set(self):
         e = self._entry(embedding=[0.1, 0.2, 0.3])
-        assert len(e.embedding) == 3
+        assert len(e.embedding) == 3  # type: ignore
 
 
 # ── TestCosineSimilarity ──────────────────────────────────────────────────

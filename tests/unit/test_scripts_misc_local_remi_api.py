@@ -18,13 +18,13 @@ import pytest
 # ============================================================
 # Stubs — must be registered before importing the module
 # ============================================================
-if "manaos_process_manager" not in sys.modules:
-    _pm_mod = types.ModuleType("manaos_process_manager")
-    _pm_instance = MagicMock()
-    _pm_instance.list_top_processes.return_value = []
-    _pm_instance.kill_processes_by_keywords.return_value = 0
-    _pm_mod.get_process_manager = MagicMock(return_value=_pm_instance)
-    sys.modules["manaos_process_manager"] = _pm_mod
+_pm_mod = types.ModuleType("manaos_process_manager")
+_pm_instance = MagicMock()
+_pm_instance.list_top_processes.return_value = []
+_pm_instance.kill_processes_by_keywords.return_value = 0
+_pm_mod.get_process_manager = MagicMock(return_value=_pm_instance)  # type: ignore
+sys.modules["manaos_process_manager"] = _pm_mod
+sys.modules.pop("scripts.misc.local_remi_api", None)
 
 import scripts.misc.local_remi_api as _sut
 from fastapi.testclient import TestClient
@@ -556,9 +556,9 @@ class TestEmergencyStopEndpoint:
         assert r.status_code == 401
 
     def test_emergency_stop_with_auth(self, client):
-        pm_mod = sys.modules["manaos_process_manager"]
-        pm_instance = pm_mod.get_process_manager.return_value
-        pm_instance.kill_processes_by_keywords.return_value = 2
+        # sys.modules["manaos_process_manager"] may be replaced by other test
+        # files during full suite run; use the module-level mock directly
+        _pm_instance.kill_processes_by_keywords.return_value = 2
         r = client.post("/emergency-stop", headers=_auth())
         assert r.status_code == 200
         data = r.json()

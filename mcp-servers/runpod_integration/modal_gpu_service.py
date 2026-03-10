@@ -122,7 +122,7 @@ def text_generation(prompt: str, max_length: int = 200, temperature: float = 0.7
         model_name,
         torch_dtype=torch.float16,
         cache_dir="/cache"
-    ).to("cuda")
+    ).to("cuda")  # type: ignore
 
     # テキスト生成
     inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
@@ -210,7 +210,7 @@ def health_check():
 def main():
     """ローカルテスト用"""
     print("🚀 ManaOS GPU Service - Health Check")
-    result = health_check.remote()
+    result = health_check.remote()  # type: ignore
     print(f"✅ Status: {result}")
 
     print("\n🎨 Image Generation Test")

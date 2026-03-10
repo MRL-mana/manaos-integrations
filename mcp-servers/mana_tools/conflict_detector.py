@@ -70,7 +70,7 @@ class ConflictDetector:
                     "pr_created_at": existing_pr.get("created_at"),
                     "overlapping_files": list(overlapping_files),
                     "conflict_type": self._determine_conflict_type(
-                        pr_files, existing_files, overlapping_files
+                        pr_files, existing_files, overlapping_files  # type: ignore
                     )
                 })
 

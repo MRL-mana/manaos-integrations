@@ -16,7 +16,7 @@ def _make_civitai_stub(models=None):
         {"id": "100", "name": "TestModel", "type": "Checkpoint"},
         {"id": "200", "name": "AnotherModel", "type": "LORA"},
     ]
-    mod.CivitAIIntegration = MagicMock(return_value=inst)
+    mod.CivitAIIntegration = MagicMock(return_value=inst)  # type: ignore
     return mod, inst
 
 

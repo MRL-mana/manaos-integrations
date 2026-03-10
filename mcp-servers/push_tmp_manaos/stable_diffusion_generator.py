@@ -58,7 +58,7 @@ class StableDiffusionGenerator:
         # パイプラインをロード
         try:
             logger.info(f"パイプラインをロード中: {model_id}...")
-            self.pipeline = StableDiffusionPipeline.from_pretrained(
+            self.pipeline = StableDiffusionPipeline.from_pretrained(  # type: ignore[possibly-unbound]
                 model_id,
                 torch_dtype=self.torch_dtype,
                 safety_checker=None,  # セーフティチェッカーを無効化（オプション）
@@ -69,7 +69,7 @@ class StableDiffusionGenerator:
             
             # スケジューラーを設定（高速化）
             logger.info("スケジューラーを設定中...")
-            self.pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
+            self.pipeline.scheduler = DPMSolverMultistepScheduler.from_config(  # type: ignore[possibly-unbound]
                 self.pipeline.scheduler.config
             )
             

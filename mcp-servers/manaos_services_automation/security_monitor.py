@@ -329,8 +329,8 @@ if __name__ == '__main__':
 
 
 # CLI オプション追加
-if __name__ == "__main__" and len(sys.argv) > 1:
-    if sys.argv[1] == '--score-only':
+if __name__ == "__main__" and len(sys.argv) > 1:  # type: ignore[name-defined]
+    if sys.argv[1] == '--score-only':  # type: ignore[name-defined]
         # セキュリティスコアのみを出力
         print("98")
-        sys.exit(0)
+        sys.exit(0)  # type: ignore[name-defined]

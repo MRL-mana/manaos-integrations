@@ -14,8 +14,8 @@ from pathlib import Path
 # Windows環境でのエンコーディング設定
 if sys.platform == "win32":
     import io
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 services = [
     {"name": "Personality System", "port": 5123, "script": "personality_system.py"},

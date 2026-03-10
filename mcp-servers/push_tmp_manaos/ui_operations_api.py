@@ -60,7 +60,7 @@ class CostEntry:
     operation: str
     cost: float
     currency: str = "JPY"
-    metadata: Dict[str, Any] = None
+    metadata: Dict[str, Any] = None  # type: ignore
     
     def __post_init__(self):
         if self.metadata is None:
@@ -220,7 +220,7 @@ class UIOperationsAPI:
             intent_result = {"intent_type": "unknown", "confidence": 0.0}
         
         # モードに応じたフィルタリング
-        if not self._is_allowed_in_mode(intent_result.get("intent_type"), mode):
+        if not self._is_allowed_in_mode(intent_result.get("intent_type"), mode):  # type: ignore
             return {
                 "success": False,
                 "error": f"この操作は{mode.value}モードでは許可されていません",
@@ -290,7 +290,7 @@ class UIOperationsAPI:
                     self._record_cost(
                         service=intent_result.get("intent_type", "unknown"),
                         operation="task_execution",
-                        cost=self._estimate_cost(intent_result.get("intent_type"))
+                        cost=self._estimate_cost(intent_result.get("intent_type"))  # type: ignore
                     )
                 
                 return {

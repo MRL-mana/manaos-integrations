@@ -166,7 +166,7 @@ class PredictiveAnalysisSystem:
         x = np.arange(len(values))
         coeffs = np.polyfit(x, values, 1)
         next_x = len(values)
-        return np.polyval(coeffs, next_x)
+        return np.polyval(coeffs, next_x)  # type: ignore
     
     def _calculate_confidence(self) -> float:
         """信頼度計算"""
@@ -185,7 +185,7 @@ class PredictiveAnalysisSystem:
         cv = std_dev / mean_val
         confidence = max(0.0, 1.0 - cv)
         
-        return min(1.0, confidence)
+        return min(1.0, confidence)  # type: ignore
     
     def _detect_anomalies(self) -> bool:
         """異常検出"""
@@ -960,11 +960,11 @@ class UltimateAutomationSystem:
                             consciousness_dimension, synchronization_dimension, integration_score, timestamp
                         ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, (
-                        metrics.get("temporal_dimension", 0.0),
-                        metrics.get("spatial_dimension", 0.0),
-                        metrics.get("quantum_dimension", 0.0),
-                        metrics.get("consciousness_dimension", 0.0),
-                        metrics.get("synchronization_dimension", 0.0),
+                        metrics.get("temporal_dimension", 0.0),  # type: ignore[possibly-unbound]
+                        metrics.get("spatial_dimension", 0.0),  # type: ignore[possibly-unbound]
+                        metrics.get("quantum_dimension", 0.0),  # type: ignore[possibly-unbound]
+                        metrics.get("consciousness_dimension", 0.0),  # type: ignore[possibly-unbound]
+                        metrics.get("synchronization_dimension", 0.0),  # type: ignore[possibly-unbound]
                         dimensional_result.get("integration_score", 0.0),
                     datetime.now().isoformat()
                 ))

@@ -56,11 +56,11 @@ class GmailConnector:
             if os.path.exists(token_path):
                 with open(token_path, 'r') as token:
                     creds_data = json.load(token)
-                    creds = Credentials.from_authorized_user_info(creds_data, self.SCOPES)
+                    creds = Credentials.from_authorized_user_info(creds_data, self.SCOPES)  # type: ignore[possibly-unbound]
             
             # 認証が有効か確認
             if creds and creds.valid:
-                self.service = build('gmail', 'v1', credentials=creds)
+                self.service = build('gmail', 'v1', credentials=creds)  # type: ignore[possibly-unbound]
                 logger.info("✅ Gmail authenticated successfully")
             else:
                 logger.warning("⚠️ Gmail authentication required")

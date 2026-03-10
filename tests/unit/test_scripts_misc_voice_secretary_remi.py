@@ -11,9 +11,9 @@ import pytest
 
 # _paths
 _paths_mod = sys.modules.get("_paths") or MagicMock()
-_paths_mod.INTENT_ROUTER_PORT = 5100
-_paths_mod.LLM_ROUTING_PORT = 5117
-_paths_mod.UNIFIED_API_PORT = 9510
+_paths_mod.INTENT_ROUTER_PORT = 5100  # type: ignore
+_paths_mod.LLM_ROUTING_PORT = 5117  # type: ignore
+_paths_mod.UNIFIED_API_PORT = 9510  # type: ignore
 sys.modules["_paths"] = _paths_mod
 
 # httpx

@@ -234,8 +234,8 @@ async def startup():
     # Redis接続（オプション）
     global redis_client
     try:
-        redis_host = os.getenv("REDIS_HOST", "redis")
-        redis_port = int(os.getenv("REDIS_PORT", "6379"))
+        redis_host = os.getenv("REDIS_HOST", "redis")  # type: ignore[name-defined]
+        redis_port = int(os.getenv("REDIS_PORT", "6379"))  # type: ignore[name-defined]
         redis_client = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
         await redis_client.ping()
         logger.info("✅ Connected to Redis")

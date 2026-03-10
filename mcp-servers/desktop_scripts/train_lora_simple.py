@@ -114,7 +114,7 @@ def train_lora(
     adam_beta1: float = 0.9,
     adam_beta2: float = 0.999,
     adam_weight_decay: float = 0.01,
-    max_train_steps: int = None,
+    max_train_steps: int = None,  # type: ignore
     gradient_accumulation_steps: int = 1,
     seed: int = 42,
     mixed_precision: str = "fp16",
@@ -189,7 +189,7 @@ def train_lora(
     if use_8bit_adam:
         try:
             import bitsandbytes as bnb
-            optimizer_class = bnb.optim.AdamW8bit
+            optimizer_class = bnb.optim.AdamW8bit  # type: ignore[misc]
         except ImportError:
             logger.warning("bitsandbytes not installed, using standard AdamW")
             optimizer_class = torch.optim.AdamW
@@ -262,7 +262,7 @@ def train_lora(
                 # バックプロパゲーション
                 accelerator.backward(loss)
                 optimizer.step()
-                lr_scheduler.step()
+                lr_scheduler.step()  # type: ignore
                 optimizer.zero_grad()
             
             # ログ

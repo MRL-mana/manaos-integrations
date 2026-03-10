@@ -16,7 +16,7 @@ class NotificationSystem:
         self.line_notify_token = os.getenv("LINE_NOTIFY_TOKEN")
         self.slack_webhook_url = os.getenv("SLACK_WEBHOOK_URL")
     
-    def send_line_notification(self, message: str, image_url: str = None) -> Dict:
+    def send_line_notification(self, message: str, image_url: str = None) -> Dict:  # type: ignore
         """LINE通知送信"""
         if not self.line_notify_token:
             return {"success": False, "error": "LINE_NOTIFY_TOKENが設定されていません"}
@@ -78,11 +78,11 @@ class NotificationSystem:
         
         # LINE通知
         if self.line_notify_token:
-            results["line"] = self.send_line_notification(alert_message)
+            results["line"] = self.send_line_notification(alert_message)  # type: ignore
         
         # Slack通知
         if self.slack_webhook_url:
-            results["slack"] = self.send_slack_notification(alert_message)
+            results["slack"] = self.send_slack_notification(alert_message)  # type: ignore
         
         return {
             "success": True,

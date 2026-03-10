@@ -15,8 +15,8 @@ from typing import Dict, Any, List
 
 # Windows環境でのUTF-8出力設定
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 def _run_service_test(name: str, port: int, test_func) -> Dict[str, Any]:
     """サービスをテスト"""

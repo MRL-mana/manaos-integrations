@@ -70,13 +70,13 @@ class SlackIntegration:
             target_channel = channel or self.default_channel
             
             if blocks:
-                response = self.client.chat_postMessage(
+                response = self.client.chat_postMessage(  # type: ignore[union-attr]
                     channel=target_channel,
                     text=text,
                     blocks=blocks
                 )
             else:
-                response = self.client.chat_postMessage(
+                response = self.client.chat_postMessage(  # type: ignore[union-attr]
                     channel=target_channel,
                     text=text
                 )
@@ -269,7 +269,7 @@ class SlackIntegration:
     def _get_team_info(self) -> Optional[Dict]:
         """チーム情報取得"""
         try:
-            response = self.client.auth_test()
+            response = self.client.auth_test()  # type: ignore[union-attr]
             return {
                 "team": response.get("team"),
                 "user": response.get("user")

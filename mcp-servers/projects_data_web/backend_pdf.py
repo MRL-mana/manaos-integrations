@@ -163,18 +163,18 @@ def _create_pdf_info_dict(backend, metadata):
 
     def is_string_like(x):
         return isinstance(x, str)
-    is_string_like.text_for_warning = "an instance of str"
+    is_string_like.text_for_warning = "an instance of str"  # type: ignore
 
     def is_date(x):
         return isinstance(x, datetime)
-    is_date.text_for_warning = "an instance of datetime.datetime"
+    is_date.text_for_warning = "an instance of datetime.datetime"  # type: ignore
 
     def check_trapped(x):
         if isinstance(x, Name):
             return x.name in (b'True', b'False', b'Unknown')
         else:
             return x in ('True', 'False', 'Unknown')
-    check_trapped.text_for_warning = 'one of {"True", "False", "Unknown"}'
+    check_trapped.text_for_warning = 'one of {"True", "False", "Unknown"}'  # type: ignore
 
     keywords = {
         'Title': is_string_like,
@@ -194,7 +194,7 @@ def _create_pdf_info_dict(backend, metadata):
         elif not keywords[k](info[k]):
             _api.warn_external(f'Bad value for infodict keyword {k}. '
                                f'Got {info[k]!r} which is not '
-                               f'{keywords[k].text_for_warning}.')
+                               f'{keywords[k].text_for_warning}.')  # type: ignore
     if 'Trapped' in info:
         info['Trapped'] = Name(info['Trapped'])
 
@@ -884,7 +884,7 @@ class PdfFile:
 
     def outputStream(self, ref, data, *, extra=None):
         self.beginStream(ref.id, None, extra)
-        self.currentstream.write(data)
+        self.currentstream.write(data)  # type: ignore[union-attr]
         self.endStream()
 
     def _write_annotations(self):
@@ -1109,7 +1109,7 @@ class PdfFile:
     def _get_xobject_glyph_name(self, filename, glyph_name):
         Fx = self.fontName(filename)
         return "-".join([
-            Fx.name.decode(),
+            Fx.name.decode(),  # type: ignore[union-attr]
             os.path.splitext(os.path.basename(filename))[0],
             glyph_name])
 
@@ -1748,7 +1748,7 @@ end"""
                 # Convert to indexed color if there are 256 colors or fewer. This can
                 # significantly reduce the file size.
                 num_colors = len(img_colors)
-                palette = np.array([comp for _, color in img_colors for comp in color],
+                palette = np.array([comp for _, color in img_colors for comp in color],  # type: ignore
                                    dtype=np.uint8)
                 palette24 = ((palette[0::3].astype(np.uint32) << 16) |
                              (palette[1::3].astype(np.uint32) << 8) |
@@ -1759,7 +1759,7 @@ end"""
                 indices = np.argsort(palette24).astype(np.uint8)
                 rgb8 = indices[np.searchsorted(palette24, rgb24, sorter=indices)]
                 img = Image.fromarray(rgb8).convert("P")
-                img.putpalette(palette)
+                img.putpalette(palette)  # type: ignore
                 png_data, bit_depth, palette = self._writePng(img)
                 if bit_depth is None or palette is None:
                     raise RuntimeError("invalid PNG header")
@@ -1780,9 +1780,9 @@ end"""
             png=png
             )
         if png:
-            self.currentstream.write(png_data)
+            self.currentstream.write(png_data)  # type: ignore[possibly-unbound, union-attr]
         else:
-            self.currentstream.write(data.tobytes())
+            self.currentstream.write(data.tobytes())  # type: ignore[union-attr]
         self.endStream()
 
     def writeImages(self):
@@ -2079,7 +2079,7 @@ class RendererPdf(_backend_pdf_ps.RendererPDFPSBase):
         for i, (path, transform) in enumerate(self._iter_collection_raw_paths(
                 master_transform, paths, all_transforms)):
             name = self.file.pathCollectionObject(
-                gc, path, transform, padding, filled, stroked)
+                gc, path, transform, padding, filled, stroked)  # type: ignore[possibly-unbound]
             path_codes.append(name)
 
         output = self.file.output
@@ -2742,7 +2742,7 @@ class PdfPages:
                 raise ValueError(f"No figure {figure}")
             figure = manager.canvas.figure
         # Force use of pdf backend, as PdfPages is tightly coupled with it.
-        figure.savefig(self, format="pdf", backend="pdf", **kwargs)
+        figure.savefig(self, format="pdf", backend="pdf", **kwargs)  # type: ignore[union-attr]
 
     def get_pagecount(self):
         """Return the current number of pages in the multipage pdf file."""

@@ -60,7 +60,7 @@ def init_learning_system() -> LearningSystem:
 @app.route('/health', methods=['GET'])
 def health() -> tuple:
     """ヘルスチェック"""
-    return jsonify({"status": "healthy", "service": "Learning System API"})
+    return jsonify({"status": "healthy", "service": "Learning System API"})  # type: ignore
 
 @app.route('/api/record', methods=['POST'])
 @auth_manager.require_api_key
@@ -83,7 +83,7 @@ def record_usage() -> tuple:
         system = init_learning_system()
         system.record_usage(action, context, result)
         
-        return jsonify({"status": "recorded", "action": action})
+        return jsonify({"status": "recorded", "action": action})  # type: ignore
     except Exception as e:
         error = error_handler.handle_exception(
             e,
@@ -99,7 +99,7 @@ def analyze_patterns() -> tuple:
     try:
         system = init_learning_system()
         analysis = system.analyze_patterns()
-        return jsonify(analysis)
+        return jsonify(analysis)  # type: ignore
     except Exception as e:
         error = error_handler.handle_exception(
             e,
@@ -115,7 +115,7 @@ def get_preferences() -> tuple:
     try:
         system = init_learning_system()
         preferences = system.learn_preferences()
-        return jsonify(preferences)
+        return jsonify(preferences)  # type: ignore
     except Exception as e:
         error = error_handler.handle_exception(
             e,
@@ -131,7 +131,7 @@ def get_optimizations() -> tuple:
     try:
         system = init_learning_system()
         optimizations = system.suggest_optimizations()
-        return jsonify({"optimizations": optimizations, "count": len(optimizations)})
+        return jsonify({"optimizations": optimizations, "count": len(optimizations)})  # type: ignore
     except Exception as e:
         error = error_handler.handle_exception(
             e,
@@ -147,7 +147,7 @@ def get_status() -> tuple:
     try:
         system = init_learning_system()
         status = system.get_status()
-        return jsonify(status)
+        return jsonify(status)  # type: ignore
     except Exception as e:
         error = error_handler.handle_exception(
             e,
@@ -176,7 +176,7 @@ def apply_preferences() -> tuple:
         system = init_learning_system()
         optimized_params = system.apply_learned_preferences(action, params)
         
-        return jsonify({"optimized_params": optimized_params})
+        return jsonify({"optimized_params": optimized_params})  # type: ignore
     except Exception as e:
         error = error_handler.handle_exception(
             e,

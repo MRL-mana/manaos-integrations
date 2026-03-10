@@ -103,9 +103,9 @@ def workflow_to_api(workflow: dict, expand_subgraphs: bool = True) -> dict:
                 continue
             if o_id != -10:
                 continue
-            if o_slot >= len(sub_inputs):
+            if o_slot >= len(sub_inputs):  # type: ignore[operator]
                 continue
-            name = sub_inputs[o_slot].get("name")
+            name = sub_inputs[o_slot].get("name")  # type: ignore[call-arg]
             if name not in main_inputs:
                 continue
             main_val = main_inputs[name]
@@ -113,9 +113,9 @@ def workflow_to_api(workflow: dict, expand_subgraphs: bool = True) -> dict:
             if not target_node:
                 continue
             inps = target_node.get("inputs") or []
-            if t_slot >= len(inps):
+            if t_slot >= len(inps):  # type: ignore[operator]
                 continue
-            inp_name = inps[t_slot].get("name") or inps[t_slot].get("input_name")
+            inp_name = inps[t_slot].get("name") or inps[t_slot].get("input_name")  # type: ignore[call-arg]
             if not inp_name:
                 continue
             key = prefix + str(t_id)

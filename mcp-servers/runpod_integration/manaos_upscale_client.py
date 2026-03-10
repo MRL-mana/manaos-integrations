@@ -83,7 +83,7 @@ class ManaOSUpscaleClient:
             # 一時ファイルにBase64を保存
             import tempfile
             with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-                json.dump({
+                json.dump({  # type: ignore[attr-defined, misc]
                     "image_base64": image_base64,
                     "scale": scale
                 }, f)

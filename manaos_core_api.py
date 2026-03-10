@@ -308,7 +308,7 @@ class ManaOSCoreAPI:
                 headers = {"Content-Type": "application/json"}
                 # APIキーが設定されている場合のみヘッダーに追加
                 if api_key:
-                    headers["X-API-Key"] = api_key
+                    headers["X-API-Key"] = api_key  # type: ignore
 
                 response = requests.post(
                     f"{api_url}/api/memory/process",
@@ -379,7 +379,7 @@ class ManaOSCoreAPI:
                 headers = {"Content-Type": "application/json"}
                 # APIキーが設定されている場合のみヘッダーに追加
                 if api_key:
-                    headers["X-API-Key"] = api_key
+                    headers["X-API-Key"] = api_key  # type: ignore
 
                 response = requests.post(
                     f"{api_url}/api/memory/search",

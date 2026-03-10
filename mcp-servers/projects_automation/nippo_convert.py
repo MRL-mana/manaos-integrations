@@ -49,7 +49,7 @@ class NippoConverter:
         page = doc[0]
         zoom = dpi / 72
         pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
-        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore
         doc.close()
         return img
     
@@ -98,12 +98,12 @@ class NippoConverter:
         """Excel作成"""
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.title = 'Sheet1'
+        ws.title = 'Sheet1'  # type: ignore[union-attr]
         
         # 表データをそのまま書き込み
         for r_idx, row_data in enumerate(table_data, start=1):
             for c_idx, value in enumerate(row_data, start=1):
-                cell = ws.cell(row=r_idx, column=c_idx, value=value)
+                cell = ws.cell(row=r_idx, column=c_idx, value=value)  # type: ignore[union-attr]
                 cell.font = Font(name='メイリオ', size=10)
                 cell.alignment = Alignment(wrap_text=True, vertical='top')
                 cell.border = Border(
@@ -118,18 +118,18 @@ class NippoConverter:
                     cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         
         # 列幅調整
-        for col in ws.columns:
+        for col in ws.columns:  # type: ignore[union-attr]
             max_len = max((len(str(cell.value or '')) for cell in col), default=10)
-            ws.column_dimensions[col[0].column_letter].width = min(max_len + 2, 50)
+            ws.column_dimensions[col[0].column_letter].width = min(max_len + 2, 50)  # type: ignore[union-attr]
         
         wb.save(output_path)
         return True
     
     def convert(self, pdf_path: str):
         """変換実行"""
-        pdf_path = Path(pdf_path)
+        pdf_path = Path(pdf_path)  # type: ignore
         
-        print(f"\n📄 {pdf_path.name}")
+        print(f"\n📄 {pdf_path.name}")  # type: ignore
         
         try:
             # 1. 画像化
@@ -149,10 +149,10 @@ class NippoConverter:
             print(f"   ✅ 表抽出: {rows}行 x {cols}列")
             
             # 3. Excel作成
-            output_name = f"{pdf_path.stem}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            output_name = f"{pdf_path.stem}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"  # type: ignore
             output_path = self.output_dir / output_name
             
-            self.create_excel(table_data, str(output_path), pdf_path.name)
+            self.create_excel(table_data, str(output_path), pdf_path.name)  # type: ignore
             print(f"   📊 Excel: {output_path.name}\n")
             
             return {'success': True, 'rows': rows, 'cols': cols}
@@ -161,10 +161,10 @@ class NippoConverter:
             print(f"   ❌ エラー: {e}\n")
             return {'success': False}
     
-    def batch(self, pdf_dir: str, limit: int = None):
+    def batch(self, pdf_dir: str, limit: int = None):  # type: ignore
         """一括変換"""
-        pdf_dir = Path(pdf_dir)
-        pdfs = list(pdf_dir.glob('*.pdf')) + list(pdf_dir.glob('*.PDF'))
+        pdf_dir = Path(pdf_dir)  # type: ignore
+        pdfs = list(pdf_dir.glob('*.pdf')) + list(pdf_dir.glob('*.PDF'))  # type: ignore
         
         if limit:
             pdfs = pdfs[:limit]
@@ -210,7 +210,7 @@ def main():
         converter.convert(str(target))
     elif target.is_dir():
         limit = int(sys.argv[2]) if len(sys.argv) > 2 else None
-        converter.batch(str(target), limit=limit)
+        converter.batch(str(target), limit=limit)  # type: ignore
 
 
 if __name__ == '__main__':

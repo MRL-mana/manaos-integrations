@@ -65,7 +65,7 @@ async def test_11_resume_safety():
         return
     print("\n=== テスト11: 再開テスト ===")
     
-    kill_switch = OHMyOpenCodeKillSwitch()
+    kill_switch = OHMyOpenCodeKillSwitch()  # type: ignore[operator]
     
     # タスク登録
     task_id = "test_resume_1"
@@ -112,7 +112,7 @@ async def test_13_budget_depletion():
         return
     print("\n=== テスト13: 予算枯渇テスト ===")
     
-    cost_manager = OHMyOpenCodeCostManager(
+    cost_manager = OHMyOpenCodeCostManager(  # type: ignore[operator]
         daily_limit=100.0,
         monthly_limit=2000.0
     )
@@ -121,7 +121,7 @@ async def test_13_budget_depletion():
     cost_manager.record_cost("test_task_1", 90.0, "normal")
     
     # 残予算メーター取得
-    visibility = OHMyOpenCodeCostVisibility(cost_manager=cost_manager)
+    visibility = OHMyOpenCodeCostVisibility(cost_manager=cost_manager)  # type: ignore[operator]
     meter = visibility.get_budget_meter()
     
     assert meter.daily_usage_percent >= 90, "予算使用率が90%未満です"
@@ -138,8 +138,8 @@ async def test_14_log_audit():
         return
     print("\n=== テスト14: ログ監査テスト ===")
     
-    kill_switch = OHMyOpenCodeKillSwitch()
-    observability = OHMyOpenCodeObservability()
+    kill_switch = OHMyOpenCodeKillSwitch()  # type: ignore[operator]
+    observability = OHMyOpenCodeObservability()  # type: ignore[operator]
     
     task_id = "test_audit_1"
     
@@ -169,11 +169,11 @@ async def test_15_concurrent_execution():
         return
     print("\n=== テスト15: 同時実行テスト ===")
     
-    cost_manager = OHMyOpenCodeCostManager(
+    cost_manager = OHMyOpenCodeCostManager(  # type: ignore[operator]
         daily_limit=100.0,
         monthly_limit=2000.0
     )
-    kill_switch = OHMyOpenCodeKillSwitch()
+    kill_switch = OHMyOpenCodeKillSwitch()  # type: ignore[operator]
     
     # 複数タスクを同時に登録
     task_ids = [f"concurrent_task_{i}" for i in range(3)]
@@ -209,7 +209,7 @@ class SmokeTestRunner:
         print("🧪 OH MY OPENCODE スモークテスト開始")
         print("=" * 60)
         
-        self.integration = OHMyOpenCodeIntegration()
+        self.integration = OHMyOpenCodeIntegration()  # type: ignore[operator]
         
         if not self.integration.initialize():
             print("❌ 初期化に失敗しました")
@@ -223,10 +223,10 @@ class SmokeTestRunner:
         print("📝 テスト1: 正常系 - 短いコード生成")
         
         try:
-            result = await self.integration.execute_task(
+            result = await self.integration.execute_task(  # type: ignore[union-attr]
                 task_description="PythonでHello Worldを出力するコードを作成してください",
-                mode=ExecutionMode.NORMAL,
-                task_type=TaskType.CODE_GENERATION
+                mode=ExecutionMode.NORMAL,  # type: ignore[union-attr]
+                task_type=TaskType.CODE_GENERATION  # type: ignore[union-attr]
             )
             
             success = result.status == "success" and result.execution_time < 10.0
@@ -258,10 +258,10 @@ class SmokeTestRunner:
         print("📝 テスト2: 外部依存なし - ネット無しで完走")
         
         try:
-            result = await self.integration.execute_task(
+            result = await self.integration.execute_task(  # type: ignore[union-attr]
                 task_description="既存のコードをリファクタリングしてください（ネット検索不要）",
-                mode=ExecutionMode.NORMAL,
-                task_type=TaskType.REFACTORING
+                mode=ExecutionMode.NORMAL,  # type: ignore[union-attr]
+                task_type=TaskType.REFACTORING  # type: ignore[union-attr]
             )
             
             success = result.status in ["success", "failed"]  # 成功または失敗（ネットエラーではない）
@@ -284,10 +284,10 @@ class SmokeTestRunner:
         print("📝 テスト3: ネットあり - 検索を含む調査→実装")
         
         try:
-            result = await self.integration.execute_task(
+            result = await self.integration.execute_task(  # type: ignore[union-attr]
                 task_description="最新のPythonベストプラクティスを調査してREST APIを作成してください",
-                mode=ExecutionMode.NORMAL,
-                task_type=TaskType.CODE_GENERATION
+                mode=ExecutionMode.NORMAL,  # type: ignore[union-attr]
+                task_type=TaskType.CODE_GENERATION  # type: ignore[union-attr]
             )
             
             success = result.status in ["success", "failed"]
@@ -310,10 +310,10 @@ class SmokeTestRunner:
         print("📝 テスト4: エラー修正ループ")
         
         try:
-            result = await self.integration.execute_task(
+            result = await self.integration.execute_task(  # type: ignore[union-attr]
                 task_description="意図的にエラーを含むコードを修正してください（構文エラーあり）",
-                mode=ExecutionMode.NORMAL,
-                task_type=TaskType.COMPLEX_BUG
+                mode=ExecutionMode.NORMAL,  # type: ignore[union-attr]
+                task_type=TaskType.COMPLEX_BUG  # type: ignore[union-attr]
             )
             
             # エラー修正ループが動作したかチェック（反復回数が1より大きい）
@@ -339,13 +339,13 @@ class SmokeTestRunner:
         
         try:
             # Kill Switchを設定（反復回数制限を低く）
-            if self.integration.kill_switch:
-                self.integration.kill_switch.max_iterations = 5
+            if self.integration.kill_switch:  # type: ignore[union-attr]
+                self.integration.kill_switch.max_iterations = 5  # type: ignore[union-attr]
             
-            result = await self.integration.execute_task(
+            result = await self.integration.execute_task(  # type: ignore[union-attr]
                 task_description="解決不可能なエラーを含むコードを修正してください（無限ループを誘発）",
-                mode=ExecutionMode.NORMAL,
-                task_type=TaskType.COMPLEX_BUG
+                mode=ExecutionMode.NORMAL,  # type: ignore[union-attr]
+                task_type=TaskType.COMPLEX_BUG  # type: ignore[union-attr]
             )
             
             # 無限ループ検知で停止されたかチェック
@@ -371,21 +371,21 @@ class SmokeTestRunner:
         
         try:
             # Kill Switchを設定（実行時間制限を短く）
-            if self.integration.kill_switch:
-                self.integration.kill_switch.max_execution_time = 5  # 5秒
+            if self.integration.kill_switch:  # type: ignore[union-attr]
+                self.integration.kill_switch.max_execution_time = 5  # 5秒  # type: ignore[union-attr]
             
-            result = await self.integration.execute_task(
+            result = await self.integration.execute_task(  # type: ignore[union-attr]
                 task_description="時間のかかる処理を実行してください（タイムアウトを誘発）",
-                mode=ExecutionMode.NORMAL,
-                task_type=TaskType.GENERAL
+                mode=ExecutionMode.NORMAL,  # type: ignore[union-attr]
+                task_type=TaskType.GENERAL  # type: ignore[union-attr]
             )
             
             # タイムアウトで停止されたかチェック
             success = result.status == "killed" and "time_limit" in str(result.error).lower()
             
             # ログが残っているかチェック
-            if success and self.integration.kill_switch:
-                kill_status = self.integration.kill_switch.get_task_status(result.task_id)
+            if success and self.integration.kill_switch:  # type: ignore[union-attr]
+                kill_status = self.integration.kill_switch.get_task_status(result.task_id)  # type: ignore[union-attr]
                 has_log = kill_status is not None and kill_status.reason is not None
             
             self.test_results.append({
@@ -407,14 +407,14 @@ class SmokeTestRunner:
         
         try:
             # コスト上限を設定（低く）
-            if self.integration.cost_manager:
-                original_limit = self.integration.cost_manager.daily_limit
-                self.integration.cost_manager.daily_limit = 0.01  # $0.01
+            if self.integration.cost_manager:  # type: ignore[union-attr]
+                original_limit = self.integration.cost_manager.daily_limit  # type: ignore[union-attr]
+                self.integration.cost_manager.daily_limit = 0.01  # $0.01  # type: ignore[union-attr]
             
-            result = await self.integration.execute_task(
+            result = await self.integration.execute_task(  # type: ignore[union-attr]
                 task_description="高コストな処理を実行してください",
-                mode=ExecutionMode.NORMAL,
-                task_type=TaskType.GENERAL
+                mode=ExecutionMode.NORMAL,  # type: ignore[union-attr]
+                task_type=TaskType.GENERAL  # type: ignore[union-attr]
             )
             
             # コスト上限で停止されたかチェック
@@ -429,8 +429,8 @@ class SmokeTestRunner:
             print(f"  結果: {'✅ 成功' if success else '❌ 失敗'}\n")
             
             # 元に戻す
-            if self.integration.cost_manager:
-                self.integration.cost_manager.daily_limit = original_limit
+            if self.integration.cost_manager:  # type: ignore[union-attr]
+                self.integration.cost_manager.daily_limit = original_limit  # type: ignore[possibly-unbound, union-attr]
             
             return success
         
@@ -443,10 +443,10 @@ class SmokeTestRunner:
         print("📝 テスト8: Ultra Work入口制限")
         
         try:
-            result = await self.integration.execute_task(
+            result = await self.integration.execute_task(  # type: ignore[union-attr]
                 task_description="一般タスクをUltra Workモードで実行",
-                mode=ExecutionMode.ULTRA_WORK,
-                task_type=TaskType.GENERAL  # 禁止されたタスクタイプ
+                mode=ExecutionMode.ULTRA_WORK,  # type: ignore[union-attr]
+                task_type=TaskType.GENERAL  # 禁止されたタスクタイプ  # type: ignore[union-attr]
             )
             
             # Ultra Workモード使用不可エラーが発生したかチェック
@@ -475,12 +475,12 @@ class SmokeTestRunner:
         
         try:
             # Ultra Work降格閾値を低く設定
-            self.integration.ultra_work_downgrade_cost_threshold = 0.1  # 10%で降格
+            self.integration.ultra_work_downgrade_cost_threshold = 0.1  # 10%で降格  # type: ignore[union-attr]
             
-            result = await self.integration.execute_task(
+            result = await self.integration.execute_task(  # type: ignore[union-attr]
                 task_description="システムアーキテクチャを設計してください",
-                mode=ExecutionMode.ULTRA_WORK,
-                task_type=TaskType.ARCHITECTURE_DESIGN
+                mode=ExecutionMode.ULTRA_WORK,  # type: ignore[union-attr]
+                task_type=TaskType.ARCHITECTURE_DESIGN  # type: ignore[union-attr]
             )
             
             # 降格フラグが設定されているかチェック
@@ -507,10 +507,10 @@ class SmokeTestRunner:
         print("📝 テスト10: Trinity連携")
         
         try:
-            result = await self.integration.execute_task(
+            result = await self.integration.execute_task(  # type: ignore[union-attr]
                 task_description="PythonでREST APIを作成してください",
-                mode=ExecutionMode.NORMAL,
-                task_type=TaskType.CODE_GENERATION,
+                mode=ExecutionMode.NORMAL,  # type: ignore[union-attr]
+                task_type=TaskType.CODE_GENERATION,  # type: ignore[union-attr]
                 use_trinity=True
             )
             
@@ -519,14 +519,14 @@ class SmokeTestRunner:
             
             # ログでTrinity連携を確認（簡易チェック）
             trinity_worked = (
-                self.integration.trinity_enabled and
-                self.integration.trinity_bridge is not None
+                self.integration.trinity_enabled and  # type: ignore[union-attr]
+                self.integration.trinity_bridge is not None  # type: ignore[union-attr]
             )
             
             self.test_results.append({
                 "test": "Trinity連携",
                 "success": success and trinity_worked,
-                "trinity_enabled": self.integration.trinity_enabled
+                "trinity_enabled": self.integration.trinity_enabled  # type: ignore[union-attr]
             })
             
             print(f"  結果: {'✅ 成功' if success and trinity_worked else '❌ 失敗'}")

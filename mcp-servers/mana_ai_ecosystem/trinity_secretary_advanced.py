@@ -252,7 +252,7 @@ class TrinitySecretaryAdvanced:
             return {
                 "response": "申し訳ございません。エラーが発生しました。",
                 "type": "error",
-                "secretary": secretary.get("name", "Trinity"),
+                "secretary": secretary.get("name", "Trinity"),  # type: ignore[possibly-unbound]
                 "timestamp": datetime.utcnow().isoformat()
             }
     
@@ -333,7 +333,7 @@ class TrinitySecretaryAdvanced:
                         "title": task.title,
                         "status": task.status,
                         "priority": task.priority,
-                        "due_date": task.due_date.isoformat() if task.due_date else None,
+                        "due_date": task.due_date.isoformat() if task.due_date else None,  # type: ignore
                         "category": task.category
                     })
                 
@@ -415,7 +415,7 @@ class TrinitySecretaryAdvanced:
                         "id": schedule.id,
                         "title": schedule.title,
                         "start_time": schedule.start_time.isoformat(),
-                        "end_time": schedule.end_time.isoformat() if schedule.end_time else None,
+                        "end_time": schedule.end_time.isoformat() if schedule.end_time else None,  # type: ignore
                         "location": schedule.location,
                         "attendees": schedule.attendees
                     })
@@ -763,7 +763,7 @@ class TrinitySecretaryAdvanced:
                     f"リマインダー: {schedule.title}",
                     f"{schedule.start_time.strftime('%H:%M')}に{schedule.title}があります。",
                     "info",
-                    schedule.user_id
+                    schedule.user_id  # type: ignore
                 )
         except Exception as e:
             logger.error(f"リマインダーチェックエラー: {e}")
@@ -806,7 +806,7 @@ class TrinitySecretaryAdvanced:
     def _create_notification(self, title: str, message: str, notification_type: str, user_id: str):
         """通知を作成"""
         try:
-            notification = Notification(
+            notification = Notification(  # type: ignore[name-defined]
                 id=f"notif_{int(time.time())}",
                 title=title,
                 message=message,

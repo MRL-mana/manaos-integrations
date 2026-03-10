@@ -144,7 +144,7 @@ def train_lora(
         # LoRA重みを保存
         output_dir = Path("/storage/lora_models") / output_name
         output_dir.mkdir(parents=True, exist_ok=True)
-        unet_lora.save_pretrained(output_dir)
+        unet_lora.save_pretrained(output_dir)  # type: ignore
 
         # ボリュームにコミット
         volume.commit()

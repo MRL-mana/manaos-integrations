@@ -51,7 +51,7 @@ class EvaluationSuite:
         # 埋め込みモデル読み込み
         if EMBEDDINGS_AVAILABLE:
             try:
-                self.embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+                self.embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')  # type: ignore[possibly-unbound]
             except Exception:
                 pass
 
@@ -59,17 +59,17 @@ class EvaluationSuite:
         """モデル読み込み"""
         try:
             print("📦 モデル読み込み中...")
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)  # type: ignore[possibly-unbound]
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
 
-            bnb_config = bnb.config.BitsAndBytesConfig(
+            bnb_config = bnb.config.BitsAndBytesConfig(  # type: ignore[attr-defined, possibly-unbound]
                 load_in_4bit=True,
                 bnb_4bit_quant_type="nf4",
-                bnb_4bit_compute_dtype=torch.float16
+                bnb_4bit_compute_dtype=torch.float16  # type: ignore[possibly-unbound]
             )
 
-            self.model = AutoModelForCausalLM.from_pretrained(
+            self.model = AutoModelForCausalLM.from_pretrained(  # type: ignore[possibly-unbound]
                 self.model_path,
                 quantization_config=bnb_config,
                 device_map="auto",
@@ -79,7 +79,7 @@ class EvaluationSuite:
             # Adapter読み込み
             adapter_path = Path(self.model_path)
             if adapter_path.is_dir() and (adapter_path / "adapter_config.json").exists():
-                self.model = PeftModel.from_pretrained(self.model, self.model_path)
+                self.model = PeftModel.from_pretrained(self.model, self.model_path)  # type: ignore[possibly-unbound]
 
             print("✅ モデル読み込み完了")
         except Exception as e:
@@ -94,7 +94,7 @@ class EvaluationSuite:
             inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
             inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
 
-            with torch.no_grad():
+            with torch.no_grad():  # type: ignore[possibly-unbound]
                 outputs = self.model.generate(
                     **inputs,
                     max_new_tokens=256,

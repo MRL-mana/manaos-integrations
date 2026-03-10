@@ -51,7 +51,7 @@ class ManaOSLangChainRAG:
         try:
             self.llm = Ollama(model="llama2", base_url="http://localhost:11434")
             logger.info("✅ Ollama LLM接続")
-        except sqlite3.Error:
+        except sqlite3.Error:  # type: ignore[name-defined]
             logger.info("ℹ️ Ollama未検出。ダミーモードで動作")
             self.llm = None
         

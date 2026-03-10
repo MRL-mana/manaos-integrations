@@ -89,7 +89,7 @@ class EmotionAnalyzer:
             primary_emotion = 'neutral'
             confidence = 0.5
         else:
-            primary_emotion = max(emotion_scores, key=emotion_scores.get)
+            primary_emotion = max(emotion_scores, key=emotion_scores.get)  # type: ignore[call-arg]
             total = sum(emotion_scores.values())
             confidence = emotion_scores[primary_emotion] / total
         
@@ -273,21 +273,21 @@ class TrinityPremiumV2Client:
         # Claude API
         if self.anthropic_key:
             try:
-                return await self._chat_with_claude(message, emotion, profile, context)
+                return await self._chat_with_claude(message, emotion, profile, context)  # type: ignore
             except Exception as e:
                 logger.warning(f"Claude failed: {e}")
         
         # GPT-4o-mini
         if self.openai_key:
             try:
-                return await self._chat_with_openai(message, emotion, profile, context)
+                return await self._chat_with_openai(message, emotion, profile, context)  # type: ignore
             except Exception as e:
                 logger.warning(f"OpenAI failed: {e}")
         
         # Gemini
         if self.gemini_key:
             try:
-                return await self._chat_with_gemini(message, emotion, profile, context)
+                return await self._chat_with_gemini(message, emotion, profile, context)  # type: ignore
             except Exception as e:
                 logger.warning(f"Gemini failed: {e}")
         
@@ -461,14 +461,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     bot_message = response['response']
     
     # 感情に応じた絵文字
-    emotion_emoji = {
+    emotion_emoji = {  # type: ignore[call-arg]
         'happy': '😊',
         'sad': '🤗',
         'tired': '☕',
         'angry': '🕊️',
         'worried': '💪',
         'excited': '🎉'
-    }.get(response.get('emotion'), '')
+    }.get(response.get('emotion'), '')  # type: ignore
     
     if emotion_emoji and emotion_emoji not in bot_message:
         bot_message = f"{emotion_emoji} {bot_message}"

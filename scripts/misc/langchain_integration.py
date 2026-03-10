@@ -102,7 +102,7 @@ class LangChainIntegration(BaseIntegration):
             初期化成功かどうか
         """
         try:
-            self.llm = Ollama(
+            self.llm = Ollama(  # type: ignore[possibly-unbound]
                 base_url=self.ollama_url,
                 model=self.model_name,
                 temperature=0.7
@@ -143,14 +143,14 @@ class LangChainIntegration(BaseIntegration):
         try:
             messages = []
             if system_prompt:
-                messages.append(SystemMessage(content=system_prompt))
-            messages.append(HumanMessage(content=message))
+                messages.append(SystemMessage(content=system_prompt))  # type: ignore[possibly-unbound]
+            messages.append(HumanMessage(content=message))  # type: ignore[possibly-unbound]
             
             if self.memory:
                 self.memory.chat_memory.add_user_message(message)
             
             timeout = self.get_timeout("llm_call")
-            response = self.llm.invoke(messages)
+            response = self.llm.invoke(messages)  # type: ignore[union-attr]
             
             if self.memory:
                 self.memory.chat_memory.add_ai_message(response.content if hasattr(response, 'content') else str(response))
@@ -198,7 +198,7 @@ class LangGraphIntegration(BaseIntegration):
         
         try:
             # 簡易グラフの作成
-            self.graph = StateGraph(dict)
+            self.graph = StateGraph(dict)  # type: ignore[possibly-unbound]
             self.logger.info("LangGraphを初期化しました")
             return True
         except Exception as e:

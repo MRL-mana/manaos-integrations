@@ -12,8 +12,8 @@ from dotenv import load_dotenv
 
 # Windowsでのエンコーディング問題を回避
 if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 # 環境変数を読み込む
 load_dotenv(Path(__file__).parent / '.env')
@@ -62,7 +62,7 @@ def search_prompt_references(query: str, count: int = 5):
         print(f"[ERROR] Brave Searchエラー: {e}")
         return []
 
-def generate_prompt_with_ai(theme: str, style: str = "", references: list = None):
+def generate_prompt_with_ai(theme: str, style: str = "", references: list = None):  # type: ignore
     """Base AI APIでプロンプトを生成"""
     print(f"\n[AI] プロンプト生成中...")
     

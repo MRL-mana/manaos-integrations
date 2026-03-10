@@ -24,7 +24,7 @@ try:
     MEMORY_INTEGRATION_AVAILABLE = True
 except ImportError:
     MEMORY_INTEGRATION_AVAILABLE = False
-    logger.warning("共有記憶システムが利用できません")
+    logger.warning("共有記憶システムが利用できません")  # type: ignore[name-defined]
 
 
 # psutil をインポート（レミ用Control APIで使用）
@@ -216,7 +216,7 @@ def handle_github_update(params_raw: Dict[str, Any]):
         # ファイルが存在するか確認
         try:
             contents = repo.get_contents(params.path, ref=params.branch)
-            current_text = contents.decoded_content.decode("utf-8")
+            current_text = contents.decoded_content.decode("utf-8")  # type: ignore
             file_exists = True
         except Exception:
             # ファイルが存在しない場合は新規作成
@@ -241,7 +241,7 @@ def handle_github_update(params_raw: Dict[str, Any]):
                 path=params.path,
                 message=params.commit_message,
                 content=final_text,
-                sha=contents.sha,
+                sha=contents.sha,  # type: ignore[possibly-unbound]
                 branch=params.branch,
             )
             logger.info(
@@ -276,7 +276,7 @@ def handle_github_get(params_raw: Dict[str, Any]):
     repo = get_github_repo(params.repo)
     try:
         contents = repo.get_contents(params.path, ref=params.branch)
-        text = contents.decoded_content.decode("utf-8")
+        text = contents.decoded_content.decode("utf-8")  # type: ignore
         logger.info(
             f"GitHub file retrieved: {params.path} from {params.branch}")
         return {
@@ -848,9 +848,9 @@ def handle_daily_prompt_read(params_raw: Dict[str, Any]):
         eta = estimated_times[idx] if idx < len(estimated_times) else "30min"
         top_items.append(DailyTaskItem(
             title=title,
-            priority=pri,
+            priority=pri,  # type: ignore
             estimated_time=eta,
-            best_time=bt,
+            best_time=bt,  # type: ignore
         ))
 
     # ③ お金になる一手（profit_ideas_analyze と連携）
@@ -1483,7 +1483,7 @@ def search_memory(params: MemorySearchParams):
         raise HTTPException(status_code=503, detail="共有記憶システムが利用できません")
     
     try:
-        memory_integration = get_memory_integration()
+        memory_integration = get_memory_integration()  # type: ignore[possibly-unbound]
         result = memory_integration.search_memory(
             query=params.query,
             limit=params.limit,
@@ -1511,7 +1511,7 @@ def get_memory_stats():
         }
     
     try:
-        memory_integration = get_memory_integration()
+        memory_integration = get_memory_integration()  # type: ignore[possibly-unbound]
         return memory_integration.get_memory_stats()
     
     except Exception as e:
@@ -1535,7 +1535,7 @@ def memory_health_check():
         return {"status": "unhealthy", "error": "共有記憶システムが利用できません"}, 503
     
     try:
-        memory_integration = get_memory_integration()
+        memory_integration = get_memory_integration()  # type: ignore[possibly-unbound]
         stats = memory_integration.get_memory_stats()
         return {
             "status": "healthy",
@@ -1613,9 +1613,9 @@ def remi_status(auth: str = Depends(verify_remi_auth)):
     # 2. システムリソース（psutil使用）
     if PSUTIL_AVAILABLE:
         try:
-            cpu = psutil.cpu_percent(interval=0.5)
-            mem = psutil.virtual_memory()
-            disk = psutil.disk_usage("/")
+            cpu = psutil.cpu_percent(interval=0.5)  # type: ignore[possibly-unbound]
+            mem = psutil.virtual_memory()  # type: ignore[possibly-unbound]
+            disk = psutil.disk_usage("/")  # type: ignore[possibly-unbound]
             result["system"] = {
                 "cpu_percent": cpu,
                 "memory": {

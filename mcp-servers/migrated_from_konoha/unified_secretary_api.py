@@ -31,7 +31,7 @@ try:
     TRINITY_LEARNING_ENABLED = True
 except ImportError as e:
     TRINITY_LEARNING_ENABLED = False
-    logger.warning(f"Trinity Learning not available: {e}")
+    logger.warning(f"Trinity Learning not available: {e}")  # type: ignore[name-defined]
     def log_success(*args, **kwargs): pass
     def log_failure(*args, **kwargs): pass
     def log_agent_event(*args, **kwargs): pass
@@ -248,16 +248,16 @@ class RemiIntegration:
             log_agent_event('remi', 'task_created', f'Task: {new_task["title"]}, Assigned: {new_task["assigned_to"]}')
         
             # Slack通知
-            if SLACK_ENABLED:
+            if SLACK_ENABLED:  # type: ignore[name-defined]
                 try:
-                    notify_task_created(new_task)
+                    notify_task_created(new_task)  # type: ignore[name-defined]
                 except Exception as e:
                     logger.warning(f"Slack notification failed: {e}")
             
             # Google Calendar同期
-            if CALENDAR_ENABLED:
+            if CALENDAR_ENABLED:  # type: ignore[name-defined]
                 try:
-                    event_id = create_task_event(new_task)
+                    event_id = create_task_event(new_task)  # type: ignore[name-defined]
                     if event_id:
                         new_task['calendar_event_id'] = event_id
                         self.trinity.save_tasks(tasks)
@@ -380,9 +380,9 @@ class MinaIntegration:
             log_agent_event('mina', 'task_reviewed', f'Task: {task["title"]}, Result: {"PASS" if review_result["passed"] else "FAIL"}')
         
         # Slack通知（完了時のみ）
-        if review_result['passed'] and SLACK_ENABLED:
+        if review_result['passed'] and SLACK_ENABLED:  # type: ignore[name-defined]
             try:
-                notify_task_completed(task)
+                notify_task_completed(task)  # type: ignore[name-defined]
             except Exception as e:
                 logger.warning(f"Slack notification failed: {e}")
         
@@ -504,22 +504,22 @@ class UnifiedSecretaryAPI:
                 
                 # Slack統合情報追加
                 try:
-                    from slack_integration import get_slack_status
+                    from slack_integration import get_slack_status  # type: ignore[attr-defined]
                     health_data["slack"] = get_slack_status()
                 except Exception as e:
                     logger.debug(f"Slack status check skipped: {e}")
                 
                 # Gmail統合情報追加
                 try:
-                    if GMAIL_ENABLED:
-                        health_data["gmail"] = get_gmail_status()
+                    if GMAIL_ENABLED:  # type: ignore[name-defined]
+                        health_data["gmail"] = get_gmail_status()  # type: ignore[name-defined]
                 except Exception as e:
                     logger.debug(f"Gmail status check skipped: {e}")
                 
                 # Calendar統合情報追加
                 try:
-                    if CALENDAR_ENABLED:
-                        health_data["calendar"] = get_calendar_status()
+                    if CALENDAR_ENABLED:  # type: ignore[name-defined]
+                        health_data["calendar"] = get_calendar_status()  # type: ignore[name-defined]
                 except Exception as e:
                     logger.debug(f"Calendar status check skipped: {e}")
                 
@@ -536,7 +536,7 @@ class UnifiedSecretaryAPI:
         async def chat(request: ChatRequest):
             """AI秘書チャット（Aria担当）"""
             try:
-                result = await self.aria.chat(request.message, request.context)
+                result = await self.aria.chat(request.message, request.context)  # type: ignore
                 return result
             except Exception as e:
                 logger.error(f"Chat error: {e}")

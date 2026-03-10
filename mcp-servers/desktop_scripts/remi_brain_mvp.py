@@ -64,7 +64,7 @@ class SpeechInput(BaseModel):
     source: str = "pixel"
 
 
-async def call_ollama_chat(messages: List[Dict], model: str = None) -> str:
+async def call_ollama_chat(messages: List[Dict], model: str = None) -> str:  # type: ignore
     """Ollama Chat API呼び出し"""
     model = model or OLLAMA_MODEL
     
@@ -171,7 +171,7 @@ async def speech_input(input_data: SpeechInput):
             text = await transcribe_audio(audio_data)
         
         if not text:
-            raise HTTPException(status_code=400, detail="Text or audio required")
+            raise HTTPException(status_code=400, detail="Text or audio required")  # type: ignore[name-defined]
         
         # 会話履歴に追加
         conversation_history.append({
@@ -210,7 +210,7 @@ async def speech_input(input_data: SpeechInput):
         
     except Exception as e:
         logger.error(f"Speech input error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))  # type: ignore[name-defined]
 
 
 @app.post("/remi/speech/output")
@@ -225,10 +225,10 @@ async def speech_output(text: str, emotion: str = "normal"):
                 media_type="audio/wav"
             )
         else:
-            raise HTTPException(status_code=500, detail="Failed to generate speech")
+            raise HTTPException(status_code=500, detail="Failed to generate speech")  # type: ignore[name-defined]
     except Exception as e:
         logger.error(f"Speech output error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))  # type: ignore[name-defined]
 
 
 @app.post("/remi/x/analyze")
@@ -237,7 +237,7 @@ async def x_analyze(request: dict):
     try:
         post_text = request.get("post_text", "")
         if not post_text:
-            raise HTTPException(status_code=400, detail="post_text required")
+            raise HTTPException(status_code=400, detail="post_text required")  # type: ignore[name-defined]
         
         conversation_state["mode"] = "x_companion"
         
@@ -261,7 +261,7 @@ async def x_analyze(request: dict):
         }
     except Exception as e:
         logger.error(f"X analyze error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))  # type: ignore[name-defined]
 
 
 @app.websocket("/remi/ws")

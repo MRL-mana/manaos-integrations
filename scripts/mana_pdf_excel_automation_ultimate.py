@@ -285,7 +285,7 @@ class ManaPDFExcelAutomation:
         
         # 月次レポート
         if self.config['schedule_config']['monthly_report']:
-            schedule.every().month.do(self.monthly_report)
+            schedule.every().month.do(self.monthly_report)  # type: ignore
             logger.info("✅ 月次レポート設定")
         
         logger.info("⏰ スケジューリング設定完了")

@@ -1,0 +1,171 @@
+........................................................................ [  1%]
+........................................................................ [  2%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 55%]
+........................................................................ [ 56%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+.........................................................F............FF [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 95%]
+........................................................................ [ 96%]
+........................................................................ [ 98%]
+...........FFFFFFF...................................................... [ 99%]
+....                                                                     [100%]
+================================== FAILURES ===================================
+_________ TestResizeImage.test_returns_tmp_file_when_pillow_available _________
+tests\unit\test_scripts_misc_video_pipeline.py:360: in test_returns_tmp_file_when_pillow_available
+    result = vp._resize_image(src, 1920, 1080)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\misc\video_pipeline.py:451: in _resize_image
+    img = Image.open(image_path).convert("RGB")  # type: ignore[possibly-unbound]
+          ^^^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\PIL\Image.py:3513: in open
+    fp = builtins.open(filename, "rb")
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\mana4\\AppData\\Local\\Temp\\pytest-of-mana4\\pytest-595\\test_returns_tmp_file_when_pil0\\src.jpg'
+_______________ TestVoiceTimeout.test_returns_value_from_config _______________
+tests\unit\test_scripts_misc_voice_integration.py:75: in test_returns_value_from_config
+    sys.modules["manaos_timeout_config"] = _tc
+    ^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: assert <MagicMock name='mock.get_timeout()' id='2717385722912'> == 5.0
+____________ TestVoiceTimeout.test_returns_default_when_exception _____________
+tests\unit\test_scripts_misc_voice_integration.py:81: in test_returns_default_when_exception
+    ???
+E   AssertionError: assert <MagicMock name='mock.get_timeout()' id='2717385722912'> == 99.0
+__________________ TestCheckPythonPackages.test_returns_dict __________________
+tests\unit\test_trinity_tool_analysis.py:99: in test_returns_dict
+    result = self.ta.check_python_packages()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\trinity_tool_analysis.py:73: in check_python_packages
+    version = PIL.__version__
+              ^^^^^^^^^^^^^^^
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:698: in __getattr__
+    raise AttributeError(name)
+E   AttributeError: __version__
+___________ TestCheckPythonPackages.test_expected_packages_present ____________
+tests\unit\test_trinity_tool_analysis.py:103: in test_expected_packages_present
+    result = self.ta.check_python_packages()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\trinity_tool_analysis.py:73: in check_python_packages
+    version = PIL.__version__
+              ^^^^^^^^^^^^^^^
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:698: in __getattr__
+    raise AttributeError(name)
+E   AttributeError: __version__
+_________ TestCheckPythonPackages.test_each_entry_has_installed_bool __________
+tests\unit\test_trinity_tool_analysis.py:108: in test_each_entry_has_installed_bool
+    result = self.ta.check_python_packages()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\trinity_tool_analysis.py:73: in check_python_packages
+    version = PIL.__version__
+              ^^^^^^^^^^^^^^^
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:698: in __getattr__
+    raise AttributeError(name)
+E   AttributeError: __version__
+___________ TestCheckPythonPackages.test_each_entry_has_version_key ___________
+tests\unit\test_trinity_tool_analysis.py:114: in test_each_entry_has_version_key
+    result = self.ta.check_python_packages()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\trinity_tool_analysis.py:73: in check_python_packages
+    version = PIL.__version__
+              ^^^^^^^^^^^^^^^
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:698: in __getattr__
+    raise AttributeError(name)
+E   AttributeError: __version__
+___________ TestCheckPythonPackages.test_each_entry_has_description ___________
+tests\unit\test_trinity_tool_analysis.py:119: in test_each_entry_has_description
+    result = self.ta.check_python_packages()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\trinity_tool_analysis.py:73: in check_python_packages
+    version = PIL.__version__
+              ^^^^^^^^^^^^^^^
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:698: in __getattr__
+    raise AttributeError(name)
+E   AttributeError: __version__
+_____ TestCheckPythonPackages.test_mock_installed_package_via_sys_modules _____
+tests\unit\test_trinity_tool_analysis.py:128: in test_mock_installed_package_via_sys_modules
+    result = self.ta.check_python_packages()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\trinity_tool_analysis.py:73: in check_python_packages
+    version = PIL.__version__
+              ^^^^^^^^^^^^^^^
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:698: in __getattr__
+    raise AttributeError(name)
+E   AttributeError: __version__
+____ TestCheckPythonPackages.test_mock_uninstalled_package_via_sys_modules ____
+tests\unit\test_trinity_tool_analysis.py:139: in test_mock_uninstalled_package_via_sys_modules
+    result = self.ta.check_python_packages()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\trinity_tool_analysis.py:73: in check_python_packages
+    version = PIL.__version__
+              ^^^^^^^^^^^^^^^
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:698: in __getattr__
+    raise AttributeError(name)
+E   AttributeError: __version__
+=========================== short test summary info ===========================
+FAILED tests/unit/test_scripts_misc_video_pipeline.py::TestResizeImage::test_returns_tmp_file_when_pillow_available
+FAILED tests/unit/test_scripts_misc_voice_integration.py::TestVoiceTimeout::test_returns_value_from_config
+FAILED tests/unit/test_scripts_misc_voice_integration.py::TestVoiceTimeout::test_returns_default_when_exception
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_returns_dict
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_expected_packages_present
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_each_entry_has_installed_bool
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_each_entry_has_version_key
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_each_entry_has_description
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_mock_installed_package_via_sys_modules
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_mock_uninstalled_package_via_sys_modules
+10 failed, 4818 passed, 240 warnings in 530.19s (0:08:50)

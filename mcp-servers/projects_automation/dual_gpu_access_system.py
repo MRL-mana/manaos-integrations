@@ -102,7 +102,7 @@ print(f"VS Code Remote SSH - GPU name: {torch.cuda.get_device_name(0) if torch.c
         
         # 非同期でVS Code操作実行
         vscode_task = asyncio.create_task(
-            asyncio.get_event_loop().run_in_executor(
+            asyncio.get_event_loop().run_in_executor(  # type: ignore
                 None, self.vscode_gpu_operation, vscode_code
             )
         )

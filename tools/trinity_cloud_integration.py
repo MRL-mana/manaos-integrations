@@ -118,12 +118,12 @@ class CloudIntegrationSystem:
         logger.warning("Google Driveは現在利用できません")
         return False
     
-    def upload_to_aws_s3(self, file_path: str, bucket_name: str, key: str = None) -> bool:
+    def upload_to_aws_s3(self, file_path: str, bucket_name: str, key: str = None) -> bool:  # type: ignore
         """AWS S3にアップロード"""
         logger.warning("AWS S3は現在利用できません")
         return False
     
-    def upload_to_dropbox(self, file_path: str, dropbox_path: str = None) -> bool:
+    def upload_to_dropbox(self, file_path: str, dropbox_path: str = None) -> bool:  # type: ignore
         """Dropboxにアップロード"""
         logger.warning("Dropboxは現在利用できません")
         return False
@@ -228,7 +228,7 @@ class CloudIntegrationSystem:
         
         return status
     
-    def create_backup(self, backup_name: str = None) -> str:
+    def create_backup(self, backup_name: str = None) -> str:  # type: ignore
         """システムバックアップを作成"""
         if backup_name is None:
             backup_name = f"trinity_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -256,7 +256,7 @@ class CloudIntegrationSystem:
             return backup_path
         except Exception as e:
             logger.error(f"❌ バックアップ作成エラー: {e}")
-            return None
+            return None  # type: ignore
 
 def main():
     """メイン実行関数"""

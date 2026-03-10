@@ -10,7 +10,7 @@ _MISC = Path(__file__).parent.parent.parent / "scripts" / "misc"
 
 def _make_stubs(monkeypatch):
     paths_mod = types.ModuleType("_paths")
-    paths_mod.UNIFIED_API_PORT = 9502
+    paths_mod.UNIFIED_API_PORT = 9502  # type: ignore
     monkeypatch.setitem(sys.modules, "_paths", paths_mod)
     monkeypatch.setitem(sys.modules, "manaos_integrations._paths", paths_mod)
 
@@ -18,9 +18,9 @@ def _make_stubs(monkeypatch):
     flask_app = MagicMock()
     flask_app.run = MagicMock()
     unified_mod = types.ModuleType("unified_api_server")
-    unified_mod.app = flask_app
-    unified_mod.initialize_integrations = MagicMock()
-    unified_mod.integrations = {}
+    unified_mod.app = flask_app  # type: ignore
+    unified_mod.initialize_integrations = MagicMock()  # type: ignore
+    unified_mod.integrations = {}  # type: ignore
     monkeypatch.setitem(sys.modules, "unified_api_server", unified_mod)
 
     # workflow_automation
@@ -28,8 +28,8 @@ def _make_stubs(monkeypatch):
     wf_inst.workflows = {"generate_and_backup": MagicMock()}
     wf_inst.execute_workflow = MagicMock(return_value={"status": "ok"})
     wf_mod = types.ModuleType("workflow_automation")
-    wf_mod.WorkflowAutomation = MagicMock(return_value=wf_inst)
-    wf_mod.create_default_workflows = MagicMock()
+    wf_mod.WorkflowAutomation = MagicMock(return_value=wf_inst)  # type: ignore
+    wf_mod.create_default_workflows = MagicMock()  # type: ignore
     monkeypatch.setitem(sys.modules, "workflow_automation", wf_mod)
 
     # enhanced_civitai_downloader
@@ -37,13 +37,13 @@ def _make_stubs(monkeypatch):
     dl_inst.download_with_enhancements = MagicMock(return_value={"download_success": True})
     dl_inst.search_and_download = MagicMock(return_value=[])
     dl_mod = types.ModuleType("enhanced_civitai_downloader")
-    dl_mod.EnhancedCivitaiDownloader = MagicMock(return_value=dl_inst)
+    dl_mod.EnhancedCivitaiDownloader = MagicMock(return_value=dl_inst)  # type: ignore
     monkeypatch.setitem(sys.modules, "enhanced_civitai_downloader", dl_mod)
 
     # manaos_service_bridge
     sb_inst = MagicMock()
     sb_mod = types.ModuleType("manaos_service_bridge")
-    sb_mod.ManaOSServiceBridge = MagicMock(return_value=sb_inst)
+    sb_mod.ManaOSServiceBridge = MagicMock(return_value=sb_inst)  # type: ignore
     monkeypatch.setitem(sys.modules, "manaos_service_bridge", sb_mod)
 
     return unified_mod, wf_inst, dl_inst

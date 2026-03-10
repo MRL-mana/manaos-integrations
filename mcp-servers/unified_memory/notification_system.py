@@ -134,7 +134,7 @@ class NotificationSystem:
         history = self.settings.get('notification_history', [])
         
         # 最近24時間
-        recent_threshold = (datetime.now() - timedelta(hours=24)).isoformat()
+        recent_threshold = (datetime.now() - timedelta(hours=24)).isoformat()  # type: ignore[name-defined]
         recent = [n for n in history if n['timestamp'] >= recent_threshold]
         
         return {

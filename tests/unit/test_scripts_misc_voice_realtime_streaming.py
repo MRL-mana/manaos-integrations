@@ -11,8 +11,8 @@ _MISC = Path(__file__).parent.parent.parent / "scripts" / "misc"
 def _stub_deps(monkeypatch):
     # voice_integration stub
     voice_mod = types.ModuleType("voice_integration")
-    voice_mod.create_stt_engine = MagicMock(return_value=MagicMock())
-    voice_mod.create_tts_engine = MagicMock(return_value=MagicMock())
+    voice_mod.create_stt_engine = MagicMock(return_value=MagicMock())  # type: ignore
+    voice_mod.create_tts_engine = MagicMock(return_value=MagicMock())  # type: ignore
 
     class _FakeConvLoop:
         def __init__(self, **kwargs):
@@ -24,18 +24,18 @@ def _stub_deps(monkeypatch):
         async def start(self):
             pass
 
-    voice_mod.VoiceConversationLoop = _FakeConvLoop
+    voice_mod.VoiceConversationLoop = _FakeConvLoop  # type: ignore
     monkeypatch.setitem(sys.modules, "voice_integration", voice_mod)
 
     # unified_logging stub
     log_mod = types.ModuleType("unified_logging")
-    log_mod.get_service_logger = MagicMock(return_value=MagicMock())
+    log_mod.get_service_logger = MagicMock(return_value=MagicMock())  # type: ignore
     monkeypatch.setitem(sys.modules, "unified_logging", log_mod)
 
     # websockets stub
     ws_mod = types.ModuleType("websockets")
-    ws_mod.serve = MagicMock()
-    ws_mod.connect = MagicMock()
+    ws_mod.serve = MagicMock()  # type: ignore
+    ws_mod.connect = MagicMock()  # type: ignore
     monkeypatch.setitem(sys.modules, "websockets", ws_mod)
 
 

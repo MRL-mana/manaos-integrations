@@ -229,7 +229,7 @@ class ManaLearningAutomationSystem:
                 raise HTTPException(status_code=400, detail="Event type and outcome are required")
             
             # パターン抽出
-            pattern = self.extract_pattern(event_type, event_context)
+            pattern = self.extract_pattern(event_type, event_context)  # type: ignore
             
             # 学習データ保存
             conn = sqlite3.connect(self.db_path)
@@ -249,7 +249,7 @@ class ManaLearningAutomationSystem:
                 json.dumps(pattern),
                 event_type, json.dumps(pattern), 1 if outcome == "success" else 0,
                 event_type, json.dumps(pattern), 1 if outcome == "failure" else 0,
-                self.calculate_success_rate(event_type, pattern, outcome),
+                self.calculate_success_rate(event_type, pattern, outcome),  # type: ignore
                 datetime.now().isoformat(),
                 datetime.now().isoformat()
             ))
@@ -263,7 +263,7 @@ class ManaLearningAutomationSystem:
                 event_type,
                 json.dumps(event_context),
                 outcome,
-                json.dumps(self.generate_learning_insights(event_type, pattern, outcome)),
+                json.dumps(self.generate_learning_insights(event_type, pattern, outcome)),  # type: ignore
                 datetime.now().isoformat()
             ))
             
@@ -276,7 +276,7 @@ class ManaLearningAutomationSystem:
                 "event_type": event_type,
                 "pattern": pattern,
                 "outcome": outcome,
-                "learning_insights": self.generate_learning_insights(event_type, pattern, outcome),
+                "learning_insights": self.generate_learning_insights(event_type, pattern, outcome),  # type: ignore
                 "learned_at": datetime.now().isoformat()
             }
             

@@ -61,7 +61,7 @@ class ManaCommandCenter:
         print(banner)
         print(f"📅 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"👤 User: {os.getenv('USER', 'unknown')}")
-        print(f"🖥️  Host: {os.uname().nodename}")
+        print(f"🖥️  Host: {os.uname().nodename}")  # type: ignore[attr-defined]
         print("=" * 65)
     
     def print_menu(self):
@@ -119,7 +119,7 @@ class ManaCommandCenter:
                          '--browser.gatherUsageStats', 'false'],
                         stdout=log,
                         stderr=log,
-                        preexec_fn=os.setsid
+                        preexec_fn=os.setsid  # type: ignore[attr-defined]
                     )
                 else:
                     # CLIツール（対話モードではなくバックグラウンド実行）
@@ -159,7 +159,7 @@ class ManaCommandCenter:
         
         try:
             # プロセスグループ全体を終了
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)  # type: ignore[attr-defined]
             process.wait(timeout=10)
             print(f"✅ {dashboard['name']} stopped successfully")
             del self.processes[service_id]
@@ -167,7 +167,7 @@ class ManaCommandCenter:
         
         except subprocess.TimeoutExpired:
             print(f"⚠️  Force killing {dashboard['name']}...")
-            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            os.killpg(os.getpgid(process.pid), signal.SIGKILL)  # type: ignore[attr-defined]
             del self.processes[service_id]
             return True
         

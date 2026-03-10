@@ -270,7 +270,7 @@ def main():
         st.markdown("### 📱 Telegram Bot")
         if telegram_status['status'] == 'online':
             st.markdown("**Status:** 🟢 Online")
-            st.markdown(f"**Uptime:** {telegram_status.get('uptime', 0) / 3600:.1f}h")
+            st.markdown(f"**Uptime:** {telegram_status.get('uptime', 0) / 3600:.1f}h")  # type: ignore
         else:
             st.markdown("**Status:** 🔴 Offline")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -281,7 +281,7 @@ def main():
         st.markdown("### 💬 Slack")
         if slack_status['status'] == 'online':
             st.markdown("**Status:** 🟢 Online")
-            st.markdown(f"**Uptime:** {slack_status.get('uptime', 0) / 3600:.1f}h")
+            st.markdown(f"**Uptime:** {slack_status.get('uptime', 0) / 3600:.1f}h")  # type: ignore
         else:
             st.markdown("**Status:** 🔴 Offline")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -331,8 +331,8 @@ def main():
         if 'error' not in manaos_status:
             service_data = []
             for service_name, service_info in manaos_status.items():
-                status = service_info.get('status', 'unknown')
-                response_time = service_info.get('response_time', 0) * 1000  # ms
+                status = service_info.get('status', 'unknown')  # type: ignore
+                response_time = service_info.get('response_time', 0) * 1000  # ms  # type: ignore
                 
                 service_data.append({
                     'Service': service_name.capitalize(),
@@ -442,7 +442,7 @@ def main():
             
             # メモリ使用率バー
             fig_mem = go.Figure(go.Bar(
-                x=[memory_used, memory_total - memory_used],
+                x=[memory_used, memory_total - memory_used],  # type: ignore
                 y=['VRAM'],
                 orientation='h',
                 marker=dict(color=['#00f2fe', '#2c3e50'])

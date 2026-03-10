@@ -110,7 +110,7 @@ class AIIntegration:
             max_tokens=500
         )
         
-        return response.choices[0].message.content.strip()
+        return response.choices[0].message.content.strip()  # type: ignore[union-attr]
     
     def _chat_anthropic(self, message: str, context: Dict[str, Any]) -> str:
         """Anthropic Claudeでチャット"""
@@ -148,7 +148,7 @@ class AIIntegration:
             ]
         )
         
-        return response.content[0].text.strip()
+        return response.content[0].text.strip()  # type: ignore
     
     def _fallback_response(self, message: str, context: Dict[str, Any]) -> str:
         """フォールバック応答（AI APIが使えない場合）"""

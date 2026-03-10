@@ -13,7 +13,7 @@ from improve_existing_excel import improve_excel_file
 
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 def batch_improve():
     """一括改善"""

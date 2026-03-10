@@ -33,12 +33,12 @@ class YouTubeResearch:
             
             search_url = f"ytsearch{max_results}:{query}"
             
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
                 info = ydl.extract_info(search_url, download=False)
                 
                 videos = []
                 if 'entries' in info:
-                    for entry in info['entries']:
+                    for entry in info['entries']:  # type: ignore[misc]
                         videos.append({
                             "title": entry.get('title', ''),
                             "url": f"https://youtube.com/watch?v={entry.get('id', '')}",
@@ -155,7 +155,7 @@ class YouTubeResearch:
 ## おすすめポイント
 （特に参考になる内容）"""
 
-            response = self.claude_client.messages.create(
+            response = self.claude_client.messages.create(  # type: ignore[union-attr]
                 model="claude-3-5-sonnet-20241022",
                 max_tokens=2000,
                 messages=[{
@@ -164,7 +164,7 @@ class YouTubeResearch:
                 }]
             )
             
-            return response.content[0].text
+            return response.content[0].text  # type: ignore
         
         except Exception as e:
             return f"要約生成エラー: {str(e)}"
@@ -221,7 +221,7 @@ class YouTubeResearch:
 ## 総合評価
 （全体の評価と推奨）"""
 
-            response = self.claude_client.messages.create(
+            response = self.claude_client.messages.create(  # type: ignore[union-attr]
                 model="claude-3-5-sonnet-20241022",
                 max_tokens=2000,
                 messages=[{
@@ -230,7 +230,7 @@ class YouTubeResearch:
                 }]
             )
             
-            return response.content[0].text
+            return response.content[0].text  # type: ignore
         
         except Exception as e:
             return f"比較分析エラー: {str(e)}"

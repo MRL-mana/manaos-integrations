@@ -353,7 +353,7 @@ class Writer:
                 ])
                 
                 summaries_text = "\n".join([
-                    f"- {summary.content}" 
+                    f"- {summary.content}"  # type: ignore
                     for summary in research_results.summaries[:10]
                 ])
                 

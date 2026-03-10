@@ -36,7 +36,7 @@ class DimensionConfig:
 class AdvancedDimensionAnalysis:
     """高度な次元分析システム"""
     
-    def __init__(self, config: DimensionConfig = None):
+    def __init__(self, config: DimensionConfig = None):  # type: ignore
         self.config = config or DimensionConfig()
         self.logger = self._setup_logger()
         self.db_path = "advanced_dimension_analysis.db"
@@ -118,7 +118,7 @@ class AdvancedDimensionAnalysis:
             results['overall_assessment'] = self._calculate_overall_assessment(results)
             
             # データベースに保存
-            await self._save_analysis_results(results)
+            await self._save_analysis_results(results)  # type: ignore
             
             self.logger.info(f"次元分析完了: {analysis_type}")
             return results
@@ -153,7 +153,7 @@ class AdvancedDimensionAnalysis:
             }
             
             # データベースに保存
-            await self._save_quantum_state(result)
+            await self._save_quantum_state(result)  # type: ignore
             
             return result
             
@@ -252,7 +252,7 @@ class AdvancedDimensionAnalysis:
         energy_variance = np.var(energy_spectrum)
         stability = 1 / (energy_variance + 1e-10)
         
-        return min(stability / 1000, 1.0)  # 0-1の範囲に正規化
+        return min(stability / 1000, 1.0)  # 0-1の範囲に正規化  # type: ignore
     
     async def _reality_manipulation_analysis(self) -> Dict:
         """現実操作分析"""
@@ -294,7 +294,7 @@ class AdvancedDimensionAnalysis:
             }
             
             # データベースに保存
-            await self._save_reality_manipulation(result)
+            await self._save_reality_manipulation(result)  # type: ignore
             
             return result
             
@@ -660,8 +660,8 @@ class AdvancedDimensionAnalysis:
             
             return {
                 'overall_score': overall_score,
-                'stability_level': self._get_stability_level(overall_score),
-                'dimensional_coherence': self._calculate_dimensional_coherence(results),
+                'stability_level': self._get_stability_level(overall_score),  # type: ignore
+                'dimensional_coherence': self._calculate_dimensional_coherence(results),  # type: ignore
                 'evolution_potential': self._calculate_evolution_potential(),
-                'reality_manipulation_capacity': self._calculate_manipulation_capacity(results)
+                'reality_manipulation_capacity': self._calculate_manipulation_capacity(results)  # type: ignore
  

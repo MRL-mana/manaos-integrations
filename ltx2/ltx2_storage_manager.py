@@ -45,19 +45,19 @@ class LTX2StorageManager:
 
     @property
     def cache_dir(self) -> Path:
-        return self.root / "cache"
+        return self.root / "cache"  # type: ignore[operator]
 
     @property
     def outputs_dir(self) -> Path:
-        return self.root / "outputs"
+        return self.root / "outputs"  # type: ignore[operator]
 
     @property
     def temp_dir(self) -> Path:
-        return self.root / "temp"
+        return self.root / "temp"  # type: ignore[operator]
 
     def get_storage_stats(self) -> Dict[str, Any]:
         """統合テスト互換: total_size_gb を必ず含めて返す。"""
-        total_bytes = _dir_size_bytes(self.root)
+        total_bytes = _dir_size_bytes(self.root)  # type: ignore
         return {
             "root": str(self.root),
             "total_size_bytes": int(total_bytes),

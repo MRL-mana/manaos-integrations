@@ -151,13 +151,13 @@ def notify_slack(text: str) -> None:
     try:
         import urllib.parse
         payload = json.dumps({"text": f"[ManaOS Daily Report]\n{text[:500]}"}).encode("utf-8")
-        req = urllib.request.Request(
+        req = urllib.request.Request(  # type: ignore[attr-defined]
             "http://127.0.0.1:5590/notify",
             data=payload,
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=5):
+        with urllib.request.urlopen(req, timeout=5):  # type: ignore[attr-defined]
             pass
     except Exception:
         pass  # Slack 通知失敗は無視

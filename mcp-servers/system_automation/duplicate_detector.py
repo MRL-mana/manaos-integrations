@@ -35,7 +35,7 @@ class DuplicateDetector:
             logger.error(f"ハッシュ計算エラー {file_path}: {e}")
             return ""
     
-    def scan_duplicates(self, exclude_dirs: List[str] = None) -> Dict:
+    def scan_duplicates(self, exclude_dirs: List[str] = None) -> Dict:  # type: ignore
         """重複ファイルをスキャン"""
         logger.info("重複ファイルスキャン開始...")
         

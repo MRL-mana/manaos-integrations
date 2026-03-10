@@ -10,9 +10,9 @@ _MISC = Path(__file__).parent.parent.parent / "scripts" / "misc"
 
 def _make_unified_api_stub(status="not_started", n_integrations=0):
     mod = types.ModuleType("unified_api_server")
-    mod.integrations = {}
-    mod.initialization_status = {"status": status, "completed": [], "failed": [], "pending": []}
-    mod.initialize_integrations = MagicMock(
+    mod.integrations = {}  # type: ignore
+    mod.initialization_status = {"status": status, "completed": [], "failed": [], "pending": []}  # type: ignore
+    mod.initialize_integrations = MagicMock(  # type: ignore
         side_effect=lambda: mod.initialization_status.update({"status": "ready", "completed": ["x"]})
     )
     return mod

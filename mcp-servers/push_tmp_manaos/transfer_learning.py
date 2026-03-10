@@ -312,7 +312,7 @@ class TransferLearning:
 
         if not scores:
             return "coding"  # デフォルト
-        return max(scores, key=scores.get)
+        return max(scores, key=scores.get)  # type: ignore[call-arg]
 
     # ───────────────── 統計 ─────────────────
 

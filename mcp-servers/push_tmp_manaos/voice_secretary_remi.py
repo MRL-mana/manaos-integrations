@@ -157,7 +157,7 @@ def create_conversation_save_callback():
             try:
                 async with httpx.AsyncClient(timeout=10.0) as client:
                     response = await client.post(
-                        os.getenv("SLACK_WEBHOOK_URL"),
+                        os.getenv("SLACK_WEBHOOK_URL"),  # type: ignore
                         json={
                             "text": f"🎤 音声会話\n**ユーザー**: {conversation_entry['user']}\n**レミ**: {conversation_entry['assistant']}"
                         }

@@ -93,7 +93,7 @@ class StateEvent(BaseModel):
     data: Optional[Dict] = None
 
 
-def get_llm_response(user_input: str, context: Dict = None) -> str:
+def get_llm_response(user_input: str, context: Dict = None) -> str:  # type: ignore
     """
     LLMに投げてレミの返事を生成
     実際の実装ではOllamaやOpenAI APIを呼ぶ
@@ -170,7 +170,7 @@ async def speech_input(request: SpeechInput):
         conversation_state["silence_count"] = 0
         
         # LLMで返事を生成
-        remi_response = get_llm_response(request.text, request.context)
+        remi_response = get_llm_response(request.text, request.context)  # type: ignore
         
         # 会話履歴に追加
         conversation_history.append({

@@ -60,7 +60,7 @@ class ManaQualityOptimizer:
                     # 長すぎる関数をチェック
                     long_functions = []
                     for func in functions:
-                        func_lines = func.end_lineno - func.lineno
+                        func_lines = func.end_lineno - func.lineno  # type: ignore[operator]
                         if func_lines > self.config["max_function_lines"]:
                             long_functions.append({
                                 "name": func.name,

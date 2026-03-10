@@ -9,7 +9,7 @@ import io
 from pathlib import Path
 
 if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 COMFYUI_OUTPUT_DIR = Path("C:/ComfyUI/output")
 

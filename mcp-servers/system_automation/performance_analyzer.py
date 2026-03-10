@@ -140,7 +140,7 @@ class PerformanceAnalyzer:
         start_time = time.time()
         
         while time.time() - start_time < duration:
-            disk_usage = psutil.disk_usage(self.base_path)
+            disk_usage = psutil.disk_usage(self.base_path)  # type: ignore
             disk_io = psutil.disk_io_counters()
             
             samples.append({
@@ -148,8 +148,8 @@ class PerformanceAnalyzer:
                 "disk_percent": disk_usage.percent,
                 "disk_used_gb": round(disk_usage.used / (1024**3), 2),
                 "disk_free_gb": round(disk_usage.free / (1024**3), 2),
-                "read_bytes_mb": round(disk_io.read_bytes / (1024**2), 2),
-                "write_bytes_mb": round(disk_io.write_bytes / (1024**2), 2)
+                "read_bytes_mb": round(disk_io.read_bytes / (1024**2), 2),  # type: ignore[union-attr]
+                "write_bytes_mb": round(disk_io.write_bytes / (1024**2), 2)  # type: ignore[union-attr]
             })
             
             time.sleep(1)

@@ -28,9 +28,9 @@ for _name in ("langchain_integration", "comfyui_integration", "obsidian_integrat
 
 # speech_recognition / pyttsx3 → stub as unavailable so SPEECH_AVAILABLE=False
 if "speech_recognition" not in sys.modules:
-    sys.modules["speech_recognition"] = None  # triggers ImportError chain
+    sys.modules["speech_recognition"] = None  # triggers ImportError chain  # type: ignore
 if "pyttsx3" not in sys.modules:
-    sys.modules["pyttsx3"] = None
+    sys.modules["pyttsx3"] = None  # type: ignore
 
 import scripts.misc.multimodal_integration as _sut
 
@@ -80,20 +80,20 @@ class TestInit:
 class TestTextToImage:
     def test_returns_dict(self):
         obj = _make_obj()
-        obj.comfyui.generate_image.return_value = "prompt123"
+        obj.comfyui.generate_image.return_value = "prompt123"  # type: ignore
         result = obj.text_to_image("a cat")
         assert isinstance(result, dict)
 
     def test_success_when_comfyui_available_and_returns_id(self):
         obj = _make_obj()
-        obj.comfyui.generate_image.return_value = "pid_abc"
+        obj.comfyui.generate_image.return_value = "pid_abc"  # type: ignore
         result = obj.text_to_image("sunset")
         assert result["success"] is True
         assert result["prompt_id"] == "pid_abc"
 
     def test_includes_prompt_in_result(self):
         obj = _make_obj()
-        obj.comfyui.generate_image.return_value = "pid"
+        obj.comfyui.generate_image.return_value = "pid"  # type: ignore
         result = obj.text_to_image("rainbow")
         assert result["prompt"] == "rainbow"
 
@@ -105,7 +105,7 @@ class TestTextToImage:
 
     def test_not_success_when_generate_returns_none(self):
         obj = _make_obj()
-        obj.comfyui.generate_image.return_value = None
+        obj.comfyui.generate_image.return_value = None  # type: ignore
         result = obj.text_to_image("test")
         assert result["success"] is False
 
@@ -130,7 +130,7 @@ class TestImageToText:
         img = tmp_path / "test.png"
         img.write_bytes(b"\x89PNG fake")
         obj = _make_obj()
-        obj.langchain.chat.return_value = "A beautiful landscape"
+        obj.langchain.chat.return_value = "A beautiful landscape"  # type: ignore
         result = obj.image_to_text(str(img))
         assert result["success"] is True
         assert result["description"] == "A beautiful landscape"
@@ -139,10 +139,10 @@ class TestImageToText:
         img = tmp_path / "test.png"
         img.write_bytes(b"data")
         obj = _make_obj()
-        obj.langchain.chat.return_value = "Answer"
+        obj.langchain.chat.return_value = "Answer"  # type: ignore
         result = obj.image_to_text(str(img), question="What is this?")
         assert result["success"] is True
-        call_args = obj.langchain.chat.call_args[0][0]
+        call_args = obj.langchain.chat.call_args[0][0]  # type: ignore
         assert "What is this?" in call_args
 
 
@@ -194,14 +194,14 @@ class TestSpeechToText:
 class TestMultimodalWorkflow:
     def test_text_to_text_passthrough(self):
         obj = _make_obj()
-        obj.langchain.chat.return_value = "processed"
+        obj.langchain.chat.return_value = "processed"  # type: ignore
         result = obj.multimodal_workflow("text", "hello", "text")
         assert result["success"] is True
         assert "text" in result
 
     def test_text_to_image_workflow(self):
         obj = _make_obj()
-        obj.comfyui.generate_image.return_value = "pid"
+        obj.comfyui.generate_image.return_value = "pid"  # type: ignore
         result = obj.multimodal_workflow("text", "a cat", "image")
         assert result["success"] is True
 
@@ -225,7 +225,7 @@ class TestMultimodalWorkflow:
 class TestCreateMultimodalNote:
     def test_success_when_obsidian_available(self):
         obj = _make_obj()
-        obj.obsidian.create_note.return_value = Path("/vault/note.md")
+        obj.obsidian.create_note.return_value = Path("/vault/note.md")  # type: ignore[union-attr]
         result = obj.create_multimodal_note("Title", "Content")
         assert result["success"] is True
         assert "note_path" in result
@@ -238,18 +238,18 @@ class TestCreateMultimodalNote:
 
     def test_includes_image_links(self):
         obj = _make_obj()
-        obj.obsidian.create_note.return_value = Path("/vault/note.md")
+        obj.obsidian.create_note.return_value = Path("/vault/note.md")  # type: ignore[union-attr]
         result = obj.create_multimodal_note(
             "Title", "Body", image_paths=["img1.png", "img2.jpg"]
         )
         assert result["success"] is True
         # Verify create_note was called with content containing image markdown
-        call_content = obj.obsidian.create_note.call_args[1]["content"]
+        call_content = obj.obsidian.create_note.call_args[1]["content"]  # type: ignore[union-attr]
         assert "img1.png" in call_content
         assert "img2.jpg" in call_content
 
     def test_note_creation_failure_returns_error(self):
         obj = _make_obj()
-        obj.obsidian.create_note.return_value = None
+        obj.obsidian.create_note.return_value = None  # type: ignore[union-attr]
         result = obj.create_multimodal_note("Title", "Content")
         assert result["success"] is False

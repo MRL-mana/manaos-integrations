@@ -48,7 +48,7 @@ def _get_rl() -> Optional["RLAnythingOrchestrator"]:
     if os.environ.get("RL_ANYTHING", "").strip().lower() not in ("1", "on", "true", "yes"):
         return None
     if _rl_instance is None:
-        _rl_instance = RLAnythingOrchestrator()
+        _rl_instance = RLAnythingOrchestrator()  # type: ignore[possibly-unbound]
     return _rl_instance
 
 
@@ -226,7 +226,7 @@ def log_turn_user(
                 _theme_by_thread[thread_id] = theme_id
         except Exception:
             pass
-    append_conversation_log(thread_id, turn_id, "user", content_preview, request_id=request_id)
+    append_conversation_log(thread_id, turn_id, "user", content_preview, request_id=request_id)  # type: ignore[possibly-unbound]
 
 
 def log_turn_assistant(
@@ -254,18 +254,18 @@ def log_turn_assistant(
     """
     if not PHASE1_AVAILABLE:
         return
-    params = FIXED_INFERENCE_PARAMS
+    params = FIXED_INFERENCE_PARAMS  # type: ignore[possibly-unbound]
     t = params["temp"] if temp is None else temp
     p = params["top_p"] if top_p is None else top_p
     m = params["max_tokens"] if max_tokens is None else max_tokens
-    append_conversation_log(
+    append_conversation_log(  # type: ignore[possibly-unbound]
         thread_id, turn_id, "assistant", assistant_preview, request_id=request_id
     )
     status = (
         reflection_status if reflection_status is not None else ("on" if reflection_on else "off")
     )
     if reflection_on and satisfaction is not None and reason is not None:
-        log_reflection_on(
+        log_reflection_on(  # type: ignore[possibly-unbound]
             thread_id=thread_id,
             turn_id=turn_id,
             user_msg_preview=user_msg_preview,
@@ -286,7 +286,7 @@ def log_turn_assistant(
         # RLAnything: satisfaction スコアをブリッジ
         _rl_bridge_on_turn(thread_id, turn_id, satisfaction, reason, reflection_on=True)
     else:
-        log_reflection_off(
+        log_reflection_off(  # type: ignore[possibly-unbound]
             thread_id=thread_id,
             turn_id=turn_id,
             user_msg_preview=user_msg_preview,

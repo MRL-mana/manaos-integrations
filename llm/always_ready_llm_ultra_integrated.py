@@ -97,28 +97,28 @@ class UltraIntegratedLLMClient(IntegratedLLMClient):
         self.github = None
         
         if enable_image_generation and COMFYUI_AVAILABLE:
-            self.comfyui = ComfyUIIntegration()
+            self.comfyui = ComfyUIIntegration()  # type: ignore[possibly-unbound]
         
         if enable_model_search and CIVITAI_AVAILABLE:
-            self.civitai = CivitAIIntegration()
+            self.civitai = CivitAIIntegration()  # type: ignore[possibly-unbound]
         
         if enable_notification_hub and NOTIFICATION_HUB_AVAILABLE:
             try:
-                self.notification_hub = NotificationHubEnhanced()
+                self.notification_hub = NotificationHubEnhanced()  # type: ignore[possibly-unbound]
             except Exception:
                 try:
-                    self.notification_hub = NotificationHub()
+                    self.notification_hub = NotificationHub()  # type: ignore[possibly-unbound]
                 except Exception:
                     pass
         
         if enable_file_organization and FILE_SECRETARY_AVAILABLE:
-            self.file_secretary = FileSecretaryAPI()
+            self.file_secretary = FileSecretaryAPI()  # type: ignore[possibly-unbound]
         
         if enable_image_generation and IMAGE_GENERATION_AVAILABLE:
-            self.image_generation = ImageGenerationIntegration()
+            self.image_generation = ImageGenerationIntegration()  # type: ignore[possibly-unbound]
         
         if GITHUB_AVAILABLE:
-            self.github = GitHubIntegration()
+            self.github = GitHubIntegration()  # type: ignore[possibly-unbound]
     
     def chat_with_image_generation(
         self,

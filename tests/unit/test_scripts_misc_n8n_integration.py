@@ -39,7 +39,7 @@ sys.modules.setdefault("config_validator_enhanced", _cve)
 
 # _paths
 _paths_mod = sys.modules.get("_paths") or MagicMock()
-_paths_mod.N8N_PORT = 5678
+_paths_mod.N8N_PORT = 5678  # type: ignore
 sys.modules["_paths"] = _paths_mod
 
 # requests
@@ -64,7 +64,7 @@ def _make_n8n(api_key: str = "test-key") -> N8NIntegration:
     obj.error_handler = MagicMock(
         handle_exception=MagicMock(return_value=_error_obj)
     )
-    obj.timeout_config = {"api_call": 10}
+    obj.timeout_config = {"api_call": 10}  # type: ignore
     obj.base_url = DEFAULT_N8N_BASE_URL
     obj.api_key = api_key
     # Provide a fake requests session
@@ -85,7 +85,7 @@ class TestN8NInit:
 
     def test_no_session_when_no_key(self):
         # Simulate construction path without api_key
-        obj = _make_n8n(api_key=None)
+        obj = _make_n8n(api_key=None)  # type: ignore
         obj.session = None
         assert obj.session is None
 
@@ -98,7 +98,7 @@ class TestN8NCheckAvailability:
         assert result is True
 
     def test_not_available_without_key(self):
-        obj = _make_n8n(api_key=None)
+        obj = _make_n8n(api_key=None)  # type: ignore
         result = obj._check_availability_internal()
         assert result is False
 
@@ -122,7 +122,7 @@ class TestN8NListWorkflows:
         fake_resp = MagicMock()
         fake_resp.status_code = 200
         fake_resp.json.return_value = [{"id": "wf1"}, {"id": "wf2"}]
-        obj.session.get.return_value = fake_resp
+        obj.session.get.return_value = fake_resp  # type: ignore[union-attr]
         with patch.object(obj, "is_available", return_value=True):
             result = obj.list_workflows()
         assert result == [{"id": "wf1"}, {"id": "wf2"}]
@@ -131,17 +131,17 @@ class TestN8NListWorkflows:
         obj = _make_n8n()
         fake_resp = MagicMock()
         fake_resp.status_code = 404
-        obj.session.get.return_value = fake_resp
+        obj.session.get.return_value = fake_resp  # type: ignore[union-attr]
         with patch.object(obj, "is_available", return_value=True):
             result = obj.list_workflows()
         assert result == []
 
     def test_returns_empty_on_exception(self):
         obj = _make_n8n()
-        obj.session.get.side_effect = ConnectionError("refused")
+        obj.session.get.side_effect = ConnectionError("refused")  # type: ignore[union-attr]
         with patch.object(obj, "is_available", return_value=True):
             result = obj.list_workflows()
-        obj.session.get.side_effect = None
+        obj.session.get.side_effect = None  # type: ignore[union-attr]
         assert result == []
 
 
@@ -158,7 +158,7 @@ class TestN8NExecuteWorkflow:
         fake_resp = MagicMock()
         fake_resp.status_code = 200
         fake_resp.json.return_value = {"status": "success"}
-        obj.session.post.return_value = fake_resp
+        obj.session.post.return_value = fake_resp  # type: ignore[union-attr]
         with patch.object(obj, "is_available", return_value=True):
             result = obj.execute_workflow("wf1", data={"key": "val"})
         assert result == {"status": "success"}
@@ -167,17 +167,17 @@ class TestN8NExecuteWorkflow:
         obj = _make_n8n()
         fake_resp = MagicMock()
         fake_resp.status_code = 500
-        obj.session.post.return_value = fake_resp
+        obj.session.post.return_value = fake_resp  # type: ignore[union-attr]
         with patch.object(obj, "is_available", return_value=True):
             result = obj.execute_workflow("wf1")
         assert result is None
 
     def test_returns_none_on_exception(self):
         obj = _make_n8n()
-        obj.session.post.side_effect = RuntimeError("timeout")
+        obj.session.post.side_effect = RuntimeError("timeout")  # type: ignore[union-attr]
         with patch.object(obj, "is_available", return_value=True):
             result = obj.execute_workflow("wf1")
-        obj.session.post.side_effect = None
+        obj.session.post.side_effect = None  # type: ignore[union-attr]
         assert result is None
 
 
@@ -194,7 +194,7 @@ class TestN8NGetWorkflow:
         fake_resp = MagicMock()
         fake_resp.status_code = 200
         fake_resp.json.return_value = {"id": "wf1", "name": "Test"}
-        obj.session.get.return_value = fake_resp
+        obj.session.get.return_value = fake_resp  # type: ignore[union-attr]
         with patch.object(obj, "is_available", return_value=True):
             result = obj.get_workflow("wf1")
         assert result == {"id": "wf1", "name": "Test"}
@@ -203,7 +203,7 @@ class TestN8NGetWorkflow:
         obj = _make_n8n()
         fake_resp = MagicMock()
         fake_resp.status_code = 404
-        obj.session.get.return_value = fake_resp
+        obj.session.get.return_value = fake_resp  # type: ignore[union-attr]
         with patch.object(obj, "is_available", return_value=True):
             result = obj.get_workflow("wf1")
         assert result is None
@@ -215,7 +215,7 @@ class TestN8NActivateDeactivate:
         obj = _make_n8n()
         fake_resp = MagicMock()
         fake_resp.status_code = 200
-        obj.session.post.return_value = fake_resp
+        obj.session.post.return_value = fake_resp  # type: ignore[union-attr]
         with patch.object(obj, "is_available", return_value=True):
             result = obj.activate_workflow("wf1")
         assert result is True
@@ -224,7 +224,7 @@ class TestN8NActivateDeactivate:
         obj = _make_n8n()
         fake_resp = MagicMock()
         fake_resp.status_code = 400
-        obj.session.post.return_value = fake_resp
+        obj.session.post.return_value = fake_resp  # type: ignore[union-attr]
         with patch.object(obj, "is_available", return_value=True):
             result = obj.activate_workflow("wf1")
         assert result is False
@@ -239,15 +239,15 @@ class TestN8NActivateDeactivate:
         obj = _make_n8n()
         fake_resp = MagicMock()
         fake_resp.status_code = 200
-        obj.session.post.return_value = fake_resp
+        obj.session.post.return_value = fake_resp  # type: ignore[union-attr]
         with patch.object(obj, "is_available", return_value=True):
             result = obj.deactivate_workflow("wf1")
         assert result is True
 
     def test_deactivate_returns_false_on_exception(self):
         obj = _make_n8n()
-        obj.session.post.side_effect = ConnectionError("fail")
+        obj.session.post.side_effect = ConnectionError("fail")  # type: ignore[union-attr]
         with patch.object(obj, "is_available", return_value=True):
             result = obj.deactivate_workflow("wf1")
-        obj.session.post.side_effect = None
+        obj.session.post.side_effect = None  # type: ignore[union-attr]
         assert result is False

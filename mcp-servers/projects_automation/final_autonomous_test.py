@@ -2,7 +2,7 @@
 """完全自律タスクテスト - Computer Use Orchestratorを使用"""
 import sys
 sys.path.insert(0, '/root')
-from manaos_computer_use import ComputerUseOrchestrator
+from manaos_computer_use import ComputerUseOrchestrator  # type: ignore[attr-defined]
 
 print("🚀 ManaOS Computer Use - 完全自律タスクテスト")
 print("=" * 60)

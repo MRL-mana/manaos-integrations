@@ -99,7 +99,7 @@ class NippoPDFToExcelGDriveOCR:
             # 既存フォルダを検索
             query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
             
-            results = self.service.files().list(
+            results = self.service.files().list(  # type: ignore[union-attr]
                 q=query,
                 spaces='drive',
                 fields='files(id, name)'
@@ -116,7 +116,7 @@ class NippoPDFToExcelGDriveOCR:
                 'mimeType': 'application/vnd.google-apps.folder'
             }
             
-            folder = self.service.files().create(
+            folder = self.service.files().create(  # type: ignore[union-attr]
                 body=file_metadata,
                 fields='id'
             ).execute()
@@ -145,7 +145,7 @@ class NippoPDFToExcelGDriveOCR:
             )
             
             # OCR付きアップロード
-            file = self.service.files().create(
+            file = self.service.files().create(  # type: ignore[union-attr]
                 body=file_metadata,
                 media_body=media,
                 fields='id, name',
@@ -168,7 +168,7 @@ class NippoPDFToExcelGDriveOCR:
         """Google DocsをテキストとしてエクスポートR"""
         try:
             # プレーンテキストでエクスポート
-            request = self.service.files().export_media(
+            request = self.service.files().export_media(  # type: ignore[union-attr]
                 fileId=file_id,
                 mimeType='text/plain'
             )
@@ -192,7 +192,7 @@ class NippoPDFToExcelGDriveOCR:
     def delete_temp_file(self, file_id: str):
         """一時ファイルを削除"""
         try:
-            self.service.files().delete(fileId=file_id).execute()
+            self.service.files().delete(fileId=file_id).execute()  # type: ignore[union-attr]
             logger.info(f"🗑️  一時ファイル削除: {file_id}")
         except Exception as e:
             logger.warning(f"一時ファイル削除エラー: {e}")
@@ -293,12 +293,12 @@ class NippoPDFToExcelGDriveOCR:
         try:
             wb = openpyxl.Workbook()
             ws = wb.active
-            ws.title = '日報データ'
+            ws.title = '日報データ'  # type: ignore[union-attr]
             
             # データを書き込み
             for r_idx, row in enumerate(df.itertuples(index=False), start=1):
                 for c_idx, value in enumerate(row, start=1):
-                    cell = ws.cell(row=r_idx, column=c_idx, value=value)
+                    cell = ws.cell(row=r_idx, column=c_idx, value=value)  # type: ignore[union-attr]
                     cell.font = Font(name='メイリオ', size=11)
                     cell.alignment = Alignment(wrap_text=True, vertical='top')
                     cell.border = Border(
@@ -317,9 +317,9 @@ class NippoPDFToExcelGDriveOCR:
                         cell.fill = PatternFill(start_color='F2F2F2', end_color='F2F2F2', fill_type='solid')
             
             # 列幅自動調整
-            for column in ws.columns:
+            for column in ws.columns:  # type: ignore[union-attr]
                 max_length = 0
-                column_letter = column[0].column_letter
+                column_letter = column[0].column_letter  # type: ignore
                 for cell in column:
                     try:
                         if cell.value:
@@ -327,7 +327,7 @@ class NippoPDFToExcelGDriveOCR:
                     except Exception:
                         pass
                 adjusted_width = min(max_length + 2, 50)
-                ws.column_dimensions[column_letter].width = adjusted_width
+                ws.column_dimensions[column_letter].width = adjusted_width  # type: ignore[union-attr]
             
             # サマリーシート
             summary_ws = wb.create_sheet('変換情報', 0)
@@ -371,14 +371,14 @@ class NippoPDFToExcelGDriveOCR:
     
     def convert_pdf(self, pdf_path: str):
         """PDFをExcelに変換（メイン処理）"""
-        pdf_path = Path(pdf_path)
+        pdf_path = Path(pdf_path)  # type: ignore
         
-        if not pdf_path.exists():
+        if not pdf_path.exists():  # type: ignore
             logger.error(f"PDFファイルが見つかりません: {pdf_path}")
             return {'success': False, 'error': 'File not found'}
         
         print(f"\n{'='*60}")
-        print(f"📄 変換開始: {pdf_path.name}")
+        print(f"📄 変換開始: {pdf_path.name}")  # type: ignore
         print(f"{'='*60}")
         
         file_id = None
@@ -411,10 +411,10 @@ class NippoPDFToExcelGDriveOCR:
             
             # 4. Excel作成
             print("📝 STEP 4: Excel作成...")
-            output_filename = f"{pdf_path.stem}_gdrive_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            output_filename = f"{pdf_path.stem}_gdrive_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"  # type: ignore
             output_path = self.output_dir / output_filename
             
-            success = self.create_excel(df, str(output_path), pdf_path.name)
+            success = self.create_excel(df, str(output_path), pdf_path.name)  # type: ignore
             
             if success:
                 print("\n✅ 変換完了！")
@@ -440,16 +440,16 @@ class NippoPDFToExcelGDriveOCR:
                 print("🗑️  一時ファイル削除中...")
                 self.delete_temp_file(file_id)
     
-    def batch_convert(self, pdf_dir: str, limit: int = None):
+    def batch_convert(self, pdf_dir: str, limit: int = None):  # type: ignore
         """フォルダ内の全PDFを一括変換"""
-        pdf_dir = Path(pdf_dir)
+        pdf_dir = Path(pdf_dir)  # type: ignore
         
-        if not pdf_dir.exists():
+        if not pdf_dir.exists():  # type: ignore
             logger.error(f"フォルダが見つかりません: {pdf_dir}")
             return
         
-        pdf_files = list(pdf_dir.glob('*.pdf'))
-        pdf_files.extend(list(pdf_dir.glob('*.PDF')))
+        pdf_files = list(pdf_dir.glob('*.pdf'))  # type: ignore
+        pdf_files.extend(list(pdf_dir.glob('*.PDF')))  # type: ignore
         
         if not pdf_files:
             logger.error("PDFファイルが見つかりません")
@@ -510,7 +510,7 @@ def main():
         converter.convert_pdf(target)
     elif target_path.is_dir():
         limit = int(sys.argv[2]) if len(sys.argv) > 2 else None
-        converter.batch_convert(target, limit=limit)
+        converter.batch_convert(target, limit=limit)  # type: ignore
     else:
         print(f"❌ パスが見つかりません: {target}")
         sys.exit(1)

@@ -83,13 +83,13 @@ def _fake_module(version: str = "9.9.9") -> ModuleType:
 class TestCheckPythonPackages:
     def setup_method(self):
         self.ta = ToolAnalysis()
-        # Remove any MagicMock'd matplotlib stubs left by other test files
-        # to avoid ValueError: matplotlib.__spec__ is not set
+        # Remove any MagicMock'd stubs left by other test files
+        # to avoid ValueError: <pkg>.__spec__ is not set (Python 3.14 strict check)
         self._saved = {}
-        for pkg in ("matplotlib", "matplotlib.pyplot"):
+        for pkg in ("matplotlib", "matplotlib.pyplot", "torch", "diffusers", "transformers"):
             if pkg in sys.modules:
                 m = sys.modules[pkg]
-                if not isinstance(m, ModuleType):
+                if not isinstance(m, ModuleType) or m.__spec__ is None:
                     self._saved[pkg] = sys.modules.pop(pkg)
 
     def teardown_method(self):

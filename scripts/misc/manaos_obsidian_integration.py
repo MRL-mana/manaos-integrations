@@ -64,13 +64,13 @@ class ObsidianNotebookLMAntigravityIntegration:
         
         # Obsidian統合
         if OBSIDIAN_AVAILABLE:
-            self.obsidian = ObsidianIntegration(str(self.vault_path))
+            self.obsidian = ObsidianIntegration(str(self.vault_path))  # type: ignore[possibly-unbound]
         else:
             self.obsidian = None
         
         # 統一記憶システム
         if MEMORY_AVAILABLE:
-            self.memory = UnifiedMemory()
+            self.memory = UnifiedMemory()  # type: ignore[possibly-unbound]
         else:
             self.memory = None
     

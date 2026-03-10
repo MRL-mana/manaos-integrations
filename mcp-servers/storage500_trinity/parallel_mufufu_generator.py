@@ -152,7 +152,7 @@ class ParallelMufufuGenerator:
                 return []
             
             # バッチ生成
-            images = generator.current_pipeline(
+            images = generator.current_pipeline(  # type: ignore[operator]
                 prompt=prompt,
                 negative_prompt=negative_prompt,
                 num_images_per_prompt=batch_size,

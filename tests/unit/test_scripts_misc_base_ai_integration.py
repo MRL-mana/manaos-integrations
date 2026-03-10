@@ -16,7 +16,7 @@ from scripts.misc.base_ai_integration import BaseAIIntegration, BaseAIResponse  
 
 # ── helpers ────────────────────────────────────────────────────────────────
 def make_mock_response(content: str = "hello", model: str = "base-ai",
-                       usage: dict = None) -> MagicMock:
+                       usage: dict = None) -> MagicMock:  # type: ignore
     resp = MagicMock()
     resp.json.return_value = {
         "choices": [{"message": {"content": content}}],

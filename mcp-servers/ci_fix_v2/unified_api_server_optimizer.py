@@ -40,7 +40,7 @@ error_handler = ManaOSErrorHandler("UnifiedAPIServerOptimizer")
 cache_system = None
 if CACHE_AVAILABLE:
     try:
-        cache_system = get_unified_cache()
+        cache_system = get_unified_cache()  # type: ignore[operator]
         logger.info("✅ キャッシュシステム初期化完了")
     except Exception as e:
         logger.warning(f"⚠️ キャッシュシステム初期化エラー: {e}")
@@ -49,7 +49,7 @@ if CACHE_AVAILABLE:
 performance_optimizer = None
 if PERFORMANCE_OPTIMIZER_AVAILABLE:
     try:
-        performance_optimizer = PerformanceOptimizer()
+        performance_optimizer = PerformanceOptimizer()  # type: ignore[operator]
         logger.info("✅ パフォーマンス最適化システム初期化完了")
     except Exception as e:
         logger.warning(f"⚠️ パフォーマンス最適化システム初期化エラー: {e}")
@@ -132,7 +132,7 @@ def measure_performance(func: Callable) -> Callable:
                     metrics = {
                         "function": func.__name__,
                         "execution_time": execution_time,
-                        "success": success,
+                        "success": success,  # type: ignore[possibly-unbound]
                         "timestamp": datetime.now().isoformat()
                     }
                     # メトリクスを記録（実装はパフォーマンス最適化システムに依存）
@@ -169,7 +169,7 @@ def retry_on_failure(max_retries: int = 3, delay: float = 1.0):
                     else:
                         logger.error(f"{func.__name__}のリトライ失敗: {e}")
             
-            raise last_exception
+            raise last_exception  # type: ignore
         
         return wrapper
     return decorator

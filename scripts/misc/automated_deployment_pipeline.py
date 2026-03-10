@@ -278,7 +278,7 @@ class AutomatedDeploymentPipeline:
         target_devices = target_devices or self.config.get("target_devices", [])
         
         # ブランチをチェックアウト
-        if not self._checkout_branch(branch):
+        if not self._checkout_branch(branch):  # type: ignore
             raise Exception(f"ブランチのチェックアウトに失敗: {branch}")
         
         # コミットハッシュを取得
@@ -292,9 +292,9 @@ class AutomatedDeploymentPipeline:
         
         deployment = Deployment(
             deployment_id=deployment_id,
-            branch=branch,
+            branch=branch,  # type: ignore
             commit_hash=commit_hash,
-            target_devices=target_devices,
+            target_devices=target_devices,  # type: ignore
             stages=stages,
             status="pending"
         )

@@ -343,8 +343,8 @@ def openai_chat_completions():
             if key in data:
                 generation[key] = data.get(key)
         if generation:
-            context = dict(context)
-            context["_generation"] = generation
+            context = dict(context)  # type: ignore[call-arg]
+            context["_generation"] = generation  # type: ignore
 
         preferences: Dict[str, Any] = {}
         if requested_model in AUTO_MODEL_ALIASES and AUTO_MODEL_DEFAULT:
@@ -354,13 +354,13 @@ def openai_chat_completions():
 
         if "temperature" in data:
             try:
-                temperature = float(data.get("temperature"))
+                temperature = float(data.get("temperature"))  # type: ignore
                 preferences["prefer_speed"] = temperature <= 0.4
                 preferences["prefer_quality"] = temperature <= 0.2
             except (TypeError, ValueError):
                 pass
 
-        result = router.route(prompt, context, preferences)
+        result = router.route(prompt, context, preferences)  # type: ignore
         if not result.get("success"):
             error_message = result.get("error") or "LLMルーティングに失敗しました"
             return jsonify({"error": {"message": error_message, "type": "server_error"}}), 500
@@ -368,7 +368,7 @@ def openai_chat_completions():
         content = result.get("response") or ""
         if "max_tokens" in data:
             try:
-                requested_max_tokens = max(1, min(4096, int(data.get("max_tokens"))))
+                requested_max_tokens = max(1, min(4096, int(data.get("max_tokens"))))  # type: ignore
                 max_chars = requested_max_tokens * 6
                 if len(content) > max_chars:
                     content = content[:max_chars].rstrip()

@@ -32,7 +32,7 @@ def test_notification_hub():
     print("通知ハブ テスト")
     print("=" * 60)
     
-    hub = NotificationHub()
+    hub = NotificationHub()  # type: ignore[operator]
     
     # 1. 通常通知
     print("\n[1] 通常通知（normal）")

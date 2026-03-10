@@ -193,8 +193,8 @@ device_health_monitor = None
 device_orchestrator = None
 if DEVICE_MANAGEMENT_AVAILABLE:
     try:
-        device_health_monitor = DeviceHealthMonitor()
-        device_orchestrator = DeviceOrchestrator()
+        device_health_monitor = DeviceHealthMonitor()  # type: ignore[operator]
+        device_orchestrator = DeviceOrchestrator()  # type: ignore[operator]
         logger.info("✅ 統合デバイス管理システム初期化完了")
     except Exception as e:
         logger.warning(f"⚠️ 統合デバイス管理システム初期化エラー: {e}")
@@ -232,7 +232,7 @@ def execute_task():
         ):
             record_and_maybe_alert(body, is_portal_timeout=False)
         return jsonify(body), status_code
-    except httpx.TimeoutError:
+    except httpx.TimeoutError:  # type: ignore[attr-defined]
         if ORCHESTRATOR_METRICS_AVAILABLE and record_and_maybe_alert:
             record_and_maybe_alert({}, is_portal_timeout=True)
         error = error_handler.handle_exception(
@@ -273,7 +273,7 @@ def ask_orchestrator():
         ):
             record_and_maybe_alert(body, is_portal_timeout=False)
         return jsonify(body), status_code
-    except httpx.TimeoutError:
+    except httpx.TimeoutError:  # type: ignore[attr-defined]
         if ORCHESTRATOR_METRICS_AVAILABLE and record_and_maybe_alert:
             record_and_maybe_alert({}, is_portal_timeout=True)
         error = error_handler.handle_exception(

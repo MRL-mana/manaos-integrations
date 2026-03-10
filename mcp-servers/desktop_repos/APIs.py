@@ -65,7 +65,7 @@ def microsoft_process_image(path):
 
 def google_process_image(path):
     """Detects text in the file."""
-    from google.cloud import vision
+    from google.cloud import vision  # type: ignore[attr-defined]
     client = vision.ImageAnnotatorClient()
 
     with open(path, 'rb') as image_file:
@@ -107,9 +107,9 @@ def abbyy_process_image(path):
         if task.DownloadUrl is not None:
             result = abbyy.download_result(task)
     text = ''
-    xml_doc = xml.dom.minidom.parseString(result.text)
+    xml_doc = xml.dom.minidom.parseString(result.text)  # type: ignore[possibly-unbound]
     for Char in xml_doc.getElementsByTagName('charParams'):
-        text += str(Char.firstChild.nodeValue)
+        text += str(Char.firstChild.nodeValue)  # type: ignore[union-attr]
     return text
 
 

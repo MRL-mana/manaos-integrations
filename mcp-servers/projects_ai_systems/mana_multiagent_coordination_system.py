@@ -354,7 +354,7 @@ class ManaMultiAgentCoordinationSystem:
                 raise HTTPException(status_code=400, detail="Task ID and type are required")
             
             # 適切なエージェントを選択
-            assigned_agents = await self.select_agents_for_task(task_type, task_data_content)
+            assigned_agents = await self.select_agents_for_task(task_type, task_data_content)  # type: ignore
             
             # 協調タスク作成
             conn = sqlite3.connect(self.db_path)

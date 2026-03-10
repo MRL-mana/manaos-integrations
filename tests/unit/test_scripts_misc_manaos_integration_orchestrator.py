@@ -28,7 +28,7 @@ _ml.get_logger.return_value = MagicMock()
 _ml.get_service_logger.return_value = MagicMock()
 
 _paths_mod = sys.modules["_paths"]
-_paths_mod.N8N_PORT = 5678
+_paths_mod.N8N_PORT = 5678  # type: ignore
 
 # ── SUT import ─────────────────────────────────────────────────────────
 import scripts.misc.manaos_integration_orchestrator as _sut

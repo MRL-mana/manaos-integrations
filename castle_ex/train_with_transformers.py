@@ -13,7 +13,7 @@ from typing import Dict, List, Optional
 
 if sys.platform == 'win32':
     try:
-        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
     except (AttributeError, ValueError, TypeError):
         pass
 
@@ -90,10 +90,10 @@ def check_environment():
     print(f"Python: {sys.version.split()[0]}")
     
     if TRANSFORMERS_AVAILABLE:
-        print(f"PyTorch: {torch.__version__}")
+        print(f"PyTorch: {torch.__version__}")  # type: ignore[possibly-unbound]
         print(f"Transformers: 利用可能")
-        if torch.cuda.is_available():
-            print(f"CUDA: 利用可能 ({torch.cuda.get_device_name(0)})")
+        if torch.cuda.is_available():  # type: ignore[possibly-unbound]
+            print(f"CUDA: 利用可能 ({torch.cuda.get_device_name(0)})")  # type: ignore[possibly-unbound]
         else:
             print("CUDA: 利用不可（CPUモード）")
     else:

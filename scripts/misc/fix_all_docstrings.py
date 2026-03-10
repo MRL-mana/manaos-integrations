@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import sys
-sys.stdout.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 import re
 
 with open('create_system3_status.py', 'r', encoding='utf-8', errors='replace') as f:

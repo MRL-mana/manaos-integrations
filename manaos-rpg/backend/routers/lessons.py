@@ -53,7 +53,7 @@ async def lessons_stats() -> Dict[str, Any]:
             "detail": "lessons_recorder not found",
         }
     try:
-        recorder = get_lessons_recorder()
+        recorder = get_lessons_recorder()  # type: ignore[possibly-unbound]
         return {"status": "ok", **recorder.stats()}
     except Exception as e:
         _log.warning("lessons_stats error: %s", e)
@@ -70,7 +70,7 @@ async def lessons_search(
     if not _HAS_LESSONS:
         return {"status": "unavailable", "items": []}
     try:
-        recorder = get_lessons_recorder()
+        recorder = get_lessons_recorder()  # type: ignore[possibly-unbound]
         results = recorder.search_lessons(
             query=q or "", category=category, limit=limit
         )
@@ -100,7 +100,7 @@ async def agents_stats() -> Dict[str, Any]:
     if not _HAS_AGENTS:
         return {"status": "unavailable", "detail": "agent_tracker not found"}
     try:
-        tracker = get_agent_tracker()
+        tracker = get_agent_tracker()  # type: ignore[possibly-unbound]
         return {"status": "ok", **tracker.stats()}
     except Exception as e:
         _log.warning("agents_stats error: %s", e)
@@ -113,7 +113,7 @@ async def agents_list() -> Dict[str, Any]:
     if not _HAS_AGENTS:
         return {"status": "unavailable", "items": []}
     try:
-        tracker = get_agent_tracker()
+        tracker = get_agent_tracker()  # type: ignore[possibly-unbound]
         all_agents: List[Any] = tracker.list_all_ranks()
         items = [
             {
@@ -137,7 +137,7 @@ async def agents_parking() -> Dict[str, Any]:
     if not _HAS_AGENTS:
         return {"status": "unavailable", "items": []}
     try:
-        tracker = get_agent_tracker()
+        tracker = get_agent_tracker()  # type: ignore[possibly-unbound]
         candidates: List[Any] = tracker.get_parking_candidates()
         items = [
             {
@@ -165,7 +165,7 @@ async def agents_audit(
     if not _HAS_AGENTS:
         return {"status": "unavailable", "items": []}
     try:
-        tracker = get_agent_tracker()
+        tracker = get_agent_tracker()  # type: ignore[possibly-unbound]
         target = (
             Path(agents_dir) if agents_dir
             else REPO_ROOT / ".claude" / "agents"

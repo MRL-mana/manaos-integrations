@@ -20,7 +20,7 @@ DEFAULT_LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", f"http://127.0.0.1:{LM_STUDIO
 
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 def wait_for_model(model_name: str, check_interval: int = 30, max_wait: int = 3600):
     """

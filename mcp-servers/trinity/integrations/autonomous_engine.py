@@ -101,7 +101,7 @@ class AutonomousEngine:
         now = datetime.now()
         if now.hour == 9 and now.minute < 10:
             if not self.last_actions.get("task_planning") or \
-               (datetime.now() - self.last_actions["task_planning"]).days >= 1:
+               (datetime.now() - self.last_actions["task_planning"]).days >= 1:  # type: ignore[operator]
                 priorities.append(("daily_planning", 0.95))
         
         # 優先度最高のアクションを選択
@@ -136,7 +136,7 @@ class AutonomousEngine:
         if handler:
             try:
                 handler()
-                self.last_actions[action] = datetime.now()
+                self.last_actions[action] = datetime.now()  # type: ignore
                 logger.info(f"✅ Action completed: {action}")
                 return True
             except Exception as e:

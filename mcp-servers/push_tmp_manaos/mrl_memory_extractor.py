@@ -432,4 +432,4 @@ if __name__ == "__main__":
     results = retriever.retrieve("決定", limit=5)
     print(f"\n検索結果: {len(results)}件")
     for result in results:
-        print(f"  - {result.get('key')}: {result.get('value')[:50]}")
+        print(f"  - {result.get('key')}: {result.get('value')[:50]}")  # type: ignore[index]

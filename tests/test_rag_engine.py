@@ -17,9 +17,9 @@ from unittest.mock import patch, MagicMock, call
 for mod_name in ("manaos_logger", "manaos_error_handler", "_paths"):
     if mod_name not in sys.modules:
         m = types.ModuleType(mod_name)
-        m.get_service_logger = lambda name="": __import__("logging").getLogger(name)
-        m.get_logger = lambda name="": __import__("logging").getLogger(name)
-        m.OLLAMA_PORT = 11434
+        m.get_service_logger = lambda name="": __import__("logging").getLogger(name)  # type: ignore
+        m.get_logger = lambda name="": __import__("logging").getLogger(name)  # type: ignore
+        m.OLLAMA_PORT = 11434  # type: ignore
         sys.modules[mod_name] = m
 
 from scripts.misc.rag_engine import RAGEngine, SearchResult, RAGChunk, get_rag_engine

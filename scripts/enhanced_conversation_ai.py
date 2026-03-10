@@ -255,7 +255,7 @@ class EnhancedConversationAI:
             X_intent = [item[0] for item in intent_data]
             y_intent = [item[1] for item in intent_data]
             
-            X_intent_vec = self.intent_vectorizer.fit_transform(X_intent)
+            X_intent_vec = self.intent_vectorizer.fit_transform(X_intent)  # type: ignore[union-attr]
             self.intent_model = MultinomialNB(alpha=0.1)
             self.intent_model.fit(X_intent_vec, y_intent)
         
@@ -264,7 +264,7 @@ class EnhancedConversationAI:
             X_sentiment = [item[0] for item in sentiment_data]
             y_sentiment = [item[1] for item in sentiment_data]
             
-            X_sentiment_vec = self.sentiment_vectorizer.fit_transform(X_sentiment)
+            X_sentiment_vec = self.sentiment_vectorizer.fit_transform(X_sentiment)  # type: ignore[union-attr]
             self.sentiment_model = MultinomialNB(alpha=0.1)
             self.sentiment_model.fit(X_sentiment_vec, y_sentiment)
     

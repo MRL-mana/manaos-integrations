@@ -60,7 +60,7 @@ class MemoryPriorityResolver:
         self.quarantine = None
         if QUARANTINE_AVAILABLE:
             try:
-                self.quarantine = MemoryQuarantine()
+                self.quarantine = MemoryQuarantine()  # type: ignore[possibly-unbound]
             except Exception as e:
                 logger.warning(f"Quarantine初期化エラー: {e}")
         
@@ -312,13 +312,13 @@ class MemoryPriorityResolver:
                                 "entry1": {
                                     "source": result1.get("source"),
                                     "key": result1.get("key"),
-                                    "value": result1.get("value")[:50],
+                                    "value": result1.get("value")[:50],  # type: ignore[index]
                                     "confidence": result1.get("confidence")
                                 },
                                 "entry2": {
                                     "source": result2.get("source"),
                                     "key": result2.get("key"),
-                                    "value": result2.get("value")[:50],
+                                    "value": result2.get("value")[:50],  # type: ignore[index]
                                     "confidence": result2.get("confidence")
                                 }
                             })
@@ -330,13 +330,13 @@ class MemoryPriorityResolver:
                                     "entry1": {
                                         "source": result1.get("source"),
                                         "key": result1.get("key"),
-                                        "value": result1.get("value")[:50],
+                                        "value": result1.get("value")[:50],  # type: ignore[index]
                                         "confidence": result1.get("confidence")
                                     },
                                     "entry2": {
                                         "source": result2.get("source"),
                                         "key": result2.get("key"),
-                                        "value": result2.get("value")[:50],
+                                        "value": result2.get("value")[:50],  # type: ignore[index]
                                         "confidence": result2.get("confidence")
                                     }
                                 })

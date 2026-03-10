@@ -295,7 +295,7 @@ class StreamingRAG:
             
             # ストリーミング生成
             full_response = ""
-            for chunk in self.streaming_llm.stream_chat(model=model, messages=messages):
+            for chunk in self.streaming_llm.stream_chat(model=model, messages=messages):  # type: ignore
                 if "error" in chunk:
                     yield {
                         "type": "error",

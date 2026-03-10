@@ -118,7 +118,7 @@ class ManaSpecVectorSearch:
         query_vector = self.model.encode([query])
         
         # 検索
-        distances, indices = self.index.search(query_vector.astype('float32'), top_k)
+        distances, indices = self.index.search(query_vector.astype('float32'), top_k)  # type: ignore[union-attr]
         
         results = []
         for i, (dist, idx) in enumerate(zip(distances[0], indices[0])):

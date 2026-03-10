@@ -89,7 +89,7 @@ def test_file_secretary_command():
     """File Secretaryコマンドテスト"""
     print("\n=== File Secretaryコマンドテスト ===")
     try:
-        from slack_integration import execute_command
+        from slack_integration import execute_command  # type: ignore[attr-defined]
         
         result = execute_command(
             text="Inboxどう？",

@@ -226,7 +226,7 @@ class UltimateDashboard:
         elif 'ultimate' in command:
             return 'Ultimate統合システム'
         else:
-            return None
+            return None  # type: ignore
     
     def _calculate_uptime(self, pid: str) -> str:
         """プロセスの稼働時間を計算"""

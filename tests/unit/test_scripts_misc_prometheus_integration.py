@@ -11,7 +11,7 @@ import pytest
 
 # unified_logging
 _ul = types.ModuleType("unified_logging")
-_ul.get_service_logger = MagicMock(return_value=MagicMock())
+_ul.get_service_logger = MagicMock(return_value=MagicMock())  # type: ignore
 sys.modules["unified_logging"] = _ul
 
 # prometheus_client — Counter / Histogram / Gauge / generate_latest / CONTENT_TYPE_LATEST
@@ -20,11 +20,11 @@ _hist_inst = MagicMock()
 _gauge_inst = MagicMock()
 
 _pc_mod = types.ModuleType("prometheus_client")
-_pc_mod.Counter = MagicMock(return_value=_counter_inst)
-_pc_mod.Histogram = MagicMock(return_value=_hist_inst)
-_pc_mod.Gauge = MagicMock(return_value=_gauge_inst)
-_pc_mod.generate_latest = MagicMock(return_value=b"# HELP metrics\n")
-_pc_mod.CONTENT_TYPE_LATEST = "text/plain; version=0.0.4"
+_pc_mod.Counter = MagicMock(return_value=_counter_inst)  # type: ignore
+_pc_mod.Histogram = MagicMock(return_value=_hist_inst)  # type: ignore
+_pc_mod.Gauge = MagicMock(return_value=_gauge_inst)  # type: ignore
+_pc_mod.generate_latest = MagicMock(return_value=b"# HELP metrics\n")  # type: ignore
+_pc_mod.CONTENT_TYPE_LATEST = "text/plain; version=0.0.4"  # type: ignore
 sys.modules["prometheus_client"] = _pc_mod
 
 import scripts.misc.prometheus_integration as pi

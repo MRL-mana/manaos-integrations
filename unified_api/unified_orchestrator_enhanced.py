@@ -160,7 +160,7 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
         
         logger.info("✅ Unified Orchestrator Enhanced初期化完了")
     
-    async def execute(
+    async def execute(  # type: ignore
         self,
         text: str,
         mode: str = "auto",
@@ -214,8 +214,8 @@ class UnifiedOrchestratorEnhanced(UnifiedOrchestrator):
                 logger.warning(f"予測取得エラー: {e}")
         
         # 基本オーケストレーターで実行
-        result = await super().execute(
-            text=text,
+        result = await super().execute(  # type: ignore[call-arg]
+            text=text,  # type: ignore[call-arg]
             mode=mode,
             auto_evaluate=auto_evaluate,
             save_to_memory=save_to_memory

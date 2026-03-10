@@ -90,12 +90,12 @@ def _start_health_server():
 
 # ── MCP サーバー ────────────────────────────────────
 if MCP_AVAILABLE:
-    server = Server("learning-system")
+    server = Server("learning-system")  # type: ignore[possibly-unbound]
 
     @server.list_tools()
     async def list_tools() -> list[Tool]:
         return [
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="learning_record",
                 description="使用パターンを記録。ユーザーの行動・選択・結果を学習システムに保存。",
                 inputSchema={
@@ -108,22 +108,22 @@ if MCP_AVAILABLE:
                     "required": ["action"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="learning_analyze",
                 description="記録されたパターンを分析。使用傾向・頻度・改善点を表示。",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="learning_preferences",
                 description="学習された好み・プリファレンスを取得。",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="learning_optimizations",
                 description="学習データに基づく最適化提案を取得。",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="learning_apply_preferences",
                 description="学習された好みをアクションに適用して最適化パラメータを取得。",
                 inputSchema={
@@ -135,7 +135,7 @@ if MCP_AVAILABLE:
                     "required": ["action"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="learning_status",
                 description="学習システムのステータスを取得。",
                 inputSchema={"type": "object", "properties": {}},
@@ -167,9 +167,9 @@ if MCP_AVAILABLE:
             else:
                 result = {"error": f"不明なツール: {name}"}
 
-            return [TextContent(type="text", text=json.dumps(result, indent=2, ensure_ascii=False))]
+            return [TextContent(type="text", text=json.dumps(result, indent=2, ensure_ascii=False))]  # type: ignore[possibly-unbound]
         except Exception as e:
-            return [TextContent(type="text", text=json.dumps({"error": str(e)}, ensure_ascii=False))]
+            return [TextContent(type="text", text=json.dumps({"error": str(e)}, ensure_ascii=False))]  # type: ignore[possibly-unbound]
 
 
 async def main():
@@ -179,7 +179,7 @@ async def main():
 
     threading.Thread(target=_start_health_server, daemon=True).start()
 
-    async with stdio_server() as (read_stream, write_stream):
+    async with stdio_server() as (read_stream, write_stream):  # type: ignore[possibly-unbound]
         await server.run(read_stream, write_stream, server.create_initialization_options())
 
 

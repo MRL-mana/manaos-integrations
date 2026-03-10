@@ -260,8 +260,8 @@ def rate_limit(limit_type: str = 'default') -> Callable:
                 identifier = hashlib.sha256(g.api_key.encode()).hexdigest()[:16]
             
             limiter = RateLimiter()
-            if not limiter.is_allowed(identifier, limit_type):
-                remaining = limiter.get_remaining(identifier, limit_type)
+            if not limiter.is_allowed(identifier, limit_type):  # type: ignore
+                remaining = limiter.get_remaining(identifier, limit_type)  # type: ignore
                 return jsonify({
                     "error": "レート制限を超えました",
                     "retry_after": 60
@@ -270,7 +270,7 @@ def rate_limit(limit_type: str = 'default') -> Callable:
             response = f(*args, **kwargs)
             
             # レスポンスヘッダーに残りリクエスト数を追加
-            remaining = limiter.get_remaining(identifier, limit_type)
+            remaining = limiter.get_remaining(identifier, limit_type)  # type: ignore
             if isinstance(response, tuple):
                 response[0].headers['X-RateLimit-Remaining'] = str(remaining)
             else:
@@ -326,7 +326,7 @@ class SecurityConfig:
             def force_https():
                 if not request.is_secure:
                     url = request.url.replace('http://', 'https://', 1)
-                    return redirect(url, code=301)
+                    return redirect(url, code=301)  # type: ignore[name-defined]
         
         # CORS設定
         from flask_cors import CORS

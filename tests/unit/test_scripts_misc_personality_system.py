@@ -32,7 +32,7 @@ _cv.ConfigValidator = MagicMock(return_value=_cv_inst)
 sys.modules.setdefault("manaos_config_validator", _cv)
 
 sys.modules.setdefault("flask_cors", MagicMock())
-sys.modules.setdefault("yaml", None)  # yaml が None の場合のテスト
+sys.modules.setdefault("yaml", None)  # yaml が None の場合のテスト  # type: ignore
 
 import pytest
 from scripts.misc.personality_system import (

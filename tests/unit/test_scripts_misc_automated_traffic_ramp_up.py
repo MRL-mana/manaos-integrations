@@ -116,7 +116,7 @@ class TestCheckServiceHealth:
                    return_value=mock_client):
             result = await sys_obj.check_service_health()
 
-        assert all(v["status"] == "UP" for v in result.values())
+        assert all(v["status"] == "UP" for v in result.values())  # type: ignore[index]
 
     @pytest.mark.asyncio
     async def test_returns_down_on_exception(self, tmp_path, monkeypatch):
@@ -132,7 +132,7 @@ class TestCheckServiceHealth:
                    return_value=mock_client):
             result = await sys_obj.check_service_health()
 
-        assert all(v["status"] == "DOWN" for v in result.values())
+        assert all(v["status"] == "DOWN" for v in result.values())  # type: ignore[index]
 
 
 # ── TestEvaluatePhaseMetrics ───────────────────────────────────────────────

@@ -10,7 +10,7 @@ _MISC = Path(__file__).parent.parent.parent / "scripts" / "misc"
 
 def _make_paths_stub(port=1234):
     mod = types.ModuleType("_paths")
-    mod.LM_STUDIO_PORT = port
+    mod.LM_STUDIO_PORT = port  # type: ignore
     return mod
 
 

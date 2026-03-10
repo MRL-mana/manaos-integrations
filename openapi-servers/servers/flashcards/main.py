@@ -41,7 +41,7 @@ class FlashcardSet(BaseModel):
 # -------------------------------
 
 
-def flashcard_html(title: str, cards: List[dict], description: str = None) -> str:
+def flashcard_html(title: str, cards: List[dict], description: str = None) -> str:  # type: ignore
     cards_json = json.dumps(cards)
     desc_html = f"<p class='description'>{description}</p>" if description else ""
 
@@ -241,7 +241,7 @@ def display_flashcards(flashcard_set: FlashcardSet):
     html_content = flashcard_html(
         title=flashcard_set.title,
         cards=cards_dict,
-        description=flashcard_set.description,
+        description=flashcard_set.description,  # type: ignore
     )
 
     headers = {"Content-Disposition": "inline"}

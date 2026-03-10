@@ -287,9 +287,9 @@ class TestGetLastError:
     def test_returns_stored_last_error_on_exception(self, mock_get):
         mock_get.side_effect = RuntimeError("fail")
         gen = SSOTGenerator()
-        gen.last_error = {"service_name": "TestSvc", "error_message": "crash"}
+        gen.last_error = {"service_name": "TestSvc", "error_message": "crash"}  # type: ignore
         result = gen.get_last_error()
-        assert result["service_name"] == "TestSvc"
+        assert result["service_name"] == "TestSvc"  # type: ignore[index]
 
 
 # ── TestGenerateSSOT ──────────────────────────────────────────────────────────

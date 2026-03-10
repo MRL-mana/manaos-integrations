@@ -13,7 +13,7 @@ from pathlib import Path
 #     import io
 #     if hasattr(sys.stdout, 'buffer'):
 #         try:
-#             sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+#             sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 #         except (AttributeError, ValueError, OSError):
 #             pass
 
@@ -57,7 +57,7 @@ os.environ.pop('HTTPS_PROXY', None)
 os.environ.pop('http_proxy', None)
 os.environ.pop('https_proxy', None)
 
-def search_and_download(query: str, model_type: str = "LoRA", download_dir: Path = None):
+def search_and_download(query: str, model_type: str = "LoRA", download_dir: Path = None):  # type: ignore
     """
     CivitAIで検索してダウンロード
 
@@ -71,9 +71,9 @@ def search_and_download(query: str, model_type: str = "LoRA", download_dir: Path
         return None
 
     # プロキシを無効化
-    civitai = CivitAIIntegration()
+    civitai = CivitAIIntegration()  # type: ignore[possibly-unbound]
     # セッションのプロキシ設定を無効化
-    civitai.session.proxies = {
+    civitai.session.proxies = {  # type: ignore
         'http': None,
         'https': None
     }
@@ -125,7 +125,7 @@ def search_and_download(query: str, model_type: str = "LoRA", download_dir: Path
                 download_path = None
 
             result = civitai.download_model(
-                model_id=model_id,
+                model_id=model_id,  # type: ignore
                 download_path=str(download_path) if download_path else None
             )
 
@@ -152,7 +152,7 @@ def main():
         print("   💡 civitai_integration.py が必要です")
         return
 
-    civitai = CivitAIIntegration()
+    civitai = CivitAIIntegration()  # type: ignore[possibly-unbound]
     if not civitai.is_available():
         print("❌ CivitAI APIキーが設定されていません")
         print("   💡 環境変数 CIVITAI_API_KEY を設定してください")

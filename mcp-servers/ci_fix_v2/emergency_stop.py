@@ -234,7 +234,7 @@ class EmergencyStop:
             pid = proc.get("Id")
             name = proc.get("ProcessName", "python")
             
-            if self.stop_process(pid, name):
+            if self.stop_process(pid, name):  # type: ignore
                 success_count += 1
                 self.stopped_processes.append(proc)
         

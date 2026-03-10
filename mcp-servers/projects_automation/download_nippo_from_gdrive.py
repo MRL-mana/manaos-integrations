@@ -80,7 +80,7 @@ class GoogleDriveDownloader:
             
             query = f"'{folder_id}' in parents and mimeType='application/pdf' and trashed=false"
             
-            results = self.service.files().list(
+            results = self.service.files().list(  # type: ignore[union-attr]
                 q=query,
                 pageSize=100,
                 fields="files(id, name, size, modifiedTime)",
@@ -107,7 +107,7 @@ class GoogleDriveDownloader:
                 logger.info(f"   ⏭️  スキップ（既存）: {file_name}")
                 return {'success': True, 'path': str(output_path), 'skipped': True}
             
-            request = self.service.files().get_media(fileId=file_id)
+            request = self.service.files().get_media(fileId=file_id)  # type: ignore[union-attr]
             
             fh = io.BytesIO()
             downloader = MediaIoBaseDownload(fh, request)
@@ -136,8 +136,8 @@ class GoogleDriveDownloader:
     
     def download_all_pdfs(self, folder_id: str, output_dir: str):
         """フォルダ内の全PDFをダウンロード"""
-        output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
+        output_dir = Path(output_dir)  # type: ignore
+        output_dir.mkdir(parents=True, exist_ok=True)  # type: ignore
         
         print("\n" + "="*60)
         print("📥 Google Driveから日報PDFダウンロード")
@@ -167,7 +167,7 @@ class GoogleDriveDownloader:
             result = self.download_file(
                 file_id=file_info['id'],
                 file_name=file_info['name'],
-                output_dir=output_dir
+                output_dir=output_dir  # type: ignore
             )
             
             if result['success']:

@@ -25,14 +25,19 @@ class _FakeModelTypeItem:
 
 class _FakeModelType:
     ULTRA_LIGHT = _FakeModelTypeItem("ultra_light")
+    LIGHT = _FakeModelTypeItem("light")
+    MEDIUM = _FakeModelTypeItem("medium")
+    HEAVY = _FakeModelTypeItem("heavy")
+    REASONING = _FakeModelTypeItem("reasoning")
 
 class _FakeTaskType:
     CONVERSATION = "conversation"
     LIGHTWEIGHT_CONVERSATION = "lightweight_conversation"
 
-_arc_mod.AlwaysReadyLLMClient = MagicMock()
-_arc_mod.ModelType = _FakeModelType
-_arc_mod.TaskType = _FakeTaskType
+_arc_mod.AlwaysReadyLLMClient = MagicMock()  # type: ignore
+_arc_mod.ModelType = _FakeModelType  # type: ignore
+_arc_mod.TaskType = _FakeTaskType  # type: ignore
+_arc_mod.LLMResponse = MagicMock()  # type: ignore  # テストセッション汚染防止
 sys.modules["always_ready_llm_client"] = _arc_mod
 
 # ── load module under test ─────────────────────────────────────────

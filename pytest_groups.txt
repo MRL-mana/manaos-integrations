@@ -1,0 +1,18 @@
+Total FAILED: 48
+   16x tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py
+   13x tests/unit/test_scripts_misc_learning_system_api.py
+    7x tests/unit/test_trinity_tool_analysis.py
+    2x tests/test_api_auth_rate_limit_state.py
+    2x tests/test_mrl_memory_mcp_server.py
+    1x tests/e2e/test_ultra_integrated.py
+    1x tests/integration/test_hf_manaos_integration.py
+    1x tests/integration/test_mrl_manaos_integration.py
+    1x tests/test_lessons_recorder.py
+    1x tests/unit/test_scripts_misc_local_remi_api.py
+    1x tests/unit/test_scripts_misc_manaos_security.py
+    1x tests/unit/test_scripts_misc_orchestrator_operational_metrics.py
+    1x tests/unit/test_scripts_misc_stable_diffusion_generator.py
+
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_mock_installed_package_via_sys_modules
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_mock_uninstalled_package_via_sys_modules
+48 failed, 6034 passed, 19 skipped, 447 warnings in 1698.06s (0:28:18)

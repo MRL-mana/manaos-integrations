@@ -202,7 +202,7 @@ class SecurityAudit:
             return 0
 
 
-def main():
+def main():  # type: ignore[misc]
     """Main entry point"""
     audit = SecurityAudit()
     

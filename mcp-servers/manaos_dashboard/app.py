@@ -34,7 +34,7 @@ try:
     SYSTEM_INTEGRATION_API_AVAILABLE = True
 except ImportError:
     SYSTEM_INTEGRATION_API_AVAILABLE = False
-    logger.warning("System integration API not available")
+    logger.warning("System integration API not available")  # type: ignore[name-defined]
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ socketio = SocketIO(app, cors_allowed_origins=[
     "http://127.0.0.1:3000",
     "http://163.44.120.49:3000",
     "http://100.93.120.33:3000"
-], async_mode=os.environ.get("FLASK_SOCKETIO_ASYNC_MODE", "threading"))
+], async_mode=os.environ.get("FLASK_SOCKETIO_ASYNC_MODE", "threading"))  # type: ignore
 
 # レート制限
 limiter = Limiter(
@@ -500,7 +500,7 @@ def get_system_metrics():
         'uptime': round(datetime.now().timestamp() - psutil.boot_time(), 0)
     }
 
-@retry_on_failure(max_attempts=2, delay=0.5)
+@retry_on_failure(max_attempts=2, delay=0.5)  # type: ignore
 def get_gmail_summary():
     """Gmail新着サマリーを取得（リトライ機能付き）"""
     try:
@@ -519,7 +519,7 @@ def get_gmail_summary():
 
     return {'count': 0, 'latest': [], 'available': False}
 
-@retry_on_failure(max_attempts=2, delay=0.5)
+@retry_on_failure(max_attempts=2, delay=0.5)  # type: ignore
 def get_calendar_summary():
     """カレンダー予定サマリーを取得（リトライ機能付き）"""
     try:
@@ -719,7 +719,7 @@ def take_screenshot():
 
             # Google Driveへアップロード
             if GOOGLE_DRIVE_ENABLED and os.path.exists(screenshot_path):
-                drive_result = drive_helper.upload_screenshot(screenshot_path)
+                drive_result = drive_helper.upload_screenshot(screenshot_path)  # type: ignore[possibly-unbound]
                 if drive_result:
                     result['drive_link'] = drive_result.get('link')
                     result['message'] += ' (Google Driveに保存)'
@@ -767,7 +767,7 @@ def stop_recording():
 
             # Google Driveへアップロード
             if GOOGLE_DRIVE_ENABLED and recording_path and os.path.exists(recording_path):
-                drive_result = drive_helper.upload_recording(recording_path)
+                drive_result = drive_helper.upload_recording(recording_path)  # type: ignore[possibly-unbound]
                 if drive_result:
                     result['drive_link'] = drive_result.get('link')
                     result['message'] += ' (Google Driveに保存)'
@@ -1065,7 +1065,7 @@ def create_gmail_summary_action():
     if analysis.get('available'):
         summary = f"📧 Gmail要約: {analysis['total_messages']}件のメールを分析しました。"
         if analysis['top_senders']:
-            top = analysis['top_senders'][0]
+            top = analysis['top_senders'][0]  # type: ignore[index]
             summary += f" 最も多い送信者: {top['sender']} ({top['count']}件)"
 
         send_notification('automation', '📧 Gmail要約', summary, analysis)
@@ -1086,7 +1086,7 @@ def generate_weekly_report_action():
         report += f"予定: {calendar_analysis['total_events']}件\n"
     if system_usage:
         metrics = system_usage['current_metrics']
-        report += f"平均CPU: {metrics['cpu']}%, メモリ: {metrics['memory']}%\n"
+        report += f"平均CPU: {metrics['cpu']}%, メモリ: {metrics['memory']}%\n"  # type: ignore
 
     send_notification('automation', '📊 週次レポート', report, {
         'gmail': gmail_analysis,
@@ -1247,7 +1247,7 @@ def get_system_integration_status():
         if not SYSTEM_INTEGRATION_API_AVAILABLE:
             return jsonify({'error': 'System integration API not available'}), 503
 
-        status = get_all_status()
+        status = get_all_status()  # type: ignore[possibly-unbound]
         return jsonify(status)
     except Exception as e:
         logger.error(f"System integration status error: {e}")
@@ -1261,7 +1261,7 @@ def get_system_integration_systems():
         if not SYSTEM_INTEGRATION_API_AVAILABLE:
             return jsonify({'error': 'System integration API not available'}), 503
 
-        status = get_system_status()
+        status = get_system_status()  # type: ignore[possibly-unbound]
         return jsonify(status)
     except Exception as e:
         logger.error(f"System status error: {e}")
@@ -1275,7 +1275,7 @@ def get_system_integration_connections():
         if not SYSTEM_INTEGRATION_API_AVAILABLE:
             return jsonify({'error': 'System integration API not available'}), 503
 
-        status = get_integration_status()
+        status = get_integration_status()  # type: ignore[possibly-unbound]
         return jsonify(status)
     except Exception as e:
         logger.error(f"Integration status error: {e}")
@@ -1289,7 +1289,7 @@ def get_system_integration_sync():
         if not SYSTEM_INTEGRATION_API_AVAILABLE:
             return jsonify({'error': 'System integration API not available'}), 503
 
-        status = get_sync_status()
+        status = get_sync_status()  # type: ignore[possibly-unbound]
         return jsonify(status)
     except Exception as e:
         logger.error(f"Sync status error: {e}")
@@ -1303,7 +1303,7 @@ def get_system_integration_metrics():
         if not SYSTEM_INTEGRATION_API_AVAILABLE:
             return jsonify({'error': 'System integration API not available'}), 503
 
-        metrics = get_metrics()
+        metrics = get_metrics()  # type: ignore[possibly-unbound]
         return jsonify(metrics)
     except Exception as e:
         logger.error(f"Metrics error: {e}")

@@ -119,7 +119,7 @@ class WorkAnalytics:
         if not hour_totals:
             return "データなし"
         
-        peak_hour = max(hour_totals, key=hour_totals.get)
+        peak_hour = max(hour_totals, key=hour_totals.get)  # type: ignore[call-arg]
         return peak_hour
     
     def _generate_suggestions(self, activities):

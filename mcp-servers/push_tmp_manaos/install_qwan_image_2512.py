@@ -164,7 +164,7 @@ def main():
                 os.makedirs(target_path, exist_ok=True)
                 
                 # ファイル名からディレクトリ部分を除去
-                base_file_name = os.path.basename(file_name)
+                base_file_name = os.path.basename(file_name)  # type: ignore[call-arg]
                 output_path = os.path.join(target_path, base_file_name)
                 if os.path.exists(output_path):
                     print(f"   ⚠️  ファイルが既に存在します: {output_path}")
@@ -404,8 +404,8 @@ def main():
     model_details = None
     
     # CivitAI統合で取得を試行
-    if civitai.is_available():
-        model_details = civitai.get_model_details(model_id)
+    if civitai.is_available():  # type: ignore[union-attr]
+        model_details = civitai.get_model_details(model_id)  # type: ignore[union-attr]
     
     # APIキーなしで直接APIを呼び出す
     if not model_details:
@@ -476,9 +476,9 @@ def main():
     downloaded_path = None
     
     # APIキーがある場合はCivitAI統合を使用
-    if civitai.is_available():
-        downloaded_path = civitai.download_model(
-            model_id=model_id,
+    if civitai.is_available():  # type: ignore[union-attr]
+        downloaded_path = civitai.download_model(  # type: ignore[union-attr]
+            model_id=model_id,  # type: ignore
             version_id=version_id,
             download_path=output_path
         )

@@ -31,7 +31,7 @@ class GitHubAutomation:
         """
         self.github = None
         if GITHUB_INTEGRATION_AVAILABLE:
-            self.github = GitHubIntegration(token)
+            self.github = GitHubIntegration(token)  # type: ignore[possibly-unbound]
             if not self.github.is_available():
                 self.github = None
         

@@ -49,13 +49,13 @@ class EnhancedPDFExcelConverter:
                         pages_info.append(current_page)
                     current_page = {}
                 elif line.startswith('PageMediaNumber:'):
-                    current_page['page_number'] = int(line.split(':')[1].strip())
+                    current_page['page_number'] = int(line.split(':')[1].strip())  # type: ignore[index]
                 elif line.startswith('PageMediaDimensions:'):
                     dims = line.split(':')[1].strip().split()
-                    current_page['width'] = float(dims[0])
-                    current_page['height'] = float(dims[1])
+                    current_page['width'] = float(dims[0])  # type: ignore[index]
+                    current_page['height'] = float(dims[1])  # type: ignore[index]
                 elif line.startswith('PageMediaRotation:'):
-                    current_page['rotation'] = int(line.split(':')[1].strip())
+                    current_page['rotation'] = int(line.split(':')[1].strip())  # type: ignore[index]
             
             if current_page:
                 pages_info.append(current_page)
@@ -189,7 +189,7 @@ class EnhancedPDFExcelConverter:
         
         # 最も頻繁に現れる列数を選択
         if column_counts:
-            optimal_columns = max(column_counts, key=column_counts.get)
+            optimal_columns = max(column_counts, key=column_counts.get)  # type: ignore[call-arg]
         else:
             optimal_columns = self.config["min_columns"]
         
@@ -223,7 +223,7 @@ class EnhancedPDFExcelConverter:
                 text = page.get_text()
                 
                 # テキストが空の場合はOCRを使用
-                if not text.strip():
+                if not text.strip():  # type: ignore
                     print(f"ページ {page_num + 1}: テキストが空のためOCRを使用")
                     text = self.extract_text_with_ocr(page)
                 
@@ -239,7 +239,7 @@ class EnhancedPDFExcelConverter:
                     "char_count": len(text),
                     "layout_info": layout_info,
                     "table_structure": table_structure,
-                    "ocr_used": not page.get_text().strip()
+                    "ocr_used": not page.get_text().strip()  # type: ignore
                 }
                 
                 text_data["pages"].append(page_data)
@@ -347,7 +347,7 @@ class EnhancedPDFExcelConverter:
     def create_excel_with_dynamic_layout(self, text_data, tables_data, images_data, output_path):
         """動的レイアウト対応のExcel作成"""
         workbook = Workbook()
-        workbook.remove(workbook.active)
+        workbook.remove(workbook.active)  # type: ignore
         
         # ボーダースタイル
         border = Border(

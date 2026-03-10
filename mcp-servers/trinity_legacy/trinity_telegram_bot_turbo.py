@@ -148,7 +148,7 @@ Manaのことを深く理解し、気遣い、質問には詳しく答える。
                 messages=[{"role": "user", "content": message}]
             )
             
-            text = response.content[0].text
+            text = response.content[0].text  # type: ignore
             
             logger.info(f"🎯 Claude応答: {message[:50]}...")
             

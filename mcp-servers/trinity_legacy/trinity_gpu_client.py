@@ -123,7 +123,7 @@ class TrinityGPUClient:
             
             # 監視データ受信ループ
             try:
-                async for message in self.websocket:
+                async for message in self.websocket:  # type: ignore[misc]
                     data = json.loads(message)
                     if data.get("type") == "gpu_monitoring":
                         gpu_data = data["data"]

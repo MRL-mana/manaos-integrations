@@ -12,7 +12,7 @@ _ml.get_logger.return_value = MagicMock()
 sys.modules.setdefault("manaos_logger", _ml)
 
 _paths_mod = sys.modules.get("_paths") or MagicMock()
-_paths_mod.UNIFIED_API_PORT = 9999
+_paths_mod.UNIFIED_API_PORT = 9999  # type: ignore
 sys.modules["_paths"] = _paths_mod
 
 import pytest

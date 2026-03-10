@@ -21,7 +21,7 @@ class SecurityAuditor:
         self.warnings: List[Dict] = []
         self.passed: List[str] = []
     
-    def add_issue(self, category: str, severity: str, message: str, file: str = None):
+    def add_issue(self, category: str, severity: str, message: str, file: str = None):  # type: ignore
         """セキュリティ問題を記録"""
         self.issues.append({
             "category": category,
@@ -30,7 +30,7 @@ class SecurityAuditor:
             "file": file
         })
     
-    def add_warning(self, category: str, message: str, file: str = None):
+    def add_warning(self, category: str, message: str, file: str = None):  # type: ignore
         """警告を記録"""
         self.warnings.append({
             "category": category,

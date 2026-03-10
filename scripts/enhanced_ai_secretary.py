@@ -595,7 +595,7 @@ class EnhancedAISecretary:
         except Exception as e:
             logger.error(f"Database initialization failed: {e}")
     
-    def process_message(self, message: str, session_id: str = None) -> Dict[str, Any]:
+    def process_message(self, message: str, session_id: str = None) -> Dict[str, Any]:  # type: ignore
         """メッセージを処理"""
         try:
             # セッション管理

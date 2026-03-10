@@ -38,28 +38,28 @@ def _make_stub_class(name):
 def _stub_all(monkeypatch):
     for mod_name in _STUB_MODULES:
         mod = types.ModuleType(mod_name)
-        mod.initialize_integrations = MagicMock()
-        mod.integrations = {}
+        mod.initialize_integrations = MagicMock()  # type: ignore
+        mod.integrations = {}  # type: ignore
         stub_cls = _make_stub_class(mod_name.title().replace("_", ""))
         # assign common class names
-        mod.WorkflowAutomation = stub_cls
-        mod.AutonomousAgent = type("AutonomousAgent", (), {"__init__": lambda self, name="", *a, **kw: None})
-        mod.PredictiveMaintenance = stub_cls
-        mod.AutoOptimization = stub_cls
-        mod.LearningSystem = stub_cls
-        mod.NotificationSystem = stub_cls
-        mod.BackupRecovery = stub_cls
-        mod.PerformanceAnalytics = stub_cls
-        mod.CostOptimization = stub_cls
-        mod.StreamingProcessor = stub_cls
-        mod.BatchProcessor = stub_cls
-        mod.DatabaseIntegration = stub_cls
-        mod.CloudIntegration = stub_cls
-        mod.MultimodalIntegration = stub_cls
-        mod.DistributedExecution = stub_cls
-        mod.SecurityMonitor = stub_cls
-        mod.ManaOSServiceBridge = stub_cls
-        mod.IntrinsicMotivation = stub_cls
+        mod.WorkflowAutomation = stub_cls  # type: ignore
+        mod.AutonomousAgent = type("AutonomousAgent", (), {"__init__": lambda self, name="", *a, **kw: None})  # type: ignore
+        mod.PredictiveMaintenance = stub_cls  # type: ignore
+        mod.AutoOptimization = stub_cls  # type: ignore
+        mod.LearningSystem = stub_cls  # type: ignore
+        mod.NotificationSystem = stub_cls  # type: ignore
+        mod.BackupRecovery = stub_cls  # type: ignore
+        mod.PerformanceAnalytics = stub_cls  # type: ignore
+        mod.CostOptimization = stub_cls  # type: ignore
+        mod.StreamingProcessor = stub_cls  # type: ignore
+        mod.BatchProcessor = stub_cls  # type: ignore
+        mod.DatabaseIntegration = stub_cls  # type: ignore
+        mod.CloudIntegration = stub_cls  # type: ignore
+        mod.MultimodalIntegration = stub_cls  # type: ignore
+        mod.DistributedExecution = stub_cls  # type: ignore
+        mod.SecurityMonitor = stub_cls  # type: ignore
+        mod.ManaOSServiceBridge = stub_cls  # type: ignore
+        mod.IntrinsicMotivation = stub_cls  # type: ignore
         monkeypatch.setitem(sys.modules, mod_name, mod)
 
 
@@ -92,7 +92,7 @@ class TestUltimateIntegration:
         _stub_all(monkeypatch)
 
         mock_init = MagicMock()
-        sys.modules["unified_api_server"].initialize_integrations = mock_init
+        sys.modules["unified_api_server"].initialize_integrations = mock_init  # type: ignore
 
         with patch("builtins.print"):
             import ultimate_integration as m

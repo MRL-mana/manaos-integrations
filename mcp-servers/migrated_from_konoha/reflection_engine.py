@@ -135,7 +135,7 @@ class ReflectionEngine:
         conn.commit()
         conn.close()
         
-        return action_id
+        return action_id  # type: ignore
         
     def record_outcome(self, action_id: int, success: bool,
                       actual_result: str, expected_result: str) -> float:

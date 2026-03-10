@@ -20,8 +20,8 @@ from _paths import OLLAMA_PORT
 # Windowsでのエンコーディング修正
 if sys.platform == 'win32':
     import io as io_module
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", f"http://127.0.0.1:{OLLAMA_PORT}")
 
@@ -180,7 +180,7 @@ OCR結果には以下の問題がある可能性があります：
                     import re
                     json_match = re.search(r'\{.*\}', content, re.DOTALL)
                     if json_match:
-                        corrections_data = json.loads(json_match.group())
+                        corrections_data = json.loads(json_match.group())  # type: ignore[name-defined]
                         corrections = corrections_data.get('corrections', [])
                         
                         if corrections:

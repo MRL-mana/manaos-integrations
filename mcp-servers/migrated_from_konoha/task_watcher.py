@@ -216,7 +216,7 @@ class TaskWatcher:
             # 統合システム: タスク実行後の処理（成功時）
             try:
                 if 'coordinator' in locals():
-                    coordinator.after_task_execution(
+                    coordinator.after_task_execution(  # type: ignore[possibly-unbound]
                         task_id,
                         task.get("description", ""),
                         {
@@ -235,7 +235,7 @@ class TaskWatcher:
             # 統合システム: タスク実行後の処理（失敗時）
             try:
                 if 'coordinator' in locals():
-                    coordinator.after_task_execution(
+                    coordinator.after_task_execution(  # type: ignore[possibly-unbound]
                         task_id,
                         task.get("description", ""),
                         {

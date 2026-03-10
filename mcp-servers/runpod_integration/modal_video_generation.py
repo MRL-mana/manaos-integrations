@@ -94,10 +94,10 @@ def generate_video_from_image(
 
         # 動画ファイルに保存（MP4）
         buffer = BytesIO()
-        imageio.mimwrite(
+        imageio.mimwrite(  # type: ignore[call-arg]
             buffer,
-            video_frames,
-            format='mp4',
+            video_frames,  # type: ignore
+            format='mp4',  # type: ignore
             fps=fps,
             codec='libx264',
             quality=8
@@ -163,10 +163,10 @@ def generate_gif_from_images(
 
         # GIF生成
         buffer = BytesIO()
-        imageio.mimsave(
+        imageio.mimsave(  # type: ignore[call-arg]
             buffer,
-            [np.array(img) for img in images],
-            format='gif',
+            [np.array(img) for img in images],  # type: ignore[name-defined]
+            format='gif',  # type: ignore
             duration=duration,
             loop=loop
         )

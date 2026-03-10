@@ -8,7 +8,7 @@ import sys
 # UTF-8で出力
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 file_path = 'SKM_C287i26011416440_PAGES.xlsx'
 

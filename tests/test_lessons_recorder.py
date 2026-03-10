@@ -21,10 +21,10 @@ from lessons_recorder import (
 @pytest.fixture(autouse=True)
 def reset_singleton():
     """テスト間でシングルトンをリセット"""
-    import lessons_recorder as _mod
-    _mod._instance = None
+    # get_lessons_recorder.__globals__ を使って正確なモジュールをリセット
+    get_lessons_recorder.__globals__["_instance"] = None
     yield
-    _mod._instance = None
+    get_lessons_recorder.__globals__["_instance"] = None
 
 
 @pytest.fixture
@@ -259,8 +259,7 @@ class TestSingleton:
         assert a is b
 
     def test_reset_works(self):
-        import lessons_recorder as _mod
         a = get_lessons_recorder(db_path=":memory:")
-        _mod._instance = None
+        get_lessons_recorder.__globals__["_instance"] = None
         b = get_lessons_recorder(db_path=":memory:")
         assert a is not b

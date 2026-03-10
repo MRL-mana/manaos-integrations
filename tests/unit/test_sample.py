@@ -28,7 +28,7 @@ def calculate_ttl_expiration(ttl_seconds: int) -> datetime:
     return datetime.utcnow() + timedelta(seconds=ttl_seconds)
 
 
-def format_api_response(success: bool, data: Any = None, error: str = None) -> Dict:
+def format_api_response(success: bool, data: Any = None, error: str = None) -> Dict:  # type: ignore
     """API レスポンスのフォーマット"""
     response = {
         "success": success,
@@ -59,13 +59,13 @@ class TestMemoryKeyValidation:
     def test_empty_key(self):
         """空のキーは無効"""
         assert validate_memory_key("") == False
-        assert validate_memory_key(None) == False
+        assert validate_memory_key(None) == False  # type: ignore
     
     def test_invalid_type(self):
         """文字列以外は無効"""
-        assert validate_memory_key(123) == False
-        assert validate_memory_key([]) == False
-        assert validate_memory_key({}) == False
+        assert validate_memory_key(123) == False  # type: ignore
+        assert validate_memory_key([]) == False  # type: ignore
+        assert validate_memory_key({}) == False  # type: ignore[arg-type]
     
     def test_too_long_key(self):
         """長すぎるキーは無効"""

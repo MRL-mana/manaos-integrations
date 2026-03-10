@@ -78,7 +78,7 @@ class ManaNotificationMaster:
                 check=False,
                 stderr=subprocess.DEVNULL
             )
-        except subprocess.SubprocessError:
+        except subprocess.SubprocessError:  # type: ignore[possibly-unbound]
             pass
     
     def monitor_loop(self, interval=300):

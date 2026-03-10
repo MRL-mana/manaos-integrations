@@ -57,7 +57,7 @@ class RemiRequest(BaseModel):
     manaos_command: Optional[str] = None
 
 
-async def call_ollama_chat(messages: List[Dict], model: str = None) -> str:
+async def call_ollama_chat(messages: List[Dict], model: str = None) -> str:  # type: ignore
     """Ollama Chat API呼び出し"""
     model = model or OLLAMA_MODEL
     
@@ -77,7 +77,7 @@ async def call_ollama_chat(messages: List[Dict], model: str = None) -> str:
         return ""
 
 
-async def get_remi_response(user_input: str, context: Dict = None) -> str:
+async def get_remi_response(user_input: str, context: Dict = None) -> str:  # type: ignore
     """レミの返事を生成"""
     messages = [{"role": "system", "content": REMI_PERSONALITY_PROMPT}]
     
@@ -97,7 +97,7 @@ async def get_remi_response(user_input: str, context: Dict = None) -> str:
     return response if response else "うーん、ちょっと考え中..."
 
 
-async def execute_manaos_command(command: str, parameters: Dict = None) -> Dict:
+async def execute_manaos_command(command: str, parameters: Dict = None) -> Dict:  # type: ignore
     """ManaOSコマンド実行"""
     try:
         cmd_lower = command.lower()
@@ -196,7 +196,7 @@ async def remi_complete(request: RemiRequest):
         
         # ManaOSコマンドが指定されている場合
         if manaos_command:
-            result = await execute_manaos_command(manaos_command, request.context_data)
+            result = await execute_manaos_command(manaos_command, request.context_data)  # type: ignore
             
             # レミの返事を生成
             result_text = json.dumps(result, ensure_ascii=False)

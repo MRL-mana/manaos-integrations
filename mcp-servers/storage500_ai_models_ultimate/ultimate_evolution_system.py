@@ -108,7 +108,7 @@ class QuantumComputingEngine:
             # 量子ビット数
             qubit_count = len(self.quantum_states)
             
-            return {
+            return {  # type: ignore
                 "entanglement_strength": entanglement_strength,
                 "coherence_time": coherence_time,
                 "qubit_count": qubit_count,
@@ -338,7 +338,7 @@ class TimeManipulationEngine:
             recent_flows = [h["time_flow_speed"] for h in list(self.time_flow_history)[-5:]]
             coherence = 1.0 - np.std(recent_flows)
             
-            return max(0.0, min(1.0, coherence))
+            return max(0.0, min(1.0, coherence))  # type: ignore
             
         except Exception as e:
             print(f"時間コヒーレンス計算エラー: {e}")

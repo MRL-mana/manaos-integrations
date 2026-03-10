@@ -190,7 +190,7 @@ class APIAuthManager:
             
             # レート制限チェック
             client_id = api_key or request.remote_addr
-            if not self.check_rate_limit(client_id):
+            if not self.check_rate_limit(client_id):  # type: ignore
                 return jsonify({
                     "error": "Rate limit exceeded",
                     "message": f"Maximum {self.rate_limit_requests} requests per {self.rate_limit_window} seconds"
@@ -218,9 +218,9 @@ class APIAuthManager:
             
             # APIキーがある場合は検証
             if api_key:
-                request.api_key_validated = self.validate_api_key(api_key)
+                request.api_key_validated = self.validate_api_key(api_key)  # type: ignore
             else:
-                request.api_key_validated = False
+                request.api_key_validated = False  # type: ignore
             
             return func(*args, **kwargs)
         

@@ -208,7 +208,7 @@ def handle_mention(event: Dict[str, Any]):
     try:
         # ManaOS v3で処理
         result = loop.run_until_complete(
-            process_with_manaos(clean_text, channel, user, thread_ts)
+            process_with_manaos(clean_text, channel, user, thread_ts)  # type: ignore
         )
         
         # 応答メッセージ生成
@@ -224,7 +224,7 @@ def handle_mention(event: Dict[str, Any]):
             reply = "申し訳ありません。処理中にエラーが発生しました。"
         
         # Slackに返信
-        send_slack_reply(channel, reply, thread_ts)
+        send_slack_reply(channel, reply, thread_ts)  # type: ignore
     
     finally:
         loop.close()
@@ -247,11 +247,11 @@ def handle_direct_message(event: Dict[str, Any]):
     
     try:
         result = loop.run_until_complete(
-            process_with_manaos(text, channel, user)
+            process_with_manaos(text, channel, user)  # type: ignore
         )
         
         reply = result.get('message', '処理が完了しました') if result.get('success') else "エラーが発生しました"
-        send_slack_reply(channel, reply)
+        send_slack_reply(channel, reply)  # type: ignore
     
     finally:
         loop.close()
@@ -274,7 +274,7 @@ def handle_channel_message(event: Dict[str, Any]):
         
         # 簡単な返信
         send_slack_reply(
-            channel,
+            channel,  # type: ignore
             "👋 ManaOSに関する質問ですか？ @ManaOSBot をメンションして話しかけてください！",
             thread_ts
         )

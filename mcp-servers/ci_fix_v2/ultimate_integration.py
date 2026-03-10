@@ -63,7 +63,7 @@ class UltimateIntegration:
         self.bridge = ManaOSServiceBridge()
         if INTRINSIC_MOTIVATION_AVAILABLE:
             try:
-                self.intrinsic_motivation = IntrinsicMotivation()
+                self.intrinsic_motivation = IntrinsicMotivation()  # type: ignore[operator]
             except Exception as e:
                 print(f"Intrinsic Motivation初期化エラー: {e}")
                 self.intrinsic_motivation = None
@@ -110,7 +110,7 @@ class UltimateIntegration:
             "optimizer_status": self.optimizer.get_status(),
             "learning_status": self.learning.get_status(),
             "backup_status": self.backup.get_backup_status(),
-            "analytics_status": self.analytics.get_status() if hasattr(self.analytics, "get_status") else {},
+            "analytics_status": self.analytics.get_status() if hasattr(self.analytics, "get_status") else {},  # type: ignore
             "cost_status": self.cost_opt.get_cost_summary(),
             "streaming_status": self.streaming.get_status(),
             "batch_status": self.batch.get_statistics(),

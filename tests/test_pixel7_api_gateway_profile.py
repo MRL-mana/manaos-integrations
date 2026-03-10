@@ -41,7 +41,7 @@ def test_open_url_allowed_in_full(monkeypatch):
     async def _mock_exec(command, timeout=10):
         return {"exit_code": 0, "stdout": "ok", "stderr": ""}
 
-    mod.execute_android_command = _mock_exec
+    mod.execute_android_command = _mock_exec  # type: ignore
 
     res = client.post(
         "/api/open/url",

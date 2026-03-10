@@ -45,7 +45,7 @@ def send_slack_message(
             attachments[0]["title"] = title
 
         if fields:
-            attachments[0]["fields"] = fields
+            attachments[0]["fields"] = fields  # type: ignore
 
         payload = {
             "attachments": attachments

@@ -40,12 +40,12 @@ class Worker:
         # S3設定
         if S3_AVAILABLE:
             try:
-                self.s3 = boto3.client(
+                self.s3 = boto3.client(  # type: ignore[possibly-unbound]
                     's3',
                     endpoint_url="https://s3.runpod.io",
                     aws_access_key_id="user_30Jv2icwfZKwAKA03cn8MZ3800z",
                     aws_secret_access_key="user_30Jv2icwfZKwAKA03cn8MZ3800z",
-                    config=Config(signature_version='s3v4')
+                    config=Config(signature_version='s3v4')  # type: ignore[possibly-unbound]
                 )
                 self.bucket = "q369xyumxq"
                 print("✅ S3接続初期化完了")
@@ -90,9 +90,9 @@ class Worker:
             if not GPU_AVAILABLE:
                 return {"success": False, "error": "GPU is not available"}
 
-            pipe = StableDiffusionPipeline.from_pretrained(
+            pipe = StableDiffusionPipeline.from_pretrained(  # type: ignore[possibly-unbound]
                 'stabilityai/stable-diffusion-2-1',
-                torch_dtype=torch.float16
+                torch_dtype=torch.float16  # type: ignore[possibly-unbound]
             ).to('cuda')
 
             image = pipe(
@@ -189,7 +189,7 @@ class Worker:
 
             try:
                 # ジョブ取得
-                job_data = self.redis.blpop(self.queue_name, timeout=5)
+                job_data = self.redis.blpop(self.queue_name, timeout=5)  # type: ignore[union-attr]
 
                 if job_data:
                     _, job_json = job_data

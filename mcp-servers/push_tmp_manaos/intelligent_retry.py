@@ -56,7 +56,7 @@ class RetryConfig:
     max_delay: float = 10.0  # 60.0 → 10.0に短縮（通信速度向上）
     exponential_base: float = 2.0
     strategy: RetryStrategy = RetryStrategy.EXPONENTIAL_BACKOFF
-    retryable_errors: List[str] = None
+    retryable_errors: List[str] = None  # type: ignore
     
     def __post_init__(self):
         if self.retryable_errors is None:
@@ -245,7 +245,7 @@ class IntelligentRetry:
                 
                 # 成功を記録
                 if circuit_breaker_key:
-                    circuit_breaker.record_success()
+                    circuit_breaker.record_success()  # type: ignore[possibly-unbound]
                 
                 return RetryResult(
                     success=True,
@@ -266,7 +266,7 @@ class IntelligentRetry:
                 else:
                     # リトライ不可能または最大回数に達した
                     if circuit_breaker_key:
-                        circuit_breaker.record_failure()
+                        circuit_breaker.record_failure()  # type: ignore[possibly-unbound]
                     
                     return RetryResult(
                         success=False,
@@ -278,7 +278,7 @@ class IntelligentRetry:
         
         # ここには到達しないはず
         if circuit_breaker_key:
-            circuit_breaker.record_failure()
+            circuit_breaker.record_failure()  # type: ignore[possibly-unbound]
         
         return RetryResult(
             success=False,
@@ -333,7 +333,7 @@ class IntelligentRetry:
                 return asyncio.run(async_wrapper(*args, **kwargs))
             
             if asyncio.iscoroutinefunction(func):
-                return async_wrapper
+                return async_wrapper  # type: ignore
             else:
                 return sync_wrapper
         

@@ -74,7 +74,7 @@ class _HealthHandler(BaseHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
 
-    def log_message(self, *args):
+    def log_message(self, *args):  # type: ignore
         pass
 
 
@@ -92,27 +92,27 @@ def _start_health_server():
 # ----------------------------------------------------------------
 
 TOOL_DEFS = [
-    Tool(name="thought_get_mood",
+    Tool(name="thought_get_mood",  # type: ignore[possibly-unbound]
          description="現在の気分(ムード)状態を取得する",
          inputSchema={"type": "object", "properties": {}}),
 
-    Tool(name="thought_detect_mood",
+    Tool(name="thought_detect_mood",  # type: ignore[possibly-unbound]
          description="テキストからムードを推定して更新する",
          inputSchema={"type": "object", "properties": {
              "text": {"type": "string", "description": "ムード推定用テキスト"}
          }, "required": ["text"]}),
 
-    Tool(name="thought_set_mood",
+    Tool(name="thought_set_mood",  # type: ignore[possibly-unbound]
          description="ムードを手動設定する (energetic/calm/curious/focused/playful/tired)",
          inputSchema={"type": "object", "properties": {
              "mood": {"type": "string", "description": "設定するムード"}
          }, "required": ["mood"]}),
 
-    Tool(name="thought_get_values",
+    Tool(name="thought_get_values",  # type: ignore[possibly-unbound]
          description="全価値観スコア (honesty/helpfulness/curiosity/empathy/efficiency/creativity) を取得",
          inputSchema={"type": "object", "properties": {}}),
 
-    Tool(name="thought_reinforce_value",
+    Tool(name="thought_reinforce_value",  # type: ignore[possibly-unbound]
          description="価値観スコアを強化 (良い行動を記録)",
          inputSchema={"type": "object", "properties": {
              "value":   {"type": "string", "description": "価値観名"},
@@ -120,7 +120,7 @@ TOOL_DEFS = [
              "example": {"type": "string", "description": "具体例テキスト"}
          }, "required": ["value"]}),
 
-    Tool(name="thought_weaken_value",
+    Tool(name="thought_weaken_value",  # type: ignore[possibly-unbound]
          description="価値観スコアを弱化 (矛盾する行動を記録)",
          inputSchema={"type": "object", "properties": {
              "value":   {"type": "string", "description": "価値観名"},
@@ -128,13 +128,13 @@ TOOL_DEFS = [
              "example": {"type": "string", "description": "具体例テキスト"}
          }, "required": ["value"]}),
 
-    Tool(name="thought_check_contradiction",
+    Tool(name="thought_check_contradiction",  # type: ignore[possibly-unbound]
          description="応答テキスト中の価値観矛盾を検出する",
          inputSchema={"type": "object", "properties": {
              "text": {"type": "string", "description": "チェックするテキスト"}
          }, "required": ["text"]}),
 
-    Tool(name="thought_log",
+    Tool(name="thought_log",  # type: ignore[possibly-unbound]
          description="思想ログ (内省エントリー) を記録する",
          inputSchema={"type": "object", "properties": {
              "user_input":  {"type": "string", "description": "ユーザー入力テキスト"},
@@ -142,13 +142,13 @@ TOOL_DEFS = [
              "reflection":  {"type": "string", "description": "内省コメント (省略時は自動生成)"}
          }, "required": ["user_input"]}),
 
-    Tool(name="thought_get_log",
+    Tool(name="thought_get_log",  # type: ignore[possibly-unbound]
          description="直近の思想ログを取得する",
          inputSchema={"type": "object", "properties": {
              "n": {"type": "integer", "description": "取得件数 (default: 10)"}
          }}),
 
-    Tool(name="thought_record_evolution",
+    Tool(name="thought_record_evolution",  # type: ignore[possibly-unbound]
          description="人格進化 (学習・成長) を記録する",
          inputSchema={"type": "object", "properties": {
              "trigger":      {"type": "string", "description": "進化のトリガーとなった出来事"},
@@ -156,15 +156,15 @@ TOOL_DEFS = [
              "value_deltas": {"type": "object", "description": "各価値観の変化量 (例: {honesty: 0.05})"}
          }, "required": ["trigger", "description"]}),
 
-    Tool(name="thought_get_evolution",
+    Tool(name="thought_get_evolution",  # type: ignore[possibly-unbound]
          description="人格進化タイムラインを取得する",
          inputSchema={"type": "object", "properties": {}}),
 
-    Tool(name="thought_get_prompt_prefix",
+    Tool(name="thought_get_prompt_prefix",  # type: ignore[possibly-unbound]
          description="ムードと直近思考に基づくプロンプト前置き文字列を取得",
          inputSchema={"type": "object", "properties": {}}),
 
-    Tool(name="thought_dashboard",
+    Tool(name="thought_dashboard",  # type: ignore[possibly-unbound]
          description="人格思想システム全体のダッシュボードを取得",
          inputSchema={"type": "object", "properties": {}}),
 ]
@@ -250,7 +250,7 @@ async def main():
         sys.exit(1)
 
     _start_health_server()
-    server = Server("personality-thought-system")
+    server = Server("personality-thought-system")  # type: ignore[possibly-unbound]
 
     @server.list_tools()
     async def list_tools():
@@ -259,9 +259,9 @@ async def main():
     @server.call_tool()
     async def call_tool(name: str, arguments: dict):
         result = await handle_tool(name, arguments)
-        return [TextContent(type="text", text=result)]
+        return [TextContent(type="text", text=result)]  # type: ignore[possibly-unbound]
 
-    async with stdio_server() as (read_stream, write_stream):
+    async with stdio_server() as (read_stream, write_stream):  # type: ignore[possibly-unbound]
         await server.run(read_stream, write_stream, server.create_initialization_options())
 
 

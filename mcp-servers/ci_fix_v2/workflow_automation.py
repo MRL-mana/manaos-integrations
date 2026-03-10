@@ -204,10 +204,10 @@ class WorkflowAutomation:
     
     def _execute_langchain_chat(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """LangChainチャットを実行"""
-        if not self.langchain.is_available():
+        if not self.langchain.is_available():  # type: ignore[union-attr]
             return {"error": "LangChainが利用できません"}
         
-        response = self.langchain.chat(
+        response = self.langchain.chat(  # type: ignore[union-attr]
             message=params.get("message", ""),
             system_prompt=params.get("system_prompt")
         )

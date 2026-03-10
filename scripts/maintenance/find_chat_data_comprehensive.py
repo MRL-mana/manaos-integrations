@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 import os
 
-db_path = Path(os.getenv('APPDATA')) / "Cursor" / "User" / "workspaceStorage" / "4592916e483577d5bb691bfc8bb37c7d" / "state.vscdb"
+db_path = Path(os.getenv('APPDATA')) / "Cursor" / "User" / "workspaceStorage" / "4592916e483577d5bb691bfc8bb37c7d" / "state.vscdb"  # type: ignore
 
 conn = sqlite3.connect(str(db_path))
 cursor = conn.cursor()

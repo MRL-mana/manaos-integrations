@@ -9,7 +9,7 @@ def _prep(monkeypatch):
     sys.modules.pop("batch_improve_excel", None)
     # stub improve_existing_excel
     _iem = types.ModuleType("improve_existing_excel")
-    _iem.improve_excel_file = MagicMock(return_value=None)
+    _iem.improve_excel_file = MagicMock(return_value=None)  # type: ignore
     monkeypatch.setitem(sys.modules, "improve_existing_excel", _iem)
     monkeypatch.syspath_prepend(
         str(__import__("pathlib").Path(__file__).parent.parent.parent / "scripts" / "misc")
@@ -46,11 +46,11 @@ class TestBatchImprove:
         mock_drive = MagicMock()
         mock_drive.upload_file.return_value = "file123"
         mock_gd = types.ModuleType("google_drive_integration")
-        mock_gd.GoogleDriveIntegration = MagicMock(return_value=mock_drive)
+        mock_gd.GoogleDriveIntegration = MagicMock(return_value=mock_drive)  # type: ignore
         monkeypatch.setitem(sys.modules, "google_drive_integration", mock_gd)
 
         mock_sheets = types.ModuleType("excel_to_google_sheets")
-        mock_sheets.excel_to_google_sheets = MagicMock(return_value="http://sheets/url")
+        mock_sheets.excel_to_google_sheets = MagicMock(return_value="http://sheets/url")  # type: ignore
         monkeypatch.setitem(sys.modules, "excel_to_google_sheets", mock_sheets)
 
         with patch("os.path.exists", return_value=True), patch("builtins.print"):
@@ -62,11 +62,11 @@ class TestBatchImprove:
         mock_drive = MagicMock()
         mock_drive.upload_file.return_value = None
         mock_gd = types.ModuleType("google_drive_integration")
-        mock_gd.GoogleDriveIntegration = MagicMock(return_value=mock_drive)
+        mock_gd.GoogleDriveIntegration = MagicMock(return_value=mock_drive)  # type: ignore
         monkeypatch.setitem(sys.modules, "google_drive_integration", mock_gd)
 
         mock_sheets = types.ModuleType("excel_to_google_sheets")
-        mock_sheets.excel_to_google_sheets = MagicMock(return_value=None)
+        mock_sheets.excel_to_google_sheets = MagicMock(return_value=None)  # type: ignore
         monkeypatch.setitem(sys.modules, "excel_to_google_sheets", mock_sheets)
 
         with patch("os.path.exists", return_value=True), patch("builtins.print"):
@@ -76,11 +76,11 @@ class TestBatchImprove:
     def test_drive_exception_handled(self, monkeypatch):
         m, iem = self._setup(monkeypatch)
         mock_gd = types.ModuleType("google_drive_integration")
-        mock_gd.GoogleDriveIntegration = MagicMock(side_effect=Exception("drive error"))
+        mock_gd.GoogleDriveIntegration = MagicMock(side_effect=Exception("drive error"))  # type: ignore
         monkeypatch.setitem(sys.modules, "google_drive_integration", mock_gd)
 
         mock_sheets = types.ModuleType("excel_to_google_sheets")
-        mock_sheets.excel_to_google_sheets = MagicMock(return_value=None)
+        mock_sheets.excel_to_google_sheets = MagicMock(return_value=None)  # type: ignore
         monkeypatch.setitem(sys.modules, "excel_to_google_sheets", mock_sheets)
 
         with patch("os.path.exists", return_value=True), patch("builtins.print"):

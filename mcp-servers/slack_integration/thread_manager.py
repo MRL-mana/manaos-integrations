@@ -253,14 +253,14 @@ if __name__ == '__main__':
     
     # 2. スレッドに返信
     print("2. スレッドに返信...")
-    manager.reply_to_thread(thread_id, "これは2番目のメッセージです")
-    manager.reply_to_thread(thread_id, "これは3番目のメッセージです")
+    manager.reply_to_thread(thread_id, "これは2番目のメッセージです")  # type: ignore
+    manager.reply_to_thread(thread_id, "これは3番目のメッセージです")  # type: ignore
     print("   ✅ 返信完了\n")
     
     # 3. スレッド履歴を取得
     print("3. スレッド履歴:")
-    history = manager.get_thread_history(thread_id)
-    for i, msg in enumerate(history["messages"], 1):
+    history = manager.get_thread_history(thread_id)  # type: ignore
+    for i, msg in enumerate(history["messages"], 1):  # type: ignore[index]
         print(f"   {i}. {msg['text'][:50]}...")
     print()
     

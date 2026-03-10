@@ -23,14 +23,14 @@ from _paths import COMFYUI_PORT, GALLERY_PORT as DEFAULT_GALLERY_PORT
 # 統一モジュールのインポート
 try:
     from unified_logging import get_service_logger
-    from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity
-    from manaos_timeout_config import get_timeout_config
-    from api_auth import get_auth_manager
+    from manaos_error_handler import ManaOSErrorHandler, ErrorCategory, ErrorSeverity  # type: ignore
+    from manaos_timeout_config import get_timeout_config  # type: ignore
+    from api_auth import get_auth_manager  # type: ignore
 except ImportError:
     try:
         from manaos_logger import get_service_logger
         logger = get_service_logger("gallery")
-        class ManaOSErrorHandler:
+        class ManaOSErrorHandler:  # type: ignore[misc]
             def __init__(self, *_args, **_kwargs):
                 pass
 
@@ -51,7 +51,7 @@ except ImportError:
         def get_timeout_config():
             return {"api_call": 30.0, "workflow_execution": 300.0}
 
-        class DummyAuthManager:
+        class DummyAuthManager:  # type: ignore[misc]
             def require_api_key(self, func):
                 return func
 
@@ -492,7 +492,7 @@ def auto_regenerate(
                         # 改善版も自動評価
                         if AUTO_REFLECTION_AVAILABLE:
                             try:
-                                auto_system = get_auto_reflection_system()
+                                auto_system = get_auto_reflection_system()  # type: ignore[possibly-unbound]
                                 image_path = str(IMAGES_DIR / gallery_filename)
 
                                 new_reflection = auto_system.process_generated_image(
@@ -711,7 +711,7 @@ def generate():
             try:
                 from intent_router import IntentRouter, IntentType
                 router = IntentRouter()
-                result = router.route(prompt)
+                result = router.route(prompt)  # type: ignore
                 if result and result.intent_type == IntentType.IMAGE_GENERATION:
                     prompt_lower = (prompt or "").lower()
                     # 実験室キーワード: lab, 実験室, 闇
@@ -868,7 +868,7 @@ def generate():
                     reflection_result = None
                     if AUTO_REFLECTION_AVAILABLE:
                         try:
-                            auto_system = get_auto_reflection_system()
+                            auto_system = get_auto_reflection_system()  # type: ignore[possibly-unbound]
                             image_path = str(IMAGES_DIR / gallery_filename)
 
                             # 評価実行
@@ -1002,7 +1002,7 @@ def get_reflection_statistics():
         }), 503
 
     try:
-        auto_system = get_auto_reflection_system()
+        auto_system = get_auto_reflection_system()  # type: ignore[possibly-unbound]
         stats = auto_system.get_statistics()
         return jsonify({
             "success": True,
@@ -1036,7 +1036,7 @@ def evaluate_image():
                 "error": "image_pathが必要です"
             }), 400
 
-        auto_system = get_auto_reflection_system()
+        auto_system = get_auto_reflection_system()  # type: ignore[possibly-unbound]
         result = auto_system.process_generated_image(
             image_path=image_path,
             prompt=prompt,

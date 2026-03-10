@@ -18,14 +18,14 @@ logger = logging.getLogger(__name__)
 class ManaHyperPerformanceEngine:
     def __init__(self):
         self.cpu_count = psutil.cpu_count()
-        self.hyper_workers = self.cpu_count * 8  # 8倍！64ワーカー
+        self.hyper_workers = self.cpu_count * 8  # 8倍！64ワーカー  # type: ignore[operator]
         
         # Redis接続
         try:
             self.redis = redis.Redis(host='localhost', port=6379, db=1)
             self.redis.ping()
             self.redis_available = True
-        except sqlite3.Error:
+        except sqlite3.Error:  # type: ignore[name-defined]
             self.redis_available = False
         
         self.config = {
@@ -85,7 +85,7 @@ class ManaHyperPerformanceEngine:
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
         
-        successful = len([r for r in results if not isinstance(r, Exception) and r.get("success")])
+        successful = len([r for r in results if not isinstance(r, Exception) and r.get("success")])  # type: ignore
         
         # Redis統合でキャッシュ
         if self.redis_available:

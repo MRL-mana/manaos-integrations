@@ -80,11 +80,11 @@ def read_data(file_path: Path, file_format: str) -> Optional[pd.DataFrame]:
     
     try:
         if file_format == "csv":
-            return pd.read_csv(file_path, encoding='utf-8')
+            return pd.read_csv(file_path, encoding='utf-8')  # type: ignore[possibly-unbound]
         elif file_format == "json":
-            return pd.read_json(file_path, encoding='utf-8')
+            return pd.read_json(file_path, encoding='utf-8')  # type: ignore[possibly-unbound]
         elif file_format == "excel":
-            return pd.read_excel(file_path)
+            return pd.read_excel(file_path)  # type: ignore[possibly-unbound]
         else:
             return None
     except Exception as e:

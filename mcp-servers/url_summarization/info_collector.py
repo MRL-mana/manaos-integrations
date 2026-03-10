@@ -101,7 +101,7 @@ class InfoCollector:
 ## 参考情報
 （参考になる情報源）"""
 
-            response = self.claude_client.messages.create(
+            response = self.claude_client.messages.create(  # type: ignore[union-attr]
                 model="claude-3-5-sonnet-20241022",
                 max_tokens=2000,
                 messages=[{
@@ -110,7 +110,7 @@ class InfoCollector:
                 }]
             )
             
-            return response.content[0].text
+            return response.content[0].text  # type: ignore
         
         except Exception as e:
             return f"要約生成エラー: {str(e)}"

@@ -65,7 +65,7 @@ class MRLMemoryPromoter:
         self.obsidian = None
         if OBSIDIAN_AVAILABLE and obsidian_vault:
             try:
-                self.obsidian = ObsidianIntegration(obsidian_vault)
+                self.obsidian = ObsidianIntegration(obsidian_vault)  # type: ignore[possibly-unbound]
                 if not self.obsidian.is_available():
                     self.obsidian = None
             except Exception as e:

@@ -21,7 +21,7 @@ import trinity_universal_model_switcher as ums_mod
 UniversalModelSwitcher = ums_mod.UniversalModelSwitcher
 
 
-def _make_switcher() -> UniversalModelSwitcher:
+def _make_switcher() -> UniversalModelSwitcher:  # type: ignore[valid-type]
     """__init__ をスキップして純粋メソッドだけテストするヘルパー。"""
     with patch.object(UniversalModelSwitcher, "__init__", lambda self: None):
         s = UniversalModelSwitcher()

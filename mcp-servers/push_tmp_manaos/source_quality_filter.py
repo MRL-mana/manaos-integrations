@@ -225,7 +225,7 @@ class SourceQualityFilter:
         # 引用のソース、要約、タイトルから日付を探す
         text_to_search = f"{citation.source} {citation.summary}"
         if hasattr(citation, 'title'):
-            text_to_search += f" {citation.title}"
+            text_to_search += f" {citation.title}"  # type: ignore
         
         # 日付パターンを検索
         date_patterns = [

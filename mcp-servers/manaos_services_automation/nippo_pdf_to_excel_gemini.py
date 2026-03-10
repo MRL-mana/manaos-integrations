@@ -46,7 +46,7 @@ logger = logging.getLogger("NippoPDFToExcelGemini")
 class NippoPDFToExcelGemini:
     """日報PDF→Excel変換システム (Gemini Vision版)"""
     
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: str = None):  # type: ignore
         self.output_dir = Path('/root/daily_reports/excel_gemini')
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
@@ -75,7 +75,7 @@ class NippoPDFToExcelGemini:
             pix = page.get_pixmap(matrix=mat)
             
             # PIL Imageに変換
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore
             
             doc.close()
             return img
@@ -160,10 +160,10 @@ JSONを出力：
             
         except json.JSONDecodeError as e:
             logger.error(f"JSON解析エラー: {e}")
-            logger.error(f"レスポンス: {response_text[:500]}")
+            logger.error(f"レスポンス: {response_text[:500]}")  # type: ignore[possibly-unbound]
             
             # フォールバック：テキストとして保存
-            return [{"内容": response.text}]
+            return [{"内容": response.text}]  # type: ignore[possibly-unbound]
             
         except Exception as e:
             logger.error(f"Gemini解析エラー: {e}")
@@ -200,11 +200,11 @@ JSONを出力：
         try:
             wb = openpyxl.Workbook()
             ws = wb.active
-            ws.title = '日報データ'
+            ws.title = '日報データ'  # type: ignore[union-attr]
             
             # ヘッダー行を書き込み
             for c_idx, col_name in enumerate(df.columns, start=1):
-                cell = ws.cell(row=1, column=c_idx, value=col_name)
+                cell = ws.cell(row=1, column=c_idx, value=col_name)  # type: ignore[union-attr]
                 cell.font = Font(name='メイリオ', size=11, bold=True, color='FFFFFF')
                 cell.fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
                 cell.alignment = Alignment(horizontal='center', vertical='center')
@@ -218,7 +218,7 @@ JSONを出力：
             # データ行を書き込み
             for r_idx, row in enumerate(df.itertuples(index=False), start=2):
                 for c_idx, value in enumerate(row, start=1):
-                    cell = ws.cell(row=r_idx, column=c_idx, value=value)
+                    cell = ws.cell(row=r_idx, column=c_idx, value=value)  # type: ignore[union-attr]
                     cell.font = Font(name='メイリオ', size=11)
                     cell.alignment = Alignment(wrap_text=True, vertical='top')
                     cell.border = Border(
@@ -233,9 +233,9 @@ JSONを出力：
                         cell.fill = PatternFill(start_color='F2F2F2', end_color='F2F2F2', fill_type='solid')
             
             # 列幅自動調整
-            for column in ws.columns:
+            for column in ws.columns:  # type: ignore[union-attr]
                 max_length = 0
-                column_letter = column[0].column_letter
+                column_letter = column[0].column_letter  # type: ignore
                 for cell in column:
                     try:
                         if cell.value:
@@ -243,7 +243,7 @@ JSONを出力：
                     except Exception:
                         pass
                 adjusted_width = min(max_length + 2, 50)
-                ws.column_dimensions[column_letter].width = adjusted_width
+                ws.column_dimensions[column_letter].width = adjusted_width  # type: ignore[union-attr]
             
             # サマリーシート追加
             summary_ws = wb.create_sheet('変換情報', 0)
@@ -287,14 +287,14 @@ JSONを出力：
     
     def convert_pdf(self, pdf_path: str):
         """PDFをExcelに変換（メイン処理）"""
-        pdf_path = Path(pdf_path)
+        pdf_path = Path(pdf_path)  # type: ignore
         
-        if not pdf_path.exists():
+        if not pdf_path.exists():  # type: ignore
             logger.error(f"PDFファイルが見つかりません: {pdf_path}")
             return {'success': False, 'error': 'File not found'}
         
         print(f"\n{'='*60}")
-        print(f"📄 変換開始: {pdf_path.name}")
+        print(f"📄 変換開始: {pdf_path.name}")  # type: ignore
         print(f"{'='*60}")
         
         try:
@@ -347,10 +347,10 @@ JSONを出力：
             
             # 4. Excel作成
             print("📝 STEP 4: Excel作成...")
-            output_filename = f"{pdf_path.stem}_gemini_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            output_filename = f"{pdf_path.stem}_gemini_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"  # type: ignore
             output_path = self.output_dir / output_filename
             
-            success = self.create_excel(df, str(output_path), pdf_path.name)
+            success = self.create_excel(df, str(output_path), pdf_path.name)  # type: ignore
             
             if success:
                 print("\n✅ 変換完了！")
@@ -370,16 +370,16 @@ JSONを出力：
             logger.error(f"変換エラー: {e}")
             return {'success': False, 'error': str(e)}
     
-    def batch_convert(self, pdf_dir: str, limit: int = None, delay: int = 2):
+    def batch_convert(self, pdf_dir: str, limit: int = None, delay: int = 2):  # type: ignore
         """フォルダ内の全PDFを一括変換"""
-        pdf_dir = Path(pdf_dir)
+        pdf_dir = Path(pdf_dir)  # type: ignore
         
-        if not pdf_dir.exists():
+        if not pdf_dir.exists():  # type: ignore
             logger.error(f"フォルダが見つかりません: {pdf_dir}")
             return
         
-        pdf_files = list(pdf_dir.glob('*.pdf'))
-        pdf_files.extend(list(pdf_dir.glob('*.PDF')))
+        pdf_files = list(pdf_dir.glob('*.pdf'))  # type: ignore
+        pdf_files.extend(list(pdf_dir.glob('*.PDF')))  # type: ignore
         
         if not pdf_files:
             logger.error("PDFファイルが見つかりません")
@@ -446,7 +446,7 @@ def main():
         converter.convert_pdf(target)
     elif target_path.is_dir():
         limit = int(sys.argv[2]) if len(sys.argv) > 2 else None
-        converter.batch_convert(target, limit=limit, delay=2)
+        converter.batch_convert(target, limit=limit, delay=2)  # type: ignore
     else:
         print(f"❌ パスが見つかりません: {target}")
         sys.exit(1)

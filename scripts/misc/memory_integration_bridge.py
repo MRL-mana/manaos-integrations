@@ -9,11 +9,11 @@ from typing import Dict, Any, List, Optional
 
 # ロガー
 try:
-    from manaos_logger import get_logger, get_service_logger
+    from manaos_logger import get_logger, get_service_logger  # type: ignore
 except ImportError:
     import logging
     def get_logger(n): return logging.getLogger(n)
-logger = get_service_logger("memory-integration-bridge")
+logger = get_service_logger("memory-integration-bridge")  # type: ignore[possibly-unbound]
 
 # UnifiedMemory
 MEMORY_UNIFIED = None
@@ -98,7 +98,7 @@ def memory_recall(
         try:
             theme_id = theme_id_from_first_user_content(query[:500])
             if theme_id:
-                phase2_memos = get_memos_for_theme(theme_id)[:3]
+                phase2_memos = get_memos_for_theme(theme_id)[:3]  # type: ignore[operator]
                 for m in phase2_memos:
                     results.append({
                         "id": m.get("thread_id", "") + "_phase2",

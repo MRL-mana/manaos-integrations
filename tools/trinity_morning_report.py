@@ -415,7 +415,7 @@ class MorningReport:
             return telegram_success or slack_success
             
         except Exception as e:
-            print(f"❌ {name}天気通知エラー: {str(e)}")
+            print(f"❌ {name}天気通知エラー: {str(e)}")  # type: ignore[possibly-unbound]
             return False
 
 

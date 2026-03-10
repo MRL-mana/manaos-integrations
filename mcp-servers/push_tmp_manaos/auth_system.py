@@ -61,7 +61,7 @@ class APIKey:
     expires_at: Optional[str] = None
     last_used_at: Optional[str] = None
     is_active: bool = True
-    metadata: Dict[str, Any] = None
+    metadata: Dict[str, Any] = None  # type: ignore
     
     def __post_init__(self):
         if self.metadata is None:
@@ -77,7 +77,7 @@ class User:
     role: Role
     created_at: str
     is_active: bool = True
-    metadata: Dict[str, Any] = None
+    metadata: Dict[str, Any] = None  # type: ignore
     
     def __post_init__(self):
         if self.metadata is None:

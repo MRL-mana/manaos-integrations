@@ -160,7 +160,7 @@ class OHMyOpenCodeOptimizer:
                 avg_cost=avg_cost,
                 avg_execution_time=avg_execution_time,
                 avg_iterations=avg_iterations,
-                common_errors=common_errors,
+                common_errors=common_errors,  # type: ignore
                 recommended_model=recommended_model,
                 sample_count=len(records)
             )

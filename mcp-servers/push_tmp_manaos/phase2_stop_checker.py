@@ -215,7 +215,7 @@ def check_gate_block_rate_go_violation(
     return False, None
 
 
-def check_stop_conditions(current: dict, baseline: dict = None) -> tuple[bool, list[str]]:
+def check_stop_conditions(current: dict, baseline: dict = None) -> tuple[bool, list[str]]:  # type: ignore
     """
     停止条件をチェック（単一スナップショット）
 
@@ -503,7 +503,7 @@ def main():
     baseline = load_snapshot(baseline_path) if baseline_path and baseline_path.exists() else None
 
     # 停止条件をチェック
-    should_stop, reasons = check_stop_conditions(current, baseline)
+    should_stop, reasons = check_stop_conditions(current, baseline)  # type: ignore
 
     if should_stop:
         print("[STOP] 停止条件に該当しました:")

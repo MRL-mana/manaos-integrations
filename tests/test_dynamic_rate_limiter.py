@@ -241,7 +241,7 @@ class TestCheckRateLimit(unittest.TestCase):
         for _ in range(5):
             result = rl.check_rate_limit("user_a", Priority.MEDIUM)
         # 最後のリクエストまで通るはず（5件以内）
-        self.assertTrue(result)
+        self.assertTrue(result)  # type: ignore[possibly-unbound]
 
     def test_request_count_increments(self):
         rl = _make_limiter(base_rate=10, max_rate=10)

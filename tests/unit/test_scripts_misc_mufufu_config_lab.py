@@ -7,15 +7,15 @@ import types
 # ─── mufufu_config stub (import guard) ────────────────────────────────────────
 if "mufufu_config" not in sys.modules:
     _mc_mod = types.ModuleType("mufufu_config")
-    _mc_mod.ANATOMY_POSITIVE_TAGS = "perfect anatomy"
-    _mc_mod.QUALITY_TAGS = "masterpiece"
-    _mc_mod.OPTIMIZED_PARAMS = {"steps": 50}
-    _mc_mod.RECOMMENDED_MODEL_LORA_PAIRS = {}
-    _mc_mod.build_ordered_prompt = lambda sections: ""
-    _mc_mod.build_mufufu_prompt = lambda *a, **kw: ""
-    _mc_mod.get_optimized_params = lambda **kw: {}
-    _mc_mod.PROMPT_ORDER = []
-    _mc_mod.PROMPT_TEMPLATES = {}
+    _mc_mod.ANATOMY_POSITIVE_TAGS = "perfect anatomy"  # type: ignore
+    _mc_mod.QUALITY_TAGS = "masterpiece"  # type: ignore
+    _mc_mod.OPTIMIZED_PARAMS = {"steps": 50}  # type: ignore
+    _mc_mod.RECOMMENDED_MODEL_LORA_PAIRS = {}  # type: ignore
+    _mc_mod.build_ordered_prompt = lambda sections: ""  # type: ignore
+    _mc_mod.build_mufufu_prompt = lambda *a, **kw: ""  # type: ignore
+    _mc_mod.get_optimized_params = lambda **kw: {}  # type: ignore
+    _mc_mod.PROMPT_ORDER = []  # type: ignore
+    _mc_mod.PROMPT_TEMPLATES = {}  # type: ignore
     sys.modules["mufufu_config"] = _mc_mod
 
 from scripts.misc.mufufu_config_lab import (

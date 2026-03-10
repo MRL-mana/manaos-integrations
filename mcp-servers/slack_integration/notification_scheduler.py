@@ -26,7 +26,7 @@ class SlackNotificationScheduler:
         time_str: str,
         channel: str,
         message_func: Callable[[], str],
-        job_name: str = None
+        job_name: str = None  # type: ignore
     ):
         """
         毎日の定期通知を追加
@@ -56,7 +56,7 @@ class SlackNotificationScheduler:
         self,
         channel: str,
         message_func: Callable[[], str],
-        job_name: str = None
+        job_name: str = None  # type: ignore
     ):
         """
         毎時の定期通知を追加
@@ -77,7 +77,7 @@ class SlackNotificationScheduler:
         minutes: int,
         channel: str,
         message_func: Callable[[], str],
-        job_name: str = None
+        job_name: str = None  # type: ignore
     ):
         """
         N分間隔の定期通知を追加
@@ -100,7 +100,7 @@ class SlackNotificationScheduler:
         time_str: str,
         channel: str,
         message_func: Callable[[], str],
-        job_name: str = None
+        job_name: str = None  # type: ignore
     ):
         """
         毎週の定期通知を追加

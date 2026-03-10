@@ -21,7 +21,7 @@ class ReportGenerator:
         # 日本語フォント設定
         plt.rcParams['font.family'] = 'DejaVu Sans'
     
-    def generate_excel_report(self, data: Dict, filename: str = None) -> str:
+    def generate_excel_report(self, data: Dict, filename: str = None) -> str:  # type: ignore
         """Excelレポート生成"""
         if not filename:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -67,7 +67,7 @@ class ReportGenerator:
         except Exception as e:
             return f"エラー: {str(e)}"
     
-    def generate_markdown_report(self, data: Dict, filename: str = None) -> str:
+    def generate_markdown_report(self, data: Dict, filename: str = None) -> str:  # type: ignore
         """Markdownレポート生成"""
         if not filename:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -108,7 +108,7 @@ class ReportGenerator:
         except Exception as e:
             return f"エラー: {str(e)}"
     
-    def generate_comparison_report(self, comparison_data: Dict, filename: str = None) -> str:
+    def generate_comparison_report(self, comparison_data: Dict, filename: str = None) -> str:  # type: ignore
         """比較レポート生成"""
         if not filename:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -148,7 +148,7 @@ class ReportGenerator:
         except Exception as e:
             return f"エラー: {str(e)}"
     
-    def generate_chart(self, data: Dict, chart_type: str = "bar") -> str:
+    def generate_chart(self, data: Dict, chart_type: str = "bar") -> str:  # type: ignore
         """グラフ生成"""
         try:
             if chart_type == "bar":

@@ -284,7 +284,7 @@ class TestCachedDecorator:
             return 1
 
         assert hasattr(fn, "cache")
-        assert isinstance(fn.cache, IntelligentCache)
+        assert isinstance(fn.cache, IntelligentCache)  # type: ignore
 
     def test_decorator_different_args_different_cache_keys(self):
         call_count = [0]

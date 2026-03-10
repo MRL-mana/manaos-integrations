@@ -34,7 +34,7 @@ logger = get_service_logger("unified-orchestrator")
 
 # 強化モジュールのインポート
 try:
-    from metrics_collector import MetricsCollector, MetricType
+    from metrics_collector import MetricsCollector, MetricType  # type: ignore[attr-defined]
 
     METRICS_AVAILABLE = True
 except ImportError:
@@ -245,18 +245,18 @@ class UnifiedOrchestrator:
         self.intelligent_retry = None
         if RETRY_AVAILABLE and self.config.get("enable_retry", True):
             try:
-                retry_config = RetryConfig(
+                retry_config = RetryConfig(  # type: ignore[possibly-unbound]
                     max_retries=self.config.get("max_retries", 3),
                     initial_delay=self.config.get("retry_initial_delay", 1.0),
                     max_delay=self.config.get("retry_max_delay", 60.0),
                     exponential_base=self.config.get("retry_exponential_base", 2.0),
                 )
-                circuit_breaker_config = CircuitBreakerConfig(
+                circuit_breaker_config = CircuitBreakerConfig(  # type: ignore[possibly-unbound]
                     failure_threshold=self.config.get("circuit_breaker_failure_threshold", 5),
                     success_threshold=self.config.get("circuit_breaker_success_threshold", 2),
                     timeout_seconds=self.config.get("circuit_breaker_timeout", 60.0),
                 )
-                self.intelligent_retry = IntelligentRetry(
+                self.intelligent_retry = IntelligentRetry(  # type: ignore[possibly-unbound]
                     retry_config=retry_config, circuit_breaker_config=circuit_breaker_config
                 )
                 logger.info("✅ Intelligent Retry統合完了")
@@ -268,7 +268,7 @@ class UnifiedOrchestrator:
         if CACHE_AVAILABLE and self.config.get("enable_cache", True):
             try:
                 cache_ttl = self.config.get("cache_ttl_seconds", 3600)
-                self.response_cache = ResponseCache(default_ttl_seconds=cache_ttl)
+                self.response_cache = ResponseCache(default_ttl_seconds=cache_ttl)  # type: ignore[possibly-unbound]
                 logger.info(f"✅ Response Cache統合完了（TTL: {cache_ttl}秒）")
             except Exception as e:
                 logger.warning(f"⚠️ Response Cache統合エラー: {e}")
@@ -436,7 +436,7 @@ class UnifiedOrchestrator:
             result.status = ExecutionStatus.EXECUTING
 
             # タスクの完了を待つ（ポーリング）
-            execution_result = await self._wait_for_task_completion(result.task_id)
+            execution_result = await self._wait_for_task_completion(result.task_id)  # type: ignore
             result.result = execution_result
 
             if execution_result and execution_result.get("status") == "completed":
@@ -490,7 +490,7 @@ class UnifiedOrchestrator:
             if self.config.get("enable_metrics", True):
                 await self._record_metric(
                     "UnifiedOrchestrator",
-                    MetricType.RESPONSE_TIME,
+                    MetricType.RESPONSE_TIME,  # type: ignore[union-attr]
                     result.duration_seconds,
                     metadata={
                         "execution_id": execution_id,
@@ -500,7 +500,7 @@ class UnifiedOrchestrator:
                 )
                 await self._record_metric(
                     "UnifiedOrchestrator",
-                    MetricType.SUCCESS_RATE,
+                    MetricType.SUCCESS_RATE,  # type: ignore[union-attr]
                     1.0 if result.status == ExecutionStatus.COMPLETED else 0.0,
                     metadata={"execution_id": execution_id, "intent_type": result.intent_type},
                 )
@@ -577,8 +577,8 @@ class UnifiedOrchestrator:
 
             # メトリクス記録
             duration = (datetime.now() - start_time).total_seconds()
-            await self._record_metric("IntentRouter", MetricType.RESPONSE_TIME, duration)
-            await self._record_metric("IntentRouter", MetricType.SUCCESS_RATE, 1.0)
+            await self._record_metric("IntentRouter", MetricType.RESPONSE_TIME, duration)  # type: ignore[union-attr]
+            await self._record_metric("IntentRouter", MetricType.SUCCESS_RATE, 1.0)  # type: ignore[union-attr]
 
             # キャッシュに保存
             if self.response_cache and result:
@@ -601,9 +601,9 @@ class UnifiedOrchestrator:
 
             # エラーメトリクス記録
             duration = (datetime.now() - start_time).total_seconds()
-            await self._record_metric("IntentRouter", MetricType.RESPONSE_TIME, duration)
-            await self._record_metric("IntentRouter", MetricType.ERROR_RATE, 1.0)
-            await self._record_metric("IntentRouter", MetricType.SUCCESS_RATE, 0.0)
+            await self._record_metric("IntentRouter", MetricType.RESPONSE_TIME, duration)  # type: ignore[union-attr]
+            await self._record_metric("IntentRouter", MetricType.ERROR_RATE, 1.0)  # type: ignore[union-attr]
+            await self._record_metric("IntentRouter", MetricType.SUCCESS_RATE, 0.0)  # type: ignore[union-attr]
 
         return None
 
@@ -645,8 +645,8 @@ class UnifiedOrchestrator:
 
             # メトリクス記録
             duration = (datetime.now() - start_time).total_seconds()
-            await self._record_metric("TaskPlanner", MetricType.RESPONSE_TIME, duration)
-            await self._record_metric("TaskPlanner", MetricType.SUCCESS_RATE, 1.0)
+            await self._record_metric("TaskPlanner", MetricType.RESPONSE_TIME, duration)  # type: ignore[union-attr]
+            await self._record_metric("TaskPlanner", MetricType.SUCCESS_RATE, 1.0)  # type: ignore[union-attr]
 
             # キャッシュに保存
             if self.response_cache and result:
@@ -669,9 +669,9 @@ class UnifiedOrchestrator:
 
             # エラーメトリクス記録
             duration = (datetime.now() - start_time).total_seconds()
-            await self._record_metric("TaskPlanner", MetricType.RESPONSE_TIME, duration)
-            await self._record_metric("TaskPlanner", MetricType.ERROR_RATE, 1.0)
-            await self._record_metric("TaskPlanner", MetricType.SUCCESS_RATE, 0.0)
+            await self._record_metric("TaskPlanner", MetricType.RESPONSE_TIME, duration)  # type: ignore[union-attr]
+            await self._record_metric("TaskPlanner", MetricType.ERROR_RATE, 1.0)  # type: ignore[union-attr]
+            await self._record_metric("TaskPlanner", MetricType.SUCCESS_RATE, 0.0)  # type: ignore[union-attr]
 
         return None
 
@@ -795,8 +795,8 @@ class UnifiedOrchestrator:
 
             # メトリクス記録
             duration = (datetime.now() - start_time).total_seconds()
-            await self._record_metric("TaskCritic", MetricType.RESPONSE_TIME, duration)
-            await self._record_metric("TaskCritic", MetricType.SUCCESS_RATE, 1.0)
+            await self._record_metric("TaskCritic", MetricType.RESPONSE_TIME, duration)  # type: ignore[union-attr]
+            await self._record_metric("TaskCritic", MetricType.SUCCESS_RATE, 1.0)  # type: ignore[union-attr]
 
             return result
 
@@ -810,9 +810,9 @@ class UnifiedOrchestrator:
 
             # エラーメトリクス記録
             duration = (datetime.now() - start_time).total_seconds()
-            await self._record_metric("TaskCritic", MetricType.RESPONSE_TIME, duration)
-            await self._record_metric("TaskCritic", MetricType.ERROR_RATE, 1.0)
-            await self._record_metric("TaskCritic", MetricType.SUCCESS_RATE, 0.0)
+            await self._record_metric("TaskCritic", MetricType.RESPONSE_TIME, duration)  # type: ignore[union-attr]
+            await self._record_metric("TaskCritic", MetricType.ERROR_RATE, 1.0)  # type: ignore[union-attr]
+            await self._record_metric("TaskCritic", MetricType.SUCCESS_RATE, 0.0)  # type: ignore[union-attr]
 
         return None
 

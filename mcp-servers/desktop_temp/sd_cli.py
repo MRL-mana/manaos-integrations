@@ -163,7 +163,7 @@ def main():
                 num_inference_steps=args.steps,
                 guidance_scale=args.guidance,
                 num_images_per_prompt=args.num_images,
-                seed=args.seed,
+                seed=args.seed,  # type: ignore[call-arg]
                 output_dir=args.output_dir
             )
         else:

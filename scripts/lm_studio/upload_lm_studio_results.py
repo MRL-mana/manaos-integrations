@@ -14,7 +14,7 @@ if str(REPO_ROOT) not in sys.path:
 if sys.platform == "win32":
     import io
 
-    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 # Google Drive統合をインポート
 try:

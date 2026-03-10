@@ -32,7 +32,7 @@ class Phase3AdvancedOptimization:
         
         # 動的ワーカー数調整設定
         self.min_workers = 1
-        self.max_workers = max_workers or min(os.cpu_count(), 8)
+        self.max_workers = max_workers or min(os.cpu_count(), 8)  # type: ignore
         self.current_workers = self.max_workers
         
         # パフォーマンス監視設定

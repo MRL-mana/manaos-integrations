@@ -221,9 +221,9 @@ def determine_tier(metrics: Dict[str, Any]) -> str:
     # 不正値ガード（None/NaN/範囲外）
     safe = {
         "score_avg": max(0.0, min(100.0, float(metrics.get("score_avg") or 0))),
-        "approval_rate": _clamp_rate(metrics.get("approval_rate")),
-        "execution_rate": _clamp_rate(metrics.get("execution_rate")),
-        "noise_index": _clamp_rate(metrics.get("noise_index")),
+        "approval_rate": _clamp_rate(metrics.get("approval_rate")),  # type: ignore
+        "execution_rate": _clamp_rate(metrics.get("execution_rate")),  # type: ignore
+        "noise_index": _clamp_rate(metrics.get("noise_index")),  # type: ignore
         "days_active": max(0, int(metrics.get("days_active") or 0)),
     }
     metrics = safe
@@ -322,8 +322,8 @@ if __name__ == "__main__":
     import io
 
     if sys.platform == "win32":
-        sys.stdout.reconfigure(encoding='utf-8')
-        sys.stderr.reconfigure(encoding='utf-8')
+        sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
+        sys.stderr.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
     print("=" * 60)
     print("System 3 Playbook Auto Promotion")

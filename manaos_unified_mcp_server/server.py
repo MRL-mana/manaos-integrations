@@ -24,8 +24,8 @@ except Exception:  # pragma: no cover
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -123,7 +123,7 @@ def _autonomy_check_tool(tool_name: str, confirm_token: str | None = None) -> tu
     Autonomy System が落ちている場合は許可（ログのみ）。
     """
     try:
-        timeout = timeout_config.get("api_call", 5.0) if TIMEOUT_CONFIG_AVAILABLE else 5.0
+        timeout = timeout_config.get("api_call", 5.0) if TIMEOUT_CONFIG_AVAILABLE else 5.0  # type: ignore[union-attr]
         payload = {"tool_name": tool_name}
         if confirm_token:
             payload["confirm_token"] = confirm_token
@@ -149,7 +149,7 @@ def _autonomy_record_cost(tool_name: str) -> None:
     if not usage_key:
         return
     try:
-        timeout = timeout_config.get("api_call", 5.0) if TIMEOUT_CONFIG_AVAILABLE else 5.0
+        timeout = timeout_config.get("api_call", 5.0) if TIMEOUT_CONFIG_AVAILABLE else 5.0  # type: ignore[union-attr]
         httpx.post(
             f"{AUTONOMY_SYSTEM_URL}/api/record-cost",
             json={"usage_key": usage_key, "period": "per_hour", "amount": 1},
@@ -1856,7 +1856,7 @@ async def call_tool(name: str, arguments: dict):
                 "image": args.get("image"),
                 "timeout": args.get("timeout", 600),
             }
-            timeout = timeout_config.get("api_call", 30.0) if TIMEOUT_CONFIG_AVAILABLE else 30.0
+            timeout = timeout_config.get("api_call", 30.0) if TIMEOUT_CONFIG_AVAILABLE else 30.0  # type: ignore[union-attr]
             resp = httpx.post(f"{MANAOS_API_URL.rstrip('/')}/api/ltx2/generate", json=payload, timeout=timeout)
             resp.raise_for_status()
             result = resp.json()
@@ -1875,7 +1875,7 @@ async def call_tool(name: str, arguments: dict):
                 "positive_suffix": args.get("positive_suffix"),
                 "negative_suffix": args.get("negative_suffix"),
             }
-            timeout = timeout_config.get("api_call", 30.0) if TIMEOUT_CONFIG_AVAILABLE else 30.0
+            timeout = timeout_config.get("api_call", 30.0) if TIMEOUT_CONFIG_AVAILABLE else 30.0  # type: ignore[union-attr]
             resp = httpx.post(
                 f"{MANAOS_API_URL.rstrip('/')}/api/ltx2-infinity/generate",
                 json=payload,
@@ -1885,13 +1885,13 @@ async def call_tool(name: str, arguments: dict):
             result = resp.json()
 
         elif name == "ltx2_infinity_list_templates":
-            timeout = timeout_config.get("api_call", 10.0) if TIMEOUT_CONFIG_AVAILABLE else 10.0
+            timeout = timeout_config.get("api_call", 10.0) if TIMEOUT_CONFIG_AVAILABLE else 10.0  # type: ignore[union-attr]
             resp = httpx.get(f"{MANAOS_API_URL.rstrip('/')}/api/ltx2-infinity/templates", timeout=timeout)
             resp.raise_for_status()
             result = resp.json()
 
         elif name == "ltx2_infinity_storage_stats":
-            timeout = timeout_config.get("api_call", 10.0) if TIMEOUT_CONFIG_AVAILABLE else 10.0
+            timeout = timeout_config.get("api_call", 10.0) if TIMEOUT_CONFIG_AVAILABLE else 10.0  # type: ignore[union-attr]
             resp = httpx.get(f"{MANAOS_API_URL.rstrip('/')}/api/ltx2-infinity/storage", timeout=timeout)
             resp.raise_for_status()
             result = resp.json()

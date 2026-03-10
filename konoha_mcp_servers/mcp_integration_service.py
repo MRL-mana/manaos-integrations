@@ -85,7 +85,7 @@ class MCPIntegrationService:
                 return
         
         try:
-            cursor = self.postgres_conn.cursor()
+            cursor = self.postgres_conn.cursor()  # type: ignore[union-attr]
             
             # 最近のアクション履歴を取得
             cursor.execute("""

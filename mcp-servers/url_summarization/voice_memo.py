@@ -58,7 +58,7 @@ class VoiceMemo:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def create_memo(self, audio_path: str, notebook_id: str = None, language: str = 'ja') -> Dict:
+    def create_memo(self, audio_path: str, notebook_id: str = None, language: str = 'ja') -> Dict:  # type: ignore
         """音声メモ作成"""
         try:
             # 文字起こし

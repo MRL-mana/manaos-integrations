@@ -17,7 +17,7 @@ except Exception:  # pragma: no cover
         UNIFIED_API_PORT = int(os.getenv("UNIFIED_API_PORT", "9510"))
 
 # UTF-8エンコーディング設定
-sys.stdout.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 BASE_URL = os.getenv("MANAOS_INTEGRATION_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}")
 

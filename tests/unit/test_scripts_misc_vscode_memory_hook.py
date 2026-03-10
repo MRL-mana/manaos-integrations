@@ -19,7 +19,7 @@ def _load(monkeypatch):
     mock_mem_instance.add_memory.return_value = None
 
     mem0_mod = types.ModuleType("mem0_integration")
-    mem0_mod.Mem0Integration = MagicMock(return_value=mock_mem_instance)
+    mem0_mod.Mem0Integration = MagicMock(return_value=mock_mem_instance)  # type: ignore
     monkeypatch.setitem(sys.modules, "mem0_integration", mem0_mod)
 
     with patch("builtins.print"):

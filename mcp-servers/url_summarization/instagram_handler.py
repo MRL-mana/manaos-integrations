@@ -62,7 +62,7 @@ class InstagramHandler:
             if use_selenium:
                 return self._get_post_selenium(url)
             else:
-                return self._get_post_requests(url, post_id, username)
+                return self._get_post_requests(url, post_id, username)  # type: ignore
 
         except Exception as e:
             return {"success": False, "error": str(e)}

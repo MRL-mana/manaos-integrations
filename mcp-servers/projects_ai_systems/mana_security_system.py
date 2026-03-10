@@ -674,13 +674,13 @@ class ManaSecuritySystem:
         
         for system_name, port in systems:
             try:
-                response = requests.get(f"http://localhost:{port}/api/status", timeout=5)
+                response = requests.get(f"http://localhost:{port}/api/status", timeout=5)  # type: ignore[name-defined]
                 status[system_name] = {
                     "status": "healthy" if response.status_code == 200 else "unhealthy",
                     "port": port,
                     "response_time": response.elapsed.total_seconds()
                 }
-            except requests.RequestException:
+            except requests.RequestException:  # type: ignore[name-defined]
                 status[system_name] = {
                     "status": "unreachable",
                     "port": port,
@@ -703,7 +703,7 @@ class ManaSecuritySystem:
                     "type": "automatic"
                 }
                 
-                asyncio.run(self.create_backup(backup_data))
+                asyncio.run(self.create_backup(backup_data))  # type: ignore[name-defined]
                 self.logger.info("自動バックアップ完了")
                 
             except Exception as e:

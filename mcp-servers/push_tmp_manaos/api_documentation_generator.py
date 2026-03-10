@@ -249,7 +249,7 @@ def generate_openapi_spec() -> Dict[str, Any]:
     return spec
 
 
-def save_openapi_spec(output_path: Path = None):
+def save_openapi_spec(output_path: Path = None):  # type: ignore
     """OpenAPI仕様を保存"""
     if output_path is None:
         output_path = Path(__file__).parent / "docs" / "openapi.json"

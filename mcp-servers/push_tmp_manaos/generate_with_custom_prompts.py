@@ -17,11 +17,11 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
 if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 from _paths import COMFYUI_PORT
 
-COMFYUI_URL = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
+COMFYUI_URL = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")  # type: ignore[name-defined]
 OUTPUT_DIR = Path("C:/ComfyUI/output")
 GENERATION_METADATA_DB = Path("C:/ComfyUI/input/mana_favorites/generation_metadata.json")
 
@@ -205,7 +205,7 @@ def create_workflow_with_loras(
     prompt: str,
     negative_prompt: str,
     model: str,
-    loras: List[Tuple[str, float]] = None,
+    loras: List[Tuple[str, float]] = None,  # type: ignore
     steps: int = 50,
     guidance_scale: float = 7.5,
     width: int = 768,
@@ -367,7 +367,7 @@ for i in range(num_images):
         prompt=prompt,
         negative_prompt=template["negative"],
         model=model,
-        loras=valid_loras if valid_loras else None,
+        loras=valid_loras if valid_loras else None,  # type: ignore
         steps=steps,
         guidance_scale=cfg_scale,
         width=width,

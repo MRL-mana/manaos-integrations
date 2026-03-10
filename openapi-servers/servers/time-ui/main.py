@@ -103,7 +103,7 @@ def html_page(title: str, body: str) -> HTMLResponse:
     </body>
     </html>
     """
-    return html
+    return html  # type: ignore
 
 
 # -------------------------------

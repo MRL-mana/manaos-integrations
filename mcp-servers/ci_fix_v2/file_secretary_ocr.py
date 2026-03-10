@@ -42,7 +42,7 @@ class FileSecretaryOCR:
         
         if OCR_AVAILABLE:
             try:
-                self.ocr_engine = MultiProviderOCR()
+                self.ocr_engine = MultiProviderOCR()  # type: ignore[possibly-unbound]
                 available_providers = self.ocr_engine.get_available_providers()
                 if ocr_provider not in available_providers:
                     logger.warning(f"⚠️ OCRプロバイダー '{ocr_provider}' が利用できません。利用可能: {available_providers}")

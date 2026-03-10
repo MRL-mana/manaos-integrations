@@ -109,16 +109,16 @@ class GoogleProductivityIntegration(BaseIntegration):
         try:
             # 既存トークンを読み込み
             if self.token_path.exists():
-                self.creds = Credentials.from_authorized_user_file(
+                self.creds = Credentials.from_authorized_user_file(  # type: ignore[possibly-unbound]
                     str(self.token_path), self.scopes
                 )
             
             # トークンが無効または存在しない場合、再認証
             if not self.creds or not self.creds.valid:
                 if self.creds and self.creds.expired and self.creds.refresh_token:
-                    self.creds.refresh(Request())
+                    self.creds.refresh(Request())  # type: ignore[possibly-unbound]
                 elif self.credentials_path.exists():
-                    flow = InstalledAppFlow.from_client_secrets_file(
+                    flow = InstalledAppFlow.from_client_secrets_file(  # type: ignore[possibly-unbound]
                         str(self.credentials_path), self.scopes
                     )
                     self.creds = flow.run_local_server(port=0)
@@ -130,12 +130,12 @@ class GoogleProductivityIntegration(BaseIntegration):
                     return False
             
             # 各サービスを初期化
-            self.calendar_service = build('calendar', 'v3', credentials=self.creds)
-            self.tasks_service = build('tasks', 'v1', credentials=self.creds)
-            self.sheets_service = build('sheets', 'v4', credentials=self.creds)
+            self.calendar_service = build('calendar', 'v3', credentials=self.creds)  # type: ignore[possibly-unbound]
+            self.tasks_service = build('tasks', 'v1', credentials=self.creds)  # type: ignore[possibly-unbound]
+            self.sheets_service = build('sheets', 'v4', credentials=self.creds)  # type: ignore[possibly-unbound]
             if self.enable_keep:
                 try:
-                    self.keep_service = build('keep', 'v1', credentials=self.creds)
+                    self.keep_service = build('keep', 'v1', credentials=self.creds)  # type: ignore[possibly-unbound]
                 except Exception as e:
                     self.logger.warning(f"Keep サービスの初期化に失敗しました: {e}")
             else:

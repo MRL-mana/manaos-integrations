@@ -47,7 +47,7 @@ class RunPodWorkerHTTP:
         log_message = f"[{timestamp}] [{self.worker_id}] [{level}] {message}"
         print(log_message)
     
-    def _make_request(self, endpoint: str, method: str = "GET", data: Dict = None) -> Dict:
+    def _make_request(self, endpoint: str, method: str = "GET", data: Dict = None) -> Dict:  # type: ignore
         """HTTP リクエスト実行"""
         url = f"{self.proxy_url}{endpoint}"
         try:
@@ -113,10 +113,10 @@ class RunPodWorkerHTTP:
             self._log("🧪 GPUテスト開始...")
             
             # 簡単なGPU演算テスト
-            device = torch.device("cuda")
-            x = torch.randn(1000, 1000).to(device)
-            y = torch.randn(1000, 1000).to(device)
-            z = torch.mm(x, y)
+            device = torch.device("cuda")  # type: ignore[possibly-unbound]
+            x = torch.randn(1000, 1000).to(device)  # type: ignore[possibly-unbound]
+            y = torch.randn(1000, 1000).to(device)  # type: ignore[possibly-unbound]
+            z = torch.mm(x, y)  # type: ignore[possibly-unbound]
             
             result = z.sum().item()
             
@@ -125,8 +125,8 @@ class RunPodWorkerHTTP:
             return {
                 "success": True,
                 "gpu_test_result": result,
-                "gpu_name": torch.cuda.get_device_name(0),
-                "gpu_memory_gb": torch.cuda.get_device_properties(0).total_memory / 1024**3
+                "gpu_name": torch.cuda.get_device_name(0),  # type: ignore[possibly-unbound]
+                "gpu_memory_gb": torch.cuda.get_device_properties(0).total_memory / 1024**3  # type: ignore[possibly-unbound]
             }
             
         except Exception as e:

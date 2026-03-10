@@ -38,7 +38,7 @@ class SRVGGNetCompact(nn.Module):
             activation = nn.PReLU(num_parameters=num_feat)
         elif act_type == 'leakyrelu':
             activation = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-        self.body.append(activation)
+        self.body.append(activation)  # type: ignore[possibly-unbound]
 
         # the body structure
         for _ in range(num_conv):
@@ -50,7 +50,7 @@ class SRVGGNetCompact(nn.Module):
                 activation = nn.PReLU(num_parameters=num_feat)
             elif act_type == 'leakyrelu':
                 activation = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-            self.body.append(activation)
+            self.body.append(activation)  # type: ignore[possibly-unbound]
 
         # the last conv
         self.body.append(nn.Conv2d(num_feat, num_out_ch * upscale * upscale, 3, 1, 1))

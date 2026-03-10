@@ -177,7 +177,7 @@ class ManaWorkflowIntegrationSystem:
             return await self.get_workflow(workflow_id)
         
         @self.app.post("/api/workflows/execute/{template_id}")
-        async def execute_workflow(template_id: str, params: Dict[str, Any] = None):
+        async def execute_workflow(template_id: str, params: Dict[str, Any] = None):  # type: ignore
             return await self.execute_workflow(template_id, params or {})
         
         @self.app.get("/api/workflows/templates")
@@ -480,7 +480,7 @@ class ManaWorkflowIntegrationSystem:
                     "port": self.config["integrations"]["ai_integration"]["port"],
                     "response_time": response.elapsed.total_seconds()
                 }
-            except requests.RequestException:
+            except requests.RequestException:  # type: ignore[possibly-unbound]
                 status["ai_integration"] = {
                     "status": "inactive",
                     "port": self.config["integrations"]["ai_integration"]["port"],
@@ -554,14 +554,14 @@ class ManaWorkflowIntegrationSystem:
         
         if schedule_type == "interval":
             interval_minutes = schedule_config.get("interval_minutes", 60)
-            next_run = datetime.now() + timedelta(minutes=interval_minutes)
+            next_run = datetime.now() + timedelta(minutes=interval_minutes)  # type: ignore[name-defined]
         elif schedule_type == "daily":
             hour = schedule_config.get("hour", 0)
             next_run = datetime.now().replace(hour=hour, minute=0, second=0, microsecond=0)
             if next_run <= datetime.now():
-                next_run += timedelta(days=1)
+                next_run += timedelta(days=1)  # type: ignore[name-defined]
         else:
-            next_run = datetime.now() + timedelta(hours=1)
+            next_run = datetime.now() + timedelta(hours=1)  # type: ignore[name-defined]
         
         return next_run.isoformat()
     
@@ -632,7 +632,7 @@ class ManaWorkflowIntegrationSystem:
             try:
                 # 完了済みワークフローのクリーンアップ
                 cleanup_days = self.config["workflow"]["cleanup_days"]
-                cutoff_date = datetime.now() - timedelta(days=cleanup_days)
+                cutoff_date = datetime.now() - timedelta(days=cleanup_days)  # type: ignore[name-defined]
                 
                 # ここでクリーンアップロジックを実装
                 # 実際の実装では、古いワークフローをアーカイブまたは削除

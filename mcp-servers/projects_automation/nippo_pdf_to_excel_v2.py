@@ -65,7 +65,7 @@ class NippoPDFToExcelV2:
             pix = page.get_pixmap(matrix=mat)
             
             # PIL Imageに変換
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore
             
             doc.close()
             return img
@@ -218,12 +218,12 @@ class NippoPDFToExcelV2:
         try:
             wb = openpyxl.Workbook()
             ws = wb.active
-            ws.title = '日報データ'
+            ws.title = '日報データ'  # type: ignore[union-attr]
             
             # データを書き込み
             for r_idx, row in enumerate(df.itertuples(index=False), start=1):
                 for c_idx, value in enumerate(row, start=1):
-                    cell = ws.cell(row=r_idx, column=c_idx, value=value)
+                    cell = ws.cell(row=r_idx, column=c_idx, value=value)  # type: ignore[union-attr]
                     
                     # スタイル設定
                     cell.font = Font(name='メイリオ', size=11)
@@ -241,9 +241,9 @@ class NippoPDFToExcelV2:
                         cell.fill = PatternFill(start_color='CCE5FF', end_color='CCE5FF', fill_type='solid')
             
             # 列幅自動調整
-            for column in ws.columns:
+            for column in ws.columns:  # type: ignore[union-attr]
                 max_length = 0
-                column_letter = column[0].column_letter
+                column_letter = column[0].column_letter  # type: ignore
                 for cell in column:
                     try:
                         if cell.value:
@@ -251,7 +251,7 @@ class NippoPDFToExcelV2:
                     except Exception:
                         pass
                 adjusted_width = min(max_length + 2, 50)
-                ws.column_dimensions[column_letter].width = adjusted_width
+                ws.column_dimensions[column_letter].width = adjusted_width  # type: ignore[union-attr]
             
             # サマリーシート追加
             summary_ws = wb.create_sheet('変換情報', 0)
@@ -287,14 +287,14 @@ class NippoPDFToExcelV2:
     
     def convert_pdf(self, pdf_path: str):
         """PDFをExcelに変換（メイン処理）"""
-        pdf_path = Path(pdf_path)
+        pdf_path = Path(pdf_path)  # type: ignore
         
-        if not pdf_path.exists():
+        if not pdf_path.exists():  # type: ignore
             logger.error(f"PDFファイルが見つかりません: {pdf_path}")
             return {'success': False, 'error': 'File not found'}
         
         print(f"\n{'='*60}")
-        print(f"📄 変換開始: {pdf_path.name}")
+        print(f"📄 変換開始: {pdf_path.name}")  # type: ignore
         print(f"{'='*60}")
         
         try:
@@ -332,10 +332,10 @@ class NippoPDFToExcelV2:
             
             # 4. Excel作成
             print("📝 STEP 4: Excel作成...")
-            output_filename = f"{pdf_path.stem}_v2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            output_filename = f"{pdf_path.stem}_v2_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"  # type: ignore
             output_path = self.output_dir / output_filename
             
-            success = self.create_excel(df, str(output_path), pdf_path.name)
+            success = self.create_excel(df, str(output_path), pdf_path.name)  # type: ignore
             
             if success:
                 print("\n✅ 変換完了！")
@@ -357,14 +357,14 @@ class NippoPDFToExcelV2:
     
     def batch_convert(self, pdf_dir: str):
         """フォルダ内の全PDFを一括変換"""
-        pdf_dir = Path(pdf_dir)
+        pdf_dir = Path(pdf_dir)  # type: ignore
         
-        if not pdf_dir.exists():
+        if not pdf_dir.exists():  # type: ignore
             logger.error(f"フォルダが見つかりません: {pdf_dir}")
             return
         
-        pdf_files = list(pdf_dir.glob('*.pdf'))
-        pdf_files.extend(list(pdf_dir.glob('*.PDF')))
+        pdf_files = list(pdf_dir.glob('*.pdf'))  # type: ignore
+        pdf_files.extend(list(pdf_dir.glob('*.PDF')))  # type: ignore
         
         if not pdf_files:
             logger.error("PDFファイルが見つかりません")

@@ -530,7 +530,7 @@ class ManaDynamicScalingSystem:
                 raise HTTPException(status_code=400, detail="Invalid policy name")
             
             # ポリシー更新
-            self.scaling_policies[policy_name].update(policy_config)
+            self.scaling_policies[policy_name].update(policy_config)  # type: ignore[call-arg]
             
             # データベースに保存
             conn = sqlite3.connect(self.db_path)

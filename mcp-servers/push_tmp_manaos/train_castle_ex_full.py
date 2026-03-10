@@ -18,7 +18,7 @@ import argparse
 
 if sys.platform == "win32":
     try:
-        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
     except (AttributeError, ValueError, TypeError):
         pass
 
@@ -180,12 +180,12 @@ def check_environment():
         print(f"[エラー] Transformersが利用できません: {IMPORT_ERROR}")
         return False
 
-    print(f"PyTorch: {torch.__version__}")
+    print(f"PyTorch: {torch.__version__}")  # type: ignore[possibly-unbound]
     print(f"Transformers: 利用可能")
 
-    if torch.cuda.is_available():
-        print(f"CUDA: 利用可能 ({torch.cuda.get_device_name(0)})")
-        print(f"CUDA Device Count: {torch.cuda.device_count()}")
+    if torch.cuda.is_available():  # type: ignore[possibly-unbound]
+        print(f"CUDA: 利用可能 ({torch.cuda.get_device_name(0)})")  # type: ignore[possibly-unbound]
+        print(f"CUDA Device Count: {torch.cuda.device_count()}")  # type: ignore[possibly-unbound]
     else:
         print("CUDA: 利用不可（CPUモード）")
 
@@ -432,7 +432,7 @@ def main():
 
     try:
         print("トークナイザーを読み込み中...")
-        tokenizer = AutoTokenizer.from_pretrained(
+        tokenizer = AutoTokenizer.from_pretrained(  # type: ignore[possibly-unbound]
             args.model,
             trust_remote_code=True,
             revision=args.model_revision,
@@ -446,9 +446,9 @@ def main():
         # VRAM節約のため、低リソース設定を使用
         # FP16はTrainingArgumentsで処理するため、モデルロード時はFP32にしておく
         try:
-            model = AutoModelForCausalLM.from_pretrained(
+            model = AutoModelForCausalLM.from_pretrained(  # type: ignore[possibly-unbound]
                 args.model,
-                torch_dtype=torch.float32,  # TrainingArgumentsのfp16で自動的にFP16に変換
+                torch_dtype=torch.float32,  # TrainingArgumentsのfp16で自動的にFP16に変換  # type: ignore[possibly-unbound]
                 trust_remote_code=True,
                 low_cpu_mem_usage=False,  # checkpoint再開時のmeta tensor問題回避
                 attn_implementation=args.attn_implementation,
@@ -456,21 +456,21 @@ def main():
                 local_files_only=True,  # プロキシエラー回避: ローカルキャッシュのみ使用
             )
             # GPUに移動（device_mapを使わずに明示的に移動）
-            if torch.cuda.is_available():
-                model = model.to("cuda")
+            if torch.cuda.is_available():  # type: ignore[possibly-unbound]
+                model = model.to("cuda")  # type: ignore
         except TypeError:
             # Transformersのバージョン差異でattn_implementationが無い場合
-            model = AutoModelForCausalLM.from_pretrained(
+            model = AutoModelForCausalLM.from_pretrained(  # type: ignore[possibly-unbound]
                 args.model,
-                torch_dtype=torch.float32,
+                torch_dtype=torch.float32,  # type: ignore[possibly-unbound]
                 trust_remote_code=True,
                 low_cpu_mem_usage=False,  # checkpoint再開時のmeta tensor問題回避
                 revision=args.model_revision,
                 local_files_only=True,  # プロキシエラー回避: ローカルキャッシュのみ使用
             )
             # GPUに移動
-            if torch.cuda.is_available():
-                model = model.to("cuda")
+            if torch.cuda.is_available():  # type: ignore[possibly-unbound]
+                model = model.to("cuda")  # type: ignore
         print("[OK] モデル読み込み完了")
 
         # Gradient Checkpointingを有効化（VRAM節約）
@@ -480,9 +480,9 @@ def main():
         elif args.no_gradient_checkpointing:
             print("[情報] Gradient Checkpointingを無効化しました（切り分け用）")
 
-        if torch.cuda.is_available():
-            gpu_memory = torch.cuda.memory_allocated(0) / 1024**3
-            gpu_total = torch.cuda.get_device_properties(0).total_memory / 1024**3
+        if torch.cuda.is_available():  # type: ignore[possibly-unbound]
+            gpu_memory = torch.cuda.memory_allocated(0) / 1024**3  # type: ignore[possibly-unbound]
+            gpu_total = torch.cuda.get_device_properties(0).total_memory / 1024**3  # type: ignore[possibly-unbound]
             print(f"GPUメモリ使用量: {gpu_memory:.2f}GB / {gpu_total:.2f}GB")
             logger.info(f"GPUメモリ使用量: {gpu_memory:.2f}GB / {gpu_total:.2f}GB")
     except Exception as e:
@@ -511,11 +511,11 @@ def main():
 
     # Datasetオブジェクトに変換
     print("\nデータセットオブジェクトを作成中...")
-    train_dataset = Dataset.from_list(train_processed)
+    train_dataset = Dataset.from_list(train_processed)  # type: ignore[possibly-unbound]
     print(f"  訓練データセット: {len(train_dataset)}件")
 
     if eval_processed:
-        eval_dataset = Dataset.from_list(eval_processed)
+        eval_dataset = Dataset.from_list(eval_processed)  # type: ignore[possibly-unbound]
         print(f"  評価データセット: {len(eval_dataset)}件")
     else:
         eval_dataset = None
@@ -572,7 +572,7 @@ def main():
             eval_steps = args.save_steps
 
     _max_steps = args.max_steps if args.max_steps > 0 else -1
-    training_args = TrainingArguments(
+    training_args = TrainingArguments(  # type: ignore[possibly-unbound]
         output_dir=str(output_dir),
         num_train_epochs=args.epochs,
         max_steps=_max_steps,
@@ -590,7 +590,7 @@ def main():
         load_best_model_at_end=load_best_model_at_end,
         metric_for_best_model="loss" if load_best_model_at_end else None,
         greater_is_better=False if load_best_model_at_end else None,
-        fp16=torch.cuda.is_available(),
+        fp16=torch.cuda.is_available(),  # type: ignore[possibly-unbound]
         bf16=False,
         dataloader_num_workers=0,  # Windowsでの互換性のため
         report_to="tensorboard",
@@ -616,7 +616,7 @@ def main():
     print(f"load_best_model_at_end: {load_best_model_at_end}")
 
     # DataCollator
-    data_collator = DataCollatorForLanguageModeling(
+    data_collator = DataCollatorForLanguageModeling(  # type: ignore[possibly-unbound]
         tokenizer=tokenizer,
         mlm=False,
     )
@@ -670,7 +670,7 @@ def main():
         print("[情報] チェックポイントが見つかりません。初めから学習を開始します。")
         logger.info("チェックポイントなし。初めから学習を開始")
 
-    trainer = Trainer(
+    trainer = Trainer(  # type: ignore[possibly-unbound]
         model=model,
         args=training_args,
         train_dataset=train_dataset,

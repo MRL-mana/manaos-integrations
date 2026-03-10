@@ -14,13 +14,13 @@ def _make_github_automation_stub(available=True):
     mock_gh.is_available.return_value = available
     inst = MagicMock()
     inst.github = mock_gh
-    mod.GitHubAutomation = MagicMock(return_value=inst)
+    mod.GitHubAutomation = MagicMock(return_value=inst)  # type: ignore
     return mod, inst
 
 
 def _make_github_helper_stub():
     mod = types.ModuleType("github_helper")
-    mod.GitHubHelper = MagicMock()
+    mod.GitHubHelper = MagicMock()  # type: ignore
     return mod
 
 

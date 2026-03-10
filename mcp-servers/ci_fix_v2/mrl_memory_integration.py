@@ -97,7 +97,7 @@ class MRLMemoryLLMIntegration:
         
         if LLM_ROUTING_AVAILABLE and llm_router is None:
             try:
-                self.llm_router = LLMRouter()
+                self.llm_router = LLMRouter()  # type: ignore[possibly-unbound]
             except Exception as e:
                 logger.warning(f"LLMルーターの初期化エラー: {e}")
                 self.llm_router = None
@@ -106,7 +106,7 @@ class MRLMemoryLLMIntegration:
         self.rag_memory = rag_memory
         if RAG_MEMORY_AVAILABLE and rag_memory is None:
             try:
-                self.rag_memory = RAGMemoryEnhanced()
+                self.rag_memory = RAGMemoryEnhanced()  # type: ignore[possibly-unbound]
             except Exception as e:
                 logger.warning(f"RAGメモリの初期化エラー: {e}")
                 self.rag_memory = None
@@ -623,7 +623,7 @@ if __name__ == "__main__":
         
         port = int(os.getenv("PORT", 5105))
         logger.info(f"🚀 MRL Memory API起動中... (ポート: {port})")
-        app.run(host='0.0.0.0', port=port, debug=os.getenv("DEBUG", "False").lower() == "true")
+        app.run(host='0.0.0.0', port=port, debug=os.getenv("DEBUG", "False").lower() == "true")  # type: ignore[possibly-unbound]
     else:
         # 直接テスト
         api = MRLMemoryAPI()

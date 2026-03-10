@@ -99,7 +99,7 @@ def test_runpod_services():
                 print("  ⚠️  RunPod Serverless Client: 見つかりません")
 
         if runpod_serverless_available:
-            client = runpod_client_class()
+            client = runpod_client_class()  # type: ignore[possibly-unbound]
 
             # 画像生成テスト
             print("  🎨 画像生成テスト...")
@@ -249,7 +249,7 @@ def test_batch_generation():
     print("=" * 60)
 
     try:
-        from generate_mufufu_batch import generate_mufufu_batch
+        from generate_mufufu_batch import generate_mufufu_batch  # type: ignore[attr-defined]
         generate_mufufu_batch(count=3)
     except Exception as e:
         print(f"❌ バッチ生成エラー: {e}")

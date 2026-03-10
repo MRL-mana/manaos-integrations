@@ -116,11 +116,11 @@ def parse_and_run(line):
     elif cmd == "C" and len(parts) >= 2:
         btn = (parts[1] or "").lower()
         if btn == "left":
-            mouse.click(Mouse.LEFT_BUTTON)
+            mouse.click(Mouse.LEFT_BUTTON)  # type: ignore[possibly-unbound]
         elif btn == "right":
-            mouse.click(Mouse.RIGHT_BUTTON)
+            mouse.click(Mouse.RIGHT_BUTTON)  # type: ignore[possibly-unbound]
         elif btn == "middle":
-            mouse.click(Mouse.MIDDLE_BUTTON)
+            mouse.click(Mouse.MIDDLE_BUTTON)  # type: ignore[possibly-unbound]
     elif cmd == "W" and len(parts) >= 2:
         try:
             mouse.move(0, 0, int(parts[1]))

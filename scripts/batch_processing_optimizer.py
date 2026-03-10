@@ -125,7 +125,7 @@ class BatchProcessingOptimizer:
             
         except Exception as e:
             self.logger.error(f"❌ 単一テストPDF作成エラー ({index}): {e}")
-            return None
+            return None  # type: ignore
     
     async def test_sequential_processing(self, pdf_files: List[str]) -> Dict[str, Any]:
         """逐次処理テスト"""

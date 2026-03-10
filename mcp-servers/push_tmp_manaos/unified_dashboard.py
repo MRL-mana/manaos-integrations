@@ -52,12 +52,12 @@ async def get_dashboard_data():
     try:
         # 並列でデータを取得
         async with AsyncUnifiedAPIClient() as client:
-            services_health, test_results, pas_status, learning_stats, perf_stats = await asyncio.gather(
+            services_health, test_results, pas_status, learning_stats, perf_stats = await asyncio.gather(  # type: ignore[call-arg]
                 client.check_all_services(),
                 test_system.run_all_tests(),
-                pas_integration.get_integrated_status(),
-                learning_memory.get_integrated_stats(),
-                performance_optimizer.get_all_stats(),
+                pas_integration.get_integrated_status(),  # type: ignore
+                learning_memory.get_integrated_stats(),  # type: ignore
+                performance_optimizer.get_all_stats(),  # type: ignore
                 return_exceptions=True
             )
         

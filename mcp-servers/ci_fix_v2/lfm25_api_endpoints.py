@@ -40,17 +40,17 @@ def register_lfm25_endpoints(app):
             
             # タスクタイプの変換
             if task_type == "lightweight_conversation":
-                task_type_enum = TaskType.LIGHTWEIGHT_CONVERSATION
+                task_type_enum = TaskType.LIGHTWEIGHT_CONVERSATION  # type: ignore[possibly-unbound]
             elif task_type == "conversation":
-                task_type_enum = TaskType.CONVERSATION
+                task_type_enum = TaskType.CONVERSATION  # type: ignore[possibly-unbound]
             else:
-                task_type_enum = TaskType.CONVERSATION
+                task_type_enum = TaskType.CONVERSATION  # type: ignore[possibly-unbound]
             
             # LFM 2.5クライアントでチャット
-            client = AlwaysReadyLLMClient()
+            client = AlwaysReadyLLMClient()  # type: ignore[possibly-unbound]
             response = client.chat(
                 message=message,
-                model=ModelType.ULTRA_LIGHT,
+                model=ModelType.ULTRA_LIGHT,  # type: ignore[possibly-unbound]
                 task_type=task_type_enum,
                 use_cache=use_cache,
                 temperature=temperature,
@@ -86,11 +86,11 @@ def register_lfm25_endpoints(app):
                 return jsonify({"error": "messageパラメータが必要です"}), 400
             
             # LFM 2.5クライアントで軽量会話
-            client = AlwaysReadyLLMClient()
+            client = AlwaysReadyLLMClient()  # type: ignore[possibly-unbound]
             response = client.chat(
                 message=message,
-                model=ModelType.ULTRA_LIGHT,
-                task_type=TaskType.LIGHTWEIGHT_CONVERSATION,
+                model=ModelType.ULTRA_LIGHT,  # type: ignore[possibly-unbound]
+                task_type=TaskType.LIGHTWEIGHT_CONVERSATION,  # type: ignore[possibly-unbound]
                 use_cache=use_cache
             )
             
@@ -124,15 +124,15 @@ def register_lfm25_endpoints(app):
             
             # タスクタイプの変換
             if task_type == "lightweight_conversation":
-                task_type_enum = TaskType.LIGHTWEIGHT_CONVERSATION
+                task_type_enum = TaskType.LIGHTWEIGHT_CONVERSATION  # type: ignore[possibly-unbound]
             else:
-                task_type_enum = TaskType.CONVERSATION
+                task_type_enum = TaskType.CONVERSATION  # type: ignore[possibly-unbound]
             
             # LFM 2.5クライアントでバッチチャット
-            client = AlwaysReadyLLMClient()
+            client = AlwaysReadyLLMClient()  # type: ignore[possibly-unbound]
             results = client.batch_chat(
                 messages=messages,
-                model=ModelType.ULTRA_LIGHT,
+                model=ModelType.ULTRA_LIGHT,  # type: ignore[possibly-unbound]
                 task_type=task_type_enum
             )
             
@@ -170,16 +170,16 @@ def register_lfm25_endpoints(app):
         
         try:
             # 簡単なテストリクエストで状態確認
-            client = AlwaysReadyLLMClient()
+            client = AlwaysReadyLLMClient()  # type: ignore[possibly-unbound]
             test_response = client.chat(
                 "test",
-                model=ModelType.ULTRA_LIGHT,
-                task_type=TaskType.CONVERSATION
+                model=ModelType.ULTRA_LIGHT,  # type: ignore[possibly-unbound]
+                task_type=TaskType.CONVERSATION  # type: ignore[possibly-unbound]
             )
             
             return jsonify({
                 "available": True,
-                "model": ModelType.ULTRA_LIGHT.value,
+                "model": ModelType.ULTRA_LIGHT.value,  # type: ignore[possibly-unbound]
                 "status": "operational",
                 "test_latency_ms": test_response.latency_ms,
                 "test_source": test_response.source

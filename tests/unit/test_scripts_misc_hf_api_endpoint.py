@@ -11,14 +11,14 @@ import pytest
 
 # unified_logging
 _ul = types.ModuleType("unified_logging")
-_ul.get_service_logger = MagicMock(return_value=MagicMock())
+_ul.get_service_logger = MagicMock(return_value=MagicMock())  # type: ignore
 sys.modules["unified_logging"] = _ul
 
 # manaos_core_api
 _core_api_instance = MagicMock()
 _core_api_instance.act = MagicMock(return_value={"image_path": "/tmp/img.png"})
 _core_api_mod = types.ModuleType("manaos_core_api")
-_core_api_mod.get_manaos_api = MagicMock(return_value=_core_api_instance)
+_core_api_mod.get_manaos_api = MagicMock(return_value=_core_api_instance)  # type: ignore
 sys.modules["manaos_core_api"] = _core_api_mod
 
 # huggingface_integration
@@ -26,7 +26,7 @@ _hf_instance = MagicMock()
 _hf_instance.list_popular_models = MagicMock(return_value=[{"id": "model1"}])
 _hf_instance.get_recommended_models = MagicMock(return_value={"text-to-image": ["sdd"]})
 _hf_mod = types.ModuleType("huggingface_integration")
-_hf_mod.HuggingFaceManaOSIntegration = MagicMock(return_value=_hf_instance)
+_hf_mod.HuggingFaceManaOSIntegration = MagicMock(return_value=_hf_instance)  # type: ignore
 sys.modules["huggingface_integration"] = _hf_mod
 
 import scripts.misc.hf_api_endpoint as hfapi

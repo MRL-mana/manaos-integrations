@@ -49,7 +49,7 @@ class KonohaBackupCleaner:
                 return 0
         return 0
     
-    def find_backup_items(self) -> List[Dict[str, any]]:
+    def find_backup_items(self) -> List[Dict[str, any]]:  # type: ignore[misc]
         """バックアップ済み・移行済みのアイテムを検索"""
         print("[検索] バックアップ済み・移行済みアイテムを検索中...")
         print("-" * 70)
@@ -154,7 +154,7 @@ class KonohaBackupCleaner:
         
         return False
     
-    def delete_item(self, item: Dict[str, any], retry_count: int = 3) -> bool:
+    def delete_item(self, item: Dict[str, any], retry_count: int = 3) -> bool:  # type: ignore[misc]
         """アイテムを削除（リトライ機能付き）"""
         path = item['path']
         

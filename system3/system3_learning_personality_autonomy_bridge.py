@@ -19,11 +19,11 @@ except Exception:  # pragma: no cover
         AUTONOMY_SYSTEM_PORT = int(os.getenv("AUTONOMY_SYSTEM_PORT", "5124"))
 
 try:
-    from manaos_logger import get_logger, get_service_logger
+    from manaos_logger import get_logger, get_service_logger  # type: ignore
 except ImportError:
     import logging
     def get_logger(n): return logging.getLogger(n)
-logger = get_service_logger("system3-learning-personality-autonomy-bridge")
+logger = get_service_logger("system3-learning-personality-autonomy-bridge")  # type: ignore[possibly-unbound]
 
 # System3 各コンポーネントの URL
 LEARNING_URL = os.getenv("LEARNING_SYSTEM_URL", f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}").rstrip("/")

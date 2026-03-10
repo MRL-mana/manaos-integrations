@@ -95,7 +95,7 @@ class TestCriticResult:
             timestamp=datetime.now().isoformat(),
         )
         defaults.update(kwargs)
-        return CriticResult(**defaults)
+        return CriticResult(**defaults)  # type: ignore
 
     def test_fields_accessible(self):
         r = self.make_result()

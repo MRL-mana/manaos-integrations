@@ -45,13 +45,13 @@ class ManaSpecWorkflowEngine:
             cwd=str(self.project_path)
         )
         stdout, stderr = await process.communicate()
-        return process.returncode, stdout.decode(), stderr.decode()
+        return process.returncode, stdout.decode(), stderr.decode()  # type: ignore
     
     async def call_mrl_api(self, url: str, data: Dict, actor: str) -> Optional[Dict]:
         """Call MRL API asynchronously"""
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(url, json=data, timeout=30) as response:
+                async with session.post(url, json=data, timeout=30) as response:  # type: ignore
                     if response.status == 200:
                         result = await response.json()
                         self.log_event(f"{actor}_api_call", {"request": data, "response": result})
@@ -152,7 +152,7 @@ JSON形式で回答してください。
         else:
             self.log_event("validation_failed", {"error": stderr})
             print(f"❌ Validation失敗:\n{stderr}")
-            return None
+            return None  # type: ignore
         
         return change_id
     

@@ -320,7 +320,7 @@ async def x280_gpu_execute():
     
     return jsonify(result)
 
-@app.route('/services/proxy/<service_name>/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
+@app.route('/services/proxy/<service_name>/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])  # type: ignore
 def service_proxy(service_name, path):
     """任意のTrinityサービスへのプロキシ"""
     boost_state["requests_processed"] += 1

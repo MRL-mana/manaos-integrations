@@ -95,7 +95,7 @@ Generate a Stable Diffusion prompt based on the above request."""
             "raw_response": response
         }
     
-    async def save_prompt(self, prompt_data: dict, output_file: str = None):
+    async def save_prompt(self, prompt_data: dict, output_file: str = None):  # type: ignore
         """プロンプトをファイルに保存"""
         if output_file is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

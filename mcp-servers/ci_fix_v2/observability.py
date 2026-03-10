@@ -4,7 +4,7 @@ ManaOS OpenTelemetry統合
 分散トレーシング・メトリクス・ログの統合可観測性
 """
 
-from opentelemetry import trace, metrics, logs
+from opentelemetry import trace, metrics, logs  # type: ignore[attr-defined]
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter

@@ -25,17 +25,17 @@ sys.modules.setdefault("manaos_error_handler", _eh)
 
 _tc = MagicMock()
 _tc.get_timeout = MagicMock(return_value=5.0)
-sys.modules.setdefault("manaos_timeout_config", _tc)
+sys.modules["manaos_timeout_config"] = _tc
 
 _paths = MagicMock()
 _paths.VOICEVOX_PORT = 50021
 sys.modules.setdefault("_paths", _paths)
 
 # Ensure optional heavy packages are absent so flags = False
-sys.modules.setdefault("faster_whisper", None)
-sys.modules.setdefault("whisper", None)
-sys.modules.setdefault("pyaudio", None)
-sys.modules.setdefault("webrtcvad", None)
+sys.modules.setdefault("faster_whisper", None)  # type: ignore
+sys.modules.setdefault("whisper", None)  # type: ignore
+sys.modules.setdefault("pyaudio", None)  # type: ignore
+sys.modules.setdefault("webrtcvad", None)  # type: ignore
 
 import numpy as np
 from scripts.misc.voice_integration import (
@@ -68,6 +68,17 @@ def _make_wav_bytes(num_samples: int = 160, sample_rate: int = 16000) -> bytes:
 
 # ── TestVoiceTimeout ───────────────────────────────────────────────────────
 class TestVoiceTimeout:
+    @pytest.fixture(autouse=True)
+    def _reinstate_tc(self):
+        """各テスト前後で _tc が sys.modules["manaos_timeout_config"] になるよう保証"""
+        old = sys.modules.get("manaos_timeout_config")
+        sys.modules["manaos_timeout_config"] = _tc
+        yield
+        if old is None:
+            sys.modules.pop("manaos_timeout_config", None)
+        else:
+            sys.modules["manaos_timeout_config"] = old
+
     def test_returns_value_from_config(self):
         _tc.get_timeout.side_effect = None
         _tc.get_timeout.return_value = 5.0

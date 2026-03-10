@@ -51,7 +51,7 @@ class LazyImport:
         """呼び出し可能な場合の処理"""
         if self._module is None:
             self.__getattr__("__call__")
-        return self._module(*args, **kwargs)
+        return self._module(*args, **kwargs)  # type: ignore[operator]
 
 
 def lazy_import(module_name: str, package: Optional[str] = None):
@@ -85,7 +85,7 @@ def lazy_function(module_name: str, function_name: str, package: Optional[str] =
     Returns:
         遅延インポートされた関数
     """
-    @wraps(function_name)
+    @wraps(function_name)  # type: ignore
     def wrapper(*args, **kwargs):
         module = lazy_import(module_name, package)
         func = getattr(module, function_name)

@@ -11,7 +11,7 @@ import io
 from pathlib import Path
 
 if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 from _paths import GALLERY_PORT
 

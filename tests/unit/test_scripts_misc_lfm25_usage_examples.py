@@ -18,9 +18,9 @@ def _make_llm_stubs(monkeypatch):
     mock_client.ask.return_value = mock_resp
 
     arlc_mod = types.ModuleType("always_ready_llm_client")
-    arlc_mod.AlwaysReadyLLMClient = MagicMock(return_value=mock_client)
-    arlc_mod.ModelType = MagicMock()
-    arlc_mod.TaskType = MagicMock()
+    arlc_mod.AlwaysReadyLLMClient = MagicMock(return_value=mock_client)  # type: ignore
+    arlc_mod.ModelType = MagicMock()  # type: ignore
+    arlc_mod.TaskType = MagicMock()  # type: ignore
     monkeypatch.setitem(sys.modules, "always_ready_llm_client", arlc_mod)
 
     # LLMRouter stub
@@ -30,11 +30,11 @@ def _make_llm_stubs(monkeypatch):
     mock_router = MagicMock()
     mock_router.route.return_value = mock_router_resp
     llm_mod = types.ModuleType("llm_routing")
-    llm_mod.LLMRouter = MagicMock(return_value=mock_router)
+    llm_mod.LLMRouter = MagicMock(return_value=mock_router)  # type: ignore
     monkeypatch.setitem(sys.modules, "llm_routing", llm_mod)
 
     paths_mod = types.ModuleType("_paths")
-    paths_mod.UNIFIED_API_PORT = 9502
+    paths_mod.UNIFIED_API_PORT = 9502  # type: ignore
     monkeypatch.setitem(sys.modules, "_paths", paths_mod)
     monkeypatch.setitem(sys.modules, "manaos_integrations._paths", paths_mod)
 

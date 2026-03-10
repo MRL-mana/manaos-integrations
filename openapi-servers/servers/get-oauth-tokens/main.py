@@ -33,7 +33,7 @@ async def get_oauth_tokens(request: Request):
     oauth_access_token = None
 
     if headers.get("Authorization"):
-        if token := headers.get("Authorization").split(" ")[1]:
+        if token := headers.get("Authorization").split(" ")[1]:  # type: ignore[union-attr]
             oauth_access_token = token
 
     if oauth_id_token is None and oauth_access_token is None:

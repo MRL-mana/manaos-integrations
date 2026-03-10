@@ -20,7 +20,7 @@ def main():
     print("=" * 60)
     
     # ManaOS統合システムを初期化
-    integration = ManaOSCompleteIntegration()
+    integration = ManaOSCompleteIntegration()  # type: ignore[operator]
     
     # 完全なステータスを取得
     status = integration.get_complete_status()

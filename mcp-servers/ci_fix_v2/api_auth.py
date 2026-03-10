@@ -108,7 +108,7 @@ def _get_billing() -> BillingManager:
 async def get_api_key(
     header_key: Optional[str] = Security(_api_key_header),
     query_key: Optional[str] = Security(_api_key_query),
-    request: Request = None,
+    request: Request = None,  # type: ignore
 ) -> str:
     """
     リクエストから API Key を抽出。

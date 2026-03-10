@@ -36,32 +36,32 @@ class TestLLMClientFix:
     def test_import(self):
         """テスト1: LLMクライアントのインポート"""
         _require_llm()
-        assert AlwaysReadyLLMClient is not None
+        assert AlwaysReadyLLMClient is not None  # type: ignore[possibly-unbound]
 
     def test_model_types(self):
         """テスト2: ModelType 定数の存在確認"""
         _require_llm()
-        assert hasattr(ModelType, "LIGHT")
-        assert hasattr(ModelType, "MEDIUM")
-        assert hasattr(ModelType, "HEAVY")
-        assert hasattr(ModelType, "REASONING")
+        assert hasattr(ModelType, "LIGHT")  # type: ignore[possibly-unbound]
+        assert hasattr(ModelType, "MEDIUM")  # type: ignore[possibly-unbound]
+        assert hasattr(ModelType, "HEAVY")  # type: ignore[possibly-unbound]
+        assert hasattr(ModelType, "REASONING")  # type: ignore[possibly-unbound]
 
     def test_client_init(self):
         """テスト3: クライアントの初期化"""
         _require_llm()
-        client = AlwaysReadyLLMClient(use_cache=False)
+        client = AlwaysReadyLLMClient(use_cache=False)  # type: ignore[possibly-unbound]
         assert client is not None
 
     @pytest.mark.slow
     def test_llm_call(self):
         """テスト4: LLM 呼び出し（実 Ollama 必要）"""
         _require_llm()
-        client = AlwaysReadyLLMClient(use_cache=False)
+        client = AlwaysReadyLLMClient(use_cache=False)  # type: ignore[possibly-unbound]
         try:
             response = client.chat(
                 "こんにちは",
-                model=ModelType.MEDIUM,
-                task_type=TaskType.CONVERSATION,
+                model=ModelType.MEDIUM,  # type: ignore[possibly-unbound]
+                task_type=TaskType.CONVERSATION,  # type: ignore[possibly-unbound]
             )
             assert response is not None
             assert hasattr(response, "response")

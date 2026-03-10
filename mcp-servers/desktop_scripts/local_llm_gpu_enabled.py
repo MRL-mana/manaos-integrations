@@ -22,7 +22,7 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
 class LocalLLMGPU:
     """GPU有効化版ローカルLLM（RTX 5080対応）"""
     
-    def __init__(self, url: str = None, default_model: str = None):
+    def __init__(self, url: str = None, default_model: str = None):  # type: ignore
         self.url = url or OLLAMA_URL
         self.default_model = default_model or OLLAMA_MODEL
         # GPU使用を明示的に有効化
@@ -32,7 +32,7 @@ class LocalLLMGPU:
     async def chat(
         self,
         messages: List[Dict],
-        model: str = None,
+        model: str = None,  # type: ignore
         use_gpu: bool = True,
         num_gpu: int = 1,  # RTX 5080を1つ使用
         temperature: float = 0.7,
@@ -67,7 +67,7 @@ class LocalLLMGPU:
                     # RTX 5080の16GB VRAMを最大限活用
                     options["num_gpu_layers"] = 99  # 可能な限りGPUレイヤーを使用
                 
-                response = ollama.chat(
+                response = ollama.chat(  # type: ignore[possibly-unbound]
                     model=model,
                     messages=messages,
                     options=options
@@ -75,7 +75,7 @@ class LocalLLMGPU:
                 return response['message']['content']
             else:
                 # httpxフォールバック
-                async with httpx.AsyncClient(timeout=120.0) as client:
+                async with httpx.AsyncClient(timeout=120.0) as client:  # type: ignore[possibly-unbound]
                     payload = {
                         "model": model,
                         "messages": messages,
@@ -106,7 +106,7 @@ class LocalLLMGPU:
     async def chat_stream(
         self,
         messages: List[Dict],
-        model: str = None,
+        model: str = None,  # type: ignore
         use_gpu: bool = True
     ):
         """GPUを使用してストリーミングチャット"""
@@ -119,7 +119,7 @@ class LocalLLMGPU:
                     options["num_gpu"] = 1
                     options["num_gpu_layers"] = 99
                 
-                stream = ollama.chat(
+                stream = ollama.chat(  # type: ignore[possibly-unbound]
                     model=model,
                     messages=messages,
                     stream=True,

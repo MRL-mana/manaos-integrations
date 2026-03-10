@@ -59,10 +59,10 @@ class ComputerUseOrchestrator:
     def execute_task(
         self,
         task: str,
-        max_steps: int = None,
+        max_steps: int = None,  # type: ignore
         step_delay: float = DEFAULT_STEP_DELAY,
-        max_cost: float = None,
-        max_time: float = None,
+        max_cost: float = None,  # type: ignore
+        max_time: float = None,  # type: ignore
         auto_adjust_budget: bool = True,
         enable_recovery: bool = True,
         enable_replay: bool = True,
@@ -223,7 +223,7 @@ class ComputerUseOrchestrator:
             
             # 予算情報を結果に追加
             if 'budget_tracker' in locals():
-                result.budget_status = budget_tracker.get_status()
+                result.budget_status = budget_tracker.get_status()  # type: ignore
             
             # リプレイ記録
             if replay_system and enable_replay:
@@ -344,7 +344,7 @@ class ComputerUseOrchestrator:
         
         # 予算情報
         if hasattr(result, 'budget_status'):
-            budget = result.budget_status
+            budget = result.budget_status  # type: ignore
             print("\n💰 予算消費:")
             print(f"   Steps: {budget['current']['steps']} ({budget['percentage_used']['steps']:.1f}%)")
             print(f"   Cost: ${budget['current']['cost']:.4f} ({budget['percentage_used']['cost']:.1f}%)")

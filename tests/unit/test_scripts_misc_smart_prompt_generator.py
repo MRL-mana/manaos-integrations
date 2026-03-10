@@ -13,13 +13,13 @@ import pytest
 def _mod():
     # Stub manaos_core_api so the module-level sys.exit(1) is avoided
     manaos_stub = types.ModuleType("manaos_core_api")
-    manaos_stub.ManaOSCoreAPI = MagicMock()
+    manaos_stub.ManaOSCoreAPI = MagicMock()  # type: ignore
     sys.modules["manaos_core_api"] = manaos_stub
 
     # Stub dotenv if needed
     if "dotenv" not in sys.modules:
         dotenv_stub = types.ModuleType("dotenv")
-        dotenv_stub.load_dotenv = lambda *a, **kw: None
+        dotenv_stub.load_dotenv = lambda *a, **kw: None  # type: ignore
         sys.modules["dotenv"] = dotenv_stub
 
     sys.path.insert(0, "scripts/misc")

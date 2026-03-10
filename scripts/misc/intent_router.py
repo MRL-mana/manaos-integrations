@@ -230,11 +230,11 @@ class IntentRouter:
             "一覧": IntentType.FILE_STATUS,
         }
 
-    def _get_default_prompt_template(self) -> str:
+    def _get_default_prompt_template(self) -> str:  # type: ignore
         """デフォルトプロンプトテンプレート"""
         # 人格設定からプロンプトを取得
-        if hasattr(self, 'current_persona') and self.current_persona:
-            persona_prompt = self.current_persona.get('personality_prompt', '')
+        if hasattr(self, 'current_persona') and self.current_persona:  # type: ignore
+            persona_prompt = self.current_persona.get('personality_prompt', '')  # type: ignore
             if persona_prompt:
                 return f"""{persona_prompt}
 

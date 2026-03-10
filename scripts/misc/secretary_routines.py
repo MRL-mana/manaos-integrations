@@ -101,7 +101,7 @@ class SecretaryRoutines:
         if MANAOS_API_AVAILABLE:
             try:
                 # 昨日のログを検索
-                results = manaos.recall(
+                results = manaos.recall(  # type: ignore[possibly-unbound]
                     query=f"date:{yesterday}",
                     scope="all",
                     limit=50
@@ -132,7 +132,7 @@ class SecretaryRoutines:
                         summary_prompt += f"- {result.get('content', '')[:100]}\n"
                     
                     try:
-                        summary_result = manaos.act("llm_call", {
+                        summary_result = manaos.act("llm_call", {  # type: ignore[possibly-unbound]
                             "task_type": "lightweight_conversation",  # LFM 2.5使用（高速・軽量）
                             "prompt": summary_prompt
                         })
@@ -153,7 +153,7 @@ class SecretaryRoutines:
             "summary": "ログ取得に失敗しました"
         }
     
-    def _get_latest_news(self, topics: List[str] = None) -> Dict[str, Any]:
+    def _get_latest_news(self, topics: List[str] = None) -> Dict[str, Any]:  # type: ignore
         """最新情報を検索（SearXNG使用）"""
         if not MANAOS_API_AVAILABLE:
             return {"results": [], "count": 0}
@@ -169,7 +169,7 @@ class SecretaryRoutines:
                 # Brave Search APIを優先的に使用（利用可能な場合）
                 search_result = None
                 try:
-                    search_result = manaos.act("brave_search", {
+                    search_result = manaos.act("brave_search", {  # type: ignore[possibly-unbound]
                         "query": f"{topic} 最新情報",
                         "count": 3,
                         "search_lang": "jp",
@@ -177,7 +177,7 @@ class SecretaryRoutines:
                     })
                 except Exception:
                     # Brave Searchが利用できない場合はSearXNGを使用
-                    search_result = manaos.act("web_search", {
+                    search_result = manaos.act("web_search", {  # type: ignore[possibly-unbound]
                         "query": f"{topic} 最新情報",
                         "max_results": 3,
                         "language": "ja",
@@ -276,7 +276,7 @@ class SecretaryRoutines:
         # 通知
         if MANAOS_API_AVAILABLE:
             try:
-                manaos.emit(
+                manaos.emit(  # type: ignore[possibly-unbound]
                     "morning_routine",
                     {"message": report},
                     "normal"
@@ -287,7 +287,7 @@ class SecretaryRoutines:
         # 記憶に保存
         if MANAOS_API_AVAILABLE:
             try:
-                manaos.remember({
+                manaos.remember({  # type: ignore[possibly-unbound]
                     "type": "system",
                     "content": report,
                     "metadata": {
@@ -376,7 +376,7 @@ class SecretaryRoutines:
 
 例: [時間不足] 他の緊急タスクが入って時間が取れなかった"""
                 
-                analysis_result = manaos.act("llm_call", {
+                analysis_result = manaos.act("llm_call", {  # type: ignore[possibly-unbound]
                     "task_type": "lightweight_conversation",  # LFM 2.5使用（高速・軽量）
                     "prompt": analysis_prompt
                 })
@@ -413,7 +413,7 @@ class SecretaryRoutines:
 
 例: 「〇〇を3ステップに分割: ①調査、②設計、③実装」"""
                     
-                    suggestion_result = manaos.act("llm_call", {
+                    suggestion_result = manaos.act("llm_call", {  # type: ignore[possibly-unbound]
                         "task_type": "lightweight_conversation",  # LFM 2.5使用（高速・軽量）
                         "prompt": suggestion_prompt
                     })
@@ -527,7 +527,7 @@ class SecretaryRoutines:
         # 通知
         if MANAOS_API_AVAILABLE:
             try:
-                manaos.emit(
+                manaos.emit(  # type: ignore[possibly-unbound]
                     "noon_routine",
                     {"message": report},
                     "normal"
@@ -538,7 +538,7 @@ class SecretaryRoutines:
         # 記憶に保存
         if MANAOS_API_AVAILABLE:
             try:
-                manaos.remember({
+                manaos.remember({  # type: ignore[possibly-unbound]
                     "type": "system",
                     "content": report,
                     "metadata": {
@@ -563,7 +563,7 @@ class SecretaryRoutines:
         # 今日のログを取得
         if MANAOS_API_AVAILABLE:
             try:
-                results = manaos.recall(
+                results = manaos.recall(  # type: ignore[possibly-unbound]
                     query=f"date:{today}",
                     scope="all",
                     limit=100
@@ -575,7 +575,7 @@ class SecretaryRoutines:
                     report_prompt += f"- {result.get('content', '')[:200]}\n"
                 
                 try:
-                    report_result = manaos.act("llm_call", {
+                    report_result = manaos.act("llm_call", {  # type: ignore[possibly-unbound]
                         "task_type": "lightweight_conversation",  # LFM 2.5使用（高速・軽量）
                         "prompt": report_prompt
                     })
@@ -669,7 +669,7 @@ class SecretaryRoutines:
         # 通知
         if MANAOS_API_AVAILABLE:
             try:
-                manaos.emit(
+                manaos.emit(  # type: ignore[possibly-unbound]
                     "evening_routine",
                     {"message": report},
                     "normal"
@@ -680,7 +680,7 @@ class SecretaryRoutines:
         # 記憶に保存
         if MANAOS_API_AVAILABLE:
             try:
-                manaos.remember({
+                manaos.remember({  # type: ignore[possibly-unbound]
                     "type": "summary",
                     "content": report,
                     "metadata": {

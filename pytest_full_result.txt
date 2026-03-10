@@ -1,0 +1,803 @@
+2026-03-09 16:26:19 [    INFO] [          mrl-memory-extractor] 笨・MRL Memory Extractor蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-09 16:26:19 [    INFO] [          mrl-memory-extractor] 笨・MRL Memory Extractor蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-09 16:26:19 [    INFO] [        mrl-memory-kill-switch] 笨・Kill Switch蛻晄悄蛹・ FWPKM=True, Write=True
+2026-03-09 16:26:19 [    INFO] [         mrl-memory-quarantine] 笨・Memory Quarantine蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:26:19 [    INFO] [        mrl-memory-ttl-manager] 笨・TTL Manager蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:26:19 [    INFO] [             mrl-memory-system] 笨・MRL Memory System蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-09 16:26:19 [    INFO] [            mrl-memory-metrics] [OK] MRL Memory Metrics蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory\metrics
+2026-03-09 16:26:19 [    INFO] [       mrl-memory-api-security] SECURITY: auth=disabled, rate_limit=enabled, max_input=200000, pii_mask=enabled
+2026-03-09 16:26:19 [    INFO] [       mrl-memory-api-security] [OK] API Security蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:26:19 [    INFO] [        mrl-memory-integration] Security initialized: require_auth=False, api_key=SET
+2026-03-09 16:26:19 [    INFO] [    mrl-memory-rollout-manager] 笨・Rollout Manager蛻晄悄蛹・ enabled=True, write_mode=full, sample_rate=1.0, review_effect=True
+2026-03-09 16:26:19 [    INFO] [               learning_system] 笨・API隱崎ｨｼ繧ｷ繧ｹ繝・Β繧貞・譛溷喧縺励∪縺励◆
+........s.................Fsss...ssss................................... [  1%]
+.....................................s..........F....................... [  2%]
+........................................................sF.............. [  3%]
+.....................................................................sss [  4%]
+ssss.................................................................... [  5%]
+...........FF........................................................... [  7%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 12%]
+..................................................................F..... [ 14%]
+.....................................................................F.. [ 15%]
+.......F................................................................ [ 16%]
+.........................s.............................................. [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 20%]
+........................................................s............... [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 33%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+.....................FFFFFF.FFFFFFF..................................... [ 56%]
+........................................................................ [ 57%]
+........................................................................ [ 59%]
+................F....................................................... [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+...................................F.................................... [ 63%]
+........................................................................ [ 64%]
+........................................................................ [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 69%]
+........................................................................ [ 70%]
+.....................................................F.................. [ 71%]
+........................................................................ [ 73%]
+......................FF..F...F.F....F.FFF.F....FFFFFF.................. [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+.......................................F................................ [ 88%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 95%]
+........................................................................ [ 96%]
+........................................................................ [ 97%]
+............................................................FFFFFFF..... [ 99%]
+C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\unraisableexception.py:33: RuntimeWarning: coroutine 'get_dashboard_data.<locals>.fetch_metrics' was never awaited
+  gc.collect()
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+.....................................................                    [100%]
+================================== FAILURES ===================================
+E   AttributeError: type object '_FakeModelType' has no attribute 'LIGHT'
+C:\Users\mana4\Desktop\manaos_integrations\llm\always_ready_llm_integrated.py:105: AttributeError: type object '_FakeModelType' has no attribute 'LIGHT'
+E   TypeError: unsupported format string passed to MagicMock.__format__
+---------------------------- Captured stdout call -----------------------------
+============================================================
+Hugging Face邨ｱ蜷医ユ繧ｹ繝茨ｼ・anaOS邨ｱ蜷育沿・・
+============================================================
+
+[0] Hugging Face Helper逶ｴ謗･繝・せ繝・
+------------------------------------------------------------
+笨・0莉ｶ縺ｮ繝｢繝・Ν縺瑚ｦ九▽縺九ｊ縺ｾ縺励◆
+
+[1] 繝｢繝・Ν讀懃ｴ｢繝・せ繝・
+------------------------------------------------------------
+2026-03-09 16:28:30 [    INFO] [Integration.Obsidian] Obsidian縺ｮ蛻晄悄蛹悶ｒ髢句ｧ・..
+2026-03-09 16:28:30 [    INFO] [Integration.Obsidian] Obsidian Vault繧貞・譛溷喧縺励∪縺励◆: C:\Users\mana4\Documents\Obsidian Vault
+2026-03-09 16:28:30 [    INFO] [Integration.Obsidian] Obsidian縺ｮ蛻晄悄蛹悶′螳御ｺ・＠縺ｾ縺励◆
+2026-03-09 16:28:30 [    INFO] [Integration.Obsidian] 繝弱・繝井ｽ懈・螳御ｺ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+2026-03-09 16:28:30 [    INFO] [memory-unified] Obsidian縺ｫ菫晏ｭ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+2026-03-09 16:28:30 [    INFO] [memory-unified] [Remember] system: 8919d0ae-c95f-49bb-9f37-c203573f44ff
+2026-03-09 16:28:30 [    INFO] [manaos-core-api] [Act] Hugging Face繝｢繝・Ν讀懃ｴ｢: 0莉ｶ
+笨・0莉ｶ縺ｮ繝｢繝・Ν縺瑚ｦ九▽縺九ｊ縺ｾ縺励◆
+
+[2] 繝｢繝・Ν諠・ｱ蜿門ｾ励ユ繧ｹ繝・
+------------------------------------------------------------
+2026-03-09 16:28:30 [    INFO] [Integration.Obsidian] 繝弱・繝井ｽ懈・螳御ｺ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+2026-03-09 16:28:30 [    INFO] [memory-unified] Obsidian縺ｫ菫晏ｭ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+2026-03-09 16:28:30 [    INFO] [memory-unified] [Remember] system: da6c4bc9-799b-4875-b932-c31c7ba7895d
+2026-03-09 16:28:30 [    INFO] [manaos-core-api] [Act] Hugging Face繝｢繝・Ν諠・ｱ蜿門ｾ・ runwayml/stable-diffusion-v1-5
+笨・繝｢繝・Ν諠・ｱ繧貞叙蠕励＠縺ｾ縺励◆
+  繝｢繝・ΝID: <MagicMock name='mock.get_model_info().get()' id='2734397254224'>
+------------------------------ Captured log call ------------------------------
+INFO     Integration.Obsidian:base_integration.py:101 Obsidian縺ｮ蛻晄悄蛹悶ｒ髢句ｧ・..
+INFO     Integration.Obsidian:obsidian_integration.py:52 Obsidian Vault繧貞・譛溷喧縺励∪縺励◆: C:\Users\mana4\Documents\Obsidian Vault
+INFO     Integration.Obsidian:base_integration.py:106 Obsidian縺ｮ蛻晄悄蛹悶′螳御ｺ・＠縺ｾ縺励◆
+INFO     Integration.Obsidian:obsidian_integration.py:138 繝弱・繝井ｽ懈・螳御ｺ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+INFO     memory-unified:memory_unified.py:160 Obsidian縺ｫ菫晏ｭ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+INFO     memory-unified:memory_unified.py:297 [Remember] system: 8919d0ae-c95f-49bb-9f37-c203573f44ff
+INFO     manaos-core-api:manaos_core_api.py:716 [Act] Hugging Face繝｢繝・Ν讀懃ｴ｢: 0莉ｶ
+INFO     Integration.Obsidian:obsidian_integration.py:138 繝弱・繝井ｽ懈・螳御ｺ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+INFO     memory-unified:memory_unified.py:160 Obsidian縺ｫ菫晏ｭ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+INFO     memory-unified:memory_unified.py:297 [Remember] system: da6c4bc9-799b-4875-b932-c31c7ba7895d
+INFO     manaos-core-api:manaos_core_api.py:736 [Act] Hugging Face繝｢繝・Ν諠・ｱ蜿門ｾ・ runwayml/stable-diffusion-v1-5
+C:\Users\mana4\Desktop\manaos_integrations\tests\integration\test_hf_manaos_integration.py:68: TypeError: unsupported format string passed to MagicMock.__format__
+E   AssertionError: assert False
+     +  where False = isinstance(<MagicMock name='mock.ManaOSServiceBridge().check_manaos_services()' id='2734457538272'>, dict)
+C:\Users\mana4\Desktop\manaos_integrations\tests\integration\test_mrl_manaos_integration.py:44: AssertionError: assert False
+E   ModuleNotFoundError: No module named 'api_auth.time'; 'api_auth' is not a package
+
+The above exception was the direct cause of the following exception:
+E   ImportError: import error in api_auth.time: No module named 'api_auth.time'; 'api_auth' is not a package
+C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\monkeypatch.py:85: ImportError: import error in api_auth.time: No module named 'api_auth.time'; 'api_auth' is not a package
+E   ModuleNotFoundError: No module named 'api_auth.time'; 'api_auth' is not a package
+
+The above exception was the direct cause of the following exception:
+E   ImportError: import error in api_auth.time: No module named 'api_auth.time'; 'api_auth' is not a package
+C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\monkeypatch.py:85: ImportError: import error in api_auth.time: No module named 'api_auth.time'; 'api_auth' is not a package
+E   assert <lessons_recorder.LessonsRecorder object at 0x0000027CAC0543B0> is not <lessons_recorder.LessonsRecorder object at 0x0000027CAC0543B0>
+C:\Users\mana4\Desktop\manaos_integrations\tests\test_lessons_recorder.py:266: assert <lessons_recorder.LessonsRecorder object at 0x0000027CAC0543B0> is not <lessons_recorder.LessonsRecorder object at 0x0000027CAC0543B0>
+E   AssertionError: assert {'entry_id': 'cd9e83d0-293e-498f-86e0-ca391c26f812', 'expires_at': '2026-03-10T07:34:01.842599'} is None
+---------------------------- Captured stdout call -----------------------------
+2026-03-09 16:34:01 [    INFO] [mrl_memory_mcp_server.server] EpisodicMemory 蛻晄悄蛹匁・蜉・
+------------------------------ Captured log call ------------------------------
+INFO     mrl_memory_mcp_server.server:server.py:101 EpisodicMemory 蛻晄悄蛹匁・蜉・
+C:\Users\mana4\Desktop\manaos_integrations\tests\test_mrl_memory_mcp_server.py:634: AssertionError: assert {'entry_id': 'cd9e83d0-293e-498f-86e0-ca391c26f812', 'expires_at': '2026-03-10T07:34:01.842599'} is None
+E   assert True is False
+---------------------------- Captured stdout call -----------------------------
+2026-03-09 16:34:02 [    INFO] [mrl_memory_mcp_server.server] EpisodicMemory 蛻晄悄蛹匁・蜉・
+------------------------------ Captured log call ------------------------------
+INFO     mrl_memory_mcp_server.server:server.py:101 EpisodicMemory 蛻晄悄蛹匁・蜉・
+C:\Users\mana4\Desktop\manaos_integrations\tests\test_mrl_memory_mcp_server.py:699: assert True is False
+E   assert 401 == 200
+     +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_learning_system_api.py:97: assert 401 == 200
+E   assert 401 == 400
+     +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_learning_system_api.py:104: assert 401 == 400
+E   AssertionError: Expected 'record_usage' to have been called once. Called 0 times.
+
+During handling of the above exception, another exception occurred:
+E   AssertionError: Expected 'record_usage' to have been called once. Called 0 times.
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_learning_system_api.py:111: AssertionError: Expected 'record_usage' to have been called once. Called 0 times.
+E   assert 401 == 200
+     +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_learning_system_api.py:121: assert 401 == 200
+E   AssertionError: assert 'patterns' in {'error': 'Unauthorized', 'message': 'Invalid or missing API key'}
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_learning_system_api.py:125: AssertionError: assert 'patterns' in {'error': 'Unauthorized', 'message': 'Invalid or missing API key'}
+E   assert 401 == 200
+     +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_learning_system_api.py:135: assert 401 == 200
+E   assert 401 == 200
+     +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_learning_system_api.py:149: assert 401 == 200
+E   AssertionError: assert 'count' in {'error': 'Unauthorized', 'message': 'Invalid or missing API key'}
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_learning_system_api.py:153: AssertionError: assert 'count' in {'error': 'Unauthorized', 'message': 'Invalid or missing API key'}
+E   assert 401 == 200
+     +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_learning_system_api.py:164: assert 401 == 200
+E   KeyError: 'status'
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_learning_system_api.py:168: KeyError: 'status'
+E   assert 401 == 200
+     +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_learning_system_api.py:180: assert 401 == 200
+E   AssertionError: assert 'optimized_params' in {'error': 'Unauthorized', 'message': 'Invalid or missing API key'}
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_learning_system_api.py:186: AssertionError: assert 'optimized_params' in {'error': 'Unauthorized', 'message': 'Invalid or missing API key'}
+E   assert 401 == 400
+     +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_learning_system_api.py:192: assert 401 == 400
+E   AttributeError: 'function' object has no attribute 'return_value'
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:36:41 [ WARNING] [                   gallery_api] 螻･豁ｴ遒ｺ隱阪お繝ｩ繝ｼ: HTTPConnectionPool(host='localhost', port=8188): Max retries exceeded with url: /history/pid-3 (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8188): Failed to establish a new connection: [WinError 10061] 蟇ｾ雎｡縺ｮ繧ｳ繝ｳ繝斐Η繝ｼ繧ｿ繝ｼ縺ｫ繧医▲縺ｦ諡貞凄縺輔ｌ縺溘◆繧√∵磁邯壹〒縺阪∪縺帙ｓ縺ｧ縺励◆縲・))
+2026-03-09 16:36:41 [ WARNING] [                   gallery_api] 螻･豁ｴ遒ｺ隱阪お繝ｩ繝ｼ: HTTPConnectionPool(host='localhost', port=8188): Max retries exceeded with url: /history/pid-3 (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8188): Failed to establish a new connection: [WinError 10061] 蟇ｾ雎｡縺ｮ繧ｳ繝ｳ繝斐Η繝ｼ繧ｿ繝ｼ縺ｫ繧医▲縺ｦ諡貞凄縺輔ｌ縺溘◆繧√∵磁邯壹〒縺阪∪縺帙ｓ縺ｧ縺励◆縲・))
+2026-03-09 16:36:41 [ WARNING] [                   gallery_api] 螻･豁ｴ遒ｺ隱阪お繝ｩ繝ｼ: HTTPConnectionPool(host='localhost', port=8188): Max retries exceeded with url: /history/pid-4 (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8188): Failed to establish a new connection: [WinError 10061] 蟇ｾ雎｡縺ｮ繧ｳ繝ｳ繝斐Η繝ｼ繧ｿ繝ｼ縺ｫ繧医▲縺ｦ諡貞凄縺輔ｌ縺溘◆繧√∵磁邯壹〒縺阪∪縺帙ｓ縺ｧ縺励◆縲・))
+2026-03-09 16:36:41 [ WARNING] [                   gallery_api] 螻･豁ｴ遒ｺ隱阪お繝ｩ繝ｼ: HTTPConnectionPool(host='localhost', port=8188): Max retries exceeded with url: /history/pid-4 (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8188): Failed to establish a new connection: [WinError 10061] 蟇ｾ雎｡縺ｮ繧ｳ繝ｳ繝斐Η繝ｼ繧ｿ繝ｼ縺ｫ繧医▲縺ｦ諡貞凄縺輔ｌ縺溘◆繧√∵磁邯壹〒縺阪∪縺帙ｓ縺ｧ縺励◆縲・))
+2026-03-09 16:36:41 [ WARNING] [                   gallery_api] 螻･豁ｴ遒ｺ隱阪お繝ｩ繝ｼ: HTTPConnectionPool(host='localhost', port=8188): Max retries exceeded with url: /history/pid-2 (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8188): Failed to establish a new connection: [WinError 10061] 蟇ｾ雎｡縺ｮ繧ｳ繝ｳ繝斐Η繝ｼ繧ｿ繝ｼ縺ｫ繧医▲縺ｦ諡貞凄縺輔ｌ縺溘◆繧√∵磁邯壹〒縺阪∪縺帙ｓ縺ｧ縺励◆縲・))
+2026-03-09 16:36:41 [ WARNING] [                   gallery_api] 螻･豁ｴ遒ｺ隱阪お繝ｩ繝ｼ: HTTPConnectionPool(host='localhost', port=8188): Max retries exceeded with url: /history/pid-2 (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8188): Failed to establish a new connection: [WinError 10061] 蟇ｾ雎｡縺ｮ繧ｳ繝ｳ繝斐Η繝ｼ繧ｿ繝ｼ縺ｫ繧医▲縺ｦ諡貞凄縺輔ｌ縺溘◆繧√∵磁邯壹〒縺阪∪縺帙ｓ縺ｧ縺励◆縲・))
+2026-03-09 16:36:41 [ WARNING] [                   gallery_api] 螻･豁ｴ遒ｺ隱阪お繝ｩ繝ｼ: HTTPConnectionPool(host='localhost', port=8188): Max retries exceeded with url: /history/pid-1 (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8188): Failed to establish a new connection: [WinError 10061] 蟇ｾ雎｡縺ｮ繧ｳ繝ｳ繝斐Η繝ｼ繧ｿ繝ｼ縺ｫ繧医▲縺ｦ諡貞凄縺輔ｌ縺溘◆繧√∵磁邯壹〒縺阪∪縺帙ｓ縺ｧ縺励◆縲・))
+2026-03-09 16:36:41 [ WARNING] [                   gallery_api] 螻･豁ｴ遒ｺ隱阪お繝ｩ繝ｼ: HTTPConnectionPool(host='localhost', port=8188): Max retries exceeded with url: /history/pid-1 (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8188): Failed to establish a new connection: [WinError 10061] 蟇ｾ雎｡縺ｮ繧ｳ繝ｳ繝斐Η繝ｼ繧ｿ繝ｼ縺ｫ繧医▲縺ｦ諡貞凄縺輔ｌ縺溘◆繧√∵磁邯壹〒縺阪∪縺帙ｓ縺ｧ縺励◆縲・))
+----------------------------- Captured log setup ------------------------------
+INFO     remi_audit:local_remi_api.py:215 Remi API started
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_local_remi_api.py:560: AttributeError: 'function' object has no attribute 'return_value'
+E   AttributeError: 'function' object has no attribute 'reset_mock'
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_manaos_security.py:235: AttributeError: 'function' object has no attribute 'reset_mock'
+E   assert True is False
+---------------------------- Captured stdout call -----------------------------
+2026-03-09 16:49:54 [    INFO] [slack-integration] Slack API邨檎罰縺ｧ騾∽ｿ｡: [error]
+蟇ｾ蠢・ 蜀崎ｩｦ陦・or 蜀・Κ繝ｭ繧ｰ遒ｺ隱・..
+2026-03-09 16:49:54 [    INFO] [slack-integration] Slack騾∽ｿ｡謌仙粥・・PI邨檎罰・・
+2026-03-09 16:49:54 [    INFO] [orchestrator-operational-metrics] orchestrator 繧｢繝ｩ繝ｼ繝医ｒ Slack 縺ｫ騾∽ｿ｡縺励∪縺励◆・・lack_integration 邨檎罰・・
+------------------------------ Captured log call ------------------------------
+INFO     slack-integration:slack_integration.py:105 Slack API邨檎罰縺ｧ騾∽ｿ｡: [error]
+蟇ｾ蠢・ 蜀崎ｩｦ陦・or 蜀・Κ繝ｭ繧ｰ遒ｺ隱・..
+INFO     slack-integration:slack_integration.py:119 Slack騾∽ｿ｡謌仙粥・・PI邨檎罰・・
+INFO     orchestrator-operational-metrics:orchestrator_operational_metrics.py:223 orchestrator 繧｢繝ｩ繝ｼ繝医ｒ Slack 縺ｫ騾∽ｿ｡縺励∪縺励◆・・lack_integration 邨檎罰・・
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_orchestrator_operational_metrics.py:199: assert True is False
+E   AssertionError: assert 'seiso_gal_feminine' == 'Remi'
+      
+      - Remi
+      + seiso_gal_feminine
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:93: AssertionError: assert 'seiso_gal_feminine' == 'Remi'
+E   AssertionError: assert '譏弱ｋ縺上ｄ縺輔＠縺・√ヵ繝ｬ繝ｳ繝峨Μ繝ｼ鬮倥ａ縺ｮ繧ｫ繧ｸ繝･繧｢繝ｫ' == 'friendly'
+      
+      - friendly
+      + 譏弱ｋ縺上ｄ縺輔＠縺・√ヵ繝ｬ繝ｳ繝峨Μ繝ｼ鬮倥ａ縺ｮ繧ｫ繧ｸ繝･繧｢繝ｫ
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:97: AssertionError: assert '譏弱ｋ縺上ｄ縺輔＠縺・√ヵ繝ｬ繝ｳ繝峨Μ繝ｼ鬮倥ａ縺ｮ繧ｫ繧ｸ繝･繧｢繝ｫ' == 'friendly'
+E   AttributeError: 'method' object has no attribute 'return_value' and no __dict__ for setting new attributes
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:116: AttributeError: 'method' object has no attribute 'return_value' and no __dict__ for setting new attributes
+E   AssertionError: assert 'seiso_gal_feminine' == 'Remi'
+      
+      - Remi
+      + seiso_gal_feminine
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+---------------------------- Captured stdout call -----------------------------
+2026-03-09 16:50:00 [    INFO] [Integration.Mem0] Mem0縺ｮ蛻晄悄蛹悶ｒ髢句ｧ・..
+2026-03-09 16:50:00 [    INFO] [Integration.Mem0] Mem0邨ｱ蜷・ Ollama繧剃ｽｿ逕ｨ・育┌譁呻ｼ・- http://localhost:11434/qwen2.5:7b
+2026-03-09 16:50:00 [ WARNING] [manaos-error-handler] [UNK_CONFI] unable to infer type for attribute "chroma_server_nofile"
+
+2026-03-09 16:50:00 [   ERROR] [Integration.Mem0] Mem0蛻晄悄蛹悶お繝ｩ繝ｼ: unable to infer type for attribute "chroma_server_nofile"
+2026-03-09 16:50:00 [ WARNING] [Integration.Mem0] Mem0莠呈鋤繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ縺ｧ邯咏ｶ壹＠縺ｾ縺・
+2026-03-09 16:50:00 [    INFO] [Integration.Mem0] Mem0縺ｮ蛻晄悄蛹悶′螳御ｺ・＠縺ｾ縺励◆
+2026-03-09 16:50:00 [    INFO] [Integration.Mem0] 繝｡繝｢繝ｪ繧定ｿｽ蜉縺励∪縺励◆: 561a62f5-ddf6-4c25-bc43-78f51f7269c3
+------------------------------ Captured log call ------------------------------
+INFO     Integration.Mem0:base_integration.py:101 Mem0縺ｮ蛻晄悄蛹悶ｒ髢句ｧ・..
+INFO     Integration.Mem0:mem0_integration.py:92 Mem0邨ｱ蜷・ Ollama繧剃ｽｿ逕ｨ・育┌譁呻ｼ・- http://localhost:11434/qwen2.5:7b
+WARNING  manaos-error-handler:manaos_error_handler.py:398 [UNK_CONFI] unable to infer type for attribute "chroma_server_nofile"
+ERROR    Integration.Mem0:mem0_integration.py:107 Mem0蛻晄悄蛹悶お繝ｩ繝ｼ: unable to infer type for attribute "chroma_server_nofile"
+WARNING  Integration.Mem0:mem0_integration.py:109 Mem0莠呈鋤繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ縺ｧ邯咏ｶ壹＠縺ｾ縺・
+INFO     Integration.Mem0:base_integration.py:106 Mem0縺ｮ蛻晄悄蛹悶′螳御ｺ・＠縺ｾ縺励◆
+INFO     Integration.Mem0:mem0_integration.py:140 繝｡繝｢繝ｪ繧定ｿｽ蜉縺励∪縺励◆: 561a62f5-ddf6-4c25-bc43-78f51f7269c3
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:148: AssertionError: assert 'seiso_gal_feminine' == 'Remi'
+E   AttributeError: 'function' object has no attribute 'reset_mock'
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:155: AttributeError: 'function' object has no attribute 'reset_mock'
+E   AttributeError: 'function' object has no attribute 'reset_mock'
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:191: AttributeError: 'function' object has no attribute 'reset_mock'
+E   sqlite3.IntegrityError: UNIQUE constraint failed: reports.report_id
+
+During handling of the above exception, another exception occurred:
+E   TypeError: exceptions must derive from BaseException
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+---------------------------- Captured stdout call -----------------------------
+2026-03-09 16:50:00 [ WARNING] [manaos-error-handler] [UNK_INTEG] UNIQUE constraint failed: reports.report_id
+
+------------------------------ Captured log call ------------------------------
+WARNING  manaos-error-handler:manaos_error_handler.py:398 [UNK_INTEG] UNIQUE constraint failed: reports.report_id
+C:\Users\mana4\Desktop\manaos_integrations\scripts\misc\database_connection_pool.py:128: TypeError: exceptions must derive from BaseException
+E   sqlite3.IntegrityError: UNIQUE constraint failed: reports.report_id
+
+During handling of the above exception, another exception occurred:
+E   TypeError: exceptions must derive from BaseException
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+---------------------------- Captured stdout call -----------------------------
+2026-03-09 16:50:00 [ WARNING] [manaos-error-handler] [UNK_INTEG] UNIQUE constraint failed: reports.report_id
+
+------------------------------ Captured log call ------------------------------
+WARNING  manaos-error-handler:manaos_error_handler.py:398 [UNK_INTEG] UNIQUE constraint failed: reports.report_id
+C:\Users\mana4\Desktop\manaos_integrations\scripts\misc\database_connection_pool.py:128: TypeError: exceptions must derive from BaseException
+E   sqlite3.IntegrityError: UNIQUE constraint failed: reports.report_id
+
+During handling of the above exception, another exception occurred:
+E   TypeError: exceptions must derive from BaseException
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+---------------------------- Captured stdout call -----------------------------
+2026-03-09 16:50:00 [ WARNING] [manaos-error-handler] [UNK_INTEG] UNIQUE constraint failed: reports.report_id
+
+------------------------------ Captured log call ------------------------------
+WARNING  manaos-error-handler:manaos_error_handler.py:398 [UNK_INTEG] UNIQUE constraint failed: reports.report_id
+C:\Users\mana4\Desktop\manaos_integrations\scripts\misc\database_connection_pool.py:128: TypeError: exceptions must derive from BaseException
+E   AssertionError: assert 'seiso_gal_feminine' == 'Remi'
+      
+      - Remi
+      + seiso_gal_feminine
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:228: AssertionError: assert 'seiso_gal_feminine' == 'Remi'
+E   AttributeError: 'RAGMemoryOptimized' object has no attribute 'search_memories'
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+C:\Users\mana4\Desktop\manaos_integrations\scripts\misc\learning_memory_integration.py:124: AttributeError: 'RAGMemoryOptimized' object has no attribute 'search_memories'
+E   AttributeError: 'RAGMemoryOptimized' object has no attribute 'search_memories'
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+C:\Users\mana4\Desktop\manaos_integrations\scripts\misc\learning_memory_integration.py:124: AttributeError: 'RAGMemoryOptimized' object has no attribute 'search_memories'
+E   AttributeError: 'method' object has no attribute 'return_value' and no __dict__ for setting new attributes
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:260: AttributeError: 'method' object has no attribute 'return_value' and no __dict__ for setting new attributes
+E   AttributeError: 'method' object has no attribute 'return_value' and no __dict__ for setting new attributes
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:267: AttributeError: 'method' object has no attribute 'return_value' and no __dict__ for setting new attributes
+E   AttributeError: 'method' object has no attribute 'return_value' and no __dict__ for setting new attributes
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+C:\Users\mana4\Desktop\manaos_integrations\tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:275: AttributeError: 'method' object has no attribute 'return_value' and no __dict__ for setting new attributes
+E   AttributeError: 'RAGMemoryOptimized' object has no attribute 'search_memories'
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:50:00 [    INFO] [personality-system] 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+2026-03-09 16:50:00 [    INFO] [autonomy-system] 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+2026-03-09 16:50:00 [ WARNING] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:50:00 [    INFO] [secretary-system-optimized] 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:50:00 [    INFO] [rag-memory-enhanced-v2] 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+2026-03-09 16:50:00 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized 竊・V2莠呈鋤繝悶Μ繝・ず縺ｧ襍ｷ蜍・
+2026-03-09 16:50:00 [    INFO] [learning-system] 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [learning-memory-integration] 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 16:50:00 [    INFO] [personality-autonomy-secretary-integration] 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 笨・persona_config.yaml 繧帝←逕ｨ: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 笨・Personality System蛻晄悄蛹門ｮ御ｺ・(莠ｺ譬ｼ: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 笨・Autonomy System蛻晄悄蛹門ｮ御ｺ・(繝ｬ繝吶Ν: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json縲ゅョ繝輔か繝ｫ繝亥､繧剃ｽｿ逕ｨ縺励∪縺吶・
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 笨・Secretary System・域怙驕ｩ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 笨・繝・・繧ｿ繝吶・繧ｹ蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 笨・RAG險俶・騾ｲ蛹悶す繧ｹ繝・Β v2・亥ｼｷ蛹也沿・牙・譛溷喧螳御ｺ・
+INFO     learning-system:learning_system.py:87 笨・Learning System蛻晄悄蛹門ｮ御ｺ・
+INFO     learning-memory-integration:learning_memory_integration.py:53 笨・蟄ｦ鄙堤ｳｻ繝ｻ險俶・邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 笨・莠ｺ譬ｼ邉ｻ繝ｻ閾ｪ蠕狗ｳｻ繝ｻ遘俶嶌邉ｻ邨ｱ蜷育ｮ｡逅・す繧ｹ繝・Β蛻晄悄蛹門ｮ御ｺ・
+C:\Users\mana4\Desktop\manaos_integrations\scripts\misc\learning_memory_integration.py:124: AttributeError: 'RAGMemoryOptimized' object has no attribute 'search_memories'
+E   AttributeError: module 'torch' has no attribute 'float32'
+C:\Users\mana4\Desktop\manaos_integrations\scripts/misc\stable_diffusion_generator.py:52: AttributeError: module 'torch' has no attribute 'float32'
+E   ValueError: torch.__spec__ is None
+<frozen importlib.util>:110: ValueError: torch.__spec__ is None
+E   ValueError: torch.__spec__ is None
+<frozen importlib.util>:110: ValueError: torch.__spec__ is None
+E   ValueError: torch.__spec__ is None
+<frozen importlib.util>:110: ValueError: torch.__spec__ is None
+E   ValueError: torch.__spec__ is None
+<frozen importlib.util>:110: ValueError: torch.__spec__ is None
+E   ValueError: torch.__spec__ is None
+<frozen importlib.util>:110: ValueError: torch.__spec__ is None
+E   ValueError: torch.__spec__ is None
+<frozen importlib.util>:110: ValueError: torch.__spec__ is None
+E   ValueError: torch.__spec__ is None
+<frozen importlib.util>:110: ValueError: torch.__spec__ is None
+=========================== short test summary info ===========================
+FAILED tests/e2e/test_ultra_integrated.py::test_ultra_integrated_chat_smoke
+FAILED tests/integration/test_hf_manaos_integration.py::test_hf_integration
+FAILED tests/integration/test_mrl_manaos_integration.py::test_service_bridge_integration
+FAILED tests/test_api_auth_rate_limit_state.py::test_rate_limit_state_is_capped_and_ttl_cleaned
+FAILED tests/test_api_auth_rate_limit_state.py::test_client_history_window_eviction
+FAILED tests/test_lessons_recorder.py::TestSingleton::test_reset_works - asse...
+FAILED tests/test_mrl_memory_mcp_server.py::TestStoreToEpisodic::test_returns_none_when_episodic_unavailable
+FAILED tests/test_mrl_memory_mcp_server.py::TestMetricsEpisodic::test_episodic_unavailable_when_none
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestRecordUsage::test_records_action
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestRecordUsage::test_returns_400_when_no_action
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestRecordUsage::test_calls_record_usage
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestAnalyzePatterns::test_returns_200
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestAnalyzePatterns::test_returns_analysis
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestGetPreferences::test_returns_200
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestGetOptimizations::test_returns_200
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestGetOptimizations::test_includes_count
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestGetStatus::test_returns_200
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestGetStatus::test_returns_status_field
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestApplyPreferences::test_returns_200_with_action
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestApplyPreferences::test_returns_optimized_params
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestApplyPreferences::test_returns_400_without_action
+FAILED tests/unit/test_scripts_misc_local_remi_api.py::TestEmergencyStopEndpoint::test_emergency_stop_with_auth
+FAILED tests/unit/test_scripts_misc_manaos_security.py::TestJWTManager::test_init_without_key_calls_mock
+FAILED tests/unit/test_scripts_misc_orchestrator_operational_metrics.py::TestNotifySlack::test_no_webhook_no_slack_integration_returns_false
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestGetPersonaDisplay::test_name_from_dict
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestGetPersonaDisplay::test_tone_from_dict
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestGetPersonaDisplay::test_object_persona_pass_through
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestExecuteWithPersonality::test_personality_subdict_present
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestExecuteWithPersonality::test_record_and_learn_called
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestExecuteAutonomousTask::test_record_and_learn_called
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestGeneratePersonalityReport::test_has_required_keys
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestGeneratePersonalityReport::test_daily_report_type
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestGeneratePersonalityReport::test_weekly_report_type
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestGetIntegratedStatus::test_has_personality_key
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestOptimizeBasedOnLearning::test_returns_dict
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestOptimizeBasedOnLearning::test_has_optimizations_key
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestOptimizeBasedOnLearning::test_empty_recommendations_gives_no_optimizations
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestOptimizeBasedOnLearning::test_personality_recommendation_included
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestOptimizeBasedOnLearning::test_autonomy_recommendation_included
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestOptimizeBasedOnLearning::test_has_timestamp
+FAILED tests/unit/test_scripts_misc_stable_diffusion_generator.py::TestStableDiffusionGeneratorInit::test_raises_runtime_error_when_pipeline_load_fails
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_returns_dict
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_expected_packages_present
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_each_entry_has_installed_bool
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_each_entry_has_version_key
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_each_entry_has_description
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_mock_installed_package_via_sys_modules
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_mock_uninstalled_package_via_sys_modules
+48 failed, 6034 passed, 19 skipped, 447 warnings in 1696.74s (0:28:16)

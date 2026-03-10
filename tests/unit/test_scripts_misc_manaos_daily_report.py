@@ -13,8 +13,8 @@ import pytest
 # ── モジュールモック（インポート前に設定）─────────────────────────────────────
 # events (tools/events.py)
 _events_mod = types.ModuleType("events")
-_events_mod.read_events = MagicMock(return_value=[])
-_events_mod.emit = MagicMock()
+_events_mod.read_events = MagicMock(return_value=[])  # type: ignore
+_events_mod.emit = MagicMock()  # type: ignore
 sys.modules.setdefault("events", _events_mod)
 
 import scripts.misc.manaos_daily_report as dr

@@ -154,7 +154,7 @@ class LinearOperator:
     def __new__(cls, *args, **kwargs):
         if cls is LinearOperator:
             # Operate as _CustomLinearOperator factory.
-            return super().__new__(_CustomLinearOperator)
+            return super().__new__(_CustomLinearOperator)  # type: ignore
         else:
             obj = super().__new__(cls)
 
@@ -440,7 +440,7 @@ class LinearOperator:
         if not np.isscalar(other):
             raise ValueError("Can only divide a linear operator by a scalar.")
 
-        return _ScaledLinearOperator(self, 1.0/other)
+        return _ScaledLinearOperator(self, 1.0/other)  # type: ignore
 
     def dot(self, x):
         """Matrix-matrix or matrix-vector multiplication.
@@ -620,7 +620,7 @@ class _CustomLinearOperator(LinearOperator):
         func = self.__rmatvec_impl
         if func is None:
             raise NotImplementedError("rmatvec is not defined")
-        return self.__rmatvec_impl(x)
+        return self.__rmatvec_impl(x)  # type: ignore[operator]
 
     def _rmatmat(self, X):
         if self.__rmatmat_impl is not None:
@@ -628,7 +628,7 @@ class _CustomLinearOperator(LinearOperator):
         else:
             return super()._rmatmat(X)
 
-    def _adjoint(self):
+    def _adjoint(self):  # type: ignore
         return _CustomLinearOperator(shape=(self.shape[1], self.shape[0]),
                                      matvec=self.__rmatvec_impl,
                                      rmatvec=self.__matvec_impl,
@@ -652,10 +652,10 @@ class _AdjointLinearOperator(LinearOperator):
     def _rmatvec(self, x):
         return self.A._matvec(x)
 
-    def _matmat(self, x):
+    def _matmat(self, x):  # type: ignore
         return self.A._rmatmat(x)
 
-    def _rmatmat(self, x):
+    def _rmatmat(self, x):  # type: ignore
         return self.A._matmat(x)
 
 class _TransposedLinearOperator(LinearOperator):
@@ -674,11 +674,11 @@ class _TransposedLinearOperator(LinearOperator):
     def _rmatvec(self, x):
         return np.conj(self.A._matvec(np.conj(x)))
 
-    def _matmat(self, x):
+    def _matmat(self, x):  # type: ignore
         # NB. np.conj works also on sparse matrices
         return np.conj(self.A._rmatmat(np.conj(x)))
 
-    def _rmatmat(self, x):
+    def _rmatmat(self, x):  # type: ignore
         return np.conj(self.A._matmat(np.conj(x)))
 
 def _get_dtype(operators, dtypes=None):
@@ -706,10 +706,10 @@ class _SumLinearOperator(LinearOperator):
     def _rmatvec(self, x):
         return self.args[0].rmatvec(x) + self.args[1].rmatvec(x)
 
-    def _rmatmat(self, x):
+    def _rmatmat(self, x):  # type: ignore
         return self.args[0].rmatmat(x) + self.args[1].rmatmat(x)
 
-    def _matmat(self, x):
+    def _matmat(self, x):  # type: ignore
         return self.args[0].matmat(x) + self.args[1].matmat(x)
 
     def _adjoint(self):
@@ -734,10 +734,10 @@ class _ProductLinearOperator(LinearOperator):
     def _rmatvec(self, x):
         return self.args[1].rmatvec(self.args[0].rmatvec(x))
 
-    def _rmatmat(self, x):
+    def _rmatmat(self, x):  # type: ignore
         return self.args[1].rmatmat(self.args[0].rmatmat(x))
 
-    def _matmat(self, x):
+    def _matmat(self, x):  # type: ignore
         return self.args[0].matmat(self.args[1].matmat(x))
 
     def _adjoint(self):
@@ -755,23 +755,23 @@ class _ScaledLinearOperator(LinearOperator):
             A, alpha_original = A.args
             # Avoid in-place multiplication so that we don't accidentally mutate
             # the original prefactor.
-            alpha = alpha * alpha_original
+            alpha = alpha * alpha_original  # type: ignore
 
         dtype = _get_dtype([A], [type(alpha)])
         super().__init__(dtype, A.shape)
         self.args = (A, alpha)
         # Note: args[1] is alpha (a scalar), so use `*` below, not `@`
 
-    def _matvec(self, x):
+    def _matvec(self, x):  # type: ignore
         return self.args[1] * self.args[0].matvec(x)
 
     def _rmatvec(self, x):
         return np.conj(self.args[1]) * self.args[0].rmatvec(x)
 
-    def _rmatmat(self, x):
+    def _rmatmat(self, x):  # type: ignore
         return np.conj(self.args[1]) * self.args[0].rmatmat(x)
 
-    def _matmat(self, x):
+    def _matmat(self, x):  # type: ignore
         return self.args[1] * self.args[0].matmat(x)
 
     def _adjoint(self):
@@ -803,10 +803,10 @@ class _PowerLinearOperator(LinearOperator):
     def _rmatvec(self, x):
         return self._power(self.args[0].rmatvec, x)
 
-    def _rmatmat(self, x):
+    def _rmatmat(self, x):  # type: ignore
         return self._power(self.args[0].rmatmat, x)
 
-    def _matmat(self, x):
+    def _matmat(self, x):  # type: ignore
         return self._power(self.args[0].matmat, x)
 
     def _adjoint(self):
@@ -824,7 +824,7 @@ class MatrixLinearOperator(LinearOperator):
     def _matmat(self, X):
         return self.A.dot(X)
 
-    def _adjoint(self):
+    def _adjoint(self):  # type: ignore
         if self.__adj is None:
             self.__adj = _AdjointMatrixOperator(self.A)
         return self.__adj
@@ -840,7 +840,7 @@ class _AdjointMatrixOperator(MatrixLinearOperator):
     def dtype(self):
         return self.args[0].dtype
 
-    def _adjoint(self):
+    def _adjoint(self):  # type: ignore
         return MatrixLinearOperator(self.args[0])
 
 
@@ -854,13 +854,13 @@ class IdentityOperator(LinearOperator):
     def _rmatvec(self, x):
         return x
 
-    def _rmatmat(self, x):
+    def _rmatmat(self, x):  # type: ignore
         return x
 
-    def _matmat(self, x):
+    def _matmat(self, x):  # type: ignore
         return x
 
-    def _adjoint(self):
+    def _adjoint(self):  # type: ignore
         return self
 
 
@@ -914,8 +914,8 @@ def aslinearoperator(A):
                 rmatmat = A.rmatmat
             if hasattr(A, 'dtype'):
                 dtype = A.dtype
-            return LinearOperator(A.shape, A.matvec, rmatvec=rmatvec,
-                                  rmatmat=rmatmat, dtype=dtype)
+            return LinearOperator(A.shape, A.matvec, rmatvec=rmatvec,  # type: ignore[call-arg]
+                                  rmatmat=rmatmat, dtype=dtype)  # type: ignore[call-arg]
 
         else:
             raise TypeError('type not understood')

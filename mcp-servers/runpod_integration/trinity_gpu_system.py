@@ -276,4 +276,4 @@ if __name__ == '__main__':
     print("🚀 Trinity GPU Generation System Starting...")
     print("🎯 Trinity達 + RTX 4090統合システム")
     print("📡 API Server: http://localhost:8082")
-    app.run(host="0.0.0.0", port=port, debug=os.getenv("DEBUG", "False").lower() == "true")
+    app.run(host="0.0.0.0", port=port, debug=os.getenv("DEBUG", "False").lower() == "true")  # type: ignore[name-defined]

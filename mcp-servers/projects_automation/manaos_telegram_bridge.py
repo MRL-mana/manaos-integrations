@@ -119,7 +119,7 @@ class ManaOSTelegramBridge:
         
         # 統合回答を生成
         integrated_response = self._integrate_trinity_responses(
-            remi_result, luna_result, mina_result
+            remi_result, luna_result, mina_result  # type: ignore
         )
         
         return integrated_response

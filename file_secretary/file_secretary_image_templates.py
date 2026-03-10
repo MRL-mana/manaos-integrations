@@ -66,7 +66,7 @@ class FileSecretaryImageTemplates:
             try:
                 # ComfyUIIntegrationの初期化パラメータを確認
                 # デフォルトではapi_urlパラメータがない可能性がある
-                self.comfyui_integration = ComfyUIIntegration()
+                self.comfyui_integration = ComfyUIIntegration()  # type: ignore[possibly-unbound]
                 # API URLを設定（可能な場合）
                 if hasattr(self.comfyui_integration, 'api_url'):
                     self.comfyui_integration.api_url = comfyui_url

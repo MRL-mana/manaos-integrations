@@ -53,7 +53,7 @@ class FaceExtractor:
         
         # MediaPipe初期化
         if self.method == "mediapipe":
-            self.mp_face_detection = mp.solutions.face_detection
+            self.mp_face_detection = mp.solutions.face_detection  # type: ignore[possibly-unbound]
             self.face_detection = self.mp_face_detection.FaceDetection(
                 model_selection=1,  # 0=short-range, 1=full-range
                 min_detection_confidence=0.5
@@ -67,7 +67,7 @@ class FaceExtractor:
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         
         # 顔の位置を検出
-        face_locations = face_recognition.face_locations(rgb_image, model="hog")
+        face_locations = face_recognition.face_locations(rgb_image, model="hog")  # type: ignore[possibly-unbound]
         
         if not face_locations:
             return None

@@ -105,8 +105,8 @@ async def orchestrate(request: OrchestrateRequest):
         
         result = orchestrator.run(
             goal=request.goal,
-            context=request.context,
-            budget_turns=request.budget_turns
+            context=request.context,  # type: ignore
+            budget_turns=request.budget_turns  # type: ignore
         )
         
         logger.info(f"✅ Orchestrate complete: {result['ticket_id']}")

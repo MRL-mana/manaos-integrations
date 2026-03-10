@@ -162,7 +162,7 @@ class SystemProcessManager:
                 
                 # 強制終了が必要な場合
                 if self.is_process_running(pid):
-                    os.kill(pid, signal.SIGKILL)
+                    os.kill(pid, signal.SIGKILL)  # type: ignore[attr-defined]
                 
                 # PIDファイルの削除
                 if os.path.exists(config['pid_file']):

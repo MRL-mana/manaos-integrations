@@ -41,8 +41,8 @@ if (
     sys.platform == "win32"
     and getattr(sys.stdout, "encoding", "") in _ENCODINGS_TO_NORMALIZE
 ):
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 
 class VSCodeManaOSIntegration:

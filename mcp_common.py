@@ -97,7 +97,7 @@ class MCPHealthServer:
                 else:
                     self.send_error(404)
 
-            def log_message(self, fmt, *args):
+            def log_message(self, fmt, *args):  # type: ignore
                 pass  # suppress access log
 
         return _Handler

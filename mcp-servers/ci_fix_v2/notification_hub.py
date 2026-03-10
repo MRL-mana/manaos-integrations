@@ -60,14 +60,14 @@ class NotificationHub:
         self.notification_system = None
         if NOTIFICATION_SYSTEM_AVAILABLE:
             try:
-                self.notification_system = NotificationSystem()
+                self.notification_system = NotificationSystem()  # type: ignore[possibly-unbound]
             except Exception as e:
                 logger.warning(f"通知システムの初期化エラー: {e}")
         
         # 失敗通知の保存ディレクトリ
         if failed_notifications_dir is None:
-            failed_notifications_dir = Path(__file__).parent.parent / "data" / "failed_notifications"
-        self.failed_notifications_dir = Path(failed_notifications_dir)
+            failed_notifications_dir = Path(__file__).parent.parent / "data" / "failed_notifications"  # type: ignore
+        self.failed_notifications_dir = Path(failed_notifications_dir)  # type: ignore
         self.failed_notifications_dir.mkdir(parents=True, exist_ok=True)
         
         # 再送試行設定

@@ -35,10 +35,10 @@ def background_monitoring():
     while True:
         try:
             # メトリクス収集
-            metrics = monitoring_engine.collect_metrics()
+            metrics = monitoring_engine.collect_metrics()  # type: ignore[union-attr]
             
             # 異常検知
-            alerts = monitoring_engine.analyze_metrics(metrics)
+            alerts = monitoring_engine.analyze_metrics(metrics)  # type: ignore[union-attr]
             
             # WebSocket経由でクライアントに送信
             socketio.emit('metrics_update', {
@@ -49,7 +49,7 @@ def background_monitoring():
             
             # アラート処理
             if alerts:
-                monitoring_engine.handle_alerts(alerts)
+                monitoring_engine.handle_alerts(alerts)  # type: ignore[union-attr]
             
             time.sleep(10)  # 10秒ごと
             

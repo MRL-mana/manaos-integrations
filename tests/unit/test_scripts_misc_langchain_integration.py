@@ -39,7 +39,7 @@ sys.modules.setdefault("config_validator_enhanced", _cve)
 
 # _paths
 _paths_mod = sys.modules.get("_paths") or MagicMock()
-_paths_mod.OLLAMA_PORT = 11434
+_paths_mod.OLLAMA_PORT = 11434  # type: ignore
 sys.modules["_paths"] = _paths_mod
 
 # langchain / langchain_community
@@ -92,7 +92,7 @@ def _make_lc() -> LangChainIntegration:
     obj.error_handler = MagicMock(
         handle_exception=MagicMock(return_value=_error_obj)
     )
-    obj.timeout_config = {"llm_call": 30, "api_call": 10}
+    obj.timeout_config = {"llm_call": 30, "api_call": 10}  # type: ignore
     obj.ollama_url = DEFAULT_OLLAMA_URL
     obj.model_name = "qwen2.5:7b"
     obj.llm = None
@@ -108,7 +108,7 @@ def _make_lg() -> LangGraphIntegration:
     obj.error_handler = MagicMock(
         handle_exception=MagicMock(return_value=_error_obj)
     )
-    obj.timeout_config = {"api_call": 10}
+    obj.timeout_config = {"api_call": 10}  # type: ignore
     obj.ollama_url = DEFAULT_OLLAMA_URL
     obj.model_name = "qwen2.5:7b"
     obj.graph = None

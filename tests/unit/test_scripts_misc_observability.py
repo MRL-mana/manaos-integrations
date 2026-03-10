@@ -107,28 +107,36 @@ class TestTelemetryMetrics:
         fake_meter.create_up_down_counter.return_value = MagicMock()
         _ot_metrics.get_meter.return_value = fake_meter
         self.metrics = TelemetryMetrics()
+        # observability.py does "from opentelemetry import metrics" which binds
+        # to the opentelemetry mock's auto-attribute, NOT _ot_metrics.
+        # Replace each counter/histogram with a fresh MagicMock so cross-test
+        # call counts don't accumulate on the shared auto-generated mock.
+        self.metrics.request_counter = MagicMock()
+        self.metrics.error_counter = MagicMock()
+        self.metrics.response_time_histogram = MagicMock()
+        self.metrics.active_requests_gauge = MagicMock()
 
     def test_record_request_calls_counter_add(self):
         self.metrics.record_request("GET", "/api/health")
-        self.metrics.request_counter.add.assert_called_once()
+        self.metrics.request_counter.add.assert_called_once()  # type: ignore
 
     def test_record_request_calls_active_requests_add(self):
         self.metrics.record_request("POST", "/api/data")
-        self.metrics.active_requests_gauge.add.assert_called()
+        self.metrics.active_requests_gauge.add.assert_called()  # type: ignore
 
     def test_record_response_calls_histogram_record(self):
         self.metrics.record_response(42.5, 200, "/api/health")
-        self.metrics.response_time_histogram.record.assert_called_once()
+        self.metrics.response_time_histogram.record.assert_called_once()  # type: ignore
 
     def test_record_response_decrements_active_requests(self):
         self.metrics.record_response(10.0, 200, "/api/x")
         # add should be called with -1
-        calls = [str(c) for c in self.metrics.active_requests_gauge.add.call_args_list]
+        calls = [str(c) for c in self.metrics.active_requests_gauge.add.call_args_list]  # type: ignore
         assert any("-1" in c for c in calls)
 
     def test_record_error_calls_counter_add(self):
         self.metrics.record_error("ValueError", "/api/broken")
-        self.metrics.error_counter.add.assert_called_once()
+        self.metrics.error_counter.add.assert_called_once()  # type: ignore
 
 
 # ─── TraceDecorator ───────────────────────────────────────────────────────────

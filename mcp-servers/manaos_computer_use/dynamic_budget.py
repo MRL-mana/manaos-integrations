@@ -179,9 +179,9 @@ class DynamicBudgetAdjuster:
             return budget
         
         # 平均実行時間を計算
-        avg_steps = statistics.mean([h["steps"] for h in similar_tasks])
-        avg_cost = statistics.mean([h["cost"] for h in similar_tasks])
-        avg_time = statistics.mean([h["time"] for h in similar_tasks])
+        avg_steps = statistics.mean([h["steps"] for h in similar_tasks])  # type: ignore[name-defined]
+        avg_cost = statistics.mean([h["cost"] for h in similar_tasks])  # type: ignore[name-defined]
+        avg_time = statistics.mean([h["time"] for h in similar_tasks])  # type: ignore[name-defined]
         
         # 安全マージン（1.3倍）
         budget["max_steps"] = int(avg_steps * 1.3)
@@ -221,7 +221,7 @@ class DynamicBudgetAdjuster:
             "cost": cost,
             "time": time_seconds,
             "success": success,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat()  # type: ignore[name-defined]
         })
         
         # 最新100件のみ保持

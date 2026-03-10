@@ -17,7 +17,7 @@ def test_model_directories_access_smoke():
 
 def test_gallery_api_model_functions_smoke():
     try:
-        from gallery_api_server import get_available_models, find_model_path
+        from gallery_api_server import get_available_models, find_model_path  # type: ignore[attr-defined]
     except Exception as exc:
         pytest.skip(f"gallery_api_server を読み込めないためスキップ: {exc}")
 

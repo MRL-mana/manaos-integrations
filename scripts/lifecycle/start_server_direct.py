@@ -10,8 +10,8 @@ from pathlib import Path
 # 注意: sys.stdout/stderrのラッピングは他のモジュールのインポート前に実行する必要がある
 if sys.platform == "win32":
     try:
-        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
     except Exception:
         pass
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     print("=" * 60)
     
     try:
-        from unified_api_server import app, start_initialization_background
+        from unified_api_server import app, start_initialization_background  # type: ignore[attr-defined]
         
         # 初期化をバックグラウンドで開始
         print("\n統合システムをバックグラウンドで初期化中...")

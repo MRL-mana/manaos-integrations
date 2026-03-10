@@ -176,7 +176,7 @@ print(json.dumps(status))
         """WebSocketサーバー起動"""
         print(f"🚀 WebSocketサーバー起動: ws://{host}:{port}")
         
-        async with websockets.serve(self.register_client, host, port):
+        async with websockets.serve(self.register_client, host, port):  # type: ignore[misc]
             print("✅ WebSocketサーバー稼働中")
             print("📡 接続URL: ws://213.181.111.2:8765")
             

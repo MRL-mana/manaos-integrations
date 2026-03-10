@@ -289,7 +289,7 @@ print('✅ Trinity Transformers完了')
     def notify_trinity(self, trinity_id, message):
         """Trinityに通知送信"""
         if trinity_id in trinity_connections:
-            socketio.emit('trinity_notification', message, room=trinity_id)
+            socketio.emit('trinity_notification', message, room=trinity_id)  # type: ignore[call-arg]
     
     def get_gpu_status(self):
         """GPU状態取得"""
@@ -444,12 +444,12 @@ def dashboard():
 @socketio.on('connect')
 def handle_connect():
     """WebSocket接続"""
-    print(f"🌟 Trinity接続: {request.sid}")
+    print(f"🌟 Trinity接続: {request.sid}")  # type: ignore
 
 @socketio.on('disconnect')
 def handle_disconnect():
     """WebSocket切断"""
-    print(f"🌟 Trinity切断: {request.sid}")
+    print(f"🌟 Trinity切断: {request.sid}")  # type: ignore
 
 @socketio.on('trinity_register')
 def handle_trinity_register(data):
@@ -459,7 +459,7 @@ def handle_trinity_register(data):
         trinity_connections[trinity_id] = {
             "connected_at": datetime.now().isoformat(),
             "status": "active",
-            "socket_id": request.sid
+            "socket_id": request.sid  # type: ignore
         }
         emit('registration_success', {'trinity_id': trinity_id})
 

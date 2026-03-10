@@ -41,7 +41,7 @@ class TemplateMatcher:
         screenshot_path: str,
         template_name: str,
         threshold: float = 0.8,
-        method: int = None,
+        method: int = None,  # type: ignore
         roi: Optional[Tuple[int, int, int, int]] = None
     ) -> Optional[Dict[str, Any]]:
         """
@@ -119,7 +119,7 @@ class TemplateMatcher:
         screenshot_path: str,
         template_name: str,
         threshold: float = 0.8,
-        method: int = None
+        method: int = None  # type: ignore
     ) -> List[Dict[str, Any]]:
         """
         複数のマッチを検出（同じテンプレートが複数ある場合）

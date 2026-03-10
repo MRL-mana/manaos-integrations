@@ -19,9 +19,9 @@ import os
 # _paths から設定をインポート
 try:
     from _paths import (
-        UNIFIED_API_URL, MRL_MEMORY_URL, LEARNING_SYSTEM_URL, 
-        LLM_ROUTING_URL, OLLAMA_URL, COMFYUI_URL, GALLERY_URL,
-        N8N_URL, SEARXNG_URL
+        UNIFIED_API_URL, MRL_MEMORY_URL, LEARNING_SYSTEM_URL,  # type: ignore[attr-defined]
+        LLM_ROUTING_URL, OLLAMA_URL, COMFYUI_URL, GALLERY_URL,  # type: ignore[attr-defined]
+        N8N_URL, SEARXNG_URL  # type: ignore[attr-defined]
     )
 except ImportError:
     print("⚠️ _paths.py が見つかりません。デフォルト値を使用します。")
@@ -334,7 +334,7 @@ class PerformanceBenchmark:
         
         print("\n" + "=" * 80)
     
-    def save_report(self, filename: str = None):
+    def save_report(self, filename: str = None):  # type: ignore
         """レポートをファイルに保存"""
         if filename is None:
             filename = f"benchmark_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"

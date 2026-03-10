@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class ManaMegaBoostEngine:
     def __init__(self):
         self.cpu_count = psutil.cpu_count()
-        self.max_workers = self.cpu_count * 2  # CPUコア数の2倍のワーカー
+        self.max_workers = self.cpu_count * 2  # CPUコア数の2倍のワーカー  # type: ignore[operator]
         
         self.config = {
             "parallel_processing": True,

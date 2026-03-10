@@ -148,7 +148,7 @@ class SelfAdjustmentSystem:
             self._save_adjustment_history()
             
             # タイムアウト設定を更新
-            timeout_config.set_timeout(service_name, new_timeout)
+            timeout_config.set_timeout(service_name, new_timeout)  # type: ignore
             
             return {
                 "success": True,

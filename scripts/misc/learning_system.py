@@ -51,7 +51,7 @@ class LearningSystem:
         """初期化"""
         if MEM0_AVAILABLE:
             try:
-                self.mem0 = Mem0Integration()
+                self.mem0 = Mem0Integration()  # type: ignore[possibly-unbound]
             except Exception as e:
                 error = error_handler.handle_exception(
                     e,
@@ -65,7 +65,7 @@ class LearningSystem:
         
         if WORKFLOW_AVAILABLE:
             try:
-                self.workflow = WorkflowAutomation()
+                self.workflow = WorkflowAutomation()  # type: ignore[possibly-unbound]
             except Exception as e:
                 error = error_handler.handle_exception(
                     e,

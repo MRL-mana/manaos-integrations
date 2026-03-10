@@ -48,7 +48,7 @@ class GoogleDriveIndexer:
             token_path = os.getenv("GOOGLE_DRIVE_TOKEN", "token.json")
             
             try:
-                self.drive_integration = GoogleDriveIntegration(
+                self.drive_integration = GoogleDriveIntegration(  # type: ignore[possibly-unbound]
                     credentials_path=credentials_path,
                     token_path=token_path
                 )

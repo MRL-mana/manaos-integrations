@@ -133,8 +133,8 @@ class UltimateIntegrationSystem:
                 "comfyui": self.comfyui.is_available(),
                 "google_drive": self.drive.is_available(),
                 "civitai": True,
-                "langchain": self.langchain.is_available(),
-                "langgraph": self.langgraph.is_available(),
+                "langchain": self.langchain.is_available(),  # type: ignore[union-attr]
+                "langgraph": self.langgraph.is_available(),  # type: ignore[union-attr]
                 "mem0": self.mem0.is_available(),
                 "obsidian": self.obsidian.is_available() if self.obsidian else False,
                 "crewai": self.crewai.is_available()
@@ -163,7 +163,7 @@ class UltimateIntegrationSystem:
             "learning_status": self.learning.get_status(),
             "security_status": self.security.get_security_status(),
             "backup_status": self.backup.get_backup_status(),
-            "analytics_status": self.analytics.get_status() if hasattr(self.analytics, 'get_status') else {},
+            "analytics_status": self.analytics.get_status() if hasattr(self.analytics, 'get_status') else {},  # type: ignore
             "timestamp": datetime.now().isoformat()
         }
     
@@ -189,8 +189,8 @@ class UltimateIntegrationSystem:
         }
         
         # 1. リクエストを解析（LangChain）
-        if self.langchain.is_available():
-            analysis = self.langchain.chat(
+        if self.langchain.is_available():  # type: ignore[union-attr]
+            analysis = self.langchain.chat(  # type: ignore[union-attr]
                 f"以下のリクエストを分析し、必要なステップを計画してください: {user_request}",
                 system_prompt="あなたは優秀なタスクプランナーです。"
             )

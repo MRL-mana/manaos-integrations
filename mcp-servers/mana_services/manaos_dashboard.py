@@ -109,7 +109,7 @@ class ManaOSDashboard:
         """サービスステータスを取得"""
         try:
             for conn in psutil.net_connections(kind='inet'):
-                if conn.laddr.port == int(port) and conn.status == 'LISTEN':
+                if conn.laddr.port == int(port) and conn.status == 'LISTEN':  # type: ignore
                     service = self.services.get(port, {})
                     url = service.get("url", f"http://localhost:{port}")
 
@@ -137,7 +137,7 @@ def index():
     return render_template_string(DASHBOARD_HTML)
 
 
-@app.route('/api/tasks', methods=['GET', 'POST'])
+@app.route('/api/tasks', methods=['GET', 'POST'])  # type: ignore
 def tasks():
     """タスク管理API"""
     conn = sqlite3.connect(DB_PATH)
@@ -186,7 +186,7 @@ def tasks():
         return jsonify({"success": True, "task_id": task_id}), 201
 
 
-@app.route('/api/tasks/<int:task_id>', methods=['GET', 'PUT', 'DELETE'])
+@app.route('/api/tasks/<int:task_id>', methods=['GET', 'PUT', 'DELETE'])  # type: ignore
 def task_detail(task_id):
     """タスク詳細API"""
     conn = sqlite3.connect(DB_PATH)
@@ -236,7 +236,7 @@ def task_detail(task_id):
         return jsonify({"success": True})
 
 
-@app.route('/api/inventory', methods=['GET', 'POST'])
+@app.route('/api/inventory', methods=['GET', 'POST'])  # type: ignore
 def inventory():
     """在庫管理API"""
     conn = sqlite3.connect(DB_PATH)
@@ -277,7 +277,7 @@ def inventory():
         return jsonify({"success": True, "item_id": item_id}), 201
 
 
-@app.route('/api/schedule', methods=['GET', 'POST'])
+@app.route('/api/schedule', methods=['GET', 'POST'])  # type: ignore
 def schedule():
     """スケジュール管理API"""
     conn = sqlite3.connect(DB_PATH)

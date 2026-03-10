@@ -41,7 +41,7 @@ _cve.ConfigValidatorEnhanced = MagicMock(return_value=MagicMock(
 sys.modules.setdefault("config_validator_enhanced", _cve)
 
 _paths_mod = sys.modules.get("_paths") or MagicMock()
-_paths_mod.OLLAMA_PORT = 11434
+_paths_mod.OLLAMA_PORT = 11434  # type: ignore
 sys.modules["_paths"] = _paths_mod
 
 # crewai / crewai_tools / langchain
@@ -263,4 +263,4 @@ class TestExecuteCrew:
                 [MagicMock(), MagicMock()],
                 [MagicMock(), MagicMock(), MagicMock()]
             )
-        assert result["tasks_completed"] == 3
+        assert result["tasks_completed"] == 3  # type: ignore[index]

@@ -809,7 +809,7 @@ class AILearningPredictiveSystem:
     async def start_async_tasks(self):
         """非同期タスク開始"""
         # WebSocketサーバーを開始
-        start_server = websockets.serve(self.websocket_handler, "localhost", 9004)
+        start_server = websockets.serve(self.websocket_handler, "localhost", 9004)  # type: ignore[misc]
         
         # 継続学習ループを開始
         learning_task = asyncio.create_task(self.continuous_learning_loop())

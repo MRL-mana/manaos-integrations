@@ -54,7 +54,7 @@ class Budget:
             return True
         
         if self.max_time:
-            elapsed = (datetime.now() - self.start_time).total_seconds()
+            elapsed = (datetime.now() - self.start_time).total_seconds()  # type: ignore
             if elapsed >= self.max_time:
                 return True
         
@@ -62,7 +62,7 @@ class Budget:
     
     def remaining(self) -> Dict[str, float]:
         """残り予算"""
-        elapsed = (datetime.now() - self.start_time).total_seconds()
+        elapsed = (datetime.now() - self.start_time).total_seconds()  # type: ignore
         
         return {
             "steps": (self.max_steps - self.current_steps) if self.max_steps else float('inf'),
@@ -72,7 +72,7 @@ class Budget:
     
     def percentage_used(self) -> Dict[str, float]:
         """使用率（%）"""
-        elapsed = (datetime.now() - self.start_time).total_seconds()
+        elapsed = (datetime.now() - self.start_time).total_seconds()  # type: ignore
         
         return {
             "steps": (self.current_steps / self.max_steps * 100) if self.max_steps else 0,
@@ -160,7 +160,7 @@ class BudgetTracker:
     
     def get_elapsed_time(self) -> float:
         """経過時間を取得（秒）"""
-        return (datetime.now() - self.budget.start_time).total_seconds()
+        return (datetime.now() - self.budget.start_time).total_seconds()  # type: ignore
     
     def get_status(self) -> Dict[str, Any]:
         """予算状況を取得"""

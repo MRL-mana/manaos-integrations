@@ -26,7 +26,7 @@ class DiscoRLManaOSBridge:
     """DiscoRLとManaOS学習システムのブリッジ"""
     
     def __init__(self):
-        self.learning_bridge = AgentLearningBridge() if MANAOS_AVAILABLE else None
+        self.learning_bridge = AgentLearningBridge() if MANAOS_AVAILABLE else None  # type: ignore[possibly-unbound]
         self.db_path = Path("/root/manaos_unified_system/data/learning.db")
         
     def save_discorl_results(
@@ -99,7 +99,7 @@ Summary: {summary}
 Success Rate: {success_rate}
 """
             
-            self.learning_bridge.save_agent_knowledge(
+            self.learning_bridge.save_agent_knowledge(  # type: ignore[union-attr]
                 agent_name="DiscoRL",
                 task=task,
                 result=result_text,
@@ -145,7 +145,7 @@ Success Rate: {success_rate}
             conn.close()
             
             # AgentLearningBridgeからも検索
-            bridge_results = self.learning_bridge.search_agent_knowledge(
+            bridge_results = self.learning_bridge.search_agent_knowledge(  # type: ignore[union-attr]
                 query=query,
                 agent_name="DiscoRL",
                 limit=5

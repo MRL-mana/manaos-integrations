@@ -43,19 +43,19 @@ class NippoToExcel:
         
     def convert_single_pdf(self, pdf_path: str, use_ocr: bool = False) -> dict:
         """単一PDF変換"""
-        pdf_path = Path(pdf_path)
+        pdf_path = Path(pdf_path)  # type: ignore
         
-        if not pdf_path.exists():
+        if not pdf_path.exists():  # type: ignore
             return {'success': False, 'error': f'ファイルが見つかりません: {pdf_path}'}
         
-        if pdf_path.suffix.lower() != '.pdf':
+        if pdf_path.suffix.lower() != '.pdf':  # type: ignore
             return {'success': False, 'error': 'PDFファイルではありません'}
         
-        print(f"\n📄 変換中: {pdf_path.name}")
+        print(f"\n📄 変換中: {pdf_path.name}")  # type: ignore
         print(f"   出力先: {self.output_dir}")
         
         # カスタム名（日報の日付を含める）
-        custom_name = f"日報_{pdf_path.stem}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        custom_name = f"日報_{pdf_path.stem}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"  # type: ignore
         
         result = self.converter.convert_pdf_to_excel(
             pdf_path=str(pdf_path),
@@ -77,14 +77,14 @@ class NippoToExcel:
     
     def convert_folder(self, folder_path: str, use_ocr: bool = False) -> dict:
         """フォルダ内の全PDF一括変換"""
-        folder_path = Path(folder_path)
+        folder_path = Path(folder_path)  # type: ignore
         
-        if not folder_path.exists() or not folder_path.is_dir():
+        if not folder_path.exists() or not folder_path.is_dir():  # type: ignore
             return {'success': False, 'error': 'フォルダが見つかりません'}
         
         # PDFファイルを検索
-        pdf_files = list(folder_path.glob('*.pdf'))
-        pdf_files.extend(list(folder_path.glob('*.PDF')))
+        pdf_files = list(folder_path.glob('*.pdf'))  # type: ignore
+        pdf_files.extend(list(folder_path.glob('*.PDF')))  # type: ignore
         
         if not pdf_files:
             return {'success': False, 'error': 'PDFファイルが見つかりません'}
@@ -153,9 +153,9 @@ class NippoToExcel:
         
         # 変換実行
         if target_path.is_file():
-            self.convert_single_pdf(target_path, use_ocr=use_ocr)
+            self.convert_single_pdf(target_path, use_ocr=use_ocr)  # type: ignore
         elif target_path.is_dir():
-            self.convert_folder(target_path, use_ocr=use_ocr)
+            self.convert_folder(target_path, use_ocr=use_ocr)  # type: ignore
         else:
             print(f"\n❌ パスが見つかりません: {target_path}")
 

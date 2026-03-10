@@ -50,7 +50,7 @@ def test_get_models():
         return False
 
 
-def _test_analyze_difficulty(prompt: str, context: Dict[str, Any] = None):
+def _test_analyze_difficulty(prompt: str, context: Dict[str, Any] = None):  # type: ignore
     """難易度分析テスト"""
     print(f"=== 難易度分析: {prompt[:50]}... ===")
     try:
@@ -69,7 +69,7 @@ def _test_analyze_difficulty(prompt: str, context: Dict[str, Any] = None):
         return False
 
 
-def _test_route_llm(prompt: str, context: Dict[str, Any] = None, preferences: Dict[str, Any] = None):
+def _test_route_llm(prompt: str, context: Dict[str, Any] = None, preferences: Dict[str, Any] = None):  # type: ignore
     """LLMルーティングテスト"""
     print(f"=== LLMルーティング: {prompt[:50]}... ===")
     try:

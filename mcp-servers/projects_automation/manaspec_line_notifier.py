@@ -12,7 +12,7 @@ from typing import Dict, List
 class ManaSpecLINENotifier:
     """LINE Notify統合"""
     
-    def __init__(self, token: str = None):
+    def __init__(self, token: str = None):  # type: ignore
         self.token = token or os.getenv("LINE_NOTIFY_TOKEN", "")
         self.api_url = "https://notify-api.line.me/api/notify"
         

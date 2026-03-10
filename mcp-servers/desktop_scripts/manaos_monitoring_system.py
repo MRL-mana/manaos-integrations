@@ -98,7 +98,7 @@ class SystemMetrics:
 
 
 try:
-    from windows_shared_memory import HWiNFOMemoryReader, RTSSMemoryReader
+    from windows_shared_memory import HWiNFOMemoryReader, RTSSMemoryReader  # type: ignore
 except ImportError:
     logger.warning("windows_shared_memory module not found, using fallback")
     
@@ -199,7 +199,7 @@ class CrystalDiskInfoReader:
         """ディスクモデル名を取得"""
         try:
             if hasattr(self, 'wmi_conn'):
-                for disk in self.wmi_conn.Win32_DiskDrive():
+                for disk in self.wmi_conn.Win32_DiskDrive():  # type: ignore[union-attr]
                     if device.startswith(disk.DeviceID.replace('\\', '')):
                         return disk.Model or "Unknown"
         except:
@@ -387,8 +387,8 @@ class ManaOSMonitoringSystem:
             usage_percent=cpu_percent,
             temperature=self._get_cpu_temperature(),
             clock_mhz=cpu_freq.current if cpu_freq else 0,
-            cores=psutil.cpu_count(logical=False),
-            threads=psutil.cpu_count(logical=True)
+            cores=psutil.cpu_count(logical=False),  # type: ignore
+            threads=psutil.cpu_count(logical=True)  # type: ignore
         )
         
         # GPU情報
@@ -422,7 +422,7 @@ class ManaOSMonitoringSystem:
         
         # psutilから取得（Windowsでは通常利用不可）
         try:
-            temps = psutil.sensors_temperatures()
+            temps = psutil.sensors_temperatures()  # type: ignore[attr-defined]
             if 'coretemp' in temps:
                 return temps['coretemp'][0].current
         except:

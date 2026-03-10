@@ -65,8 +65,11 @@ def test_hf_integration():
         if info:
             print(f"✓ モデル情報を取得しました")
             print(f"  モデルID: {info.get('id')}")
-            print(f"  ダウンロード数: {info.get('downloads', 0):,}")
-            print(f"  いいね数: {info.get('likes', 0):,}")
+            try:
+                print(f"  ダウンロード数: {int(info.get('downloads') or 0):,}")
+                print(f"  いいね数: {int(info.get('likes') or 0):,}")
+            except (TypeError, ValueError):
+                print("  数値情報: N/A")
         else:
             print("✗ モデル情報が取得できませんでした")
     

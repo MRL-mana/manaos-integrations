@@ -19,7 +19,7 @@ DEFAULT_LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", f"http://127.0.0.1:{LM_STUDIO
 
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 print("=" * 60)
 print("Qwen2.5-Coder-32B-Instruct 量子化バージョン推奨")

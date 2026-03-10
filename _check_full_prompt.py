@@ -4,7 +4,7 @@ import sys, json
 from pathlib import Path
 from PIL import Image
 
-sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 output_dir = Path(r"C:\ComfyUI\output")
 

@@ -48,9 +48,9 @@ def get_generated_contents(content_type: Optional[str] = None, status: str = "dr
     try:
         params = {"limit": limit}
         if content_type:
-            params["content_type"] = content_type
+            params["content_type"] = content_type  # type: ignore
         if status:
-            params["status"] = status
+            params["status"] = status  # type: ignore
         
         timeout = timeout_config.get("api_call", 10.0)
         response = httpx.get(

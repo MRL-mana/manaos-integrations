@@ -70,7 +70,7 @@ class X280GoogleDriveConverter:
         """フォルダ内のPDFファイル一覧を取得"""
         try:
             query = f"'{self.folder_id}' in parents and mimeType='application/pdf'"
-            results = self.service.files().list(
+            results = self.service.files().list(  # type: ignore[union-attr]
                 q=query,
                 fields="files(id, name, size, modifiedTime)",
                 pageSize=100
@@ -96,7 +96,7 @@ class X280GoogleDriveConverter:
     def download_pdf_file(self, file_id, filename):
         """PDFファイルをダウンロード"""
         try:
-            request = self.service.files().get_media(fileId=file_id)
+            request = self.service.files().get_media(fileId=file_id)  # type: ignore[union-attr]
             file_content = request.execute()
             
             file_path = self.output_dir / f"downloaded_{filename}"

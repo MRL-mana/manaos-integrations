@@ -87,7 +87,7 @@ def bench(provider, model_path: Path, runs: int = 200) -> tuple[float, float, li
 
     avg = statistics.mean(latencies)
     p95 = np.percentile(latencies, 95)
-    return avg, float(p95), used_providers
+    return avg, float(p95), used_providers  # type: ignore
 
 
 def main() -> None:

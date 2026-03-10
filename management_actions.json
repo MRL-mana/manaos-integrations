@@ -1,1702 +1,1822 @@
 [
   {
-    "action_id": "auto_optimize_1772980287",
+    "action_id": "resource_1773108216",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T11:03:36.378138",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 25.2,
+        "memory_percent": 96.9,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:03:36.055741"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773108216",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-08T23:31:27.313793",
+    "executed_at": "2026-03-10T11:03:36.380859",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 28.0,
-        "memory_percent": 38.0,
-        "disk_percent": 64.4,
-        "timestamp": "2026-03-08T23:31:27.313793"
+        "cpu_percent": 25.2,
+        "memory_percent": 96.9,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:03:36.055741"
+      },
+      "actions_taken": [
+        "memory_cleanup"
+      ]
+    }
+  },
+  {
+    "action_id": "resource_1773108234",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T11:03:54.011858",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 40.2,
+        "memory_percent": 98.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:03:53.759579"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773108234",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T11:03:54.013852",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 40.2,
+        "memory_percent": 98.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:03:53.759579"
+      },
+      "actions_taken": [
+        "memory_cleanup"
+      ]
+    }
+  },
+  {
+    "action_id": "resource_1773108261",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T11:04:21.645238",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 3.5,
+        "memory_percent": 85.6,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:04:21.400705"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773108261",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T11:04:21.647458",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 3.5,
+        "memory_percent": 85.6,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:04:21.400705"
+      },
+      "actions_taken": [
+        "memory_cleanup"
+      ]
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773108275",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T11:04:35.923576",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 13.7,
+        "memory_percent": 78.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:04:35.922217"
       },
       "actions_taken": []
     }
   },
   {
-    "action_id": "auto_optimize_1772980312",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
+    "action_id": "resource_1773108787",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
     "target": "system",
-    "executed_at": "2026-03-08T23:31:52.938355",
+    "executed_at": "2026-03-10T11:13:07.704293",
     "result": {
       "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
       "resource_usage": {
-        "cpu_percent": 15.6,
-        "memory_percent": 38.3,
-        "disk_percent": 64.4,
-        "timestamp": "2026-03-08T23:31:52.937351"
-      },
-      "actions_taken": []
+        "cpu_percent": 23.3,
+        "memory_percent": 98.0,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:12:56.808585"
+      }
     }
   },
   {
-    "action_id": "auto_optimize_1772980325",
+    "action_id": "auto_optimize_1773108787",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-08T23:32:05.331710",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 28.3,
-        "memory_percent": 38.5,
-        "disk_percent": 64.4,
-        "timestamp": "2026-03-08T23:32:05.330705"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772980738",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:38:58.695927",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 22.7,
-        "memory_percent": 42.0,
-        "disk_percent": 64.7,
-        "timestamp": "2026-03-08T23:38:58.693846"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772980741",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:39:01.911644",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 24.9,
-        "memory_percent": 42.1,
-        "disk_percent": 64.7,
-        "timestamp": "2026-03-08T23:39:01.911141"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772980745",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:39:05.135640",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 28.8,
-        "memory_percent": 42.1,
-        "disk_percent": 64.7,
-        "timestamp": "2026-03-08T23:39:05.135640"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772980750",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:39:10.569533",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 19.2,
-        "memory_percent": 42.2,
-        "disk_percent": 64.7,
-        "timestamp": "2026-03-08T23:39:10.567970"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772980753",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:39:13.843914",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 30.5,
-        "memory_percent": 42.2,
-        "disk_percent": 64.7,
-        "timestamp": "2026-03-08T23:39:13.842353"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772980757",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:39:17.098625",
+    "executed_at": "2026-03-10T11:13:07.706431",
     "result": {
       "success": true,
       "resource_usage": {
         "cpu_percent": 23.3,
-        "memory_percent": 42.2,
-        "disk_percent": 64.7,
-        "timestamp": "2026-03-08T23:39:17.098117"
+        "memory_percent": 98.0,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:12:56.808585"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1772980760",
+    "action_id": "resource_1773108791",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T11:13:11.133125",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 21.7,
+        "memory_percent": 90.8,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:10.882638"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773108791",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-08T23:39:20.361269",
+    "executed_at": "2026-03-10T11:13:11.135085",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 39.6,
-        "memory_percent": 42.2,
-        "disk_percent": 64.7,
-        "timestamp": "2026-03-08T23:39:20.360064"
+        "cpu_percent": 21.7,
+        "memory_percent": 90.8,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:10.882638"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1772980770",
+    "action_id": "resource_1773108794",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T11:13:14.640984",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 49.5,
+        "memory_percent": 88.5,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:14.298280"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773108794",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-08T23:39:30.142643",
+    "executed_at": "2026-03-10T11:13:14.644656",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 32.2,
-        "memory_percent": 42.2,
-        "disk_percent": 64.7,
-        "timestamp": "2026-03-08T23:39:30.141639"
+        "cpu_percent": 49.5,
+        "memory_percent": 88.5,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:14.298280"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1772980787",
+    "action_id": "resource_1773108800",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T11:13:20.269502",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 38.8,
+        "memory_percent": 89.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:19.941006"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773108800",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-08T23:39:47.666375",
+    "executed_at": "2026-03-10T11:13:20.272077",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 59.9,
-        "memory_percent": 42.4,
-        "disk_percent": 64.7,
-        "timestamp": "2026-03-08T23:39:47.664816"
+        "cpu_percent": 38.8,
+        "memory_percent": 89.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:19.941006"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1772980813",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
+    "action_id": "resource_1773108803",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
     "target": "system",
-    "executed_at": "2026-03-08T23:40:13.272271",
+    "executed_at": "2026-03-10T11:13:23.712212",
     "result": {
       "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
       "resource_usage": {
-        "cpu_percent": 16.1,
-        "memory_percent": 43.4,
-        "disk_percent": 64.7,
-        "timestamp": "2026-03-08T23:40:13.271271"
-      },
-      "actions_taken": []
+        "cpu_percent": 14.2,
+        "memory_percent": 89.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:23.470527"
+      }
     }
   },
   {
-    "action_id": "auto_optimize_1772980825",
+    "action_id": "auto_optimize_1773108803",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-08T23:40:25.700335",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 24.4,
-        "memory_percent": 43.6,
-        "disk_percent": 64.7,
-        "timestamp": "2026-03-08T23:40:25.698265"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772981715",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:55:15.819654",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 19.1,
-        "memory_percent": 49.2,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-08T23:55:15.818142"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772981719",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:55:19.020075",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 18.5,
-        "memory_percent": 49.2,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-08T23:55:19.019068"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772981722",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:55:22.248877",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 34.2,
-        "memory_percent": 48.4,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-08T23:55:22.247316"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772981727",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:55:27.680881",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 13.2,
-        "memory_percent": 48.4,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-08T23:55:27.678881"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772981730",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:55:30.925421",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 32.8,
-        "memory_percent": 48.0,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-08T23:55:30.924417"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772981734",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:55:34.163819",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 17.3,
-        "memory_percent": 47.8,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-08T23:55:34.162815"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772981737",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:55:37.395302",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 11.7,
-        "memory_percent": 47.9,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-08T23:55:37.393758"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772981747",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:55:47.104378",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 16.1,
-        "memory_percent": 47.2,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-08T23:55:47.102875"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772981764",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:56:04.575465",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 17.7,
-        "memory_percent": 47.5,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-08T23:56:04.575465"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772981790",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:56:30.211809",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 18.4,
-        "memory_percent": 48.1,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-08T23:56:30.210805"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772981802",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-08T23:56:42.619007",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 21.5,
-        "memory_percent": 48.4,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-08T23:56:42.618004"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772982190",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T00:03:10.558788",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 31.0,
-        "memory_percent": 55.6,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:03:10.557783"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772982193",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T00:03:13.774355",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 22.1,
-        "memory_percent": 55.6,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:03:13.773838"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772982196",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T00:03:16.971963",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 13.5,
-        "memory_percent": 55.6,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:03:16.970938"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772982202",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T00:03:22.387535",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 25.3,
-        "memory_percent": 55.6,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:03:22.386028"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772982205",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T00:03:25.624190",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 14.0,
-        "memory_percent": 55.7,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:03:25.622603"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772982208",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T00:03:28.886365",
+    "executed_at": "2026-03-10T11:13:23.714236",
     "result": {
       "success": true,
       "resource_usage": {
         "cpu_percent": 14.2,
-        "memory_percent": 55.7,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:03:28.884858"
+        "memory_percent": 89.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:23.470527"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1772982212",
+    "action_id": "resource_1773108807",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T11:13:27.145366",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 21.5,
+        "memory_percent": 89.7,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:26.896093"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773108807",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T00:03:32.094756",
+    "executed_at": "2026-03-10T11:13:27.147288",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 13.8,
-        "memory_percent": 55.8,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:03:32.094014"
+        "cpu_percent": 21.5,
+        "memory_percent": 89.7,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:26.896093"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1772982221",
+    "action_id": "resource_1773108810",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T11:13:30.597695",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 26.6,
+        "memory_percent": 90.3,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:30.346963"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773108810",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T00:03:41.768872",
+    "executed_at": "2026-03-10T11:13:30.599709",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 12.9,
-        "memory_percent": 56.0,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:03:41.767869"
+        "cpu_percent": 26.6,
+        "memory_percent": 90.3,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:30.346963"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1772982239",
+    "action_id": "resource_1773108820",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T11:13:40.148067",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 47.0,
+        "memory_percent": 92.9,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:39.877532"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773108820",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T00:03:59.253864",
+    "executed_at": "2026-03-10T11:13:40.150020",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 14.1,
-        "memory_percent": 56.4,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:03:59.252861"
+        "cpu_percent": 47.0,
+        "memory_percent": 92.9,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:39.877532"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1772982264",
+    "action_id": "resource_1773108837",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T11:13:57.785002",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 47.8,
+        "memory_percent": 98.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:57.495544"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773108837",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T00:04:24.935086",
+    "executed_at": "2026-03-10T11:13:57.787375",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 15.4,
-        "memory_percent": 56.8,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:04:24.933577"
+        "cpu_percent": 47.8,
+        "memory_percent": 98.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:13:57.495544"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1772982277",
+    "action_id": "resource_1773108865",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T11:14:25.417445",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 8.7,
+        "memory_percent": 98.5,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:14:25.173834"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773108865",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T00:04:37.376257",
+    "executed_at": "2026-03-10T11:14:25.419528",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 20.3,
-        "memory_percent": 57.1,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:04:37.375253"
+        "cpu_percent": 8.7,
+        "memory_percent": 98.5,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:14:25.173834"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1772985090",
+    "action_id": "resource_1773108879",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T11:14:39.990084",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 20.1,
+        "memory_percent": 98.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:14:39.727362"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773108879",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T00:51:30.414337",
+    "executed_at": "2026-03-10T11:14:39.992140",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 13.8,
-        "memory_percent": 50.9,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:51:30.412751"
+        "cpu_percent": 20.1,
+        "memory_percent": 98.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:14:39.727362"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1772985093",
+    "action_id": "auto_optimize_1773110646",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T00:51:33.650519",
+    "executed_at": "2026-03-10T11:44:06.383607",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 13.3,
-        "memory_percent": 51.0,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:51:33.650003"
+        "cpu_percent": 20.8,
+        "memory_percent": 67.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:44:06.382617"
       },
       "actions_taken": []
     }
   },
   {
-    "action_id": "auto_optimize_1772985096",
+    "action_id": "auto_optimize_1773110649",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T00:51:36.869664",
+    "executed_at": "2026-03-10T11:44:09.480494",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 12.5,
-        "memory_percent": 50.2,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:51:36.868631"
+        "cpu_percent": 57.0,
+        "memory_percent": 67.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:44:09.479414"
       },
       "actions_taken": []
     }
   },
   {
-    "action_id": "auto_optimize_1772985102",
+    "action_id": "auto_optimize_1773110652",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T00:51:42.289642",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 14.0,
-        "memory_percent": 50.4,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:51:42.288924"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772985105",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T00:51:45.550852",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 14.5,
-        "memory_percent": 50.5,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:51:45.549849"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772985108",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T00:51:48.820983",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 12.9,
-        "memory_percent": 50.5,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:51:48.819979"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772985112",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T00:51:52.087010",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 23.1,
-        "memory_percent": 50.6,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:51:52.085204"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772985121",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T00:52:01.827531",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 23.0,
-        "memory_percent": 50.0,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:52:01.826528"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772985139",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T00:52:19.322124",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 23.1,
-        "memory_percent": 49.3,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:52:19.320616"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772985164",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T00:52:44.974875",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 13.9,
-        "memory_percent": 48.2,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:52:44.973871"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772985177",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T00:52:57.395727",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 12.6,
-        "memory_percent": 47.7,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T00:52:57.394650"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772986312",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T01:11:52.295114",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 39.0,
-        "memory_percent": 51.1,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:11:52.294110"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772986317",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T01:11:57.926079",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 12.3,
-        "memory_percent": 51.3,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:11:57.925075"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772986323",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T01:12:03.502270",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 18.8,
-        "memory_percent": 51.5,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:12:03.501265"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772986331",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T01:12:11.288126",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 14.8,
-        "memory_percent": 51.7,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:12:11.286123"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772986336",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T01:12:16.880870",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 24.0,
-        "memory_percent": 51.4,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:12:16.879835"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772986342",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T01:12:22.459988",
+    "executed_at": "2026-03-10T11:44:12.566024",
     "result": {
       "success": true,
       "resource_usage": {
         "cpu_percent": 14.0,
-        "memory_percent": 51.0,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:12:22.458985"
+        "memory_percent": 67.3,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:44:12.564904"
       },
       "actions_taken": []
     }
   },
   {
-    "action_id": "auto_optimize_1772986348",
+    "action_id": "auto_optimize_1773110658",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T01:12:28.011844",
+    "executed_at": "2026-03-10T11:44:18.100189",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 23.6,
-        "memory_percent": 52.3,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:12:28.010840"
+        "cpu_percent": 17.3,
+        "memory_percent": 67.5,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:44:18.099254"
       },
       "actions_taken": []
     }
   },
   {
-    "action_id": "auto_optimize_1772986360",
+    "action_id": "auto_optimize_1773110661",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T01:12:40.015082",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 20.0,
-        "memory_percent": 50.6,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:12:40.014080"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772986557",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T01:15:57.773625",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 12.9,
-        "memory_percent": 49.6,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:15:57.772622"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772986560",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T01:16:00.990874",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 14.7,
-        "memory_percent": 49.7,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:16:00.989842"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772986564",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T01:16:04.217284",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 63.6,
-        "memory_percent": 49.7,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:16:04.216278"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772986569",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T01:16:09.651198",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 14.1,
-        "memory_percent": 49.6,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:16:09.650136"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1772986572",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T01:16:12.886708",
+    "executed_at": "2026-03-10T11:44:21.217030",
     "result": {
       "success": true,
       "resource_usage": {
         "cpu_percent": 13.1,
-        "memory_percent": 49.7,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:16:12.884870"
+        "memory_percent": 67.6,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:44:21.216086"
       },
       "actions_taken": []
     }
   },
   {
-    "action_id": "auto_optimize_1772986576",
+    "action_id": "auto_optimize_1773110664",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T01:16:16.128823",
+    "executed_at": "2026-03-10T11:44:24.324929",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 12.1,
-        "memory_percent": 49.8,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:16:16.127819"
+        "cpu_percent": 9.6,
+        "memory_percent": 67.7,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:44:24.323828"
       },
       "actions_taken": []
     }
   },
   {
-    "action_id": "auto_optimize_1772986579",
+    "action_id": "auto_optimize_1773110667",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T01:16:19.349905",
+    "executed_at": "2026-03-10T11:44:27.444503",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 11.9,
-        "memory_percent": 49.8,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:16:19.348507"
+        "cpu_percent": 18.8,
+        "memory_percent": 67.8,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:44:27.443563"
       },
       "actions_taken": []
     }
   },
   {
-    "action_id": "auto_optimize_1772986589",
+    "action_id": "auto_optimize_1773110676",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T01:16:29.028899",
+    "executed_at": "2026-03-10T11:44:36.667939",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 19.4,
+        "memory_percent": 68.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:44:36.666927"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773110693",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T11:44:53.946619",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 10.3,
+        "memory_percent": 68.7,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:44:53.945535"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773110721",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T11:45:21.332221",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 11.0,
+        "memory_percent": 69.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:45:21.331214"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773110735",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T11:45:35.524434",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 41.0,
+        "memory_percent": 69.7,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T11:45:35.523432"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "resource_1773112021",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T12:07:01.200454",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 14.3,
+        "memory_percent": 91.4,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:06:53.802155"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112021",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:07:01.202306",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 14.3,
+        "memory_percent": 91.4,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:06:53.802155"
+      },
+      "actions_taken": [
+        "memory_cleanup"
+      ]
+    }
+  },
+  {
+    "action_id": "resource_1773112030",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T12:07:10.297758",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 22.7,
+        "memory_percent": 89.7,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:07:07.849489"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112030",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:07:10.299752",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 22.7,
+        "memory_percent": 89.7,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:07:07.849489"
+      },
+      "actions_taken": [
+        "memory_cleanup"
+      ]
+    }
+  },
+  {
+    "action_id": "resource_1773112039",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T12:07:19.393901",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 42.1,
+        "memory_percent": 88.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:07:16.805327"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112039",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:07:19.395986",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 42.1,
+        "memory_percent": 88.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:07:16.805327"
+      },
+      "actions_taken": [
+        "memory_cleanup"
+      ]
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112047",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:07:27.974398",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 9.1,
+        "memory_percent": 83.8,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:07:27.973261"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112053",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:07:33.600116",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 19.8,
+        "memory_percent": 80.9,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:07:33.599231"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112059",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:07:39.208592",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 7.0,
+        "memory_percent": 78.0,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:07:39.207582"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112064",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:07:44.803374",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 30.8,
+        "memory_percent": 74.9,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:07:44.802235"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112076",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:07:56.521396",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 12.4,
+        "memory_percent": 68.5,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:07:56.520352"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112096",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:08:16.382040",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 47.8,
+        "memory_percent": 61.6,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:08:16.379105"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112126",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:08:46.319385",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 10.4,
+        "memory_percent": 55.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:08:46.318401"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112143",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:09:03.036259",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 46.5,
+        "memory_percent": 58.9,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:09:03.035278"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "resource_1773112827",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T12:20:27.108818",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 53.8,
+        "memory_percent": 85.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:20:18.401040"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112827",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:20:27.111004",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 53.8,
+        "memory_percent": 85.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:20:18.401040"
+      },
+      "actions_taken": [
+        "memory_cleanup"
+      ]
+    }
+  },
+  {
+    "action_id": "resource_1773112837",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T12:20:37.351147",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 22.2,
+        "memory_percent": 85.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:20:33.958112"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112837",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:20:37.353772",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 22.2,
+        "memory_percent": 85.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:20:33.958112"
+      },
+      "actions_taken": [
+        "memory_cleanup"
+      ]
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112844",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:20:44.146153",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 10.0,
+        "memory_percent": 81.7,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:20:44.145155"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112851",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:20:51.833935",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 11.2,
+        "memory_percent": 81.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:20:51.832578"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112857",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:20:57.427692",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 13.7,
+        "memory_percent": 80.8,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:20:57.426605"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112863",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:21:03.037289",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 14.3,
+        "memory_percent": 80.4,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:21:03.036272"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112868",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:21:08.630815",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 11.7,
+        "memory_percent": 80.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:21:08.629726"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112880",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:21:20.474518",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 14.1,
+        "memory_percent": 79.3,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:21:20.473482"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773112900",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:21:40.287590",
     "result": {
       "success": true,
       "resource_usage": {
         "cpu_percent": 23.1,
-        "memory_percent": 50.1,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:16:29.027896"
+        "memory_percent": 78.5,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:21:40.286654"
       },
       "actions_taken": []
     }
   },
   {
-    "action_id": "auto_optimize_1772986606",
+    "action_id": "auto_optimize_1773112930",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T01:16:46.561827",
+    "executed_at": "2026-03-10T12:22:10.193455",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 17.2,
-        "memory_percent": 50.7,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:16:46.560824"
+        "cpu_percent": 9.9,
+        "memory_percent": 76.5,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:22:10.192508"
       },
       "actions_taken": []
     }
   },
   {
-    "action_id": "auto_optimize_1772986632",
+    "action_id": "auto_optimize_1773112946",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T01:17:12.216213",
+    "executed_at": "2026-03-10T12:22:26.895758",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 13.5,
-        "memory_percent": 51.0,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:17:12.215206"
+        "cpu_percent": 20.4,
+        "memory_percent": 75.8,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:22:26.894849"
       },
       "actions_taken": []
     }
   },
   {
-    "action_id": "auto_optimize_1772986644",
+    "action_id": "auto_optimize_1773113897",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T01:17:24.621530",
+    "executed_at": "2026-03-10T12:38:17.534225",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 58.5,
+        "memory_percent": 60.8,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:38:17.532032"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773113903",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:38:23.146265",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 10.3,
+        "memory_percent": 61.0,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:38:23.145271"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773113908",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:38:28.772167",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 12.2,
+        "memory_percent": 61.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:38:28.771096"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773113916",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:38:36.462286",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 26.1,
+        "memory_percent": 61.3,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:38:36.461269"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773113922",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:38:42.068777",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 9.1,
+        "memory_percent": 62.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:38:42.067495"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773113927",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:38:47.723900",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 15.4,
+        "memory_percent": 63.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:38:47.722983"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773113933",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:38:53.334932",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 4.4,
+        "memory_percent": 64.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:38:53.333818"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773113945",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:39:05.070618",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 38.0,
+        "memory_percent": 64.9,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:39:05.069555"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773113964",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:39:24.852577",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 25.6,
+        "memory_percent": 66.5,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:39:24.851693"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773113994",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:39:54.833501",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 6.5,
+        "memory_percent": 70.9,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:39:54.832429"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773114011",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:40:11.710952",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 14.5,
+        "memory_percent": 73.3,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:40:11.709880"
+      },
+      "actions_taken": []
+    }
+  },
+  {
+    "action_id": "resource_1773115076",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T12:57:56.785560",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 19.2,
+        "memory_percent": 98.6,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:57:49.051746"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773115076",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:57:56.787581",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 19.2,
+        "memory_percent": 98.6,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:57:49.051746"
+      },
+      "actions_taken": [
+        "memory_cleanup"
+      ]
+    }
+  },
+  {
+    "action_id": "resource_1773115087",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T12:58:07.716233",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 45.7,
+        "memory_percent": 99.0,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:58:03.754475"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773115087",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:58:07.719343",
+    "result": {
+      "success": true,
+      "resource_usage": {
+        "cpu_percent": 45.7,
+        "memory_percent": 99.0,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:58:03.754475"
+      },
+      "actions_taken": [
+        "memory_cleanup"
+      ]
+    }
+  },
+  {
+    "action_id": "resource_1773115099",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
+    "target": "system",
+    "executed_at": "2026-03-10T12:58:19.261317",
+    "result": {
+      "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
+      "resource_usage": {
+        "cpu_percent": 18.7,
+        "memory_percent": 98.3,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:58:14.629133"
+      }
+    }
+  },
+  {
+    "action_id": "auto_optimize_1773115099",
+    "action_type": "optimization",
+    "description": "リソース自動最適化",
+    "target": "system",
+    "executed_at": "2026-03-10T12:58:19.267266",
     "result": {
       "success": true,
       "resource_usage": {
         "cpu_percent": 18.7,
-        "memory_percent": 51.1,
-        "disk_percent": 64.8,
-        "timestamp": "2026-03-09T01:17:24.619963"
+        "memory_percent": 98.3,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:58:14.629133"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1773015161",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
+    "action_id": "resource_1773115111",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
     "target": "system",
-    "executed_at": "2026-03-09T09:12:41.761695",
+    "executed_at": "2026-03-10T12:58:31.506312",
     "result": {
       "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
       "resource_usage": {
-        "cpu_percent": 36.4,
-        "memory_percent": 50.3,
-        "disk_percent": 64.5,
-        "timestamp": "2026-03-09T09:12:41.760274"
-      },
-      "actions_taken": []
+        "cpu_percent": 43.2,
+        "memory_percent": 98.9,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:58:28.271547"
+      }
     }
   },
   {
-    "action_id": "auto_optimize_1773015164",
+    "action_id": "auto_optimize_1773115111",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T09:12:44.943745",
+    "executed_at": "2026-03-10T12:58:31.508326",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 28.6,
-        "memory_percent": 50.2,
-        "disk_percent": 64.5,
-        "timestamp": "2026-03-09T09:12:44.942701"
+        "cpu_percent": 43.2,
+        "memory_percent": 98.9,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:58:28.271547"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1773015168",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
+    "action_id": "resource_1773115121",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
     "target": "system",
-    "executed_at": "2026-03-09T09:12:48.106617",
+    "executed_at": "2026-03-10T12:58:41.515785",
     "result": {
       "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
       "resource_usage": {
-        "cpu_percent": 45.5,
-        "memory_percent": 50.0,
-        "disk_percent": 64.5,
-        "timestamp": "2026-03-09T09:12:48.105709"
-      },
-      "actions_taken": []
+        "cpu_percent": 26.4,
+        "memory_percent": 99.0,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:58:38.349159"
+      }
     }
   },
   {
-    "action_id": "auto_optimize_1773015830",
+    "action_id": "auto_optimize_1773115121",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T09:23:50.153174",
+    "executed_at": "2026-03-10T12:58:41.517954",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 42.7,
-        "memory_percent": 52.8,
-        "disk_percent": 64.5,
-        "timestamp": "2026-03-09T09:23:50.152037"
+        "cpu_percent": 26.4,
+        "memory_percent": 99.0,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:58:38.349159"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1773015833",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
+    "action_id": "resource_1773115131",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
     "target": "system",
-    "executed_at": "2026-03-09T09:23:53.348336",
+    "executed_at": "2026-03-10T12:58:51.507216",
     "result": {
       "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
       "resource_usage": {
-        "cpu_percent": 23.3,
-        "memory_percent": 52.9,
-        "disk_percent": 64.5,
-        "timestamp": "2026-03-09T09:23:53.346689"
-      },
-      "actions_taken": []
+        "cpu_percent": 12.3,
+        "memory_percent": 99.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:58:48.332400"
+      }
     }
   },
   {
-    "action_id": "auto_optimize_1773015836",
+    "action_id": "auto_optimize_1773115131",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T09:23:56.533928",
+    "executed_at": "2026-03-10T12:58:51.509174",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 55.8,
-        "memory_percent": 52.7,
-        "disk_percent": 64.5,
-        "timestamp": "2026-03-09T09:23:56.532720"
+        "cpu_percent": 12.3,
+        "memory_percent": 99.1,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:58:48.332400"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1773015841",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
+    "action_id": "resource_1773115141",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
     "target": "system",
-    "executed_at": "2026-03-09T09:24:01.890023",
+    "executed_at": "2026-03-10T12:59:01.539911",
     "result": {
       "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
       "resource_usage": {
-        "cpu_percent": 48.9,
-        "memory_percent": 53.1,
-        "disk_percent": 64.5,
-        "timestamp": "2026-03-09T09:24:01.888716"
-      },
-      "actions_taken": []
+        "cpu_percent": 18.6,
+        "memory_percent": 99.4,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:58:58.332462"
+      }
     }
   },
   {
-    "action_id": "auto_optimize_1773015845",
+    "action_id": "auto_optimize_1773115141",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T09:24:05.101249",
+    "executed_at": "2026-03-10T12:59:01.541885",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 18.3,
-        "memory_percent": 53.2,
-        "disk_percent": 64.5,
-        "timestamp": "2026-03-09T09:24:05.100296"
+        "cpu_percent": 18.6,
+        "memory_percent": 99.4,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:58:58.332462"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1773015848",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
+    "action_id": "resource_1773115159",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
     "target": "system",
-    "executed_at": "2026-03-09T09:24:08.313493",
+    "executed_at": "2026-03-10T12:59:19.509060",
     "result": {
       "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
       "resource_usage": {
-        "cpu_percent": 56.0,
-        "memory_percent": 53.4,
-        "disk_percent": 64.5,
-        "timestamp": "2026-03-09T09:24:08.311921"
-      },
-      "actions_taken": []
+        "cpu_percent": 7.9,
+        "memory_percent": 99.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:59:15.036345"
+      }
     }
   },
   {
-    "action_id": "auto_optimize_1773015851",
+    "action_id": "auto_optimize_1773115159",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T09:24:11.551324",
+    "executed_at": "2026-03-10T12:59:19.511294",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 41.9,
-        "memory_percent": 53.8,
-        "disk_percent": 64.5,
-        "timestamp": "2026-03-09T09:24:11.550083"
+        "cpu_percent": 7.9,
+        "memory_percent": 99.2,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:59:15.036345"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1773015861",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
+    "action_id": "resource_1773115182",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
     "target": "system",
-    "executed_at": "2026-03-09T09:24:21.192332",
+    "executed_at": "2026-03-10T12:59:42.944760",
     "result": {
       "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
       "resource_usage": {
-        "cpu_percent": 40.3,
-        "memory_percent": 54.0,
-        "disk_percent": 64.5,
-        "timestamp": "2026-03-09T09:24:21.190532"
-      },
-      "actions_taken": []
+        "cpu_percent": 16.3,
+        "memory_percent": 99.5,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:59:39.583091"
+      }
     }
   },
   {
-    "action_id": "auto_optimize_1773015878",
+    "action_id": "auto_optimize_1773115182",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T09:24:38.618459",
+    "executed_at": "2026-03-10T12:59:42.946832",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 66.1,
-        "memory_percent": 53.7,
-        "disk_percent": 64.5,
-        "timestamp": "2026-03-09T09:24:38.617522"
+        "cpu_percent": 16.3,
+        "memory_percent": 99.5,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T12:59:39.583091"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1773015904",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
+    "action_id": "resource_1773115220",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
     "target": "system",
-    "executed_at": "2026-03-09T09:25:04.203521",
+    "executed_at": "2026-03-10T13:00:20.129960",
     "result": {
       "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
       "resource_usage": {
-        "cpu_percent": 65.6,
-        "memory_percent": 54.4,
-        "disk_percent": 64.5,
-        "timestamp": "2026-03-09T09:25:04.201133"
-      },
-      "actions_taken": []
+        "cpu_percent": 12.5,
+        "memory_percent": 98.9,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T13:00:15.552035"
+      }
     }
   },
   {
-    "action_id": "auto_optimize_1773015916",
+    "action_id": "auto_optimize_1773115220",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T09:25:16.609184",
+    "executed_at": "2026-03-10T13:00:20.132419",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 34.8,
-        "memory_percent": 54.4,
-        "disk_percent": 64.5,
-        "timestamp": "2026-03-09T09:25:16.608128"
+        "cpu_percent": 12.5,
+        "memory_percent": 98.9,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T13:00:15.552035"
       },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   },
   {
-    "action_id": "auto_optimize_1773016301",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
+    "action_id": "resource_1773115241",
+    "action_type": "resource_cleanup",
+    "description": "リソースクリーンアップを実行",
     "target": "system",
-    "executed_at": "2026-03-09T09:31:41.817316",
+    "executed_at": "2026-03-10T13:00:41.696054",
     "result": {
       "success": true,
+      "actions": [
+        "memory_cleanup"
+      ],
       "resource_usage": {
-        "cpu_percent": 63.6,
-        "memory_percent": 57.8,
-        "disk_percent": 65.8,
-        "timestamp": "2026-03-09T09:31:41.816335"
-      },
-      "actions_taken": []
+        "cpu_percent": 31.7,
+        "memory_percent": 98.4,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T13:00:38.208913"
+      }
     }
   },
   {
-    "action_id": "auto_optimize_1773016304",
+    "action_id": "auto_optimize_1773115241",
     "action_type": "optimization",
     "description": "リソース自動最適化",
     "target": "system",
-    "executed_at": "2026-03-09T09:31:44.985825",
+    "executed_at": "2026-03-10T13:00:41.698246",
     "result": {
       "success": true,
       "resource_usage": {
-        "cpu_percent": 32.5,
-        "memory_percent": 57.8,
-        "disk_percent": 65.8,
-        "timestamp": "2026-03-09T09:31:44.984752"
+        "cpu_percent": 31.7,
+        "memory_percent": 98.4,
+        "disk_percent": 64.9,
+        "timestamp": "2026-03-10T13:00:38.208913"
       },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016308",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:31:48.204033",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 37.6,
-        "memory_percent": 57.9,
-        "disk_percent": 65.8,
-        "timestamp": "2026-03-09T09:31:48.203002"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016313",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:31:53.591736",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 39.4,
-        "memory_percent": 57.5,
-        "disk_percent": 65.8,
-        "timestamp": "2026-03-09T09:31:53.590664"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016316",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:31:56.776873",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 27.4,
-        "memory_percent": 57.3,
-        "disk_percent": 65.8,
-        "timestamp": "2026-03-09T09:31:56.775895"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016319",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:31:59.976537",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 29.9,
-        "memory_percent": 57.4,
-        "disk_percent": 65.8,
-        "timestamp": "2026-03-09T09:31:59.974719"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016323",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:32:03.200047",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 46.7,
-        "memory_percent": 57.2,
-        "disk_percent": 65.8,
-        "timestamp": "2026-03-09T09:32:03.198873"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016332",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:32:12.794516",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 31.2,
-        "memory_percent": 57.7,
-        "disk_percent": 65.9,
-        "timestamp": "2026-03-09T09:32:12.793369"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016350",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:32:30.236975",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 49.7,
-        "memory_percent": 59.2,
-        "disk_percent": 65.2,
-        "timestamp": "2026-03-09T09:32:30.235973"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016429",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:33:49.235028",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 39.6,
-        "memory_percent": 57.7,
-        "disk_percent": 64.3,
-        "timestamp": "2026-03-09T09:33:49.233883"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016432",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:33:52.422611",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 35.0,
-        "memory_percent": 57.7,
-        "disk_percent": 64.3,
-        "timestamp": "2026-03-09T09:33:52.421555"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016435",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:33:55.581307",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 28.5,
-        "memory_percent": 57.5,
-        "disk_percent": 64.3,
-        "timestamp": "2026-03-09T09:33:55.580206"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016444",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:34:04.182198",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 100.0,
-        "memory_percent": 57.6,
-        "disk_percent": 64.3,
-        "timestamp": "2026-03-09T09:34:04.053017"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016450",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:34:10.096356",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 57.4,
-        "memory_percent": 57.4,
-        "disk_percent": 64.3,
-        "timestamp": "2026-03-09T09:34:10.095307"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016453",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:34:13.294239",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 21.6,
-        "memory_percent": 57.7,
-        "disk_percent": 64.3,
-        "timestamp": "2026-03-09T09:34:13.292741"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016456",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:34:16.483809",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 34.9,
-        "memory_percent": 58.1,
-        "disk_percent": 64.3,
-        "timestamp": "2026-03-09T09:34:16.482859"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016466",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:34:26.045115",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 44.5,
-        "memory_percent": 58.1,
-        "disk_percent": 64.3,
-        "timestamp": "2026-03-09T09:34:26.043862"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016483",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:34:43.451091",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 39.8,
-        "memory_percent": 58.2,
-        "disk_percent": 64.3,
-        "timestamp": "2026-03-09T09:34:43.450162"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016508",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:35:08.947093",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 30.1,
-        "memory_percent": 58.5,
-        "disk_percent": 64.3,
-        "timestamp": "2026-03-09T09:35:08.944942"
-      },
-      "actions_taken": []
-    }
-  },
-  {
-    "action_id": "auto_optimize_1773016521",
-    "action_type": "optimization",
-    "description": "リソース自動最適化",
-    "target": "system",
-    "executed_at": "2026-03-09T09:35:21.255451",
-    "result": {
-      "success": true,
-      "resource_usage": {
-        "cpu_percent": 33.4,
-        "memory_percent": 58.6,
-        "disk_percent": 64.3,
-        "timestamp": "2026-03-09T09:35:21.254395"
-      },
-      "actions_taken": []
+      "actions_taken": [
+        "memory_cleanup"
+      ]
     }
   }
 ]

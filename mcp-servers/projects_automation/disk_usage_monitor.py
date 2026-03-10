@@ -90,7 +90,7 @@ class DiskUsageMonitor:
             }
         except Exception as e:
             logger.error(f"ディスク使用状況取得エラー: {e}")
-            return None
+            return None  # type: ignore
     
     def check_all_partitions(self) -> dict:
         """全パーティションをチェック"""

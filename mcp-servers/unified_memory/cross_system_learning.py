@@ -197,8 +197,8 @@ class CrossSystemLearning:
         }
     
     async def record_execution(self, action: str, context: str, 
-                             success: bool, latency_ms: int = None,
-                             notes: str = None) -> Dict:
+                             success: bool, latency_ms: int = None,  # type: ignore
+                             notes: str = None) -> Dict:  # type: ignore
         """
         実行結果を記録してフィードバックループを回す
         

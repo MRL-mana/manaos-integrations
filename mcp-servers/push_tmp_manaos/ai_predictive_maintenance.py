@@ -67,7 +67,7 @@ class AIPredictiveMaintenance:
         self.base_system = None
         if PREDICTIVE_MAINTENANCE_AVAILABLE:
             try:
-                self.base_system = PredictiveMaintenance()
+                self.base_system = PredictiveMaintenance()  # type: ignore[possibly-unbound]
             except Exception as e:
                 logger.warning(f"既存の予測メンテナンスシステムの初期化エラー: {e}")
         
@@ -156,7 +156,7 @@ class AIPredictiveMaintenance:
             return None
         
         try:
-            response = httpx.post(
+            response = httpx.post(  # type: ignore[possibly-unbound]
                 self.llm_url,
                 json={
                     "model": self.llm_model,
@@ -177,7 +177,7 @@ class AIPredictiveMaintenance:
     def _get_device_health_data(self) -> Optional[Dict[str, Any]]:
         """デバイス健康状態データを取得"""
         try:
-            response = httpx.get(
+            response = httpx.get(  # type: ignore[possibly-unbound]
                 f"{self.device_health_monitor_url}/api/status",
                 timeout=10
             )
@@ -242,7 +242,7 @@ class AIPredictiveMaintenance:
         # トレンド分析（既存システムを使用）
         if self.base_system:
             try:
-                trends = self.base_system.analyze_trends()
+                trends = self.base_system.analyze_trends()  # type: ignore
                 analysis["trends"] = trends
             except Exception as e:
                 logger.warning(f"トレンド分析エラー: {e}")

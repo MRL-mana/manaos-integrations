@@ -592,7 +592,7 @@ def test_experiment_tracker():
         # Conclude
         tracker.conclude(id_a)
         exp_a = tracker.get_experiment(id_a)
-        assert not exp_a["active"]
+        assert not exp_a["active"]  # type: ignore[index]
         print(f"    concluded {id_a}")
 
         # Persistence: reload from same dir
@@ -691,7 +691,7 @@ def test_auto_curriculum():
             "score": 0.85,
             "difficulty": "standard",
         })
-    rec = curriculum.recommend(history_up, current_difficulty="standard")
+    rec = curriculum.recommend(history_up, current_difficulty="standard")  # type: ignore
     assert isinstance(rec, CurriculumRecommendation)
     assert rec.recommended in ("abstract", "standard")  # 高成績なら上がるか据え置き
     print(f"    case-up: {rec.current} → {rec.recommended}, changed={rec.changed}, conf={rec.confidence:.2f}")
@@ -705,13 +705,13 @@ def test_auto_curriculum():
             "score": 0.20,
             "difficulty": "standard",
         })
-    rec2 = curriculum.recommend(history_down, current_difficulty="standard")
+    rec2 = curriculum.recommend(history_down, current_difficulty="standard")  # type: ignore
     assert rec2.recommended in ("guided", "concrete", "standard")
     print(f"    case-down: {rec2.current} → {rec2.recommended}, changed={rec2.changed}, conf={rec2.confidence:.2f}")
 
     # ── ケース 3: データ少ない → 据え置き
     rec3 = curriculum.recommend([{"cycle": 1, "outcome": "success", "score": 0.9, "difficulty": "standard"}],
-                                 current_difficulty="standard")
+                                 current_difficulty="standard")  # type: ignore
     assert not rec3.changed, "少データでは変更しない"
     print(f"    case-few: changed={rec3.changed}")
 
@@ -831,8 +831,8 @@ def test_orchestrator_with_curriculum_and_anomaly():
 
         # curriculum 推薦
         rec = rl.curriculum.recommend(
-            rl.analytics.cycle_history if hasattr(rl, "analytics") else [],
-            current_difficulty=rl.evolution.current_difficulty.value,
+            rl.analytics.cycle_history if hasattr(rl, "analytics") else [],  # type: ignore
+            current_difficulty=rl.evolution.current_difficulty.value,  # type: ignore
             replay_stats=rl.replay.get_stats() if rl.replay else None,
         )
         assert isinstance(rec, CurriculumRecommendation)
@@ -847,7 +847,7 @@ def test_orchestrator_with_curriculum_and_anomaly():
 
         # anomaly detector
         alerts = rl.anomaly_detector.check(
-            rl.analytics.cycle_history if hasattr(rl, "analytics") else []
+            rl.analytics.cycle_history if hasattr(rl, "analytics") else []  # type: ignore
         )
         print(f"    anomaly: {len(alerts)} alerts")
 
@@ -1329,13 +1329,13 @@ def test_curiosity_explorer():
         ce = CuriosityExplorer(persist_path=persist)
 
         # 状態ハッシュ
-        h1 = CuriosityExplorer.hash_state(0.5, "success", ["read_file"], "coding")
-        h2 = CuriosityExplorer.hash_state(0.8, "failure", ["write_file"], "testing")
+        h1 = CuriosityExplorer.hash_state(0.5, "success", ["read_file"], "coding")  # type: ignore
+        h2 = CuriosityExplorer.hash_state(0.8, "failure", ["write_file"], "testing")  # type: ignore
         assert len(h1) == 16
         assert h1 != h2
 
         # 同じパラメータなら同じハッシュ
-        h1a = CuriosityExplorer.hash_state(0.5, "success", ["read_file"], "coding")
+        h1a = CuriosityExplorer.hash_state(0.5, "success", ["read_file"], "coding")  # type: ignore
         assert h1 == h1a
 
         # observe
@@ -1392,7 +1392,7 @@ def test_hierarchical_policy():
         assert len(opts) >= 4  # consolidate, explore_up, recover, balanced
 
         # 意思決定
-        d1 = hp.decide(difficulty=0.3, state={"cycle": 1}, cycle=1)
+        d1 = hp.decide(difficulty=0.3, state={"cycle": 1}, cycle=1)  # type: ignore
         assert isinstance(d1, HierarchicalDecision)
         assert d1.action in ["level_down", "stay", "level_up"]
         assert d1.level in ["manager", "worker"]
@@ -1401,10 +1401,10 @@ def test_hierarchical_policy():
         # 報酬更新
         hp.update_reward(0.8, "success")
 
-        d2 = hp.decide(difficulty=0.7, state={"cycle": 2}, cycle=2)
+        d2 = hp.decide(difficulty=0.7, state={"cycle": 2}, cycle=2)  # type: ignore
         hp.update_reward(0.3, "failure")
 
-        d3 = hp.decide(difficulty=0.5, state={"cycle": 3}, cycle=3)
+        d3 = hp.decide(difficulty=0.5, state={"cycle": 3}, cycle=3)  # type: ignore
         hp.update_reward(0.6, "partial")
 
         # 統計
@@ -1555,7 +1555,7 @@ def test_orchestrator_with_r9_components():
         assert "total_decisions" in hs or "option_count" in hs
 
         # Hierarchical Decide
-        hd = rl.hierarchical_decide(0.6)
+        hd = rl.hierarchical_decide(0.6)  # type: ignore
         assert "action" in hd
 
         # Options
@@ -1649,7 +1649,7 @@ def test_distributional_reward():
         for i in range(20):
             score = 0.3 + (i % 10) * 0.05
             dist = dr.record("standard|success", score)
-        assert isinstance(dist, RewardDistribution)
+        assert isinstance(dist, RewardDistribution)  # type: ignore[possibly-unbound]
         assert dist.count == 20
         assert dist.mean > 0
         assert dist.std >= 0

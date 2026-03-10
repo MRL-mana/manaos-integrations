@@ -51,7 +51,7 @@ def main():
         print("❌ RunPod Serverlessが利用できません")
         return
 
-    client = RunPodServerlessClient()
+    client = RunPodServerlessClient()  # type: ignore[possibly-unbound]
     results = []
 
     # RunPod Serverlessで生成

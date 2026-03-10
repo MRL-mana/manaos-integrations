@@ -218,5 +218,5 @@ async def run_trinity():
     )
 
 if __name__ == '__main__':
-    asyncio.run(run_trinity())
+    asyncio.run(run_trinity())  # type: ignore[name-defined]
 

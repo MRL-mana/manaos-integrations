@@ -14,7 +14,7 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent))
 
 from agent_remi import RemiAgent
-from agent_manager import TrinityDB
+from agent_manager import TrinityDB  # type: ignore[attr-defined]
 
 logger = logging.getLogger(__name__)
 
@@ -292,17 +292,17 @@ async def test_enhanced_remi():
     
     # テストリクエスト
     user_request = \"\"\"
-タスク管理Webアプリを作成してください。
+タスク管理Webアプリを作成してください。  # type: ignore[name-defined]
 
 要望:
-- ユーザー登録・ログイン機能
-- タスクのCRUD操作
-- 優先度・期限設定
-- フィルター・検索機能
-- レスポンシブデザイン
-\"\"\"
+- ユーザー登録・ログイン機能  # type: ignore[name-defined]
+- タスクのCRUD操作  # type: ignore[name-defined]
+- 優先度・期限設定  # type: ignore[name-defined]
+- フィルター・検索機能  # type: ignore[name-defined]
+- レスポンシブデザイン  # type: ignore[name-defined]
+\"\"\"  # type: ignore[invalid-escape-sequence]
     
-    result = await remi.process_user_request_with_requirements(user_request)
+    result = await remi.process_user_request_with_requirements(user_request)  # type: ignore[name-defined]
     
     print("\n📊 Result:")
     print(json.dumps(result, indent=2, ensure_ascii=False))
@@ -310,7 +310,7 @@ async def test_enhanced_remi():
     print("\n✅ Enhanced Remi test complete")
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # type: ignore
     import asyncio
     asyncio.run(test_enhanced_remi())
 

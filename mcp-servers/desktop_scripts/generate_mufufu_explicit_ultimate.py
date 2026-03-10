@@ -305,7 +305,7 @@ async def generate_mufufu_explicit_ultimate():
         traceback.print_exc()
     finally:
         if 'generator' in locals():
-            generator.cleanup()
+            generator.cleanup()  # type: ignore[possibly-unbound]
 
 if __name__ == "__main__":
     asyncio.run(generate_mufufu_explicit_ultimate())

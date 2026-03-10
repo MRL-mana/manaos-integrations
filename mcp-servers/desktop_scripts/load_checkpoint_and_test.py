@@ -17,9 +17,9 @@ def load_lora_and_generate(
 ):
     """チェックポイントからLoRAを読み込んで画像生成"""
     
-    checkpoint_path = Path(checkpoint_path)
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = Path(checkpoint_path)  # type: ignore
+    output_dir = Path(output_dir)  # type: ignore
+    output_dir.mkdir(parents=True, exist_ok=True)  # type: ignore
     
     print(f"チェックポイントを読み込み: {checkpoint_path}")
     print(f"ベースモデル: {base_model}")
@@ -65,7 +65,7 @@ def load_lora_and_generate(
             height=512,
         ).images[0]
         
-        output_file = output_dir / f"test_{checkpoint_path.name}_{i+1}.png"
+        output_file = output_dir / f"test_{checkpoint_path.name}_{i+1}.png"  # type: ignore[operator]
         image.save(output_file)
         print(f"    保存: {output_file}")
     

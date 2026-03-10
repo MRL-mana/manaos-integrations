@@ -134,7 +134,7 @@ class UltimateSystemDashboard:
             
             # ディスクI/O
             disk_io = psutil.disk_io_counters()
-            disk_io_mb = (disk_io.read_bytes + disk_io.write_bytes) / 1024 / 1024  # MB
+            disk_io_mb = (disk_io.read_bytes + disk_io.write_bytes) / 1024 / 1024  # MB  # type: ignore[union-attr]
             
             metrics = {
                 'timestamp': datetime.now().isoformat(),

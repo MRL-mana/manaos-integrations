@@ -186,7 +186,7 @@ async def main():
     host = os.getenv("VOICE_WEBSOCKET_HOST", "0.0.0.0")  # 0.0.0.0で全インターフェースでリッスン
     logger.info(f"🚀 WebSocketサーバーを起動: ws://{host}:{port}")
 
-    async with websockets.serve(streaming.handle_websocket, host, port):
+    async with websockets.serve(streaming.handle_websocket, host, port):  # type: ignore[misc]
         await asyncio.Future()  # 永久に実行
 
 

@@ -80,7 +80,7 @@ class PDFToExcelConverter:
         self.page_data = []  # ページごとのデータを保存
         if OCR_AVAILABLE:
             try:
-                self.ocr = MultiProviderOCR()
+                self.ocr = MultiProviderOCR()  # type: ignore[possibly-unbound]
             except Exception as e:
                 logger.warning(f"OCRの初期化に失敗: {e}")
         self.check_dependencies()
@@ -221,13 +221,13 @@ class PDFToExcelConverter:
         
         tables = []
         try:
-            with pdfplumber.open(pdf_path) as pdf:
+            with pdfplumber.open(pdf_path) as pdf:  # type: ignore[possibly-unbound]
                 for page_num, page in enumerate(pdf.pages, 1):
                     page_tables = page.extract_tables()
                     for table_num, table in enumerate(page_tables, 1):
                         if table:
                             # テーブルをDataFrameに変換
-                            df = pd.DataFrame(table[1:], columns=table[0] if table else None)
+                            df = pd.DataFrame(table[1:], columns=table[0] if table else None)  # type: ignore[possibly-unbound]
                             df.attrs['page'] = page_num
                             df.attrs['table_num'] = table_num
                             tables.append(df)
@@ -254,7 +254,7 @@ class PDFToExcelConverter:
         tables = []
         try:
             # すべてのページからテーブルを抽出
-            dfs = tabula.read_pdf(pdf_path, pages='all', multiple_tables=True)
+            dfs = tabula.read_pdf(pdf_path, pages='all', multiple_tables=True)  # type: ignore[possibly-unbound]
             for i, df in enumerate(dfs, 1):
                 if not df.empty:
                     df.attrs['table_num'] = i
@@ -428,7 +428,7 @@ class PDFToExcelConverter:
                 "provider": "tesseract",
                 "text": text.strip(),
                 "grid_data": None,
-                "confidence": self._calculate_confidence(data) if 'conf' in data else 0.0,
+                "confidence": self._calculate_confidence(data) if 'conf' in data else 0.0,  # type: ignore
                 "raw_data": data
             }
         except Exception as e:
@@ -449,7 +449,7 @@ class PDFToExcelConverter:
             actual_page_num = page_num + 1
             
             # ページを画像に変換
-            mat = fitz.Matrix(zoom, zoom)
+            mat = fitz.Matrix(zoom, zoom)  # type: ignore[possibly-unbound]
             pix = page.get_pixmap(matrix=mat, alpha=False)
             temp_image_path = f"temp_page_{actual_page_num}_{os.getpid()}.png"
             pix.save(temp_image_path, output="png")
@@ -471,7 +471,7 @@ class PDFToExcelConverter:
             for provider in providers_to_try:
                 try:
                     if provider == "tesseract":
-                        result = self.ocr.recognize(
+                        result = self.ocr.recognize(  # type: ignore[union-attr]
                             temp_image_path,
                             provider="tesseract",
                             layout=True,
@@ -501,7 +501,7 @@ class PDFToExcelConverter:
                                 use_gpu = False
                         
                         try:
-                            result = self.ocr.recognize(
+                            result = self.ocr.recognize(  # type: ignore[union-attr]
                                 temp_image_path,
                                 provider=provider,
                                 layout=True,
@@ -513,7 +513,7 @@ class PDFToExcelConverter:
                         except (MemoryError, OSError, RuntimeError):
                             continue
                     else:
-                        result = self.ocr.recognize(temp_image_path, provider=provider)
+                        result = self.ocr.recognize(temp_image_path, provider=provider)  # type: ignore[union-attr]
                     
                     if result and result.get('text') and result.get('text').strip():
                         ocr_results.append(result)
@@ -636,7 +636,7 @@ class PDFToExcelConverter:
         # まずpdfplumberでテキスト抽出を試みる
         if PDFPLUMBER_AVAILABLE:
             try:
-                with pdfplumber.open(pdf_path) as pdf:
+                with pdfplumber.open(pdf_path) as pdf:  # type: ignore[possibly-unbound]
                     for page in pdf.pages:
                         page_text = page.extract_text()
                         if page_text:
@@ -651,7 +651,7 @@ class PDFToExcelConverter:
         if PYMUPDF_AVAILABLE:
             try:
                 logger.info("PyMuPDFでテキスト抽出を試みます...")
-                doc = fitz.open(pdf_path)
+                doc = fitz.open(pdf_path)  # type: ignore[possibly-unbound]
                 for page_num in range(len(doc)):
                     page = doc[page_num]
                     page_text = page.get_text()
@@ -699,7 +699,7 @@ class PDFToExcelConverter:
                 
                 # PyMuPDFで画像に変換
                 if PYMUPDF_AVAILABLE:
-                    doc = fitz.open(pdf_path)
+                    doc = fitz.open(pdf_path)  # type: ignore[possibly-unbound]
                     doc_pages = len(doc)
                     start = max(int(start_page or 0), 0)
                     start = min(start, max(doc_pages - 1, 0)) if doc_pages else 0
@@ -709,8 +709,8 @@ class PDFToExcelConverter:
                     total_target = max(end - start, 0)
                     
                     # 並列処理の設定（環境変数で制御可能）
-                    use_parallel = os.getenv("MANA_OCR_PARALLEL", "1").strip().lower() in ("1", "true", "yes", "y", "on")
-                    max_workers = int(os.getenv("MANA_OCR_MAX_WORKERS", "0")) or min(4, multiprocessing.cpu_count(), total_target)
+                    use_parallel = os.getenv("MANA_OCR_PARALLEL", "1").strip().lower() in ("1", "true", "yes", "y", "on")  # type: ignore[attr-defined, misc]
+                    max_workers = int(os.getenv("MANA_OCR_MAX_WORKERS", "0")) or min(4, multiprocessing.cpu_count(), total_target)  # type: ignore[attr-defined, misc]
                     
                     # GPU使用時は並列数を制限（メモリ使用量を考慮）
                     try:
@@ -734,15 +734,15 @@ class PDFToExcelConverter:
                         for idx, page_num in enumerate(range(start, end), start=1):
                             page = doc[page_num]
                             actual_page_num = page_num + 1
-                        logger.info(f"ページ {actual_page_num}（範囲 {idx}/{total_target}）をOCR処理中...")
+                        logger.info(f"ページ {actual_page_num}（範囲 {idx}/{total_target}）をOCR処理中...")  # type: ignore[possibly-unbound]
                         
                         # ページを画像に変換（超高解像度・精度向上）
                         # zoom 6.0 = 600 DPI相当（数字・文字の読み取り精度を最大化）
                         # 4.0 → 6.0 に向上（処理時間は増えるが精度が大幅向上）
                         zoom = 6.0
-                        mat = fitz.Matrix(zoom, zoom)
-                        pix = page.get_pixmap(matrix=mat, alpha=False)
-                        temp_image_path = f"temp_page_{actual_page_num}.png"
+                        mat = fitz.Matrix(zoom, zoom)  # type: ignore[possibly-unbound]
+                        pix = page.get_pixmap(matrix=mat, alpha=False)  # type: ignore[possibly-unbound]
+                        temp_image_path = f"temp_page_{actual_page_num}.png"  # type: ignore[possibly-unbound]
                         pix.save(temp_image_path, output="png")
                         
                         # OCRで認識（複数エンジンで試行して最良の結果を選ぶ、またはマージ）
@@ -895,17 +895,17 @@ class PDFToExcelConverter:
                         if ocr_result:
                             # ページごとのデータを保存（後でシート分けに使用）
                             self.page_data.append({
-                                'page_num': actual_page_num,
+                                'page_num': actual_page_num,  # type: ignore[possibly-unbound]
                                 'text': ocr_result.get('text', ''),
                                 'grid_data': ocr_result.get('grid_data'),
                                 'provider': ocr_result.get('provider', selected_provider)
                             })
                             
                             page_text = ocr_result['text']
-                            text += f"=== ページ {actual_page_num} ===\n{page_text}\n\n"
-                            logger.info(f"✅ ページ {actual_page_num} からテキストを抽出しました ({len(page_text)}文字, {ocr_result.get('provider', selected_provider)})")
+                            text += f"=== ページ {actual_page_num} ===\n{page_text}\n\n"  # type: ignore[possibly-unbound]
+                            logger.info(f"✅ ページ {actual_page_num} からテキストを抽出しました ({len(page_text)}文字, {ocr_result.get('provider', selected_provider)})")  # type: ignore[possibly-unbound]
                         else:
-                            logger.warning(f"⚠️ ページ {actual_page_num} からテキストを抽出できませんでした")
+                            logger.warning(f"⚠️ ページ {actual_page_num} からテキストを抽出できませんでした")  # type: ignore[possibly-unbound]
                         
                         # 一時ファイルを削除
                         import os
@@ -913,7 +913,7 @@ class PDFToExcelConverter:
                             os.remove(temp_image_path)
                     doc.close()
                 elif PDF2IMAGE_AVAILABLE:
-                    images = convert_from_path(pdf_path, dpi=300)
+                    images = convert_from_path(pdf_path, dpi=300)  # type: ignore[possibly-unbound]
                     logger.info(f"PDFを{len(images)}枚の画像に変換しました")
                     
                     for i, image in enumerate(images, 1):
@@ -985,7 +985,7 @@ class PDFToExcelConverter:
             if append_mode and excel_file.exists():
                 writer_kwargs.update({"mode": "a", "if_sheet_exists": "replace"})
 
-            with pd.ExcelWriter(excel_file, **writer_kwargs) as writer:
+            with pd.ExcelWriter(excel_file, **writer_kwargs) as writer:  # type: ignore[possibly-unbound]
                 if tables:
                     # テーブルをシートに分割
                     for i, df in enumerate(tables, 1):
@@ -1027,7 +1027,7 @@ class PDFToExcelConverter:
                                     normalized_row = row + [''] * (max_cols - len(row))
                                     normalized_grid.append(normalized_row[:max_cols])
                                 
-                                df = pd.DataFrame(normalized_grid)
+                                df = pd.DataFrame(normalized_grid)  # type: ignore[possibly-unbound]
                                 sheet_name = f"Page{page_num}"
                                 if len(sheet_name) > 31:
                                     sheet_name = sheet_name[:31]
@@ -1040,7 +1040,7 @@ class PDFToExcelConverter:
                                 if page_text:
                                     lines = [line.strip() for line in page_text.split('\n') if line.strip()]
                                     if lines:
-                                        df = pd.DataFrame({'Text': lines})
+                                        df = pd.DataFrame({'Text': lines})  # type: ignore[possibly-unbound]
                                         sheet_name = f"Page{page_num}"
                                         if len(sheet_name) > 31:
                                             sheet_name = sheet_name[:31]
@@ -1053,17 +1053,17 @@ class PDFToExcelConverter:
                         # テキストを行に分割してDataFrameに変換
                         lines = [line.strip() for line in text.split('\n') if line.strip()]
                         if lines:
-                            df = pd.DataFrame({'Text': lines})
+                            df = pd.DataFrame({'Text': lines})  # type: ignore[possibly-unbound]
                             df.to_excel(writer, sheet_name='Text', index=False)
                             logger.info(f"テキストを抽出: {len(lines)}行")
                         else:
                             # 空のDataFrameでもシートを作成
-                            df = pd.DataFrame({'Message': ['PDFからテキストを抽出できませんでした。']})
+                            df = pd.DataFrame({'Message': ['PDFからテキストを抽出できませんでした。']})  # type: ignore[possibly-unbound]
                             df.to_excel(writer, sheet_name='Info', index=False)
                             logger.warning("テキストが空でした")
                     else:
                         # 空のDataFrameでもシートを作成
-                        df = pd.DataFrame({'Message': ['PDFからテキストを抽出できませんでした。PDFが画像のみの可能性があります。']})
+                        df = pd.DataFrame({'Message': ['PDFからテキストを抽出できませんでした。PDFが画像のみの可能性があります。']})  # type: ignore[possibly-unbound]
                         df.to_excel(writer, sheet_name='Info', index=False)
                         logger.warning("テキストも抽出できませんでした")
             
@@ -1139,16 +1139,16 @@ def main():
     google_drive = None
     if "drive.google.com" in input_path or input_path.startswith("http"):
         try:
-            google_drive = GoogleDriveIntegration()
+            google_drive = GoogleDriveIntegration()  # type: ignore[possibly-unbound]
             if not google_drive.is_available():
                 print("警告: Google Drive統合が利用できません。ローカルファイルとして処理します。")
         except Exception as e:
             print(f"警告: Google Drive統合の初期化に失敗: {e}")
     
     converter = PDFToExcelConverter(google_drive=google_drive)
-    converter._max_pages = max_pages
-    converter._start_page = start_page
-    converter._append_mode = append_flag
+    converter._max_pages = max_pages  # type: ignore
+    converter._start_page = start_page  # type: ignore
+    converter._append_mode = append_flag  # type: ignore
     
     # 依存関係をチェック
     deps = converter.check_dependencies()

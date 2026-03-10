@@ -10,7 +10,7 @@ import sys
 
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 def check_llava_installed():
     """llava:latestがインストールされているか確認"""

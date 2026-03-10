@@ -331,7 +331,7 @@ class ManaSelfHealingSystem:
                 result = await self.general_recovery(failure_details)
             
             # 修復履歴保存
-            await self.save_healing_history(failure_type, failure_details, recovery_action, result, 0.0)
+            await self.save_healing_history(failure_type, failure_details, recovery_action, result, 0.0)  # type: ignore
             
             return {
                 "failure_type": failure_type,

@@ -72,9 +72,9 @@ class SearXNGIntegration(BaseIntegration):
         
         # キャッシュディレクトリの設定
         if cache_dir:
-            self.cache_dir = Path(cache_dir)
+            self.cache_dir = Path(cache_dir)  # type: ignore[possibly-unbound]
         else:
-            self.cache_dir = Path(__file__).parent / "data" / "searxng_cache"
+            self.cache_dir = Path(__file__).parent / "data" / "searxng_cache"  # type: ignore[possibly-unbound]
         
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         
@@ -101,7 +101,7 @@ class SearXNGIntegration(BaseIntegration):
         
         # 接続テスト
         try:
-            response = self.client.get(f"{self.base_url}/", timeout=5)
+            response = self.client.get(f"{self.base_url}/", timeout=5)  # type: ignore[union-attr]
             if response.status_code == 200:
                 self.logger.info(f"SearXNGサーバーに接続しました: {self.base_url}")
                 return True
@@ -296,7 +296,7 @@ class SearXNGIntegration(BaseIntegration):
                 params["time_range"] = time_range
             
             self.logger.info(f"SearXNGで検索実行: {query[:50]}...")
-            response = self.client.get(
+            response = self.client.get(  # type: ignore[union-attr]
                 f"{self.base_url}/search",
                 params=params,
                 timeout=self.get_timeout("api_call")
@@ -373,7 +373,7 @@ class SearXNGIntegration(BaseIntegration):
             return []
         
         try:
-            response = self.client.get(
+            response = self.client.get(  # type: ignore[union-attr]
                 f"{self.base_url}/engines",
                 timeout=self.get_timeout("api_call")
             )

@@ -17,7 +17,7 @@ from typing import Dict, List, Any
 class MoltbotAuditDashboard:
     """監査ログから統計情報を抽出・ダッシュボード表示"""
 
-    def __init__(self, audit_base_dir: str = None):
+    def __init__(self, audit_base_dir: str = None):  # type: ignore
         if audit_base_dir is None:
             audit_base_dir = Path(__file__).parent / "moltbot_audit"
         self.audit_base_dir = Path(audit_base_dir)
@@ -103,7 +103,7 @@ class MoltbotAuditDashboard:
             "failure_count": status_counts.get("failed", 0)
         }
 
-    def generate_html_dashboard(self, output_file: str = None) -> str:
+    def generate_html_dashboard(self, output_file: str = None) -> str:  # type: ignore
         """HTML ダッシュボードを生成"""
         logs = self.get_all_audit_logs()
         stats = self.compute_statistics(logs)

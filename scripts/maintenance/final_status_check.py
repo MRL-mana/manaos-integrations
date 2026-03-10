@@ -11,7 +11,7 @@ import os
 from _paths import COMFYUI_PORT, GALLERY_PORT
 
 if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 COMFYUI_URL = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
 GALLERY_API = os.getenv("GALLERY_API", f"http://127.0.0.1:{GALLERY_PORT}/api").rstrip("/")

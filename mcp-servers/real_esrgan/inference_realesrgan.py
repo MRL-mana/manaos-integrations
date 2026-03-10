@@ -91,7 +91,7 @@ def main():
         model_path = os.path.join('weights', args.model_name + '.pth')
         if not os.path.isfile(model_path):
             ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-            for url in file_url:
+            for url in file_url:  # type: ignore[possibly-unbound]
                 # model_path will be updated
                 model_path = load_file_from_url(
                     url=url, model_dir=os.path.join(ROOT_DIR, 'weights'), progress=True, file_name=None)
@@ -105,10 +105,10 @@ def main():
 
     # restorer
     upsampler = RealESRGANer(
-        scale=netscale,
+        scale=netscale,  # type: ignore[possibly-unbound]
         model_path=model_path,
         dni_weight=dni_weight,
-        model=model,
+        model=model,  # type: ignore[possibly-unbound]
         tile=args.tile,
         tile_pad=args.tile_pad,
         pre_pad=args.pre_pad,
@@ -142,7 +142,7 @@ def main():
 
         try:
             if args.face_enhance:
-                _, _, output = face_enhancer.enhance(img, has_aligned=False, only_center_face=False, paste_back=True)
+                _, _, output = face_enhancer.enhance(img, has_aligned=False, only_center_face=False, paste_back=True)  # type: ignore[possibly-unbound]
             else:
                 output, _ = upsampler.enhance(img, outscale=args.outscale)
         except RuntimeError as error:

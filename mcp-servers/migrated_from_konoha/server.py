@@ -477,7 +477,7 @@ def get_logs():
 @socketio.on('connect')
 def handle_connect():
     """クライアント接続"""
-    client_id = request.sid
+    client_id = request.sid  # type: ignore
     connected_clients.add(client_id)
     
     logger.info(f"Client connected: {client_id} (Total: {len(connected_clients)})")
@@ -492,7 +492,7 @@ def handle_connect():
 @socketio.on('disconnect')
 def handle_disconnect():
     """クライアント切断"""
-    client_id = request.sid
+    client_id = request.sid  # type: ignore
     connected_clients.discard(client_id)
     
     logger.info(f"Client disconnected: {client_id} (Total: {len(connected_clients)})")
@@ -501,7 +501,7 @@ def handle_disconnect():
 @socketio.on('subscribe_tasks')
 def handle_subscribe_tasks():
     """タスク更新を購読"""
-    client_id = request.sid
+    client_id = request.sid  # type: ignore
     logger.info(f"Client {client_id} subscribed to task updates")
     
     # 現在のタスク一覧を送信
@@ -520,7 +520,7 @@ def handle_subscribe_tasks():
 @socketio.on('subscribe_agents')
 def handle_subscribe_agents():
     """エージェント状態更新を購読"""
-    client_id = request.sid
+    client_id = request.sid  # type: ignore
     logger.info(f"Client {client_id} subscribed to agent updates")
     
     # 現在のエージェント状態を送信

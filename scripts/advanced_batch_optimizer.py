@@ -290,7 +290,7 @@ class AdvancedBatchOptimizer:
                             'filename': file_info['filename'],
                             'status': 'error',
                             'error': str(e),
-                            'processing_time': time.time() - start_time,
+                            'processing_time': time.time() - start_time,  # type: ignore[possibly-unbound]
                             'batch_id': batch_id,
                             'timestamp': datetime.now().isoformat()
                         }

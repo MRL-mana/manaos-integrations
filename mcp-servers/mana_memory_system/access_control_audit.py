@@ -94,7 +94,7 @@ class AccessControlAudit:
 
             # 機密ファイルの権限をチェック
             sensitive_files = [
-                DB_PATH,
+                DB_PATH,  # type: ignore[name-defined]
                 MEMORY_DIR / "memory_audit.db",
                 MEMORY_DIR / "config.json"
             ]

@@ -93,7 +93,7 @@ def generate_with_runpod_serverless(prompt: str, index: int) -> dict:
     if not RUNPOD_SERVERLESS_AVAILABLE:
         return {"success": False, "error": "RunPod Serverless is not available"}
 
-    client = RunPodServerlessClient()
+    client = RunPodServerlessClient()  # type: ignore[possibly-unbound]
 
     result = client.generate_image(
         prompt=prompt,

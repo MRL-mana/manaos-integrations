@@ -20,26 +20,26 @@ def _make_stubs(monkeypatch):
 
     # flask
     flask_mod = types.ModuleType("flask")
-    flask_mod.Flask = MagicMock(return_value=MagicMock())
-    flask_mod.jsonify = MagicMock(side_effect=lambda x: x)
-    flask_mod.request = MagicMock()
+    flask_mod.Flask = MagicMock(return_value=MagicMock())  # type: ignore
+    flask_mod.jsonify = MagicMock(side_effect=lambda x: x)  # type: ignore
+    flask_mod.request = MagicMock()  # type: ignore
     monkeypatch.setitem(sys.modules, "flask", flask_mod)
     monkeypatch.setitem(sys.modules, "flask_cors", types.ModuleType("flask_cors"))
-    sys.modules["flask_cors"].CORS = MagicMock()
+    sys.modules["flask_cors"].CORS = MagicMock()  # type: ignore
 
     # logger
     log_mod = types.ModuleType("manaos_logger")
-    log_mod.get_logger = MagicMock(return_value=MagicMock())
-    log_mod.get_service_logger = MagicMock(return_value=MagicMock())
+    log_mod.get_logger = MagicMock(return_value=MagicMock())  # type: ignore
+    log_mod.get_service_logger = MagicMock(return_value=MagicMock())  # type: ignore
     monkeypatch.setitem(sys.modules, "manaos_logger", log_mod)
 
     # error_handler
     eh_mod = types.ModuleType("manaos_error_handler")
     eh = MagicMock()
     eh.handle_exception = MagicMock(return_value=MagicMock(user_message="err", message="err"))
-    eh_mod.ManaOSErrorHandler = MagicMock(return_value=eh)
-    eh_mod.ErrorCategory = MagicMock()
-    eh_mod.ErrorSeverity = MagicMock()
+    eh_mod.ManaOSErrorHandler = MagicMock(return_value=eh)  # type: ignore
+    eh_mod.ErrorCategory = MagicMock()  # type: ignore
+    eh_mod.ErrorSeverity = MagicMock()  # type: ignore
     monkeypatch.setitem(sys.modules, "manaos_error_handler", eh_mod)
 
     # async client
@@ -49,32 +49,32 @@ def _make_stubs(monkeypatch):
     async_client.__aenter__ = AsyncMock(return_value=async_client)
     async_client.__aexit__ = AsyncMock(return_value=False)
     async_mod = types.ModuleType("manaos_async_client")
-    async_mod.AsyncUnifiedAPIClient = MagicMock(return_value=async_client)
+    async_mod.AsyncUnifiedAPIClient = MagicMock(return_value=async_client)  # type: ignore
     monkeypatch.setitem(sys.modules, "manaos_async_client", async_mod)
 
     # cache / pool / config
     cache = MagicMock()
     cache.get_stats.return_value = {"hits": 10, "misses": 1}
     cache_mod = types.ModuleType("unified_cache_system")
-    cache_mod.get_unified_cache = MagicMock(return_value=cache)
+    cache_mod.get_unified_cache = MagicMock(return_value=cache)  # type: ignore
     monkeypatch.setitem(sys.modules, "unified_cache_system", cache_mod)
 
     pool = MagicMock()
     pool.get_stats.return_value = {"connections": 3}
     db_mod = types.ModuleType("database_connection_pool")
-    db_mod.get_pool = MagicMock(return_value=pool)
+    db_mod.get_pool = MagicMock(return_value=pool)  # type: ignore
     monkeypatch.setitem(sys.modules, "database_connection_pool", db_mod)
 
     http_pool = MagicMock()
     http_pool.get_stats.return_value = {"active": 2}
     http_mod = types.ModuleType("http_session_pool")
-    http_mod.get_http_session_pool = MagicMock(return_value=http_pool)
+    http_mod.get_http_session_pool = MagicMock(return_value=http_pool)  # type: ignore
     monkeypatch.setitem(sys.modules, "http_session_pool", http_mod)
 
     cfg_cache = MagicMock()
     cfg_cache.get_stats.return_value = {"entries": 5}
     cfg_mod = types.ModuleType("config_cache")
-    cfg_mod.get_config_cache = MagicMock(return_value=cfg_cache)
+    cfg_mod.get_config_cache = MagicMock(return_value=cfg_cache)  # type: ignore
     monkeypatch.setitem(sys.modules, "config_cache", cfg_mod)
 
     return cache, http_pool, cfg_cache, async_client

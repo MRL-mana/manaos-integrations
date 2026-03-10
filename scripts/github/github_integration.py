@@ -62,13 +62,13 @@ class GitHubIntegration(BaseIntegration):
             # GitHub APIの新しい認証方法を使用
             try:
                 from github import Auth
-                self.github = Github(auth=Auth.Token(self.token))
+                self.github = Github(auth=Auth.Token(self.token))  # type: ignore[possibly-unbound]
             except (ImportError, AttributeError):
                 # フォールバック: 古い方法を使用（非推奨だが動作する）
                 import warnings
                 with warnings.catch_warnings():
                     warnings.filterwarnings("ignore", category=DeprecationWarning)
-                    self.github = Github(self.token)
+                    self.github = Github(self.token)  # type: ignore[possibly-unbound]
             # 接続テスト
             self.github.get_user().login
             self.logger.info("GitHub統合を初期化しました")
@@ -106,7 +106,7 @@ class GitHubIntegration(BaseIntegration):
             return None
         
         try:
-            repo_obj = self.github.get_repo(f"{owner}/{repo}")
+            repo_obj = self.github.get_repo(f"{owner}/{repo}")  # type: ignore[union-attr]
             return {
                 "name": repo_obj.name,
                 "full_name": repo_obj.full_name,
@@ -150,7 +150,7 @@ class GitHubIntegration(BaseIntegration):
             return []
         
         try:
-            repos = self.github.search_repositories(
+            repos = self.github.search_repositories(  # type: ignore[union-attr]
                 query=query,
                 sort=sort,
                 order=order
@@ -159,13 +159,13 @@ class GitHubIntegration(BaseIntegration):
             results = []
             for repo in repos[:per_page]:
                 results.append({
-                    "name": repo.name,
-                    "full_name": repo.full_name,
-                    "description": repo.description,
-                    "stars": repo.stargazers_count,
-                    "forks": repo.forks_count,
-                    "language": repo.language,
-                    "url": repo.html_url
+                    "name": repo.name,  # type: ignore
+                    "full_name": repo.full_name,  # type: ignore
+                    "description": repo.description,  # type: ignore
+                    "stars": repo.stargazers_count,  # type: ignore
+                    "forks": repo.forks_count,  # type: ignore
+                    "language": repo.language,  # type: ignore
+                    "url": repo.html_url  # type: ignore
                 })
             
             self.logger.info(f"リポジトリ検索完了: {len(results)}件")
@@ -194,7 +194,7 @@ class GitHubIntegration(BaseIntegration):
             return []
         
         try:
-            user = self.github.get_user(username)
+            user = self.github.get_user(username)  # type: ignore[union-attr]
             repos = user.get_repos()
             
             results = []
@@ -244,10 +244,10 @@ class GitHubIntegration(BaseIntegration):
             return None
         
         try:
-            user = self.github.get_user()
-            repo = user.create_repo(
+            user = self.github.get_user()  # type: ignore[union-attr]
+            repo = user.create_repo(  # type: ignore
                 name=name,
-                description=description,
+                description=description,  # type: ignore
                 private=private,
                 auto_init=auto_init
             )
@@ -297,7 +297,7 @@ class GitHubIntegration(BaseIntegration):
             return []
         
         try:
-            repo_obj = self.github.get_repo(f"{owner}/{repo}")
+            repo_obj = self.github.get_repo(f"{owner}/{repo}")  # type: ignore[union-attr]
             commits = repo_obj.get_commits(sha=branch)
             
             results = []
@@ -345,7 +345,7 @@ class GitHubIntegration(BaseIntegration):
             return []
         
         try:
-            repo_obj = self.github.get_repo(f"{owner}/{repo}")
+            repo_obj = self.github.get_repo(f"{owner}/{repo}")  # type: ignore[union-attr]
             prs = repo_obj.get_pulls(state=state)
             
             results = []
@@ -395,7 +395,7 @@ class GitHubIntegration(BaseIntegration):
             return []
         
         try:
-            repo_obj = self.github.get_repo(f"{owner}/{repo}")
+            repo_obj = self.github.get_repo(f"{owner}/{repo}")  # type: ignore[union-attr]
             issues = repo_obj.get_issues(state=state)
             
             results = []
@@ -448,10 +448,10 @@ class GitHubIntegration(BaseIntegration):
             return None
         
         try:
-            repo_obj = self.github.get_repo(f"{owner}/{repo}")
+            repo_obj = self.github.get_repo(f"{owner}/{repo}")  # type: ignore[union-attr]
             issue = repo_obj.create_issue(
                 title=title,
-                body=body,
+                body=body,  # type: ignore
                 labels=labels or []
             )
             

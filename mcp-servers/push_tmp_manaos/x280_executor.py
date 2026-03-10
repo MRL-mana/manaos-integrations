@@ -90,10 +90,10 @@ class Pixel7Executor:
         except httpx.RequestError as e:
             logger.error(f"ピクセル7実行リクエスト失敗: {e}")
             error_handler.handle_error(
-                ErrorCategory.NETWORK,
-                ErrorSeverity.MEDIUM,
-                f"ピクセル7実行リクエスト失敗: {command}",
-                str(e)
+                ErrorCategory.NETWORK,  # type: ignore
+                ErrorSeverity.MEDIUM,  # type: ignore
+                f"ピクセル7実行リクエスト失敗: {command}",  # type: ignore
+                str(e)  # type: ignore
             )
             execution_time = (datetime.now() - start_time).total_seconds()
             return Pixel7ExecutionResult(
@@ -109,10 +109,10 @@ class Pixel7Executor:
         except Exception as e:
             logger.error(f"ピクセル7実行エラー: {e}")
             error_handler.handle_error(
-                ErrorCategory.EXECUTION,
-                ErrorSeverity.MEDIUM,
-                f"ピクセル7実行エラー: {command}",
-                str(e)
+                ErrorCategory.EXECUTION,  # type: ignore
+                ErrorSeverity.MEDIUM,  # type: ignore
+                f"ピクセル7実行エラー: {command}",  # type: ignore
+                str(e)  # type: ignore
             )
             execution_time = (datetime.now() - start_time).total_seconds()
             return Pixel7ExecutionResult(

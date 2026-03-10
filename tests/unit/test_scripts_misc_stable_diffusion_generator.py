@@ -9,22 +9,34 @@ import pytest
 
 @pytest.fixture(scope="module")
 def _mod():
+    # Save original state of heavy dependencies before stubbing
+    _stub_names = ("torch", "PIL", "PIL.Image", "diffusers", "diffusers.utils")
+    _saved = {name: sys.modules.pop(name, None) for name in _stub_names}
+
     # Stub heavy dependencies so the module can be imported cleanly
-    for mod_name in ("torch", "PIL", "PIL.Image", "diffusers", "diffusers.utils"):
-        if mod_name not in sys.modules:
-            sys.modules[mod_name] = MagicMock()
+    # Always replace to avoid inheriting stubs without float32 or other attrs
+    for mod_name in _stub_names:
+        sys.modules[mod_name] = MagicMock()
 
     # Stub manaos_logger
     logger_stub = types.ModuleType("manaos_logger")
-    logger_stub.get_logger = lambda *a, **kw: MagicMock()
-    logger_stub.get_service_logger = lambda *a, **kw: MagicMock()
+    logger_stub.get_logger = lambda *a, **kw: MagicMock()  # type: ignore
+    logger_stub.get_service_logger = lambda *a, **kw: MagicMock()  # type: ignore
     sys.modules["manaos_logger"] = logger_stub
 
     sys.path.insert(0, "scripts/misc")
     sys.modules.pop("stable_diffusion_generator", None)
     with patch("builtins.print"):
         mod = importlib.import_module("stable_diffusion_generator")
-    return mod
+
+    yield mod
+
+    # Restore original state to prevent contaminating subsequent tests
+    for name in _stub_names:
+        if _saved[name] is None:
+            sys.modules.pop(name, None)
+        else:
+            sys.modules[name] = _saved[name]
 
 
 def _make_instance(_mod):

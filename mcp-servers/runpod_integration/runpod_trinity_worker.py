@@ -97,12 +97,12 @@ class RunPodTrinityWorker:
                 self.s3_bucket = s3_bucket
 
                 # S3クライアント初期化
-                self.s3_client = boto3.client(
+                self.s3_client = boto3.client(  # type: ignore[possibly-unbound]
                     's3',
                     endpoint_url=self.s3_endpoint,
                     aws_access_key_id=self.s3_access_key,
                     aws_secret_access_key=self.s3_secret_key,
-                    config=Config(signature_version='s3v4')
+                    config=Config(signature_version='s3v4')  # type: ignore[possibly-unbound]
                 )
                 self._log(f"✅ S3接続初期化完了: {self.s3_endpoint}")
             except Exception as e:
@@ -126,9 +126,9 @@ class RunPodTrinityWorker:
         if "stable_diffusion" not in self.models:
             self._log("📦 Stable Diffusionモデル読み込み中...")
             try:
-                pipe = StableDiffusionPipeline.from_pretrained(
+                pipe = StableDiffusionPipeline.from_pretrained(  # type: ignore[possibly-unbound]
                     'stabilityai/stable-diffusion-2-1',
-                    torch_dtype=torch.float16
+                    torch_dtype=torch.float16  # type: ignore[possibly-unbound]
                 )
                 pipe = pipe.to('cuda')
                 self.models["stable_diffusion"] = pipe
@@ -169,7 +169,7 @@ class RunPodTrinityWorker:
             if self.s3_enabled:
                 try:
                     s3_key = f"Generated/Images/{datetime.now().strftime('%Y-%m-%d')}/trinity_{timestamp}.png"
-                    self.s3_client.upload_file(
+                    self.s3_client.upload_file(  # type: ignore[union-attr]
                         image_path,
                         self.s3_bucket,
                         s3_key,
@@ -199,8 +199,8 @@ class RunPodTrinityWorker:
                     "height": height
                 },
                 "gpu_info": {
-                    "name": torch.cuda.get_device_name(0),
-                    "memory_gb": torch.cuda.get_device_properties(0).total_memory / 1024**3
+                    "name": torch.cuda.get_device_name(0),  # type: ignore[possibly-unbound]
+                    "memory_gb": torch.cuda.get_device_properties(0).total_memory / 1024**3  # type: ignore[possibly-unbound]
                 }
             }
 
@@ -219,11 +219,11 @@ class RunPodTrinityWorker:
 
             # 仮想動画フレーム生成
             video_frames = []
-            device = torch.device("cuda")
+            device = torch.device("cuda")  # type: ignore[possibly-unbound]
 
             for i in range(frames):
                 # フレーム生成（例：グラデーション動画）
-                frame = np.zeros((height, width, 3), dtype=np.uint8)
+                frame = np.zeros((height, width, 3), dtype=np.uint8)  # type: ignore[possibly-unbound]
 
                 # グラデーション効果
                 for y in range(height):
@@ -231,15 +231,15 @@ class RunPodTrinityWorker:
                     frame[y, :] = [intensity, 128, 255 - intensity]
 
                 # アニメーション効果
-                offset = int(50 * np.sin(i * 0.1))
-                frame = np.roll(frame, offset, axis=1)
+                offset = int(50 * np.sin(i * 0.1))  # type: ignore[possibly-unbound]
+                frame = np.roll(frame, offset, axis=1)  # type: ignore[possibly-unbound]
 
                 video_frames.append(frame)
 
             # GPU処理（フレーム変換）
             tensor_frames = []
             for frame in video_frames[:10]:  # 最初の10フレームのみ処理
-                tensor_frame = torch.from_numpy(frame).float().to(device)
+                tensor_frame = torch.from_numpy(frame).float().to(device)  # type: ignore[possibly-unbound]
                 tensor_frames.append(tensor_frame)
 
             # 動画保存
@@ -247,8 +247,8 @@ class RunPodTrinityWorker:
             video_path = f"/workspace/trinity_video_{timestamp}.mp4"
 
             # OpenCVで動画作成
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            out = cv2.VideoWriter(video_path, fourcc, 30.0, (width, height))
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # type: ignore[possibly-unbound]
+            out = cv2.VideoWriter(video_path, fourcc, 30.0, (width, height))  # type: ignore[possibly-unbound]
 
             for frame in video_frames:
                 out.write(frame)
@@ -259,7 +259,7 @@ class RunPodTrinityWorker:
             if self.s3_enabled:
                 try:
                     s3_key = f"Generated/Videos/{datetime.now().strftime('%Y-%m-%d')}/trinity_{timestamp}.mp4"
-                    self.s3_client.upload_file(
+                    self.s3_client.upload_file(  # type: ignore[union-attr]
                         video_path,
                         self.s3_bucket,
                         s3_key,
@@ -280,8 +280,8 @@ class RunPodTrinityWorker:
                 "total_frames": frames,
                 "resolution": resolution,
                 "gpu_info": {
-                    "name": torch.cuda.get_device_name(0),
-                    "memory_gb": torch.cuda.get_device_properties(0).total_memory / 1024**3
+                    "name": torch.cuda.get_device_name(0),  # type: ignore[possibly-unbound]
+                    "memory_gb": torch.cuda.get_device_properties(0).total_memory / 1024**3  # type: ignore[possibly-unbound]
                 }
             }
 
@@ -307,7 +307,7 @@ class RunPodTrinityWorker:
                 return {"success": False, "error": "S3 is not enabled"}
 
             # S3にアップロード
-            self.s3_client.upload_file(
+            self.s3_client.upload_file(  # type: ignore[union-attr]
                 local_path,
                 self.s3_bucket,
                 s3_key
@@ -348,7 +348,7 @@ class RunPodTrinityWorker:
                 return {"success": False, "error": "S3 is not enabled"}
 
             # S3からダウンロード
-            self.s3_client.download_file(
+            self.s3_client.download_file(  # type: ignore[union-attr]
                 self.s3_bucket,
                 s3_key,
                 local_path
@@ -381,7 +381,7 @@ class RunPodTrinityWorker:
 
             # S3から一覧取得
             files = []
-            paginator = self.s3_client.get_paginator('list_objects_v2')
+            paginator = self.s3_client.get_paginator('list_objects_v2')  # type: ignore[union-attr]
 
             for page in paginator.paginate(Bucket=self.s3_bucket, Prefix=prefix):
                 if 'Contents' in page:
@@ -435,19 +435,19 @@ class RunPodTrinityWorker:
                 # S3からダウンロードしてから処理
                 s3_key = input_path.replace(f"s3://{self.s3_bucket}/", "")
                 temp_input = f"/tmp/temp_input_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                self.s3_client.download_file(self.s3_bucket, s3_key, temp_input)
+                self.s3_client.download_file(self.s3_bucket, s3_key, temp_input)  # type: ignore[union-attr]
                 input_path = temp_input
 
-            image = Image.open(input_path)
+            image = Image.open(input_path)  # type: ignore[possibly-unbound]
 
             # 処理実行
             if operation == "resize":
                 width = job_data.get("width", 1024)
                 height = job_data.get("height", 1024)
-                image = image.resize((width, height), Image.Resampling.LANCZOS)
+                image = image.resize((width, height), Image.Resampling.LANCZOS)  # type: ignore[possibly-unbound]
             elif operation == "thumbnail":
                 size = job_data.get("size", (256, 256))
-                image.thumbnail(size, Image.Resampling.LANCZOS)
+                image.thumbnail(size, Image.Resampling.LANCZOS)  # type: ignore[possibly-unbound]
             elif operation == "convert":
                 format_name = job_data.get("format", "PNG")
                 if image.format != format_name:
@@ -461,11 +461,11 @@ class RunPodTrinityWorker:
             s3_path = None
             if self.s3_enabled and job_data.get("upload_to_s3", False):
                 s3_key = job_data.get("s3_key") or f"Processed/{datetime.now().strftime('%Y-%m-%d')}/processed_{os.path.basename(output_path)}"
-                self.s3_client.upload_file(
+                self.s3_client.upload_file(  # type: ignore[union-attr]
                     output_path,
                     self.s3_bucket,
                     s3_key,
-                    ExtraArgs={'ContentType': f'image/{image.format.lower()}'}
+                    ExtraArgs={'ContentType': f'image/{image.format.lower()}'}  # type: ignore[union-attr]
                 )
                 s3_path = f"s3://{self.s3_bucket}/{s3_key}"
 

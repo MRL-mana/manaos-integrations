@@ -10,13 +10,13 @@ import types
 
 # ── モジュールモック（インポート前に設定）──────────────────────────────────────
 _paths_mod = sys.modules.get("_paths") or MagicMock()
-_paths_mod.UNIFIED_API_PORT = 9502
+_paths_mod.UNIFIED_API_PORT = 9502  # type: ignore
 sys.modules["_paths"] = _paths_mod
 # manaos_integrations._paths もモック
 _mi_paths = types.ModuleType("manaos_integrations._paths")
-_mi_paths.UNIFIED_API_PORT = 9502
+_mi_paths.UNIFIED_API_PORT = 9502  # type: ignore
 _mi_mod = types.ModuleType("manaos_integrations")
-_mi_mod._paths = _mi_paths
+_mi_mod._paths = _mi_paths  # type: ignore
 sys.modules["manaos_integrations"] = _mi_mod
 sys.modules["manaos_integrations._paths"] = _mi_paths
 
@@ -27,7 +27,7 @@ _ns_instance.send_slack = MagicMock()
 _ns_cls = MagicMock(return_value=_ns_instance)
 
 _ns_mod = types.ModuleType("notification_system")
-_ns_mod.NotificationSystem = _ns_cls
+_ns_mod.NotificationSystem = _ns_cls  # type: ignore
 sys.modules["notification_system"] = _ns_mod
 
 # dotenv は不要

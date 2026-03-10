@@ -241,7 +241,7 @@ class NotificationSystem:
     def send_notification(
         self,
         message: str,
-        channels: List[str] = None,
+        channels: List[str] = None,  # type: ignore
         priority: str = "normal"
     ) -> Dict[str, bool]:
         """

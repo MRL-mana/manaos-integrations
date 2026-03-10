@@ -39,7 +39,7 @@ def init_orchestrator():
     """オーケストレーターを初期化"""
     global orchestrator
     if orchestrator is None and ORCHESTRATOR_AVAILABLE:
-        orchestrator = ManaOSIntegrationOrchestrator()
+        orchestrator = ManaOSIntegrationOrchestrator()  # type: ignore[operator]
     return orchestrator
 
 
@@ -402,7 +402,7 @@ def get_orchestrator_stats():
     if not HTTPX_AVAILABLE:
         return jsonify({"error": "httpx が利用できません"}), 503
     try:
-        r = httpx.get(f"{PORTAL_URL.rstrip('/')}/api/orchestrator/stats", timeout=5)
+        r = httpx.get(f"{PORTAL_URL.rstrip('/')}/api/orchestrator/stats", timeout=5)  # type: ignore[possibly-unbound]
         if r.status_code == 200:
             return jsonify(r.json())
         return jsonify({"error": f"Portal returned {r.status_code}"}), r.status_code

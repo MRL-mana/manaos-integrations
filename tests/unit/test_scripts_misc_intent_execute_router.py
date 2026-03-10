@@ -13,9 +13,9 @@ _ml.get_service_logger = MagicMock(return_value=MagicMock())
 sys.modules.setdefault("manaos_logger", _ml)
 
 _paths_mod = sys.modules.get("_paths") or MagicMock()
-_paths_mod.INTENT_ROUTER_PORT = 5118
-_paths_mod.ORCHESTRATOR_PORT = 5119
-_paths_mod.UNIFIED_API_PORT = 9502
+_paths_mod.INTENT_ROUTER_PORT = 5118  # type: ignore
+_paths_mod.ORCHESTRATOR_PORT = 5119  # type: ignore
+_paths_mod.UNIFIED_API_PORT = 9502  # type: ignore
 sys.modules["_paths"] = _paths_mod
 
 import scripts.misc.intent_execute_router as ier

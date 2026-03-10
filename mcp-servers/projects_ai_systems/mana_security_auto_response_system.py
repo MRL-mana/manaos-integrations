@@ -218,7 +218,7 @@ class ManaSecurityAutoResponseSystem:
             
             # 自動対応実行
             response_actions = await self.execute_auto_response_for_threat(
-                event_id, threat_level, threat_score, attack_type
+                event_id, threat_level, threat_score, attack_type  # type: ignore
             )
             
             self.logger.info(f"脅威検知: {event_type} - レベル: {threat_level}")
@@ -447,7 +447,7 @@ class ManaSecurityAutoResponseSystem:
             if not all([event_id, action_type]):
                 raise HTTPException(status_code=400, detail="Event ID and action type are required")
             
-            result = await self.execute_security_action(event_id, {
+            result = await self.execute_security_action(event_id, {  # type: ignore
                 "type": action_type,
                 "params": action_params
             })

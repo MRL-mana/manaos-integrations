@@ -322,7 +322,7 @@ def get_status():
         }), 500
 
 
-@app.route("/api/history/<session_id>", methods=["GET", "DELETE"])
+@app.route("/api/history/<session_id>", methods=["GET", "DELETE"])  # type: ignore
 def manage_history(session_id: str):
     """会話履歴の管理"""
     if request.method == "GET":

@@ -123,7 +123,7 @@ def example6_save_and_load():
     interface2.load()
     
     # 保存したエージェントを使用
-    if interface2.get_agent("mana_assistant"):
+    if interface2.get_agent("mana_assistant"):  # type: ignore
         print("\n✅ カスタムエージェントが正しく復元されました!")
     else:
         print("\n❌ カスタムエージェントの復元に失敗")

@@ -146,7 +146,7 @@ JSON形式で以下の構造で返してください：
             )
             
             # レスポンスをパース
-            response_text = message.content[0].text
+            response_text = message.content[0].text  # type: ignore
             
             # JSONを抽出（```json ... ``` の中身を取得）
             if '```json' in response_text:

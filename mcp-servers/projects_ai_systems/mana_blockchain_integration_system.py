@@ -369,7 +369,7 @@ class ManaBlockchainIntegrationSystem:
                 gas_fee=0.01
             )
             
-            await self.create_transaction(mint_transaction)
+            await self.create_transaction(mint_transaction)  # type: ignore
             
             self.logger.info(f"NFTミント: {nft_id} - {nft.name}")
             return {"status": "success", "nft_id": nft_id, "message": "NFTがミントされました"}
@@ -844,7 +844,7 @@ class BlockchainNetwork:
 
     async def submit_transaction(self, transaction: BlockchainTransaction):
         """トランザクションをネットワークに送信"""
-        self.logger.info(f"トランザクション送信: {transaction.id}")
+        self.logger.info(f"トランザクション送信: {transaction.id}")  # type: ignore
 
     async def deploy_contract(self, contract: SmartContract) -> str:
         """スマートコントラクトをデプロイ"""

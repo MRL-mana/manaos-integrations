@@ -210,18 +210,18 @@ class CivitAIIntegration(BaseIntegration):
             
             # ダウンロード先を決定
             if not download_path:
-                download_path = Path("./downloads") / f"model_{model_id}_v{version_id}.safetensors"
+                download_path = Path("./downloads") / f"model_{model_id}_v{version_id}.safetensors"  # type: ignore
             else:
-                download_path = Path(download_path)
+                download_path = Path(download_path)  # type: ignore
             
-            download_path.parent.mkdir(parents=True, exist_ok=True)
+            download_path.parent.mkdir(parents=True, exist_ok=True)  # type: ignore[union-attr]
             
             # ダウンロード実行
             timeout = self.get_timeout("file_download")
             response = self.session.get(download_url, stream=True, timeout=timeout)
             response.raise_for_status()
             
-            with open(download_path, 'wb') as f:
+            with open(download_path, 'wb') as f:  # type: ignore[call-arg]
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
             

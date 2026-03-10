@@ -11,14 +11,14 @@ import requests
 from manaos_process_manager import get_process_manager
 
 if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 pm = get_process_manager("ComfyUIStop")
 
 from _paths import COMFYUI_PORT
 
-COMFYUI_URL = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")
+COMFYUI_URL = os.getenv("COMFYUI_URL", f"http://127.0.0.1:{COMFYUI_PORT}")  # type: ignore[name-defined]
 COMFYUI_PORT = 8188
 
 def check_comfyui_running():
@@ -35,7 +35,7 @@ def stop_comfyui_by_port():
     
     try:
         # netstatでポート8188を使用しているプロセスを確認
-        result = subprocess.run(
+        result = subprocess.run(  # type: ignore[name-defined]
             ["netstat", "-ano"],
             capture_output=True,
             text=True,
@@ -61,9 +61,9 @@ def stop_comfyui_by_port():
         for pid in pids:
             try:
                 print(f"  🛑 プロセス {pid} を終了中...")
-                subprocess.run(["taskkill", "/F", "/PID", pid], capture_output=True, check=True)
+                subprocess.run(["taskkill", "/F", "/PID", pid], capture_output=True, check=True)  # type: ignore[name-defined]
                 print(f"    ✓ プロセス {pid} を終了しました")
-            except subprocess.CalledProcessError as e:
+            except subprocess.CalledProcessError as e:  # type: ignore[name-defined]
                 print(f"    ⚠️ プロセス {pid} の終了エラー: {e}")
             except Exception as e:
                 print(f"    ⚠️ プロセス {pid} の終了エラー: {e}")
@@ -81,7 +81,7 @@ def stop_comfyui_by_name():
     
     try:
         # Pythonプロセスを検索
-        result = subprocess.run(
+        result = subprocess.run(  # type: ignore[name-defined]
             ["tasklist", "/FI", "IMAGENAME eq python.exe", "/FO", "CSV"],
             capture_output=True,
             text=True,
@@ -110,9 +110,9 @@ def stop_comfyui_by_name():
             try:
                 print(f"  🛑 プロセス {pid} を終了中...")
                 print(f"    コマンド: {cmdline[:80]}...")
-                subprocess.run(["taskkill", "/F", "/PID", pid], capture_output=True, check=True)
+                subprocess.run(["taskkill", "/F", "/PID", pid], capture_output=True, check=True)  # type: ignore[name-defined]
                 print(f"    ✓ プロセス {pid} を終了しました")
-            except subprocess.CalledProcessError as e:
+            except subprocess.CalledProcessError as e:  # type: ignore[name-defined]
                 print(f"    ⚠️ プロセス {pid} の終了エラー: {e}")
             except Exception as e:
                 print(f"    ⚠️ プロセス {pid} の終了エラー: {e}")

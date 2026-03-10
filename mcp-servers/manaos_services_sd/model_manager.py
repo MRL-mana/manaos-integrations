@@ -51,7 +51,7 @@ class ModelManager:
                 logger = logging.getLogger(__name__)
                 logger.info(f"Loading as SDXL: {path}")
                 # SDXLパイプラインはsafety_checker引数をサポートしていない
-                pipe = StableDiffusionXLPipeline.from_single_file(
+                pipe = StableDiffusionXLPipeline.from_single_file(  # type: ignore[union-attr]
                     path,
                     torch_dtype=torch.float32,
                     load_safety_checker=False,

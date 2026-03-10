@@ -75,7 +75,7 @@ def check_file_secretary_integration():
     """File Secretary統合確認"""
     print("\n=== File Secretary統合確認 ===")
     try:
-        from slack_integration import execute_command
+        from slack_integration import execute_command  # type: ignore[attr-defined]
         
         # File Secretaryコマンドをテスト
         result = execute_command(

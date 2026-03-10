@@ -10,7 +10,7 @@ import jax
 import jax.numpy as jnp
 from absl import app, flags, logging
 
-from disco_rl import agent
+from disco_rl import agent  # type: ignore[attr-defined]
 from disco_rl.environments import jittable_envs
 
 # 設定フラグ

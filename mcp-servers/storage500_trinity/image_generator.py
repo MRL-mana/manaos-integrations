@@ -47,7 +47,7 @@ class TrinityImageGenerator:
         # グラデーション効果
         for i in range(height):
             alpha = i / height
-            color = tuple(int(c * (1 - alpha * 0.3)) for c in Image.new('RGB', (1, 1), bg_color).getpixel((0, 0)))
+            color = tuple(int(c * (1 - alpha * 0.3)) for c in Image.new('RGB', (1, 1), bg_color).getpixel((0, 0)))  # type: ignore[misc]
             draw.line([(0, i), (width, i)], fill=color)
         
         # 装飾的な図形

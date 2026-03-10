@@ -87,7 +87,7 @@ class StateEvent(BaseModel):
     data: Dict
 
 
-async def call_ollama_chat(messages: List[Dict], model: str = None) -> str:
+async def call_ollama_chat(messages: List[Dict], model: str = None) -> str:  # type: ignore
     """Ollama Chat API呼び出し"""
     model = model or OLLAMA_MODEL
     
@@ -141,7 +141,7 @@ async def generate_speech(text: str, emotion: str = "normal") -> Optional[bytes]
         return None
 
 
-async def execute_manaos_command(command: str, parameters: Dict = None) -> Dict:
+async def execute_manaos_command(command: str, parameters: Dict = None) -> Dict:  # type: ignore
     """ManaOSコマンド実行（Remi Complete Integration経由）"""
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
@@ -158,7 +158,7 @@ async def execute_manaos_command(command: str, parameters: Dict = None) -> Dict:
         return {"error": str(e)}
 
 
-async def get_remi_response(user_input: str, context: Dict = None) -> str:
+async def get_remi_response(user_input: str, context: Dict = None) -> str:  # type: ignore
     """レミの返事を生成"""
     messages = [{"role": "system", "content": REMI_PERSONALITY_PROMPT}]
     

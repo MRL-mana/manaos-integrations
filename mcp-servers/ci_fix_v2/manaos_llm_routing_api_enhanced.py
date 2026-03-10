@@ -59,7 +59,7 @@ def route_llm_request():
     except Exception as e:
         logger.error(f"ルーティングエラー: {e}", exc_info=True)
         routing_logger.log_response(
-            prompt=data.get("prompt", "") if data else "",
+            prompt=data.get("prompt", "") if data else "",  # type: ignore[possibly-unbound]
             model="unknown",
             difficulty_score=0,
             response_time_ms=0,
@@ -75,10 +75,10 @@ def route_llm_request():
 @app.route("/api/llm/analyze", methods=["POST"])
 def analyze_difficulty():
     """プロンプトの難易度を分析（LLM呼び出しなし）"""
-    if not ENHANCED_LLM_ROUTING_AVAILABLE:
+    if not ENHANCED_LLM_ROUTING_AVAILABLE:  # type: ignore[name-defined]
         return jsonify({"error": "拡張LLMルーティングが利用できません"}), 503
     
-    router = integrations.get("enhanced_llm_routing")
+    router = integrations.get("enhanced_llm_routing")  # type: ignore[name-defined]
     if not router:
         return jsonify({"error": "拡張LLMルーティングが初期化されていません"}), 503
     

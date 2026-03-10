@@ -87,11 +87,11 @@ class HuggingFaceManaOSIntegration:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
         # 画像ストック
-        self.stock = ImageStock() if IMAGE_STOCK_AVAILABLE else None
+        self.stock = ImageStock() if IMAGE_STOCK_AVAILABLE else None  # type: ignore[possibly-unbound]
         
         # モデルキャッシュ
         self.model_cache: Dict[str, Any] = {}
-        self.generators: Dict[str, StableDiffusionGenerator] = {}
+        self.generators: Dict[str, StableDiffusionGenerator] = {}  # type: ignore[valid-type]
         
         # モデル管理設定
         self.cache_dir = Path(os.getenv("HF_CACHE_DIR", ".hf_cache"))
@@ -231,7 +231,7 @@ class HuggingFaceManaOSIntegration:
             ダウンロード先のパス
         """
         try:
-            path = self.helper.download_model(model_id, output_dir=output_dir)
+            path = self.helper.download_model(model_id, output_dir=output_dir)  # type: ignore[call-arg]
             logger.info(f"モデルダウンロード完了: {model_id}")
             return path
         except Exception as e:
@@ -444,7 +444,7 @@ class HuggingFaceManaOSIntegration:
             モデル情報のリスト
         """
         try:
-            return self.helper.list_popular_models(task=task, limit=limit)
+            return self.helper.list_popular_models(task=task, limit=limit)  # type: ignore
         except Exception as e:
             logger.error(f"人気モデル取得エラー: {e}")
             return []
@@ -456,7 +456,7 @@ class HuggingFaceManaOSIntegration:
         Returns:
             タスク別の推奨モデル辞書
         """
-        return self.helper.get_recommended_models()
+        return self.helper.get_recommended_models()  # type: ignore
     
     def cleanup(self):
         """リソースのクリーンアップ"""

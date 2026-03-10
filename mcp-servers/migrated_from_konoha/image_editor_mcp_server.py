@@ -29,7 +29,7 @@ class ImageEditorMCPServer:
         self.setup_tools()
 
     def setup_tools(self):
-        @self.server.list_tools()
+        @self.server.list_tools()  # type: ignore[misc]
         async def list_tools() -> ListToolsResult:
             """利用可能なツール一覧を返す"""
             return ListToolsResult(
@@ -457,7 +457,7 @@ async def main():
     """MCPサーバー起動"""
     server = ImageEditorMCPServer()
     async with stdio_server() as streams:
-        await server.server.run(streams[0], streams[1])
+        await server.server.run(streams[0], streams[1])  # type: ignore[call-arg]
 
 
 if __name__ == "__main__":

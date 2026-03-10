@@ -53,7 +53,7 @@ class CursorChatFileIntegration:
             print(f"📊 チャット埋め込みExcel表示: {excel_path}")
             
             # Excelファイルを読み込み
-            wb = load_workbook(excel_path, data_only=True)
+            wb = load_workbook(excel_path, data_only=True)  # type: ignore[possibly-unbound]
             
             # チャット埋め込み用HTML
             chat_html = f"""
@@ -384,9 +384,9 @@ function insertChatMessage(html) {
                 print("❌ FastAPIがインストールされていません")
                 return
             
-            app = FastAPI(title="Cursor Chat File Integration")
+            app = FastAPI(title="Cursor Chat File Integration")  # type: ignore[possibly-unbound]
             
-            @app.get("/", response_class=HTMLResponse)
+            @app.get("/", response_class=HTMLResponse)  # type: ignore[possibly-unbound]
             async def chat_page():
                 return f"""
 <!DOCTYPE html>
@@ -464,22 +464,22 @@ function insertChatMessage(html) {
 """
             
             @app.post("/chat/upload")
-            async def chat_upload(file: UploadFile = File(...)):
-                if not file.filename.endswith(('.xlsx', '.pdf')):
-                    raise HTTPException(status_code=400, detail="ExcelまたはPDFファイルのみアップロード可能です")
+            async def chat_upload(file: UploadFile = File(...)):  # type: ignore[possibly-unbound]
+                if not file.filename.endswith(('.xlsx', '.pdf')):  # type: ignore[union-attr]
+                    raise HTTPException(status_code=400, detail="ExcelまたはPDFファイルのみアップロード可能です")  # type: ignore[possibly-unbound]
                 
                 # ファイルを一時保存
-                temp_path = self.output_dir / file.filename
+                temp_path = self.output_dir / file.filename  # type: ignore
                 with open(temp_path, "wb") as buffer:
                     shutil.copyfileobj(file.file, buffer)
                 
                 # チャット埋め込みHTMLを生成
-                if file.filename.endswith('.xlsx'):
+                if file.filename.endswith('.xlsx'):  # type: ignore[union-attr]
                     _, chat_html = self.create_chat_embed_excel(str(temp_path))
                 else:
                     _, chat_html = self.create_chat_embed_pdf(str(temp_path))
                 
-                return JSONResponse({
+                return JSONResponse({  # type: ignore[possibly-unbound]
                     "success": True,
                     "filename": file.filename,
                     "html": chat_html
@@ -493,20 +493,20 @@ function insertChatMessage(html) {
                 try:
                     source_path = Path(file_path)
                     if not source_path.exists():
-                        return JSONResponse({"success": False, "error": "ファイルが見つかりません"})
+                        return JSONResponse({"success": False, "error": "ファイルが見つかりません"})  # type: ignore[possibly-unbound]
                     
                     desktop_path = Path("/home/mana/Desktop") / source_path.name
                     shutil.copy2(source_path, desktop_path)
                     
-                    return JSONResponse({"success": True, "message": "デスクトップにコピーしました"})
+                    return JSONResponse({"success": True, "message": "デスクトップにコピーしました"})  # type: ignore[possibly-unbound]
                 except Exception as e:
-                    return JSONResponse({"success": False, "error": str(e)})
+                    return JSONResponse({"success": False, "error": str(e)})  # type: ignore[possibly-unbound]
             
             # WebUIを起動
             print("🚀 Chat File Integration WebUI起動中...")
             print("🌐 URL: http://127.0.0.1:8093")
             
-            uvicorn.run(app, host="0.0.0.0", port=8093)
+            uvicorn.run(app, host="0.0.0.0", port=8093)  # type: ignore[possibly-unbound]
             
         except Exception as e:
             print(f"❌ WebUI作成エラー: {e}")

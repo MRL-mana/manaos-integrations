@@ -259,7 +259,7 @@ class RecoveryPlaybook:
             "error_type": error_type.value,
             "attempts": attempts,
             "success": success,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat()  # type: ignore[name-defined]
         })
     
     def get_recovery_stats(self) -> Dict[str, Any]:

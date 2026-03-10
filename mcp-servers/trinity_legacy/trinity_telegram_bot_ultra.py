@@ -117,7 +117,7 @@ class TrinityUltraClient:
             logger.error(f"AI会話エラー: {e}")
             return await self._ollama_fallback(message, [])
     
-    async def _ollama_fallback(self, message: str, history: List = None) -> Dict[str, Any]:
+    async def _ollama_fallback(self, message: str, history: List = None) -> Dict[str, Any]:  # type: ignore
         """Ollamaフォールバック（強化版）"""
         try:
             # 履歴を含めたプロンプト

@@ -66,7 +66,7 @@ class MultiModelMCPServer:
     def setup_handlers(self):
         """MCPハンドラーを設定"""
         
-        @self.server.list_tools()
+        @self.server.list_tools()  # type: ignore[misc]
         async def list_tools() -> ListToolsResult:
             """利用可能なツール一覧を返す"""
             tools = [
@@ -145,7 +145,7 @@ class MultiModelMCPServer:
                 if name == "list_models":
                     return await self.list_models()
                 elif name == "switch_model":
-                    return await self.switch_model(arguments.get("model_name"))
+                    return await self.switch_model(arguments.get("model_name"))  # type: ignore
                 elif name == "generate_text":
                     return await self.generate_text(
                         arguments.get("prompt", ""),
@@ -332,7 +332,7 @@ class MultiModelMCPServer:
                     server_name="multi-model-ai",
                     server_version="1.0.0",
                     capabilities=self.server.get_capabilities(
-                        notification_options=None,
+                        notification_options=None,  # type: ignore
                         experimental_capabilities={}
                     )
                 )

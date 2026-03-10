@@ -45,7 +45,7 @@ class UnifiedWebUISystem:
         
         self._setup_routes()
     
-    def _setup_routes(self):
+    def _setup_routes(self):  # type: ignore[misc]
         """ルートを設定する"""
         
         @self.app.route('/')

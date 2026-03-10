@@ -69,10 +69,10 @@ class CursorAgentWrapper:
         
         if self.use_cursor_api:
             # Cursor API使用
-            return await self._call_via_cursor_api(prompt, model, max_tokens, temperature, **kwargs)
+            return await self._call_via_cursor_api(prompt, model, max_tokens, temperature, **kwargs)  # type: ignore
         else:
             # 標準API使用（元のエージェントの実装）
-            return await self._call_via_standard_api(prompt, model, max_tokens, temperature, **kwargs)
+            return await self._call_via_standard_api(prompt, model, max_tokens, temperature, **kwargs)  # type: ignore
     
     async def _call_via_cursor_api(
         self,

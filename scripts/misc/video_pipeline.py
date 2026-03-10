@@ -188,7 +188,7 @@ class LocalLLMClient:
         }
 
         try:
-            resp = requests.post(
+            resp = requests.post(  # type: ignore[possibly-unbound]
                 f"{self.ollama_url}/api/generate", json=payload, timeout=120
             )
             resp.raise_for_status()
@@ -218,7 +218,7 @@ class LocalLLMClient:
         }
 
         try:
-            resp = requests.post(
+            resp = requests.post(  # type: ignore[possibly-unbound]
                 f"{self.ollama_url}/api/generate", json=payload, timeout=120
             )
             resp.raise_for_status()
@@ -249,7 +249,7 @@ class VoicevoxTTS:
     def is_available(self) -> bool:
         """VOICEVOXが起動しているか確認"""
         try:
-            resp = requests.get(f"{self.url}/version", timeout=3)
+            resp = requests.get(f"{self.url}/version", timeout=3)  # type: ignore[possibly-unbound]
             return resp.status_code == 200
         except Exception:
             return False
@@ -265,7 +265,7 @@ class VoicevoxTTS:
         spd = speed or self.speed
 
         # 1. 音声クエリ生成
-        query_resp = requests.post(
+        query_resp = requests.post(  # type: ignore[possibly-unbound]
             f"{self.url}/audio_query",
             params={"text": str(text), "speaker": str(sid)},
             timeout=30,
@@ -275,7 +275,7 @@ class VoicevoxTTS:
         audio_query["speedScale"] = spd
 
         # 2. 音声合成
-        synth_resp = requests.post(
+        synth_resp = requests.post(  # type: ignore[possibly-unbound]
             f"{self.url}/synthesis",
             params={"speaker": str(sid)},
             json=audio_query,
@@ -302,7 +302,7 @@ class VoicevoxTTS:
     def get_speakers(self) -> List[Dict]:
         """利用可能なスピーカー一覧を取得"""
         try:
-            resp = requests.get(f"{self.url}/speakers", timeout=10)
+            resp = requests.get(f"{self.url}/speakers", timeout=10)  # type: ignore[possibly-unbound]
             resp.raise_for_status()
             return resp.json()
         except Exception as e:
@@ -448,7 +448,7 @@ class VideoPipeline:
         if not PILLOW_AVAILABLE:
             return image_path
 
-        img = Image.open(image_path).convert("RGB")
+        img = Image.open(image_path).convert("RGB")  # type: ignore[possibly-unbound]
         bg_color = self.config["video"]["bg_color"]
 
         # アスペクト比計算
@@ -463,14 +463,14 @@ class VideoPipeline:
             new_w = int(height * img_ratio)
 
         resample = getattr(
-            getattr(Image, "Resampling", Image),
+            getattr(Image, "Resampling", Image),  # type: ignore[possibly-unbound]
             "LANCZOS",
-            getattr(Image, "BICUBIC", 3),
+            getattr(Image, "BICUBIC", 3),  # type: ignore[possibly-unbound]
         )
         img = img.resize((new_w, new_h), resample)
 
         # キャンバスに配置
-        canvas = Image.new("RGB", (width, height), bg_color)
+        canvas = Image.new("RGB", (width, height), bg_color)  # type: ignore[possibly-unbound]
         x = (width - new_w) // 2
         y = (height - new_h) // 2
         canvas.paste(img, (x, y))
@@ -608,13 +608,13 @@ class VideoPipeline:
             # クリップ生成
             clips = []
             for i, img_path in enumerate(resized_images):
-                clip = ImageClip(img_path, duration=duration_per)
+                clip = ImageClip(img_path, duration=duration_per)  # type: ignore[possibly-unbound]
 
                 # テロップ追加
                 if subtitles and i < len(subtitles) and subtitles[i]:
                     try:
                         sub_cfg = self.config["subtitle"]
-                        txt_clip = TextClip(
+                        txt_clip = TextClip(  # type: ignore[possibly-unbound]
                             text=subtitles[i],
                             font_size=sub_cfg["font_size"],
                             color=sub_cfg["font_color"],
@@ -625,18 +625,18 @@ class VideoPipeline:
                         txt_clip = txt_clip.with_position(
                             ("center", h - sub_cfg["margin_bottom"] - sub_cfg["font_size"])
                         )
-                        clip = CompositeVideoClip([clip, txt_clip])
+                        clip = CompositeVideoClip([clip, txt_clip])  # type: ignore[possibly-unbound]
                     except Exception as e:
                         logger.warning(f"テロップ追加失敗: {e}")
 
                 clips.append(clip)
 
             # 結合
-            final_video = concatenate_videoclips(clips, method="compose")
+            final_video = concatenate_videoclips(clips, method="compose")  # type: ignore[possibly-unbound]
 
             # 音声追加
             if audio_path and os.path.exists(audio_path):
-                audio_clip = AudioFileClip(audio_path)
+                audio_clip = AudioFileClip(audio_path)  # type: ignore[possibly-unbound]
                 # 音声が長い場合は動画に合わせてカット
                 if audio_clip.duration > final_video.duration:
                     audio_clip = audio_clip.subclipped(0, final_video.duration)
@@ -701,10 +701,10 @@ class VideoPipeline:
             result["error"] = str(e)
             logger.error(f"動画生成エラー: {e}", exc_info=True)
             if error_handler:
-                error_handler.handle_error(
+                error_handler.handle_error(  # type: ignore[call-arg]
                     error=e,
-                    category=ErrorCategory.INTERNAL,
-                    severity=ErrorSeverity.HIGH,
+                    category=ErrorCategory.INTERNAL,  # type: ignore[possibly-unbound]
+                    severity=ErrorSeverity.HIGH,  # type: ignore[possibly-unbound]
                     context={"operation": "create_promo_video", "topic": topic},
                 )
             return result
@@ -739,11 +739,11 @@ class VideoPipeline:
         if not resized:
             raise ValueError("有効な画像がありません")
 
-        clips = [ImageClip(img, duration=duration_per_image) for img in resized]
-        final = concatenate_videoclips(clips, method="compose")
+        clips = [ImageClip(img, duration=duration_per_image) for img in resized]  # type: ignore[possibly-unbound]
+        final = concatenate_videoclips(clips, method="compose")  # type: ignore[possibly-unbound]
 
         if audio_path and os.path.exists(audio_path):
-            audio = AudioFileClip(audio_path)
+            audio = AudioFileClip(audio_path)  # type: ignore[possibly-unbound]
             if audio.duration > final.duration:
                 audio = audio.subclipped(0, final.duration)
             final = final.with_audio(audio)
@@ -802,7 +802,7 @@ def demo():
 
     # Ollamaチェック
     try:
-        resp = requests.get(f"{DEFAULT_OLLAMA_URL}/api/tags", timeout=5)
+        resp = requests.get(f"{DEFAULT_OLLAMA_URL}/api/tags", timeout=5)  # type: ignore[possibly-unbound]
         models = [m["name"] for m in resp.json().get("models", [])]
         print(f"  ✅ Ollama ({len(models)}モデル)")
         for m in models:

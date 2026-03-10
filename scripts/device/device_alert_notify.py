@@ -11,11 +11,11 @@ from typing import Dict, Any, List
 from _paths import PORTAL_INTEGRATION_PORT, UNIFIED_API_PORT
 
 try:
-    from manaos_logger import get_logger, get_service_logger
+    from manaos_logger import get_logger, get_service_logger  # type: ignore
 except ImportError:
     import logging
     def get_logger(n): return logging.getLogger(n)
-logger = get_service_logger("device-alert-notify")
+logger = get_service_logger("device-alert-notify")  # type: ignore[possibly-unbound]
 
 # Portal API URL（デバイスアラート取得）
 DEFAULT_PORTAL_URL = f"http://127.0.0.1:{PORTAL_INTEGRATION_PORT}"

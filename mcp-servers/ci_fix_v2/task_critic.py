@@ -362,30 +362,30 @@ class TaskCritic:
                 )
             
                 if response.status_code != 200:
-                    error = error_handler.handle_exception(
+                    error = error_handler.handle_exception(  # type: ignore
                         Exception(f"LLM評価失敗: HTTP {response.status_code}"),
                         context={"service": "Ollama", "url": self.ollama_url, "model": self.model},
                         user_message="実行結果の評価に失敗しました"
                     )
-                    logger.warning(f"LLM評価失敗: {error.message}")
+                    logger.warning(f"LLM評価失敗: {error.message}")  # type: ignore[union-attr]
                     return self._create_fallback_evaluation(status, error)
                 
                 result_text = response.json().get("response", "")
             except httpx.TimeoutException as e:
-                error = error_handler.handle_exception(
+                error = error_handler.handle_exception(  # type: ignore
                     e,
                     context={"service": "Ollama", "url": self.ollama_url, "model": self.model},
                     user_message="実行結果の評価がタイムアウトしました"
                 )
-                logger.warning(f"LLM評価タイムアウト - フォールバック評価を使用: {error.message}")
+                logger.warning(f"LLM評価タイムアウト - フォールバック評価を使用: {error.message}")  # type: ignore[union-attr]
                 return self._create_fallback_evaluation(status, error)
             except Exception as e:
-                error = error_handler.handle_exception(
+                error = error_handler.handle_exception(  # type: ignore
                     e,
                     context={"service": "Ollama", "url": self.ollama_url, "model": self.model},
                     user_message="実行結果の評価に失敗しました"
                 )
-                logger.error(f"LLM評価エラー: {error.message}")
+                logger.error(f"LLM評価エラー: {error.message}")  # type: ignore[union-attr]
                 return self._create_fallback_evaluation(status, error)
         
         # レスポンス処理（正常な場合）
@@ -400,12 +400,12 @@ class TaskCritic:
             else:
                 return self._create_fallback_evaluation(status, error)
         except json.JSONDecodeError as e:
-            error = error_handler.handle_exception(
+            error = error_handler.handle_exception(  # type: ignore
                 e,
                 context={"service": "TaskCritic", "method": "_evaluate_with_llm"},
                 user_message="評価結果の解析に失敗しました"
             )
-            logger.warning(f"JSON解析失敗、フォールバック評価を使用: {error.message}")
+            logger.warning(f"JSON解析失敗、フォールバック評価を使用: {error.message}")  # type: ignore[union-attr]
             return self._create_fallback_evaluation(status, error)
         
         # CriticResultに変換

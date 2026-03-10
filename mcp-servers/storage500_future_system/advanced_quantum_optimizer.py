@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'advanced_quantum_optimizer_secret'
-socketio = SocketIO(app, cors_allowed_origins="*", allow_unsafe_werkzeug=True)
+socketio = SocketIO(app, cors_allowed_origins="*", allow_unsafe_werkzeug=True)  # type: ignore[call-arg]
 
 class QuantumState:
     """量子状態クラス"""

@@ -30,7 +30,7 @@ class EnhancedCivitaiDownloader:
         self.civitai = CivitAIIntegration()
         self.drive = GoogleDriveIntegration()
         self.obsidian = ObsidianIntegration(
-            vault_path=Path.home() / "Documents" / "Obsidian Vault"
+            vault_path=Path.home() / "Documents" / "Obsidian Vault"  # type: ignore
         )
         self.mem0 = Mem0Integration()
         
@@ -39,7 +39,7 @@ class EnhancedCivitaiDownloader:
     def download_with_enhancements(
         self,
         model_id: str,
-        version_id: str = None,
+        version_id: str = None,  # type: ignore
         backup_to_drive: bool = False,
         create_note: bool = True,
         save_to_memory: bool = True
@@ -66,13 +66,13 @@ class EnhancedCivitaiDownloader:
         }
         
         # モデル情報を取得
-        model_info = self.civitai.get_model_info(model_id)
+        model_info = self.civitai.get_model_info(model_id)  # type: ignore
         if not model_info:
             result["error"] = "モデル情報の取得に失敗"
             return result
         
         model_name = model_info.get("name", f"model_{model_id}")
-        model_stats = self.civitai.get_model_stats(model_id)
+        model_stats = self.civitai.get_model_stats(model_id)  # type: ignore
         
         # ダウンロード実行
         print(f"\n{'='*60}")

@@ -140,4 +140,4 @@ def get_job_error(job_id):
 if __name__ == '__main__':
     print("🚀 Redis Proxy Server Starting...")
     print("📡 RunPodからHTTP経由でRedisにアクセス可能")
-    app.run(host="0.0.0.0", port=port, debug=os.getenv("DEBUG", "False").lower() == "true")
+    app.run(host="0.0.0.0", port=port, debug=os.getenv("DEBUG", "False").lower() == "true")  # type: ignore[name-defined]

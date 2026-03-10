@@ -332,14 +332,14 @@ class BackupManager:
                         logger.info(f"削除: {backup['backup_name']}")
         
         # インデックスを更新
-        self.index["backups"] = [b for b in backups if b not in to_delete]
+        self.index["backups"] = [b for b in backups if b not in to_delete]  # type: ignore[possibly-unbound]
         self.save_index()
         
         logger.info(f"✅ クリーンアップ完了: {results['deleted']}個削除, {results['freed_space'] / (1024**2):.2f} MB解放")
         
         return results
     
-    def restore_backup(self, backup_name: str, target_path: str = None) -> Dict:
+    def restore_backup(self, backup_name: str, target_path: str = None) -> Dict:  # type: ignore
         """バックアップから復元"""
         logger.info(f"📥 バックアップ復元開始: {backup_name}")
         
@@ -364,9 +364,9 @@ class BackupManager:
         if target_path is None:
             target_path = self.base_path / "restored"
         else:
-            target_path = Path(target_path)
+            target_path = Path(target_path)  # type: ignore
         
-        target_path.mkdir(exist_ok=True)
+        target_path.mkdir(exist_ok=True)  # type: ignore
         
         # 展開
         with tarfile.open(archive_path, "r:gz") as tar:

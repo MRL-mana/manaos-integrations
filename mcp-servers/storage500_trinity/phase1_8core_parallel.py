@@ -187,7 +187,7 @@ class Phase1_8CoreParallel:
         print(f"   成功: {success_count}/{count} 枚")
         print(f"   平均時間: {total_time/count:.1f}秒/枚")
         print(f"   8コア効率: {success_count/total_time:.2f}枚/秒")
-        print(f"   ワーカー効率: {success_count/self.max_workers:.2f}枚/ワーカー")
+        print(f"   ワーカー効率: {success_count/self.max_workers:.2f}枚/ワーカー")  # type: ignore
         
         return results
     
@@ -212,7 +212,7 @@ class Phase1_8CoreParallel:
                 "parallel_time": parallel_time,
                 "parallel_success": parallel_success,
                 "parallel_efficiency": parallel_success/parallel_time if parallel_time > 0 else 0,
-                "worker_efficiency": parallel_success/self.max_workers if self.max_workers > 0 else 0
+                "worker_efficiency": parallel_success/self.max_workers if self.max_workers > 0 else 0  # type: ignore[operator]
             })
             
             print(f"   8コア並列: {parallel_time:.1f}秒 ({parallel_success}枚成功)")

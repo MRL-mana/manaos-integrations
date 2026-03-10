@@ -88,8 +88,8 @@ class SystemMonitor:
             "used_gb": disk.used / 1024**3,
             "free_gb": disk.free / 1024**3,
             "total_gb": disk.total / 1024**3,
-            "read_mb": io.read_bytes / 1024**2,
-            "write_mb": io.write_bytes / 1024**2
+            "read_mb": io.read_bytes / 1024**2,  # type: ignore[union-attr]
+            "write_mb": io.write_bytes / 1024**2  # type: ignore[union-attr]
         }
     
     def check_network(self):

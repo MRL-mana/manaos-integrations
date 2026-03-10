@@ -20,8 +20,8 @@ except Exception:  # pragma: no cover
 # WindowsのコンソールエンコーディングをUTF-8に設定
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 def test_mrl_memory_api():
     """MRL Memory APIの直接使用例"""
@@ -123,7 +123,7 @@ def test_mrl_memory_with_llm_routing():
     print("=" * 60)
 
     try:
-        from mrl_memory_integration import MRLMemoryLLMIntegration
+        from mrl_memory_integration import MRLMemoryLLMIntegration  # type: ignore[attr-defined]
         from llm_routing import LLMRouter
 
         print("\n[1] 統合システムを初期化")

@@ -276,7 +276,7 @@ class PerformanceChecker:
         # GPUtilライブラリ
         if HAS_GPUTIL:
             try:
-                gpus = GPUtil.getGPUs()
+                gpus = GPUtil.getGPUs()  # type: ignore[possibly-unbound]
                 if gpus:
                     print("\nGPUtilライブラリによる情報:")
                     for gpu in gpus:
@@ -290,20 +290,20 @@ class PerformanceChecker:
                 print(f"GPUtilエラー: {e}")
         
         # PyTorch CUDA
-        if HAS_TORCH and torch.cuda.is_available():
+        if HAS_TORCH and torch.cuda.is_available():  # type: ignore[possibly-unbound]
             print("\nPyTorch CUDA情報:")
             print(f"  CUDA利用可能  : はい")
-            print(f"  CUDAバージョン: {torch.version.cuda}")
-            print(f"  cuDNNバージョン: {torch.backends.cudnn.version()}")
-            print(f"  GPU数          : {torch.cuda.device_count()}")
-            for i in range(torch.cuda.device_count()):
-                print(f"\n  GPU {i}: {torch.cuda.get_device_name(i)}")
-                props = torch.cuda.get_device_properties(i)
+            print(f"  CUDAバージョン: {torch.version.cuda}")  # type: ignore[possibly-unbound]
+            print(f"  cuDNNバージョン: {torch.backends.cudnn.version()}")  # type: ignore[possibly-unbound]
+            print(f"  GPU数          : {torch.cuda.device_count()}")  # type: ignore[possibly-unbound]
+            for i in range(torch.cuda.device_count()):  # type: ignore[possibly-unbound]
+                print(f"\n  GPU {i}: {torch.cuda.get_device_name(i)}")  # type: ignore[possibly-unbound]
+                props = torch.cuda.get_device_properties(i)  # type: ignore[possibly-unbound]
                 print(f"    総メモリ      : {props.total_memory / (1024**3):.2f} GB")
                 print(f"    マルチプロセッサ数: {props.multi_processor_count}")
                 print(f"    計算能力      : {props.major}.{props.minor}")
                 gpu_info[f"pytorch_gpu_{i}"] = {
-                    "name": torch.cuda.get_device_name(i),
+                    "name": torch.cuda.get_device_name(i),  # type: ignore[possibly-unbound]
                     "total_memory_gb": props.total_memory / (1024**3),
                     "multi_processor_count": props.multi_processor_count,
                     "compute_capability": f"{props.major}.{props.minor}"

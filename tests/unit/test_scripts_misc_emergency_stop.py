@@ -12,16 +12,16 @@ _ml.get_logger.return_value = MagicMock()
 sys.modules.setdefault("manaos_logger", _ml)
 
 _paths_mod = sys.modules.get("_paths") or MagicMock()
-_paths_mod.MRL_MEMORY_PORT = 5100
-_paths_mod.LEARNING_SYSTEM_PORT = 5101
-_paths_mod.LLM_ROUTING_PORT = 5117
-_paths_mod.VIDEO_PIPELINE_PORT = 5102
-_paths_mod.WINDOWS_AUTOMATION_PORT = 5103
-_paths_mod.PICO_HID_PORT = 5104
-_paths_mod.UNIFIED_API_PORT = 9999
-_paths_mod.GALLERY_PORT = 5559
-_paths_mod.COMFYUI_PORT = 8188
-_paths_mod.MOLTBOT_GATEWAY_PORT = 5105
+_paths_mod.MRL_MEMORY_PORT = 5100  # type: ignore
+_paths_mod.LEARNING_SYSTEM_PORT = 5101  # type: ignore
+_paths_mod.LLM_ROUTING_PORT = 5117  # type: ignore
+_paths_mod.VIDEO_PIPELINE_PORT = 5102  # type: ignore
+_paths_mod.WINDOWS_AUTOMATION_PORT = 5103  # type: ignore
+_paths_mod.PICO_HID_PORT = 5104  # type: ignore
+_paths_mod.UNIFIED_API_PORT = 9999  # type: ignore
+_paths_mod.GALLERY_PORT = 5559  # type: ignore
+_paths_mod.COMFYUI_PORT = 8188  # type: ignore
+_paths_mod.MOLTBOT_GATEWAY_PORT = 5105  # type: ignore
 sys.modules["_paths"] = _paths_mod
 
 import pytest

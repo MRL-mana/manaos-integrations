@@ -38,7 +38,7 @@ _cve.ConfigValidatorEnhanced = MagicMock(return_value=MagicMock(
 sys.modules.setdefault("config_validator_enhanced", _cve)
 
 _paths_mod = sys.modules.get("_paths") or MagicMock()
-_paths_mod.COMFYUI_PORT = 8188
+_paths_mod.COMFYUI_PORT = 8188  # type: ignore
 sys.modules["_paths"] = _paths_mod
 
 from scripts.misc.comfyui_integration import ComfyUIIntegration, DEFAULT_COMFYUI_URL
@@ -233,7 +233,7 @@ class TestGenerateImage:
         def _capture(wf, *a, **kw):
             workflows_submitted.append(wf)
             return "pid"
-        ci.submit_workflow = _capture
+        ci.submit_workflow = _capture  # type: ignore
         ci.generate_image(prompt="test", model="")
         wf = workflows_submitted[0]
         assert wf["1"]["inputs"]["ckpt_name"] == "auto_ckpt.safetensors"
@@ -244,7 +244,7 @@ class TestGenerateImage:
         def _capture(wf, *a, **kw):
             workflows_submitted.append(wf)
             return "pid"
-        ci.submit_workflow = _capture
+        ci.submit_workflow = _capture  # type: ignore
         ci.generate_image(prompt="test", loras=[("lora_a.safetensors", 0.8)])
         wf = workflows_submitted[0]
         lora_nodes = [v for v in wf.values() if v.get("class_type") == "LoraLoader"]
@@ -257,7 +257,7 @@ class TestGenerateImage:
         def _capture(wf, *a, **kw):
             workflows_submitted.append(wf)
             return "pid"
-        ci.submit_workflow = _capture
+        ci.submit_workflow = _capture  # type: ignore
         ci.generate_image(prompt="test", model="my_model.safetensors")
         wf = workflows_submitted[0]
         assert wf["1"]["inputs"]["ckpt_name"] == "my_model.safetensors"

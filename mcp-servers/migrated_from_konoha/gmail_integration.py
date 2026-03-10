@@ -97,7 +97,7 @@ class GmailIntegration:
             raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
             
             # 送信
-            self.service.users().messages().send(
+            self.service.users().messages().send(  # type: ignore[union-attr]
                 userId='me',
                 body={'raw': raw}
             ).execute()

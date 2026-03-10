@@ -12,8 +12,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from castle_ex.castle_ex_evaluator_fixed import (
-    format_prompt_phi3,
-    CastleEXEvaluator,
+    format_prompt_phi3,  # type: ignore[attr-defined]
+    CastleEXEvaluator,  # type: ignore[attr-defined]
 )
 
 
@@ -33,7 +33,7 @@ def load_model_predictor(model_path: str):
         torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
     )
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = model.to(device)
+    model = model.to(device)  # type: ignore
     model.eval()
     max_new_tokens = 512
 

@@ -54,7 +54,7 @@ class CursorExcelPDFViewer:
             print(f"📊 ExcelファイルをHTMLで表示: {excel_path}")
             
             # Excelファイルを読み込み
-            wb = load_workbook(excel_path, data_only=True)
+            wb = load_workbook(excel_path, data_only=True)  # type: ignore[possibly-unbound]
             
             html_content = f"""
 <!DOCTYPE html>
@@ -459,9 +459,9 @@ class CursorExcelPDFViewer:
                 print("❌ FastAPIがインストールされていません")
                 return
             
-            app = FastAPI(title="Cursor Excel・PDF Viewer")
+            app = FastAPI(title="Cursor Excel・PDF Viewer")  # type: ignore[possibly-unbound]
             
-            @app.get("/", response_class=HTMLResponse)
+            @app.get("/", response_class=HTMLResponse)  # type: ignore[possibly-unbound]
             async def main_page():
                 return """
 <!DOCTYPE html>
@@ -609,11 +609,11 @@ class CursorExcelPDFViewer:
 """
             
             @app.post("/upload")
-            async def upload_file(file: UploadFile = File(...)):
-                if not file.filename.endswith(('.xlsx', '.pdf')):
-                    raise HTTPException(status_code=400, detail="ExcelまたはPDFファイルのみアップロード可能です")
+            async def upload_file(file: UploadFile = File(...)):  # type: ignore[possibly-unbound]
+                if not file.filename.endswith(('.xlsx', '.pdf')):  # type: ignore[union-attr]
+                    raise HTTPException(status_code=400, detail="ExcelまたはPDFファイルのみアップロード可能です")  # type: ignore[possibly-unbound]
                 
-                file_path = self.output_dir / file.filename
+                file_path = self.output_dir / file.filename  # type: ignore
                 with open(file_path, "wb") as buffer:
                     shutil.copyfileobj(file.file, buffer)
                 
@@ -623,32 +623,32 @@ class CursorExcelPDFViewer:
             async def view_file(filename: str):
                 file_path = self.output_dir / filename
                 if not file_path.exists():
-                    raise HTTPException(status_code=404, detail="ファイルが見つかりません")
+                    raise HTTPException(status_code=404, detail="ファイルが見つかりません")  # type: ignore[possibly-unbound]
                 
                 if filename.endswith('.xlsx'):
                     html_path = self.create_excel_html_viewer(str(file_path))
                     if html_path:
-                        return FileResponse(html_path)
+                        return FileResponse(html_path)  # type: ignore[possibly-unbound]
                 elif filename.endswith('.pdf'):
                     html_path = self.create_pdf_html_viewer(str(file_path))
                     if html_path:
-                        return FileResponse(html_path)
+                        return FileResponse(html_path)  # type: ignore[possibly-unbound]
                 
-                raise HTTPException(status_code=400, detail="サポートされていないファイル形式です")
+                raise HTTPException(status_code=400, detail="サポートされていないファイル形式です")  # type: ignore[possibly-unbound]
             
             @app.get("/download/{filename}")
             async def download_file(filename: str):
                 file_path = self.output_dir / filename
                 if not file_path.exists():
-                    raise HTTPException(status_code=404, detail="ファイルが見つかりません")
+                    raise HTTPException(status_code=404, detail="ファイルが見つかりません")  # type: ignore[possibly-unbound]
                 
-                return FileResponse(file_path, filename=filename)
+                return FileResponse(file_path, filename=filename)  # type: ignore[possibly-unbound]
             
             # WebUIを起動
             print("🚀 Cursor Viewer WebUI起動中...")
             print("🌐 URL: http://localhost:8092")
             
-            uvicorn.run(app, host="0.0.0.0", port=8092)
+            uvicorn.run(app, host="0.0.0.0", port=8092)  # type: ignore[possibly-unbound]
             
         except Exception as e:
             print(f"❌ WebUI作成エラー: {e}")

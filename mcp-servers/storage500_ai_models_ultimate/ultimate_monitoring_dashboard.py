@@ -352,7 +352,7 @@ class VisualizationEngine:
             "system_status": system_status,
             "performance_status": performance_status,
             "total_processes": len(metrics.get('processes', [])),
-            "python_processes": len(processes)
+            "python_processes": len(processes)  # type: ignore[name-defined]
         }
 
 class UltimateMonitoringDatabase:

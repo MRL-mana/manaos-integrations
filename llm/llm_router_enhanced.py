@@ -254,11 +254,11 @@ class EnhancedLLMRouter:
         ]
 
         generation = context.get("_generation") if isinstance(context.get("_generation"), dict) else {}
-        req_temperature = generation.get("temperature", 0.2)
-        req_max_tokens = generation.get("max_tokens", 256)
-        req_top_p = generation.get("top_p", 1.0)
-        req_stop = generation.get("stop")
-        req_timeout = generation.get("timeout_sec", 300.0)
+        req_temperature = generation.get("temperature", 0.2)  # type: ignore[union-attr]
+        req_max_tokens = generation.get("max_tokens", 256)  # type: ignore[union-attr]
+        req_top_p = generation.get("top_p", 1.0)  # type: ignore[union-attr]
+        req_stop = generation.get("stop")  # type: ignore[union-attr]
+        req_timeout = generation.get("timeout_sec", 300.0)  # type: ignore[union-attr]
 
         try:
             temperature = max(0.0, min(2.0, float(req_temperature)))

@@ -183,8 +183,8 @@ nautilus . &
         # 3. ファイル転送
         transfer_result = self.transfer_files()
         
-        if not transfer_result['success']:
-            print(f"❌ ファイル転送に失敗: {transfer_result['failed']}")
+        if not transfer_result['success']:  # type: ignore[index]
+            print(f"❌ ファイル転送に失敗: {transfer_result['failed']}")  # type: ignore[index]
             return False
         
         # 4. 転送結果確認
@@ -198,8 +198,8 @@ nautilus . &
         print("\n🎉 X280ダウンロード完了！")
         print("=" * 60)
         print(f"📁 X280ダウンロード先: {self.x280_download_dir}")
-        print(f"✅ 転送成功ファイル: {len(transfer_result['transferred'])}個")
-        print(f"📋 転送ファイル一覧: {transfer_result['transferred']}")
+        print(f"✅ 転送成功ファイル: {len(transfer_result['transferred'])}個")  # type: ignore[index]
+        print(f"📋 転送ファイル一覧: {transfer_result['transferred']}")  # type: ignore[index]
         print(f"🔗 デスクトップショートカット: {self.x280_desktop}/PDF変換結果を開く.sh")
         
         return True

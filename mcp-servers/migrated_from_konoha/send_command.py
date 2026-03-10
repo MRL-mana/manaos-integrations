@@ -40,10 +40,10 @@ def send_command(cmd: dict):
     except requests.exceptions.RequestException as e:
         print(f"エラー: {e}", file=sys.stderr)
         if hasattr(e.response, 'text'):
-            print(f"レスポンス: {e.response.text}", file=sys.stderr)
+            print(f"レスポンス: {e.response.text}", file=sys.stderr)  # type: ignore[union-attr]
         sys.exit(1)
 
-def create_github_get_command(path: str, repo: str = None, branch: str = "main"):
+def create_github_get_command(path: str, repo: str = None, branch: str = "main"):  # type: ignore
     """github_get_fileコマンドを作成"""
     return {
         "task": "github_get_file",
@@ -59,9 +59,9 @@ def create_github_get_command(path: str, repo: str = None, branch: str = "main")
         "auth_token": DEFAULT_AUTH_TOKEN
     }
 
-def create_github_update_command(path: str, append_text: str = None, new_content: str = None,
-                                repo: str = None, branch: str = "main",
-                                commit_message: str = None):
+def create_github_update_command(path: str, append_text: str = None, new_content: str = None,  # type: ignore
+                                repo: str = None, branch: str = "main",  # type: ignore
+                                commit_message: str = None):  # type: ignore
     """github_update_fileコマンドを作成"""
     if append_text:
         content_mode = "append"

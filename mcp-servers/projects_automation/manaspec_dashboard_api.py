@@ -21,7 +21,7 @@ CORS(app)
 OPENSPEC_PROJECT_PATH = os.getenv("OPENSPEC_PROJECT_PATH", "/root/openspec_test")
 AI_LEARNING_DB = os.getenv("AI_LEARNING_DB", "/root/ai_learning.db")
 
-def run_openspec_command(cmd: str, cwd: str = None) -> tuple:
+def run_openspec_command(cmd: str, cwd: str = None) -> tuple:  # type: ignore
     """Run openspec command and return result"""
     try:
         result = subprocess.run(

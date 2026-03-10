@@ -109,7 +109,7 @@ class ManaSpecAILearningIntegration:
             await self._extract_patterns(archive_data, cursor)
             
             conn.commit()
-            return archive_id
+            return archive_id  # type: ignore
             
         except Exception as e:
             print(f"❌ Failed to save archive: {e}")
@@ -238,7 +238,7 @@ class ManaSpecAILearningIntegration:
         return patterns
     
     async def save_insight(self, change_id: str, insight_type: str, insight_content: str, 
-                          confidence: float = 0.5, metadata: Dict = None):
+                          confidence: float = 0.5, metadata: Dict = None):  # type: ignore
         """
         Save implementation insight
         

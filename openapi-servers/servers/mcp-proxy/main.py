@@ -58,7 +58,7 @@ async def create_dynamic_endpoints(app: FastAPI, session: ClientSession):
         FormModel = create_model(f"{endpoint_name}_form_model", **model_fields)
 
         def make_endpoint_func(endpoint_name: str, FormModel):
-            async def tool(form_data: FormModel):
+            async def tool(form_data: FormModel):  # type: ignore[valid-type]
                 args = form_data.model_dump()
                 print(f"Calling {endpoint_name} with arguments:", args)
 
@@ -69,7 +69,7 @@ async def create_dynamic_endpoints(app: FastAPI, session: ClientSession):
                 response = []
                 for content in tool_call_result.content:
 
-                    text = content.text
+                    text = content.text  # type: ignore
                     if isinstance(text, str):
                         try:
                             text = json.loads(text)
@@ -79,7 +79,7 @@ async def create_dynamic_endpoints(app: FastAPI, session: ClientSession):
 
                 return response
 
-            return tool
+            return tool  # type: ignore[misc]
 
         tool = make_endpoint_func(endpoint_name, FormModel)
 

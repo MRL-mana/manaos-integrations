@@ -15,7 +15,7 @@ sys.modules.setdefault("manaos_logger", _ml)
 
 # manaos_core_api は None でインポートさせるとエラーになるので MagicMock へ
 # ただし MANAOS_API_AVAILABLE は ImportError パスに任せたいため None を設定
-sys.modules.setdefault("manaos_core_api", None)
+sys.modules.setdefault("manaos_core_api", None)  # type: ignore
 
 import pytest
 from scripts.misc.secretary_routines import SecretaryRoutines

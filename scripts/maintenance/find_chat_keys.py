@@ -93,7 +93,7 @@ def find_chat_keys(db_path: Path):
 
 def main():
     appdata = os.getenv('APPDATA')
-    workspace_storage = Path(appdata) / "Cursor" / "User" / "workspaceStorage"
+    workspace_storage = Path(appdata) / "Cursor" / "User" / "workspaceStorage"  # type: ignore
     
     # 最新のワークスペースを確認
     workspaces = []

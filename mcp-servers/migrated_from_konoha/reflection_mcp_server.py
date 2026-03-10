@@ -140,11 +140,11 @@ class ReflectionMCPServer:
         """ツール呼び出しを処理"""
         try:
             if tool_name == "record_action":
-                action_id = self.engine.record_action(
+                action_id = self.engine.record_action(  # type: ignore[call-arg]
                     agent=arguments['agent'],
                     action_type=arguments['action_type'],
                     context=arguments['context'],
-                    decision_reasoning=arguments.get('reasoning', ''),
+                    decision_reasoning=arguments.get('reasoning', ''),  # type: ignore[call-arg]
                     confidence=arguments.get('confidence', 0.5)
                 )
                 return {
@@ -181,7 +181,7 @@ class ReflectionMCPServer:
                 }
             
             elif tool_name == "get_learned_patterns":
-                patterns = self.engine.get_learned_patterns(
+                patterns = self.engine.get_learned_patterns(  # type: ignore
                     agent=arguments.get('agent'),
                     pattern_type=arguments.get('pattern_type')
                 )
@@ -302,7 +302,7 @@ class ReflectionMCPServer:
             except Exception as e:
                 error_response = {
                     "jsonrpc": "2.0",
-                    "id": request.get('id') if 'request' in locals() else None,
+                    "id": request.get('id') if 'request' in locals() else None,  # type: ignore[possibly-unbound]
                     "error": {
                         "code": -32603,
                         "message": str(e)

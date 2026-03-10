@@ -138,7 +138,7 @@ class Phase9PerformanceOptimizer:
             process_count = len(psutil.pids())
             
             # ロードアベレージ
-            load_avg = os.getloadavg()
+            load_avg = os.getloadavg()  # type: ignore[attr-defined]
             
             # レスポンス時間測定
             response_time = self.measure_response_time()
@@ -275,7 +275,7 @@ class Phase9PerformanceOptimizer:
         try:
             # CPU governor設定
             cpu_count = psutil.cpu_count()
-            for i in range(cpu_count):
+            for i in range(cpu_count):  # type: ignore
                 governor_file = f'/sys/devices/system/cpu/cpu{i}/cpufreq/scaling_governor'
                 if os.path.exists(governor_file):
                     with open(governor_file, 'w') as f:

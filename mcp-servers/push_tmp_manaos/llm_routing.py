@@ -74,9 +74,9 @@ class LLMRouter:
             config_path: 設定ファイルのパス（Noneの場合はデフォルト）
         """
         if config_path is None:
-            config_path = Path(__file__).parent / "llm_routing_config.yaml"
+            config_path = Path(__file__).parent / "llm_routing_config.yaml"  # type: ignore
 
-        self.config_path = Path(config_path)
+        self.config_path = Path(config_path)  # type: ignore
         self.config = self._load_config()
         self.ollama_url = self.config.get("ollama_url", DEFAULT_OLLAMA_URL)
         self.routing_config = self.config.get("routing", {})
@@ -85,8 +85,8 @@ class LLMRouter:
         # HTTPセッションプールの初期化（通信速度向上）
         if USE_SESSION_POOL:
             try:
-                self.session_pool = get_http_session_pool()
-                self.timeout_config = get_timeout_config()
+                self.session_pool = get_http_session_pool()  # type: ignore[possibly-unbound]
+                self.timeout_config = get_timeout_config()  # type: ignore[possibly-unbound]
                 logger.info("HTTPセッションプールを初期化しました")
             except Exception as e:
                 logger.warning(f"セッションプールの初期化に失敗: {e}")
@@ -177,7 +177,7 @@ class LLMRouter:
 
         # MRL Memory Systemの初期化（オプション）
         try:
-            from mrl_memory_integration import MRLMemoryLLMIntegration
+            from mrl_memory_integration import MRLMemoryLLMIntegration  # type: ignore[attr-defined]
             # LLMRouterとMRLMemorySystemを統合
             self._mrl_memory_integration = MRLMemoryLLMIntegration(
                 llm_router=self  # 循環参照を避けるため、後で設定
@@ -473,8 +473,8 @@ class LLMRouter:
         latency_ms: int,
         input_summary: str,
         output_summary: str,
-        memory_refs: List[str] = None,
-        tools_used: List[str] = None,
+        memory_refs: List[str] = None,  # type: ignore
+        tools_used: List[str] = None,  # type: ignore
         cpu_mode: bool = False,
         fallback_reason_code: Optional[str] = None,
         fallback_reason_detail: Optional[str] = None,
@@ -710,8 +710,8 @@ ${audit_log.cost:.4f}
                 latency_ms=latency_ms,
                 input_summary=prompt[:200],
                 output_summary=result.get("response", "")[:200],
-                memory_refs=memory_refs,
-                tools_used=tools_used,
+                memory_refs=memory_refs,  # type: ignore
+                tools_used=tools_used,  # type: ignore
                 cpu_mode=gpu_in_use,
                 trigger_metric=gpu_metrics if gpu_in_use else None
             )
@@ -842,8 +842,8 @@ ${audit_log.cost:.4f}
                         latency_ms=latency_ms,
                         input_summary=prompt[:200],
                         output_summary=result.get("response", "")[:200],
-                        memory_refs=memory_refs,
-                        tools_used=tools_used,
+                        memory_refs=memory_refs,  # type: ignore
+                        tools_used=tools_used,  # type: ignore
                         cpu_mode=gpu_in_use,
                         fallback_reason_code=fallback_reason_code,
                         fallback_reason_detail=fallback_reason_detail,
@@ -1069,7 +1069,7 @@ ${audit_log.cost:.4f}
             # ログに記録
             self._log_routing(
                 task_type="conversation",
-                model=model,
+                model=model,  # type: ignore
                 source="primary",
                 request_id=request_id,
                 latency_ms=latency_ms,

@@ -104,7 +104,7 @@ async def health_check():
 async def get_command_stats():
     """指令統計を取得"""
     try:
-        stats = command_processor.get_command_stats()
+        stats = command_processor.get_command_stats()  # type: ignore
         return {
             "status": "success",
             "stats": stats,

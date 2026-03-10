@@ -106,7 +106,7 @@ class ManaOSServiceBridge:
         self.cache = None
         if UNIFIED_CACHE_AVAILABLE:
             try:
-                self.cache = get_unified_cache()
+                self.cache = get_unified_cache()  # type: ignore[operator]
                 logger.info("統一キャッシュシステムを有効化しました")
             except Exception as e:
                 logger.warning(f"統一キャッシュシステムの初期化に失敗: {e}")
@@ -115,7 +115,7 @@ class ManaOSServiceBridge:
         self.performance_optimizer = None
         if PERFORMANCE_OPTIMIZER_AVAILABLE:
             try:
-                self.performance_optimizer = PerformanceOptimizer()
+                self.performance_optimizer = PerformanceOptimizer()  # type: ignore[operator]
                 logger.info("パフォーマンス最適化システムを有効化しました")
             except Exception as e:
                 logger.warning(f"パフォーマンス最適化システムの初期化に失敗: {e}")
@@ -250,7 +250,7 @@ class ManaOSServiceBridge:
         async def check_service_async(check_item: Dict[str, str]) -> tuple[str, bool]:
             """個別のサービスチェック関数（非同期）"""
             try:
-                async with AsyncUnifiedAPIClient() as async_client:
+                async with AsyncUnifiedAPIClient() as async_client:  # type: ignore[operator]
                     result = await async_client.call_service(
                         "external",
                         check_item["url"],
@@ -269,7 +269,7 @@ class ManaOSServiceBridge:
             if isinstance(result, Exception):
                 logger.warning(f"サービスチェックエラー: {result}")
                 continue
-            name, status = result
+            name, status = result  # type: ignore
             services[name] = status
         
         return services

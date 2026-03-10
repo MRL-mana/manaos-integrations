@@ -73,7 +73,7 @@ class TestSaveNotebooklmResult:
         obj.memory = None
 
         path = obj.save_notebooklm_result("content", date_str="2026-03-15")
-        assert "2026-03-15" in path.name
+        assert "2026-03-15" in path.name  # type: ignore[union-attr]
 
 
 class TestPrepareNotebooklmInput:

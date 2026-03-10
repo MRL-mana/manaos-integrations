@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ComfyUI過去ワークフロー解析"""
 import sys, json, requests
-sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 r = requests.get('http://127.0.0.1:8188/history', timeout=10)
 data = r.json()

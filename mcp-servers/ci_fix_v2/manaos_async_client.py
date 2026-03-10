@@ -233,13 +233,13 @@ class AsyncUnifiedAPIClient:
             request_timeout = timeout or timeout_config.get("api_call", 10.0)
             
             if method.upper() == "GET":
-                response = await self.client.get(url, params=params, timeout=request_timeout)
+                response = await self.client.get(url, params=params, timeout=request_timeout)  # type: ignore[union-attr]
             elif method.upper() == "POST":
-                response = await self.client.post(url, json=data, params=params, timeout=request_timeout)
+                response = await self.client.post(url, json=data, params=params, timeout=request_timeout)  # type: ignore[union-attr]
             elif method.upper() == "PUT":
-                response = await self.client.put(url, json=data, params=params, timeout=request_timeout)
+                response = await self.client.put(url, json=data, params=params, timeout=request_timeout)  # type: ignore[union-attr]
             elif method.upper() == "DELETE":
-                response = await self.client.delete(url, params=params, timeout=request_timeout)
+                response = await self.client.delete(url, params=params, timeout=request_timeout)  # type: ignore[union-attr]
             else:
                 raise ValueError(f"サポートされていないHTTPメソッド: {method}")
             

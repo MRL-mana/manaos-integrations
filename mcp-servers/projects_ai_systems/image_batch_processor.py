@@ -165,7 +165,7 @@ class ImageBatchProcessor:
                     print(f"❌ [{i}/{len(tasks)}] {Path(result['input']).name}: {result['error']}")
         
         elapsed = time.time() - start
-        self.stats['total_time'] = elapsed
+        self.stats['total_time'] = elapsed  # type: ignore
         
         print(f"\n⏱️ 完了: {elapsed:.2f}秒")
         print(f"✅ 成功: {self.stats['processed']}")
@@ -217,7 +217,7 @@ class ImageBatchProcessor:
                     print(f"❌ [{i}/{len(tasks)}] {Path(result['input']).name}: {result['error']}")
         
         elapsed = time.time() - start
-        self.stats['total_time'] = elapsed
+        self.stats['total_time'] = elapsed  # type: ignore
         
         print(f"\n⏱️ 完了: {elapsed:.2f}秒")
         print(f"✅ 成功: {self.stats['processed']}")

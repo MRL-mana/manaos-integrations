@@ -1,0 +1,582 @@
+........................................................................ [  1%]
+........................................................................ [  2%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 55%]
+........................................................................ [ 56%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+.........................................................F............FF [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 95%]
+........................................................................ [ 96%]
+........................................................................ [ 98%]
+...........FFFFFFF...................................................... [ 99%]
+....                                                                     [100%]
+================================== FAILURES ===================================
+_________ TestResizeImage.test_returns_tmp_file_when_pillow_available _________
+
+self = <test_scripts_misc_video_pipeline.TestResizeImage object at 0x000001B5A0358690>
+vp = <scripts.misc.video_pipeline.VideoPipeline object at 0x000001B5A93D9190>
+tmp_path = WindowsPath('C:/Users/mana4/AppData/Local/Temp/pytest-of-mana4/pytest-585/test_returns_tmp_file_when_pil0')
+
+    def test_returns_tmp_file_when_pillow_available(self, vp, tmp_path):
+        if not _sut.PILLOW_AVAILABLE:
+            pytest.skip("Pillow not available")
+        from PIL import Image as _PIL
+        img = _PIL.new("RGB", (640, 480), color=(100, 150, 200))
+        src = str(tmp_path / "src.jpg")
+        img.save(src)
+>       result = vp._resize_image(src, 1920, 1080)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_scripts_misc_video_pipeline.py:360: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <scripts.misc.video_pipeline.VideoPipeline object at 0x000001B5A93D9190>
+image_path = 'C:\\Users\\mana4\\AppData\\Local\\Temp\\pytest-of-mana4\\pytest-585\\test_returns_tmp_file_when_pil0\\src.jpg'
+width = 1920, height = 1080
+
+    def _resize_image(self, image_path: str, width: int, height: int) -> str:
+        """画像をリサイズしてアスペクト比を維持（黒帯追加）"""
+        if not PILLOW_AVAILABLE:
+            return image_path
+    
+>       img = Image.open(image_path).convert("RGB")  # type: ignore[possibly-unbound]
+              ^^^^^^^^^^^^^^^^^^^^^^
+
+scripts\misc\video_pipeline.py:451: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+fp = 'C:\\Users\\mana4\\AppData\\Local\\Temp\\pytest-of-mana4\\pytest-585\\test_returns_tmp_file_when_pil0\\src.jpg'
+mode = 'r', formats = []
+
+    def open(
+        fp: StrOrBytesPath | IO[bytes],
+        mode: Literal["r"] = "r",
+        formats: list[str] | tuple[str, ...] | None = None,
+    ) -> ImageFile.ImageFile:
+        """
+        Opens and identifies the given image file.
+    
+        This is a lazy operation; this function identifies the file, but
+        the file remains open and the actual image data is not read from
+        the file until you try to process the data (or call the
+        :py:meth:`~PIL.Image.Image.load` method).  See
+        :py:func:`~PIL.Image.new`. See :ref:`file-handling`.
+    
+        :param fp: A filename (string), os.PathLike object or a file object.
+           The file object must implement ``file.read``,
+           ``file.seek``, and ``file.tell`` methods,
+           and be opened in binary mode. The file object will also seek to zero
+           before reading.
+        :param mode: The mode.  If given, this argument must be "r".
+        :param formats: A list or tuple of formats to attempt to load the file in.
+           This can be used to restrict the set of formats checked.
+           Pass ``None`` to try all supported formats. You can print the set of
+           available formats by running ``python3 -m PIL`` or using
+           the :py:func:`PIL.features.pilinfo` function.
+        :returns: An :py:class:`~PIL.Image.Image` object.
+        :exception FileNotFoundError: If the file cannot be found.
+        :exception PIL.UnidentifiedImageError: If the image cannot be opened and
+           identified.
+        :exception ValueError: If the ``mode`` is not "r", or if a ``StringIO``
+           instance is used for ``fp``.
+        :exception TypeError: If ``formats`` is not ``None``, a list or a tuple.
+        """
+    
+        if mode != "r":
+            msg = f"bad mode {repr(mode)}"  # type: ignore[unreachable]
+            raise ValueError(msg)
+        elif isinstance(fp, io.StringIO):
+            msg = (  # type: ignore[unreachable]
+                "StringIO cannot be used to open an image. "
+                "Binary data must be used instead."
+            )
+            raise ValueError(msg)
+    
+        if formats is None:
+            formats = ID
+        elif not isinstance(formats, (list, tuple)):
+            msg = "formats must be a list or tuple"  # type: ignore[unreachable]
+            raise TypeError(msg)
+    
+        exclusive_fp = False
+        filename: str | bytes = ""
+        if is_path(fp):
+            filename = os.fspath(fp)
+>           fp = builtins.open(filename, "rb")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\mana4\\AppData\\Local\\Temp\\pytest-of-mana4\\pytest-585\\test_returns_tmp_file_when_pil0\\src.jpg'
+
+..\.venv\Lib\site-packages\PIL\Image.py:3513: FileNotFoundError
+_______________ TestVoiceTimeout.test_returns_value_from_config _______________
+
+self = <test_scripts_misc_voice_integration.TestVoiceTimeout object at 0x000001B5A0359310>
+
+    def test_returns_value_from_config(self):
+        _tc.get_timeout.side_effect = None
+        _tc.get_timeout.return_value = 5.0
+        result = _voice_timeout("api_call", 30.0)
+>       assert result == 5.0
+E       AssertionError: assert <MagicMock name='mock.get_timeout()' id='1879742784784'> == 5.0
+
+tests\unit\test_scripts_misc_voice_integration.py:75: AssertionError
+____________ TestVoiceTimeout.test_returns_default_when_exception _____________
+
+self = <test_scripts_misc_voice_integration.TestVoiceTimeout object at 0x000001B5A0359450>
+
+    def test_returns_default_when_exception(self):
+        _tc.get_timeout.side_effect = RuntimeError("fail")
+        try:
+            result = _voice_timeout("missing_key", 99.0)
+>           assert result == 99.0
+E           AssertionError: assert <MagicMock name='mock.get_timeout()' id='1879742784784'> == 99.0
+
+tests\unit\test_scripts_misc_voice_integration.py:81: AssertionError
+__________________ TestCheckPythonPackages.test_returns_dict __________________
+
+self = <test_trinity_tool_analysis.TestCheckPythonPackages object at 0x000001B5A06E4CD0>
+
+    def test_returns_dict(self):
+>       result = self.ta.check_python_packages()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_trinity_tool_analysis.py:99: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <trinity_tool_analysis.ToolAnalysis object at 0x000001B5A503F250>
+
+    def check_python_packages(self):
+        """Pythonパッケージの確認"""
+        packages = {
+            "PIL": "Pillow - 画像処理ライブラリ",
+            "torch": "PyTorch - 深層学習フレームワーク",
+            "diffusers": "Diffusers - 拡散モデルライブラリ",
+            "transformers": "Transformers - 事前訓練済みモデル",
+            "matplotlib": "Matplotlib - データ可視化",
+            "seaborn": "Seaborn - 統計的データ可視化",
+            "opencv": "OpenCV - コンピュータビジョン",
+            "numpy": "NumPy - 数値計算",
+            "scipy": "SciPy - 科学計算",
+            "flask": "Flask - Webフレームワーク",
+            "requests": "Requests - HTTPライブラリ"
+        }
+    
+        installed_packages = {}
+        for package, description in packages.items():
+            try:
+                if package == "PIL":
+                    import PIL
+>                   version = PIL.__version__
+                              ^^^^^^^^^^^^^^^
+
+tools\trinity_tool_analysis.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <MagicMock id='1879737312864'>, name = '__version__'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+                raise AttributeError("Mock object has no attribute %r" % name)
+        elif _is_magic(name):
+>           raise AttributeError(name)
+E           AttributeError: __version__
+
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:698: AttributeError
+___________ TestCheckPythonPackages.test_expected_packages_present ____________
+
+self = <test_trinity_tool_analysis.TestCheckPythonPackages object at 0x000001B5A06E4E10>
+
+    def test_expected_packages_present(self):
+>       result = self.ta.check_python_packages()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_trinity_tool_analysis.py:103: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <trinity_tool_analysis.ToolAnalysis object at 0x000001B5A891CF50>
+
+    def check_python_packages(self):
+        """Pythonパッケージの確認"""
+        packages = {
+            "PIL": "Pillow - 画像処理ライブラリ",
+            "torch": "PyTorch - 深層学習フレームワーク",
+            "diffusers": "Diffusers - 拡散モデルライブラリ",
+            "transformers": "Transformers - 事前訓練済みモデル",
+            "matplotlib": "Matplotlib - データ可視化",
+            "seaborn": "Seaborn - 統計的データ可視化",
+            "opencv": "OpenCV - コンピュータビジョン",
+            "numpy": "NumPy - 数値計算",
+            "scipy": "SciPy - 科学計算",
+            "flask": "Flask - Webフレームワーク",
+            "requests": "Requests - HTTPライブラリ"
+        }
+    
+        installed_packages = {}
+        for package, description in packages.items():
+            try:
+                if package == "PIL":
+                    import PIL
+>                   version = PIL.__version__
+                              ^^^^^^^^^^^^^^^
+
+tools\trinity_tool_analysis.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <MagicMock id='1879737312864'>, name = '__version__'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+                raise AttributeError("Mock object has no attribute %r" % name)
+        elif _is_magic(name):
+>           raise AttributeError(name)
+E           AttributeError: __version__
+
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:698: AttributeError
+_________ TestCheckPythonPackages.test_each_entry_has_installed_bool __________
+
+self = <test_trinity_tool_analysis.TestCheckPythonPackages object at 0x000001B5A065A780>
+
+    def test_each_entry_has_installed_bool(self):
+>       result = self.ta.check_python_packages()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_trinity_tool_analysis.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <trinity_tool_analysis.ToolAnalysis object at 0x000001B5A891C230>
+
+    def check_python_packages(self):
+        """Pythonパッケージの確認"""
+        packages = {
+            "PIL": "Pillow - 画像処理ライブラリ",
+            "torch": "PyTorch - 深層学習フレームワーク",
+            "diffusers": "Diffusers - 拡散モデルライブラリ",
+            "transformers": "Transformers - 事前訓練済みモデル",
+            "matplotlib": "Matplotlib - データ可視化",
+            "seaborn": "Seaborn - 統計的データ可視化",
+            "opencv": "OpenCV - コンピュータビジョン",
+            "numpy": "NumPy - 数値計算",
+            "scipy": "SciPy - 科学計算",
+            "flask": "Flask - Webフレームワーク",
+            "requests": "Requests - HTTPライブラリ"
+        }
+    
+        installed_packages = {}
+        for package, description in packages.items():
+            try:
+                if package == "PIL":
+                    import PIL
+>                   version = PIL.__version__
+                              ^^^^^^^^^^^^^^^
+
+tools\trinity_tool_analysis.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <MagicMock id='1879737312864'>, name = '__version__'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+                raise AttributeError("Mock object has no attribute %r" % name)
+        elif _is_magic(name):
+>           raise AttributeError(name)
+E           AttributeError: __version__
+
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:698: AttributeError
+___________ TestCheckPythonPackages.test_each_entry_has_version_key ___________
+
+self = <test_trinity_tool_analysis.TestCheckPythonPackages object at 0x000001B5A065A8B0>
+
+    def test_each_entry_has_version_key(self):
+>       result = self.ta.check_python_packages()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_trinity_tool_analysis.py:114: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <trinity_tool_analysis.ToolAnalysis object at 0x000001B59D9D57F0>
+
+    def check_python_packages(self):
+        """Pythonパッケージの確認"""
+        packages = {
+            "PIL": "Pillow - 画像処理ライブラリ",
+            "torch": "PyTorch - 深層学習フレームワーク",
+            "diffusers": "Diffusers - 拡散モデルライブラリ",
+            "transformers": "Transformers - 事前訓練済みモデル",
+            "matplotlib": "Matplotlib - データ可視化",
+            "seaborn": "Seaborn - 統計的データ可視化",
+            "opencv": "OpenCV - コンピュータビジョン",
+            "numpy": "NumPy - 数値計算",
+            "scipy": "SciPy - 科学計算",
+            "flask": "Flask - Webフレームワーク",
+            "requests": "Requests - HTTPライブラリ"
+        }
+    
+        installed_packages = {}
+        for package, description in packages.items():
+            try:
+                if package == "PIL":
+                    import PIL
+>                   version = PIL.__version__
+                              ^^^^^^^^^^^^^^^
+
+tools\trinity_tool_analysis.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <MagicMock id='1879737312864'>, name = '__version__'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+                raise AttributeError("Mock object has no attribute %r" % name)
+        elif _is_magic(name):
+>           raise AttributeError(name)
+E           AttributeError: __version__
+
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:698: AttributeError
+___________ TestCheckPythonPackages.test_each_entry_has_description ___________
+
+self = <test_trinity_tool_analysis.TestCheckPythonPackages object at 0x000001B5A06D0B90>
+
+    def test_each_entry_has_description(self):
+>       result = self.ta.check_python_packages()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_trinity_tool_analysis.py:119: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <trinity_tool_analysis.ToolAnalysis object at 0x000001B59D9D50F0>
+
+    def check_python_packages(self):
+        """Pythonパッケージの確認"""
+        packages = {
+            "PIL": "Pillow - 画像処理ライブラリ",
+            "torch": "PyTorch - 深層学習フレームワーク",
+            "diffusers": "Diffusers - 拡散モデルライブラリ",
+            "transformers": "Transformers - 事前訓練済みモデル",
+            "matplotlib": "Matplotlib - データ可視化",
+            "seaborn": "Seaborn - 統計的データ可視化",
+            "opencv": "OpenCV - コンピュータビジョン",
+            "numpy": "NumPy - 数値計算",
+            "scipy": "SciPy - 科学計算",
+            "flask": "Flask - Webフレームワーク",
+            "requests": "Requests - HTTPライブラリ"
+        }
+    
+        installed_packages = {}
+        for package, description in packages.items():
+            try:
+                if package == "PIL":
+                    import PIL
+>                   version = PIL.__version__
+                              ^^^^^^^^^^^^^^^
+
+tools\trinity_tool_analysis.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <MagicMock id='1879737312864'>, name = '__version__'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+                raise AttributeError("Mock object has no attribute %r" % name)
+        elif _is_magic(name):
+>           raise AttributeError(name)
+E           AttributeError: __version__
+
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:698: AttributeError
+_____ TestCheckPythonPackages.test_mock_installed_package_via_sys_modules _____
+
+self = <test_trinity_tool_analysis.TestCheckPythonPackages object at 0x000001B5A0621D00>
+
+    def test_mock_installed_package_via_sys_modules(self):
+        """sys.modules に fake モジュールを挿入するとインストール済みと判定される"""
+        fake = _fake_module("3.1.4")
+        with patch.dict(sys.modules, {"flask": fake}, clear=False):
+>           result = self.ta.check_python_packages()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_trinity_tool_analysis.py:128: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <trinity_tool_analysis.ToolAnalysis object at 0x000001B5A23F8530>
+
+    def check_python_packages(self):
+        """Pythonパッケージの確認"""
+        packages = {
+            "PIL": "Pillow - 画像処理ライブラリ",
+            "torch": "PyTorch - 深層学習フレームワーク",
+            "diffusers": "Diffusers - 拡散モデルライブラリ",
+            "transformers": "Transformers - 事前訓練済みモデル",
+            "matplotlib": "Matplotlib - データ可視化",
+            "seaborn": "Seaborn - 統計的データ可視化",
+            "opencv": "OpenCV - コンピュータビジョン",
+            "numpy": "NumPy - 数値計算",
+            "scipy": "SciPy - 科学計算",
+            "flask": "Flask - Webフレームワーク",
+            "requests": "Requests - HTTPライブラリ"
+        }
+    
+        installed_packages = {}
+        for package, description in packages.items():
+            try:
+                if package == "PIL":
+                    import PIL
+>                   version = PIL.__version__
+                              ^^^^^^^^^^^^^^^
+
+tools\trinity_tool_analysis.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <MagicMock id='1879737312864'>, name = '__version__'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+                raise AttributeError("Mock object has no attribute %r" % name)
+        elif _is_magic(name):
+>           raise AttributeError(name)
+E           AttributeError: __version__
+
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:698: AttributeError
+____ TestCheckPythonPackages.test_mock_uninstalled_package_via_sys_modules ____
+
+self = <test_trinity_tool_analysis.TestCheckPythonPackages object at 0x000001B5A0621E10>
+
+    def test_mock_uninstalled_package_via_sys_modules(self):
+        """sys.modules から削除すると未インストール扱いになる"""
+        # diffusers は通常このシステムには存在しない
+        with patch.dict(sys.modules, {}, clear=False):
+            if "diffusers" in sys.modules:
+                with patch.dict(sys.modules, {"diffusers": None}, clear=False):
+                    result = self.ta.check_python_packages()
+            else:
+>               result = self.ta.check_python_packages()
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_trinity_tool_analysis.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <trinity_tool_analysis.ToolAnalysis object at 0x000001B5A9009790>
+
+    def check_python_packages(self):
+        """Pythonパッケージの確認"""
+        packages = {
+            "PIL": "Pillow - 画像処理ライブラリ",
+            "torch": "PyTorch - 深層学習フレームワーク",
+            "diffusers": "Diffusers - 拡散モデルライブラリ",
+            "transformers": "Transformers - 事前訓練済みモデル",
+            "matplotlib": "Matplotlib - データ可視化",
+            "seaborn": "Seaborn - 統計的データ可視化",
+            "opencv": "OpenCV - コンピュータビジョン",
+            "numpy": "NumPy - 数値計算",
+            "scipy": "SciPy - 科学計算",
+            "flask": "Flask - Webフレームワーク",
+            "requests": "Requests - HTTPライブラリ"
+        }
+    
+        installed_packages = {}
+        for package, description in packages.items():
+            try:
+                if package == "PIL":
+                    import PIL
+>                   version = PIL.__version__
+                              ^^^^^^^^^^^^^^^
+
+tools\trinity_tool_analysis.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <MagicMock id='1879737312864'>, name = '__version__'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+                raise AttributeError("Mock object has no attribute %r" % name)
+        elif _is_magic(name):
+>           raise AttributeError(name)
+E           AttributeError: __version__
+
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:698: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/unit/test_scripts_misc_video_pipeline.py::TestResizeImage::test_returns_tmp_file_when_pillow_available
+FAILED tests/unit/test_scripts_misc_voice_integration.py::TestVoiceTimeout::test_returns_value_from_config
+FAILED tests/unit/test_scripts_misc_voice_integration.py::TestVoiceTimeout::test_returns_default_when_exception
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_returns_dict
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_expected_packages_present
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_each_entry_has_installed_bool
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_each_entry_has_version_key
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_each_entry_has_description
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_mock_installed_package_via_sys_modules
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_mock_uninstalled_package_via_sys_modules
+10 failed, 4818 passed in 517.15s (0:08:37)

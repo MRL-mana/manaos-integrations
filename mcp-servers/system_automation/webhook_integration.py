@@ -107,7 +107,7 @@ class WebhookIntegration:
         
         return self._send_webhook(webhook_url, payload)
     
-    def send_slack_webhook(self, text: str, channel: str = None) -> bool:
+    def send_slack_webhook(self, text: str, channel: str = None) -> bool:  # type: ignore
         """Slack Webhook送信"""
         if not self.config["webhooks"]["slack"]["enabled"]:
             return False
@@ -197,7 +197,7 @@ class WebhookIntegration:
             
             return False
     
-    def send_alert(self, severity: str, message: str, details: dict = None):
+    def send_alert(self, severity: str, message: str, details: dict = None):  # type: ignore
         """アラート通知"""
         color_map = {
             "critical": 0xff0000,
@@ -230,7 +230,7 @@ class WebhookIntegration:
                 theme_color="FF0000"
             )
     
-    def send_maintenance_notification(self, status: str, details: dict = None):
+    def send_maintenance_notification(self, status: str, details: dict = None):  # type: ignore
         """メンテナンス通知"""
         # Discord
         if "maintenance" in self.config["webhooks"]["discord"]["events"]:
@@ -254,7 +254,7 @@ class WebhookIntegration:
                 theme_color="0078D4"
             )
     
-    def send_backup_notification(self, status: str, backup_info: dict = None):
+    def send_backup_notification(self, status: str, backup_info: dict = None):  # type: ignore
         """バックアップ通知"""
         # Discord
         if "backup" in self.config["webhooks"]["discord"]["events"]:

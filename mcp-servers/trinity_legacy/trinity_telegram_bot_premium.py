@@ -80,7 +80,7 @@ class EmotionAnalyzer:
             primary_emotion = 'neutral'
             confidence = 0.5
         else:
-            primary_emotion = max(emotion_scores, key=emotion_scores.get)
+            primary_emotion = max(emotion_scores, key=emotion_scores.get)  # type: ignore[call-arg]
             total = sum(emotion_scores.values())
             confidence = emotion_scores[primary_emotion] / total
         
@@ -143,7 +143,7 @@ class ConversationContext:
         self.last_intent = None
         self.context_window = 10  # 直近10ターンを保持
     
-    def add_turn(self, user_msg: str, bot_msg: str, intent: str = None):
+    def add_turn(self, user_msg: str, bot_msg: str, intent: str = None):  # type: ignore
         """会話ターンを追加"""
         self.history.append({
             'user': user_msg,
@@ -276,7 +276,7 @@ class TrinityPremiumClient:
             
             # 6. 学習・記録
             await self._learn_from_conversation(user_id, message, bot_response, emotion)
-            context.add_turn(message, bot_response, response.get('intent'))
+            context.add_turn(message, bot_response, response.get('intent'))  # type: ignore
             
             # 7. フォローアップ提案
             suggestions = await self._generate_smart_suggestions(
@@ -378,7 +378,7 @@ class TrinityPremiumClient:
                 messages=[{"role": "user", "content": message}]
             )
             
-            text = response.content[0].text
+            text = response.content[0].text  # type: ignore
             logger.info("🎯 Claude Premium応答生成")
             
             return {
@@ -851,14 +851,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     bot_message = response['response']
     
     # 感情に応じた絵文字追加
-    emotion_emoji = {
+    emotion_emoji = {  # type: ignore[call-arg]
         'happy': '😊',
         'sad': '🤗',
         'tired': '☕',
         'angry': '🕊️',
         'worried': '💪',
         'excited': '🎉'
-    }.get(response.get('emotion'), '')
+    }.get(response.get('emotion'), '')  # type: ignore
     
     if emotion_emoji and emotion_emoji not in bot_message:
         bot_message = f"{emotion_emoji} {bot_message}"

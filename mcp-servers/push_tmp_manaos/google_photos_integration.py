@@ -61,14 +61,14 @@ class GooglePhotosIntegration:
         try:
             # 既存のトークンを確認
             if self.token_path.exists():
-                self.creds = Credentials.from_authorized_user_file(
+                self.creds = Credentials.from_authorized_user_file(  # type: ignore[possibly-unbound]
                     str(self.token_path), self.SCOPES
                 )
             
             # トークンが無効または存在しない場合、再認証
             if not self.creds or not self.creds.valid:
                 if self.creds and self.creds.expired and self.creds.refresh_token:
-                    self.creds.refresh(Request())
+                    self.creds.refresh(Request())  # type: ignore[possibly-unbound]
                 else:
                     if not self.credentials_path.exists():
                         print(f"認証情報ファイルが見つかりません: {self.credentials_path}")
@@ -76,7 +76,7 @@ class GooglePhotosIntegration:
                         print("Google Photos Library APIを有効にする必要があります。")
                         return False
                     
-                    flow = InstalledAppFlow.from_client_secrets_file(
+                    flow = InstalledAppFlow.from_client_secrets_file(  # type: ignore[possibly-unbound]
                         str(self.credentials_path), self.SCOPES
                     )
                     self.creds = flow.run_local_server(port=0)
@@ -86,7 +86,7 @@ class GooglePhotosIntegration:
                     token.write(self.creds.to_json())
             
             # サービスを構築
-            self.service = build('photoslibrary', 'v1', credentials=self.creds, static_discovery=False)
+            self.service = build('photoslibrary', 'v1', credentials=self.creds, static_discovery=False)  # type: ignore[possibly-unbound]
             return True
             
         except Exception as e:
@@ -125,12 +125,12 @@ class GooglePhotosIntegration:
                 'pageSize': min(page_size, 100),
             }
             if page_token:
-                body['pageToken'] = page_token
+                body['pageToken'] = page_token  # type: ignore
             
-            response = self.service.mediaItems().list(**body).execute()
+            response = self.service.mediaItems().list(**body).execute()  # type: ignore[union-attr]
             return response
             
-        except HttpError as e:
+        except HttpError as e:  # type: ignore[possibly-unbound]
             print(f"メディアアイテム取得エラー: {e}")
             return {'mediaItems': [], 'nextPageToken': None}
     
@@ -190,14 +190,14 @@ class GooglePhotosIntegration:
                 'pageSize': min(page_size, 100),
             }
             if filters:
-                body['filters'] = filters
+                body['filters'] = filters  # type: ignore
             if page_token:
-                body['pageToken'] = page_token
+                body['pageToken'] = page_token  # type: ignore
             
-            response = self.service.mediaItems().search(body=body).execute()
+            response = self.service.mediaItems().search(body=body).execute()  # type: ignore[union-attr]
             return response
             
-        except HttpError as e:
+        except HttpError as e:  # type: ignore[possibly-unbound]
             print(f"検索エラー: {e}")
             return {'mediaItems': [], 'nextPageToken': None}
     
@@ -215,9 +215,9 @@ class GooglePhotosIntegration:
             return None
         
         try:
-            response = self.service.mediaItems().get(mediaItemId=media_item_id).execute()
+            response = self.service.mediaItems().get(mediaItemId=media_item_id).execute()  # type: ignore[union-attr]
             return response
-        except HttpError as e:
+        except HttpError as e:  # type: ignore[possibly-unbound]
             print(f"メディアアイテム取得エラー: {e}")
             return None
     
@@ -244,12 +244,12 @@ class GooglePhotosIntegration:
                 'pageSize': min(page_size, 50),
             }
             if page_token:
-                body['pageToken'] = page_token
+                body['pageToken'] = page_token  # type: ignore
             
-            response = self.service.albums().list(**body).execute()
+            response = self.service.albums().list(**body).execute()  # type: ignore[union-attr]
             return response
             
-        except HttpError as e:
+        except HttpError as e:  # type: ignore[possibly-unbound]
             print(f"アルバム取得エラー: {e}")
             return {'albums': [], 'nextPageToken': None}
     
@@ -267,9 +267,9 @@ class GooglePhotosIntegration:
             return None
         
         try:
-            response = self.service.albums().get(albumId=album_id).execute()
+            response = self.service.albums().get(albumId=album_id).execute()  # type: ignore[union-attr]
             return response
-        except HttpError as e:
+        except HttpError as e:  # type: ignore[possibly-unbound]
             print(f"アルバム取得エラー: {e}")
             return None
     
@@ -301,10 +301,10 @@ class GooglePhotosIntegration:
             if page_token:
                 body['pageToken'] = page_token
             
-            response = self.service.mediaItems().search(body=body).execute()
+            response = self.service.mediaItems().search(body=body).execute()  # type: ignore[union-attr]
             return response
             
-        except HttpError as e:
+        except HttpError as e:  # type: ignore[possibly-unbound]
             print(f"アルバムメディア取得エラー: {e}")
             return {'mediaItems': [], 'nextPageToken': None}
 

@@ -30,7 +30,6 @@ _ps_inst.get_current_persona.return_value = {
 }
 _ps_mod = MagicMock()
 _ps_mod.PersonalitySystem.return_value = _ps_inst
-sys.modules.setdefault("personality_system", _ps_mod)
 
 # AutonomySystem mock
 _as_inst = MagicMock()
@@ -38,7 +37,6 @@ _as_inst.autonomy_level = MagicMock(value="semi_auto")
 _as_inst.tasks = []
 _as_mod = MagicMock()
 _as_mod.AutonomySystem.return_value = _as_inst
-sys.modules.setdefault("autonomy_system", _as_mod)
 
 # SecretarySystemOptimized mock
 _ss_inst = MagicMock()
@@ -48,7 +46,6 @@ _ss_mod = MagicMock()
 _ss_mod.SecretarySystemOptimized.return_value = _ss_inst
 _ss_mod.Reminder = MagicMock
 _ss_mod.ReminderType = MagicMock(side_effect=lambda x: x)
-sys.modules.setdefault("secretary_system_optimized", _ss_mod)
 
 # LearningMemoryIntegration mock
 _lm_inst = MagicMock()
@@ -60,17 +57,43 @@ _lm_inst.record_and_learn = MagicMock()
 _lm_inst.analyze_and_optimize = MagicMock(return_value={"recommendations": []})
 _lm_mod = MagicMock()
 _lm_mod.LearningMemoryIntegration.return_value = _lm_inst
-sys.modules.setdefault("learning_memory_integration", _lm_mod)
 
 # unified_cache_system mock
 _uc = MagicMock()
 _uc.get_unified_cache.return_value = MagicMock()
-sys.modules.setdefault("unified_cache_system", _uc)
+
+# Install stubs (save originals to restore after SUT import)
+_orig_ps = sys.modules.pop("personality_system", None)
+_orig_as = sys.modules.pop("autonomy_system", None)
+_orig_ss = sys.modules.pop("secretary_system_optimized", None)
+_orig_lm = sys.modules.pop("learning_memory_integration", None)
+_orig_uc = sys.modules.pop("unified_cache_system", None)
+sys.modules["personality_system"] = _ps_mod
+sys.modules["autonomy_system"] = _as_mod
+sys.modules["secretary_system_optimized"] = _ss_mod
+sys.modules["learning_memory_integration"] = _lm_mod
+sys.modules["unified_cache_system"] = _uc
 
 # ── Import target ─────────────────────────────────────────────────────────────
+sys.modules.pop("scripts.misc.personality_autonomy_secretary_integration", None)
 from scripts.misc.personality_autonomy_secretary_integration import (  # noqa: E402
     PersonalityAutonomySecretaryIntegration,
 )
+# Restore real modules; SUT already captured stub class references.
+# If a module wasn't in sys.modules originally (_orig is None), it means the
+# real module doesn't exist on this system – keep the mock so lazy imports
+# inside SUT methods (e.g. `from secretary_system_optimized import Report`)
+# can resolve correctly during tests.
+for _name, _orig in [
+    ("personality_system", _orig_ps),
+    ("autonomy_system", _orig_as),
+    ("secretary_system_optimized", _orig_ss),
+    ("learning_memory_integration", _orig_lm),
+    ("unified_cache_system", _orig_uc),
+]:
+    if _orig is not None:
+        sys.modules[_name] = _orig
+    # else: keep our mock – the real module does not exist
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────

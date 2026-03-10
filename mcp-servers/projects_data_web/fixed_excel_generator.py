@@ -106,7 +106,7 @@ class FixedExcelGenerator(PDFExcelConverter):
             wb = Workbook()
             
             # デフォルトシートを削除
-            wb.remove(wb.active)
+            wb.remove(wb.active)  # type: ignore
             
             # テキストデータシート作成
             if extracted_data.get("text_data"):

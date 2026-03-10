@@ -25,8 +25,8 @@ from pydantic import BaseModel, Field
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 # パスを追加（サブディレクトリ実行でも _paths 等を解決できるようにする）
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

@@ -195,4 +195,4 @@ if __name__ == '__main__':
     print("  - http://localhost:5000/ssh/test")
     print("  - http://localhost:5000/gpu/web-terminal-command")
     
-    app.run(host="0.0.0.0", port=port, debug=os.getenv("DEBUG", "False").lower() == "true")
+    app.run(host="0.0.0.0", port=port, debug=os.getenv("DEBUG", "False").lower() == "true")  # type: ignore[name-defined]

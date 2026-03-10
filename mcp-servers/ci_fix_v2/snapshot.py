@@ -570,8 +570,8 @@ def snapshot() -> dict[str, Any]:
             openapi_paths_count = None
             if isinstance(unified_integrations, dict):
                 od = unified_integrations.get("data") if isinstance(unified_integrations.get("data"), dict) else {}
-                oo = od.get("openapi") if isinstance(od.get("openapi"), dict) else {}
-                pc = oo.get("paths_count")
+                oo = od.get("openapi") if isinstance(od.get("openapi"), dict) else {}  # type: ignore[union-attr]
+                pc = oo.get("paths_count")  # type: ignore[union-attr]
                 if isinstance(pc, int):
                     openapi_paths_count = pc
                 else:
@@ -610,8 +610,8 @@ def snapshot() -> dict[str, Any]:
                         get_no_params_cnt = None
                         if isinstance(unified_integrations, dict):
                             od2 = unified_integrations.get("data") if isinstance(unified_integrations.get("data"), dict) else {}
-                            oo2 = od2.get("openapi") if isinstance(od2.get("openapi"), dict) else {}
-                            get_no_params_cnt = oo2.get("get_paths_no_params_count")
+                            oo2 = od2.get("openapi") if isinstance(od2.get("openapi"), dict) else {}  # type: ignore[union-attr]
+                            get_no_params_cnt = oo2.get("get_paths_no_params_count")  # type: ignore[union-attr]
                         try:
                             get_no_params_cnt_i = int(get_no_params_cnt) if get_no_params_cnt is not None else 0
                         except Exception:

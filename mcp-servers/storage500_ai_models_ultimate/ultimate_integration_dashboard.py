@@ -110,7 +110,7 @@ class FixedUltimateIntegrationDashboard:
         conn.commit()
         conn.close()
     
-    def _log_action(self, action: str, system_name: str = None, details: str = ""):
+    def _log_action(self, action: str, system_name: str = None, details: str = ""):  # type: ignore
         """アクションをログに記録（修正版）"""
         try:
             conn = sqlite3.connect(self.db_path)

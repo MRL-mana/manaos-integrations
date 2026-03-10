@@ -74,7 +74,7 @@ class SearXNGLLMIntegration:
     def _initialize_llm(self):
         """LLMを初期化"""
         try:
-            self.llm = Ollama(
+            self.llm = Ollama(  # type: ignore[operator]
                 base_url=self.ollama_url,
                 model=self.model_name,
                 temperature=0.7

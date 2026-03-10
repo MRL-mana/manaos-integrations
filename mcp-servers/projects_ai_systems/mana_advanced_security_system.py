@@ -643,7 +643,7 @@ class ManaAdvancedSecuritySystem:
             
             # 異常な使用パターンを検知
             if usage_count > 1000:  # 1時間で1000回以上
-                await self.report_threat(SecurityThreat(
+                await self.report_threat(SecurityThreat(  # type: ignore
                     threat_type="api_key_abuse",
                     severity="high",
                     source_ip="unknown",

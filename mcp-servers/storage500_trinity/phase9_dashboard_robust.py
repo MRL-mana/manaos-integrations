@@ -93,7 +93,7 @@ class Phase9DashboardRobust:
                 "cpu_percent": psutil.cpu_percent(interval=1),
                 "memory_percent": psutil.virtual_memory().percent,
                 "disk_percent": psutil.disk_usage('/').percent,
-                "load_avg": os.getloadavg()
+                "load_avg": os.getloadavg()  # type: ignore[attr-defined]
             }
         except Exception as e:
             self.logger.warning(f"パフォーマンスメトリクス取得エラー: {e}")

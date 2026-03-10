@@ -18,18 +18,18 @@ import importlib.util
 
 # learning_api
 spec1 = importlib.util.spec_from_file_location("learning_api", "/root/scripts/learning_api.py")
-learning_api = importlib.util.module_from_spec(spec1)
-spec1.loader.exec_module(learning_api)
+learning_api = importlib.util.module_from_spec(spec1)  # type: ignore
+spec1.loader.exec_module(learning_api)  # type: ignore[union-attr]
 
 # rule_engine
 spec2 = importlib.util.spec_from_file_location("rule_engine", "/root/manaos_learning/rule_engine.py")
-rule_engine_module = importlib.util.module_from_spec(spec2)
-spec2.loader.exec_module(rule_engine_module)
+rule_engine_module = importlib.util.module_from_spec(spec2)  # type: ignore
+spec2.loader.exec_module(rule_engine_module)  # type: ignore[union-attr]
 
 # learning_control
 spec3 = importlib.util.spec_from_file_location("learning_control", "/root/scripts/learning_control.py")
-learning_control = importlib.util.module_from_spec(spec3)
-spec3.loader.exec_module(learning_control)
+learning_control = importlib.util.module_from_spec(spec3)  # type: ignore
+spec3.loader.exec_module(learning_control)  # type: ignore[union-attr]
 
 get_statistics = learning_api.get_statistics
 get_recent_examples = learning_api.get_recent_examples

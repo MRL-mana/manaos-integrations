@@ -30,8 +30,8 @@ class ManaOSMemoryAdapter:
         logger.info("ManaOS Memory Adapter 初期化完了")
 
     def save_memory(self, content: str, importance: int = 5,
-                    category: str = None, source: str = None,
-                    metadata: dict = None) -> dict:
+                    category: str = None, source: str = None,  # type: ignore
+                    metadata: dict = None) -> dict:  # type: ignore
         """記憶を保存（ManaOS互換）"""
         try:
             success = self.hot_api.save_memory(

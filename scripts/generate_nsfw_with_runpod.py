@@ -355,10 +355,10 @@ def main():
                 continue
 
             # 出力がネストされている場合の処理
-            if isinstance(output, dict) and "output" in output:
+            if isinstance(output, dict) and "output" in output:  # type: ignore[possibly-unbound]
                 actual_output = output.get("output", {})
             else:
-                actual_output = output
+                actual_output = output  # type: ignore[possibly-unbound]
 
             # デバッグ: 出力内容を確認
             print(

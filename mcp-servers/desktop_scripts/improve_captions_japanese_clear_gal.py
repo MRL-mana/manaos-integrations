@@ -109,7 +109,7 @@ def improve_captions_in_directory(dataset_dir):
     print("=" * 80)
     print()
     print("改善されたキャプションのサンプル:")
-    print(f"  {improved_caption}")
+    print(f"  {improved_caption}")  # type: ignore[possibly-unbound]
     print()
 
 

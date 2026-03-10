@@ -94,7 +94,7 @@ class VideoInput(BaseModel):
     prompt: Optional[str] = None
 
 
-async def call_ollama(prompt: str, model: str = None, stream: bool = False) -> str:
+async def call_ollama(prompt: str, model: str = None, stream: bool = False) -> str:  # type: ignore
     """Ollama API呼び出し"""
     model = model or OLLAMA_MODEL
     
@@ -124,7 +124,7 @@ async def call_ollama(prompt: str, model: str = None, stream: bool = False) -> s
         return ""
 
 
-async def call_ollama_chat(messages: List[Dict], model: str = None) -> str:
+async def call_ollama_chat(messages: List[Dict], model: str = None) -> str:  # type: ignore
     """Ollama Chat API呼び出し"""
     model = model or OLLAMA_MODEL
     
@@ -193,7 +193,7 @@ async def generate_speech(text: str, emotion: str = "normal") -> bytes:
         return b""
 
 
-async def analyze_image(image_data: bytes, prompt: str = None) -> str:
+async def analyze_image(image_data: bytes, prompt: str = None) -> str:  # type: ignore
     """画像を解析（VLM使用）"""
     try:
         # OllamaのVLMモデルを使用
@@ -224,7 +224,7 @@ async def analyze_image(image_data: bytes, prompt: str = None) -> str:
         return ""
 
 
-async def analyze_video(video_data: bytes, prompt: str = None) -> str:
+async def analyze_video(video_data: bytes, prompt: str = None) -> str:  # type: ignore
     """動画を解析（フレーム抽出→VLM）"""
     try:
         # 簡易版：動画の最初のフレームを抽出して解析
@@ -240,7 +240,7 @@ async def analyze_video(video_data: bytes, prompt: str = None) -> str:
         return ""
 
 
-async def get_remi_response(user_input: str, context: Dict = None) -> str:
+async def get_remi_response(user_input: str, context: Dict = None) -> str:  # type: ignore
     """レミの返事を生成（Ollama使用）"""
     # 会話履歴を構築
     messages = []
@@ -305,7 +305,7 @@ async def speech_input(request: SpeechInput):
         conversation_state["silence_count"] = 0
         
         # レミの返事を生成
-        remi_response = await get_remi_response(text, request.context)
+        remi_response = await get_remi_response(text, request.context)  # type: ignore
         
         # 会話履歴に追加
         conversation_history.append({

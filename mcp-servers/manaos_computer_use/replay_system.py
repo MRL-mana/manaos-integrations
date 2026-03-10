@@ -243,7 +243,7 @@ class ReplaySystem:
         try:
             import numpy as np
             np.random.seed(seed)
-            logger.debug("numpy seed set")
+            logger.debug("numpy seed set")  # type: ignore[name-defined]
         except ImportError:
             pass
         
@@ -253,7 +253,7 @@ class ReplaySystem:
             torch.manual_seed(seed)
             if torch.cuda.is_available():
                 torch.cuda.manual_seed_all(seed)
-            logger.debug("torch seed set")
+            logger.debug("torch seed set")  # type: ignore[name-defined]
         except ImportError:
             pass
 

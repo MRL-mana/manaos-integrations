@@ -11,8 +11,8 @@ import pytest
 # Stub _paths if not available
 if "_paths" not in sys.modules:
     _paths_mod = types.ModuleType("_paths")
-    _paths_mod.FILE_SECRETARY_PORT = 5120
-    _paths_mod.ORCHESTRATOR_PORT = 5106
+    _paths_mod.FILE_SECRETARY_PORT = 5120  # type: ignore
+    _paths_mod.ORCHESTRATOR_PORT = 5106  # type: ignore
     sys.modules.setdefault("_paths", _paths_mod)
 
 from scripts.misc.integrate_slack_config import (

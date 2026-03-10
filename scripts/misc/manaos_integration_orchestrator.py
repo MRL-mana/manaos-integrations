@@ -376,7 +376,7 @@ class ManaOSIntegrationOrchestrator:
         self.cache = None
         if CACHE_AVAILABLE:
             try:
-                self.cache = get_unified_cache()
+                self.cache = get_unified_cache()  # type: ignore[operator]
                 logger.info("✅ キャッシュシステム初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ キャッシュシステム初期化エラー: {e}")
@@ -385,7 +385,7 @@ class ManaOSIntegrationOrchestrator:
         self.performance_optimizer = None
         if PERFORMANCE_OPTIMIZER_AVAILABLE:
             try:
-                self.performance_optimizer = PerformanceOptimizer()
+                self.performance_optimizer = PerformanceOptimizer()  # type: ignore[operator]
                 logger.info("✅ パフォーマンス最適化システム初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ パフォーマンス最適化システム初期化エラー: {e}")
@@ -394,7 +394,7 @@ class ManaOSIntegrationOrchestrator:
         self.async_client = None
         if ASYNC_CLIENT_AVAILABLE:
             try:
-                self.async_client = AsyncUnifiedAPIClient()
+                self.async_client = AsyncUnifiedAPIClient()  # type: ignore[operator]
                 logger.info("✅ 非同期クライアント初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ 非同期クライアント初期化エラー: {e}")
@@ -403,7 +403,7 @@ class ManaOSIntegrationOrchestrator:
         self.distributed_execution = None
         if DISTRIBUTED_EXECUTION_AVAILABLE:
             try:
-                self.distributed_execution = DistributedExecution()
+                self.distributed_execution = DistributedExecution()  # type: ignore[operator]
                 logger.info("✅ 分散処理システム初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ 分散処理システム初期化エラー: {e}")
@@ -412,7 +412,7 @@ class ManaOSIntegrationOrchestrator:
         self.cost_optimization = None
         if COST_OPTIMIZATION_AVAILABLE:
             try:
-                self.cost_optimization = CostOptimization()
+                self.cost_optimization = CostOptimization()  # type: ignore[operator]
                 logger.info("✅ コスト最適化システム初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ コスト最適化システム初期化エラー: {e}")
@@ -421,7 +421,7 @@ class ManaOSIntegrationOrchestrator:
         self.batch_processor = None
         if BATCH_PROCESSING_AVAILABLE:
             try:
-                self.batch_processor = BatchProcessor()
+                self.batch_processor = BatchProcessor()  # type: ignore[operator]
                 logger.info("✅ バッチ処理システム初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ バッチ処理システム初期化エラー: {e}")
@@ -430,7 +430,7 @@ class ManaOSIntegrationOrchestrator:
         self.intrinsic_motivation = None
         if INTRINSIC_MOTIVATION_AVAILABLE:
             try:
-                self.intrinsic_motivation = IntrinsicMotivation()
+                self.intrinsic_motivation = IntrinsicMotivation()  # type: ignore[operator]
                 logger.info("✅ Intrinsic Motivationシステム初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Intrinsic Motivationシステム初期化エラー: {e}")
@@ -439,7 +439,7 @@ class ManaOSIntegrationOrchestrator:
         self.workflow_automation = None
         if WORKFLOW_AUTOMATION_AVAILABLE:
             try:
-                self.workflow_automation = WorkflowAutomation()
+                self.workflow_automation = WorkflowAutomation()  # type: ignore[operator]
                 logger.info("✅ Workflow Automation初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Workflow Automation初期化エラー: {e}")
@@ -447,7 +447,7 @@ class ManaOSIntegrationOrchestrator:
         self.autonomous_agent = None
         if AUTONOMOUS_AGENT_AVAILABLE:
             try:
-                self.autonomous_agent = AutonomousAgent("ManaOS Integration Orchestrator Agent")
+                self.autonomous_agent = AutonomousAgent("ManaOS Integration Orchestrator Agent")  # type: ignore[operator]
                 logger.info("✅ Autonomous Agent初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Autonomous Agent初期化エラー: {e}")
@@ -455,7 +455,7 @@ class ManaOSIntegrationOrchestrator:
         self.predictive_maintenance = None
         if PREDICTIVE_MAINTENANCE_AVAILABLE:
             try:
-                self.predictive_maintenance = PredictiveMaintenance()
+                self.predictive_maintenance = PredictiveMaintenance()  # type: ignore[operator]
                 logger.info("✅ Predictive Maintenance初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Predictive Maintenance初期化エラー: {e}")
@@ -463,7 +463,7 @@ class ManaOSIntegrationOrchestrator:
         self.auto_optimization = None
         if AUTO_OPTIMIZATION_AVAILABLE:
             try:
-                self.auto_optimization = AutoOptimization()
+                self.auto_optimization = AutoOptimization()  # type: ignore[operator]
                 logger.info("✅ Auto Optimization初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Auto Optimization初期化エラー: {e}")
@@ -471,7 +471,7 @@ class ManaOSIntegrationOrchestrator:
         self.learning_system = None
         if LEARNING_SYSTEM_AVAILABLE:
             try:
-                self.learning_system = LearningSystem()
+                self.learning_system = LearningSystem()  # type: ignore[operator]
                 logger.info("✅ Learning System初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Learning System初期化エラー: {e}")
@@ -479,7 +479,7 @@ class ManaOSIntegrationOrchestrator:
         self.notification_system = None
         if NOTIFICATION_SYSTEM_AVAILABLE:
             try:
-                self.notification_system = NotificationSystem()
+                self.notification_system = NotificationSystem()  # type: ignore[operator]
                 logger.info("✅ Notification System初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Notification System初期化エラー: {e}")
@@ -487,7 +487,7 @@ class ManaOSIntegrationOrchestrator:
         self.backup_recovery = None
         if BACKUP_RECOVERY_AVAILABLE:
             try:
-                self.backup_recovery = BackupRecovery()
+                self.backup_recovery = BackupRecovery()  # type: ignore[operator]
                 logger.info("✅ Backup Recovery初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Backup Recovery初期化エラー: {e}")
@@ -495,7 +495,7 @@ class ManaOSIntegrationOrchestrator:
         self.performance_analytics = None
         if PERFORMANCE_ANALYTICS_AVAILABLE:
             try:
-                self.performance_analytics = PerformanceAnalytics()
+                self.performance_analytics = PerformanceAnalytics()  # type: ignore[operator]
                 logger.info("✅ Performance Analytics初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Performance Analytics初期化エラー: {e}")
@@ -503,7 +503,7 @@ class ManaOSIntegrationOrchestrator:
         self.streaming_processor = None
         if STREAMING_PROCESSOR_AVAILABLE:
             try:
-                self.streaming_processor = StreamingProcessor()
+                self.streaming_processor = StreamingProcessor()  # type: ignore[operator]
                 logger.info("✅ Streaming Processor初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Streaming Processor初期化エラー: {e}")
@@ -511,7 +511,7 @@ class ManaOSIntegrationOrchestrator:
         self.database_integration = None
         if DATABASE_INTEGRATION_AVAILABLE:
             try:
-                self.database_integration = DatabaseIntegration()
+                self.database_integration = DatabaseIntegration()  # type: ignore[operator]
                 logger.info("✅ Database Integration初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Database Integration初期化エラー: {e}")
@@ -519,7 +519,7 @@ class ManaOSIntegrationOrchestrator:
         self.cloud_integration = None
         if CLOUD_INTEGRATION_AVAILABLE:
             try:
-                self.cloud_integration = CloudIntegration()
+                self.cloud_integration = CloudIntegration()  # type: ignore[operator]
                 logger.info("✅ Cloud Integration初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Cloud Integration初期化エラー: {e}")
@@ -527,7 +527,7 @@ class ManaOSIntegrationOrchestrator:
         self.multimodal_integration = None
         if MULTIMODAL_INTEGRATION_AVAILABLE:
             try:
-                self.multimodal_integration = MultimodalIntegration()
+                self.multimodal_integration = MultimodalIntegration()  # type: ignore[operator]
                 logger.info("✅ Multimodal Integration初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Multimodal Integration初期化エラー: {e}")
@@ -535,7 +535,7 @@ class ManaOSIntegrationOrchestrator:
         self.security_monitor = None
         if SECURITY_MONITOR_AVAILABLE:
             try:
-                self.security_monitor = SecurityMonitor()
+                self.security_monitor = SecurityMonitor()  # type: ignore[operator]
                 logger.info("✅ Security Monitor初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Security Monitor初期化エラー: {e}")
@@ -544,7 +544,7 @@ class ManaOSIntegrationOrchestrator:
         self.device_orchestrator = None
         if DEVICE_ORCHESTRATOR_AVAILABLE:
             try:
-                self.device_orchestrator = DeviceOrchestrator()
+                self.device_orchestrator = DeviceOrchestrator()  # type: ignore[operator]
                 logger.info("✅ Device Orchestrator初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Device Orchestrator初期化エラー: {e}")
@@ -552,7 +552,7 @@ class ManaOSIntegrationOrchestrator:
         self.google_drive_sync_agent = None
         if GOOGLE_DRIVE_SYNC_AGENT_AVAILABLE:
             try:
-                self.google_drive_sync_agent = GoogleDriveSyncAgent()
+                self.google_drive_sync_agent = GoogleDriveSyncAgent()  # type: ignore[operator]
                 logger.info("✅ Google Drive Sync Agent初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Google Drive Sync Agent初期化エラー: {e}")
@@ -560,7 +560,7 @@ class ManaOSIntegrationOrchestrator:
         self.adb_automation_toolkit = None
         if ADB_AUTOMATION_TOOLKIT_AVAILABLE:
             try:
-                self.adb_automation_toolkit = ADBAutomationToolkit()
+                self.adb_automation_toolkit = ADBAutomationToolkit()  # type: ignore[operator]
                 logger.info("✅ ADB Automation Toolkit初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ ADB Automation Toolkit初期化エラー: {e}")
@@ -568,7 +568,7 @@ class ManaOSIntegrationOrchestrator:
         self.unified_backup_manager = None
         if UNIFIED_BACKUP_MANAGER_AVAILABLE:
             try:
-                self.unified_backup_manager = UnifiedBackupManager()
+                self.unified_backup_manager = UnifiedBackupManager()  # type: ignore[operator]
                 logger.info("✅ Unified Backup Manager初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Unified Backup Manager初期化エラー: {e}")
@@ -576,7 +576,7 @@ class ManaOSIntegrationOrchestrator:
         self.device_health_monitor = None
         if DEVICE_HEALTH_MONITOR_AVAILABLE:
             try:
-                self.device_health_monitor = DeviceHealthMonitor()
+                self.device_health_monitor = DeviceHealthMonitor()  # type: ignore[operator]
                 logger.info("✅ Device Health Monitor初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Device Health Monitor初期化エラー: {e}")
@@ -584,7 +584,7 @@ class ManaOSIntegrationOrchestrator:
         self.cross_platform_file_sync = None
         if CROSS_PLATFORM_FILE_SYNC_AVAILABLE:
             try:
-                self.cross_platform_file_sync = CrossPlatformFileSync()
+                self.cross_platform_file_sync = CrossPlatformFileSync()  # type: ignore[operator]
                 logger.info("✅ Cross-Platform File Sync初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Cross-Platform File Sync初期化エラー: {e}")
@@ -592,7 +592,7 @@ class ManaOSIntegrationOrchestrator:
         self.automated_deployment_pipeline = None
         if AUTOMATED_DEPLOYMENT_PIPELINE_AVAILABLE:
             try:
-                self.automated_deployment_pipeline = AutomatedDeploymentPipeline()
+                self.automated_deployment_pipeline = AutomatedDeploymentPipeline()  # type: ignore[operator]
                 logger.info("✅ Automated Deployment Pipeline初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Automated Deployment Pipeline初期化エラー: {e}")
@@ -600,7 +600,7 @@ class ManaOSIntegrationOrchestrator:
         self.notification_hub_enhanced = None
         if NOTIFICATION_HUB_ENHANCED_AVAILABLE:
             try:
-                self.notification_hub_enhanced = NotificationHubEnhanced()
+                self.notification_hub_enhanced = NotificationHubEnhanced()  # type: ignore[operator]
                 logger.info("✅ Notification Hub Enhanced初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Notification Hub Enhanced初期化エラー: {e}")
@@ -609,7 +609,7 @@ class ManaOSIntegrationOrchestrator:
         self.comprehensive_self_capabilities = None
         if COMPREHENSIVE_SELF_CAPABILITIES_AVAILABLE:
             try:
-                self.comprehensive_self_capabilities = ComprehensiveSelfCapabilitiesSystem()
+                self.comprehensive_self_capabilities = ComprehensiveSelfCapabilitiesSystem()  # type: ignore[operator]
                 logger.info("✅ Comprehensive Self Capabilities System初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Comprehensive Self Capabilities System初期化エラー: {e}")
@@ -619,7 +619,7 @@ class ManaOSIntegrationOrchestrator:
         self.self_evolution = None
         if SELF_EVOLUTION_AVAILABLE:
             try:
-                self.self_evolution = SelfEvolutionSystem()
+                self.self_evolution = SelfEvolutionSystem()  # type: ignore[operator]
                 logger.info("✅ Self Evolution System初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Self Evolution System初期化エラー: {e}")
@@ -629,7 +629,7 @@ class ManaOSIntegrationOrchestrator:
         self.self_protection = None
         if SELF_PROTECTION_AVAILABLE:
             try:
-                self.self_protection = SelfProtectionSystem()
+                self.self_protection = SelfProtectionSystem()  # type: ignore[operator]
                 logger.info("✅ Self Protection System初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Self Protection System初期化エラー: {e}")
@@ -639,7 +639,7 @@ class ManaOSIntegrationOrchestrator:
         self.self_management = None
         if SELF_MANAGEMENT_AVAILABLE:
             try:
-                self.self_management = SelfManagementSystem()
+                self.self_management = SelfManagementSystem()  # type: ignore[operator]
                 logger.info("✅ Self Management System初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Self Management System初期化エラー: {e}")
@@ -649,7 +649,7 @@ class ManaOSIntegrationOrchestrator:
         self.self_diagnosis = None
         if SELF_DIAGNOSIS_AVAILABLE:
             try:
-                self.self_diagnosis = SelfDiagnosisSystem()
+                self.self_diagnosis = SelfDiagnosisSystem()  # type: ignore[operator]
                 logger.info("✅ Self Diagnosis System初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Self Diagnosis System初期化エラー: {e}")
@@ -659,7 +659,7 @@ class ManaOSIntegrationOrchestrator:
         self.degraded_mode = None
         if DEGRADED_MODE_AVAILABLE:
             try:
-                self.degraded_mode = DegradedModeSystem()
+                self.degraded_mode = DegradedModeSystem()  # type: ignore[operator]
                 logger.info("✅ Degraded Mode System初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Degraded Mode System初期化エラー: {e}")
@@ -669,7 +669,7 @@ class ManaOSIntegrationOrchestrator:
         self.self_adjustment = None
         if SELF_ADJUSTMENT_AVAILABLE:
             try:
-                self.self_adjustment = SelfAdjustmentSystem()
+                self.self_adjustment = SelfAdjustmentSystem()  # type: ignore[operator]
                 logger.info("✅ Self Adjustment System初期化完了")
             except Exception as e:
                 logger.warning(f"⚠️ Self Adjustment System初期化エラー: {e}")
@@ -720,7 +720,7 @@ class ManaOSIntegrationOrchestrator:
             """拡張エラーハンドラー"""
             # エラーを自己修復システムに報告
             try:
-                repair_result = self.comprehensive_self_capabilities.auto_repair(error, context)
+                repair_result = self.comprehensive_self_capabilities.auto_repair(error, context)  # type: ignore[union-attr]
                 if repair_result.get("success"):
                     logger.info(f"✅ 自動修復成功: {repair_result.get('message', '')}")
                 elif repair_result.get("skipped"):
@@ -755,7 +755,7 @@ class ManaOSIntegrationOrchestrator:
                     # 新しいイベントループを作成
                     new_loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(new_loop)
-                    new_loop.run_until_complete(self.gpu_optimizer.initialize())
+                    new_loop.run_until_complete(self.gpu_optimizer.initialize())  # type: ignore[union-attr]
                     new_loop.close()
                     logger.info("✅ GPU最適化システム非同期初期化完了")
                 except Exception as e:
@@ -810,7 +810,7 @@ class ManaOSIntegrationOrchestrator:
                     # 新しいイベントループを作成
                     new_loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(new_loop)
-                    new_loop.run_until_complete(self.performance_monitor.start_monitoring(interval=10))
+                    new_loop.run_until_complete(self.performance_monitor.start_monitoring(interval=10))  # type: ignore[union-attr]
                     logger.info("✅ パフォーマンス監視自動開始完了（10秒間隔）")
                 except Exception as e:
                     logger.warning(f"⚠️ パフォーマンス監視自動開始エラー: {e}")
@@ -882,13 +882,13 @@ class ManaOSIntegrationOrchestrator:
                 try:
                     # 修復成功パターンを学習
                     if repair_result.get("success"):
-                        self.self_evolution.record_successful_repair(repair_result)
+                        self.self_evolution.record_successful_repair(repair_result)  # type: ignore[union-attr]
                 except Exception as e:
                     logger.warning(f"自己進化システム連携エラー: {e}")
             
             # 修復成功時のコールバックを設定
             if hasattr(self.comprehensive_self_capabilities, 'on_repair_success'):
-                self.comprehensive_self_capabilities.on_repair_success = on_repair_success
+                self.comprehensive_self_capabilities.on_repair_success = on_repair_success  # type: ignore
         
         # 自己保護 ↔ 自己管理の連携
         if self.self_protection and self.self_management:
@@ -897,7 +897,7 @@ class ManaOSIntegrationOrchestrator:
                 try:
                     # 脅威に応じた管理アクションを実行
                     if threat.get("severity") in ["high", "critical"]:
-                        self.self_management.execute_security_action(threat)
+                        self.self_management.execute_security_action(threat)  # type: ignore[union-attr]
                 except Exception as e:
                     logger.warning(f"自己管理システム連携エラー: {e}")
             
@@ -912,7 +912,7 @@ class ManaOSIntegrationOrchestrator:
                 try:
                     # 改善提案を管理アクションとして記録
                     if improvement.get("priority", 0) >= 7:
-                        self.self_management.record_improvement_suggestion(improvement)
+                        self.self_management.record_improvement_suggestion(improvement)  # type: ignore[union-attr]
                 except Exception as e:
                     logger.warning(f"自己管理システム連携エラー: {e}")
             
@@ -1101,7 +1101,7 @@ class ManaOSIntegrationOrchestrator:
             url = f"http://127.0.0.1:{port}"
             
             try:
-                async with self.async_client as client:
+                async with self.async_client as client:  # type: ignore[misc]
                     result = await client.call_service(
                         "external",
                         f"{url}/health",
@@ -1134,7 +1134,7 @@ class ManaOSIntegrationOrchestrator:
             if isinstance(result, Exception):
                 logger.warning(f"サービスチェックエラー: {result}")
                 continue
-            service_id, status = result
+            service_id, status = result  # type: ignore
             results["manaos_services"][service_id] = status
         
         # 統合システムのチェック
@@ -1147,7 +1147,7 @@ class ManaOSIntegrationOrchestrator:
             if isinstance(result, Exception):
                 logger.warning(f"サービスチェックエラー: {result}")
                 continue
-            service_id, status = result
+            service_id, status = result  # type: ignore
             results["integration_services"][service_id] = status
         
         # 実行時間を記録

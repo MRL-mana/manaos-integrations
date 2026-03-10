@@ -170,13 +170,13 @@ class ContainerManager:
         while self.is_running:
             try:
                 # 実行時間チェック
-                if not self.security_manager.check_execution_time():
-                    self.security_manager.emergency_stop("Execution time exceeded")
+                if not self.security_manager.check_execution_time():  # type: ignore[union-attr]
+                    self.security_manager.emergency_stop("Execution time exceeded")  # type: ignore[union-attr]
                     break
                 
                 # リソース使用量チェック
-                if not self.security_manager.check_resource_usage():
-                    self.security_manager.emergency_stop("Resource limit exceeded")
+                if not self.security_manager.check_resource_usage():  # type: ignore[union-attr]
+                    self.security_manager.emergency_stop("Resource limit exceeded")  # type: ignore[union-attr]
                     break
                 
                 time.sleep(1)  # 1秒間隔でチェック
@@ -186,7 +186,7 @@ class ContainerManager:
                 break
             except Exception as e:
                 logging.error(f"Monitoring error: {e}")
-                self.security_manager.emergency_stop(f"Monitoring error: {e}")
+                self.security_manager.emergency_stop(f"Monitoring error: {e}")  # type: ignore[union-attr]
                 break
     
     def stop(self):

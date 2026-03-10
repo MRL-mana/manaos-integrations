@@ -163,7 +163,7 @@ class GPUOptimizer:
         )
         
         # GPUリソースを取得
-        acquired = await self.gpu_manager.acquire_gpu(request)
+        acquired = await self.gpu_manager.acquire_gpu(request)  # type: ignore[union-attr]
         
         if not acquired:
             # GPUが取得できない場合、バッチキューに追加
@@ -196,7 +196,7 @@ class GPUOptimizer:
                 "request_id": request_id
             }
         finally:
-            await self.gpu_manager.release_gpu(request_id)
+            await self.gpu_manager.release_gpu(request_id)  # type: ignore[union-attr]
     
     async def _process_batch(
         self,
@@ -278,7 +278,7 @@ class GPUOptimizer:
             estimated_duration=len(requests) * 30
         )
         
-        acquired = await self.gpu_manager.acquire_gpu(request)
+        acquired = await self.gpu_manager.acquire_gpu(request)  # type: ignore[union-attr]
         if not acquired:
             # GPUが取得できない場合、個別に処理
             return await self._process_individually(requests)
@@ -300,7 +300,7 @@ class GPUOptimizer:
             
             return formatted_results
         finally:
-            await self.gpu_manager.release_gpu(request_id)
+            await self.gpu_manager.release_gpu(request_id)  # type: ignore[union-attr]
     
     async def _execute_gpu_call(self, model: str, prompt: str, task_type: str) -> Dict[str, Any]:
         """GPUでLLM呼び出しを実行"""
@@ -343,7 +343,7 @@ class GPUOptimizer:
         # 並列実行（GPUが複数のリクエストを同時処理できる場合）
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        return results
+        return results  # type: ignore
     
     async def _process_individually(self, requests: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """個別に処理（フォールバック）"""

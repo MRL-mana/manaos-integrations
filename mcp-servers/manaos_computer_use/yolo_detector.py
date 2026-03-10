@@ -82,7 +82,7 @@ class YOLOUIDetector:
         
         try:
             # YOLO推論
-            results = self.model(screenshot_path, conf=confidence_threshold)
+            results = self.model(screenshot_path, conf=confidence_threshold)  # type: ignore[operator]
             
             detections = []
             

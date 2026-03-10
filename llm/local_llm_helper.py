@@ -225,7 +225,7 @@ def generate(model: str = "qwen3:4b", prompt: str = "", stream: bool = False,
                 "source": "lm_studio"
             }
         except requests.exceptions.Timeout:
-            return {"error": "タイムアウト", "message": f"モデルのロードに時間がかかっています（タイムアウト: {extended_timeout}秒）。モデルが大きすぎるか、LM Studioでモデルを事前にロードしてください。"}
+            return {"error": "タイムアウト", "message": f"モデルのロードに時間がかかっています（タイムアウト: {extended_timeout}秒）。モデルが大きすぎるか、LM Studioでモデルを事前にロードしてください。"}  # type: ignore[possibly-unbound]
         except requests.exceptions.HTTPError as e:
             try:
                 error_data = e.response.json() if e.response and e.response.content else {}

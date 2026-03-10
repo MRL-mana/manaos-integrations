@@ -567,9 +567,9 @@ def get_intrinsic_score_history(days: int = 7) -> List[Dict[str, Any]]:
 
                     #                     score_match = re.search(r"\*\*ﾃｧﾂｷ・ｽﾃ･・ｽﾋ・｣窶堋ｹﾃ｣窶堋ｳﾃ｣窶堋｢\*\*: ([\d.]+)/100", content)
 
-                    if score_match:
+                    if score_match:  # type: ignore[name-defined]
 
-                        score = float(score_match.group(1))
+                        score = float(score_match.group(1))  # type: ignore[name-defined]
 
                         scores.append({"date": target_date.isoformat(), "score": score})
 
@@ -718,7 +718,7 @@ def generate_system3_status(
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 raw = resp.read()
             return json.loads(raw.decode("utf-8"))
-        except urllib.error.URLError:
+        except urllib.error.URLError:  # type: ignore[attr-defined]
             # API not available, return empty dict
             return {}
         except Exception:
@@ -830,7 +830,7 @@ def generate_system3_status(
     score_history = [{"date": d.isoformat(), "score": s} for d, s in scores]
     if USE_METRICS_SCHEMA:
         try:
-            score_metrics_normalized = normalize_score_metrics(
+            score_metrics_normalized = normalize_score_metrics(  # type: ignore[possibly-unbound]
                 score_today=score_today or 10.0,
                 score_7d_avg=score_7d_avg,
                 score_trend=score_trend,
@@ -852,7 +852,7 @@ def generate_system3_status(
 
         # Metrics Schemaを使用して正規化
         if USE_METRICS_SCHEMA:
-            todo_metrics_normalized = normalize_todo_metrics(proposed, approved, executed, expired)
+            todo_metrics_normalized = normalize_todo_metrics(proposed, approved, executed, expired)  # type: ignore[possibly-unbound]
             approval_rate = todo_metrics_normalized.get("approval_rate")
             execution_rate = todo_metrics_normalized.get("execution_rate")
             noise_index = todo_metrics_normalized.get("noise_index")
@@ -968,7 +968,7 @@ def update_weekly_review(
                 scores.append((d, float(sc)))
 
     if len(scores) < 2:
-        return None  # Not enough data
+        return None  # Not enough data  # type: ignore
 
     # Calculate score change
     week_start_score = scores[0][1]

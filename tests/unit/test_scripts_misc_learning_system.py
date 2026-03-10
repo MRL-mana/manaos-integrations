@@ -31,8 +31,8 @@ _cv.ConfigValidator = MagicMock(return_value=_cv_inst)
 sys.modules.setdefault("manaos_config_validator", _cv)
 
 # mem0_integration / workflow_automation がなければ auto-skip
-sys.modules.setdefault("mem0_integration", None)
-sys.modules.setdefault("workflow_automation", None)
+sys.modules.setdefault("mem0_integration", None)  # type: ignore
+sys.modules.setdefault("workflow_automation", None)  # type: ignore
 
 import pytest
 from scripts.misc.learning_system import LearningSystem

@@ -14,8 +14,8 @@ from pathlib import Path
 # Windowsでのエンコーディング修正
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 def wait_for_file(file_path: str, timeout: int = 3600, check_interval: int = 10):
     """ファイルが作成されるまで待機"""

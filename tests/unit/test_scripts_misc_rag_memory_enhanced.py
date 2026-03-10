@@ -30,7 +30,7 @@ _v2_mod.MemoryEntry = MagicMock()
 sys.modules["rag_memory_enhanced_v2"] = _v2_mod
 
 _paths_mod = sys.modules.get("_paths") or MagicMock()
-_paths_mod.OLLAMA_PORT = 11434
+_paths_mod.OLLAMA_PORT = 11434  # type: ignore
 sys.modules.setdefault("_paths", _paths_mod)
 
 _ul_mod = MagicMock()
@@ -100,12 +100,12 @@ class TestRAGMemoryEnhancedSearch:
     def test_search_calls_semantic_search_with_correct_args(self):
         obj = self._make_obj([])
         obj.search("my query", limit=5, min_importance=0.3)
-        obj.semantic_search.assert_called_once_with("my query", 5, 0.3)
+        obj.semantic_search.assert_called_once_with("my query", 5, 0.3)  # type: ignore
 
     def test_search_default_args(self):
         obj = self._make_obj([])
         obj.search("q")
-        obj.semantic_search.assert_called_once_with("q", 10, 0.0)
+        obj.semantic_search.assert_called_once_with("q", 10, 0.0)  # type: ignore
 
     def test_search_returns_empty_list_when_no_results(self):
         obj = self._make_obj([])

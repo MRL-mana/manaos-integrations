@@ -12,7 +12,7 @@ _MISC = Path(__file__).parent.parent.parent / "scripts" / "misc"
 
 def _make_paths_stub(port=5559):
     mod = types.ModuleType("_paths")
-    mod.GALLERY_PORT = port
+    mod.GALLERY_PORT = port  # type: ignore
     return mod
 
 
@@ -37,11 +37,11 @@ def _prep(monkeypatch, response_ok=True, images=None, port=5559):
     spec = importlib.util.spec_from_file_location(
         "open_latest_images", str(_MISC / "open_latest_images.py")
     )
-    mod = importlib.util.module_from_spec(spec)
-    mod.os = _os_mod  # inject missing os
+    mod = importlib.util.module_from_spec(spec)  # type: ignore
+    mod.os = _os_mod  # inject missing os  # type: ignore
     sys.modules["open_latest_images"] = mod
     with patch("builtins.print"):
-        spec.loader.exec_module(mod)
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
     return mock_req, mock_wb
 
 

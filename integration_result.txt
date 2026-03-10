@@ -1,0 +1,87 @@
+[1m============================= test session starts =============================[0m
+collected 248 items
+
+tests\integration\test_all_apis.py [32m.[0m[32m.[0m[33m                                    [  0%][0m
+tests\integration\test_all_enhancements.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[33m                         [  2%][0m
+tests\integration\test_all_integrations.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[33m                       [  5%][0m
+tests\integration\test_all_mcp_tools.py [32m.[0m[32m.[0m[32m.[0m[33m                              [  6%][0m
+tests\integration\test_all_services.py [32m.[0m[33m                                 [  7%][0m
+tests\integration\test_all_systems.py [32m.[0m[32m.[0m[33m                                 [  8%][0m
+tests\integration\test_always_ready_llm.py [32m.[0m[33m                             [  8%][0m
+tests\integration\test_api_endpoints.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[33m                             [ 10%][0m
+tests\integration\test_api_endpoints_extension.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[33m                 [ 12%][0m
+tests\integration\test_api_key_auth.py [32m.[0m[33m                                 [ 12%][0m
+tests\integration\test_api_server_auth.py [32m.[0m[32m.[0m[33m                             [ 13%][0m
+tests\integration\test_apis_working.py [32m.[0m[32m.[0m[33m                                [ 14%][0m
+tests\integration\test_auto_reflection.py [33ms[0m[33ms[0m[33ms[0m[33ms[0m[33m                           [ 16%][0m
+tests\integration\test_auto_save.py [32m.[0m[33m                                    [ 16%][0m
+tests\integration\test_brave_search.py [32m.[0m[33m                                 [ 16%][0m
+tests\integration\test_comfyui_civitai.py [32m.[0m[32m.[0m[33m                             [ 17%][0m
+tests\integration\test_cross_chat_reflection.py [32m.[0m[33m                        [ 18%][0m
+tests\integration\test_drive_indexer.py [32m.[0m[33m                                [ 18%][0m
+tests\integration\test_e2e_image_pipeline.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[33m          [ 25%][0m
+tests\integration\test_environment_variables.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[33m                     [ 27%][0m
+tests\integration\test_fellatio_prompt.py [32m.[0m[33m                              [ 27%][0m
+tests\integration\test_file_secretary_llm_integration.py [32m.[0m[32m.[0m[32m.[0m[33m             [ 29%][0m
+tests\integration\test_flask_direct.py [32m.[0m[33m                                 [ 29%][0m
+tests\integration\test_free_integrations.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[33m                       [ 31%][0m
+tests\integration\test_gallery_api_direct.py [32m.[0m[33m                           [ 32%][0m
+tests\integration\test_gallery_models_direct.py [32m.[0m[32m.[0m[33m                       [ 33%][0m
+tests\integration\test_github_integration.py [33ms[0m[33m                           [ 33%][0m
+tests\integration\test_hf_manaos_integration.py [32m.[0m[33m                        [ 33%][0m
+tests\integration\test_implementations.py [31mF[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                         [ 36%][0m
+tests\integration\test_improved_integrations.py [32m.[0m[33ms[0m[33ms[0m[33ms[0m[33ms[0m[33ms[0m[33ms[0m[31m                  [ 39%][0m
+tests\integration\test_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                              [ 41%][0m
+tests\integration\test_integration_all.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                           [ 42%][0m
+tests\integration\test_integration_flow.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                         [ 44%][0m
+tests\integration\test_intrinsic_motivation_integration.py [32m.[0m[31m             [ 45%][0m
+tests\integration\test_lfm25_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                         [ 46%][0m
+tests\integration\test_llm_routing.py [32m.[0m[32m.[0m[31m                                 [ 47%][0m
+tests\integration\test_lm_studio.py [32m.[0m[31m                                    [ 47%][0m
+tests\integration\test_lm_studio_direct.py [32m.[0m[32m.[0m[31m                            [ 48%][0m
+tests\integration\test_lm_studio_load_model.py [32m.[0m[32m.[0m[31m                        [ 49%][0m
+tests\integration\test_lm_studio_working.py [32m.[0m[31m                            [ 50%][0m
+tests\integration\test_ltx2.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                                      [ 51%][0m
+tests\integration\test_ltx2_infinity_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                 [ 53%][0m
+tests\integration\test_ltx2_workflow.py [31mF[0m[31m                                [ 53%][0m
+tests\integration\test_manaos_github_integration.py [33ms[0m[31m                    [ 54%][0m
+tests\integration\test_manaos_integration.py [32m.[0m[32m.[0m[32m.[0m[31m                         [ 55%][0m
+tests\integration\test_manaos_integration_complete.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m              [ 57%][0m
+tests\integration\test_manaos_modules.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                           [ 59%][0m
+tests\integration\test_manaos_tools_direct.py [32m.[0m[32m.[0m[33ms[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                    [ 62%][0m
+tests\integration\test_mcp_api_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                       [ 63%][0m
+tests\integration\test_memory_functionality.py [32m.[0m[32m.[0m[32m.[0m[31m                       [ 64%][0m
+tests\integration\test_memory_unified.py [32m.[0m[32m.[0m[31m                              [ 65%][0m
+tests\integration\test_mrl_manaos_integration.py [32m.[0m[32m.[0m[31m                      [ 66%][0m
+tests\integration\test_mrl_memory.py [32m.[0m[32m.[0m[32m.[0m[31m                                 [ 67%][0m
+tests\integration\test_mrl_memory_api_security.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                   [ 69%][0m
+tests\integration\test_mrl_memory_integration.py [32m.[0m[32m.[0m[32m.[0m[31m                     [ 70%][0m
+tests\integration\test_mrl_memory_usage.py [32m.[0m[32m.[0m[32m.[0m[31m                           [ 71%][0m
+tests\integration\test_notification.py [32m.[0m[32m.[0m[31m                                [ 72%][0m
+tests\integration\test_notification_hub.py [32m.[0m[32m.[0m[31m                            [ 73%][0m
+tests\integration\test_oh_my_opencode.py [32m.[0m[32m.[0m[31m                              [ 74%][0m
+tests\integration\test_oh_my_opencode_integration.py [32m.[0m[32m.[0m[32m.[0m[31m                 [ 75%][0m
+tests\integration\test_oh_my_opencode_smoke.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                     [ 77%][0m
+tests\integration\test_ollama_memory_integration.py [32m.[0m[31m                    [ 77%][0m
+tests\integration\test_persona.py [32m.[0m[31m                                      [ 78%][0m
+tests\integration\test_rows_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                        [ 80%][0m
+tests\integration\test_sample_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                     [ 83%][0m
+tests\integration\test_searxng_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                      [ 85%][0m
+tests\integration\test_secretary_routines.py [32m.[0m[31m                           [ 85%][0m
+tests\integration\test_service_health.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                      [ 89%][0m
+tests\integration\test_single_generation.py [32m.[0m[31m                            [ 90%][0m
+tests\integration\test_slack_chat.py [32m.[0m[31m                                   [ 90%][0m
+tests\integration\test_slack_connection.py [32m.[0m[31m                             [ 91%][0m
+tests\integration\test_slack_integration.py [32m.[0m[32m.[0m[32m.[0m[31m                          [ 92%][0m
+tests\integration\test_slack_llm.py [32m.[0m[32m.[0m[32m.[0m[31m                                  [ 93%][0m
+tests\integration\test_slack_webhook_direct.py [32m.[0m[31m                         [ 93%][0m
+tests\integration\test_startup_notification.py [32m.[0m[31m                         [ 94%][0m
+tests\integration\test_svi_wan22.py [32m.[0m[32m.[0m[32m.[0m[31m                                  [ 95%][0m
+tests\integration\test_tool_server_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m              [ 99%][0m
+tests\integration\test_voicevox_connection.py [32m.[0m[31m                          [ 99%][0m
+tests\integration\test_voicevox_rdp.py [32m.[0m[31m                                 [100%][0m
+
+[36m[1m=========================== short test summary info ===========================[0m
+[31mFAILED[0m tests/integration/test_implementations.py::[1mtest_translation[0m - AttributeError: '_StubSVI' object has no attribute 'translate_prompt_to_eng...
+[31mFAILED[0m tests/integration/test_ltx2_workflow.py::[1mtest_workflow_structure[0m - Failed: 1-pass workflow creation failed: 'list' object has no attribute 'get'
+[31m===== [31m[1m2 failed[0m, [32m233 passed[0m, [33m13 skipped[0m, [33m56 warnings[0m[31m in 369.13s (0:06:09)[0m[31m ======[0m

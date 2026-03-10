@@ -12,8 +12,8 @@ sys.modules.setdefault("manaos_logger", _ml)
 
 # _paths is try/except in this module, so setdefault is enough
 _paths_mod = sys.modules.get("_paths") or MagicMock()
-_paths_mod.GALLERY_PORT = 5559
-_paths_mod.LLM_ROUTING_PORT = 5117
+_paths_mod.GALLERY_PORT = 5559  # type: ignore
+_paths_mod.LLM_ROUTING_PORT = 5117  # type: ignore
 sys.modules["_paths"] = _paths_mod
 
 import pytest

@@ -112,7 +112,7 @@ def generate_image():
         
         if filepath:
             # 履歴に保存
-            prompt_templates.save_prompt_history(prompt, "api", filepath)
+            prompt_templates.save_prompt_history(prompt, "api", filepath)  # type: ignore[union-attr]
             
             return jsonify({
                 "success": True,
@@ -169,7 +169,7 @@ def style_transfer_api():
             return jsonify({"error": "画像ファイルが見つかりません"}), 400
         
         # スタイル転送実行
-        output_path = style_transfer.apply_artistic_style(image_path, style, intensity)
+        output_path = style_transfer.apply_artistic_style(image_path, style, intensity)  # type: ignore[union-attr]
         
         if output_path:
             return jsonify({
@@ -193,11 +193,11 @@ def get_prompt_templates():
         
         if category:
             # 特定カテゴリのテンプレート
-            template = prompt_templates.get_template(category)
+            template = prompt_templates.get_template(category)  # type: ignore[union-attr]
             return jsonify({"category": category, "template": template})
         else:
             # 全カテゴリ一覧
-            with open(prompt_templates.prompts_file, 'r', encoding='utf-8') as f:
+            with open(prompt_templates.prompts_file, 'r', encoding='utf-8') as f:  # type: ignore[union-attr]
                 all_templates = json.load(f)
             return jsonify({"templates": all_templates})
             
@@ -214,7 +214,7 @@ def generate_prompt():
         custom_elements = data.get('custom_elements', [])
         quality_level = data.get('quality_level', 'high')
         
-        prompt = prompt_templates.generate_prompt(category, custom_elements, quality_level)
+        prompt = prompt_templates.generate_prompt(category, custom_elements, quality_level)  # type: ignore[union-attr]
         
         return jsonify({
             "success": True,
@@ -231,7 +231,7 @@ def get_history():
     """履歴を取得"""
     try:
         limit = request.args.get('limit', 20, type=int)
-        history = prompt_templates.get_prompt_history(limit)
+        history = prompt_templates.get_prompt_history(limit)  # type: ignore[union-attr]
         
         return jsonify({
             "success": True,
@@ -315,8 +315,8 @@ def optimize_prompt():
         if not prompt:
             return jsonify({"error": "プロンプトが指定されていません"}), 400
         
-        optimized = prompt_templates.optimize_prompt(prompt)
-        analysis = prompt_templates.analyze_prompt(prompt)
+        optimized = prompt_templates.optimize_prompt(prompt)  # type: ignore[union-attr]
+        analysis = prompt_templates.analyze_prompt(prompt)  # type: ignore[union-attr]
         
         return jsonify({
             "success": True,

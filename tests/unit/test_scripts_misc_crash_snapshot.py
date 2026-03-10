@@ -25,7 +25,7 @@ _mtc.get_timeout_config = MagicMock(return_value={"api_call": 10, "file_download
 sys.modules.setdefault("manaos_timeout_config", _mtc)
 
 _paths_mod = sys.modules.get("_paths") or MagicMock()
-_paths_mod.TASK_QUEUE_PORT = 5100
+_paths_mod.TASK_QUEUE_PORT = 5100  # type: ignore
 sys.modules["_paths"] = _paths_mod
 
 sys.modules.setdefault("flask", MagicMock(

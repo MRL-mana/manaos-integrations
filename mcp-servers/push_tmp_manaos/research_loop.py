@@ -172,7 +172,7 @@ class ResearchLoop:
             if not hasattr(results, 'stop_reason'):
                 results.stop_reason = StopReason.MAX_ITERATIONS
             
-            logger.info(f"Research loop completed: {len(results.citations)} citations, {len(results.summaries)} summaries (stop_reason: {results.stop_reason.value})")
+            logger.info(f"Research loop completed: {len(results.citations)} citations, {len(results.summaries)} summaries (stop_reason: {results.stop_reason.value})")  # type: ignore[union-attr]
             return results
             
         except Exception as e:

@@ -45,7 +45,7 @@ class ManaOSMCPServer:
     def setup_tools(self):
         """MCPツールを設定"""
         
-        @self.server.list_tools()
+        @self.server.list_tools()  # type: ignore[misc]
         async def list_tools() -> ListToolsResult:
             """利用可能なツール一覧を返す"""
             return ListToolsResult(
@@ -272,8 +272,8 @@ class ManaOSMCPServer:
         service = arguments.get("service")
         
         try:
-            result = subprocess.run(
-                ["systemctl", action, service],
+            result = subprocess.run(  # type: ignore[call-arg]
+                ["systemctl", action, service],  # type: ignore
                 capture_output=True, text=True
             )
             
@@ -304,7 +304,7 @@ class ManaOSMCPServer:
         data = arguments.get("data", {})
         
         try:
-            url = f"{self.manaos_apis.get(api_name)}/{endpoint.lstrip('/')}"
+            url = f"{self.manaos_apis.get(api_name)}/{endpoint.lstrip('/')}"  # type: ignore[union-attr]
             
             async with httpx.AsyncClient() as client:
                 if method == "GET":
@@ -319,7 +319,7 @@ class ManaOSMCPServer:
                 return CallToolResult(
                     content=[TextContent(
                         type="text",
-                        text=json.dumps(response.json(), indent=2, ensure_ascii=False)
+                        text=json.dumps(response.json(), indent=2, ensure_ascii=False)  # type: ignore[possibly-unbound]
                     )]
                 )
         except Exception as e:
@@ -353,7 +353,7 @@ class ManaOSMCPServer:
                 return CallToolResult(
                     content=[TextContent(
                         type="text",
-                        text=f"Screen share {action}: {json.dumps(response.json(), indent=2, ensure_ascii=False)}"
+                        text=f"Screen share {action}: {json.dumps(response.json(), indent=2, ensure_ascii=False)}"  # type: ignore[possibly-unbound]
                     )]
                 )
         except Exception as e:
@@ -389,7 +389,7 @@ class ManaOSMCPServer:
                 content=[TextContent(type="text", text=f"Error generating image: {e}")]
             )
     
-    async def trinity_control(self, arguments: Dict[str, Any]) -> CallToolResult:
+    async def trinity_control(self, arguments: Dict[str, Any]) -> CallToolResult:  # type: ignore
         """Trinityシステム制御"""
         agent = arguments.get("agent")
         action = arguments.get("action")
@@ -456,7 +456,7 @@ class ManaOSMCPServer:
                 content=[TextContent(type="text", text=f"Error optimizing system: {e}")]
             )
     
-    async def backup_restore(self, arguments: Dict[str, Any]) -> CallToolResult:
+    async def backup_restore(self, arguments: Dict[str, Any]) -> CallToolResult:  # type: ignore
         """バックアップ・復元"""
         action = arguments.get("action")
         target = arguments.get("target", "all")
@@ -517,7 +517,7 @@ class ManaOSMCPServer:
             return CallToolResult(
                 content=[TextContent(
                     type="text",
-                    text=f"Metrics ({metric_type}):\n{result.stdout}"
+                    text=f"Metrics ({metric_type}):\n{result.stdout}"  # type: ignore[possibly-unbound]
                 )]
             )
         except Exception as e:

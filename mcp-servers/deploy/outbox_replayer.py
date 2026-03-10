@@ -141,7 +141,7 @@ def parse_args(argv: Optional[Iterable[str]] = None) -> argparse.Namespace:
     parser.add_argument("--timeout", type=float, default=5.0, help="HTTP timeout in seconds")
     parser.add_argument("--dry-run", action="store_true", help="Do not send requests; count entries")
     parser.add_argument("--quiet", action="store_true", help="Suppress summary output")
-    return parser.parse_args(argv)
+    return parser.parse_args(argv)  # type: ignore
 
 
 def main(argv: Optional[Iterable[str]] = None) -> int:

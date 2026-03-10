@@ -313,7 +313,7 @@ def main():
             print(f"\n  修復失敗: {', '.join(healing_result['failed'])}")
     
     # レポート生成
-    report = monitor.generate_report(health_report, healing_result if health_report['unhealthy_services'] else {'healed': [], 'failed': []})
+    report = monitor.generate_report(health_report, healing_result if health_report['unhealthy_services'] else {'healed': [], 'failed': []})  # type: ignore[possibly-unbound]
     
     print("\n📄 詳細レポート: /root/logs/health_report_*.json")
     print("="*60 + "\n")

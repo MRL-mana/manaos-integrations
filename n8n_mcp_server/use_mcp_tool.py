@@ -30,10 +30,10 @@ async def import_workflow_via_mcp():
     
     # 結果を表示
     for content in result:
-        print(content.text)
+        print(content.text)  # type: ignore
         # JSONをパースして成功かどうかを判定
         try:
-            data = json.loads(content.text)
+            data = json.loads(content.text)  # type: ignore
             if data.get("status") == "success":
                 print("\n[OK] ワークフローをインポートしました！")
                 return 0

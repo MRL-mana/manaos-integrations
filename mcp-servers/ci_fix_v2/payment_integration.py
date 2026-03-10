@@ -139,7 +139,7 @@ def process_stripe_payment(amount: float, currency: str = "JPY", product_id: Opt
     
     except Exception as e:
         # stripeライブラリがインポートされている場合のみStripeErrorをチェック
-        if stripe and hasattr(stripe, 'error'):
+        if stripe and hasattr(stripe, 'error'):  # type: ignore[possibly-unbound]
             if isinstance(e, stripe.error.StripeError):
                 logger.error(f"Stripe APIエラー: {e}")
                 return {

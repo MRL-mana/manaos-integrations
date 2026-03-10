@@ -33,14 +33,14 @@ try:
         "secretary_learning_integration",
         "/root/trinity_automation/trinity_secretary_learning_integration.py"
     )
-    learning_module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(learning_module)
+    learning_module = importlib.util.module_from_spec(spec)  # type: ignore
+    spec.loader.exec_module(learning_module)  # type: ignore[union-attr]
     secretary_learning = learning_module.get_secretary_learning()
     LEARNING_INTEGRATION_AVAILABLE = True
 except Exception as e:
     LEARNING_INTEGRATION_AVAILABLE = False
     secretary_learning = None
-    logger.warning(f"学習統合モジュールのロード失敗: {e}")
+    logger.warning(f"学習統合モジュールのロード失敗: {e}")  # type: ignore[name-defined]
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

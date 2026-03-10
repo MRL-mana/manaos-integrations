@@ -55,8 +55,8 @@ class PredictiveMaintenance:
     def _initialize_models(self):
         """予測モデルを初期化"""
         for metric in ["cpu", "memory", "disk"]:
-            self.models[metric] = LinearRegression()
-            self.scalers[metric] = StandardScaler()
+            self.models[metric] = LinearRegression()  # type: ignore[possibly-unbound]
+            self.scalers[metric] = StandardScaler()  # type: ignore[possibly-unbound]
     
     def _load_state(self):
         """状態を読み込み"""
@@ -150,8 +150,8 @@ class PredictiveMaintenance:
         
         try:
             # データを準備
-            X = np.array(list(range(len(self.metrics_history[metric])))).reshape(-1, 1)
-            y = np.array(list(self.metrics_history[metric]))
+            X = np.array(list(range(len(self.metrics_history[metric])))).reshape(-1, 1)  # type: ignore[possibly-unbound]
+            y = np.array(list(self.metrics_history[metric]))  # type: ignore[possibly-unbound]
             
             # スケーリング
             X_scaled = self.scalers[metric].fit_transform(X)
@@ -161,7 +161,7 @@ class PredictiveMaintenance:
             
             # 将来の値を予測
             future_point = len(self.metrics_history[metric]) + hours_ahead
-            future_X = np.array([[future_point]])
+            future_X = np.array([[future_point]])  # type: ignore[possibly-unbound]
             future_X_scaled = self.scalers[metric].transform(future_X)
             prediction = self.models[metric].predict(future_X_scaled)[0]
             

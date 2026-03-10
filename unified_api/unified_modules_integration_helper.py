@@ -42,13 +42,13 @@ def setup_unified_modules(service_name: str) -> Dict[str, Any]:
         }
     
     # 統一ロガー
-    logger = get_logger(service_name)
+    logger = get_logger(service_name)  # type: ignore[operator]
     
     # 統一エラーハンドラー
-    error_handler = ManaOSErrorHandler(service_name)
+    error_handler = ManaOSErrorHandler(service_name)  # type: ignore[operator]
     
     # 統一タイムアウト設定
-    timeout_config = get_timeout_config()
+    timeout_config = get_timeout_config()  # type: ignore[operator]
     
     return {
         "logger": logger,
@@ -80,10 +80,10 @@ def apply_error_handler(func):
                 # Flaskアプリケーションの場合
                 try:
                     from flask import jsonify
-                    return jsonify(error.to_json_response()), error.status_code
+                    return jsonify(error.to_json_response()), error.status_code  # type: ignore
                 except ImportError:
                     # Flask以外の場合
-                    raise error
+                    raise error  # type: ignore
         else:
             # フォールバック: 標準例外処理
             try:
@@ -107,8 +107,8 @@ def get_timeout(timeout_type: str) -> float:
     Returns:
         タイムアウト値（秒）
     """
-    if UNIFIED_MODULES_AVAILABLE and timeout_config:
-        return timeout_config.get_timeout(timeout_type)
+    if UNIFIED_MODULES_AVAILABLE and timeout_config:  # type: ignore[name-defined]
+        return timeout_config.get_timeout(timeout_type)  # type: ignore[name-defined]
     else:
         # フォールバック: デフォルト値
         defaults = {

@@ -190,10 +190,10 @@ class Phase9ManaOSIntegration:
                 'cpu_percent': psutil.cpu_percent(interval=1),
                 'memory_percent': psutil.virtual_memory().percent,
                 'disk_percent': psutil.disk_usage('/').percent,
-                'load_avg': os.getloadavg(),
+                'load_avg': os.getloadavg(),  # type: ignore[attr-defined]
                 'process_count': len(psutil.pids()),
                 'network_io': psutil.net_io_counters()._asdict(),
-                'disk_io': psutil.disk_io_counters()._asdict()
+                'disk_io': psutil.disk_io_counters()._asdict()  # type: ignore[union-attr]
             }
             
             return metrics
@@ -216,9 +216,9 @@ class Phase9ManaOSIntegration:
             dashboard_data = {
                 'timestamp': datetime.now().isoformat(),
                 'system_info': {
-                    'hostname': os.uname().nodename,
+                    'hostname': os.uname().nodename,  # type: ignore[attr-defined]
                     'uptime': time.time() - psutil.boot_time(),
-                    'kernel': os.uname().release
+                    'kernel': os.uname().release  # type: ignore[attr-defined]
                 },
                 'manaos_services': manaos_services,
                 'phase9_services': phase9_services,

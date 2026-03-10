@@ -121,7 +121,7 @@ def print_dashboard(phase: str = "unknown"):
     
     print("=" * 60)
 
-def export_snapshot_json(output_path: Path = None) -> dict:
+def export_snapshot_json(output_path: Path = None) -> dict:  # type: ignore
     """
     スナップショットをJSON形式で出力
     

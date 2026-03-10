@@ -17,7 +17,7 @@ def main(args):
                 except (IOError, OSError) as error:
                     print(f'Read {img_path} error: {error}')
                     status = False
-                if img is None:
+                if img is None:  # type: ignore[possibly-unbound]
                     status = False
                     print(f'Img is None: {img_path}')
             if status:

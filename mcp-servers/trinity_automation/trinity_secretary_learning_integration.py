@@ -17,8 +17,8 @@ import importlib.util
 
 # learning_api
 spec1 = importlib.util.spec_from_file_location("learning_api", "/root/scripts/learning_api.py")
-learning_api = importlib.util.module_from_spec(spec1)
-spec1.loader.exec_module(learning_api)
+learning_api = importlib.util.module_from_spec(spec1)  # type: ignore
+spec1.loader.exec_module(learning_api)  # type: ignore[union-attr]
 
 log_event = learning_api.log_event
 
@@ -28,8 +28,8 @@ try:
         "memory_integration",
         "/root/manaos_learning/memory_integration.py"
     )
-    memory_module = importlib.util.module_from_spec(spec2)
-    spec2.loader.exec_module(memory_module)
+    memory_module = importlib.util.module_from_spec(spec2)  # type: ignore
+    spec2.loader.exec_module(memory_module)  # type: ignore[union-attr]
     memory_bridge = memory_module.get_memory_bridge()
 except Exception:
     memory_bridge = None

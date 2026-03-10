@@ -52,7 +52,7 @@ class TrinityNotifier:
         if USE_REUSABLE and self.slack_webhook:
             try:
                 os.environ["SLACK_WEBHOOK_URL"] = self.slack_webhook
-                self.slack = Notification(NotificationType.SLACK)
+                self.slack = Notification(NotificationType.SLACK)  # type: ignore[possibly-unbound]
                 logger.info("✅ Slack notification initialized (reusable module)")
             except Exception as e:
                 logger.warning(f"⚠️ Failed to init Slack: {e}")

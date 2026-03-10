@@ -98,7 +98,7 @@ class MegaBoostEngine:
                     results.append({"success": False, "error": str(e)})
                     logger.error(f"タスク失敗: {e}")
         
-        self.stats["total_time"] = time.time() - start_time
+        self.stats["total_time"] = time.time() - start_time  # type: ignore
         self.results = results
         
         self.log(f"✅ 完了: {self.stats['completed']}/{len(tasks)} ({self.stats['total_time']:.2f}s)")
@@ -145,7 +145,7 @@ class MegaBoostEngine:
         except Exception as e:
             return {"task": "file_hash", "success": False, "file": file_path, "error": str(e), "time": 0}
     
-    def file_compress(self, file_path: str, output: str = None) -> Dict:
+    def file_compress(self, file_path: str, output: str = None) -> Dict:  # type: ignore
         try:
             import gzip
             start = time.time()
@@ -267,7 +267,7 @@ class MegaBoostEngine:
         except Exception as e:
             return {"task": "gpu_train", "success": False, "error": str(e), "time": 0}
     
-    def save_report(self, output: str = None):
+    def save_report(self, output: str = None):  # type: ignore
         """レポート保存"""
         if not output:
             output = f"/root/logs/mega_boost_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"

@@ -42,7 +42,7 @@ def _direct_comfyui_generate(payload: dict, comfyui_url: str | None = None) -> t
     base_url = _resolve_comfyui_base_url(comfyui_url)
 
     try:
-        ckpt_resp = requests.get(
+        ckpt_resp = requests.get(  # type: ignore[union-attr]
             f"{base_url}/object_info/CheckpointLoaderSimple",
             timeout=20,
         )
@@ -111,7 +111,7 @@ def _direct_comfyui_generate(payload: dict, comfyui_url: str | None = None) -> t
             },
         }
 
-        submit = requests.post(
+        submit = requests.post(  # type: ignore[union-attr]
             f"{base_url}/prompt",
             json={"prompt": workflow, "client_id": "manaos-generate-image-cli"},
             timeout=30,
@@ -180,7 +180,7 @@ def main() -> int:
     if args.jp:
         sd_prompt_url = f"{api_url}/api/sd-prompt/generate"
         try:
-            r = requests.post(
+            r = requests.post(  # type: ignore[union-attr]
                 sd_prompt_url,
                 json={"description": prompt, "with_negative": False},
                 timeout=90,

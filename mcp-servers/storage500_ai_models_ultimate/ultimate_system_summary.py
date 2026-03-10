@@ -206,7 +206,7 @@ class UltimateSystemSummary:
                 'cpu_usage': psutil.cpu_percent(interval=1),
                 'memory_usage': psutil.virtual_memory().percent,
                 'disk_usage': psutil.disk_usage('/').percent,
-                'load_average': os.getloadavg() if hasattr(os, 'getloadavg') else [0, 0, 0]
+                'load_average': os.getloadavg() if hasattr(os, 'getloadavg') else [0, 0, 0]  # type: ignore[attr-defined]
             }
         except Exception as e:
             return {'error': str(e)}

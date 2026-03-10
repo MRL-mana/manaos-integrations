@@ -29,7 +29,7 @@ class TestImageGenerateRequest:
 
     def test_minimal_request(self):
         """最小限のリクエスト（prompt のみ）"""
-        req = ImageGenerateRequest(prompt="a cat")
+        req = ImageGenerateRequest(prompt="a cat")  # type: ignore[call-arg]
         assert req.prompt == "a cat"
         assert req.width == 512
         assert req.height == 512
@@ -68,40 +68,40 @@ class TestImageGenerateRequest:
         assert req.steps == 50
         assert req.style == StylePreset.cyberpunk
         assert req.quality_mode == QualityMode.best
-        assert len(req.loras) == 1
+        assert len(req.loras) == 1  # type: ignore
 
     def test_prompt_too_short(self):
         """空プロンプトはバリデーションエラー"""
         with pytest.raises(Exception):
-            ImageGenerateRequest(prompt="")
+            ImageGenerateRequest(prompt="")  # type: ignore[call-arg]
 
     def test_width_bounds(self):
         """解像度の上限・下限チェック"""
         with pytest.raises(Exception):
-            ImageGenerateRequest(prompt="test", width=100)
+            ImageGenerateRequest(prompt="test", width=100)  # type: ignore[call-arg]
         with pytest.raises(Exception):
-            ImageGenerateRequest(prompt="test", width=4096)
+            ImageGenerateRequest(prompt="test", width=4096)  # type: ignore[call-arg]
 
     def test_steps_bounds(self):
         """ステップ数の上限・下限チェック"""
         with pytest.raises(Exception):
-            ImageGenerateRequest(prompt="test", steps=0)
+            ImageGenerateRequest(prompt="test", steps=0)  # type: ignore[call-arg]
         with pytest.raises(Exception):
-            ImageGenerateRequest(prompt="test", steps=200)
+            ImageGenerateRequest(prompt="test", steps=200)  # type: ignore[call-arg]
 
     def test_cfg_bounds(self):
         """CFG の上限・下限チェック"""
         with pytest.raises(Exception):
-            ImageGenerateRequest(prompt="test", cfg_scale=0.5)
+            ImageGenerateRequest(prompt="test", cfg_scale=0.5)  # type: ignore[call-arg]
         with pytest.raises(Exception):
-            ImageGenerateRequest(prompt="test", cfg_scale=35.0)
+            ImageGenerateRequest(prompt="test", cfg_scale=35.0)  # type: ignore[call-arg]
 
     def test_batch_size_bounds(self):
         """バッチサイズの上限"""
         with pytest.raises(Exception):
-            ImageGenerateRequest(prompt="test", batch_size=0)
+            ImageGenerateRequest(prompt="test", batch_size=0)  # type: ignore[call-arg]
         with pytest.raises(Exception):
-            ImageGenerateRequest(prompt="test", batch_size=10)
+            ImageGenerateRequest(prompt="test", batch_size=10)  # type: ignore[call-arg]
 
 
 # ─── QualityScore ────────────────────────────────────
@@ -110,7 +110,7 @@ class TestQualityScore:
 
     def test_all_none(self):
         """全フィールド None (初期状態)"""
-        qs = QualityScore()
+        qs = QualityScore()  # type: ignore[call-arg]
         assert qs.clip_score is None
         assert qs.overall is None
 
@@ -130,14 +130,14 @@ class TestQualityScore:
     def test_clip_score_bounds(self):
         """CLIP スコアは 0-1"""
         with pytest.raises(Exception):
-            QualityScore(clip_score=1.5)
+            QualityScore(clip_score=1.5)  # type: ignore[call-arg]
         with pytest.raises(Exception):
-            QualityScore(clip_score=-0.1)
+            QualityScore(clip_score=-0.1)  # type: ignore[call-arg]
 
     def test_aesthetic_score_bounds(self):
         """美的スコアは 0-10"""
         with pytest.raises(Exception):
-            QualityScore(aesthetic_score=11.0)
+            QualityScore(aesthetic_score=11.0)  # type: ignore[call-arg]
 
 
 # ─── ImageGenerateResponse ───────────────────────────
@@ -146,7 +146,7 @@ class TestImageGenerateResponse:
 
     def test_default_response(self):
         """デフォルトレスポンス"""
-        resp = ImageGenerateResponse()
+        resp = ImageGenerateResponse()  # type: ignore[call-arg]
         # uuid4 形式
         UUID(resp.job_id)
         assert resp.status == JobStatus.queued
@@ -157,19 +157,19 @@ class TestImageGenerateResponse:
 
     def test_completed_response(self):
         """完了レスポンス"""
-        resp = ImageGenerateResponse(
+        resp = ImageGenerateResponse(  # type: ignore[call-arg]
             status=JobStatus.completed,
             prompt="a cat",
             seed=42,
             image_url="/images/cat.png",
-            quality_score=QualityScore(overall=8.5),
+            quality_score=QualityScore(overall=8.5),  # type: ignore[call-arg]
             generation_time_ms=5000,
             cost_estimate_yen=0.012,
             message="Done",
         )
         assert resp.status == JobStatus.completed
         assert resp.generation_time_ms == 5000
-        assert resp.quality_score.overall == 8.5
+        assert resp.quality_score.overall == 8.5  # type: ignore[union-attr]
 
 
 # ─── JobStatus Enum ──────────────────────────────────
@@ -204,7 +204,7 @@ class TestStylePreset:
 class TestErrorResponse:
 
     def test_basic_error(self):
-        err = ErrorResponse(error="NOT_FOUND", message="Job not found")
+        err = ErrorResponse(error="NOT_FOUND", message="Job not found")  # type: ignore[call-arg]
         assert err.error == "NOT_FOUND"
         assert err.detail is None
 
@@ -214,7 +214,7 @@ class TestErrorResponse:
             message="Invalid parameter",
             detail={"field": "width", "max": 2048},
         )
-        assert err.detail["field"] == "width"
+        assert err.detail["field"] == "width"  # type: ignore[index]
 
 
 if __name__ == "__main__":

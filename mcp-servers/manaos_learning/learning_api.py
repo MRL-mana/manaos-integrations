@@ -190,7 +190,7 @@ class LearningAPI:
             replace: 置換文字列
             replace_func: 置換関数名
         """
-        self.rule_engine.add_rule(
+        self.rule_engine.add_rule(  # type: ignore
             rule_id=rule_id,
             target=target,
             pattern=pattern,

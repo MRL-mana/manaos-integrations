@@ -21,7 +21,7 @@ from tools.lm_studio_model_selector import ModelSelectionConfig, select_models
 class EnsembleOCRCorrector:
     """複数モデルでアンサンブル修正"""
     
-    def __init__(self, models: List[str] = None):
+    def __init__(self, models: List[str] = None):  # type: ignore
         """
         初期化
         

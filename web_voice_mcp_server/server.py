@@ -22,8 +22,8 @@ except Exception:  # pragma: no cover
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 # パスを追加
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -36,7 +36,7 @@ try:
     MCP_AVAILABLE = True
 except ImportError:
     MCP_AVAILABLE = False
-    logging.warning("MCP SDKがインストールされていません。pip install mcp を実行してください。")
+    logging.warning("MCP SDKがインストールされていません。pip install mcp を実行してください。")  # type: ignore[name-defined]
 
 logger = get_service_logger("server")
 
@@ -45,7 +45,7 @@ WEB_VOICE_API_URL = os.getenv("WEB_VOICE_API_URL", f"http://127.0.0.1:{WINDOWS_A
 
 # MCPサーバーの初期化
 if MCP_AVAILABLE:
-    app = Server("web-voice")
+    app = Server("web-voice")  # type: ignore[possibly-unbound]
 else:
     app = None
 
@@ -70,16 +70,16 @@ def call_api(endpoint: str, method: str = "GET", data: Optional[Dict[str, Any]] 
 
 
 if MCP_AVAILABLE:
-    @app.list_tools()
+    @app.list_tools()  # type: ignore[union-attr]
     async def list_tools() -> List[Tool]:
         """利用可能なツール一覧を返す"""
         return [
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="web_voice_health",
                 description="Web Voice Interfaceのヘルスチェック",
                 inputSchema={"type": "object", "properties": {}}
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="web_voice_execute",
                 description="音声認識結果を実行します",
                 inputSchema={
@@ -91,7 +91,7 @@ if MCP_AVAILABLE:
                     "required": ["text"]
                 }
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="web_voice_text_execute",
                 description="テキストコマンドを実行します",
                 inputSchema={
@@ -103,14 +103,14 @@ if MCP_AVAILABLE:
                     "required": ["text"]
                 }
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="web_voice_status",
                 description="Web Voice Interfaceのステータスを取得します",
                 inputSchema={"type": "object", "properties": {}}
             )
         ]
     
-    @app.call_tool()
+    @app.call_tool()  # type: ignore[union-attr]
     async def call_tool(name: str, arguments: Any) -> List[TextContent]:
         """ツールを実行"""
         try:
@@ -127,7 +127,7 @@ if MCP_AVAILABLE:
             else:
                 result = {"error": f"Unknown tool: {name}"}
             
-            return [TextContent(
+            return [TextContent(  # type: ignore[possibly-unbound]
                 type="text",
                 text=json.dumps(result, ensure_ascii=False, indent=2)
             )]
@@ -136,7 +136,7 @@ if MCP_AVAILABLE:
             logger.error(f"ツール実行エラー ({name}): {e}")
             import traceback
             logger.error(traceback.format_exc())
-            return [TextContent(
+            return [TextContent(  # type: ignore[possibly-unbound]
                 type="text",
                 text=json.dumps({"error": str(e)}, ensure_ascii=False)
             )]
@@ -148,11 +148,11 @@ async def main():
         logger.error("MCP SDKが利用できません")
         sys.exit(1)
     
-    async with stdio_server() as (read_stream, write_stream):
-        await app.run(
+    async with stdio_server() as (read_stream, write_stream):  # type: ignore[possibly-unbound]
+        await app.run(  # type: ignore[union-attr]
             read_stream,
             write_stream,
-            app.create_initialization_options()
+            app.create_initialization_options()  # type: ignore[union-attr]
         )
 
 

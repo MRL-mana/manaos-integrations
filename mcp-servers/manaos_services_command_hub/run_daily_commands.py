@@ -163,7 +163,7 @@ def main():
     # Slack通知（オプション）
     if SLACK_AVAILABLE:
         try:
-            notify_daily_summary(success_count, total_count, summary_text)
+            notify_daily_summary(success_count, total_count, summary_text)  # type: ignore[possibly-unbound]
         except Exception as e:
             logger.warning(f"Failed to send Slack notification: {e}")
 

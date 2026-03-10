@@ -1,5 +1,5 @@
 import requests, json, sys
-sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 pid = 'd432c0e0-3d68-4a4e-857f-ac28e804b5f3'
 r = requests.get(f'http://127.0.0.1:8188/history/{pid}', timeout=10)

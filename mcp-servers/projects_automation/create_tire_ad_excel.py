@@ -14,15 +14,15 @@ class TireAdExcelCreator:
     def __init__(self):
         self.workbook = openpyxl.Workbook()
         self.worksheet = self.workbook.active
-        self.worksheet.title = "タイヤ交換広告"
+        self.worksheet.title = "タイヤ交換広告"  # type: ignore[union-attr]
         
         # カスタムサイズ設定 (1200x800px相当)
-        self.worksheet.row_dimensions[1].height = 600  # 上部60%
-        self.worksheet.row_dimensions[2].height = 400  # 下部40%
+        self.worksheet.row_dimensions[1].height = 600  # 上部60%  # type: ignore[union-attr]
+        self.worksheet.row_dimensions[2].height = 400  # 下部40%  # type: ignore[union-attr]
         
         # 列幅調整
         for col in range(1, 21):  # A-T列
-            self.worksheet.column_dimensions[get_column_letter(col)].width = 6
+            self.worksheet.column_dimensions[get_column_letter(col)].width = 6  # type: ignore[union-attr]
         
     def create_tire_ad(self):
         """タイヤ交換広告を作成"""
@@ -46,19 +46,19 @@ class TireAdExcelCreator:
         # 上部エリアの背景色（雪の白）
         tire_area = "A1:T1"
         fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
-        self.worksheet.merge_cells(tire_area)
-        self.worksheet['A1'].fill = fill
+        self.worksheet.merge_cells(tire_area)  # type: ignore[union-attr]
+        self.worksheet['A1'].fill = fill  # type: ignore[index]
         
         # タイヤ画像の代わりにテキストで表現
-        self.worksheet['A1'].value = "❄️ タイヤの履き替えは当店で ❄️"
-        self.worksheet['A1'].font = Font(name='メイリオ', size=24, bold=True, color="2C3E50")
-        self.worksheet['A1'].alignment = Alignment(horizontal='center', vertical='center')
+        self.worksheet['A1'].value = "❄️ タイヤの履き替えは当店で ❄️"  # type: ignore[index]
+        self.worksheet['A1'].font = Font(name='メイリオ', size=24, bold=True, color="2C3E50")  # type: ignore[index]
+        self.worksheet['A1'].alignment = Alignment(horizontal='center', vertical='center')  # type: ignore[index]
         
         # 雪の装飾
-        self.worksheet['D1'] = "❄"
-        self.worksheet['D1'].font = Font(size=20)
-        self.worksheet['Q1'] = "❄"
-        self.worksheet['Q1'].font = Font(size=20)
+        self.worksheet['D1'] = "❄"  # type: ignore[index]
+        self.worksheet['D1'].font = Font(size=20)  # type: ignore[index]
+        self.worksheet['Q1'] = "❄"  # type: ignore[index]
+        self.worksheet['Q1'].font = Font(size=20)  # type: ignore[index]
         
     def create_text_area(self):
         """下部40% - テキストエリア"""
@@ -66,19 +66,19 @@ class TireAdExcelCreator:
         # ダークブルー背景
         text_area = "A2:T2"
         fill = PatternFill(start_color="1e3a8a", end_color="1e3a8a", fill_type="solid")
-        self.worksheet.merge_cells(text_area)
-        self.worksheet['A2'].fill = fill
+        self.worksheet.merge_cells(text_area)  # type: ignore[union-attr]
+        self.worksheet['A2'].fill = fill  # type: ignore[index]
         
         # メインテキスト
         main_text = "タイヤ交換は\nかんたんネット予約"
-        self.worksheet['K2'] = main_text
-        self.worksheet['K2'].font = Font(name='メイリオ', size=32, bold=True, color="e11d48")
-        self.worksheet['K2'].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        self.worksheet['K2'] = main_text  # type: ignore[index]
+        self.worksheet['K2'].font = Font(name='メイリオ', size=32, bold=True, color="e11d48")  # type: ignore[index]
+        self.worksheet['K2'].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)  # type: ignore[index]
         
         # CTAボタン（セルで表現）
         button_area = "I3:L3"
         button_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
-        self.worksheet.merge_cells(button_area)
+        self.worksheet.merge_cells(button_area)  # type: ignore[union-attr]
         
         # ボーダー
         thin_border = Border(
@@ -87,18 +87,18 @@ class TireAdExcelCreator:
             top=Side(style='thin', color='CCCCCC'),
             bottom=Side(style='thin', color='CCCCCC')
         )
-        self.worksheet['I3'].border = thin_border
-        self.worksheet['I3'].fill = button_fill
+        self.worksheet['I3'].border = thin_border  # type: ignore[index]
+        self.worksheet['I3'].fill = button_fill  # type: ignore[index]
         
         # ボタンテキスト
-        self.worksheet['K3'] = "予約はこちら"
-        self.worksheet['K3'].font = Font(name='メイリオ', size=16, bold=True, color="000000")
-        self.worksheet['K3'].alignment = Alignment(horizontal='center', vertical='center')
+        self.worksheet['K3'] = "予約はこちら"  # type: ignore[index]
+        self.worksheet['K3'].font = Font(name='メイリオ', size=16, bold=True, color="000000")  # type: ignore[index]
+        self.worksheet['K3'].alignment = Alignment(horizontal='center', vertical='center')  # type: ignore[index]
         
         # 指差しアイコン
-        self.worksheet['M3'] = "👉"
-        self.worksheet['M3'].font = Font(size=16)
-        self.worksheet['M3'].alignment = Alignment(horizontal='center', vertical='center')
+        self.worksheet['M3'] = "👉"  # type: ignore[index]
+        self.worksheet['M3'].font = Font(size=16)  # type: ignore[index]
+        self.worksheet['M3'].alignment = Alignment(horizontal='center', vertical='center')  # type: ignore[index]
 
 def main():
     """メイン実行関数"""

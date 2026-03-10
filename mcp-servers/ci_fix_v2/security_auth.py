@@ -92,7 +92,7 @@ class JWTManager:
     def create_access_token(
         user_id: str,
         role: UserRole,
-        scopes: list[str] = None,
+        scopes: list[str] = None,  # type: ignore
         expires_delta: Optional[timedelta] = None
     ) -> str:
         """アクセストークン作成"""
@@ -153,8 +153,8 @@ class JWTManager:
             user_id = payload.get("user_id")
             role = payload.get("role")
             scopes = payload.get("scopes", [])
-            exp = datetime.fromtimestamp(payload.get("exp"))
-            iat = datetime.fromtimestamp(payload.get("iat"))
+            exp = datetime.fromtimestamp(payload.get("exp"))  # type: ignore
+            iat = datetime.fromtimestamp(payload.get("iat"))  # type: ignore
             
             if user_id is None:
                 raise HTTPException(
@@ -289,7 +289,7 @@ class AuthDependencies:
     
     @staticmethod
     async def get_admin_user(
-        current_user: User = Depends(get_current_user.__func__)
+        current_user: User = Depends(get_current_user.__func__)  # type: ignore
     ) -> User:
         """管理者権限チェック"""
         if current_user.role != UserRole.ADMIN:

@@ -25,7 +25,7 @@ except ImportError:
 
     get_logger = lambda n: logging.getLogger(n)
 
-logger = get_service_logger("orchestrator-operational-metrics")
+logger = get_service_logger("orchestrator-operational-metrics")  # type: ignore[possibly-unbound]
 
 # 設定（環境変数で上書き可）
 SUPPRESSION_MINUTES = int(os.getenv("ORCHESTRATOR_ALERT_SUPPRESSION_MINUTES", "30"))
@@ -216,7 +216,7 @@ def notify_slack(
 
     # 既存の slack_integration（SLACK_BOT_TOKEN / 渡してあるSlack）を優先して利用
     try:
-        from slack_integration import send_to_slack
+        from slack_integration import send_to_slack  # type: ignore[attr-defined]
 
         channel = (ORCHESTRATOR_ALERT_CHANNEL or "").strip() or None
         send_to_slack(text, channel=channel)

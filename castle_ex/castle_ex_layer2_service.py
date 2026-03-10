@@ -171,7 +171,7 @@ class Layer2InferenceService:
                 self._detach_lora()
 
             tok = self._tokenizer
-            inputs = tok(prompt, return_tensors="pt").to(self._model.device)
+            inputs = tok(prompt, return_tensors="pt").to(self._model.device)  # type: ignore[operator, union-attr]
             input_len = inputs["input_ids"].shape[1]
 
             gen_kwargs: dict = dict(
@@ -180,18 +180,18 @@ class Layer2InferenceService:
                 repetition_penalty=repetition_penalty,
                 no_repeat_ngram_size=no_repeat_ngram_size,
                 do_sample=do_sample,
-                pad_token_id=tok.pad_token_id,
-                eos_token_id=tok.eos_token_id,
+                pad_token_id=tok.pad_token_id,  # type: ignore[union-attr]
+                eos_token_id=tok.eos_token_id,  # type: ignore[union-attr]
             )
             if do_sample:
                 gen_kwargs["temperature"] = temperature
 
             with torch.no_grad():
-                out = self._model.generate(**gen_kwargs)
+                out = self._model.generate(**gen_kwargs)  # type: ignore[union-attr]
 
         # 入力部分を除いたトークンだけデコード
         generated_ids = out[0][input_len:]
-        text = tok.decode(generated_ids, skip_special_tokens=True).strip()
+        text = tok.decode(generated_ids, skip_special_tokens=True).strip()  # type: ignore[union-attr]
         return text
 
     # -- ヘルスチェック用 ---------------------------------------------------- #

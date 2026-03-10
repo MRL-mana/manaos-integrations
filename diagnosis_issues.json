@@ -483,5 +483,538 @@
       "パフォーマンス最適化を検討してください"
     ],
     "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773020993",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "CPU使用率が高い: 99.6%",
+    "component": "cpu",
+    "detected_at": "2026-03-09T10:49:53.553337",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773021010",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-09T10:50:10.493830",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773021010",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "CPU使用率が高い: 99.9%",
+    "component": "cpu",
+    "detected_at": "2026-03-09T10:50:10.493901",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773036329",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 93.7%",
+    "component": "memory",
+    "detected_at": "2026-03-09T15:05:29.570992",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773036344",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 91.0%",
+    "component": "memory",
+    "detected_at": "2026-03-09T15:05:44.317206",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773037078",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-09T15:17:58.505062",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773037078",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "CPU使用率が高い: 100.0%",
+    "component": "cpu",
+    "detected_at": "2026-03-09T15:17:58.505097",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773037092",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-09T15:18:12.962746",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773037092",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "CPU使用率が高い: 100.0%",
+    "component": "cpu",
+    "detected_at": "2026-03-09T15:18:12.962782",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773037125",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-09T15:18:45.214994",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773037125",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "CPU使用率が高い: 100.0%",
+    "component": "cpu",
+    "detected_at": "2026-03-09T15:18:45.215023",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773037778",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-09T15:29:38.686954",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773037778",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "CPU使用率が高い: 100.0%",
+    "component": "cpu",
+    "detected_at": "2026-03-09T15:29:38.687054",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773037801",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-09T15:30:01.771544",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773037801",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "CPU使用率が高い: 100.0%",
+    "component": "cpu",
+    "detected_at": "2026-03-09T15:30:01.771630",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773042491",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "CPU使用率が高い: 91.2%",
+    "component": "cpu",
+    "detected_at": "2026-03-09T16:48:11.953557",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773098804",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T08:26:44.542109",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773098804",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 96.2%",
+    "component": "memory",
+    "detected_at": "2026-03-10T08:26:44.542137",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773098817",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T08:26:57.153145",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773098817",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 97.2%",
+    "component": "memory",
+    "detected_at": "2026-03-10T08:26:57.153175",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773099072",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 92.7%",
+    "component": "memory",
+    "detected_at": "2026-03-10T08:31:12.270104",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773099084",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 92.2%",
+    "component": "memory",
+    "detected_at": "2026-03-10T08:31:24.893169",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773103161",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 92.3%",
+    "component": "memory",
+    "detected_at": "2026-03-10T09:39:21.431657",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773103173",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T09:39:33.901493",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773103173",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 95.7%",
+    "component": "memory",
+    "detected_at": "2026-03-10T09:39:33.901522",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773103317",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T09:41:57.031439",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773103317",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 99.0%",
+    "component": "memory",
+    "detected_at": "2026-03-10T09:41:57.031467",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773103329",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T09:42:09.674629",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773103329",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 98.6%",
+    "component": "memory",
+    "detected_at": "2026-03-10T09:42:09.674662",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773103745",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T09:49:05.636492",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773103745",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 99.0%",
+    "component": "memory",
+    "detected_at": "2026-03-10T09:49:05.636521",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773103758",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T09:49:18.311440",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773103758",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 99.3%",
+    "component": "memory",
+    "detected_at": "2026-03-10T09:49:18.311469",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773106069",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 94.5%",
+    "component": "memory",
+    "detected_at": "2026-03-10T10:27:49.190355",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773106083",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 94.4%",
+    "component": "memory",
+    "detected_at": "2026-03-10T10:28:03.724248",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773108862",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T11:14:22.157889",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773108862",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 98.6%",
+    "component": "memory",
+    "detected_at": "2026-03-10T11:14:22.157919",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773108876",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T11:14:36.710550",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773108876",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 98.4%",
+    "component": "memory",
+    "detected_at": "2026-03-10T11:14:36.710580",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773115209",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T13:00:09.961200",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773115209",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 99.3%",
+    "component": "memory",
+    "detected_at": "2026-03-10T13:00:09.961233",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773115232",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T13:00:32.644414",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773115232",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 98.7%",
+    "component": "memory",
+    "detected_at": "2026-03-10T13:00:32.644447",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
   }
 ]

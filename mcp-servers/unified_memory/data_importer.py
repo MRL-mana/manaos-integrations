@@ -184,7 +184,7 @@ class DataImporter:
             
         except Exception as e:
             logger.error(f"  ❌ Trinity Memory: {e}")
-            result['error'] = str(e)
+            result['error'] = str(e)  # type: ignore
         
         return result
     
@@ -236,7 +236,7 @@ class DataImporter:
             
         except Exception as e:
             logger.error(f"  ❌ Context Memory: {e}")
-            result['error'] = str(e)
+            result['error'] = str(e)  # type: ignore
         
         return result
     
@@ -285,7 +285,7 @@ class DataImporter:
             
         except Exception as e:
             logger.error(f"  ❌ ManaOS Metrics: {e}")
-            result['error'] = str(e)
+            result['error'] = str(e)  # type: ignore
         
         return result
     

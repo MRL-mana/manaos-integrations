@@ -49,7 +49,7 @@ class GitHubIntegration(BaseIntegration):
             return False
         
         try:
-            self.github = Github(self.token)
+            self.github = Github(self.token)  # type: ignore[possibly-unbound]
             # 接続テスト
             self.github.get_user().login
             self.logger.info("GitHub統合を初期化しました")
@@ -87,7 +87,7 @@ class GitHubIntegration(BaseIntegration):
             return None
         
         try:
-            repo_obj = self.github.get_repo(f"{owner}/{repo}")
+            repo_obj = self.github.get_repo(f"{owner}/{repo}")  # type: ignore[union-attr]
             return {
                 "name": repo_obj.name,
                 "full_name": repo_obj.full_name,
@@ -131,7 +131,7 @@ class GitHubIntegration(BaseIntegration):
             return []
         
         try:
-            repos = self.github.search_repositories(
+            repos = self.github.search_repositories(  # type: ignore[union-attr]
                 query=query,
                 sort=sort,
                 order=order
@@ -140,13 +140,13 @@ class GitHubIntegration(BaseIntegration):
             results = []
             for repo in repos[:per_page]:
                 results.append({
-                    "name": repo.name,
-                    "full_name": repo.full_name,
-                    "description": repo.description,
-                    "stars": repo.stargazers_count,
-                    "forks": repo.forks_count,
-                    "language": repo.language,
-                    "url": repo.html_url
+                    "name": repo.name,  # type: ignore
+                    "full_name": repo.full_name,  # type: ignore
+                    "description": repo.description,  # type: ignore
+                    "stars": repo.stargazers_count,  # type: ignore
+                    "forks": repo.forks_count,  # type: ignore
+                    "language": repo.language,  # type: ignore
+                    "url": repo.html_url  # type: ignore
                 })
             
             self.logger.info(f"リポジトリ検索完了: {len(results)}件")
@@ -175,7 +175,7 @@ class GitHubIntegration(BaseIntegration):
             return []
         
         try:
-            user = self.github.get_user(username)
+            user = self.github.get_user(username)  # type: ignore[union-attr]
             repos = user.get_repos()
             
             results = []

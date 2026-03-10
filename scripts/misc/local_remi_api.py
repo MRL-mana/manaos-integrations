@@ -2851,7 +2851,7 @@ async def _proxy_get(url: str, timeout: float = 10.0) -> dict:
         return resp.json()
 
 
-async def _proxy_post(url: str, data: dict = None, timeout: float = 15.0) -> dict:
+async def _proxy_post(url: str, data: dict = None, timeout: float = 15.0) -> dict:  # type: ignore
     """Proxy POST to internal service"""
     async with httpx.AsyncClient(timeout=timeout) as client:
         resp = await client.post(url, json=data or {})
@@ -2984,4 +2984,4 @@ if __name__ == "__main__":
     else:
         print(f"[Remi] Running HTTP (no Tailscale certs at {cert_dir})")
         print(f"[Remi] To enable HTTPS: tailscale cert <hostname> && copy to {cert_dir}")
-    uvicorn.run(app, host="0.0.0.0", port=5050, log_level="info", **ssl_kwargs)
+    uvicorn.run(app, host="0.0.0.0", port=5050, log_level="info", **ssl_kwargs)  # type: ignore

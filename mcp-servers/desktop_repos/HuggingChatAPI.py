@@ -68,18 +68,18 @@ class HuggingChat(LLM):
                 # Create a ChatBot using cookie_path
                 cookies = self.cookie_path and hugchat.ChatBot(cookie_path=self.cookie_path)
             
-            self.chatbot = cookies.get_dict() and hugchat.ChatBot(cookies=cookies.get_dict())
+            self.chatbot = cookies.get_dict() and hugchat.ChatBot(cookies=cookies.get_dict())  # type: ignore[union-attr]
             if self.log : print(f"[LOG] LLM WRAPPER created successfully")
             
         except Exception as e:
             raise ValueError("LogIn failed. Please check your credentials or cookie_path. " + str(e))
 
         # Setup ChatBot info
-        self.chatbot.switch_llm(self.model)
+        self.chatbot.switch_llm(self.model)  # type: ignore[union-attr]
         if self.log : print(f"[LOG] LLM WRAPPER switched to model { 'OpenAssistant/oasst-sft-6-llama-30b-xor' if self.model == 0 else 'meta-llama/Llama-2-70b-chat-hf'}")
 
-        self.conversation = self.conversation or self.chatbot.new_conversation()
-        self.chatbot.change_conversation(self.conversation)
+        self.conversation = self.conversation or self.chatbot.new_conversation()  # type: ignore[union-attr]
+        self.chatbot.change_conversation(self.conversation)  # type: ignore[union-attr]
         if self.log : print(f"[LOG] LLM WRAPPER changed conversation to {self.conversation}\n")
         
 
@@ -99,7 +99,7 @@ class HuggingChat(LLM):
         try:
             if self.log : print(f"[LOG] LLM WRAPPER called with prompt: {prompt}")
             start_time = time.time()
-            resp = self.chatbot.chat(
+            resp = self.chatbot.chat(  # type: ignore[union-attr]
                 prompt,
                 temperature=self.temperature,
                 top_p=self.top_p,

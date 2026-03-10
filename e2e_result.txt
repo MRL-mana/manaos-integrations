@@ -1,0 +1,13 @@
+============================= test session starts =============================
+collected 37 items
+
+tests\e2e\test_all_features.py ....                                      [ 10%]
+tests\e2e\test_final_checklist.py .....                                  [ 24%]
+tests\e2e\test_final_checklist_stable.py .....                           [ 37%]
+tests\e2e\test_full_workflow.py ........                                 [ 59%]
+tests\e2e\test_service_health_checks.py ...                              [ 67%]
+tests\e2e\test_ultimate.py .                                             [ 70%]
+tests\e2e\test_ultra_integrated.py .                                     [ 72%]
+tests\e2e\test_unified_workflow.py ..........                            [100%]
+
+====================== 37 passed, 10 warnings in 12.42s =======================

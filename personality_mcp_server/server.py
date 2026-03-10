@@ -92,22 +92,22 @@ def _start_health_server():
 
 # ── MCP サーバー ────────────────────────────────────
 if MCP_AVAILABLE:
-    server = Server("personality-system")
+    server = Server("personality-system")  # type: ignore[possibly-unbound]
 
     @server.list_tools()
     async def list_tools() -> list[Tool]:
         return [
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="personality_get_persona",
                 description="現在のペルソナ（人格プロファイル）を取得。名前・特性・トーン・スタイルを返す。",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="personality_get_prompt",
                 description="現在のペルソナに基づくシステムプロンプトを生成して返す。LLMへのsystem instructionに使用。",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="personality_apply_to_prompt",
                 description="任意のプロンプトテキストにペルソナのスタイルを適用して返す。",
                 inputSchema={
@@ -121,7 +121,7 @@ if MCP_AVAILABLE:
                     "required": ["prompt"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="personality_update_persona",
                 description="ペルソナを更新する。name, traits, tone, response_style を指定可能。",
                 inputSchema={
@@ -167,7 +167,7 @@ if MCP_AVAILABLE:
         else:
             result = {"error": f"Unknown tool: {name}"}
 
-        return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]
+        return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]  # type: ignore[possibly-unbound]
 
 
 async def main():
@@ -179,7 +179,7 @@ async def main():
     health_thread = threading.Thread(target=_start_health_server, daemon=True)
     health_thread.start()
 
-    async with stdio_server() as (read_stream, write_stream):
+    async with stdio_server() as (read_stream, write_stream):  # type: ignore[possibly-unbound]
         await server.run(
             read_stream,
             write_stream,

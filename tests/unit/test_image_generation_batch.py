@@ -25,7 +25,7 @@ from image_generation_service.models import (
 
 def _make_response(score: float, time_ms: int = 5000, cost: float = 0.5) -> ImageGenerateResponse:
     """テスト用レスポンス生成"""
-    return ImageGenerateResponse(
+    return ImageGenerateResponse(  # type: ignore[call-arg]
         status=JobStatus.completed,
         prompt="test prompt",
         seed=42,
@@ -63,7 +63,7 @@ class TestBatchResult:
             total_time_ms=5000,
             score_spread=2.0,
         )
-        assert r.best.quality_score.overall == 7.5
+        assert r.best.quality_score.overall == 7.5  # type: ignore[union-attr]
         assert r.total_cost_yen == 1.5
 
 
@@ -79,11 +79,11 @@ class TestBatchGenerator:
     def test_generate_batch_picks_best(self):
         resps = [_make_response(5.0), _make_response(8.0), _make_response(6.0)]
         bg = self._make_generator(resps)
-        req = ImageGenerateRequest(prompt="test batch")
+        req = ImageGenerateRequest(prompt="test batch")  # type: ignore[call-arg]
 
         result = asyncio.run(bg.generate_batch(req, count=3))
         assert result.best is not None
-        assert result.best.quality_score.overall == 8.0
+        assert result.best.quality_score.overall == 8.0  # type: ignore[union-attr]
         assert len(result.all_results) == 3
         assert result.score_spread == 3.0  # 8.0 - 5.0
 
@@ -94,15 +94,15 @@ class TestBatchGenerator:
             _make_response(7.0, time_ms=5000),
         ]
         bg = self._make_generator(resps)
-        req = ImageGenerateRequest(prompt="test speed")
+        req = ImageGenerateRequest(prompt="test speed")  # type: ignore[call-arg]
 
         result = asyncio.run(bg.generate_batch(req, count=3, strategy="speed"))
-        assert result.best.generation_time_ms == 2000
+        assert result.best.generation_time_ms == 2000  # type: ignore[union-attr]
 
     def test_generate_batch_count_clamped(self):
         resps = [_make_response(7.0)]
         bg = self._make_generator(resps)
-        req = ImageGenerateRequest(prompt="test clamp")
+        req = ImageGenerateRequest(prompt="test clamp")  # type: ignore[call-arg]
 
         result = asyncio.run(bg.generate_batch(req, count=0))  # clamped to 1
         assert len(result.all_results) == 1
@@ -110,7 +110,7 @@ class TestBatchGenerator:
     def test_generate_batch_handles_exceptions(self):
         resps = [_make_response(7.0), Exception("GPU OOM"), _make_response(6.0)]
         bg = self._make_generator(resps)
-        req = ImageGenerateRequest(prompt="test error")
+        req = ImageGenerateRequest(prompt="test error")  # type: ignore[call-arg]
 
         result = asyncio.run(bg.generate_batch(req, count=3))
         assert len(result.all_results) == 2  # 1 exception filtered
@@ -118,7 +118,7 @@ class TestBatchGenerator:
     def test_generate_batch_all_fail(self):
         resps = [Exception("fail1"), Exception("fail2")]
         bg = self._make_generator(resps)
-        req = ImageGenerateRequest(prompt="test all fail")
+        req = ImageGenerateRequest(prompt="test all fail")  # type: ignore[call-arg]
 
         result = asyncio.run(bg.generate_batch(req, count=2))
         assert result.best is None
@@ -126,7 +126,7 @@ class TestBatchGenerator:
     def test_generate_batch_total_cost(self):
         resps = [_make_response(7.0, cost=0.5), _make_response(8.0, cost=0.8)]
         bg = self._make_generator(resps)
-        req = ImageGenerateRequest(prompt="test cost")
+        req = ImageGenerateRequest(prompt="test cost")  # type: ignore[call-arg]
 
         result = asyncio.run(bg.generate_batch(req, count=2))
         assert result.total_cost_yen == 1.3
@@ -139,8 +139,8 @@ class TestBatchGenerator:
         ])
         bg = BatchGenerator(mock_service)
 
-        req_a = ImageGenerateRequest(prompt="prompt A")
-        req_b = ImageGenerateRequest(prompt="prompt B")
+        req_a = ImageGenerateRequest(prompt="prompt A")  # type: ignore[call-arg]
+        req_b = ImageGenerateRequest(prompt="prompt B")  # type: ignore[call-arg]
 
         result = asyncio.run(bg.ab_compare(req_a, req_b))
         assert result["winner"] == "A"
@@ -157,8 +157,8 @@ class TestBatchGenerator:
         bg = BatchGenerator(mock_service)
 
         result = asyncio.run(bg.ab_compare(
-            ImageGenerateRequest(prompt="A"),
-            ImageGenerateRequest(prompt="B"),
+            ImageGenerateRequest(prompt="A"),  # type: ignore[call-arg]
+            ImageGenerateRequest(prompt="B"),  # type: ignore[call-arg]
         ))
         assert result["winner"] == "B"
 
@@ -171,8 +171,8 @@ class TestBatchGenerator:
         bg = BatchGenerator(mock_service)
 
         result = asyncio.run(bg.ab_compare(
-            ImageGenerateRequest(prompt="A"),
-            ImageGenerateRequest(prompt="B"),
+            ImageGenerateRequest(prompt="A"),  # type: ignore[call-arg]
+            ImageGenerateRequest(prompt="B"),  # type: ignore[call-arg]
         ))
         assert result["winner"] == "A"
         assert result["b"] is None

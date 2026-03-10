@@ -71,20 +71,20 @@ HEALTH_PORT = int(os.getenv("PICO_HID_MCP_HEALTH_PORT", "5136"))
 
 def _get_client():
     """クライアントを取得（毎回取得・使い捨て）"""
-    return get_client()
+    return get_client()  # type: ignore[possibly-unbound]
 
 
 def _backend_info():
     """現在のバックエンド情報"""
-    pico_port = find_pico_port()
+    pico_port = find_pico_port()  # type: ignore[possibly-unbound]
     return {
-        "pynput_available": _has_pynput,
-        "pyserial_available": _has_serial,
+        "pynput_available": _has_pynput,  # type: ignore[possibly-unbound]
+        "pyserial_available": _has_serial,  # type: ignore[possibly-unbound]
         "pico_port": pico_port,
         "active_backend": (
-            "pico" if (not use_pc_backend() and pico_port) else "pc_pynput"
+            "pico" if (not use_pc_backend() and pico_port) else "pc_pynput"  # type: ignore[possibly-unbound]
         ),
-        "screen_size": list(screen_size()),
+        "screen_size": list(screen_size()),  # type: ignore[possibly-unbound]
     }
 
 
@@ -120,12 +120,12 @@ def _start_health_server():
 
 # ── MCP サーバー ────────────────────────────────────
 if MCP_AVAILABLE:
-    server = Server("pico-hid")
+    server = Server("pico-hid")  # type: ignore[possibly-unbound]
 
     @server.list_tools()
     async def list_tools() -> list[Tool]:
         return [
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="hid_mouse_move",
                 description="マウスを相対移動（dx, dy ピクセル）。Picoまたはpynputで動作。",
                 inputSchema={
@@ -143,7 +143,7 @@ if MCP_AVAILABLE:
                     "required": ["dx", "dy"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="hid_mouse_move_abs",
                 description="マウスを画面の絶対座標(x, y)に移動。PC(pynput)バックエンドのみ対応。",
                 inputSchema={
@@ -155,7 +155,7 @@ if MCP_AVAILABLE:
                     "required": ["x", "y"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="hid_mouse_click",
                 description="マウスをクリック（left/right/middle）",
                 inputSchema={
@@ -169,7 +169,7 @@ if MCP_AVAILABLE:
                     },
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="hid_mouse_click_at",
                 description="指定座標(x, y)に移動してクリック。PC(pynput)バックエンドのみ対応。",
                 inputSchema={
@@ -186,7 +186,7 @@ if MCP_AVAILABLE:
                     "required": ["x", "y"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="hid_mouse_scroll",
                 description="マウスホイールスクロール（正=上、負=下）",
                 inputSchema={
@@ -200,12 +200,12 @@ if MCP_AVAILABLE:
                     "required": ["amount"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="hid_mouse_position",
                 description="マウスの現在のスクリーン座標(x, y)を取得。PC(pynput)バックエンドのみ。",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="hid_key_press",
                 description="キーを1回押して離す。例: 'enter', 'tab', 'a', 'F5'",
                 inputSchema={
@@ -223,7 +223,7 @@ if MCP_AVAILABLE:
                     "required": ["key"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="hid_key_combo",
                 description=(
                     "キーコンボを実行。例: ['ctrl', 'c']でCtrl+C, "
@@ -243,7 +243,7 @@ if MCP_AVAILABLE:
                     "required": ["keys"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="hid_type_text",
                 description="テキストを1文字ずつタイプ入力。USキーボードレイアウト。",
                 inputSchema={
@@ -257,17 +257,17 @@ if MCP_AVAILABLE:
                     "required": ["text"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="hid_status",
                 description="HIDバックエンドの状態を確認（Pico接続/pynput/画面サイズ）",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="hid_screen_size",
                 description="画面の解像度(width, height)を取得",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="hid_run_macro",
                 description="Pico HID マクロを実行（Win+R→コマンド実行など）。",
                 inputSchema={
@@ -305,7 +305,7 @@ if MCP_AVAILABLE:
             ),
 
             # --- aliases for ManaOS docs/autonomy gates (pico_hid_*) ---
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="pico_hid_mouse_move",
                 description="(alias) マウスを相対移動（dx, dy ピクセル）。",
                 inputSchema={
@@ -317,7 +317,7 @@ if MCP_AVAILABLE:
                     "required": ["dx", "dy"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="pico_hid_mouse_move_absolute",
                 description="(alias) マウスを絶対座標(x, y)に移動。PC(pynput)のみ。",
                 inputSchema={
@@ -329,7 +329,7 @@ if MCP_AVAILABLE:
                     "required": ["x", "y"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="pico_hid_mouse_click",
                 description="(alias) マウスクリック（left/right/middle）",
                 inputSchema={
@@ -339,7 +339,7 @@ if MCP_AVAILABLE:
                     },
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="pico_hid_mouse_click_at",
                 description="(alias) 指定座標(x, y)をクリック。PC(pynput)のみ。",
                 inputSchema={
@@ -352,7 +352,7 @@ if MCP_AVAILABLE:
                     "required": ["x", "y"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="pico_hid_scroll",
                 description="(alias) ホイールスクロール（delta: 正=上, 負=下）",
                 inputSchema={
@@ -361,7 +361,7 @@ if MCP_AVAILABLE:
                     "required": ["delta"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="pico_hid_key_press",
                 description="(alias) キーを1回押す",
                 inputSchema={
@@ -370,7 +370,7 @@ if MCP_AVAILABLE:
                     "required": ["key"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="pico_hid_key_combo",
                 description="(alias) キーコンボを実行",
                 inputSchema={
@@ -384,7 +384,7 @@ if MCP_AVAILABLE:
                     "required": ["keys"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="pico_hid_type_text",
                 description="(alias) テキスト入力",
                 inputSchema={
@@ -393,17 +393,17 @@ if MCP_AVAILABLE:
                     "required": ["text"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="pico_hid_mouse_position",
                 description="(alias) マウス座標取得（PCのみ）",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="pico_hid_screen_size",
                 description="(alias) 画面サイズ取得",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="pico_hid_screenshot",
                 description="(alias) スクリーンショットをPNG保存（path省略可）",
                 inputSchema={
@@ -411,7 +411,7 @@ if MCP_AVAILABLE:
                     "properties": {"path": {"type": "string"}},
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="pico_hid_type_text_auto",
                 description="(alias) IME切替→入力→スクショ（確認用）",
                 inputSchema={
@@ -420,7 +420,7 @@ if MCP_AVAILABLE:
                     "required": ["text"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="pico_hid_clear_and_retype_auto",
                 description="(alias) Ctrl+A→Delete→IME切替→入力→スクショ",
                 inputSchema={
@@ -429,7 +429,7 @@ if MCP_AVAILABLE:
                     "required": ["text"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="pico_hid_click_then_type_auto",
                 description="(alias) (x,y)クリック→IME切替→入力→スクショ（PCのみ）",
                 inputSchema={
@@ -447,7 +447,7 @@ if MCP_AVAILABLE:
     @server.call_tool()
     async def call_tool(name: str, arguments: dict):
         if not HID_AVAILABLE:
-            return [TextContent(type="text", text=json.dumps(
+            return [TextContent(type="text", text=json.dumps(  # type: ignore[possibly-unbound]
                 {"error": "pico_hid_client が利用できません"}, ensure_ascii=False))]
 
         try:
@@ -457,7 +457,7 @@ if MCP_AVAILABLE:
                 result = _backend_info()
 
             elif name == "hid_screen_size":
-                w, h = screen_size()
+                w, h = screen_size()  # type: ignore[possibly-unbound]
                 result = {"width": w, "height": h}
 
             elif name == "hid_mouse_position":
@@ -568,7 +568,7 @@ if MCP_AVAILABLE:
                     confirm_token = (
                         (arguments.get("confirm_token") or "").strip() or None
                     )
-                    r = _run_macro(
+                    r = _run_macro(  # type: ignore[possibly-unbound]
                         macro_name,
                         args=macro_args,
                         speed=speed,
@@ -583,17 +583,17 @@ if MCP_AVAILABLE:
                         "error": r.error,
                         "artifacts": getattr(r, "artifacts", {}) or {},
                         "available_macros": (
-                            _list_macros() if MACROS_AVAILABLE else []
+                            _list_macros() if MACROS_AVAILABLE else []  # type: ignore[possibly-unbound]
                         ),
                     }
 
             elif name == "pico_hid_screen_size":
-                w, h = screen_size()
+                w, h = screen_size()  # type: ignore[possibly-unbound]
                 result = {"width": w, "height": h}
 
             elif name == "pico_hid_screenshot":
                 path = arguments.get("path")
-                saved = take_screenshot(path if path else None)
+                saved = take_screenshot(path if path else None)  # type: ignore[possibly-unbound]
                 result = {"success": bool(saved), "path": saved or ""}
 
             elif name == "pico_hid_mouse_position":
@@ -694,14 +694,14 @@ if MCP_AVAILABLE:
                     client.close()
 
             elif name == "pico_hid_type_text_auto":
-                ok, screenshot_path = type_text_auto(arguments["text"])
+                ok, screenshot_path = type_text_auto(arguments["text"])  # type: ignore[possibly-unbound]
                 result = {
                     "success": bool(ok),
                     "screenshot_path": screenshot_path,
                 }
 
             elif name == "pico_hid_clear_and_retype_auto":
-                ok, screenshot_path = clear_input_then_type_auto(
+                ok, screenshot_path = clear_input_then_type_auto(  # type: ignore[possibly-unbound]
                     arguments["text"]
                 )
                 result = {
@@ -710,7 +710,7 @@ if MCP_AVAILABLE:
                 }
 
             elif name == "pico_hid_click_then_type_auto":
-                ok, screenshot_path = click_then_type_auto(
+                ok, screenshot_path = click_then_type_auto(  # type: ignore[possibly-unbound]
                     arguments["x"],
                     arguments["y"],
                     arguments["text"],
@@ -724,14 +724,14 @@ if MCP_AVAILABLE:
                 result = {"error": f"不明なツール: {name}"}
 
             return [
-                TextContent(
+                TextContent(  # type: ignore[possibly-unbound]
                     type="text",
                     text=json.dumps(result, indent=2, ensure_ascii=False),
                 )
             ]
         except Exception as e:  # pylint: disable=broad-except
             return [
-                TextContent(
+                TextContent(  # type: ignore[possibly-unbound]
                     type="text",
                     text=json.dumps({"error": str(e)}, ensure_ascii=False),
                 )
@@ -748,7 +748,7 @@ async def main():
 
     threading.Thread(target=_start_health_server, daemon=True).start()
 
-    async with stdio_server() as (read_stream, write_stream):
+    async with stdio_server() as (read_stream, write_stream):  # type: ignore[possibly-unbound]
         await server.run(
             read_stream,
             write_stream,

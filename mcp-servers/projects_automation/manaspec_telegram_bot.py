@@ -224,7 +224,7 @@ def _save_to_cache(message: str, response: str, model: str):
     }
     logger.info(f"💾 キャッシュ保存: {message[:50]}...")
 
-def chat_with_ollama(message: str, model: str = None, retry_count: int = 3) -> tuple[str, str]:
+def chat_with_ollama(message: str, model: str = None, retry_count: int = 3) -> tuple[str, str]:  # type: ignore
     """Ollamaで応答生成（同期版・会話感重視・リトライ機能付き・キャッシュ対応）"""
     global _performance_stats
     start_time = time.time()
@@ -869,7 +869,7 @@ async def handle_natural_language(update: Update, context: ContextTypes.DEFAULT_
             )
 
             # Ariaの感情を更新（成功）
-            trinity_emotion.emotion.update_emotion({
+            trinity_emotion.emotion.update_emotion({  # type: ignore[union-attr]
                 'type': 'success',
                 'impact': 0.6
             })
@@ -924,7 +924,7 @@ def main():
     global memory_ingestor
     if MEMORY_SYSTEM_AVAILABLE:
         try:
-            memory_ingestor = MemoryIngestor()
+            memory_ingestor = MemoryIngestor()  # type: ignore[possibly-unbound]
             print("✅ 記憶システム初期化完了")
             print("   📋 コマンド: /memo, /decide, /seed, /proc")
         except Exception as e:

@@ -195,6 +195,7 @@ class TestFormatSlackMessage:
 class TestNotifySlack:
     def test_no_webhook_no_slack_integration_returns_false(self, monkeypatch):
         monkeypatch.setattr(oom, "SLACK_WEBHOOK_URL", "")
+        monkeypatch.setitem(sys.modules, "slack_integration", None)
         result = oom.notify_slack("error")
         assert result is False
 

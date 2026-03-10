@@ -62,7 +62,7 @@ def check_redis():
         print("[WARN] redisライブラリがインストールされていません")
         print("   インストール: pip install redis")
         return False
-    except redis.ConnectionError:
+    except redis.ConnectionError:  # type: ignore[possibly-unbound]
         print("[ERROR] Redisサーバーに接続できません")
         print("   起動方法: docker-compose -f docker-compose.always-ready-llm.yml up -d redis")
         return False

@@ -13,7 +13,7 @@ import shutil
 from datetime import datetime, timezone, timedelta
 import json
 import secrets
-from config import ALLOWED_DIRECTORIES
+from config import ALLOWED_DIRECTORIES  # type: ignore[attr-defined]
 
 app = FastAPI(
     title="Secure Filesystem API",
@@ -353,7 +353,7 @@ async def directory_tree(data: DirectoryTreeRequest = Body(...)):
                 "type": "directory" if item.is_dir() else "file",
             }
             if item.is_dir():
-                entry["children"] = build_tree(item)
+                entry["children"] = build_tree(item)  # type: ignore
             entries.append(entry)
         return entries
 
@@ -372,7 +372,7 @@ async def search_files(data: SearchFilesRequest = Body(...)):
         root_path = pathlib.Path(root)
         # Apply exclusion patterns
         excluded = False
-        for pattern in data.excludePatterns:
+        for pattern in data.excludePatterns:  # type: ignore[misc]
             if pathlib.Path(root).match(pattern):
                 excluded = True
                 break
@@ -572,7 +572,7 @@ async def search_content(data: SearchContentRequest = Body(...)):
     if not base_path.is_dir():
         raise HTTPException(status_code=400, detail="Provided path is not a directory")
 
-    iterator = base_path.rglob(data.file_pattern) if data.recursive else base_path.glob(data.file_pattern)
+    iterator = base_path.rglob(data.file_pattern) if data.recursive else base_path.glob(data.file_pattern)  # type: ignore
 
     for item_path in iterator:
         if item_path.is_file():

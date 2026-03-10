@@ -32,7 +32,7 @@ class NotificationConfig:
     email_smtp_port: int = 587
     email_username: str = ""
     email_password: str = ""
-    email_recipients: List[str] = None
+    email_recipients: List[str] = None  # type: ignore
     webhook_enabled: bool = False
     webhook_url: str = ""
     log_enabled: bool = True

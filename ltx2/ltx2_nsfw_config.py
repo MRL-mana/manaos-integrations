@@ -47,7 +47,7 @@ class LTX2NSFWConfig:
 
     def get_workflow_config(self) -> Dict[str, Any]:
         try:
-            with self.path.open("r", encoding="utf-8") as f:
+            with self.path.open("r", encoding="utf-8") as f:  # type: ignore[union-attr]
                 data = json.load(f)
         except Exception:
             data = DEFAULT_CONFIG

@@ -22,7 +22,7 @@ from advanced_image_generator import AdvancedImageGenerator
 class ParallelImageGenerator:
     def __init__(self, max_workers=None):
         """並列画像生成システム初期化"""
-        self.max_workers = max_workers or min(os.cpu_count(), 8)
+        self.max_workers = max_workers or min(os.cpu_count(), 8)  # type: ignore
         self.executor = ProcessPoolExecutor(max_workers=self.max_workers)
         
         # 出力ディレクトリ

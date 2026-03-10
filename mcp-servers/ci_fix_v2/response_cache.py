@@ -41,7 +41,7 @@ class CacheEntry:
     created_at: str
     expires_at: str
     hit_count: int = 0
-    metadata: Dict[str, Any] = None
+    metadata: Dict[str, Any] = None  # type: ignore
     
     def __post_init__(self):
         if self.metadata is None:
@@ -382,7 +382,7 @@ class ResponseCache:
                 return result
             
             if asyncio.iscoroutinefunction(func):
-                return async_wrapper
+                return async_wrapper  # type: ignore
             else:
                 return sync_wrapper
         

@@ -274,12 +274,12 @@ class RPGSystem:
         # 第2階層: 応用スキル
         self.skill_tree.add_node('advanced_coding', ['basic_coding'], {'level': 30}, (0, 1))
         self.skill_tree.add_node('system_design', ['basic_coding', 'automation_basics'], 
-                                {'level': 25}, (0.5, 1))
+                                {'level': 25}, (0.5, 1))  # type: ignore
         self.skill_tree.add_node('complex_automation', ['automation_basics'], {'level': 30}, (1, 1))
         
         self.skill_tree.add_node('logical_reasoning', ['reasoning_basics'], {'level': 30}, (2, 1))
         self.skill_tree.add_node('creative_thinking', ['reasoning_basics', 'communication_basics'], 
-                                {'level': 25}, (2.5, 1))
+                                {'level': 25}, (2.5, 1))  # type: ignore
         
         self.skill_tree.add_node('natural_language', ['communication_basics'], {'level': 30}, (3, 1))
         
@@ -287,7 +287,7 @@ class RPGSystem:
         self.skill_tree.add_node('architectural_design', ['system_design', 'logical_reasoning'], 
                                 {'level': 50}, (1, 2))
         self.skill_tree.add_node('ai_development', ['advanced_coding', 'logical_reasoning'], 
-                                {'level': 50}, (0.5, 2))
+                                {'level': 50}, (0.5, 2))  # type: ignore
         
         self.logger.info("Skill tree built")
     

@@ -54,7 +54,7 @@ def _run_manaosctl(*cmd_args: str) -> Any:
 
 
 class DashboardHandler(BaseHTTPRequestHandler):
-    def log_message(self, fmt, *args):
+    def log_message(self, fmt, *args):  # type: ignore
         pass  # アクセスログ抑制
 
     def _send_json(self, data: Any, status: int = 200) -> None:

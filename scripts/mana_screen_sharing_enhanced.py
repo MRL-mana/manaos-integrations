@@ -177,10 +177,10 @@ class ManaScreenSharingEnhanced:
             if mss is not None:
                 with mss.mss() as sct:
                     # monitor_indexが有効範囲かチェック
-                    if monitor_index < 1 or monitor_index >= len(sct.monitors):
+                    if monitor_index < 1 or monitor_index >= len(sct.monitors):  # type: ignore[operator]
                         monitor_index = 1
                     
-                    monitor = sct.monitors[monitor_index]
+                    monitor = sct.monitors[monitor_index]  # type: ignore[call-arg]
                     screenshot = sct.grab(monitor)
                     img = Image.frombytes('RGB', screenshot.size, screenshot.bgra, 'raw', 'BGRX')
                     frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)

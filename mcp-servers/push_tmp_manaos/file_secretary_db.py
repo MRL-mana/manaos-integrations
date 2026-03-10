@@ -101,7 +101,7 @@ class FileSecretaryDB:
             成功したかどうか
         """
         try:
-            cursor = self.conn.cursor()
+            cursor = self.conn.cursor()  # type: ignore[union-attr]
             cursor.execute("""
                 INSERT INTO file_records (
                     id, source, path, original_name, created_at,
@@ -143,12 +143,12 @@ class FileSecretaryDB:
                 json.dumps(file_record.tags, ensure_ascii=False)
             ))
             
-            self.conn.commit()
+            self.conn.commit()  # type: ignore[union-attr]
             logger.info(f"✅ ファイルレコード作成: {file_record.id}")
             return True
         except Exception as e:
             logger.error(f"❌ ファイルレコード作成エラー: {e}")
-            self.conn.rollback()
+            self.conn.rollback()  # type: ignore[union-attr]
             return False
     
     def get_file_record(self, file_id: str) -> Optional[FileRecord]:
@@ -161,7 +161,7 @@ class FileSecretaryDB:
         Returns:
             FileRecordまたはNone
         """
-        cursor = self.conn.cursor()
+        cursor = self.conn.cursor()  # type: ignore[union-attr]
         cursor.execute("SELECT * FROM file_records WHERE id = ?", (file_id,))
         row = cursor.fetchone()
         
@@ -181,7 +181,7 @@ class FileSecretaryDB:
             成功したかどうか
         """
         try:
-            cursor = self.conn.cursor()
+            cursor = self.conn.cursor()  # type: ignore[union-attr]
             
             # 現在のrowidを取得
             cursor.execute("SELECT rowid FROM file_records WHERE id = ?", (file_record.id,))
@@ -260,17 +260,17 @@ class FileSecretaryDB:
             rows_updated = cursor.rowcount
             if rows_updated == 0:
                 logger.warning(f"No rows updated for file record: {file_record.id[:16]}...")
-                self.conn.rollback()
+                self.conn.rollback()  # type: ignore[union-attr]
                 return False
             
-            self.conn.commit()
+            self.conn.commit()  # type: ignore[union-attr]
             logger.info(f"✅ ファイルレコード更新: {file_record.id}")
             return True
         except Exception as e:
             logger.error(f"❌ ファイルレコード更新エラー: {e}")
             import traceback
             logger.error(traceback.format_exc())
-            self.conn.rollback()
+            self.conn.rollback()  # type: ignore[union-attr]
             return False
     
     def get_files_by_thread(self, thread_ref: str) -> List[FileRecord]:
@@ -283,7 +283,7 @@ class FileSecretaryDB:
         Returns:
             FileRecordリスト
         """
-        cursor = self.conn.cursor()
+        cursor = self.conn.cursor()  # type: ignore[union-attr]
         cursor.execute("SELECT * FROM file_records WHERE thread_ref = ?", (thread_ref,))
         rows = cursor.fetchall()
         
@@ -301,7 +301,7 @@ class FileSecretaryDB:
         Returns:
             FileRecordリスト
         """
-        cursor = self.conn.cursor()
+        cursor = self.conn.cursor()  # type: ignore[union-attr]
         
         if source:
             cursor.execute(
@@ -328,7 +328,7 @@ class FileSecretaryDB:
         Returns:
             FileRecordリスト
         """
-        cursor = self.conn.cursor()
+        cursor = self.conn.cursor()  # type: ignore[union-attr]
         
         # FTS5で検索
         cursor.execute("""
@@ -354,7 +354,7 @@ class FileSecretaryDB:
         Returns:
             状況サマリ
         """
-        cursor = self.conn.cursor()
+        cursor = self.conn.cursor()  # type: ignore[union-attr]
         
         # 新規ファイル数（days_new日以内）
         new_threshold = (datetime.now().timestamp() - days_new * 86400)
@@ -419,7 +419,7 @@ class FileSecretaryDB:
         Returns:
             FileRecordリスト
         """
-        cursor = self.conn.cursor()
+        cursor = self.conn.cursor()  # type: ignore[union-attr]
         cursor.execute("""
             SELECT * FROM file_records
             WHERE status IN ('inbox', 'triaged')

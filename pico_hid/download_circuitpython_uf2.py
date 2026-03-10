@@ -10,7 +10,7 @@ from pathlib import Path
 try:
     import urllib.request
 except ImportError:
-    urllib.request = None
+    urllib.request = None  # type: ignore[attr-defined, misc]
 
 UF2_URL = "https://downloads.circuitpython.org/bin/raspberry_pi_pico2_w/en_US/adafruit-circuitpython-raspberry_pi_pico2_w-en_US-10.0.3.uf2"
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -18,7 +18,7 @@ DEST_FILE = SCRIPT_DIR / "adafruit-circuitpython-raspberry_pi_pico2_w-en_US-10.0
 
 
 def main():
-    if urllib.request is None:
+    if urllib.request is None:  # type: ignore[possibly-unbound]
         print("urllib が使えません。以下の URL から手動でダウンロードしてください:")
         print(UF2_URL)
         sys.exit(1)
@@ -28,8 +28,8 @@ def main():
         return
     print("CircuitPython UF2 をダウンロード中...")
     try:
-        req = urllib.request.Request(UF2_URL, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        req = urllib.request.Request(UF2_URL, headers={"User-Agent": "Mozilla/5.0"})  # type: ignore[possibly-unbound]
+        with urllib.request.urlopen(req, timeout=120) as resp:  # type: ignore[possibly-unbound]
             DEST_FILE.write_bytes(resp.read())
         print(f"保存しました: {DEST_FILE}")
     except Exception as e:

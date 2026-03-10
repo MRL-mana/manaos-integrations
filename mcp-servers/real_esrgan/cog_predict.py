@@ -24,7 +24,7 @@ except Exception:
     print('please install cog and realesrgan package')
 
 
-class Predictor(BasePredictor):
+class Predictor(BasePredictor):  # type: ignore[possibly-unbound]
 
     def setup(self):
         os.makedirs('output', exist_ok=True)
@@ -71,7 +71,7 @@ class Predictor(BasePredictor):
             self.upsampler = RealESRGANer(
                 scale=4, model_path=model_path, model=model, tile=tile, tile_pad=10, pre_pad=0, half=half)
 
-        self.face_enhancer = GFPGANer(
+        self.face_enhancer = GFPGANer(  # type: ignore[possibly-unbound]
             model_path='weights/GFPGANv1.4.pth',
             upscale=scale,
             arch='clean',
@@ -80,15 +80,15 @@ class Predictor(BasePredictor):
 
     def predict(
         self,
-        img: Path = Input(description='Input'),
-        version: str = Input(
+        img: Path = Input(description='Input'),  # type: ignore[possibly-unbound]
+        version: str = Input(  # type: ignore[possibly-unbound]
             description='RealESRGAN version. Please see [Readme] below for more descriptions',
             choices=['General - RealESRGANplus', 'General - v3', 'Anime - anime6B', 'AnimeVideo - v3'],
             default='General - v3'),
-        scale: float = Input(description='Rescaling factor', default=2),
-        face_enhance: bool = Input(
+        scale: float = Input(description='Rescaling factor', default=2),  # type: ignore[possibly-unbound]
+        face_enhance: bool = Input(  # type: ignore[possibly-unbound]
             description='Enhance faces with GFPGAN. Note that it does not work for anime images/vidoes', default=False),
-        tile: int = Input(
+        tile: int = Input(  # type: ignore[possibly-unbound]
             description=
             'Tile size. Default is 0, that is no tile. When encountering the out-of-GPU-memory issue, please specify it, e.g., 400 or 200',
             default=0)
@@ -127,13 +127,13 @@ class Predictor(BasePredictor):
                 extension = 'png'
             # save_path = f'output/out.{extension}'
             # cv2.imwrite(save_path, output)
-            out_path = Path(tempfile.mkdtemp()) / f'out.{extension}'
-            cv2.imwrite(str(out_path), output)
+            out_path = Path(tempfile.mkdtemp()) / f'out.{extension}'  # type: ignore[possibly-unbound]
+            cv2.imwrite(str(out_path), output)  # type: ignore[possibly-unbound]
         except Exception as error:
             print('global exception: ', error)
         finally:
             clean_folder('output')
-        return out_path
+        return out_path  # type: ignore[possibly-unbound]
 
 
 def clean_folder(folder):

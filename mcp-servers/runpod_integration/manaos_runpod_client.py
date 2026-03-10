@@ -348,7 +348,7 @@ def main():
     if result.get("success"):
         job_id = result.get("job_id")
         print(f"3️⃣ Check Job Status: {job_id}...")
-        status = client.get_job_status(job_id)
+        status = client.get_job_status(job_id)  # type: ignore
         print(f"Status: {json.dumps(status, indent=2, ensure_ascii=False)}\n")
 
     # S3ファイル一覧

@@ -49,7 +49,7 @@ def test_webhook_success(set_env=set_env):
     nonce = uuid.uuid4().hex
     body = {"content": "pytest test", "metadata": {"source": "cursor"}}
     raw = json.dumps(body).encode("utf-8")
-    sig = make_sig(secret, raw)
+    sig = make_sig(secret, raw)  # type: ignore
 
     with app.test_client() as client:
         resp = client.post(
@@ -75,7 +75,7 @@ def test_replay_detection(set_env=set_env):
     nonce = uuid.uuid4().hex
     body = {"content": "pytest replay test", "metadata": {"source": "cursor"}}
     raw = json.dumps(body).encode("utf-8")
-    sig = make_sig(secret, raw)
+    sig = make_sig(secret, raw)  # type: ignore
 
     with app.test_client() as client:
         # first call should succeed

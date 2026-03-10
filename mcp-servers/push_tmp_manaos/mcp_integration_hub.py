@@ -41,7 +41,7 @@ class MCPIntegrationHub:
     # ========================================
     
     async def ai_learn_pattern(self, pattern: str, pattern_type: str = "general", 
-                               context: Dict = None, confidence: float = 0.8):
+                               context: Dict = None, confidence: float = 0.8):  # type: ignore
         """AI Learning MCPにパターンを学習させる"""
         self.log(f"AI Learning: パターン学習開始 - {pattern}")
         
@@ -81,7 +81,7 @@ class MCPIntegrationHub:
         self.log(f"AI Learning: パターン学習完了 - {result['action']}")
         return result
     
-    async def ai_search_patterns(self, query: str = None, pattern_type: str = None, 
+    async def ai_search_patterns(self, query: str = None, pattern_type: str = None,  # type: ignore
                                  min_confidence: float = 0.0, limit: int = 10):
         """AI Learning MCPからパターンを検索"""
         self.log(f"AI Learning: パターン検索 - query={query}, type={pattern_type}")
@@ -212,7 +212,7 @@ class MCPIntegrationHub:
             }
     
     async def manaos_api_call(self, api_name: str, endpoint: str, 
-                             method: str = "GET", data: Dict = None):
+                             method: str = "GET", data: Dict = None):  # type: ignore
         """ManaOS APIを呼び出し"""
         self.log(f"ManaOS: API呼び出し - {api_name}/{endpoint}")
         
@@ -233,11 +233,11 @@ class MCPIntegrationHub:
                 elif method == "DELETE":
                     response = await client.delete(url)
                 
-                self.log(f"ManaOS: API呼び出し完了 - status={response.status_code}")
+                self.log(f"ManaOS: API呼び出し完了 - status={response.status_code}")  # type: ignore[possibly-unbound]
                 
                 return {
-                    "status_code": response.status_code,
-                    "data": response.json() if response.headers.get('content-type', '').startswith('application/json') else response.text
+                    "status_code": response.status_code,  # type: ignore[possibly-unbound]
+                    "data": response.json() if response.headers.get('content-type', '').startswith('application/json') else response.text  # type: ignore[possibly-unbound]
                 }
         except Exception as e:
             self.log(f"ManaOS: API呼び出しエラー - {e}")

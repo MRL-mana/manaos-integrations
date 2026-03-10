@@ -193,7 +193,7 @@ class TestProbeLive:
     def test_500_returns_http_500(self):
         import urllib.error
         with patch("urllib.request.urlopen", side_effect=urllib.error.HTTPError(
-            url="http://x", code=500, msg="err", hdrs=None, fp=None
+            url="http://x", code=500, msg="err", hdrs=None, fp=None  # type: ignore
         )):
             name, status = probe_live(self._svc())
         assert status == "HTTP_500"

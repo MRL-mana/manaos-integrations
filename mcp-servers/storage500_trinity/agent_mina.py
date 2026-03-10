@@ -12,7 +12,7 @@ import json
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from agent_manager import BaseAgent, TrinityDB
+from agent_manager import BaseAgent, TrinityDB  # type: ignore[attr-defined]
 
 logger = logging.getLogger(__name__)
 
@@ -152,10 +152,10 @@ JSON形式で回答してください：
             
             answer = response.choices[0].message.content
             self.add_to_context("user", prompt)
-            self.add_to_context("assistant", answer)
+            self.add_to_context("assistant", answer)  # type: ignore
             
-            logger.info(f"Mina: Generated review ({len(answer)} chars)")
-            return answer
+            logger.info(f"Mina: Generated review ({len(answer)} chars)")  # type: ignore
+            return answer  # type: ignore
         
         except Exception as e:
             logger.error(f"Mina: OpenAI API error: {e}")

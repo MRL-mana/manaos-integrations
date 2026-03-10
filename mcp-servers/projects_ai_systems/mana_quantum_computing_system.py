@@ -45,7 +45,7 @@ class ManaQuantumComputingSystem:
         self.init_database()
         self.setup_api()
         self.setup_startup_events()
-        self.start_background_tasks()
+        self.start_background_tasks()  # type: ignore
         self.logger.info("🚀 Mana Quantum Computing System 初期化完了")
 
     def load_quantum_algorithms(self) -> Dict[str, Any]:
@@ -720,7 +720,7 @@ class QuantumSimulator:
 
     def start_background_tasks(self):
         # バックグラウンドタスクはFastAPIのstartupイベントで開始
-        self.logger.info("バックグラウンドタスク準備完了")
+        self.logger.info("バックグラウンドタスク準備完了")  # type: ignore
 
 def main():
     system = ManaQuantumComputingSystem()

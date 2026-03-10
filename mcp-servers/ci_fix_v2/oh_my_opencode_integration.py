@@ -182,7 +182,7 @@ class OHMyOpenCodeIntegration(BaseIntegration):
             config_path: 設定ファイルのパス
         """
         if config_path is None:
-            config_path = Path(__file__).parent / "oh_my_opencode_config.yaml"
+            config_path = Path(__file__).parent / "oh_my_opencode_config.yaml"  # type: ignore
         
         super().__init__("OHMyOpenCode", str(config_path))
         
@@ -282,7 +282,7 @@ class OHMyOpenCodeIntegration(BaseIntegration):
         self.llm_router = None
         if self.llm_routing_enabled and LLM_ROUTING_AVAILABLE:
             try:
-                self.llm_router = LLMRouter()
+                self.llm_router = LLMRouter()  # type: ignore[operator]
                 self.logger.info("LLMルーターを初期化しました")
             except Exception as e:
                 self.logger.warning(f"LLMルーターの初期化に失敗: {e}")
@@ -291,7 +291,7 @@ class OHMyOpenCodeIntegration(BaseIntegration):
         self.trinity_bridge = None
         if self.trinity_enabled and TRINITY_BRIDGE_AVAILABLE:
             try:
-                self.trinity_bridge = TrinityBridge()
+                self.trinity_bridge = TrinityBridge()  # type: ignore[operator]
                 self.logger.info("Trinity統合ブリッジを初期化しました")
             except Exception as e:
                 self.logger.warning(f"Trinity統合ブリッジの初期化に失敗: {e}")
@@ -302,7 +302,7 @@ class OHMyOpenCodeIntegration(BaseIntegration):
             # OH MY OPENCODE専用コスト管理を優先
             if OH_MY_OPENCODE_COST_MANAGER_AVAILABLE:
                 try:
-                    self.cost_manager = OHMyOpenCodeCostManager(
+                    self.cost_manager = OHMyOpenCodeCostManager(  # type: ignore[operator]
                         daily_limit=self.daily_cost_limit,
                         monthly_limit=self.monthly_cost_limit,
                         warning_threshold=self.cost_warning_threshold,
@@ -314,7 +314,7 @@ class OHMyOpenCodeIntegration(BaseIntegration):
             # フォールバック: ManaOS標準コスト管理
             elif COST_MANAGEMENT_AVAILABLE:
                 try:
-                    self.cost_manager = CostOptimization()
+                    self.cost_manager = CostOptimization()  # type: ignore[operator]
                     self.logger.info("ManaOSコスト管理を初期化しました")
                 except Exception as e:
                     self.logger.warning(f"ManaOSコスト管理の初期化に失敗: {e}")
@@ -330,7 +330,7 @@ class OHMyOpenCodeIntegration(BaseIntegration):
         self.kill_switch = None
         if self.kill_switch_enabled and KILL_SWITCH_AVAILABLE:
             try:
-                self.kill_switch = OHMyOpenCodeKillSwitch(
+                self.kill_switch = OHMyOpenCodeKillSwitch(  # type: ignore[operator]
                     max_execution_time=self.kill_switch_max_time,
                     max_iterations=self.kill_switch_max_iterations,
                     detect_infinite_loop=self.kill_switch_detect_loop,
@@ -344,7 +344,7 @@ class OHMyOpenCodeIntegration(BaseIntegration):
         self.optimizer = None
         if OPTIMIZER_AVAILABLE:
             try:
-                self.optimizer = OHMyOpenCodeOptimizer()
+                self.optimizer = OHMyOpenCodeOptimizer()  # type: ignore[operator]
                 self.logger.info("最適化システムを初期化しました")
             except Exception as e:
                 self.logger.warning(f"最適化システムの初期化に失敗: {e}")
@@ -353,7 +353,7 @@ class OHMyOpenCodeIntegration(BaseIntegration):
         self.cost_visibility = None
         if COST_VISIBILITY_AVAILABLE:
             try:
-                self.cost_visibility = OHMyOpenCodeCostVisibility(
+                self.cost_visibility = OHMyOpenCodeCostVisibility(  # type: ignore[operator]
                     cost_manager=self.cost_manager,
                     optimizer=self.optimizer
                 )
@@ -365,7 +365,7 @@ class OHMyOpenCodeIntegration(BaseIntegration):
         self.templates = None
         if TEMPLATES_AVAILABLE:
             try:
-                self.templates = OHMyOpenCodeTemplates()
+                self.templates = OHMyOpenCodeTemplates()  # type: ignore[operator]
                 self.logger.info("成功パターンテンプレートを初期化しました")
             except Exception as e:
                 self.logger.warning(f"成功パターンテンプレートの初期化に失敗: {e}")
@@ -374,7 +374,7 @@ class OHMyOpenCodeIntegration(BaseIntegration):
         self.observability = None
         if OBSERVABILITY_AVAILABLE:
             try:
-                self.observability = OHMyOpenCodeObservability()
+                self.observability = OHMyOpenCodeObservability()  # type: ignore[operator]
                 self.logger.info("観測設計システムを初期化しました")
             except Exception as e:
                 self.logger.warning(f"観測設計システムの初期化に失敗: {e}")
@@ -383,7 +383,7 @@ class OHMyOpenCodeIntegration(BaseIntegration):
         self.policy = None
         if POLICY_AVAILABLE:
             try:
-                self.policy = OHMyOpenCodePolicy()
+                self.policy = OHMyOpenCodePolicy()  # type: ignore[operator]
                 self.logger.info("Policyを初期化しました")
             except Exception as e:
                 self.logger.warning(f"Policyの初期化に失敗: {e}")
@@ -483,7 +483,7 @@ class OHMyOpenCodeIntegration(BaseIntegration):
         try:
             # slack_integrationモジュールを使用
             try:
-                from slack_integration import send_to_slack
+                from slack_integration import send_to_slack  # type: ignore[attr-defined]
                 slack_available = True
             except ImportError:
                 # notification_systemやnotification_hub_enhancedも試す
@@ -521,13 +521,13 @@ Body: {{"approval_request_id": "{approval_request_id}"}}
                 
                 # Slack通知を送信
                 try:
-                    send_to_slack(approval_message, channel="#manaos-notifications")
+                    send_to_slack(approval_message, channel="#manaos-notifications")  # type: ignore[possibly-unbound]
                 except Exception:
                     try:
-                        notification_system.send_slack(approval_message)
+                        notification_system.send_slack(approval_message)  # type: ignore[possibly-unbound]
                     except Exception:
                         try:
-                            notification_hub.notify(approval_message, priority="important")
+                            notification_hub.notify(approval_message, priority="important")  # type: ignore[possibly-unbound]
                         except Exception:
                             pass
                 
@@ -621,7 +621,7 @@ Body: {{"approval_request_id": "{approval_request_id}"}}
         if self.cost_manager:
             # OH MY OPENCODE専用コスト管理の場合
             if hasattr(self.cost_manager, 'check_limit'):
-                can_execute, warning = self.cost_manager.check_limit(estimated_cost)
+                can_execute, warning = self.cost_manager.check_limit(estimated_cost)  # type: ignore
                 if not can_execute:
                     raise CostLimitExceededError(warning or "コスト上限に達しました")
                 if warning:
@@ -689,7 +689,7 @@ Body: {{"approval_request_id": "{approval_request_id}"}}
         if self.templates:
             try:
                 enhanced_description = self.templates.enhance_prompt(
-                    task_type,
+                    task_type,  # type: ignore
                     task_description,
                     use_requirement_analysis=True,
                     use_implementation_template=True,
@@ -800,8 +800,8 @@ Body: {{"approval_request_id": "{approval_request_id}"}}
                             execution_time=execution_time,
                             iterations=result_iterations,
                             max_cost=self.ultra_work_cost_limit,
-                            max_time=task.max_execution_time,
-                            max_iterations=task.max_iterations
+                            max_time=task.max_execution_time,  # type: ignore
+                            max_iterations=task.max_iterations  # type: ignore
                         ):
                             # Ultra WorkからNORMALに降格（再実行ではなく、結果に降格フラグを付ける）
                             if isinstance(result, dict):
@@ -864,7 +864,7 @@ Body: {{"approval_request_id": "{approval_request_id}"}}
             # コスト記録
             if self.cost_manager:
                 if hasattr(self.cost_manager, 'record_cost'):
-                    self.cost_manager.record_cost(
+                    self.cost_manager.record_cost(  # type: ignore
                         task_id=task_id,
                         cost=oh_result.cost,
                         task_type=task_type.value,
@@ -1296,7 +1296,7 @@ Body: {{"approval_request_id": "{approval_request_id}"}}
         """
         # Kill Switchを使用
         if self.kill_switch:
-            success = self.kill_switch.kill_task(task_id, KillSwitchReason.MANUAL)
+            success = self.kill_switch.kill_task(task_id, KillSwitchReason.MANUAL)  # type: ignore[union-attr]
             if success:
                 self._kill_switch_active = True
                 self.logger.warning(f"タスクを強制停止しました: {task_id}")

@@ -74,7 +74,7 @@ class MultiProviderOCR:
         
         # Google Cloud Vision
         try:
-            from google.cloud import vision
+            from google.cloud import vision  # type: ignore[attr-defined]
             self.providers["google"] = True
             logger.info("Google Cloud Vision APIが利用可能です")
         except ImportError:
@@ -814,7 +814,7 @@ class MultiProviderOCR:
                                 "grid_data": None,
                                 "confidence": conf,
                                 "raw_data": data,
-                                "_meta": {"variant": vname, "psm": psm, "cols": len(cols), "rows": len(row_centers)},
+                                "_meta": {"variant": vname, "psm": psm, "cols": len(cols), "rows": len(row_centers)},  # type: ignore[possibly-unbound]
                             }
                         continue
 
@@ -829,12 +829,12 @@ class MultiProviderOCR:
                                 best_i = i
                         return best_i
 
-                    grid: List[List[str]] = [[""] * len(cols) for _ in range(row_count)]
+                    grid: List[List[str]] = [[""] * len(cols) for _ in range(row_count)]  # type: ignore[possibly-unbound]
                     for i, pos in enumerate(positions):
-                        if row_index is not None:
-                            r = row_index.get(row_keys[i], 0)
+                        if row_index is not None:  # type: ignore[possibly-unbound]
+                            r = row_index.get(row_keys[i], 0)  # type: ignore[possibly-unbound]
                         else:
-                            r = nearest_index(pos["center_y"], row_centers)
+                            r = nearest_index(pos["center_y"], row_centers)  # type: ignore[possibly-unbound]
                         c = nearest_index(pos["center_x"], cols)
                         if grid[r][c]:
                             grid[r][c] += " " + texts[i]
@@ -855,7 +855,7 @@ class MultiProviderOCR:
                     # 極端に列が多いほどペナルティ（表の見やすさ優先）
                     score -= max(0.0, (len(cols) - 60) / 80.0)
                     # 行が多すぎる場合もペナルティ（行暴発を抑える）
-                    score -= max(0.0, (row_count - 120) / 250.0)
+                    score -= max(0.0, (row_count - 120) / 250.0)  # type: ignore[possibly-unbound]
 
                     if score > best_score:
                         best_score = score
@@ -865,7 +865,7 @@ class MultiProviderOCR:
                             "grid_data": grid,
                             "confidence": conf,
                             "raw_data": data,
-                            "_meta": {"variant": vname, "psm": psm, "cols": len(cols), "rows": len(row_centers)},
+                            "_meta": {"variant": vname, "psm": psm, "cols": len(cols), "rows": len(row_centers)},  # type: ignore[possibly-unbound]
                         }
 
             if not best:
@@ -942,7 +942,7 @@ class MultiProviderOCR:
     def _recognize_google(self, image_path: str, **kwargs) -> Optional[Dict[str, Any]]:
         """Google Cloud Vision APIで認識"""
         try:
-            from google.cloud import vision
+            from google.cloud import vision  # type: ignore[attr-defined]
             
             client = vision.ImageAnnotatorClient()
             with open(image_path, 'rb') as image_file:

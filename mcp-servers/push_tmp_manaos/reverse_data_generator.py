@@ -314,7 +314,7 @@ class ReverseDataGenerator:
                                         critique_result = CritiqueResult(
                                             score=critique_data.get("score", 25),
                                             is_passed=critique_data.get("is_passed", True),
-                                            feedback=critique_data.get("feedback", "")
+                                            feedback=critique_data.get("feedback", "")  # type: ignore[call-arg]
                                         )
                                 
                                 # Planを探す

@@ -126,7 +126,7 @@ class RAGMemorySystem:
                 try:
                     memory = json.loads(line)
                     memories.append(memory)
-                except sqlite3.Error:
+                except sqlite3.Error:  # type: ignore[name-defined]
                     continue
         
         # フィルタリング
@@ -210,7 +210,7 @@ class RAGMemorySystem:
                         if memory['fragment_id'] == fragment_id:
                             target_memory = memory
                             break
-                    except sqlite3.Error:
+                    except sqlite3.Error:  # type: ignore[name-defined]
                         continue
         
         if not target_memory:
@@ -244,7 +244,7 @@ class RAGMemorySystem:
             for line in f:
                 try:
                     memories.append(json.loads(line))
-                except sqlite3.Error:
+                except sqlite3.Error:  # type: ignore[name-defined]
                     continue
         
         # カテゴリ分布

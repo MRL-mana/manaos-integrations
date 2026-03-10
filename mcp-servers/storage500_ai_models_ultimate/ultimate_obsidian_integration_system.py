@@ -64,7 +64,7 @@ class ObsidianVaultManager:
         self.file_history = []
         self.sync_status = {}
         
-    def create_daily_note(self, date: datetime = None) -> Dict[str, Any]:
+    def create_daily_note(self, date: datetime = None) -> Dict[str, Any]:  # type: ignore
         """日次ノートの作成"""
         if date is None:
             date = datetime.now()
@@ -107,7 +107,7 @@ class ObsidianVaultManager:
         
         # ファイル作成
         with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(front_matter.dumps())
+            f.write(front_matter.dumps())  # type: ignore
             f.write('\n')
             f.write(content)
         
@@ -179,7 +179,7 @@ class ObsidianVaultManager:
         
         # ファイル作成
         with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(front_matter.dumps())
+            f.write(front_matter.dumps())  # type: ignore
             f.write('\n')
             f.write(content)
         
@@ -242,7 +242,7 @@ class ObsidianVaultManager:
         
         # ファイル作成
         with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(front_matter.dumps())
+            f.write(front_matter.dumps())  # type: ignore
             f.write('\n')
             f.write(content)
         
@@ -375,7 +375,7 @@ class UltimateObsidianIntegrationSystem:
         conn.commit()
         conn.close()
         
-    def save_activity_log(self, action: str, file_path: str, metadata: Dict[str, Any] = None):
+    def save_activity_log(self, action: str, file_path: str, metadata: Dict[str, Any] = None):  # type: ignore
         """アクティビティログの保存"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -462,7 +462,7 @@ class UltimateObsidianIntegrationSystem:
             else:
                 logger.warning(f"同期失敗: {file_path} - {sync_result.get('error', '')}")
     
-    def create_daily_note(self, date: datetime = None) -> Dict[str, Any]:
+    def create_daily_note(self, date: datetime = None) -> Dict[str, Any]:  # type: ignore
         """日次ノートの作成"""
         result = self.vault_manager.create_daily_note(date)
         
@@ -603,7 +603,7 @@ def create_daily_note():
     else:
         date = None
     
-    result = obsidian_system.create_daily_note(date)
+    result = obsidian_system.create_daily_note(date)  # type: ignore
     return jsonify(result)
 
 @app.route('/api/create-conversation-note', methods=['POST'])

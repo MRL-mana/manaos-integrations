@@ -40,8 +40,8 @@ class TrinityServiceManager:
             else:
                 actual_service = service_name
 
-            result = subprocess.run(
-                [_SYSTEMCTL, 'start', actual_service],
+            result = subprocess.run(  # type: ignore[call-arg]
+                [_SYSTEMCTL, 'start', actual_service],  # type: ignore
                 capture_output=True,
                 text=True
             )
@@ -67,8 +67,8 @@ class TrinityServiceManager:
             else:
                 actual_service = service_name
 
-            result = subprocess.run(
-                [_SYSTEMCTL, 'stop', actual_service],
+            result = subprocess.run(  # type: ignore[call-arg]
+                [_SYSTEMCTL, 'stop', actual_service],  # type: ignore
                 capture_output=True,
                 text=True
             )
@@ -97,8 +97,8 @@ class TrinityServiceManager:
             else:
                 actual_service = service_name
 
-            result = subprocess.run(
-                [_SYSTEMCTL, 'status', actual_service],
+            result = subprocess.run(  # type: ignore[call-arg]
+                [_SYSTEMCTL, 'status', actual_service],  # type: ignore
             )
             
             return {

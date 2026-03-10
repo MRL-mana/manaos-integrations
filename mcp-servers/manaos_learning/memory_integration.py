@@ -19,8 +19,8 @@ import importlib.util
 
 # learning_api
 spec1 = importlib.util.spec_from_file_location("learning_api", "/root/scripts/learning_api.py")
-learning_api = importlib.util.module_from_spec(spec1)
-spec1.loader.exec_module(learning_api)
+learning_api = importlib.util.module_from_spec(spec1)  # type: ignore
+spec1.loader.exec_module(learning_api)  # type: ignore[union-attr]
 
 get_statistics = learning_api.get_statistics
 get_recent_examples = learning_api.get_recent_examples

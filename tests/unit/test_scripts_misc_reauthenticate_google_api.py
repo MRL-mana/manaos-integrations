@@ -12,7 +12,7 @@ def _make_gp_stub():
     stub = types.ModuleType("google_calendar_tasks_sheets_integration")
     gp_mock = MagicMock()
     gp_mock.is_available.return_value = True
-    stub.GoogleProductivityIntegration = MagicMock(return_value=gp_mock)
+    stub.GoogleProductivityIntegration = MagicMock(return_value=gp_mock)  # type: ignore
     return stub
 
 

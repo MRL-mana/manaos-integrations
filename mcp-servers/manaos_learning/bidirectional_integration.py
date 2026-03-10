@@ -18,8 +18,8 @@ import importlib.util
 
 # learning_api
 spec1 = importlib.util.spec_from_file_location("learning_api", "/root/scripts/learning_api.py")
-learning_api = importlib.util.module_from_spec(spec1)
-spec1.loader.exec_module(learning_api)
+learning_api = importlib.util.module_from_spec(spec1)  # type: ignore
+spec1.loader.exec_module(learning_api)  # type: ignore[union-attr]
 
 log_event = learning_api.log_event
 get_statistics = learning_api.get_statistics
@@ -46,8 +46,8 @@ class BidirectionalBridge:
                 "memory_integration",
                 "/root/manaos_learning/memory_integration.py"
             )
-            memory_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(memory_module)
+            memory_module = importlib.util.module_from_spec(spec)  # type: ignore
+            spec.loader.exec_module(memory_module)  # type: ignore[union-attr]
             return memory_module.get_memory_bridge()
         except Exception as e:
             logger.warning(f"記憶系ブリッジのロード失敗: {e}")
@@ -60,8 +60,8 @@ class BidirectionalBridge:
                 "personality_integration",
                 "/root/manaos_learning/personality_integration.py"
             )
-            personality_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(personality_module)
+            personality_module = importlib.util.module_from_spec(spec)  # type: ignore
+            spec.loader.exec_module(personality_module)  # type: ignore[union-attr]
             return personality_module
         except Exception as e:
             logger.warning(f"人格系ブリッジのロード失敗: {e}")
@@ -74,8 +74,8 @@ class BidirectionalBridge:
                 "autonomous_integration",
                 "/root/manaos_learning/autonomous_integration.py"
             )
-            autonomous_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(autonomous_module)
+            autonomous_module = importlib.util.module_from_spec(spec)  # type: ignore
+            spec.loader.exec_module(autonomous_module)  # type: ignore[union-attr]
             return autonomous_module
         except Exception as e:
             logger.warning(f"自律系ブリッジのロード失敗: {e}")
@@ -88,8 +88,8 @@ class BidirectionalBridge:
                 "backup_integration",
                 "/root/manaos_learning/backup_integration.py"
             )
-            backup_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(backup_module)
+            backup_module = importlib.util.module_from_spec(spec)  # type: ignore
+            spec.loader.exec_module(backup_module)  # type: ignore[union-attr]
             return backup_module
         except Exception as e:
             logger.warning(f"バックアップ系ブリッジのロード失敗: {e}")

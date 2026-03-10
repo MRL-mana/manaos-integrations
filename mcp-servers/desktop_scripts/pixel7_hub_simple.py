@@ -131,7 +131,7 @@ async def get_device_info():
         if result.returncode == 0:
             for line in result.stdout.split('\n'):
                 if 'level:' in line:
-                    level = int(re.search(r'level:\s*(\d+)', line).group(1))
+                    level = int(re.search(r'level:\s*(\d+)', line).group(1))  # type: ignore[union-attr]
                     info["battery_level"] = level
                     break
         
@@ -233,9 +233,9 @@ async def get_battery():
         if result.returncode == 0:
             for line in result.stdout.split('\n'):
                 if 'level:' in line:
-                    battery_info["level"] = int(re.search(r'level:\s*(\d+)', line).group(1))
+                    battery_info["level"] = int(re.search(r'level:\s*(\d+)', line).group(1))  # type: ignore[union-attr]
                 elif 'status:' in line:
-                    battery_info["status"] = int(re.search(r'status:\s*(\d+)', line).group(1))
+                    battery_info["status"] = int(re.search(r'status:\s*(\d+)', line).group(1))  # type: ignore[union-attr]
         
         return {"success": True, "battery": battery_info}
     except Exception as e:

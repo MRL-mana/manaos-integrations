@@ -53,7 +53,7 @@ def start_xvfb():
     proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     time.sleep(2)  # 起動待機
     if proc.poll() is None:
-        processes['xvfb'] = proc
+        processes['xvfb'] = proc  # type: ignore
         os.environ['DISPLAY'] = display
         logger.info("✅ Xvfb起動成功")
         return True
@@ -102,7 +102,7 @@ def start_xfreerdp():
         )
         time.sleep(5)  # 接続待機
         if proc.poll() is None:
-            processes['xfreerdp'] = proc
+            processes['xfreerdp'] = proc  # type: ignore
             logger.info("✅ xfreerdp起動成功")
             return True
         else:
@@ -112,7 +112,7 @@ def start_xfreerdp():
                 log_lines = f.readlines()[-10:]
                 if log_lines:
                     logger.warning(f"ログ: {''.join(log_lines)}")
-            processes['xfreerdp'] = proc
+            processes['xfreerdp'] = proc  # type: ignore
             return False
 
 def start_x11vnc():
@@ -136,7 +136,7 @@ def start_x11vnc():
     proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     time.sleep(2)
     if proc.poll() is None:
-        processes['x11vnc'] = proc
+        processes['x11vnc'] = proc  # type: ignore
         logger.info("✅ x11vnc起動成功")
         return True
     else:
@@ -161,7 +161,7 @@ def start_websockify():
     proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     time.sleep(2)
     if proc.poll() is None:
-        processes['websockify'] = proc
+        processes['websockify'] = proc  # type: ignore
         logger.info("✅ websockify起動成功")
         return True
     else:

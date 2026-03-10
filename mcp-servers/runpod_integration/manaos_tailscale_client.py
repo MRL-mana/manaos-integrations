@@ -30,7 +30,7 @@ class ManaOSTailscaleClient:
 
         # Tailscale接続初期化
         self.connector = TailscaleRunPodConnector(
-            tailscale_ip=tailscale_ip,
+            tailscale_ip=tailscale_ip,  # type: ignore
             ssh_port=ssh_port,
             ssh_user=ssh_user,
             ssh_key_path=ssh_key_path,

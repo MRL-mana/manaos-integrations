@@ -42,7 +42,7 @@ def start_service(name: str, config: dict) -> subprocess.Popen:
     
     if not script_path.exists():
         print(f"[エラー] {config['script']} が見つかりません")
-        return None
+        return None  # type: ignore
     
     print(f"[起動中] {config['description']} ({name})...")
     
@@ -67,7 +67,7 @@ def start_service(name: str, config: dict) -> subprocess.Popen:
         
     except Exception as e:
         print(f"[エラー] {config['description']} の起動に失敗: {e}")
-        return None
+        return None  # type: ignore
 
 def main():
     """メイン関数"""

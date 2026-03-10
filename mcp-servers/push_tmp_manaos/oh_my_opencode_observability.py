@@ -223,7 +223,7 @@ class OHMyOpenCodeObservability:
         if not self.system_metrics:
             self._calculate_system_metrics()
         
-        return self.system_metrics
+        return self.system_metrics  # type: ignore
     
     def get_dashboard_data(self) -> Dict[str, Any]:
         """

@@ -103,7 +103,7 @@ with st.sidebar:
                         del st.session_state['hf_token']
                         st.experimental_rerun()
 
-                    st.session_state['chatbot'] = chatbot
+                    st.session_state['chatbot'] = chatbot  # type: ignore[possibly-unbound]
 
                     id = st.session_state['chatbot'].new_conversation()
                     st.session_state['chatbot'].change_conversation(id)

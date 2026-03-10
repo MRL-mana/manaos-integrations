@@ -121,9 +121,9 @@ class SimpleLearningAgent(BaseAgent):
         else:
             # 最適アクション
             action_index = np.argmax(self.q_table[state_index])
-            action_type = self._get_action_type(action_index)
+            action_type = self._get_action_type(action_index)  # type: ignore
             parameters = {
-                'direction': self._get_direction_from_index(action_index),
+                'direction': self._get_direction_from_index(action_index),  # type: ignore
                 'magnitude': 0.1
             }
         

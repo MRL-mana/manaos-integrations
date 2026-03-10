@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch, call
 # ensure it is stubbed here as well (setdefault is safe).
 if "google_drive_integration" not in sys.modules:
     _gdi = types.ModuleType("google_drive_integration")
-    _gdi.GoogleDriveIntegration = MagicMock()
+    _gdi.GoogleDriveIntegration = MagicMock()  # type: ignore
     sys.modules["google_drive_integration"] = _gdi
 
 import scripts.misc.backup_and_delete_models as _sut

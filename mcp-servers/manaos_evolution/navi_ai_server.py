@@ -112,7 +112,7 @@ class NaviAI:
         """朝の最適ルート提案"""
         prompt = self.morning_prompt.format(**context)
         
-        response = await openai.ChatCompletion.acreate(
+        response = await openai.ChatCompletion.acreate(  # type: ignore[attr-defined]
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "あなたはマナOSのナビAIです。実用的で具体的な提案をしてください。"},
@@ -128,7 +128,7 @@ class NaviAI:
         """昼の集中復帰ポイント提案"""
         prompt = self.noon_prompt.format(**context)
         
-        response = await openai.ChatCompletion.acreate(
+        response = await openai.ChatCompletion.acreate(  # type: ignore[attr-defined]
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "あなたはマナOSのナビAIです。集中力を回復させる提案をしてください。"},
@@ -144,7 +144,7 @@ class NaviAI:
         """夜のリフレクション+改善提案"""
         prompt = self.night_prompt.format(**context)
         
-        response = await openai.ChatCompletion.acreate(
+        response = await openai.ChatCompletion.acreate(  # type: ignore[attr-defined]
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "あなたはマナOSのナビAIです。前向きで建設的な振り返りをしてください。"},

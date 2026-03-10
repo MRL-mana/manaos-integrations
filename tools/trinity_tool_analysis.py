@@ -83,7 +83,7 @@ class ToolAnalysis:
                     'description': description,
                     'installed': True
                 }
-            except ImportError:
+            except (ImportError, ValueError, AttributeError, RuntimeError):
                 installed_packages[package] = {
                     'version': None,
                     'description': description,

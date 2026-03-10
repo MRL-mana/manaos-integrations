@@ -253,16 +253,16 @@ class UnifiedAPIClient:
                     if attempt < max_retries:
                         import time
                         time.sleep(1.0 * (attempt + 1))
-            if last_error and result.get("status") == "error":
+            if last_error and result.get("status") == "error":  # type: ignore[possibly-unbound]
                 result = last_error
                 self.stats["retry_count"] += max_retries
         else:
             result = self._make_request(url, method, data, params, timeout)
         
         # エラーチェック
-        if "error" in result:
+        if "error" in result:  # type: ignore[possibly-unbound]
             self.stats["failed_requests"] += 1
-            return result
+            return result  # type: ignore[possibly-unbound]
         
         # 成功
         self.stats["successful_requests"] += 1
@@ -271,12 +271,12 @@ class UnifiedAPIClient:
         if use_cache and method.upper() == "GET":
             cache_key = self._get_cache_key(service, endpoint, params or {})
             self.cache[cache_key] = {
-                "data": result,
+                "data": result,  # type: ignore[possibly-unbound]
                 "timestamp": datetime.now().isoformat()
             }
             self._clean_cache()
         
-        return result
+        return result  # type: ignore[possibly-unbound]
     
     def _make_request(
         self,

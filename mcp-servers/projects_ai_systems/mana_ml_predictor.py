@@ -24,10 +24,10 @@ except ImportError:
 class ManaMLPredictor:
     def __init__(self):
         self.db_path = "/root/mana_predictive.db"
-        self.model_cpu = LinearRegression() if SKLEARN_AVAILABLE else None
-        self.model_memory = LinearRegression() if SKLEARN_AVAILABLE else None
-        self.model_disk = LinearRegression() if SKLEARN_AVAILABLE else None
-        self.scaler = StandardScaler() if SKLEARN_AVAILABLE else None
+        self.model_cpu = LinearRegression() if SKLEARN_AVAILABLE else None  # type: ignore[possibly-unbound]
+        self.model_memory = LinearRegression() if SKLEARN_AVAILABLE else None  # type: ignore[possibly-unbound]
+        self.model_disk = LinearRegression() if SKLEARN_AVAILABLE else None  # type: ignore[possibly-unbound]
+        self.scaler = StandardScaler() if SKLEARN_AVAILABLE else None  # type: ignore[possibly-unbound]
         
         logger.info("🤖 Mana ML Predictor 初期化")
         logger.info(f"scikit-learn: {'有効' if SKLEARN_AVAILABLE else '無効'}")
@@ -51,7 +51,7 @@ class ManaMLPredictor:
             conn.close()
             
             if len(data) < 5:
-                return None, None
+                return None, None  # type: ignore
             
             # 時系列データを数値に変換
             X = np.array(range(len(data))).reshape(-1, 1)
@@ -61,7 +61,7 @@ class ManaMLPredictor:
             
         except Exception as e:
             logger.error(f"学習データ取得エラー: {e}")
-            return None, None
+            return None, None  # type: ignore
     
     def train_and_predict(self, metric: str) -> Dict[str, Any]:
         """学習して予測"""
@@ -87,17 +87,17 @@ class ManaMLPredictor:
             else:
                 model = self.model_disk
             
-            model.fit(X, y)
+            model.fit(X, y)  # type: ignore[union-attr]
             
             # 24時間後を予測
             future_step = len(X) + 24
-            prediction = model.predict([[future_step]])[0]
+            prediction = model.predict([[future_step]])[0]  # type: ignore[union-attr]
             
             # スコア（精度）
-            score = model.score(X, y)
+            score = model.score(X, y)  # type: ignore[union-attr]
             
             # トレンド判定
-            slope = model.coef_[0] if hasattr(model, 'coef_') else 0
+            slope = model.coef_[0] if hasattr(model, 'coef_') else 0  # type: ignore[union-attr]
             trend = "increasing" if slope > 0.5 else "decreasing" if slope < -0.5 else "stable"
             
             return {

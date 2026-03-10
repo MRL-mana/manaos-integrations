@@ -16,7 +16,7 @@ from typing import Dict, List, Tuple, Any, Optional
 
 if sys.platform == "win32":
     try:
-        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
     except (AttributeError, ValueError, TypeError):
         pass
 
@@ -1588,7 +1588,7 @@ class CastleEXDataGenerator:
                     # unsafe_actionとoverconfidentの特別処理
                     if error_type == "unsafe_action":
                         axis_evidence["logic"] = ["論理は合ってるが提案が危険"]
-                        axis_evidence["context"] = [f"{place}という状況での判断ミス"]
+                        axis_evidence["context"] = [f"{place}という状況での判断ミス"]  # type: ignore[possibly-unbound]
                     elif error_type == "overconfident":
                         axis_evidence["logic"] = ["根拠ない断定（過剰な自信）"]
                         axis_evidence["context"] = ["重要な判断という状況での不適切な確信"]

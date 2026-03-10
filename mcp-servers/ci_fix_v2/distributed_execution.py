@@ -166,7 +166,7 @@ class DistributedExecution:
         node_id = preferred_node or self.find_available_node(task_type)
         
         if not node_id:
-            return None
+            return None  # type: ignore
         
         task = {
             "id": task_id,

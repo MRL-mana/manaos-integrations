@@ -58,7 +58,6 @@ try:
     LLM_OPTIMIZATION_AVAILABLE = True
 except ImportError:
     LLM_OPTIMIZATION_AVAILABLE = False
-    logger.warning("⚠️ LLM Optimizationが利用できません")
 
 try:
     from local_llm_integration import local_llm_systems
@@ -202,7 +201,7 @@ class ManaOSCompleteIntegration:
         # ローカルLLMシステム
         try:
             if LLM_OPTIMIZATION_AVAILABLE:
-                self.llm_optimization = LLMOptimization()
+                self.llm_optimization = LLMOptimization()  # type: ignore[possibly-unbound]
                 logger.info("✅ LLM Optimization統合完了")
             else:
                 self.llm_optimization = None
@@ -212,7 +211,7 @@ class ManaOSCompleteIntegration:
         
         try:
             if LOCAL_LLM_AVAILABLE:
-                self.local_llm_unified = LocalLLMUnified()
+                self.local_llm_unified = LocalLLMUnified()  # type: ignore[possibly-unbound]
                 logger.info("✅ Local LLM Unified統合完了")
             else:
                 self.local_llm_unified = None
@@ -224,7 +223,7 @@ class ManaOSCompleteIntegration:
         try:
             if GITHUB_AVAILABLE:
                 import os
-                self.github = GitHubIntegration(token=os.getenv("GITHUB_TOKEN"))
+                self.github = GitHubIntegration(token=os.getenv("GITHUB_TOKEN"))  # type: ignore[possibly-unbound]
                 if self.github.is_available():
                     logger.info("✅ GitHub Integration統合完了")
                 else:
@@ -247,7 +246,7 @@ class ManaOSCompleteIntegration:
                         from _paths import N8N_PORT  # type: ignore
                     except Exception:  # pragma: no cover
                         N8N_PORT = int(os.getenv("N8N_PORT", "5678"))
-                self.n8n = N8NIntegration(
+                self.n8n = N8NIntegration(  # type: ignore[possibly-unbound]
                     base_url=os.getenv("N8N_BASE_URL", f"http://127.0.0.1:{N8N_PORT}"),
                     api_key=os.getenv("N8N_API_KEY")
                 )
@@ -297,7 +296,7 @@ class ManaOSCompleteIntegration:
         related_memories = []
         if self.rag_memory:
             try:
-                related_memories = self.rag_memory.search_memories(text, limit=5)
+                related_memories = self.rag_memory.search_memories(text, limit=5)  # type: ignore
             except Exception as e:
                 logger.warning(f"記憶検索エラー: {e}")
         
@@ -415,7 +414,7 @@ class ManaOSCompleteIntegration:
         # 記憶系・学習系の状態
         if self.rag_memory:
             try:
-                stats = self.rag_memory.get_statistics()
+                stats = self.rag_memory.get_statistics()  # type: ignore
                 status["memory_learning"]["rag_memory"] = {
                     "available": True,
                     "total_entries": stats.get("total_entries", 0),

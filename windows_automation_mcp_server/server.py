@@ -53,7 +53,7 @@ except ImportError:
 
 # ── 設定 ─────────────────────────────────────────
 HEALTH_PORT = int(os.getenv("WIN_AUTOMATION_MCP_HEALTH_PORT", "5115"))
-toolkit = WindowsAutomationToolkit() if TOOLKIT_AVAILABLE else None
+toolkit = WindowsAutomationToolkit() if TOOLKIT_AVAILABLE else None  # type: ignore[possibly-unbound]
 
 
 # ── ヘルスチェック HTTP ─────────────────────────────
@@ -85,27 +85,27 @@ def _start_health_server():
 
 # ── MCP サーバー ────────────────────────────────────
 if MCP_AVAILABLE:
-    server = Server("windows-automation")
+    server = Server("windows-automation")  # type: ignore[possibly-unbound]
 
     @server.list_tools()
     async def list_tools() -> list[Tool]:
         return [
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_system_info",
                 description="母艦PCのシステム情報を取得（OS、CPU、RAM、GPU、稼働時間）",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_resource_usage",
                 description="CPU/RAM/Disk/GPU/ネットワークの現在の使用率を取得",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_resource_alerts",
                 description="リソース使用量が閾値を超えていないか確認",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_screenshot",
                 description="母艦PCのスクリーンショットを撮影して保存",
                 inputSchema={
@@ -116,12 +116,12 @@ if MCP_AVAILABLE:
                     },
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_monitor_info",
                 description="接続されているモニターの情報を取得",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_top_processes",
                 description="CPU/メモリ使用量トップのプロセスを表示",
                 inputSchema={
@@ -132,7 +132,7 @@ if MCP_AVAILABLE:
                     },
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_kill_process",
                 description="PIDを指定してプロセスを終了",
                 inputSchema={
@@ -143,7 +143,7 @@ if MCP_AVAILABLE:
                     "required": ["pid"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_start_app",
                 description="アプリケーションを起動",
                 inputSchema={
@@ -155,12 +155,12 @@ if MCP_AVAILABLE:
                     "required": ["command"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_list_windows",
                 description="現在表示されているウィンドウの一覧を取得",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_focus_window",
                 description="指定したウィンドウを前面に表示",
                 inputSchema={
@@ -171,7 +171,7 @@ if MCP_AVAILABLE:
                     },
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_powershell",
                 description="PowerShellコマンドを実行して結果を返す",
                 inputSchema={
@@ -183,17 +183,17 @@ if MCP_AVAILABLE:
                     "required": ["command"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_network_info",
                 description="ネットワーク接続情報（IP、Tailscale状態）を取得",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_disk_info",
                 description="全ドライブのディスク使用量を取得",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_list_apps",
                 description="wingetでインストール済みアプリを一覧表示",
                 inputSchema={
@@ -203,7 +203,7 @@ if MCP_AVAILABLE:
                     },
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_install_app",
                 description="wingetでアプリをインストール",
                 inputSchema={
@@ -214,7 +214,7 @@ if MCP_AVAILABLE:
                     "required": ["app_id"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="win_uninstall_app",
                 description="wingetでアプリをアンインストール",
                 inputSchema={
@@ -230,11 +230,11 @@ if MCP_AVAILABLE:
     @server.call_tool()
     async def call_tool(name: str, arguments: dict):
         if not toolkit:
-            return [TextContent(type="text", text=json.dumps(
+            return [TextContent(type="text", text=json.dumps(  # type: ignore[possibly-unbound]
                 {"error": "WindowsAutomationToolkit が利用できません"}, ensure_ascii=False))]
 
         try:
-            result: Any = None
+            result: Any = None  # type: ignore[name-defined]
 
             if name == "win_system_info":
                 result = toolkit.get_system_info()
@@ -288,9 +288,9 @@ if MCP_AVAILABLE:
             else:
                 result = {"error": f"不明なツール: {name}"}
 
-            return [TextContent(type="text", text=json.dumps(result, indent=2, ensure_ascii=False))]
+            return [TextContent(type="text", text=json.dumps(result, indent=2, ensure_ascii=False))]  # type: ignore[possibly-unbound]
         except Exception as e:
-            return [TextContent(type="text", text=json.dumps({"error": str(e)}, ensure_ascii=False))]
+            return [TextContent(type="text", text=json.dumps({"error": str(e)}, ensure_ascii=False))]  # type: ignore[possibly-unbound]
 
 
 async def main():
@@ -301,7 +301,7 @@ async def main():
     # ヘルスチェック
     threading.Thread(target=_start_health_server, daemon=True).start()
 
-    async with stdio_server() as (read_stream, write_stream):
+    async with stdio_server() as (read_stream, write_stream):  # type: ignore[possibly-unbound]
         await server.run(read_stream, write_stream, server.create_initialization_options())
 
 

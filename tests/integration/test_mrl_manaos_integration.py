@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """MRL Memory SystemとManaOS統合の pytest スモークテスト。"""
 
+import sys
 import pytest
 
 
@@ -33,6 +34,7 @@ def test_manaos_core_api_integration():
 
 
 def test_service_bridge_integration():
+    sys.modules.pop("manaos_service_bridge", None)  # clear any unit-test mock
     module = _require_or_skip("manaos_service_bridge")
     bridge = module.ManaOSServiceBridge()
 

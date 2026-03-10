@@ -9,7 +9,7 @@ from pathlib import Path
 from datetime import datetime
 
 # UTF-8エンコーディング設定
-sys.stdout.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 TEST_SCRIPT = Path(__file__).parent / "test_final_checklist_stable.py"
 

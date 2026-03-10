@@ -128,7 +128,7 @@ def get_learning_summary():
     # QSRスコア計算（簡易版）
     if reflection.get('agent_stats'):
         confidences = [stat[2] for stat in reflection['agent_stats'] if stat[2]]
-        avg_confidence = sum(confidences) / len(confidences) if confidences else 0.5
+        avg_confidence = sum(confidences) / len(confidences) if confidences else 0.5  # type: ignore[call-arg]
         qsr_score = avg_confidence * 100
     else:
         qsr_score = 50.0

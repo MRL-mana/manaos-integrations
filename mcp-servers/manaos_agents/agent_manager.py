@@ -149,7 +149,7 @@ class AgentManager:
             # OpenAI APIを呼び出し
             response = self.client.chat.completions.create(
                 model=agent.model,
-                messages=messages,
+                messages=messages,  # type: ignore
                 temperature=0.7,
                 max_tokens=2000
             )
@@ -308,7 +308,7 @@ DEFAULT_AGENTS = {
 def setup_default_agents(manager: AgentManager):
     """デフォルトエージェントをセットアップ"""
     for agent_data in DEFAULT_AGENTS.values():
-        manager.create_agent(**agent_data)
+        manager.create_agent(**agent_data)  # type: ignore
 
 
 if __name__ == "__main__":

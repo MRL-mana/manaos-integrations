@@ -453,7 +453,7 @@ class ManaPredictiveMaintenanceSystem:
                 raise HTTPException(status_code=400, detail="Alert ID and action type are required")
             
             # メンテナンスアクション実行
-            result = await self.execute_maintenance_action(action_type, action_params)
+            result = await self.execute_maintenance_action(action_type, action_params)  # type: ignore
             
             # アクション記録
             conn = sqlite3.connect(self.db_path)

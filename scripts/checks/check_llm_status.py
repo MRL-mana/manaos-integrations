@@ -103,9 +103,9 @@ def check_slack_integration_llm():
     try:
         import slack_integration
         if hasattr(slack_integration, 'LLM_CLIENT'):
-            if slack_integration.LLM_CLIENT:
+            if slack_integration.LLM_CLIENT:  # type: ignore[attr-defined]
                 print("✅ Slack Integration: always_ready_llm_client使用")
-                print(f"   クライアント: {type(slack_integration.LLM_CLIENT).__name__}")
+                print(f"   クライアント: {type(slack_integration.LLM_CLIENT).__name__}")  # type: ignore[attr-defined]
             else:
                 print("⚠️ Slack Integration: local_llm_helper使用（フォールバック）")
         else:

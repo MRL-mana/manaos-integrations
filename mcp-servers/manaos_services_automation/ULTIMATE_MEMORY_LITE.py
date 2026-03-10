@@ -327,8 +327,8 @@ class UltimateMemoryLite:
         
         return results
     
-    def smart_store(self, content: str, title: str = None, importance: int = 5, 
-                    tags: List[str] = None, category: str = None) -> Dict:
+    def smart_store(self, content: str, title: str = None, importance: int = 5,  # type: ignore
+                    tags: List[str] = None, category: str = None) -> Dict:  # type: ignore
         """スマート保存"""
         print(f"\n💾 スマート保存: '{content[:50]}...'")
         print(f"   重要度: {importance}/10")
@@ -390,7 +390,7 @@ class UltimateMemoryLite:
         conn.commit()
         conn.close()
         
-        return knowledge_id
+        return knowledge_id  # type: ignore
     
     def _save_to_trinity(self, content: str, importance: int):
         """Trinity Memory保存"""
@@ -413,7 +413,7 @@ class UltimateMemoryLite:
         with open(filepath, 'w') as f:
             json.dump(memory, f, ensure_ascii=False, indent=2)
     
-    def _save_to_obsidian(self, content: str, title: str = None) -> str:
+    def _save_to_obsidian(self, content: str, title: str = None) -> str:  # type: ignore
         """Obsidian保存"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         title = title or f"Memory_{timestamp}"

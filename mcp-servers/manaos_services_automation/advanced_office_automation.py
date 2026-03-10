@@ -197,7 +197,7 @@ class AdvancedOfficeAutomation:
         try:
             wb = Workbook()
             ws = wb.active
-            ws.title = "ダッシュボード"
+            ws.title = "ダッシュボード"  # type: ignore[union-attr]
             
             # ヘッダー作成
             await self._create_dashboard_header(ws)

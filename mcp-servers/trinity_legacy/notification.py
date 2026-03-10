@@ -99,7 +99,7 @@ class Notification:
         if "fields" in kwargs:
             payload["attachments"][0]["fields"] = kwargs["fields"]
         
-        response = requests.post(self.webhook_url, json=payload, timeout=10)
+        response = requests.post(self.webhook_url, json=payload, timeout=10)  # type: ignore
         
         if response.status_code == 200:
             logger.info("✅ Slack notification sent")

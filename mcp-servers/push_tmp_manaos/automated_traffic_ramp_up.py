@@ -129,9 +129,9 @@ class TrafficRampUpSystem:
         """フェーズの評価メトリクス計算"""
         health = await self.check_service_health()
         
-        up_count = sum(1 for s in health.values() if s["status"] == "UP")
+        up_count = sum(1 for s in health.values() if s["status"] == "UP")  # type: ignore[index]
         down_count = len(health) - up_count
-        avg_latency = sum(s.get("latency_ms", 0) for s in health.values()) / len(health)
+        avg_latency = sum(s.get("latency_ms", 0) for s in health.values()) / len(health)  # type: ignore
         error_rate = (down_count / len(health)) * 100
         
         return {
@@ -212,7 +212,7 @@ class TrafficRampUpSystem:
             logger.info(f"  {status} {service_name:20s} | {latency:>8s}")
         
         # メトリクス保存
-        self.metrics[self.current_phase].append(metrics)
+        self.metrics[self.current_phase].append(metrics)  # type: ignore
     
     async def run_continuous_monitoring(self, interval_seconds: int = 30):
         """継続的な監視ループ"""

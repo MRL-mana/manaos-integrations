@@ -282,11 +282,11 @@ class VaultAuditLogger:
                 
         except KeyboardInterrupt:
             self.audit_logger.info("監視を停止します")
-            observer.stop()
+            observer.stop()  # type: ignore[possibly-unbound]
         except Exception as e:
             self.audit_logger.error(f"監視エラー: {e}")
         finally:
-            observer.join()
+            observer.join()  # type: ignore[possibly-unbound]
 
 if __name__ == "__main__":
     # 監査ログシステム起動

@@ -64,7 +64,7 @@ def find_pico_port():
         return env_port
     if not _has_serial:
         return None
-    for port in serial.tools.list_ports.comports():
+    for port in serial.tools.list_ports.comports():  # type: ignore[union-attr]
         desc = (port.description or "").upper()
         hwid = (port.hwid or "").upper()
         # Pico / CircuitPython の典型的な名前、または Windows の「USB Serial Device」
@@ -79,7 +79,7 @@ def find_pico_port():
         ):
             return port.device
     # COM1 以外が1つだけある場合はそれを試す（CircuitPython が汎用名で出る場合）
-    ports = [p.device for p in serial.tools.list_ports.comports()]
+    ports = [p.device for p in serial.tools.list_ports.comports()]  # type: ignore[union-attr]
     others = [p for p in ports if p.upper() != "COM1"]
     if len(others) == 1:
         return others[0]
@@ -90,7 +90,7 @@ def get_serial_ports():
     """利用可能な COM ポート一覧を返す（デバッグ用）。"""
     if not _has_serial:
         return []
-    return [p.device for p in serial.tools.list_ports.comports()]
+    return [p.device for p in serial.tools.list_ports.comports()]  # type: ignore[union-attr]
 
 
 def take_screenshot(path=None):
@@ -157,29 +157,29 @@ class PCHIDClient:
     def __init__(self):
         if not _has_pynput:
             raise RuntimeError("PC 操作には pynput が必要です: pip install pynput")
-        self._mouse = MouseController()
-        self._keyboard = KeyboardController()
+        self._mouse = MouseController()  # type: ignore[possibly-unbound]
+        self._keyboard = KeyboardController()  # type: ignore[possibly-unbound]
         self._key_map = {
-            "ENTER": Key.enter,
-            "TAB": Key.tab,
-            "SPACE": Key.space,
-            "ESCAPE": Key.esc,
-            "BACKSPACE": Key.backspace,
-            "DELETE": Key.delete,
-            "UP": Key.up,
-            "DOWN": Key.down,
-            "LEFT": Key.left,
-            "RIGHT": Key.right,
-            "HOME": Key.home,
-            "END": Key.end,
-            "PAGEUP": Key.page_up,
-            "PAGEDOWN": Key.page_down,
-            "SHIFT": Key.shift,
-            "CONTROL": Key.ctrl,
-            "CTRL": Key.ctrl,
-            "ALT": Key.alt,
-            "GUI": Key.cmd,
-            "WINDOWS": Key.cmd,
+            "ENTER": Key.enter,  # type: ignore[possibly-unbound]
+            "TAB": Key.tab,  # type: ignore[possibly-unbound]
+            "SPACE": Key.space,  # type: ignore[possibly-unbound]
+            "ESCAPE": Key.esc,  # type: ignore[possibly-unbound]
+            "BACKSPACE": Key.backspace,  # type: ignore[possibly-unbound]
+            "DELETE": Key.delete,  # type: ignore[possibly-unbound]
+            "UP": Key.up,  # type: ignore[possibly-unbound]
+            "DOWN": Key.down,  # type: ignore[possibly-unbound]
+            "LEFT": Key.left,  # type: ignore[possibly-unbound]
+            "RIGHT": Key.right,  # type: ignore[possibly-unbound]
+            "HOME": Key.home,  # type: ignore[possibly-unbound]
+            "END": Key.end,  # type: ignore[possibly-unbound]
+            "PAGEUP": Key.page_up,  # type: ignore[possibly-unbound]
+            "PAGEDOWN": Key.page_down,  # type: ignore[possibly-unbound]
+            "SHIFT": Key.shift,  # type: ignore[possibly-unbound]
+            "CONTROL": Key.ctrl,  # type: ignore[possibly-unbound]
+            "CTRL": Key.ctrl,  # type: ignore[possibly-unbound]
+            "ALT": Key.alt,  # type: ignore[possibly-unbound]
+            "GUI": Key.cmd,  # type: ignore[possibly-unbound]
+            "WINDOWS": Key.cmd,  # type: ignore[possibly-unbound]
         }
 
     def mouse_move(self, dx: int, dy: int) -> bool:
@@ -208,12 +208,12 @@ class PCHIDClient:
         """画面上の絶対座標 (x, y) をクリックする。"""
         try:
             self._mouse.position = (x, y)
-            btn = Button.left
+            btn = Button.left  # type: ignore[possibly-unbound]
             normalized = (button or "").strip().lower()
             if normalized == "right":
-                btn = Button.right
+                btn = Button.right  # type: ignore[possibly-unbound]
             elif normalized == "middle":
-                btn = Button.middle
+                btn = Button.middle  # type: ignore[possibly-unbound]
             self._mouse.click(btn)
             return True
         except Exception:
@@ -243,12 +243,12 @@ class PCHIDClient:
 
     def mouse_click(self, button: str = "left") -> bool:
         try:
-            btn = Button.left
+            btn = Button.left  # type: ignore[possibly-unbound]
             normalized = (button or "").strip().lower()
             if normalized == "right":
-                btn = Button.right
+                btn = Button.right  # type: ignore[possibly-unbound]
             elif normalized == "middle":
-                btn = Button.middle
+                btn = Button.middle  # type: ignore[possibly-unbound]
             self._mouse.click(btn)
             return True
         except Exception:
@@ -313,7 +313,7 @@ class PicoHIDClient:
         if not self.port:
             return False
         try:
-            self._ser = serial.Serial(
+            self._ser = serial.Serial(  # type: ignore[union-attr]
                 self.port,
                 self.baud,
                 timeout=self.timeout,
@@ -331,8 +331,8 @@ class PicoHIDClient:
         if not self._ensure_open():
             return False
         try:
-            self._ser.write(line.encode("utf-8"))
-            self._ser.flush()
+            self._ser.write(line.encode("utf-8"))  # type: ignore[union-attr]
+            self._ser.flush()  # type: ignore[union-attr]
             time.sleep(0.08)  # Pico が受信するまで少し待つ
             return True
         except Exception:

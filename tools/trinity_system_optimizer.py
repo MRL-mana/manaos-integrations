@@ -153,7 +153,7 @@ class TrinitySystemOptimizer:
         
         return json.dumps(report, indent=2, ensure_ascii=False)
     
-    def save_report(self, filename: str = None):
+    def save_report(self, filename: str = None):  # type: ignore
         """レポートを保存"""
         if not filename:
             filename = f"/root/trinity_workspace/logs/optimization_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"

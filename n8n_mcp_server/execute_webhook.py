@@ -7,8 +7,8 @@ import sys
 from datetime import datetime
 
 # Webhook URL（先ほど取得したもの）
-DEFAULT_N8N_BASE_URL = f"http://127.0.0.1:{os.getenv('N8N_PORT', '5678')}"
-N8N_BASE_URL = os.getenv("N8N_BASE_URL", DEFAULT_N8N_BASE_URL).rstrip("/")
+DEFAULT_N8N_BASE_URL = f"http://127.0.0.1:{os.getenv('N8N_PORT', '5678')}"  # type: ignore[name-defined]
+N8N_BASE_URL = os.getenv("N8N_BASE_URL", DEFAULT_N8N_BASE_URL).rstrip("/")  # type: ignore[name-defined]
 WEBHOOK_URL = f"{N8N_BASE_URL}/webhook/comfyui-generated"
 
 def execute_webhook(payload=None):

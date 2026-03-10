@@ -366,8 +366,8 @@ async def status_bundle(_: None = Depends(require_auth)):
     info = await get_system_info()  # type: ignore
     resources = await get_resources()  # type: ignore
     return JSONResponse(content={
-        "info": json.loads(info.body.decode("utf-8")),
-        "resources": json.loads(resources.body.decode("utf-8")),
+        "info": json.loads(info.body.decode("utf-8")),  # type: ignore
+        "resources": json.loads(resources.body.decode("utf-8")),  # type: ignore
         "timestamp": datetime.now().isoformat(),
     })
 

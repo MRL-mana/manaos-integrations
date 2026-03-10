@@ -149,7 +149,7 @@ def main():
         print("❌ Runpod GPU環境にアクセスできません")
         print("💡 以下を確認してください:")
         print("   1. Runpodが起動しているか")
-        print(f"   2. Web Terminal: {self.web_terminal_url}")
+        print(f"   2. Web Terminal: {self.web_terminal_url}")  # type: ignore[name-defined]
         print("   3. Jupyter Lab: http://213.181.111.2:8888")
 
 if __name__ == "__main__":

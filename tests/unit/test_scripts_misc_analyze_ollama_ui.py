@@ -8,8 +8,8 @@ import pytest
 
 def _make_paths_stub():
     mod = types.ModuleType("_paths")
-    mod.OLLAMA_PORT = 11434
-    mod.UNIFIED_API_PORT = 9502
+    mod.OLLAMA_PORT = 11434  # type: ignore
+    mod.UNIFIED_API_PORT = 9502  # type: ignore
     return mod
 
 

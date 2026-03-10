@@ -408,7 +408,7 @@ class LLMOptimization:
             # Ollama APIでモデルをアンロード
             response = httpx.delete(
                 f"{self.ollama_url}/api/generate",
-                json={"model": model_name},
+                json={"model": model_name},  # type: ignore[call-arg]
                 timeout=10
             )
             

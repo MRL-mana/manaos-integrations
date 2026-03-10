@@ -208,7 +208,7 @@ class MoltbotExecutor:
             }
             try:
                 body_bytes = json.dumps(body, ensure_ascii=False).encode("utf-8")
-                r = requests.post(url, data=body_bytes, headers=headers, timeout=60)
+                r = requests.post(url, data=body_bytes, headers=headers, timeout=60)  # type: ignore[possibly-unbound]
                 r.encoding = r.encoding or "utf-8"
                 if r.status_code == 404:
                     # ツールが OpenClaw にない / 許可されていない → read-only はローカルで本物を返す
@@ -378,7 +378,7 @@ class MoltbotExecutor:
         base = MOLTBOT_DAEMON_URL.rstrip("/")
         url = f"{base}/run"
         try:
-            r = requests.post(url, json=plan, timeout=60)
+            r = requests.post(url, json=plan, timeout=60)  # type: ignore[possibly-unbound]
             r.raise_for_status()
             data = r.json()
             result = data.get("result", data)

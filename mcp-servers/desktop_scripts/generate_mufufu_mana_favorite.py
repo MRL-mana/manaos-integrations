@@ -381,7 +381,7 @@ async def main_async():
     llm = None
     if LLM_AVAILABLE:
         try:
-            llm = LocalLLM(default_model="gurubot/llama3-guru-uncensored:latest")
+            llm = LocalLLM(default_model="gurubot/llama3-guru-uncensored:latest")  # type: ignore[operator]
             if await llm.check_connection():
                 print("[OK] LLM接続成功 - AIプロンプト生成を使用")
             else:
@@ -571,7 +571,7 @@ async def main_async():
                     height=768,
                     num_inference_steps=30,
                     guidance_scale=7.5,
-                    seed=seed,  # 同じシードで比較
+                    seed=seed,  # 同じシードで比較  # type: ignore[possibly-unbound]
                     output_dir=f"{combined_output_dir}/model2_{model2_config['name']}"
                 )
                 generator2.cleanup()

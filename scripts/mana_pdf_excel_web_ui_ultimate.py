@@ -672,7 +672,7 @@ async def convert_pdf(
         # ファイル保存
         temp_files = []
         for file in files:
-            if not file.filename.endswith('.pdf'):
+            if not file.filename.endswith('.pdf'):  # type: ignore[union-attr]
                 raise HTTPException(status_code=400, detail="PDFファイルのみ対応")
 
             temp_path = f"/tmp/{file.filename}"
@@ -687,7 +687,7 @@ async def convert_pdf(
             await manager.send_progress(progress_data)
 
         from mana_pdf_excel_ai_ultimate import ManaPDFExcelAIUltimate
-        converter = ManaPDFExcelAIUltimate(progress_callback=lambda data: asyncio.create_task(progress_callback(data)))
+        converter = ManaPDFExcelAIUltimate(progress_callback=lambda data: asyncio.create_task(progress_callback(data)))  # type: ignore[name-defined]
 
         # 変換実行
         if len(temp_files) == 1:

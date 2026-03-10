@@ -12,8 +12,8 @@ import io
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 
 def detect_comfyui_path():
@@ -92,7 +92,7 @@ def detect_mufufu_dirs():
     return dirs
 
 
-def generate_env_file(output_path: Path = None):
+def generate_env_file(output_path: Path = None):  # type: ignore
     """環境変数設定ファイルを生成"""
     if output_path is None:
         output_path = Path(__file__).parent / ".env"

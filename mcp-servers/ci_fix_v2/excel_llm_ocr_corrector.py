@@ -31,7 +31,7 @@ class ExcelLLMOCRCorrector:
 
     def __init__(
         self,
-        llm_model: str = None,  # Noneの場合は環境変数またはデフォルトを使用
+        llm_model: str = None,  # Noneの場合は環境変数またはデフォルトを使用  # type: ignore
         batch_size: int = 100,  # 一度に処理するセル数
         max_cell_length: int = 500  # セルあたりの最大文字数
     ):
@@ -430,7 +430,7 @@ OCR結果には以下の問題がある可能性があります：
 修正後のテキストのみを返してください（説明やJSON形式は不要）:"""
 
         try:
-            result = generate(self.llm_model, prompt, timeout=30)
+            result = generate(self.llm_model, prompt, timeout=30)  # type: ignore[possibly-unbound]
             if result and result.get('response'):
                 corrected = result['response'].strip()
 
@@ -507,14 +507,14 @@ OCR結果には以下の問題がある可能性があります：
 
         # 行ごとに処理（コンテキストを保持）
         for idx, row in df.iterrows():
-            if verbose and (idx + 1) % 10 == 0:
-                print(f"    行 {idx + 1}/{len(df)} を処理中...")
+            if verbose and (idx + 1) % 10 == 0:  # type: ignore[operator]
+                print(f"    行 {idx + 1}/{len(df)} を処理中...")  # type: ignore[operator]
 
             for col_idx, col_name in enumerate(df.columns):
                 cell_value = row[col_name]
 
                 # 空セルや数値のみのセルはスキップ
-                if pd.isna(cell_value):
+                if pd.isna(cell_value):  # type: ignore
                     continue
 
                 cell_str = str(cell_value)
@@ -554,7 +554,7 @@ OCR結果には以下の問題がある可能性があります：
                 )
 
                 if should_correct:
-                    context = self._build_cell_context(df, idx, col_idx, col_headers)
+                    context = self._build_cell_context(df, idx, col_idx, col_headers)  # type: ignore
                     corrected = self.correct_cell_text(cell_str, context)
                     if corrected != cell_str:
                         corrected_df.at[idx, col_name] = corrected
@@ -645,7 +645,7 @@ def main():
     use_large = os.getenv("MANA_OCR_USE_LARGE_MODEL", "0").strip().lower() in ("1", "true", "yes", "y", "on")
 
     corrector = ExcelLLMOCRCorrector(
-        llm_model=model,  # Noneの場合は内部で自動選択
+        llm_model=model,  # Noneの場合は内部で自動選択  # type: ignore
         batch_size=100
     )
 

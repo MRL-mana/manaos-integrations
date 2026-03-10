@@ -50,7 +50,7 @@ class GameDayExtended:
                 # 書き込みが成功したら失敗（権限が効いていない）
                 success = False
                 error_msg = "書き込みが成功（権限が効いていない）"
-            except sqlite3.OperationalError as e:
+            except sqlite3.OperationalError as e:  # type: ignore[possibly-unbound]
                 error_str = str(e).lower()
                 if "readonly" in error_str or "locked" in error_str or "permission" in error_str:
                     success = True  # 適切にエラーが発生
@@ -80,13 +80,13 @@ class GameDayExtended:
             if original_mode and DB_PATH.exists():
                 try:
                     DB_PATH.chmod(original_mode)
-                except sqlite3.Error as e:
+                except sqlite3.Error as e:  # type: ignore[possibly-unbound]
                     pass
 
             return {
                 "test": "permission_misconfig",
                 "success": False,
-                "error": str(e),
+                "error": str(e),  # type: ignore[possibly-unbound]
                 "timestamp": datetime.now().isoformat()
             }
 
@@ -119,7 +119,7 @@ class GameDayExtended:
             return {
                 "test": "disk_full",
                 "success": success,
-                "usage_percent": usage_percent if 'usage_percent' in locals() else None,
+                "usage_percent": usage_percent if 'usage_percent' in locals() else None,  # type: ignore[possibly-unbound]
                 "timestamp": datetime.now().isoformat()
             }
         except Exception as e:

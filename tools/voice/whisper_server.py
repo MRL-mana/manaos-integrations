@@ -78,7 +78,7 @@ def transcribe_audio():
         
         # 一時ファイル保存
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"audio_{timestamp}.{audio_file.filename.split('.')[-1]}"
+        filename = f"audio_{timestamp}.{audio_file.filename.split('.')[-1]}"  # type: ignore[union-attr]
         temp_path = AUDIO_DIR / filename
         
         audio_file.save(temp_path)
@@ -136,7 +136,7 @@ def transcribe_and_execute():
         
         # 一時ファイル保存
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"audio_{timestamp}.{audio_file.filename.split('.')[-1]}"
+        filename = f"audio_{timestamp}.{audio_file.filename.split('.')[-1]}"  # type: ignore[union-attr]
         temp_path = AUDIO_DIR / filename
         
         audio_file.save(temp_path)

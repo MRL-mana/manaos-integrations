@@ -168,7 +168,7 @@ class ManaOSUltimateCognitiveSystem:
                 await self._optimize_system_performance()
                 
                 # リソース使用量の最適化
-                await self._optimize_resource_usage()
+                await self._optimize_resource_usage()  # type: ignore
                 
                 # 自動スケーリング
                 await self._auto_scaling_management()
@@ -223,7 +223,7 @@ class ManaOSUltimateCognitiveSystem:
                 'cpu_percent': psutil.cpu_percent(),
                 'memory_percent': psutil.virtual_memory().percent,
                 'disk_usage': psutil.disk_usage('/').percent,
-                'network_io': psutil.net_io_counters()._asdict(),
+                'network_io': psutil.net_io_counters()._asdict(),  # type: ignore
                 'timestamp': time.time()
             }
         except Exception as e:

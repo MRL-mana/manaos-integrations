@@ -115,7 +115,7 @@ class MultiObjectiveOptimizer:
         weight: float = 1.0,
     ) -> Dict[str, Any]:
         """Objective を追加 / 更新"""
-        obj = Objective(name=name, direction=direction, weight=weight)
+        obj = Objective(name=name, direction=direction, weight=weight)  # type: ignore
         self._objectives[name] = obj
         return {"added": name, "direction": direction, "weight": weight}
 

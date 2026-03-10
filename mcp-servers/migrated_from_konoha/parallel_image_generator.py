@@ -22,7 +22,7 @@ from advanced_image_generator import AdvancedImageGenerator
 class ParallelImageGenerator:
     def __init__(self, max_workers=None):
         """並列画像生成システム初期化"""
-        self.max_workers = max_workers or min(os.cpu_count(), 8)
+        self.max_workers = max_workers or min(os.cpu_count(), 8)  # type: ignore
         self.executor = ProcessPoolExecutor(max_workers=self.max_workers)
         
         # 出力ディレクトリ
@@ -209,7 +209,7 @@ class ParallelImageGenerator:
             negative_prompt = ", ".join(self.negative_prompts)
             
             # 複数画像を一度に生成
-            images = generator.current_pipeline(
+            images = generator.current_pipeline(  # type: ignore[operator]
                 prompt=prompt,
                 negative_prompt=negative_prompt,
                 num_images_per_prompt=batch_size,

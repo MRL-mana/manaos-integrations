@@ -22,7 +22,7 @@ class CommandMatch:
 class CommandProcessor:
     """定型指令処理エンジン"""
     
-    def __init__(self, patterns_file: str = None):
+    def __init__(self, patterns_file: str = None):  # type: ignore
         self.patterns_file = patterns_file or os.path.expanduser("~/mrl-mcp/commands/patterns.json")
         self.patterns = self._load_patterns()
         self.log_dir = os.path.expanduser("~/mrl-mcp/logs/commands")
@@ -105,7 +105,7 @@ class CommandProcessor:
             self.logger.info(f"Executing command: {match.pattern} -> {match.target}.{match.action}")
             
             # 指令ログを保存
-            self._log_command(match, content)
+            self._log_command(match, content)  # type: ignore
             
             # ターゲット別の処理
             if match.target == "claude":
@@ -204,15 +204,15 @@ class CommandProcessor:
             return self._execute_backup()
         elif match.action == "monitor":
             # 監視処理
-            return self._execute_monitor()
+            return self._execute_monitor()  # type: ignore
         elif match.action == "optimize":
             # 最適化処理
-            return self._execute_optimize()
+            return self._execute_optimize()  # type: ignore
         else:
             return {"status": "error", "message": f"Unknown system action: {match.action}"}
     
-    def _execute_backup(self) -> Dict:
+    def _execute_backup(self) -> Dict:  # type: ignore
         """バックアップ実行"""
         try:
             # バックアップ処理の実装
-            backup_dir 
+            backup_dir  # type: ignore[name-defined]

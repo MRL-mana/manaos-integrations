@@ -3,7 +3,7 @@
 import sys, os, json, glob
 from pathlib import Path
 
-sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 try:
     from PIL import Image
@@ -24,7 +24,7 @@ for i, png in enumerate(pngs[skip_count:skip_count+10]):
     print(f"\n=== {png.name} (modified: {png.stat().st_mtime}) ===")
     print(f"  Size: {png.stat().st_size} bytes")
     try:
-        img = Image.open(png)
+        img = Image.open(png)  # type: ignore[possibly-unbound]
         print(f"  Dimensions: {img.size}")
         metadata = img.info
         if 'prompt' in metadata:

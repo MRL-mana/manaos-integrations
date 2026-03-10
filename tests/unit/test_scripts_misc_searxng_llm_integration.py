@@ -10,7 +10,7 @@ import pytest
 
 # _paths
 _paths_mod = sys.modules.get("_paths") or MagicMock()
-_paths_mod.OLLAMA_PORT = 11434
+_paths_mod.OLLAMA_PORT = 11434  # type: ignore
 sys.modules["_paths"] = _paths_mod
 
 # searxng_integration
@@ -77,7 +77,7 @@ class TestSearchWithLLM:
     def test_returns_search_result_when_no_llm(self):
         obj = _make_sli()
         obj.llm = None
-        obj.searxng.search.return_value = {
+        obj.searxng.search.return_value = {  # type: ignore
             "query": "python",
             "results": [{"title": "Python docs", "url": "https://python.org", "content": "..."}],
             "count": 1,
@@ -88,7 +88,7 @@ class TestSearchWithLLM:
 
     def test_returns_error_from_searxng(self):
         obj = _make_sli()
-        obj.searxng.search.return_value = {"error": "connection refused"}
+        obj.searxng.search.return_value = {"error": "connection refused"}  # type: ignore
         result = obj.search_with_llm("test")
         assert result.get("error") == "connection refused"
 
@@ -96,7 +96,7 @@ class TestSearchWithLLM:
         obj = _make_sli()
         obj.llm = MagicMock()
         obj.llm.invoke.return_value = "要約テキスト"
-        obj.searxng.search.return_value = {
+        obj.searxng.search.return_value = {  # type: ignore
             "query": "AI",
             "results": [{"title": "AI news", "url": "http://news.example.com", "content": "AI is great"}],
             "count": 1,
@@ -109,7 +109,7 @@ class TestSearchWithLLM:
         obj = _make_sli()
         obj.llm = MagicMock()
         obj.llm.invoke.side_effect = RuntimeError("llm error")
-        obj.searxng.search.return_value = {
+        obj.searxng.search.return_value = {  # type: ignore
             "query": "test",
             "results": [],
             "count": 0,
@@ -136,13 +136,13 @@ class TestGetLangChainTool:
 class TestCreateRAGContext:
     def test_returns_error_string_on_search_error(self):
         obj = _make_sli()
-        obj.searxng.search.return_value = {"error": "unreachable"}
+        obj.searxng.search.return_value = {"error": "unreachable"}  # type: ignore
         result = obj.create_rag_context("query")
         assert "エラー" in result
 
     def test_returns_context_string_with_results(self):
         obj = _make_sli()
-        obj.searxng.search.return_value = {
+        obj.searxng.search.return_value = {  # type: ignore
             "results": [
                 {"title": "Article 1", "url": "http://ex.com/1", "content": "some content"},
             ]
@@ -153,7 +153,7 @@ class TestCreateRAGContext:
 
     def test_exclude_urls_when_include_urls_false(self):
         obj = _make_sli()
-        obj.searxng.search.return_value = {
+        obj.searxng.search.return_value = {  # type: ignore
             "results": [
                 {"title": "Article 2", "url": "http://ex.com/2", "content": "text"},
             ]
@@ -166,7 +166,7 @@ class TestCreateRAGContext:
 class TestCollectTrainingData:
     def test_returns_list_of_data(self):
         obj = _make_sli()
-        obj.searxng.search.return_value = {
+        obj.searxng.search.return_value = {  # type: ignore
             "results": [{"title": "T", "url": "http://x.com"}],
             "timestamp": "2024-01-01",
         }
@@ -176,13 +176,13 @@ class TestCollectTrainingData:
 
     def test_skips_error_results(self):
         obj = _make_sli()
-        obj.searxng.search.return_value = {"error": "fail"}
+        obj.searxng.search.return_value = {"error": "fail"}  # type: ignore
         result = obj.collect_training_data(["bad query"])
         assert result == []
 
     def test_saves_to_file(self, tmp_path):
         obj = _make_sli()
-        obj.searxng.search.return_value = {
+        obj.searxng.search.return_value = {  # type: ignore
             "results": [{"title": "X", "url": "http://y.com"}],
             "timestamp": "now",
         }

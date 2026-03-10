@@ -142,9 +142,9 @@ async def execute_command(request: CommandRequest):
     
     # PowerShellコマンドかCMDコマンドかを判定
     if request.command.startswith("powershell") or request.command.startswith("pwsh"):
-        result = await execute_powershell_command(request.command, request.timeout)
+        result = await execute_powershell_command(request.command, request.timeout)  # type: ignore
     else:
-        result = await execute_cmd_command(request.command, request.timeout)
+        result = await execute_cmd_command(request.command, request.timeout)  # type: ignore
     
     execution_time = (datetime.now() - start_time).total_seconds()
     

@@ -81,7 +81,7 @@ def main() -> int:
     if args.jp:
         sd_prompt_url = f"{api_url}/api/sd-prompt/generate"
         try:
-            r = requests.post(
+            r = requests.post(  # type: ignore[union-attr]
                 sd_prompt_url,
                 json={"description": prompt, "with_negative": False},
                 timeout=90,

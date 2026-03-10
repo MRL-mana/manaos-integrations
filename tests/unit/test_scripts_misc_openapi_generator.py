@@ -175,7 +175,7 @@ class TestFlaskOpenAPIExtractor:
         fake_rule = MagicMock()
         fake_rule.endpoint = "health"
         fake_rule.methods = {"GET", "OPTIONS", "HEAD"}
-        fake_rule.__str__ = lambda self: "/health"
+        fake_rule.__str__ = lambda self: "/health"  # type: ignore
         fake_app = MagicMock()
         fake_app.url_map.iter_rules.return_value = [fake_rule]
         fake_view = MagicMock(__doc__="Health check endpoint\nReturns status.")

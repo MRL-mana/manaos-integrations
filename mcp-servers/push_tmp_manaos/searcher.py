@@ -52,7 +52,7 @@ class Searcher:
         # ソース品質フィルタ初期化
         self.quality_filter = SourceQualityFilter()
     
-    def search(self, query: str, tool: TaskTool, max_results: int = None) -> List[SearchResult]:
+    def search(self, query: str, tool: TaskTool, max_results: int = None) -> List[SearchResult]:  # type: ignore
         """
         検索実行
         

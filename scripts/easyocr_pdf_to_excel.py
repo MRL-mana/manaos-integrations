@@ -75,7 +75,7 @@ class EasyOCRPDFToExcel:
             pix = page.get_pixmap(matrix=mat)
 
             # PIL Imageに変換
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore
 
             doc.close()
             return img
@@ -402,7 +402,7 @@ class EasyOCRPDFToExcel:
                                 for candidate in candidates:
                                     if 0 <= candidate < len(centers) and candidate not in row_map:
                                         # 新しい列が元の列に近いか確認
-                                        if abs(centers[candidate] - item['x']) <= allowed_distance * 2:
+                                        if abs(centers[candidate] - item['x']) <= allowed_distance * 2:  # type: ignore[possibly-unbound]
                                             col_idx = candidate
                                             placed = True
                                             break
@@ -529,7 +529,7 @@ class EasyOCRPDFToExcel:
             if analysis.get("is_text_based"):
                 if self.camelot_available:
                     try:
-                        tables = camelot.read_pdf(
+                        tables = camelot.read_pdf(  # type: ignore[union-attr]
                             str(pdf_path_obj),
                             pages=str(page_number),
                             flavor="lattice",
@@ -548,7 +548,7 @@ class EasyOCRPDFToExcel:
                 # latticeで何も取れなければstream試行
                 if structured_table is None and self.camelot_available:
                     try:
-                        tables = camelot.read_pdf(
+                        tables = camelot.read_pdf(  # type: ignore[union-attr]
                             str(pdf_path_obj),
                             pages=str(page_number),
                             flavor="stream",
@@ -566,7 +566,7 @@ class EasyOCRPDFToExcel:
 
                 if structured_table is None and self.pdfplumber_available:
                     try:
-                        with pdfplumber.open(str(pdf_path_obj)) as pdf_plumber_doc:
+                        with pdfplumber.open(str(pdf_path_obj)) as pdf_plumber_doc:  # type: ignore[union-attr]
                             pdf_page = pdf_plumber_doc.pages[page_index]
                             tables = pdf_page.extract_tables()
                             if tables:
@@ -590,7 +590,7 @@ class EasyOCRPDFToExcel:
 
                 mat = fitz.Matrix(dpi / 72, dpi / 72)
                 pix = page.get_pixmap(matrix=mat)
-                image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore
 
                 # より積極的なリサイズ（メモリ節約）
                 max_dim = max(image.width, image.height)
@@ -599,7 +599,7 @@ class EasyOCRPDFToExcel:
                     if scale < 1.0:
                         new_width = max(1, int(image.width * scale))
                         new_height = max(1, int(image.height * scale))
-                        image = image.resize((new_width, new_height), Image.BICUBIC)
+                        image = image.resize((new_width, new_height), Image.BICUBIC)  # type: ignore[attr-defined]
                         print(f"   画像をリサイズ: {image.width}x{image.height}")
 
                 max_slice_width = 1200
@@ -675,11 +675,11 @@ class EasyOCRPDFToExcel:
             else:
                 ws = workbook.create_sheet()
 
-            ws.title = f"ページ{page_number}"
+            ws.title = f"ページ{page_number}"  # type: ignore[union-attr]
 
             # テキストベースの表が抽出できた場合はそのまま出力
             if structured_table is not None and not use_easyocr:
-                title_cell = ws['A1']
+                title_cell = ws['A1']  # type: ignore[index]
                 method_label = extraction_method.upper() if extraction_method else "TEXT"
                 table_count = len(structured_tables) if structured_tables else 1
                 title_cell.value = f"ページ {page_number} - {method_label} テーブル ({table_count}件)"
@@ -707,8 +707,8 @@ class EasyOCRPDFToExcel:
                         continue
 
                     # 各テーブルごとのタイトル行
-                    table_title_cell = ws.cell(row=current_start_row, column=1)
-                    table_title_cell.value = f"テーブル{table_index}"
+                    table_title_cell = ws.cell(row=current_start_row, column=1)  # type: ignore[union-attr]
+                    table_title_cell.value = f"テーブル{table_index}"  # type: ignore
                     table_title_cell.font = header_font
                     table_title_cell.fill = header_fill
                     table_title_cell.alignment = Alignment(horizontal='left', vertical='center')
@@ -717,7 +717,7 @@ class EasyOCRPDFToExcel:
 
                     for row in table_rows:
                         for col_idx, value in enumerate(row, start=1):
-                            cell = ws.cell(row=current_start_row, column=col_idx)
+                            cell = ws.cell(row=current_start_row, column=col_idx)  # type: ignore[union-attr]
                             cell.value = value if value not in ("", None) else None
                             cell.border = border_style
                             if current_start_row == 4:  # 最初のテーブルのヘッダーとみなす
@@ -731,17 +731,17 @@ class EasyOCRPDFToExcel:
                     current_start_row += 1  # テーブル間の空行
                     table_index += 1
 
-                max_used_col = ws.max_column
+                max_used_col = ws.max_column  # type: ignore[union-attr]
                 for col_idx in range(1, max_used_col + 1):
                     col_letter = get_column_letter(col_idx)
                     max_length = 0
-                    for row_idx in range(1, ws.max_row + 1):
-                        value = ws.cell(row=row_idx, column=col_idx).value
+                    for row_idx in range(1, ws.max_row + 1):  # type: ignore[union-attr]
+                        value = ws.cell(row=row_idx, column=col_idx).value  # type: ignore[union-attr]
                         if value:
                             max_length = max(max_length, len(str(value)))
-                    ws.column_dimensions[col_letter].width = min(max_length + 2, 60)
+                    ws.column_dimensions[col_letter].width = min(max_length + 2, 60)  # type: ignore[union-attr]
 
-                ws.freeze_panes = ws.cell(row=4, column=1)
+                ws.freeze_panes = ws.cell(row=4, column=1)  # type: ignore[union-attr]
                 continue
 
             # ここからはOCRベースでの出力
@@ -762,18 +762,18 @@ class EasyOCRPDFToExcel:
             header_row_index = detect_header_row(filtered_rows, header_candidate_idx)
 
             if not filtered_rows:
-                ws['A1'] = f"ページ {page_number} - データが検出できませんでした"
-                ws['A1'].font = title_font
+                ws['A1'] = f"ページ {page_number} - データが検出できませんでした"  # type: ignore[index]
+                ws['A1'].font = title_font  # type: ignore[index]
                 continue
 
             total_active_columns = len(columns_to_keep)
-            title_cell = ws['A1']
+            title_cell = ws['A1']  # type: ignore[index]
             title_cell.value = f"ページ {page_number} - OCR構造化テーブル"
             title_cell.font = title_font
             title_cell.fill = title_fill
             title_cell.alignment = Alignment(horizontal='center', vertical='center')
             if total_active_columns > 1:
-                ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_active_columns)
+                ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_active_columns)  # type: ignore[union-attr]
 
             data_start_row = 3
             column_widths = [10] * total_active_columns
@@ -793,17 +793,17 @@ class EasyOCRPDFToExcel:
                         continue
 
                     numeric_value = parse_numeric(display_text)
-                    cell = ws.cell(row=excel_row, column=col_offset)
+                    cell = ws.cell(row=excel_row, column=col_offset)  # type: ignore[union-attr]
 
                     if numeric_value is not None:
-                        cell.value = numeric_value
+                        cell.value = numeric_value  # type: ignore
                         if numeric_value.is_integer():
                             cell.number_format = '#,##0'
                         else:
                             cell.number_format = '#,##0.00'
                         cell.alignment = Alignment(horizontal='right', vertical='center')
                     else:
-                        cell.value = display_text
+                        cell.value = display_text  # type: ignore
                         if is_header:
                             cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
                         else:
@@ -820,10 +820,10 @@ class EasyOCRPDFToExcel:
 
                     merge_candidates[col_offset - 1].append((relative_row_idx, display_text, numeric_value is None))
 
-                ws.row_dimensions[excel_row].height = 18
+                ws.row_dimensions[excel_row].height = 18  # type: ignore[union-attr]
 
             for idx, width in enumerate(column_widths, start=1):
-                ws.column_dimensions[get_column_letter(idx)].width = width
+                ws.column_dimensions[get_column_letter(idx)].width = width  # type: ignore[union-attr]
 
             merge_ranges = set()
             for col_idx, column_values in merge_candidates.items():
@@ -890,11 +890,11 @@ class EasyOCRPDFToExcel:
                 if end_excel_row - start_excel_row < 1:
                     continue
                 col_letter = get_column_letter(col_idx + 1)
-                ws.merge_cells(f"{col_letter}{start_excel_row}:{col_letter}{end_excel_row}")
-                merged_cell = ws.cell(row=start_excel_row, column=col_idx + 1)
+                ws.merge_cells(f"{col_letter}{start_excel_row}:{col_letter}{end_excel_row}")  # type: ignore[union-attr]
+                merged_cell = ws.cell(row=start_excel_row, column=col_idx + 1)  # type: ignore[union-attr]
                 merged_cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
 
-            ws.freeze_panes = ws.cell(row=data_start_row, column=1)
+            ws.freeze_panes = ws.cell(row=data_start_row, column=1)  # type: ignore[union-attr]
 
         doc.close()
         self.latest_page_analysis = page_analysis_results
@@ -924,30 +924,30 @@ class EasyOCRPDFToExcel:
         try:
             wb = openpyxl.Workbook()
             ws = wb.active
-            ws.title = "EasyOCR抽出結果"
+            ws.title = "EasyOCR抽出結果"  # type: ignore[union-attr]
 
             # ヘッダー
             header_font = Font(bold=True, color="FFFFFF", size=12)
             header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
             header_alignment = Alignment(horizontal="center", vertical="center")
 
-            ws.append(["行番号", "内容"])
-            ws['A1'].font = header_font
-            ws['A1'].fill = header_fill
-            ws['A1'].alignment = header_alignment
-            ws['B1'].font = header_font
-            ws['B1'].fill = header_fill
-            ws['B1'].alignment = header_alignment
+            ws.append(["行番号", "内容"])  # type: ignore[union-attr]
+            ws['A1'].font = header_font  # type: ignore[index]
+            ws['A1'].fill = header_fill  # type: ignore[index]
+            ws['A1'].alignment = header_alignment  # type: ignore[index]
+            ws['B1'].font = header_font  # type: ignore[index]
+            ws['B1'].fill = header_fill  # type: ignore[index]
+            ws['B1'].alignment = header_alignment  # type: ignore[index]
 
             # データ行
             lines = [line.strip() for line in text.split('\n') if line.strip()]
 
             for i, line in enumerate(lines, 1):
-                ws.append([i, line])
+                ws.append([i, line])  # type: ignore[union-attr]
 
             # 列幅調整
-            ws.column_dimensions['A'].width = 12
-            ws.column_dimensions['B'].width = 120
+            ws.column_dimensions['A'].width = 12  # type: ignore[union-attr]
+            ws.column_dimensions['B'].width = 120  # type: ignore[union-attr]
 
             # 保存
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -975,14 +975,14 @@ class EasyOCRPDFToExcel:
 
     def convert_pdf(self, pdf_path: str, mode: str = "auto"):
         """PDFをEasyOCRで変換（構造化優先、フォールバックあり）"""
-        pdf_path = Path(pdf_path)
+        pdf_path = Path(pdf_path)  # type: ignore
 
-        if not pdf_path.exists():
+        if not pdf_path.exists():  # type: ignore
             print(f"❌ PDFファイルが見つかりません: {pdf_path}")
             return None
 
         print("=" * 60)
-        print(f"📄 EasyOCR変換開始: {pdf_path.name}")
+        print(f"📄 EasyOCR変換開始: {pdf_path.name}")  # type: ignore
         print("=" * 60)
 
         mode = (mode or "auto").lower()
@@ -1027,7 +1027,7 @@ class EasyOCRPDFToExcel:
                 return None
 
             print("\n📊 Step 4: テキストExcelファイル生成中...")
-            excel_path = self.text_to_excel(text, pdf_path.stem)
+            excel_path = self.text_to_excel(text, pdf_path.stem)  # type: ignore
 
             if excel_path:
                 print("\n" + "=" * 60)

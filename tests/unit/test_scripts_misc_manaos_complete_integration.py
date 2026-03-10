@@ -36,13 +36,13 @@ for _m in _MOCKS:
 
 # Configure _paths constants
 _p = sys.modules["_paths"]
-_p.N8N_PORT = 5678
-_p.AUTONOMY_SYSTEM_PORT = 5200
-_p.LEARNING_SYSTEM_PORT = 5201
-_p.ORCHESTRATOR_PORT = 5202
-_p.PERSONALITY_SYSTEM_PORT = 5203
-_p.RAG_MEMORY_PORT = 5204
-_p.SECRETARY_SYSTEM_PORT = 5205
+_p.N8N_PORT = 5678  # type: ignore
+_p.AUTONOMY_SYSTEM_PORT = 5200  # type: ignore
+_p.LEARNING_SYSTEM_PORT = 5201  # type: ignore
+_p.ORCHESTRATOR_PORT = 5202  # type: ignore
+_p.PERSONALITY_SYSTEM_PORT = 5203  # type: ignore
+_p.RAG_MEMORY_PORT = 5204  # type: ignore
+_p.SECRETARY_SYSTEM_PORT = 5205  # type: ignore
 
 # ── SUT import ────────────────────────────────────────────────────────
 import scripts.misc.manaos_complete_integration as _sut

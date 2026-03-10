@@ -77,7 +77,7 @@ def test_batch_processing():
     print("=" * 60)
 
     try:
-        from generate_mufufu_batch import generate_mufufu_batch
+        from generate_mufufu_batch import generate_mufufu_batch  # type: ignore[attr-defined]
 
         print("バッチ生成を実行中...")
         generate_mufufu_batch(count=5)

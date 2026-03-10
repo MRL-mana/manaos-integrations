@@ -67,7 +67,7 @@ class AlwaysReadyLLMClient:
     
     def __init__(
         self,
-        n8n_webhook_url: str = None,
+        n8n_webhook_url: str = None,  # type: ignore
         ollama_url: Optional[str] = None,
         lm_studio_url: Optional[str] = None,
         cache_api_url: Optional[str] = None,

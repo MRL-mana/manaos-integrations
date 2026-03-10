@@ -55,7 +55,7 @@ class UltimateAutomationMaster:
         """システム情報を取得"""
         disk_usage = psutil.disk_usage('/')
         memory = psutil.virtual_memory()
-        load_avg = os.getloadavg()
+        load_avg = os.getloadavg()  # type: ignore[attr-defined]
         
         return {
             'disk_percent': disk_usage.percent,

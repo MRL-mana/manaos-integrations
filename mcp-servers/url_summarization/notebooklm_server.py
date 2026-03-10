@@ -51,7 +51,7 @@ instagram_handler = InstagramHandler()
 search_integration = SearchIntegration()
 info_collector = InfoCollector()
 report_generator = ReportGenerator()
-youtube_research = YouTubeResearch()
+youtube_research = YouTubeResearch()  # type: ignore
 voice_memo = VoiceMemo()
 timeline_viewer = TimelineViewer()
 notification_system = NotificationSystem()
@@ -150,7 +150,7 @@ class NotebookManager:
                 }]
             )
 
-            summary = response.content[0].text
+            summary = response.content[0].text  # type: ignore
             notebook['summary'] = summary
             self.save_notebook(notebook_id)
             return summary
@@ -332,7 +332,7 @@ def chat(notebook_id):
             }]
         )
 
-        answer = response.content[0].text
+        answer = response.content[0].text  # type: ignore
 
         # ノートに追加
         notebook_manager.add_note(notebook_id, {
@@ -504,7 +504,7 @@ def youtube_search():
     if not query:
         return jsonify({"success": False, "error": "検索クエリが必要です"}), 400
 
-    result = youtube_research.search_youtube(query, max_results)
+    result = youtube_research.search_youtube(query, max_results)  # type: ignore
     return jsonify(result)
 
 
@@ -518,7 +518,7 @@ def youtube_research():
     if not query:
         return jsonify({"success": False, "error": "検索クエリが必要です"}), 400
 
-    result = youtube_research.research_and_summarize(query, max_results)
+    result = youtube_research.research_and_summarize(query, max_results)  # type: ignore
     return jsonify(result)
 
 
@@ -531,7 +531,7 @@ def youtube_compare():
     if not video_urls:
         return jsonify({"success": False, "error": "動画URLリストが必要です"}), 400
 
-    result = youtube_research.compare_videos(video_urls)
+    result = youtube_research.compare_videos(video_urls)  # type: ignore
     return jsonify(result)
 
 
@@ -546,7 +546,7 @@ def transcribe_audio():
 
     # 一時保存
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    temp_path = AUDIO_DIR / f"audio_{timestamp}.{audio_file.filename.split('.')[-1]}"
+    temp_path = AUDIO_DIR / f"audio_{timestamp}.{audio_file.filename.split('.')[-1]}"  # type: ignore[union-attr]
     audio_file.save(temp_path)
 
     # 文字起こし

@@ -22,8 +22,8 @@ import json
 # Windowsでのエンコーディング修正
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 try:
     import fitz  # PyMuPDF
@@ -61,7 +61,7 @@ class PDFToExcelVisionLLM:
         self,
         vision_model: str = "llava:latest",
         use_ocr_fallback: bool = True,
-        ocr_providers: List[str] = None
+        ocr_providers: List[str] = None  # type: ignore
     ):
         """
         初期化
@@ -77,7 +77,7 @@ class PDFToExcelVisionLLM:
         
         # OCR初期化
         if OCR_AVAILABLE and use_ocr_fallback:
-            self.ocr = MultiProviderOCR()
+            self.ocr = MultiProviderOCR()  # type: ignore[possibly-unbound]
             available = self.ocr.get_available_providers()
             logger.info(f"利用可能なOCRプロバイダー: {available}")
         else:
@@ -213,7 +213,7 @@ class PDFToExcelVisionLLM:
         if not PYMUPDF_AVAILABLE:
             raise ImportError("PyMuPDFが必要です: pip install PyMuPDF")
         
-        doc = fitz.open(pdf_path)
+        doc = fitz.open(pdf_path)  # type: ignore[possibly-unbound]
         total_pages = len(doc)
         logger.info(f"PDFページ数: {total_pages}")
         
@@ -226,7 +226,7 @@ class PDFToExcelVisionLLM:
             
             # 高解像度で画像に変換（DPI 300）
             zoom = 3.0  # 300 DPI相当
-            mat = fitz.Matrix(zoom, zoom)
+            mat = fitz.Matrix(zoom, zoom)  # type: ignore[possibly-unbound]
             pix = page.get_pixmap(matrix=mat)
             
             # 一時画像ファイルに保存

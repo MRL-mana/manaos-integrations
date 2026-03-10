@@ -11,7 +11,7 @@ import torch
 from typing import Dict, Any
 
 class EasyOCREngine:
-    def __init__(self, gpu: bool = None):
+    def __init__(self, gpu: bool = None):  # type: ignore
         """
         Args:
             gpu: GPU使用フラグ（Noneの場合は自動判定）
@@ -69,7 +69,7 @@ class EasyOCREngine:
             }
             
             if detail == 1:
-                result['confidence'] = float(avg_confidence * 100)  # パーセント表記
+                result['confidence'] = float(avg_confidence * 100)  # パーセント表記  # type: ignore[operator]
                 result['details'] = {
                     'boxes': [[float(coord) for coord in box] for box in [item[0] for item in results]],
                     'texts': [item[1] for item in results],

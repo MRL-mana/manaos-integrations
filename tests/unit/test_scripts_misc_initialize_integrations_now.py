@@ -10,15 +10,15 @@ _MISC = Path(__file__).parent.parent.parent / "scripts" / "misc"
 
 def _make_paths_stub():
     mod = types.ModuleType("_paths")
-    mod.N8N_PORT = 5678
+    mod.N8N_PORT = 5678  # type: ignore
     return mod
 
 
 def _make_unified_api_stub(status="ready"):
     mod = types.ModuleType("unified_api_server")
-    mod.integrations = {}
-    mod.initialization_status = {"status": status, "completed": ["n8n"], "failed": [], "pending": []}
-    mod.initialize_integrations = MagicMock()
+    mod.integrations = {}  # type: ignore
+    mod.initialization_status = {"status": status, "completed": ["n8n"], "failed": [], "pending": []}  # type: ignore
+    mod.initialize_integrations = MagicMock()  # type: ignore
     return mod
 
 
@@ -52,7 +52,7 @@ class TestInitializeIntegrationsNow:
             import initialize_integrations_now  # noqa
         import os
         assert os.getenv("N8N_BASE_URL") is not None
-        assert "5678" in os.getenv("N8N_BASE_URL")
+        assert "5678" in os.getenv("N8N_BASE_URL")  # type: ignore
 
     def test_n8n_base_url_not_overwritten_when_present(self, monkeypatch):
         sys.modules.pop("initialize_integrations_now", None)

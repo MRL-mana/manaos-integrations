@@ -59,7 +59,7 @@ class EnhancedConversationContext:
         
         logger.info("🧠 Enhanced Conversation Context initialized")
     
-    def add_turn(self, user_msg: str, bot_msg: str, intent: str = None, emotion: str = 'neutral'):
+    def add_turn(self, user_msg: str, bot_msg: str, intent: str = None, emotion: str = 'neutral'):  # type: ignore
         """会話ターンを追加"""
         turn = {
             'user': user_msg,
@@ -323,7 +323,7 @@ class EnhancedConversationContext:
         
         return missing
     
-    def get_context_summary(self, format: str = 'text') -> str:
+    def get_context_summary(self, format: str = 'text') -> str:  # type: ignore
         """コンテキスト要約"""
         if not self.short_term:
             return "会話履歴なし"
@@ -341,7 +341,7 @@ class EnhancedConversationContext:
             return summary
         
         elif format == 'json':
-            return {
+            return {  # type: ignore[return-value]
                 'short_term_count': len(self.short_term),
                 'current_topic': self.conversation_flow['current_topic'],
                 'topics_discussed': self.mid_term['topics'],

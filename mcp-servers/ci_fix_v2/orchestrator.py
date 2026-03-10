@@ -460,7 +460,7 @@ class RLAnythingOrchestrator:
                 }
                 score_series = [e.get("score", 0) for e in history]
                 # ポリシーエントロピ
-                probs = self.policy_gradient.get_action_probs(pg_state)
+                probs = self.policy_gradient.get_action_probs(pg_state)  # type: ignore[possibly-unbound]
                 import math as _math
                 entropy = -sum(p * _math.log(max(p, 1e-10)) for p in probs.values())
 
@@ -489,7 +489,7 @@ class RLAnythingOrchestrator:
             efficiency = score / max(1, tool_count) * 10  # スケーリング
             # 探索度 = ポリシーエントロピ (pg_state があれば)
             try:
-                probs_for_mo = self.policy_gradient.get_action_probs(pg_state)
+                probs_for_mo = self.policy_gradient.get_action_probs(pg_state)  # type: ignore[possibly-unbound]
                 import math as _math_mo
                 exploration = -sum(p * _math_mo.log(max(p, 1e-10)) for p in probs_for_mo.values())
             except Exception:

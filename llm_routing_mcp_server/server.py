@@ -40,7 +40,7 @@ UNIFIED_API_URL = os.getenv(
 
 # MCPサーバーの初期化
 if MCP_AVAILABLE:
-    app = Server("llm-routing")
+    app = Server("llm-routing")  # type: ignore[possibly-unbound]
 else:
     app = None
 
@@ -141,11 +141,11 @@ def get_available_models() -> Dict[str, Any]:
 
 
 if MCP_AVAILABLE:
-    @app.list_tools()
+    @app.list_tools()  # type: ignore[union-attr]
     async def list_tools() -> List[Tool]:
         """利用可能なツール一覧を返す"""
         return [
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="analyze_llm_difficulty",
                 description="プロンプトの難易度を分析して、推奨モデルを返す（LLM呼び出しなし）",
                 inputSchema={
@@ -163,7 +163,7 @@ if MCP_AVAILABLE:
                     "required": ["prompt"]
                 }
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="route_llm_request",
                 description="LLMリクエストをルーティングして実行（難易度に応じて適切なモデルを自動選択）",
                 inputSchema={
@@ -189,7 +189,7 @@ if MCP_AVAILABLE:
                     "required": ["prompt"]
                 }
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="get_available_models",
                 description="利用可能なLLMモデル一覧を取得",
                 inputSchema={
@@ -199,7 +199,7 @@ if MCP_AVAILABLE:
             )
         ]
     
-    @app.call_tool()
+    @app.call_tool()  # type: ignore[union-attr]
     async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
         """ツールを呼び出す"""
         try:
@@ -209,7 +209,7 @@ if MCP_AVAILABLE:
                 
                 result = analyze_difficulty(prompt, code_context)
                 
-                return [TextContent(
+                return [TextContent(  # type: ignore[possibly-unbound]
                     type="text",
                     text=json.dumps(result, indent=2, ensure_ascii=False)
                 )]
@@ -222,7 +222,7 @@ if MCP_AVAILABLE:
                 
                 result = route_llm(prompt, code_context, prefer_speed, prefer_quality)
                 
-                return [TextContent(
+                return [TextContent(  # type: ignore[possibly-unbound]
                     type="text",
                     text=json.dumps(result, indent=2, ensure_ascii=False)
                 )]
@@ -230,20 +230,20 @@ if MCP_AVAILABLE:
             elif name == "get_available_models":
                 result = get_available_models()
                 
-                return [TextContent(
+                return [TextContent(  # type: ignore[possibly-unbound]
                     type="text",
                     text=json.dumps(result, indent=2, ensure_ascii=False)
                 )]
             
             else:
-                return [TextContent(
+                return [TextContent(  # type: ignore[possibly-unbound]
                     type="text",
                     text=json.dumps({"error": f"不明なツール: {name}"}, ensure_ascii=False)
                 )]
         
         except Exception as e:
             logger.error(f"ツール呼び出しエラー: {e}", exc_info=True)
-            return [TextContent(
+            return [TextContent(  # type: ignore[possibly-unbound]
                 type="text",
                 text=json.dumps({"error": str(e)}, ensure_ascii=False)
             )]
@@ -259,8 +259,8 @@ async def main():
     health_port = int(os.getenv("PORT", "5117"))
     start_health_thread("llm-routing", health_port)
     
-    async with stdio_server() as (read_stream, write_stream):
-        await app.run(read_stream, write_stream, app.create_initialization_options())
+    async with stdio_server() as (read_stream, write_stream):  # type: ignore[possibly-unbound]
+        await app.run(read_stream, write_stream, app.create_initialization_options())  # type: ignore[union-attr]
 
 
 if __name__ == "__main__":

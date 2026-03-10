@@ -370,7 +370,7 @@ def execute_command():
     
     if system:
         try:
-            result = system.execute_intelligent_workflow(command)
+            result = system.execute_intelligent_workflow(command)  # type: ignore
         except Exception as e:
             result = {"error": str(e)}
     else:
@@ -383,7 +383,7 @@ def full_check():
     """フルシステムチェック"""
     if system:
         try:
-            result = system.run_full_system_check()
+            result = system.run_full_system_check()  # type: ignore
         except Exception as e:
             result = {"error": str(e)}
     else:

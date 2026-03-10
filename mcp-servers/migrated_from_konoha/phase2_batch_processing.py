@@ -25,7 +25,7 @@ class Phase2BatchProcessing:
         """Phase 2 バッチ処理システム初期化"""
         # Phase 1システムを継承
         self.phase1_system = Phase1BasicParallel(max_workers)
-        self.max_workers = max_workers or min(os.cpu_count(), 4)
+        self.max_workers = max_workers or min(os.cpu_count(), 4)  # type: ignore
         
         # バッチ処理用設定
         self.batch_sizes = [2, 4, 6, 8]  # テスト用バッチサイズ
@@ -111,7 +111,7 @@ class Phase2BatchProcessing:
             
             # バッチ生成実行
             print(f"🔄 バッチ生成実行中...")
-            images = generator.current_pipeline(
+            images = generator.current_pipeline(  # type: ignore[operator]
                 prompt=prompt,
                 negative_prompt=negative_prompt,
                 num_images_per_prompt=batch_size,

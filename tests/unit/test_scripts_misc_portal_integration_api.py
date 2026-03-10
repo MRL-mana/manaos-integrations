@@ -45,7 +45,7 @@ sys.modules["_paths"] = _paths_mod
 # httpx.TimeoutError compatibility patch (some versions use TimeoutException)
 import httpx as _httpx
 if not hasattr(_httpx, "TimeoutError"):
-    _httpx.TimeoutError = _httpx.TimeoutException
+    _httpx.TimeoutError = _httpx.TimeoutException  # type: ignore[attr-defined]
 
 # ── import SUT ────────────────────────────────────────────────────────
 _root = str(Path(__file__).parent.parent.parent)
@@ -150,7 +150,7 @@ class TestExecuteTask:
     def test_504_on_timeout(self, client):
         import httpx
         with patch("scripts.misc.portal_integration_api.httpx.post",
-                   side_effect=httpx.TimeoutError("timeout")):
+                   side_effect=httpx.TimeoutError("timeout")):  # type: ignore[attr-defined]
             r = client.post("/api/execute", json={"text": "slow query"})
         assert r.status_code == 504
 
@@ -184,7 +184,7 @@ class TestAskOrchestrator:
     def test_504_on_timeout(self, client):
         import httpx
         with patch("scripts.misc.portal_integration_api.httpx.post",
-                   side_effect=httpx.TimeoutError("slow")):
+                   side_effect=httpx.TimeoutError("slow")):  # type: ignore[attr-defined]
             r = client.post("/api/ask_orchestrator", json={"query": "slow"})
         assert r.status_code == 504
 

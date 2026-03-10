@@ -61,7 +61,7 @@ class UnifiedCacheSystem:
         self.redis_client = None
         if REDIS_AVAILABLE:
             try:
-                self.redis_client = redis.Redis(
+                self.redis_client = redis.Redis(  # type: ignore[union-attr]
                     host=redis_host,
                     port=redis_port,
                     db=redis_db,

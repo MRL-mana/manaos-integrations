@@ -9,11 +9,11 @@ import webbrowser
 
 # Windowsでのエンコーディング問題を回避
 if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 from _paths import GALLERY_PORT
 
-GALLERY_API = os.getenv("GALLERY_API_URL", f"http://127.0.0.1:{GALLERY_PORT}") + "/api/images"
+GALLERY_API = os.getenv("GALLERY_API_URL", f"http://127.0.0.1:{GALLERY_PORT}") + "/api/images"  # type: ignore[name-defined]
 
 try:
     response = requests.get(GALLERY_API)

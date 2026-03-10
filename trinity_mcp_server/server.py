@@ -112,12 +112,12 @@ def _agent_name(agent) -> str:
 
 # ── MCP サーバー ────────────────────────────────────
 if MCP_AVAILABLE:
-    server = Server("trinity-system")
+    server = Server("trinity-system")  # type: ignore[possibly-unbound]
 
     @server.list_tools()
     async def list_tools() -> list[Tool]:
         return [
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="trinity_route",
                 description=(
                     "タスクタイプから担当エージェント（Remi/Luna/Mina）を特定する。\n"
@@ -134,7 +134,7 @@ if MCP_AVAILABLE:
                     "required": ["task_type"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="trinity_who_does",
                 description=(
                     "特定の作業（planning/search/reading/verification/writing/critique）を誰が担当するか返す。\n"
@@ -152,7 +152,7 @@ if MCP_AVAILABLE:
                     "required": ["action"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="trinity_enhance_prompt",
                 description="プロンプトをエージェント（Remi/Luna/Mina）向けに強化する。エージェント専用の文脈情報を先頭に付与。",
                 inputSchema={
@@ -171,7 +171,7 @@ if MCP_AVAILABLE:
                     "required": ["prompt", "agent"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="trinity_format_context",
                 description="エージェント向けのコンテキスト説明文を生成する（役割・担当・注意事項）。",
                 inputSchema={
@@ -186,7 +186,7 @@ if MCP_AVAILABLE:
                     "required": ["agent"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="trinity_log_activity",
                 description="エージェントの活動をログに記録する。",
                 inputSchema={
@@ -215,7 +215,7 @@ if MCP_AVAILABLE:
     async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         if _trinity is None:
             result = {"error": f"Trinity未初期化: {_trinity_error}"}
-            return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]
+            return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]  # type: ignore[possibly-unbound]
 
         try:
             if name == "trinity_route":
@@ -296,7 +296,7 @@ if MCP_AVAILABLE:
         except Exception as e:
             result = {"error": str(e)}
 
-        return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]
+        return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]  # type: ignore[possibly-unbound]
 
 
 async def main():
@@ -307,7 +307,7 @@ async def main():
     health_thread = threading.Thread(target=_start_health_server, daemon=True)
     health_thread.start()
 
-    async with stdio_server() as (read_stream, write_stream):
+    async with stdio_server() as (read_stream, write_stream):  # type: ignore[possibly-unbound]
         await server.run(
             read_stream,
             write_stream,

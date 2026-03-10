@@ -253,7 +253,7 @@ class ChunkMemoryProcessor:
         # 各スロットを更新
         for i, j in slot_indices:
             # ゲーティングで更新量を調整
-            gate = self._calculate_gate(i, j)
+            gate = self._calculate_gate(i, j)  # type: ignore
             update = self.learning_rate * gate * gradient
             
             # Value行列を更新
@@ -289,7 +289,7 @@ class ChunkMemoryProcessor:
         gradient = (chunk_vector - output_vector) * (1 - similarity)
         
         for i, j in slot_indices:
-            gate = self._calculate_gate(i, j)
+            gate = self._calculate_gate(i, j)  # type: ignore
             update = self.learning_rate * gate * gradient * self.update_rate
             
             self.value_matrix[i, j] += update

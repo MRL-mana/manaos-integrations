@@ -270,7 +270,7 @@ class ConsciousnessState:
         conn.commit()
         conn.close()
         
-        return thought_id
+        return thought_id  # type: ignore
         
     def get_recent_thoughts(self, agent: str, limit: int = 10) -> List[Dict]:
         """最近の思考を取得"""

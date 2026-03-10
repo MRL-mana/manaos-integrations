@@ -25,11 +25,11 @@ class WindowsLocalLLMWithManaOS:
     
     def __init__(
         self,
-        ollama_url: str = None,
-        manaos_api_url: str = None,
-        default_model: str = None,
+        ollama_url: str = None,  # type: ignore
+        manaos_api_url: str = None,  # type: ignore
+        default_model: str = None,  # type: ignore
         use_gpu: bool = True,
-        persona: str = None
+        persona: str = None  # type: ignore
     ):
         self.ollama_url = ollama_url or OLLAMA_URL
         self.manaos_api_url = manaos_api_url or MANAOS_API_URL
@@ -52,7 +52,7 @@ class WindowsLocalLLMWithManaOS:
             pass  # 記憶取得エラーは無視（オプション機能）
         return []
     
-    async def _store_memory(self, content: str, tags: List[str] = None):
+    async def _store_memory(self, content: str, tags: List[str] = None):  # type: ignore
         """ManaOSに記憶を保存"""
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
@@ -87,10 +87,10 @@ class WindowsLocalLLMWithManaOS:
     async def chat_with_memory(
         self,
         user_message: str,
-        model: str = None,
+        model: str = None,  # type: ignore
         use_memory: bool = True,
         save_memory: bool = True,
-        persona: str = None
+        persona: str = None  # type: ignore
     ) -> str:
         """
         記憶機能を使用してチャット（GPU対応）
@@ -141,7 +141,7 @@ class WindowsLocalLLMWithManaOS:
             if HAS_OLLAMA_LIB:
                 # Ollama公式クライアントを使用（GPUオプション付き）
                 gpu_options = self._get_gpu_options()
-                response = ollama.chat(
+                response = ollama.chat(  # type: ignore[possibly-unbound]
                     model=model,
                     messages=messages,
                     options=gpu_options if gpu_options else None
@@ -182,9 +182,9 @@ class WindowsLocalLLMWithManaOS:
     async def chat_with_memory_stream(
         self,
         user_message: str,
-        model: str = None,
+        model: str = None,  # type: ignore
         use_memory: bool = True,
-        persona: str = None
+        persona: str = None  # type: ignore
     ) -> AsyncGenerator[str, None]:
         """記憶機能を使用してストリーミングチャット"""
         model = model or self.default_model
@@ -222,7 +222,7 @@ class WindowsLocalLLMWithManaOS:
     async def chat_stream(
         self,
         messages: List[Dict],
-        model: str = None
+        model: str = None  # type: ignore
     ) -> AsyncGenerator[str, None]:
         """ストリーミング形式でチャット（GPU対応）"""
         model = model or self.default_model
@@ -230,7 +230,7 @@ class WindowsLocalLLMWithManaOS:
         try:
             if HAS_OLLAMA_LIB:
                 gpu_options = self._get_gpu_options()
-                stream = ollama.chat(
+                stream = ollama.chat(  # type: ignore[possibly-unbound]
                     model=model,
                     messages=messages,
                     stream=True,
@@ -313,7 +313,7 @@ class WindowsLocalLLMWithManaOS:
 # 便利関数
 async def quick_chat_with_manaos(
     user_message: str,
-    model: str = None,
+    model: str = None,  # type: ignore
     use_memory: bool = True,
     use_gpu: bool = True
 ) -> str:

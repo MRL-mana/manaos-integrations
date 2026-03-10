@@ -15,7 +15,7 @@ import sys
 
 # Windowsでのエンコーディング問題を回避
 if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 class CursorChatHistoryViewer:
     """Cursorチャット履歴ビューア"""

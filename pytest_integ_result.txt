@@ -1,0 +1,9 @@
+........................................................................ [ 29%]
+........................................................................ [ 58%]
+........................................................................ [ 87%]
+................................                                         [100%]
+248 passed, 56 warnings in 543.38s (0:09:03)
+Task was destroyed but it is pending!
+task: <Task pending name='Task-18' coro=<GPUResourceManager.start_monitoring.<locals>.monitor() running at C:\Users\mana4\Desktop\manaos_integrations\scripts\gpu\gpu_resource_manager.py:152> wait_for=<Future pending cb=[Task.task_wakeup()]>>
+Task was destroyed but it is pending!
+task: <Task pending name='Task-20' coro=<PerformanceMonitor.start_monitoring.<locals>.monitor_loop() running at C:\Users\mana4\Desktop\manaos_integrations\scripts\misc\performance_monitor.py:72> wait_for=<Future pending cb=[Task.task_wakeup()]>>

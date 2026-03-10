@@ -176,7 +176,7 @@ class UnifiedMonitor:
                 disk_used_gb=round(disk.used / 1024 / 1024 / 1024, 2),
                 disk_free_gb=round(disk.free / 1024 / 1024 / 1024, 2),
                 process_count=len(psutil.pids()),
-                load_avg_1m=os.getloadavg()[0]
+                load_avg_1m=os.getloadavg()[0]  # type: ignore[attr-defined]
             )
             
             # DB保存

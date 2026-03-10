@@ -28,7 +28,7 @@ _pm_instance.get_process_info = MagicMock(return_value=None)
 _pm_instance.save_process_info = MagicMock()
 _pm_instance.cleanup_process = MagicMock()
 _pm_mod = types.ModuleType("manaos_process_manager")
-_pm_mod.ProcessManager = MagicMock(return_value=_pm_instance)
+_pm_mod.ProcessManager = MagicMock(return_value=_pm_instance)  # type: ignore
 sys.modules["manaos_process_manager"] = _pm_mod
 
 sys.modules.setdefault("psutil", MagicMock())

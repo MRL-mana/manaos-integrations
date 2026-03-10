@@ -22,7 +22,7 @@ class ClaudeMCPOptimizer:
             "memory_available": psutil.virtual_memory().available,
             "disk_total": psutil.disk_usage('/').total,
             "disk_free": psutil.disk_usage('/').free,
-            "python_version": f"{psutil.sys.version_info.major}.{psutil.sys.version_info.minor}"
+            "python_version": f"{psutil.sys.version_info.major}.{psutil.sys.version_info.minor}"  # type: ignore[attr-defined]
         }
     
     def optimize_memory_usage(self):

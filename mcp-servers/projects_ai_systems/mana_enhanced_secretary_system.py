@@ -216,11 +216,11 @@ class ManaEnhancedSecretarySystem:
         
         @self.app.get("/api/ai-secretary/context")
         async def get_ai_context():
-            return await self.get_ai_context()
+            return await self.get_ai_context()  # type: ignore
         
         @self.app.post("/api/ai-secretary/learn")
         async def ai_learning(feedback: Dict[str, Any]):
-            return await self.ai_learning(feedback)
+            return await self.ai_learning(feedback)  # type: ignore
         
         # 統合システム管理API
         @self.app.get("/api/integration/status")
@@ -234,15 +234,15 @@ class ManaEnhancedSecretarySystem:
         # 自動化ワークフローAPI
         @self.app.get("/api/automation/workflows")
         async def get_workflows():
-            return await self.get_workflows()
+            return await self.get_workflows()  # type: ignore
         
         @self.app.post("/api/automation/workflows")
         async def create_workflow(workflow: Dict[str, Any]):
-            return await self.create_workflow(workflow)
+            return await self.create_workflow(workflow)  # type: ignore
         
         @self.app.post("/api/automation/execute")
         async def execute_workflow(workflow_id: int):
-            return await self.execute_workflow(workflow_id)
+            return await self.execute_workflow(workflow_id)  # type: ignore
         
         # パフォーマンス監視API
         @self.app.get("/api/performance/metrics")

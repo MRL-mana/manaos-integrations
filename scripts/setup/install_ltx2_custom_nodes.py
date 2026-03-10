@@ -17,8 +17,8 @@ import io
 
 # Windows環境での文字エンコーディング設定
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 COMFYUI_URL = os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")
 # ComfyUIパスを環境変数から取得（デフォルト: C:/ComfyUI）
@@ -177,7 +177,7 @@ def main():
         print("   または、環境変数 COMFYUI_PATH を設定してください")
         return False
 
-    print(f"   [OK] ComfyUIが見つかりました: {COMFYUI_PATH}")
+    print(f"   [OK] ComfyUIが見つかりました: {COMFYUI_PATH}")  # type: ignore[possibly-unbound]
 
     # ComfyUIが起動しているか確認（オプション）
     print()
@@ -195,11 +195,11 @@ def main():
     # custom_nodesディレクトリの確認
     print()
     print("[3] カスタムノードディレクトリの確認...")
-    if not CUSTOM_NODES_PATH.exists():
-        CUSTOM_NODES_PATH.mkdir(parents=True, ok=True)
-        print(f"   [OK] ディレクトリを作成しました: {CUSTOM_NODES_PATH}")
+    if not CUSTOM_NODES_PATH.exists():  # type: ignore[possibly-unbound]
+        CUSTOM_NODES_PATH.mkdir(parents=True, ok=True)  # type: ignore[call-arg, possibly-unbound]
+        print(f"   [OK] ディレクトリを作成しました: {CUSTOM_NODES_PATH}")  # type: ignore[possibly-unbound]
     else:
-        print(f"   [OK] ディレクトリが存在します: {CUSTOM_NODES_PATH}")
+        print(f"   [OK] ディレクトリが存在します: {CUSTOM_NODES_PATH}")  # type: ignore[possibly-unbound]
 
     # カスタムノードのインストール
     print()
@@ -248,7 +248,7 @@ def main():
         print(f"  - ダウンロード先: {hf_url}")
         print()
         print("モデルの配置場所:")
-        model_path = COMFYUI_PATH / 'models' / 'unet'
+        model_path = COMFYUI_PATH / 'models' / 'unet'  # type: ignore[possibly-unbound]
         print(f"  - {model_path}")
         return True
     else:

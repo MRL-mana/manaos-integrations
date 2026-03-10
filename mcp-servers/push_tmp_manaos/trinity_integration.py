@@ -150,7 +150,7 @@ class TrinityIntegration:
         
         return "\n".join(formatted)
     
-    def enhance_prompt_for_agent(self, prompt: str, agent: TrinityAgent, context: Dict[str, Any] = None) -> str:
+    def enhance_prompt_for_agent(self, prompt: str, agent: TrinityAgent, context: Dict[str, Any] = None) -> str:  # type: ignore
         """
         エージェント用にプロンプトを強化
         
@@ -172,7 +172,7 @@ class TrinityIntegration:
 """
         return enhanced
     
-    def log_agent_activity(self, agent: TrinityAgent, activity: str, details: Dict[str, Any] = None):
+    def log_agent_activity(self, agent: TrinityAgent, activity: str, details: Dict[str, Any] = None):  # type: ignore
         """
         エージェントの活動をログに記録
         

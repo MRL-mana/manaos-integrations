@@ -14,7 +14,7 @@ import jax
 import matplotlib.pyplot as plt
 from absl import app, flags, logging
 
-from disco_rl import agent
+from disco_rl import agent  # type: ignore[attr-defined]
 from disco_rl.environments.catch import CatchEnvironment, get_config
 
 # 設定フラグ

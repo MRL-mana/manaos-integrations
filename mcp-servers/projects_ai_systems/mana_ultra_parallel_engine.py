@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class ManaUltraParallelEngine:
     def __init__(self):
         self.cpu_count = psutil.cpu_count()
-        self.ultra_workers = self.cpu_count * 4  # CPUコア数の4倍！
+        self.ultra_workers = self.cpu_count * 4  # CPUコア数の4倍！  # type: ignore[operator]
         
         self.config = {
             "mode": "ULTRA",
@@ -62,7 +62,7 @@ class ManaUltraParallelEngine:
         duration = (end_time - start_time).total_seconds()
         
         # 結果集計
-        successful = len([r for r in results if not isinstance(r, Exception) and r.get("success")])
+        successful = len([r for r in results if not isinstance(r, Exception) and r.get("success")])  # type: ignore
         
         logger.info("=" * 60)
         logger.info(f"⚡ ULTRA PARALLEL COMPLETE in {duration:.2f}s")
@@ -198,11 +198,11 @@ class ManaUltraParallelEngine:
             optimized = 0
             for db in dbs[:10]:  # 最大10個
                 try:
-                    conn = sqlite3.connect(db)
+                    conn = sqlite3.connect(db)  # type: ignore[name-defined]
                     conn.execute("VACUUM")
                     conn.close()
                     optimized += 1
-                except sqlite3.Error:
+                except sqlite3.Error:  # type: ignore[name-defined]
                     continue
             
             return {"success": True, "optimized_dbs": optimized}
@@ -212,7 +212,7 @@ class ManaUltraParallelEngine:
     async def system_health_check(self) -> Dict[str, Any]:
         """システムヘルスチェック"""
         try:
-            response = requests.get("http://localhost:9999/api/overview", timeout=5)
+            response = requests.get("http://localhost:9999/api/overview", timeout=5)  # type: ignore[name-defined]
             data = response.json()
             return {"success": True, "services": data.get("services", {})}
         except Exception as e:

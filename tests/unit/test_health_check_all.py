@@ -45,7 +45,7 @@ class TestCheckOne:
 
     def test_4xx_treated_as_healthy(self):
         err = urllib.error.HTTPError(url="http://x", code=404, msg="Not Found",
-                                     hdrs=None, fp=None)
+                                     hdrs=None, fp=None)  # type: ignore
         with patch("urllib.request.urlopen", side_effect=err):
             result = check_one("svc", "http://localhost", [])
         assert result["healthy"] is True
@@ -53,7 +53,7 @@ class TestCheckOne:
 
     def test_5xx_treated_as_error(self):
         err = urllib.error.HTTPError(url="http://x", code=500, msg="Error",
-                                     hdrs=None, fp=None)
+                                     hdrs=None, fp=None)  # type: ignore
         with patch("urllib.request.urlopen", side_effect=err):
             result = check_one("svc", "http://localhost", [])
         assert result["healthy"] is False

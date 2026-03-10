@@ -156,7 +156,7 @@ class GPUAutoIntegration:
                 "timestamp": datetime.now().isoformat(),
                 "training_time_ms": (end_time - start_time) * 1000,
                 "gpu_memory_used_gb": torch.cuda.memory_allocated(0) / 1024**3,
-                "final_loss": loss.item(),
+                "final_loss": loss.item(),  # type: ignore[possibly-unbound]
                 "status": "success"
             }
             

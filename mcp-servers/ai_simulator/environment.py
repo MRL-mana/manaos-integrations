@@ -133,7 +133,7 @@ class SimpleLearningEnvironment(BaseEnvironment):
             )
         
         # 報酬計算
-        distance = np.linalg.norm(self.current_state_vector - self.goal_state)
+        distance = np.linalg.norm(self.current_state_vector - self.goal_state)  # type: ignore[operator]
         reward = -distance  # 距離が近いほど報酬が高い
         
         # 終了条件チェック
@@ -148,7 +148,7 @@ class SimpleLearningEnvironment(BaseEnvironment):
         
         # 状態情報更新
         observations = {
-            'state_vector': self.current_state_vector.tolist(),
+            'state_vector': self.current_state_vector.tolist(),  # type: ignore[union-attr]
             'goal_distance': float(distance)
         }
         
@@ -162,7 +162,7 @@ class SimpleLearningEnvironment(BaseEnvironment):
             step=self.step_count,
             timestamp=time.time(),
             observations=observations,
-            reward=reward,
+            reward=reward,  # type: ignore
             done=done,
             info=info
         )

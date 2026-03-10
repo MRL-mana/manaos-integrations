@@ -30,8 +30,8 @@ _cv_mod.ConfigValidator = MagicMock(return_value=MagicMock(
 sys.modules.setdefault("manaos_config_validator", _cv_mod)
 
 _paths_mod = sys.modules.get("_paths") or MagicMock()
-_paths_mod.OLLAMA_PORT = 11434
-_paths_mod.RAG_MEMORY_PORT = 5600
+_paths_mod.OLLAMA_PORT = 11434  # type: ignore
+_paths_mod.RAG_MEMORY_PORT = 5600  # type: ignore
 sys.modules["_paths"] = _paths_mod
 
 _flask_mod = MagicMock()

@@ -51,7 +51,7 @@ class FileOrganizer:
         self.memory = None
         if self.use_memory:
             try:
-                self.memory = UnifiedMemory()
+                self.memory = UnifiedMemory()  # type: ignore[possibly-unbound]
                 logger.info("✅ File Secretary: 記憶機能を有効化しました")
             except Exception as e:
                 logger.warning(f"⚠️ 記憶機能の初期化エラー: {e}")

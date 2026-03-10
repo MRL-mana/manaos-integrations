@@ -422,12 +422,12 @@ def _metrics_rag() -> dict:
 
 # ── MCP サーバー ────────────────────────────────────
 if MCP_AVAILABLE:
-    server = Server("mrl-memory")
+    server = Server("mrl-memory")  # type: ignore[possibly-unbound]
 
     @server.list_tools()
     async def list_tools() -> list[Tool]:
         return [
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="memory_search",
                 description="ManaOSメモリを検索。過去の会話・決定事項・技術メモなどを取得。",
                 inputSchema={
@@ -439,7 +439,7 @@ if MCP_AVAILABLE:
                     "required": ["query"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="memory_store",
                 description="テキストをManaOSメモリに保存。重要な決定・学び・コンテキスト・アクション履歴を RAGv2 + 中期記憶(EpisodicMemory) にデュアル記録。",
                 inputSchema={
@@ -452,7 +452,7 @@ if MCP_AVAILABLE:
                     "required": ["text"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="memory_context",
                 description="LLMコンテキスト用にメモリを取得。関連する過去の記憶を文脈として返す。",
                 inputSchema={
@@ -464,12 +464,12 @@ if MCP_AVAILABLE:
                     "required": ["query"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="memory_metrics",
                 description="MRL Memory (RAGv2) のメトリクス・統計情報を取得。",
                 inputSchema={"type": "object", "properties": {}},
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="lessons_record",
                 description="指摘・訂正・失敗パターンを教訓として永続記録する。セッション開始時に自動注入して同じミスを繰り返さない。",
                 inputSchema={
@@ -487,7 +487,7 @@ if MCP_AVAILABLE:
                     "required": ["instruction"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="lessons_search",
                 description="過去の教訓・失敗パターンを検索してセッション注入テキストを生成する。",
                 inputSchema={
@@ -499,7 +499,7 @@ if MCP_AVAILABLE:
                     },
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="agent_track",
                 description="Claudeエージェントの使用をトラッキングしランク（N/N-C/N-B/N-A/N-S）を更新する。",
                 inputSchema={
@@ -512,7 +512,7 @@ if MCP_AVAILABLE:
                     "required": ["agent_name"],
                 },
             ),
-            Tool(
+            Tool(  # type: ignore[possibly-unbound]
                 name="agent_audit",
                 description="エージェント定義ファイル（.md）を品質スコアリング（100点満点）してフィードバックを返す。",
                 inputSchema={
@@ -578,9 +578,9 @@ if MCP_AVAILABLE:
             else:
                 result = {"error": f"不明なツール: {name}"}
 
-            return [TextContent(type="text", text=json.dumps(result, indent=2, ensure_ascii=False))]
+            return [TextContent(type="text", text=json.dumps(result, indent=2, ensure_ascii=False))]  # type: ignore[possibly-unbound]
         except Exception as e:
-            return [TextContent(type="text", text=json.dumps({"error": str(e)}, ensure_ascii=False))]
+            return [TextContent(type="text", text=json.dumps({"error": str(e)}, ensure_ascii=False))]  # type: ignore[possibly-unbound]
 
 
 async def main():
@@ -591,7 +591,7 @@ async def main():
     # ヘルスチェック
     start_health_thread("mrl-memory-mcp", HEALTH_PORT)
 
-    async with stdio_server() as (read_stream, write_stream):
+    async with stdio_server() as (read_stream, write_stream):  # type: ignore[possibly-unbound]
         await server.run(read_stream, write_stream, server.create_initialization_options())
 
 

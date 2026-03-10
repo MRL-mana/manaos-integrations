@@ -11,7 +11,7 @@ import os
 from collections import Counter
 
 if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 from _paths import COMFYUI_PORT
 
@@ -91,7 +91,7 @@ try:
                         for model in api_models:
                             model_lower = model.lower()
                             if any(keyword in model_lower for keyword in favorite_keywords):
-                                if model not in problematic:
+                                if model not in problematic:  # type: ignore[possibly-unbound]
                                     favorites.append(model)
                         
                         if favorites:

@@ -138,7 +138,7 @@ class AdvancedTimeControl:
         total_dilation = lorentz_factor * gravitational_factor
         
         # 時間座標の更新
-        self.temporal_coordinates['t'] += total_dilation
+        self.temporal_coordinates['t'] += total_dilation  # type: ignore
         
         return {
             'dilation_factor': total_dilation,

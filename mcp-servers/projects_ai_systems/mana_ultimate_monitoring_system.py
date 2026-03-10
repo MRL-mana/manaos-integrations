@@ -289,7 +289,7 @@ class ManaUltimateMonitoringSystem:
                     "cpu_usage": cpu_percent,
                     "memory_usage": memory.percent,
                     "disk_usage": disk.percent,
-                    "load_average": os.getloadavg() if hasattr(os, 'getloadavg') else None
+                    "load_average": os.getloadavg() if hasattr(os, 'getloadavg') else None  # type: ignore[attr-defined]
                 },
                 "integration_status": integration_status,
                 "monitoring_status": "active"

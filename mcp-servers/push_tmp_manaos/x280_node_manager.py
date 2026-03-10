@@ -67,8 +67,8 @@ class Pixel7NodeInfo:
     hostname: str = "DESKTOP-ASMRKIM"
     status: NodeStatus = NodeStatus.UNKNOWN
     last_seen: Optional[datetime] = None
-    resources: Dict[str, Any] = None
-    capabilities: List[str] = None
+    resources: Dict[str, Any] = None  # type: ignore
+    capabilities: List[str] = None  # type: ignore
     
     def __post_init__(self):
         if self.resources is None:
@@ -135,10 +135,10 @@ class Pixel7NodeManager:
         except Exception as e:
             logger.error(f"コマンド実行失敗: {e}")
             error_handler.handle_error(
-                ErrorCategory.EXECUTION,
-                ErrorSeverity.MEDIUM,
-                f"ピクセル7コマンド実行失敗: {command}",
-                str(e)
+                ErrorCategory.EXECUTION,  # type: ignore
+                ErrorSeverity.MEDIUM,  # type: ignore
+                f"ピクセル7コマンド実行失敗: {command}",  # type: ignore
+                str(e)  # type: ignore
             )
             execution_time = (datetime.now() - start_time).total_seconds()
             return CommandResult(

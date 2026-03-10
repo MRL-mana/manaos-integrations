@@ -71,7 +71,7 @@ class GoogleDriveUploader:
             logger.error(f"❌ Google Drive初期化エラー: {e}")
             sys.exit(1)
     
-    def get_or_create_folder(self, folder_name: str, parent_id: str = None):
+    def get_or_create_folder(self, folder_name: str, parent_id: str = None):  # type: ignore
         """フォルダを取得または作成"""
         try:
             # 既存フォルダを検索
@@ -79,7 +79,7 @@ class GoogleDriveUploader:
             if parent_id:
                 query += f" and '{parent_id}' in parents"
             
-            results = self.service.files().list(
+            results = self.service.files().list(  # type: ignore[union-attr]
                 q=query,
                 spaces='drive',
                 fields='files(id, name)'
@@ -99,9 +99,9 @@ class GoogleDriveUploader:
             }
             
             if parent_id:
-                file_metadata['parents'] = [parent_id]
+                file_metadata['parents'] = [parent_id]  # type: ignore
             
-            folder = self.service.files().create(
+            folder = self.service.files().create(  # type: ignore[union-attr]
                 body=file_metadata,
                 fields='id'
             ).execute()
@@ -130,7 +130,7 @@ class GoogleDriveUploader:
                 resumable=True
             )
             
-            file = self.service.files().create(
+            file = self.service.files().create(  # type: ignore[union-attr]
                 body=file_metadata,
                 media_body=media,
                 fields='id, name, webViewLink'
@@ -144,19 +144,19 @@ class GoogleDriveUploader:
             }
             
         except Exception as e:
-            logger.error(f"❌ アップロードエラー ({file_name}): {e}")
+            logger.error(f"❌ アップロードエラー ({file_name}): {e}")  # type: ignore[possibly-unbound]
             return {'success': False, 'error': str(e)}
     
     def upload_all_excel(self, excel_dir: str, folder_name: str = '日報Excel変換結果'):
         """Excelファイルを一括アップロード"""
-        excel_dir = Path(excel_dir)
+        excel_dir = Path(excel_dir)  # type: ignore
         
-        if not excel_dir.exists():
+        if not excel_dir.exists():  # type: ignore
             logger.error(f"❌ ディレクトリが見つかりません: {excel_dir}")
             return
         
         # Excelファイルを取得
-        excel_files = list(excel_dir.glob('*.xlsx'))
+        excel_files = list(excel_dir.glob('*.xlsx'))  # type: ignore
         
         if not excel_files:
             logger.error("❌ アップロードするExcelファイルがありません")
@@ -206,7 +206,7 @@ class GoogleDriveUploader:
         
         if results['success'] > 0:
             # フォルダリンクを取得
-            folder_info = self.service.files().get(
+            folder_info = self.service.files().get(  # type: ignore[union-attr]
                 fileId=folder_id,
                 fields='webViewLink'
             ).execute()

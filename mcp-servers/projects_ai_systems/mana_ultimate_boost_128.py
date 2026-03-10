@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class ManaUltimateBoost128:
     def __init__(self):
         self.cpu_count = psutil.cpu_count()
-        self.ultimate_workers = self.cpu_count * 16  # 128ワーカー！
+        self.ultimate_workers = self.cpu_count * 16  # 128ワーカー！  # type: ignore[operator]
         
         self.config = {
             "mode": "ULTIMATE",

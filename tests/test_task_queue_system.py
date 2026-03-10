@@ -265,7 +265,7 @@ class TestCheckRateLimit:
         qs.rate_limit_rules["test"] = RateLimitRule("test", 10, 60)
         for _ in range(10):
             result = qs._check_rate_limit("test")
-        assert result is True  # 10回目もOK
+        assert result is True  # 10回目もOK  # type: ignore[possibly-unbound]
 
     def test_exceeds_limit_blocked(self, tmp_path):
         qs = TaskQueueSystem(db_path=tmp_path / "tq.db")

@@ -155,7 +155,7 @@ class CivitAIAIGenerator:
             saved_paths = []
             for i, image in enumerate(images):
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                model_name = self.current_model['name'].replace(' ', '_').replace('/', '_')
+                model_name = self.current_model['name'].replace(' ', '_').replace('/', '_')  # type: ignore[index]
                 filename = f"civitai_{model_name}_{timestamp}_{i+1}.png"
                 filepath = self.output_dir / filename
                 

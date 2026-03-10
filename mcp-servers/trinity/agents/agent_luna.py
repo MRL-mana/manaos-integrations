@@ -12,7 +12,7 @@ import json
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from agent_manager import BaseAgent, TrinityDB
+from agent_manager import BaseAgent, TrinityDB  # type: ignore[attr-defined]
 
 logger = logging.getLogger(__name__)
 
@@ -222,7 +222,7 @@ class LunaAgent(BaseAgent):
                 ]
             )
             
-            answer = message.content[0].text
+            answer = message.content[0].text  # type: ignore
             
             # コンテキストメモリに追加
             self.add_to_context("user", prompt)

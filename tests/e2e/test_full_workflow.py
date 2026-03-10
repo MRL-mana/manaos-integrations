@@ -35,45 +35,7 @@ class E2ETestConfig:
     RETRY_DELAY = 2
 
 
-@pytest.fixture(scope="session")
-async def http_session():
-    """HTTP セッションフィクスチャ"""
-    timeout = aiohttp.ClientTimeout(total=E2ETestConfig.REQUEST_TIMEOUT)
-    async with aiohttp.ClientSession(timeout=timeout) as session:
-        yield session
-
-
-@pytest.fixture(scope="session")
-async def wait_for_services():
-    """サービスの起動を待機"""
-    services = {
-        "Unified API": E2ETestConfig.UNIFIED_API_URL,
-        "MRL Memory": E2ETestConfig.MRL_MEMORY_URL,
-        "Learning System": E2ETestConfig.LEARNING_SYSTEM_URL,
-        "LLM Routing": E2ETestConfig.LLM_ROUTING_URL,
-    }
-    
-    start_time = time.time()
-    
-    async with aiohttp.ClientSession() as session:
-        for service_name, url in services.items():
-            health_url = f"{url}/health"
-            attempts = 0
-            
-            while attempts < E2ETestConfig.MAX_RETRIES:
-                try:
-                    async with session.get(health_url, timeout=5) as response:
-                        if response.status == 200:
-                            print(f"✅ {service_name} is ready")
-                            break
-                except Exception as e:
-                    attempts += 1
-                    if attempts >= E2ETestConfig.MAX_RETRIES:
-                        pytest.skip(f"❌ {service_name} not available: {e}")
-                    await asyncio.sleep(E2ETestConfig.RETRY_DELAY)
-            
-            if time.time() - start_time > E2ETestConfig.SERVICE_STARTUP_TIMEOUT:
-                pytest.skip("Services startup timeout exceeded")
+# http_session と wait_for_services は tests/e2e/conftest.py から提供される
 
 
 # ===========================

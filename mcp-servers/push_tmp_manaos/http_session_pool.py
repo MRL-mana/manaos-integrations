@@ -125,9 +125,9 @@ class HTTPSessionPool:
             
             # タイムアウト設定
             if timeout:
-                session.timeout = timeout
+                session.timeout = timeout  # type: ignore
             else:
-                session.timeout = timeout_config.get("api_call", 10.0)
+                session.timeout = timeout_config.get("api_call", 10.0)  # type: ignore
             
             # セッションを保存
             self.sessions[session_key] = session

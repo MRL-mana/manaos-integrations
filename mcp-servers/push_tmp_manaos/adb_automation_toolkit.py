@@ -282,8 +282,8 @@ class ADBAutomationToolkit:
                 # バイナリデータとして保存
                 with open(screenshot_path, 'wb') as f:
                     # stdoutから直接バイナリデータを取得
-                    screenshot_result = subprocess.run(
-                        [self.adb_path, "-s", f"{self.device_ip}:{self.device_port}", "exec-out", "screencap", "-p"],
+                    screenshot_result = subprocess.run(  # type: ignore[call-arg]
+                        [self.adb_path, "-s", f"{self.device_ip}:{self.device_port}", "exec-out", "screencap", "-p"],  # type: ignore
                         capture_output=True,
                         timeout=30
                     )

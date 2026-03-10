@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 # ---------------------------------------------------------------------------
 _ui_mock = types.ModuleType("ultimate_integration")
 _ui_cls = MagicMock()
-_ui_mock.UltimateIntegration = _ui_cls
+_ui_mock.UltimateIntegration = _ui_cls  # type: ignore
 sys.modules.setdefault("ultimate_integration", _ui_mock)
 
 import importlib

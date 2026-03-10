@@ -60,7 +60,7 @@ except ImportError:
 class PDFExcelConverter:
     """PDF-Excel変換システム"""
     
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: Dict[str, Any] = None):  # type: ignore
         self.config = config or self.get_default_config()
         self.logger = self.setup_logger()
         self.temp_dir = Path("/tmp/pdf_excel_converter")
@@ -117,16 +117,16 @@ class PDFExcelConverter:
     def validate_pdf_file(self, file_path: str) -> Dict[str, Any]:
         """PDFファイル検証"""
         try:
-            file_path = Path(file_path)
+            file_path = Path(file_path)  # type: ignore
             
-            if not file_path.exists():
+            if not file_path.exists():  # type: ignore
                 return {"valid": False, "error": "ファイルが存在しません"}
             
-            if not file_path.suffix.lower() == '.pdf':
+            if not file_path.suffix.lower() == '.pdf':  # type: ignore
                 return {"valid": False, "error": "PDFファイルではありません"}
             
             # ファイルサイズチェック
-            file_size_mb = file_path.stat().st_size / (1024 * 1024)
+            file_size_mb = file_path.stat().st_size / (1024 * 1024)  # type: ignore
             if file_size_mb > self.config["max_file_size_mb"]:
                 return {
                     "valid": False, 
@@ -136,7 +136,7 @@ class PDFExcelConverter:
             # PDFファイルの基本検証
             if PYMUPDF_AVAILABLE:
                 try:
-                    doc = fitz.open(file_path)
+                    doc = fitz.open(file_path)  # type: ignore[possibly-unbound]
                     page_count = len(doc)
                     doc.close()
                     
@@ -160,7 +160,7 @@ class PDFExcelConverter:
             if not PYMUPDF_AVAILABLE:
                 return {"success": False, "error": "PyMuPDFが利用できません"}
             
-            doc = fitz.open(pdf_path)
+            doc = fitz.open(pdf_path)  # type: ignore[possibly-unbound]
             extracted_data = {
                 "pages": [],
                 "full_text": "",
@@ -179,7 +179,7 @@ class PDFExcelConverter:
                 }
                 
                 extracted_data["pages"].append(page_data)
-                extracted_data["full_text"] += text + "\n"
+                extracted_data["full_text"] += text + "\n"  # type: ignore
             
             doc.close()
             
@@ -201,7 +201,7 @@ class PDFExcelConverter:
                 "total_tables": 0
             }
             
-            with pdfplumber.open(pdf_path) as pdf:
+            with pdfplumber.open(pdf_path) as pdf:  # type: ignore[possibly-unbound]
                 for page_num, page in enumerate(pdf.pages):
                     tables = page.extract_tables()
                     
@@ -249,7 +249,7 @@ class PDFExcelConverter:
                 "ocr_text": ""
             }
             
-            doc = fitz.open(pdf_path)
+            doc = fitz.open(pdf_path)  # type: ignore[possibly-unbound]
             
             for page_num in range(len(doc)):
                 page = doc.load_page(page_num)
@@ -259,7 +259,7 @@ class PDFExcelConverter:
                     try:
                         # 画像データ取得
                         xref = img[0]
-                        pix = fitz.Pixmap(doc, xref)
+                        pix = fitz.Pixmap(doc, xref)  # type: ignore[possibly-unbound]
                         
                         if pix.n - pix.alpha < 4:  # GRAY or RGB
                             img_filename = f"page_{page_num+1}_img_{img_num+1}.png"
@@ -278,8 +278,8 @@ class PDFExcelConverter:
                             # OCR処理
                             if OCR_AVAILABLE and self.config["ocr_enabled"]:
                                 try:
-                                    ocr_text = pytesseract.image_to_string(
-                                        Image.open(img_path),
+                                    ocr_text = pytesseract.image_to_string(  # type: ignore[possibly-unbound]
+                                        Image.open(img_path),  # type: ignore[possibly-unbound]
                                         lang='jpn+eng'
                                     )
                                     image_info["ocr_text"] = ocr_text
@@ -313,21 +313,21 @@ class PDFExcelConverter:
             if not OPENPYXL_AVAILABLE or not PANDAS_AVAILABLE:
                 return {"success": False, "error": "openpyxlまたはpandasが利用できません"}
             
-            workbook = openpyxl.Workbook()
+            workbook = openpyxl.Workbook()  # type: ignore[possibly-unbound]
             
             # デフォルトシート削除
             if "Sheet" in workbook.sheetnames:
                 workbook.remove(workbook["Sheet"])
             
             # スタイル設定
-            header_font = Font(bold=True, color="FFFFFF")
-            header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
-            header_alignment = Alignment(horizontal="center", vertical="center")
-            border = Border(
-                left=Side(style='thin'),
-                right=Side(style='thin'),
-                top=Side(style='thin'),
-                bottom=Side(style='thin')
+            header_font = Font(bold=True, color="FFFFFF")  # type: ignore[possibly-unbound]
+            header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")  # type: ignore[possibly-unbound]
+            header_alignment = Alignment(horizontal="center", vertical="center")  # type: ignore[possibly-unbound]
+            border = Border(  # type: ignore[possibly-unbound]
+                left=Side(style='thin'),  # type: ignore[possibly-unbound]
+                right=Side(style='thin'),  # type: ignore[possibly-unbound]
+                top=Side(style='thin'),  # type: ignore[possibly-unbound]
+                bottom=Side(style='thin')  # type: ignore[possibly-unbound]
             )
             
             sheet_index = 1
@@ -425,7 +425,7 @@ class PDFExcelConverter:
             for sheet in workbook.worksheets:
                 for column in sheet.columns:
                     max_length = 0
-                    column_letter = column[0].column_letter
+                    column_letter = column[0].column_letter  # type: ignore
                     
                     for cell in column:
                         try:
@@ -458,7 +458,7 @@ class PDFExcelConverter:
             for table_data in tables_data["tables"]:
                 if table_data["data"]:
                     # DataFrame作成
-                    df = pd.DataFrame(table_data["data"][1:], columns=table_data["data"][0])
+                    df = pd.DataFrame(table_data["data"][1:], columns=table_data["data"][0])  # type: ignore[possibly-unbound]
                     
                     # CSVファイル名生成
                     csv_filename = f"table_{table_data['page_number']}_{table_data['table_number']}.csv"
@@ -475,8 +475,8 @@ class PDFExcelConverter:
             self.logger.error(f"CSV生成エラー: {e}")
             return {"success": False, "error": str(e)}
     
-    async def convert_pdf_to_excel(self, pdf_path: str, output_path: str = None, 
-                                 config: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def convert_pdf_to_excel(self, pdf_path: str, output_path: str = None,  # type: ignore
+                                 config: Dict[str, Any] = None) -> Dict[str, Any]:  # type: ignore
         """PDFからExcelへの変換（メイン処理）"""
         task_id = str(uuid.uuid4())
         

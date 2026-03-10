@@ -77,7 +77,7 @@ class MemoryRetrieveResponse(BaseModel):
 
 class LearningEventRequest(BaseModel):
     """学習イベント記録リクエスト"""
-    event_type: str = Field(..., description="イベントタイプ", regex="^(success|failure|optimization)$")
+    event_type: str = Field(..., description="イベントタイプ", regex="^(success|failure|optimization)$")  # type: ignore
     context: Dict[str, Any] = Field(..., description="イベントコンテキスト")
     metadata: Optional[Dict[str, Any]] = Field(None, description="追加メタデータ")
     

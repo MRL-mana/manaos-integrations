@@ -69,7 +69,7 @@ def cache_get(key: str) -> Optional[str]:
         return None
     
     try:
-        value = redis_client.get(key)
+        value = redis_client.get(key)  # type: ignore[union-attr]
         if value:
             cache_hits.inc()
             return value
@@ -85,7 +85,7 @@ def cache_set(key: str, value: str, ttl: int = 60):
         return False
     
     try:
-        redis_client.setex(key, ttl, value)
+        redis_client.setex(key, ttl, value)  # type: ignore[union-attr]
         return True
     except Exception as e:
         print(f"Cache set error: {e}")
@@ -97,7 +97,7 @@ def cache_delete(key: str):
         return False
     
     try:
-        redis_client.delete(key)
+        redis_client.delete(key)  # type: ignore[union-attr]
         return True
     except Exception as e:
         print(f"Cache delete error: {e}")
@@ -136,7 +136,7 @@ def handle_connect():
     connected_clients += 1
     websocket_connections.set(connected_clients)
     print(f'✅ Client connected. Total: {connected_clients}')
-    emit('connection_response', {'status': 'connected', 'client_id': request.sid})
+    emit('connection_response', {'status': 'connected', 'client_id': request.sid})  # type: ignore
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -225,7 +225,7 @@ def cache_stats():
         return jsonify({"error": "Redis not available"}), 503
     
     try:
-        info = redis_client.info('stats')
+        info = redis_client.info('stats')  # type: ignore[union-attr]
         return jsonify({
             "redis_available": True,
             "total_connections": info.get('total_connections_received', 0),
@@ -244,7 +244,7 @@ def cache_clear():
         return jsonify({"error": "Redis not available"}), 503
     
     try:
-        redis_client.flushdb()
+        redis_client.flushdb()  # type: ignore[union-attr]
         return jsonify({"success": True, "message": "Cache cleared"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500

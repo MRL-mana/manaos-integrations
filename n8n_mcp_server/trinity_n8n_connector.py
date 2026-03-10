@@ -28,7 +28,7 @@ class N8NConnector:
         self.orchestrator_url = orchestrator_url
         logger.info(f"✅ n8n Connector initialized (Orchestrator: {orchestrator_url})")
     
-    def trigger_orchestrator(self, goal: str, context: List[str] = None, budget_turns: int = 12) -> Dict:
+    def trigger_orchestrator(self, goal: str, context: List[str] = None, budget_turns: int = 12) -> Dict:  # type: ignore
         """
         Orchestratorをトリガー
         

@@ -25,9 +25,9 @@ class LocalLLMWithMemory:
     
     def __init__(
         self,
-        ollama_url: str = None,
-        manaos_api_url: str = None,
-        default_model: str = None
+        ollama_url: str = None,  # type: ignore
+        manaos_api_url: str = None,  # type: ignore
+        default_model: str = None  # type: ignore
     ):
         self.ollama_url = ollama_url or OLLAMA_URL
         self.manaos_api_url = manaos_api_url or MANAOS_API_URL
@@ -49,7 +49,7 @@ class LocalLLMWithMemory:
             pass  # 記憶取得エラーは無視（オプション機能）
         return []
     
-    async def _store_memory(self, content: str, tags: List[str] = None):
+    async def _store_memory(self, content: str, tags: List[str] = None):  # type: ignore
         """ManaOSに記憶を保存"""
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
@@ -68,7 +68,7 @@ class LocalLLMWithMemory:
     async def chat_with_memory(
         self,
         user_message: str,
-        model: str = None,
+        model: str = None,  # type: ignore
         use_memory: bool = True,
         save_memory: bool = True,
         stream: bool = False
@@ -113,12 +113,12 @@ class LocalLLMWithMemory:
         
         # 3. LLMでチャット
         if stream:
-            return self.chat_stream(messages, model)
+            return self.chat_stream(messages, model)  # type: ignore
         
         try:
             if HAS_OLLAMA_LIB:
                 # GPU最適化オプション（RTX 5080用）
-                response = ollama.chat(
+                response = ollama.chat(  # type: ignore[possibly-unbound]
                     model=model,
                     messages=messages,
                     options={
@@ -157,14 +157,14 @@ class LocalLLMWithMemory:
     async def chat_stream(
         self,
         messages: List[Dict],
-        model: str = None
+        model: str = None  # type: ignore
     ) -> AsyncGenerator[str, None]:
         """ストリーミング形式でチャット"""
         model = model or self.default_model
         
         try:
             if HAS_OLLAMA_LIB:
-                stream = ollama.chat(
+                stream = ollama.chat(  # type: ignore[possibly-unbound]
                     model=model,
                     messages=messages,
                     stream=True
@@ -222,7 +222,7 @@ class LocalLLMWithMemory:
 # 便利関数
 async def quick_chat_with_memory(
     user_message: str,
-    model: str = None,
+    model: str = None,  # type: ignore
     use_memory: bool = True
 ) -> str:
     """記憶機能を使用して簡単にチャット"""

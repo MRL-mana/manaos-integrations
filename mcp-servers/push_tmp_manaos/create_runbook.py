@@ -421,7 +421,7 @@ if __name__ == "__main__":
     import sys
     import io
     if sys.platform == 'win32':
-        sys.stdout.reconfigure(encoding='utf-8')
-        sys.stderr.reconfigure(encoding='utf-8')
+        sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
+        sys.stderr.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
     path = generate_runbook()
     print(f"OK Runbook generated: {path}")

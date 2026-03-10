@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from github_helper import GitHubHelper
 from github_integration import GitHubIntegration
 
-def quick_commit_push(message: str = None):
+def quick_commit_push(message: str = None):  # type: ignore
     """クイックコミット・プッシュ"""
     helper = GitHubHelper()
     
@@ -62,7 +62,7 @@ def quick_status():
     else:
         print("\n✅ 変更なし")
 
-def quick_issue(title: str, body: str = None, labels: str = None):
+def quick_issue(title: str, body: str = None, labels: str = None):  # type: ignore
     """クイックイシュー作成"""
     github = GitHubIntegration()
     
@@ -84,7 +84,7 @@ def quick_issue(title: str, body: str = None, labels: str = None):
     else:
         print("❌ イシューの作成に失敗しました")
 
-def quick_release(tag: str, title: str = None):
+def quick_release(tag: str, title: str = None):  # type: ignore
     """クイックリリース作成"""
     if not title:
         title = f"Release {tag}"

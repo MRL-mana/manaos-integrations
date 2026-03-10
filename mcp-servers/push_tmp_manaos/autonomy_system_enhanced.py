@@ -58,7 +58,7 @@ class AutonomySystemEnhanced:
         from autonomy_system import AutonomySystem
         
         # 基本システム
-        self.base_system = AutonomySystem(orchestrator_url, learning_system_url, config_path)
+        self.base_system = AutonomySystem(orchestrator_url, learning_system_url, config_path)  # type: ignore
         
         # 学習システム
         self.learning = LearningSystemEnhanced()

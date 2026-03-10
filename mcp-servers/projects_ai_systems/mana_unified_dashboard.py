@@ -278,7 +278,7 @@ class ManaUnifiedDashboard:
                     data = await websocket.receive_text()
                     
                     # リアルタイム更新送信
-                    overview = await self.get_overview()
+                    overview = await self.get_overview()  # type: ignore
                     await websocket.send_json(overview)
                     
                     await asyncio.sleep(2)  # 2秒間隔

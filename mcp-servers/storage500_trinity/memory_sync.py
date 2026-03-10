@@ -168,7 +168,7 @@ class MemorySync:
                 
             # 新しいエントリを追加
             existing_data['entries'].extend(qa_entries)
-            existing_data['last_updated'] = datetime.now().isoformat()
+            existing_data['last_updated'] = datetime.now().isoformat()  # type: ignore
             
             with open(mina_memory, 'w', encoding='utf-8') as f:
                 json.dump(existing_data, f, indent=2, ensure_ascii=False)
@@ -198,7 +198,7 @@ class MemorySync:
                 in_question = False
                 in_answer = False
                 tags = line.replace('**タグ**:', '').strip()
-                current_entry['tags'] = [t.strip() for t in tags.split() if t.startswith('#')]
+                current_entry['tags'] = [t.strip() for t in tags.split() if t.startswith('#')]  # type: ignore
                 if current_entry:
                     entries.append(current_entry)
                     current_entry = {}
@@ -233,7 +233,7 @@ class MemorySync:
             }
             
             knowledge['documents'].append(document)
-            knowledge['last_updated'] = datetime.now().isoformat()
+            knowledge['last_updated'] = datetime.now().isoformat()  # type: ignore
             
             with open(aria_memory, 'w', encoding='utf-8') as f:
                 json.dump(knowledge, f, indent=2, ensure_ascii=False)
@@ -262,7 +262,7 @@ class MemorySync:
             }
             tasks['tasks'].append(task)
             
-        tasks['last_updated'] = datetime.now().isoformat()
+        tasks['last_updated'] = datetime.now().isoformat()  # type: ignore
         
         with open(luna_memory, 'w', encoding='utf-8') as f:
             json.dump(tasks, f, indent=2, ensure_ascii=False)
@@ -286,7 +286,7 @@ class MemorySync:
         }
         
         knowledge['system_info'].append(metadata)
-        knowledge['last_updated'] = datetime.now().isoformat()
+        knowledge['last_updated'] = datetime.now().isoformat()  # type: ignore
         
         with open(remi_memory, 'w', encoding='utf-8') as f:
             json.dump(knowledge, f, indent=2, ensure_ascii=False)

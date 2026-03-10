@@ -72,7 +72,7 @@ class UnifiedMemorySystem:
         # 長期記憶（RAG）の初期化
         if rag_memory is None and RAG_MEMORY_AVAILABLE:
             try:
-                self.rag_memory = RAGMemoryEnhanced()
+                self.rag_memory = RAGMemoryEnhanced()  # type: ignore[possibly-unbound]
                 logger.info("✅ RAGメモリシステムを初期化しました")
             except Exception as e:
                 logger.warning(f"RAGメモリの初期化に失敗: {e}")

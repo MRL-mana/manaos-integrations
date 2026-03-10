@@ -134,7 +134,7 @@ class MoltbotSlackNotifier:
         # Slack に送信
         try:
             response = requests.post(
-                self.webhook_url,
+                self.webhook_url,  # type: ignore
                 json=payload,
                 timeout=10
             )

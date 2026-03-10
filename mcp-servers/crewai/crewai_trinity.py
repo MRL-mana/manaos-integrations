@@ -8,7 +8,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from crewai import Agent, Task, Crew, Process
+from crewai import Agent, Task, Crew, Process  # type: ignore[attr-defined]
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 

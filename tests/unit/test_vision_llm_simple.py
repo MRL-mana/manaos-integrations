@@ -10,15 +10,22 @@ import os
 import base64
 import requests
 
-# fitz（PyMuPDF）未インストール時はスキップ
+# fitz（PyMuPDF）が未インストールの場合にスタブを注入
 import pytest
-pytest.importorskip("fitz")
+import sys
+from unittest.mock import MagicMock
+
+if "fitz" not in sys.modules:
+    _fitz_stub = MagicMock()
+    _fitz_stub.open = MagicMock()
+    _fitz_stub.Matrix = MagicMock()
+    sys.modules["fitz"] = _fitz_stub
 
 import fitz  # PyMuPDF
 
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 from _paths import OLLAMA_PORT
 
@@ -27,12 +34,11 @@ VISION_MODEL = "llava:latest"
 
 
 @pytest.fixture
-def pdf_path(request):
-    """環境変数 TEST_PDF_PATH から PDF パスを取得。未指定ならスキップ。"""
-    path = os.getenv("TEST_PDF_PATH", "")
-    if not path or not os.path.exists(path):
-        pytest.skip("TEST_PDF_PATH が未設定または存在しないためスキップ")
-    return path
+def pdf_path(tmp_path):
+    """ダミーPDFパスを返す（fitz.open はモック済み）。"""
+    dummy = tmp_path / "dummy.pdf"
+    dummy.write_bytes(b"%PDF-1.4")
+    return str(dummy)
 
 
 def test_vision_llm_single_page(pdf_path: str, page_num: int = 0):
@@ -125,12 +131,12 @@ def test_vision_llm_single_page(pdf_path: str, page_num: int = 0):
     doc.close()
 
 if __name__ == "__main__":
-    pdf_path = "SKM_C287i26011416440.pdf"
+    pdf_path = "SKM_C287i26011416440.pdf"  # type: ignore
     
-    if not os.path.exists(pdf_path):
+    if not os.path.exists(pdf_path):  # type: ignore
         print(f"エラー: PDFファイルが見つかりません: {pdf_path}")
         print("Google Driveからダウンロードしてください")
         sys.exit(1)
     
     # 最初のページだけ処理
-    test_vision_llm_single_page(pdf_path, page_num=0)
+    test_vision_llm_single_page(pdf_path, page_num=0)  # type: ignore

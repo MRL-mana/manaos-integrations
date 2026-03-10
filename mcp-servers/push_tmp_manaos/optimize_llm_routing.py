@@ -46,10 +46,10 @@ class LLMRoutingOptimizer:
             response_time = log.get("response_time_ms", 0)
             success = log.get("success", False)
             
-            model_stats[model]["response_times"].append(response_time)
-            model_stats[model]["total_count"] += 1
+            model_stats[model]["response_times"].append(response_time)  # type: ignore
+            model_stats[model]["total_count"] += 1  # type: ignore
             if success:
-                model_stats[model]["success_count"] += 1
+                model_stats[model]["success_count"] += 1  # type: ignore
         
         # モデル別の平均レスポンス時間と成功率を計算
         model_analysis = {}
@@ -57,9 +57,9 @@ class LLMRoutingOptimizer:
             response_times = stats["response_times"]
             if response_times:
                 model_analysis[model] = {
-                    "mean_response_time": statistics.mean(response_times),
-                    "median_response_time": statistics.median(response_times),
-                    "success_rate": (stats["success_count"] / stats["total_count"] * 100) if stats["total_count"] > 0 else 0,
+                    "mean_response_time": statistics.mean(response_times),  # type: ignore
+                    "median_response_time": statistics.median(response_times),  # type: ignore
+                    "success_rate": (stats["success_count"] / stats["total_count"] * 100) if stats["total_count"] > 0 else 0,  # type: ignore
                     "total_requests": stats["total_count"]
                 }
         

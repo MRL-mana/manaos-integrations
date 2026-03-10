@@ -222,9 +222,9 @@ class TemporalAbstraction:
         hour_avg = {h: round(sum(s) / len(s), 4) for h, s in by_hour.items()}
         day_avg = {d: round(sum(s) / len(s), 4) for d, s in by_weekday.items()}
 
-        best_h = max(hour_avg, key=hour_avg.get) if hour_avg else 0
-        worst_h = min(hour_avg, key=hour_avg.get) if hour_avg else 0
-        best_d = max(day_avg, key=day_avg.get) if day_avg else 0
+        best_h = max(hour_avg, key=hour_avg.get) if hour_avg else 0  # type: ignore[call-arg]
+        worst_h = min(hour_avg, key=hour_avg.get) if hour_avg else 0  # type: ignore[call-arg]
+        best_d = max(day_avg, key=day_avg.get) if day_avg else 0  # type: ignore[call-arg]
         peak = max(hour_avg.values()) if hour_avg else 0.0
 
         return PeriodicPattern(

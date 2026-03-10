@@ -170,7 +170,7 @@ class IntelligentAutomationWorkflow:
             return {
                 'filename': filename,
                 'status': 'error',
-                'error': str(e),
+                'error': str(e),  # type: ignore[possibly-unbound]
                 'processing_time': time.time() - start_time,
                 'timestamp': datetime.now().isoformat()
             }

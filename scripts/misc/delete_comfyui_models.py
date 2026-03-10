@@ -11,8 +11,8 @@ import io
 
 # Windowsでのエンコーディング設定
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 
 def get_comfyui_models_path() -> Path:
@@ -60,7 +60,7 @@ def format_size(size_bytes: int) -> str:
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size_bytes < 1024.0:
             return f"{size_bytes:.2f} {unit}"
-        size_bytes /= 1024.0
+        size_bytes /= 1024.0  # type: ignore
     return f"{size_bytes:.2f} PB"
 
 

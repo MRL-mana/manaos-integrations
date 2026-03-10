@@ -19,7 +19,7 @@ logger = get_service_logger("svi-wan22-video-integration")
 class SVIWan22VideoIntegration:
     """SVI × Wan 2.2動画生成統合クラス"""
     
-    def __init__(self, base_url: str = None):
+    def __init__(self, base_url: str = None):  # type: ignore
         """
         初期化
         
@@ -765,7 +765,7 @@ class SVIWan22VideoIntegration:
             
             # 各セグメントを生成
             execution_id = self.generate_video(
-                start_image_path=current_image_path if i == 0 else None,
+                start_image_path=current_image_path if i == 0 else None,  # type: ignore
                 prompt=prompt,
                 video_length_seconds=segment_length_seconds,
                 steps=steps,

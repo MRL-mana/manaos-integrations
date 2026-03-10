@@ -13,8 +13,8 @@ System 3 Learning Idle (Background Learning)
 import sys
 import io
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 import os
 import time
@@ -153,7 +153,7 @@ def execute_idle_learning_job() -> Dict[str, Any]:
         # タスク1: ログ整理（簡易統計生成）
         print("  [1] ログ整理・統計生成中...")
         try:
-            from system3_learning_nightly import analyze_error_logs
+            from system3_learning_nightly import analyze_error_logs  # type: ignore[attr-defined]
             from pathlib import Path as PPath
             integrations_dir = Path(os.getenv("MANAOS_INTEGRATIONS_DIR", r"C:\Users\mana4\Desktop\manaos_integrations"))
             logs_dir = integrations_dir / "logs"

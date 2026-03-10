@@ -53,7 +53,7 @@ class GalleryAPI:
     
     def generate_image(self, prompt: str, model: str = "majicmixRealistic_v7.safetensors", 
                       steps: int = 30, guidance_scale: float = 7.5, 
-                      negative_prompt: str = None, mufufu_mode: bool = False) -> dict:
+                      negative_prompt: str = None, mufufu_mode: bool = False) -> dict:  # type: ignore
         """画像生成"""
         try:
             # ムフフモード時のネガティブプロンプト（服を除外）
@@ -346,6 +346,6 @@ if __name__ == '__main__':
         logger.error(f"❌ SD Inference API接続エラー: {e}")
     
     logger.info("🌐 Gallery Server起動: http://localhost:5559")
-    app.run(host="0.0.0.0", port=port, debug=os.getenv("DEBUG", "False").lower() == "true")
+    app.run(host="0.0.0.0", port=port, debug=os.getenv("DEBUG", "False").lower() == "true")  # type: ignore[name-defined]
 
 

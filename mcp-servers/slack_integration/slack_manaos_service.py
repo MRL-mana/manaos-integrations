@@ -322,7 +322,7 @@ def handle_slash_command():
         log(f"⚡ コマンド受信: {command} {text} from @{user_name}")
         
         if command == '/manaos':
-            response = handle_manaos_command(text, user_name, channel_id)
+            response = handle_manaos_command(text, user_name, channel_id)  # type: ignore
             return jsonify(response)
         
         return jsonify({

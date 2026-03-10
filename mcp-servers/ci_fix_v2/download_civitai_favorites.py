@@ -72,7 +72,7 @@ def main():
         return 1
 
     civitai = CivitAIIntegration()
-    civitai.session.proxies = {"http": None, "https": None}
+    civitai.session.proxies = {"http": None, "https": None}  # type: ignore
 
     if not civitai.is_available():
         print("[NG] CivitAIが利用できません（APIキーを確認してください）")
@@ -168,7 +168,7 @@ def main():
         print(f"[{i+1}/{len(favorites)}] {name[:50]} ({model_type}) -> {file_name[:40]}...")
         try:
             result = civitai.download_model(
-                model_id=model_id,
+                model_id=model_id,  # type: ignore
                 version_id=version_id,
                 download_path=str(dest_path),
             )

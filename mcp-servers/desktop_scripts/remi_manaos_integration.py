@@ -67,7 +67,7 @@ class TaskRequest(BaseModel):
     timeout: Optional[int] = 300
 
 
-async def call_manaos_api(endpoint: str, method: str = "GET", data: Dict = None):
+async def call_manaos_api(endpoint: str, method: str = "GET", data: Dict = None):  # type: ignore
     """ManaOS API呼び出し"""
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -106,7 +106,7 @@ async def call_ollama_chat(messages: List[Dict], model: str = "qwen2.5:7b") -> s
         return ""
 
 
-async def get_remi_response(user_input: str, context: Dict = None) -> str:
+async def get_remi_response(user_input: str, context: Dict = None) -> str:  # type: ignore
     """レミの返事を生成"""
     messages = [{"role": "system", "content": REMI_PERSONALITY_PROMPT}]
     

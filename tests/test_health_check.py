@@ -65,7 +65,7 @@ class TestCheckService:
 
         success, detail, elapsed = check_service(mock_service)
         assert success is False
-        assert "Connection" in detail or "refused" in detail.lower() or "error" in detail.lower()
+        assert "Connection" in detail or "refused" in detail.lower() or "error" in detail.lower()  # type: ignore[operator]
 
     @patch("check_services_health.requests.get")
     def test_timeout(self, mock_get, mock_service):

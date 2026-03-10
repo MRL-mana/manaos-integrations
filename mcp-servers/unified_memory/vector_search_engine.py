@@ -64,7 +64,7 @@ class VectorSearchEngine:
             return self.embeddings_cache[text]
         
         # ベクトル化
-        vector = self.model.encode(text, convert_to_numpy=True)
+        vector = self.model.encode(text, convert_to_numpy=True)  # type: ignore[union-attr]
         
         # キャッシュ
         self.embeddings_cache[text] = vector

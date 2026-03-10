@@ -16,7 +16,7 @@ import pandas as pd
 
 # バッファリングを無効化（リアルタイム出力のため）
 if hasattr(sys.stdout, 'reconfigure'):
-    sys.stdout.reconfigure(encoding='utf-8', line_buffering=True)
+    sys.stdout.reconfigure(encoding='utf-8', line_buffering=True)  # type: ignore[attr-defined]
 
 # どのディレクトリから実行しても動くように、リポジトリルートを import パスに追加
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -168,7 +168,7 @@ def optimize_excel_correction(
                 sys.stdout.flush()  # バッファをフラッシュ
 
         for col_idx, col_name in enumerate(df.columns):
-            cell_value = row[col_name]
+            cell_value = row[col_name]  # type: ignore[possibly-unbound]
             if pd.isna(cell_value):
                 continue
 
@@ -183,12 +183,12 @@ def optimize_excel_correction(
             # 正規化とルールベース修正
             cell_norm = base._normalize_text(cell_str)
             if cell_norm != cell_str:
-                corrected_df.at[idx, col_name] = cell_norm
+                corrected_df.at[idx, col_name] = cell_norm  # type: ignore[possibly-unbound]
                 cell_str = cell_norm
             
             fixed = base._fix_common_ocr_errors(cell_str)
             if fixed != cell_str:
-                corrected_df.at[idx, col_name] = fixed
+                corrected_df.at[idx, col_name] = fixed  # type: ignore[possibly-unbound]
                 cell_str = fixed
                 corrected_cells += 1
 
@@ -203,15 +203,15 @@ def optimize_excel_correction(
             # コンテキスト構築（アンサンブルの場合は高度なコンテキスト）
             if isinstance(base_corrector, EnsembleOCRCorrector):
                 col_headers = base_corrector._build_col_headers(df, top_n=6)
-                context = base_corrector._build_cell_context(df, idx, col_idx, col_headers)
+                context = base_corrector._build_cell_context(df, idx, col_idx, col_headers)  # type: ignore[possibly-unbound]
             else:
                 # ExcelLLMOCRCorrectorの場合も同様のコンテキスト構築
                 if hasattr(base_corrector, '_build_cell_context'):
                     col_headers = base_corrector._build_col_headers(df, top_n=6)
-                    context = base_corrector._build_cell_context(df, idx, col_idx, col_headers)
+                    context = base_corrector._build_cell_context(df, idx, col_idx, col_headers)  # type: ignore[possibly-unbound]
                 else:
                     row_context = " | ".join(
-                        [str(val)[:50] for val in row.values[:5] if pd.notna(val)]
+                        [str(val)[:50] for val in row.values[:5] if pd.notna(val)]  # type: ignore[possibly-unbound]
                     )
                     context = row_context
 
@@ -226,7 +226,7 @@ def optimize_excel_correction(
             if should_correct:
                 corrected = optimized.correct_cell(cell_str, context)
                 if corrected != cell_str:
-                    corrected_df.at[idx, col_name] = corrected
+                    corrected_df.at[idx, col_name] = corrected  # type: ignore[possibly-unbound]
                     corrected_cells += 1
         
         corrected_data[sheet_name] = corrected_df

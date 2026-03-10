@@ -48,7 +48,7 @@ from .queue import JobQueue
 from .feedback import FeedbackManager
 from .batch_generator import BatchGenerator
 from .gpu_monitor import get_gpu_monitor
-from .revenue_tracker import RevenueWriter
+from .revenue_tracker import RevenueWriter  # type: ignore[attr-defined]
 
 _log = logging.getLogger("manaos.image_api")
 
@@ -791,7 +791,7 @@ async def get_job_result(
     if result is None:
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
     if result.status != JobStatus.completed:
-        return JSONResponse(
+        return JSONResponse(  # type: ignore
             status_code=202,
             content={"job_id": job_id, "status": result.status.value,
                      "message": "Still processing"},

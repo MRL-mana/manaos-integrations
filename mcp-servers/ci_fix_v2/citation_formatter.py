@@ -25,7 +25,7 @@ class CitationFormatter:
         self,
         report: str,
         citations: List[Citation],
-        claims: List[str] = None
+        claims: List[str] = None  # type: ignore
     ) -> str:
         """
         レポートに引用を強制的にフォーマット

@@ -140,7 +140,7 @@ PR番号: #{pr_number}
 
         return message
 
-    def _log_notification(self, notification_type: str, message: str, data: dict = None):
+    def _log_notification(self, notification_type: str, message: str, data: dict = None):  # type: ignore
         """通知をログに記録"""
         entry = {
             "timestamp": datetime.now().isoformat(),
@@ -155,7 +155,7 @@ PR番号: #{pr_number}
         # コンソールにも出力
         print(message)
 
-    def get_recent_notifications(self, hours: int = 24, notification_type: str = None):
+    def get_recent_notifications(self, hours: int = 24, notification_type: str = None):  # type: ignore
         """最近の通知を取得"""
         if not self.notification_file.exists():
             return []

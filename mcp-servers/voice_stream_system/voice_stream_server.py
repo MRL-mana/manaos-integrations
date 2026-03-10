@@ -149,7 +149,7 @@ class ConnectionManager:
         await websocket.accept()
         connection_id = id(websocket)
         self.active_connections.append(websocket)
-        self.audio_buffers[connection_id] = []
+        self.audio_buffers[connection_id] = []  # type: ignore
         logger.info(f"✅ WebSocket接続: {connection_id}")
         return connection_id
 
@@ -362,7 +362,7 @@ async def handle_audio_message(websocket: WebSocket, audio_bytes: bytes, connect
     """音声メッセージを処理"""
     try:
         # 音声バッファに追加
-        buffer = manager.audio_buffers.get(connection_id, [])
+        buffer = manager.audio_buffers.get(connection_id, [])  # type: ignore[call-arg]
         buffer.append(audio_bytes)
 
         # バッファサイズをチェック（簡易実装）

@@ -197,7 +197,7 @@ class ReportGenerator:
         """ディスク使用状況取得"""
         try:
             import psutil
-            disk = psutil.disk_usage(self.base_path)
+            disk = psutil.disk_usage(self.base_path)  # type: ignore
             
             return {
                 "total_gb": round(disk.total / (1024**3), 2),

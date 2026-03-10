@@ -2,7 +2,7 @@
 """過去の実績ある設定で画像生成（ComfyUI直接）"""
 import sys, json, time, random, requests
 
-sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 model = 'cyberrealisticPony_v150 (1).safetensors'
 loras = [

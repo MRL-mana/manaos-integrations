@@ -226,7 +226,7 @@ class ManaOptimizedIntegrationSystem:
         
         @self.app.get("/api/ai-secretary/context")
         async def get_ai_context():
-            return await self.get_ai_context()
+            return await self.get_ai_context()  # type: ignore
         
         # 統合タスク管理API
         @self.app.get("/api/tasks")
@@ -239,25 +239,25 @@ class ManaOptimizedIntegrationSystem:
         
         @self.app.put("/api/tasks/{task_id}")
         async def update_task(task_id: int, task: Dict[str, Any]):
-            return await self.update_optimized_task(task_id, task)
+            return await self.update_optimized_task(task_id, task)  # type: ignore
         
         # 統合スケジュール管理API
         @self.app.get("/api/schedules")
         async def get_schedules():
-            return await self.get_optimized_schedules()
+            return await self.get_optimized_schedules()  # type: ignore
         
         @self.app.post("/api/schedules")
         async def create_schedule(schedule: Dict[str, Any]):
-            return await self.create_optimized_schedule(schedule)
+            return await self.create_optimized_schedule(schedule)  # type: ignore
         
         # 統合メール管理API
         @self.app.get("/api/emails")
         async def get_emails():
-            return await self.get_optimized_emails()
+            return await self.get_optimized_emails()  # type: ignore
         
         @self.app.post("/api/emails/send")
         async def send_email(email: Dict[str, Any]):
-            return await self.send_optimized_email(email)
+            return await self.send_optimized_email(email)  # type: ignore
         
         # システム最適化API
         @self.app.get("/api/optimization/status")
@@ -270,7 +270,7 @@ class ManaOptimizedIntegrationSystem:
         
         @self.app.get("/api/optimization/metrics")
         async def get_optimization_metrics():
-            return await self.get_optimization_metrics()
+            return await self.get_optimization_metrics()  # type: ignore
         
         # 統合ダッシュボードAPI
         @self.app.get("/api/dashboard")

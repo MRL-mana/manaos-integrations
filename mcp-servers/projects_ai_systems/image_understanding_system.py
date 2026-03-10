@@ -136,7 +136,7 @@ class ImageUnderstandingSystem:
                     {
                         "role": "user",
                         "content": [
-                            {
+                            {  # type: ignore
                                 "type": "image",
                                 "source": {
                                     "type": "base64",
@@ -153,7 +153,7 @@ class ImageUnderstandingSystem:
                 ],
             )
             
-            analysis = message.content[0].text
+            analysis = message.content[0].text  # type: ignore
             
             logger.info("  ✅ Claude Vision analysis complete")
             

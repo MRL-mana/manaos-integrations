@@ -10,7 +10,7 @@ import pytest
 from scripts.misc.inspect_cursor_db_structure import inspect_db_structure
 
 
-def _make_db(db_path: Path, rows: list = None):
+def _make_db(db_path: Path, rows: list = None):  # type: ignore
     """Helper: create a minimal SQLite DB with ItemTable."""
     conn = sqlite3.connect(str(db_path))
     conn.execute("CREATE TABLE ItemTable (key TEXT, value TEXT)")

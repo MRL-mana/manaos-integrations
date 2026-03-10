@@ -1,0 +1,101 @@
+[1m============================= test session starts =============================[0m
+2026-03-10 07:58:10 [    INFO] [          mrl-memory-extractor] ✅ MRL Memory Extractor初期化完了: C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-10 07:58:10 [    INFO] [          mrl-memory-extractor] ✅ MRL Memory Extractor初期化完了: C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-10 07:58:10 [    INFO] [        mrl-memory-kill-switch] ✅ Kill Switch初期化: FWPKM=True, Write=True
+2026-03-10 07:58:10 [    INFO] [         mrl-memory-quarantine] ✅ Memory Quarantine初期化完了
+2026-03-10 07:58:10 [    INFO] [        mrl-memory-ttl-manager] ✅ TTL Manager初期化完了
+2026-03-10 07:58:10 [    INFO] [             mrl-memory-system] ✅ MRL Memory System初期化完了: C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-10 07:58:10 [    INFO] [            mrl-memory-metrics] [OK] MRL Memory Metrics初期化完了: C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory\metrics
+2026-03-10 07:58:10 [    INFO] [       mrl-memory-api-security] SECURITY: auth=disabled, rate_limit=enabled, max_input=200000, pii_mask=enabled
+2026-03-10 07:58:10 [    INFO] [       mrl-memory-api-security] [OK] API Security初期化完了
+2026-03-10 07:58:10 [    INFO] [        mrl-memory-integration] Security initialized: require_auth=False, api_key=SET
+2026-03-10 07:58:10 [    INFO] [    mrl-memory-rollout-manager] ✅ Rollout Manager初期化: enabled=True, write_mode=full, sample_rate=1.0, review_effect=True
+2026-03-10 07:58:10 [    INFO] [               learning_system] ✅ API認証システムを初期化しました
+collected 6109 items
+
+tests\e2e\test_all_features.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                      [  0%][0m
+tests\e2e\test_final_checklist.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[33ms[0m[32m                                  [  0%][0m
+tests\e2e\test_final_checklist_stable.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                           [  0%][0m
+tests\e2e\test_full_workflow.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                 [  0%][0m
+tests\e2e\test_service_health_checks.py [32m.[0m[32m.[0m[32m.[0m[32m                              [  0%][0m
+tests\e2e\test_ultimate.py [32m.[0m[32m                                             [  0%][0m
+tests\e2e\test_ultra_integrated.py [32m.[0m[32m                                     [  0%][0m
+tests\e2e\test_unified_workflow.py [33ms[0m[33ms[0m[33ms[0m[32m.[0m[32m.[0m[32m.[0m[33ms[0m[33ms[0m[33ms[0m[33ms[0m[32m                            [  0%][0m
+tests\integration\test_all_apis.py [32m.[0m[32m.[0m[32m                                    [  0%][0m
+tests\integration\test_all_enhancements.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                         [  0%][0m
+tests\integration\test_all_integrations.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                       [  0%][0m
+tests\integration\test_all_mcp_tools.py [32m.[0m[32m.[0m[32m.[0m[32m                              [  0%][0m
+tests\integration\test_all_services.py [32m.[0m[32m                                 [  0%][0m
+tests\integration\test_all_systems.py [32m.[0m[32m.[0m[32m                                 [  0%][0m
+tests\integration\test_always_ready_llm.py [32m.[0m[32m                             [  0%][0m
+tests\integration\test_api_endpoints.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                             [  1%][0m
+tests\integration\test_api_endpoints_extension.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                 [  1%][0m
+tests\integration\test_api_key_auth.py [32m.[0m[32m                                 [  1%][0m
+tests\integration\test_api_server_auth.py [32m.[0m[32m.[0m[32m                             [  1%][0m
+tests\integration\test_apis_working.py [32m.[0m[32m.[0m[32m                                [  1%][0m
+tests\integration\test_auto_reflection.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                           [  1%][0m
+tests\integration\test_auto_save.py [32m.[0m[32m                                    [  1%][0m
+tests\integration\test_brave_search.py [32m.[0m[32m                                 [  1%][0m
+tests\integration\test_comfyui_civitai.py [32m.[0m[32m.[0m[32m                             [  1%][0m
+tests\integration\test_cross_chat_reflection.py [32m.[0m[32m                        [  1%][0m
+tests\integration\test_drive_indexer.py [32m.[0m[32m                                [  1%][0m
+tests\integration\test_e2e_image_pipeline.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m          [  1%][0m
+tests\integration\test_environment_variables.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                     [  1%][0m
+tests\integration\test_fellatio_prompt.py [32m.[0m[32m                              [  1%][0m
+tests\integration\test_file_secretary_llm_integration.py [32m.[0m[32m.[0m[32m.[0m[32m             [  1%][0m
+tests\integration\test_flask_direct.py [33ms[0m[32m                                 [  1%][0m
+tests\integration\test_free_integrations.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                       [  1%][0m
+tests\integration\test_gallery_api_direct.py [32m.[0m[32m                           [  1%][0m
+tests\integration\test_gallery_models_direct.py [32m.[0m[32m.[0m[32m                       [  1%][0m
+tests\integration\test_github_integration.py [32m.[0m[32m                           [  1%][0m
+tests\integration\test_hf_manaos_integration.py [31mF[0m[31m                        [  1%][0m
+tests\integration\test_implementations.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                         [  2%][0m
+tests\integration\test_improved_integrations.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                  [  2%][0m
+tests\integration\test_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                              [  2%][0m
+tests\integration\test_integration_all.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                           [  2%][0m
+tests\integration\test_integration_flow.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                         [  2%][0m
+tests\integration\test_intrinsic_motivation_integration.py [32m.[0m[31m             [  2%][0m
+tests\integration\test_lfm25_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                         [  2%][0m
+tests\integration\test_llm_routing.py [32m.[0m[32m.[0m[31m                                 [  2%][0m
+tests\integration\test_lm_studio.py [32m.[0m[31m                                    [  2%][0m
+tests\integration\test_lm_studio_direct.py [32m.[0m[32m.[0m[31m                            [  2%][0m
+tests\integration\test_lm_studio_load_model.py [32m.[0m[32m.[0m[31m                        [  2%][0m
+tests\integration\test_lm_studio_working.py [32m.[0m[31m                            [  2%][0m
+tests\integration\test_ltx2.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                                      [  2%][0m
+tests\integration\test_ltx2_infinity_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                 [  2%][0m
+tests\integration\test_ltx2_workflow.py [32m.[0m[31m                                [  2%][0m
+tests\integration\test_manaos_github_integration.py [32m.[0m[31m                    [  2%][0m
+tests\integration\test_manaos_integration.py [32m.[0m[32m.[0m[32m.[0m[31m                         [  2%][0m
+tests\integration\test_manaos_integration_complete.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m              [  2%][0m
+tests\integration\test_manaos_modules.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                           [  3%][0m
+tests\integration\test_manaos_tools_direct.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                    [  3%][0m
+tests\integration\test_mcp_api_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                       [  3%][0m
+tests\integration\test_memory_functionality.py [32m.[0m[32m.[0m[32m.[0m[31m                       [  3%][0m
+tests\integration\test_memory_unified.py [32m.[0m[32m.[0m[31m                              [  3%][0m
+tests\integration\test_mrl_manaos_integration.py [33ms[0m[32m.[0m[31m                      [  3%][0m
+tests\integration\test_mrl_memory.py [32m.[0m[32m.[0m[32m.[0m[31m                                 [  3%][0m
+tests\integration\test_mrl_memory_api_security.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                   [  3%][0m
+tests\integration\test_mrl_memory_integration.py [32m.[0m[32m.[0m[32m.[0m[31m                     [  3%][0m
+tests\integration\test_mrl_memory_usage.py [32m.[0m[32m.[0m[32m.[0m[31m                           [  3%][0m
+tests\integration\test_notification.py [32m.[0m[32m.[0m[31m                                [  3%][0m
+tests\integration\test_notification_hub.py [32m.[0m[32m.[0m[31m                            [  3%][0m
+tests\integration\test_oh_my_opencode.py [32m.[0m[32m.[0m[31m                              [  3%][0m
+tests\integration\test_oh_my_opencode_integration.py [32m.[0m[32m.[0m[32m.[0m[31m                 [  3%][0m
+tests\integration\test_oh_my_opencode_smoke.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                     [  3%][0m
+tests\integration\test_ollama_memory_integration.py [32m.[0m[31m                    [  3%][0m
+tests\integration\test_persona.py [32m.[0m[31m                                      [  3%][0m
+tests\integration\test_rows_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                        [  3%][0m
+tests\integration\test_sample_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                     [  3%][0m
+tests\integration\test_searxng_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                      [  4%][0m
+tests\integration\test_secretary_routines.py [32m.[0m[31m                           [  4%][0m
+tests\integration\test_service_health.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                      [  4%][0m
+tests\integration\test_single_generation.py [32m.[0m[31m                            [  4%][0m
+tests\integration\test_slack_chat.py [32m.[0m[31m                                   [  4%][0m
+tests\integration\test_slack_connection.py [32m.[0m[31m                             [  4%][0m
+tests\integration\test_slack_integration.py [32m.[0m[32m.[0m[32m.[0m[31m                          [  4%][0m
+tests\integration\test_slack_llm.py [32m.[0m[32m.[0m[32m.[0m[31m                                  [  4%][0m
+tests\integration\test_slack_webhook_direct.py [32m.[0m[31m                         [  4%][0m
+tests\integration\test_startup_notification.py [32m.[0m[31m                         [  4%][0m
+tests\integration\test_svi_wan22.py [32m.[0m[32m.[0m[32m.[0m[31m                                  [  4%][0m
+tests\integration\test_tool_server_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0mC:\Users\mana4\Desktop\manaos_integrations\api_auth.py:27: UserWarning: MANAOS_API_KEYS が未設定です。APIキーを環境変数で設定してください。
+  self._load_api_keys()

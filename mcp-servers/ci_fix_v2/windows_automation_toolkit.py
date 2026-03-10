@@ -188,8 +188,8 @@ class WindowsAutomationToolkit:
                 os_version=platform.version(),
                 os_build=platform.platform(),
                 cpu_name=cpu_name,
-                cpu_cores_physical=psutil.cpu_count(logical=False) if psutil else 0,
-                cpu_cores_logical=psutil.cpu_count(logical=True) if psutil else 0,
+                cpu_cores_physical=psutil.cpu_count(logical=False) if psutil else 0,  # type: ignore
+                cpu_cores_logical=psutil.cpu_count(logical=True) if psutil else 0,  # type: ignore
                 ram_total_gb=round(psutil.virtual_memory().total / (1024**3), 1) if psutil else 0,
                 gpu_name=gpu_name,
                 uptime_hours=round(uptime_hours, 1),
@@ -794,7 +794,7 @@ class WindowsAutomationToolkit:
             except Exception as e:
                 logger.error(f"監視エラー: {e}")
 
-            time.sleep(interval)
+            time.sleep(interval)  # type: ignore
 
 
 # ─── CLI ────────────────────────────────────────────

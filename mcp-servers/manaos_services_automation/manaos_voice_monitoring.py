@@ -132,7 +132,7 @@ class VoiceMonitoringEngine:
             'disk_percent': psutil.disk_usage('/').percent,
             'process_count': len(psutil.pids()),
             'uptime': time.time() - psutil.boot_time(),
-            'load_avg': os.getloadavg() if hasattr(os, 'getloadavg') else [0, 0, 0]
+            'load_avg': os.getloadavg() if hasattr(os, 'getloadavg') else [0, 0, 0]  # type: ignore[attr-defined]
         }
         
         # ManaOS v3ステータス取得
@@ -422,7 +422,7 @@ class VoiceMonitoringEngine:
                 pass
         
         # クエリログ保存
-        self._save_voice_query(query, response, audio_file)
+        self._save_voice_query(query, response, audio_file)  # type: ignore
         
         return {
             'query': query,

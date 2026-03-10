@@ -45,7 +45,7 @@ class PostgreSQLIntegration:
     def _connect(self):
         """接続"""
         try:
-            self.conn = psycopg2.connect(self.connection_string)
+            self.conn = psycopg2.connect(self.connection_string)  # type: ignore[possibly-unbound]
         except Exception as e:
             print(f"PostgreSQL接続エラー: {e}")
     
@@ -68,12 +68,12 @@ class PostgreSQLIntegration:
             return []
         
         try:
-            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:  # type: ignore[possibly-unbound, union-attr]
                 cursor.execute(query, params)
                 if cursor.description:
                     return [dict(row) for row in cursor.fetchall()]
                 else:
-                    self.conn.commit()
+                    self.conn.commit()  # type: ignore[union-attr]
                     return []
         except Exception as e:
             print(f"クエリ実行エラー: {e}")
@@ -98,9 +98,9 @@ class PostgreSQLIntegration:
         query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
         
         try:
-            with self.conn.cursor() as cursor:
+            with self.conn.cursor() as cursor:  # type: ignore[union-attr]
                 cursor.execute(query, tuple(data.values()))
-                self.conn.commit()
+                self.conn.commit()  # type: ignore[union-attr]
                 return True
         except Exception as e:
             print(f"データ挿入エラー: {e}")
@@ -129,7 +129,7 @@ class MongoDBIntegration:
     def _connect(self):
         """接続"""
         try:
-            self.client = MongoClient(self.connection_string)
+            self.client = MongoClient(self.connection_string)  # type: ignore[possibly-unbound]
             self.db = self.client[self.database_name]
         except Exception as e:
             print(f"MongoDB接続エラー: {e}")
@@ -153,7 +153,7 @@ class MongoDBIntegration:
             return None
         
         try:
-            result = self.db[collection].insert_one(document)
+            result = self.db[collection].insert_one(document)  # type: ignore[index]
             return str(result.inserted_id)
         except Exception as e:
             print(f"ドキュメント挿入エラー: {e}")
@@ -180,7 +180,7 @@ class MongoDBIntegration:
             return []
         
         try:
-            cursor = self.db[collection].find(filter or {}).limit(limit)
+            cursor = self.db[collection].find(filter or {}).limit(limit)  # type: ignore[index]
             return [doc for doc in cursor]
         except Exception as e:
             print(f"ドキュメント検索エラー: {e}")

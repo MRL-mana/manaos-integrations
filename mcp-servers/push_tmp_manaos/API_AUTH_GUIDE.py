@@ -56,7 +56,7 @@ def public_endpoint():
 @auth_manager.optional_api_key
 def optional_auth_endpoint():
     from flask import request
-    if request.api_key_validated:
+    if request.api_key_validated:  # type: ignore
         return jsonify({"message": "Authenticated user", "premium": True})
     else:
         return jsonify({"message": "Anonymous user", "premium": False})

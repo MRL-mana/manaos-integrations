@@ -154,7 +154,7 @@ class ChaosTest:
             return {
                 "test": "obsidian_write_denial",
                 "success": False,
-                "error": str(e),
+                "error": str(e),  # type: ignore[possibly-unbound]
                 "timestamp": datetime.now().isoformat()
             }
 

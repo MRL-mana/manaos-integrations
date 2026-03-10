@@ -160,7 +160,7 @@ class PerformanceBenchmark:
                 total, healthy, warning, critical, avg_score = metrics['health_stats']
                 print("\n   ヘルスチェック結果:")
                 print(f"     総チェック数: {total}回")
-                print(f"     Healthy: {healthy}回 ({healthy/total*100 if total > 0 else 0:.1f}%)")
+                print(f"     Healthy: {healthy}回 ({healthy/total*100 if total > 0 else 0:.1f}%)")  # type: ignore
                 print(f"     Warning: {warning}回")
                 print(f"     Critical: {critical}回")
                 print(f"     平均スコア: {avg_score:.1f}/100")
@@ -210,8 +210,8 @@ class PerformanceBenchmark:
         print(f"    メモリ使用率: {system['memory_percent']:.1f}%")
         
         # 監視品質
-        if metrics.get('health_stats') and metrics['health_stats'][0] > 0:
-            healthy_rate = metrics['health_stats'][1] / metrics['health_stats'][0] * 100
+        if metrics.get('health_stats') and metrics['health_stats'][0] > 0:  # type: ignore
+            healthy_rate = metrics['health_stats'][1] / metrics['health_stats'][0] * 100  # type: ignore
             if healthy_rate >= 95:
                 quality = "🟩 優秀"
             elif healthy_rate >= 85:

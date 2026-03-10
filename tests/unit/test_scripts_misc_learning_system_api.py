@@ -11,15 +11,15 @@ import pytest
 # ── モジュールモック（インポート前に設定）─────────────────────────────────────
 
 # manaos_logger / unified_logging
-sys.modules.setdefault("manaos_logger", MagicMock(
+sys.modules["manaos_logger"] = MagicMock(
     get_logger=MagicMock(return_value=MagicMock()),
     get_service_logger=MagicMock(return_value=MagicMock()),
-))
+)
 _ul = types.ModuleType("unified_logging")
-_ul.get_service_logger = MagicMock(return_value=MagicMock())
+_ul.get_service_logger = MagicMock(return_value=MagicMock())  # type: ignore
 sys.modules["unified_logging"] = _ul
 
-sys.modules.setdefault("manaos_error_handler", MagicMock(
+sys.modules["manaos_error_handler"] = MagicMock(
     ManaOSErrorHandler=MagicMock(return_value=MagicMock(
         handle_exception=MagicMock(return_value=MagicMock(
             message="err",
@@ -28,18 +28,19 @@ sys.modules.setdefault("manaos_error_handler", MagicMock(
     )),
     ErrorCategory=MagicMock(),
     ErrorSeverity=MagicMock(),
-))
-sys.modules.setdefault("manaos_timeout_config", MagicMock(
+)
+sys.modules["manaos_timeout_config"] = MagicMock(
     get_timeout_config=MagicMock(return_value={"api_call": 10}),
-))
+)
 
 # api_auth — DummyAuthManager pass-through
+# Save and restore the real api_auth so test_api_auth_rate_limit_state.py is not polluted
+_real_api_auth = sys.modules.pop("api_auth", None)
 _api_auth = types.ModuleType("api_auth")
 class _DummyAuthManager:
     def require_api_key(self, func):
         return func
-_api_auth.get_auth_manager = MagicMock(return_value=_DummyAuthManager())
-sys.modules["api_auth"] = _api_auth
+_api_auth.get_auth_manager = MagicMock(return_value=_DummyAuthManager())  # type: ignore
 
 # learning_system
 _ls_instance = MagicMock()
@@ -51,10 +52,18 @@ _ls_instance.get_status = MagicMock(return_value={"status": "active"})
 _ls_instance.apply_learned_preferences = MagicMock(return_value={"temperature": 0.7})
 
 _ls_mod = types.ModuleType("learning_system")
-_ls_mod.LearningSystem = MagicMock(return_value=_ls_instance)
+_ls_mod.LearningSystem = MagicMock(return_value=_ls_instance)  # type: ignore
 sys.modules["learning_system"] = _ls_mod
 
+# Force fresh import of learning_system_api so Flask app uses our stubs
+sys.modules.pop("scripts.misc.learning_system_api", None)
+sys.modules["api_auth"] = _api_auth
 import scripts.misc.learning_system_api as api
+# Restore real api_auth immediately (the Flask app already captured our stub's references)
+if _real_api_auth is not None:
+    sys.modules["api_auth"] = _real_api_auth
+else:
+    sys.modules.pop("api_auth", None)
 
 # Reset global state between tests
 @pytest.fixture(autouse=True)

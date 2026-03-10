@@ -420,8 +420,8 @@ if __name__ == "__main__":
     )
     
     analysis1 = system.end_session("レビュー完了", True)
-    print(f"  成功率: {analysis1['total_steps'] - analysis1['failed_steps']}/{analysis1['total_steps']}")
-    print(f"  平均信頼度: {analysis1['avg_confidence']*100:.1f}%")
+    print(f"  成功率: {analysis1['total_steps'] - analysis1['failed_steps']}/{analysis1['total_steps']}")  # type: ignore[index]
+    print(f"  平均信頼度: {analysis1['avg_confidence']*100:.1f}%")  # type: ignore[index]
     
     # デモセッション2: 失敗を含む例
     print("\n[デモ2] 失敗を含む例...")
@@ -455,8 +455,8 @@ if __name__ == "__main__":
     )
     
     analysis2 = system.end_session("部分的に成功", False)
-    print(f"  成功率: {analysis2['total_steps'] - analysis2['failed_steps']}/{analysis2['total_steps']}")
-    print(f"  平均信頼度: {analysis2['avg_confidence']*100:.1f}%")
+    print(f"  成功率: {analysis2['total_steps'] - analysis2['failed_steps']}/{analysis2['total_steps']}")  # type: ignore[index]
+    print(f"  平均信頼度: {analysis2['avg_confidence']*100:.1f}%")  # type: ignore[index]
     
     # レポート生成
     print("\n" + "=" * 70)

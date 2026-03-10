@@ -366,7 +366,7 @@ def generate_mana_mufufu_advanced(num_images=50):
         
         # モデルが変わったら再読み込み
         if current_model != model_name:
-            if current_pipeline:
+            if current_pipeline:  # type: ignore[possibly-unbound]
                 del current_pipeline
                 gc.collect()
                 if device == "cuda":
@@ -433,7 +433,7 @@ def generate_mana_mufufu_advanced(num_images=50):
                 optimal_steps = 50 if device == "cuda" else 30  # SD 1.5: GPU 50ステップ、CPU 30ステップ
             
             image, seed = generate_image(
-                current_pipeline,
+                current_pipeline,  # type: ignore[possibly-unbound]
                 prompt,
                 MANA_NEGATIVE_PROMPT,
                 num_inference_steps=optimal_steps,  # 最適化されたステップ数
@@ -466,7 +466,7 @@ def generate_mana_mufufu_advanced(num_images=50):
         time.sleep(0.5)
     
     # クリーンアップ
-    if current_pipeline:
+    if current_pipeline:  # type: ignore[possibly-unbound]
         del current_pipeline
         gc.collect()
         if device == "cuda":

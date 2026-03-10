@@ -44,17 +44,17 @@ class LTX2TemplateManager:
 
     def list_templates(self) -> List[Dict[str, Any]]:
         out: List[Dict[str, Any]] = []
-        for p in sorted(self.templates_dir.glob("*.json")):
+        for p in sorted(self.templates_dir.glob("*.json")):  # type: ignore[union-attr]
             out.append({"name": p.stem, "path": str(p)})
         return out
 
     def load_template(self, name: str) -> Dict[str, Any]:
-        path = self.templates_dir / f"{name}.json"
+        path = self.templates_dir / f"{name}.json"  # type: ignore[operator]
         with path.open("r", encoding="utf-8") as f:
             return json.load(f)
 
     def save_template(self, name: str, data: Dict[str, Any]) -> str:
-        path = self.templates_dir / f"{name}.json"
+        path = self.templates_dir / f"{name}.json"  # type: ignore[operator]
         with path.open("w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         return str(path)

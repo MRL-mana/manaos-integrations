@@ -84,7 +84,7 @@ class PersonalityEngine:
             logger.error(f"パーソナリティ保存エラー: {e}")
     
     async def analyze_personality_from_text(self, text: str, 
-                                           context: Dict = None) -> Dict:
+                                           context: Dict = None) -> Dict:  # type: ignore
         """
         テキストから性格・感情を分析
         

@@ -95,7 +95,7 @@ def check_one(name: str, url: str, tags: list) -> Dict[str, Any]:
                 "latency_ms": latency_ms, "error": str(e)[:80]}
 
 
-def load_ledger_services(ledger_path: str, filter_tag: str = None) -> list:
+def load_ledger_services(ledger_path: str, filter_tag: str = None) -> list:  # type: ignore
     """services_ledger.yaml から (name, url, tags) を生成する。"""
     try:
         import yaml
@@ -127,7 +127,7 @@ def load_ledger_services(ledger_path: str, filter_tag: str = None) -> list:
     return results
 
 
-def run_checks(filter_tag: str = None, ledger_path: str = None) -> list:
+def run_checks(filter_tag: str = None, ledger_path: str = None) -> list:  # type: ignore
     if ledger_path:
         targets = load_ledger_services(ledger_path, filter_tag)
     else:

@@ -13,8 +13,8 @@ def _prep(monkeypatch, comfyui_ok=True, gallery_ok=True):
     monkeypatch.syspath_prepend(str(_MISC))
 
     paths_mod = types.ModuleType("_paths")
-    paths_mod.COMFYUI_PORT = 8188
-    paths_mod.GALLERY_PORT = 5559
+    paths_mod.COMFYUI_PORT = 8188  # type: ignore
+    paths_mod.GALLERY_PORT = 5559  # type: ignore
     monkeypatch.setitem(sys.modules, "_paths", paths_mod)
 
     monkeypatch.delenv("COMFYUI_URL", raising=False)
@@ -61,8 +61,8 @@ class TestTryRestartAndGenerate:
         sys.modules.pop("try_restart_and_generate", None)
         monkeypatch.syspath_prepend(str(_MISC))
         paths_mod = types.ModuleType("_paths")
-        paths_mod.COMFYUI_PORT = 8188
-        paths_mod.GALLERY_PORT = 5559
+        paths_mod.COMFYUI_PORT = 8188  # type: ignore
+        paths_mod.GALLERY_PORT = 5559  # type: ignore
         monkeypatch.setitem(sys.modules, "_paths", paths_mod)
         monkeypatch.setitem(sys.modules, "requests", mock_req)
         monkeypatch.setitem(sys.modules, "subprocess", MagicMock())

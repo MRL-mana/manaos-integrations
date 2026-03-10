@@ -11,7 +11,7 @@ _MISC = Path(__file__).parent.parent.parent / "scripts" / "misc"
 def _make_logging_stub():
     mod = types.ModuleType("unified_logging")
     log = MagicMock()
-    mod.get_service_logger = MagicMock(return_value=log)
+    mod.get_service_logger = MagicMock(return_value=log)  # type: ignore
     return mod, log
 
 
@@ -58,7 +58,7 @@ class TestIntegrateGpuManager:
         m, _ = _prep(monkeypatch)
         mock_manager = MagicMock()
         mock_gpu = types.ModuleType("gpu_resource_manager")
-        mock_gpu.get_gpu_manager = MagicMock(return_value=mock_manager)
+        mock_gpu.get_gpu_manager = MagicMock(return_value=mock_manager)  # type: ignore
         with patch.dict(sys.modules, {"gpu_resource_manager": mock_gpu}):
             result = m.integrate_gpu_manager()
         assert result is mock_manager
@@ -75,7 +75,7 @@ class TestIntegrateCache:
         m, _ = _prep(monkeypatch)
         mock_cache = MagicMock()
         mock_mod = types.ModuleType("intelligent_cache")
-        mock_mod.get_cache = MagicMock(return_value=mock_cache)
+        mock_mod.get_cache = MagicMock(return_value=mock_cache)  # type: ignore
         with patch.dict(sys.modules, {"intelligent_cache": mock_mod}):
             result = m.integrate_cache()
         assert result is mock_cache
@@ -92,7 +92,7 @@ class TestIntegrateBackupSystem:
         m, _ = _prep(monkeypatch)
         mock_backup = MagicMock()
         mock_mod = types.ModuleType("auto_backup_system")
-        mock_mod.get_backup_system = MagicMock(return_value=mock_backup)
+        mock_mod.get_backup_system = MagicMock(return_value=mock_backup)  # type: ignore
         with patch.dict(sys.modules, {"auto_backup_system": mock_mod}):
             result = m.integrate_backup_system()
         assert result is mock_backup
@@ -109,7 +109,7 @@ class TestIntegrateMetricsCollector:
         m, _ = _prep(monkeypatch)
         mock_col = MagicMock()
         mock_mod = types.ModuleType("metrics_collector")
-        mock_mod.get_metrics_collector = MagicMock(return_value=mock_col)
+        mock_mod.get_metrics_collector = MagicMock(return_value=mock_col)  # type: ignore
         with patch.dict(sys.modules, {"metrics_collector": mock_mod}):
             result = m.integrate_metrics_collector()
         assert result is mock_col

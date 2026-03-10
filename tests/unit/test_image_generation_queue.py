@@ -50,15 +50,15 @@ class TestJobQueue:
 
         # priority DESC → enterprise が先
         job1 = _run(q.dequeue())
-        assert job1["job_id"] == "ent-job"
+        assert job1["job_id"] == "ent-job"  # type: ignore[index]
         _run(q.complete("ent-job"))
 
         job2 = _run(q.dequeue())
-        assert job2["job_id"] == "pro-job"
+        assert job2["job_id"] == "pro-job"  # type: ignore[index]
         _run(q.complete("pro-job"))
 
         job3 = _run(q.dequeue())
-        assert job3["job_id"] == "free-job"
+        assert job3["job_id"] == "free-job"  # type: ignore[index]
 
     def test_max_concurrent_limit(self, fresh_db):
         """同時処理制限: 1個処理中は次を取れない"""
@@ -67,7 +67,7 @@ class TestJobQueue:
         _run(q.enqueue("job-b", priority=1))
 
         job1 = _run(q.dequeue())
-        assert job1["job_id"] == "job-a"
+        assert job1["job_id"] == "job-a"  # type: ignore[index]
 
         # 処理中が 1 → _MAX_CONCURRENT=1 のため None
         job2 = _run(q.dequeue())
@@ -76,7 +76,7 @@ class TestJobQueue:
         # complete → 取れるようになる
         _run(q.complete("job-a"))
         job2 = _run(q.dequeue())
-        assert job2["job_id"] == "job-b"
+        assert job2["job_id"] == "job-b"  # type: ignore[index]
 
     def test_complete(self, fresh_db):
         q = JobQueue()

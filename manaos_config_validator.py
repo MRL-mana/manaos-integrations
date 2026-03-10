@@ -109,7 +109,7 @@ class ConfigValidator:
             }
             expected_type = type_map.get(expected_type, type(None))
         
-        return isinstance(value, expected_type)
+        return isinstance(value, expected_type)  # type: ignore
     
     def validate_and_load(
         self,

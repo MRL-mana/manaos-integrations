@@ -74,9 +74,9 @@ class RunPodWorker:
         """Stable Diffusionモデルをロード"""
         if "stable_diffusion" not in self.models:
             self._log("Stable Diffusionモデルをロード中...")
-            pipe = StableDiffusionPipeline.from_pretrained(
+            pipe = StableDiffusionPipeline.from_pretrained(  # type: ignore[possibly-unbound]
                 "stabilityai/stable-diffusion-2-1",
-                torch_dtype=torch.float16
+                torch_dtype=torch.float16  # type: ignore[possibly-unbound]
             )
             pipe = pipe.to("cuda")
             self.models["stable_diffusion"] = pipe

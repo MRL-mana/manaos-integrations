@@ -539,7 +539,7 @@ class RAGEngine:
         if not HTTPX_AVAILABLE:
             return "[httpx未インストールのためLLM生成不可]"
         try:
-            resp = httpx.post(
+            resp = httpx.post(  # type: ignore[possibly-unbound]
                 f"{self.ollama_url}/api/generate",
                 json={
                     "model": model,
@@ -630,7 +630,7 @@ class RAGEngine:
 
         clean = text.replace("\n", " ").strip()[:2000]
         try:
-            resp = httpx.post(
+            resp = httpx.post(  # type: ignore[possibly-unbound]
                 f"{self.ollama_url}/api/embeddings",
                 json={"model": self.embed_model, "prompt": clean},
                 timeout=EMBED_TIMEOUT,
@@ -697,13 +697,13 @@ class RAGEngine:
     def _cosine_similarity(v1: List[float], v2: List[float]) -> float:
         """コサイン類似度を計算する。"""
         if NUMPY_AVAILABLE:
-            a = np.array(v1, dtype=np.float32)
-            b = np.array(v2, dtype=np.float32)
-            norm_a = np.linalg.norm(a)
-            norm_b = np.linalg.norm(b)
+            a = np.array(v1, dtype=np.float32)  # type: ignore[possibly-unbound]
+            b = np.array(v2, dtype=np.float32)  # type: ignore[possibly-unbound]
+            norm_a = np.linalg.norm(a)  # type: ignore[possibly-unbound]
+            norm_b = np.linalg.norm(b)  # type: ignore[possibly-unbound]
             if norm_a == 0 or norm_b == 0:
                 return 0.0
-            return float(np.dot(a, b) / (norm_a * norm_b))
+            return float(np.dot(a, b) / (norm_a * norm_b))  # type: ignore[possibly-unbound]
         # numpy なし : 純 Python
         dot = sum(a * b for a, b in zip(v1, v2))
         norm_a = math.sqrt(sum(a * a for a in v1))

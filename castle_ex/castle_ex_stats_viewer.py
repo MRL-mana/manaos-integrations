@@ -12,7 +12,7 @@ from typing import Dict, Any
 
 if sys.platform == 'win32':
     try:
-        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
     except (AttributeError, ValueError, TypeError):
         pass
 
@@ -40,9 +40,9 @@ class CastleEXStatsViewer:
         warnings = []
         
         # 1. logic-only偏りチェック
-        axes_combinations = self.stats.get("axes_combinations", {})
+        axes_combinations = self.stats.get("axes_combinations", {})  # type: ignore[union-attr]
         logic_only_count = axes_combinations.get("logic", 0)
-        total = self.stats.get("total", 1)
+        total = self.stats.get("total", 1)  # type: ignore[union-attr]
         logic_only_ratio = logic_only_count / total
         
         if logic_only_ratio > 0.5:
@@ -62,7 +62,7 @@ class CastleEXStatsViewer:
             })
         
         # 2. error_type分布の偏りチェック
-        error_dist = self.stats.get("error_type_distribution", {})
+        error_dist = self.stats.get("error_type_distribution", {})  # type: ignore[union-attr]
         if error_dist:
             error_types = list(error_dist.keys())
             error_counts = list(error_dist.values())
@@ -80,7 +80,7 @@ class CastleEXStatsViewer:
                         })
         
         # 3. layer×error_typeクロス集計の偏りチェック
-        layer_error_cross = self.stats.get("layer_error_type_cross", {})
+        layer_error_cross = self.stats.get("layer_error_type_cross", {})  # type: ignore[union-attr]
         if layer_error_cross:
             # 特定のlayerにerror_typeが集中していないか
             layer_error_counts = {}
@@ -101,7 +101,7 @@ class CastleEXStatsViewer:
                         })
         
         # 4. axes×平均トークン長の偏りチェック
-        axes_token = self.stats.get("axes_avg_token_length", {})
+        axes_token = self.stats.get("axes_avg_token_length", {})  # type: ignore[union-attr]
         if axes_token:
             for axes_key, token_data in axes_token.items():
                 assistant_avg = token_data.get("assistant_avg", 0)
@@ -118,7 +118,7 @@ class CastleEXStatsViewer:
                     })
         
         # 5. 重複メッセージチェック
-        duplicate_count = self.stats.get("duplicate_count", 0)
+        duplicate_count = self.stats.get("duplicate_count", 0)  # type: ignore[union-attr]
         if duplicate_count > total * 0.1:
             issues.append({
                 "type": "high_duplication",
@@ -134,7 +134,7 @@ class CastleEXStatsViewer:
             })
         
         # 6. axis_evidenceカバレッジチェック
-        evidence_coverage = self.stats.get("axis_evidence_coverage", {})
+        evidence_coverage = self.stats.get("axis_evidence_coverage", {})  # type: ignore[union-attr]
         if evidence_coverage:
             with_evidence = evidence_coverage.get("with_evidence", 0)
             without_evidence = evidence_coverage.get("without_evidence", 0)
@@ -157,12 +157,12 @@ class CastleEXStatsViewer:
         """次に増やすべきLayer/axesの推奨"""
         recommendations = []
         
-        by_layer = self.stats.get("by_layer", {})
-        axes_combinations = self.stats.get("axes_combinations", {})
+        by_layer = self.stats.get("by_layer", {})  # type: ignore[union-attr]
+        axes_combinations = self.stats.get("axes_combinations", {})  # type: ignore[union-attr]
         
         # Layer別の推奨
         layer_ratios = {}
-        total = self.stats.get("total", 1)
+        total = self.stats.get("total", 1)  # type: ignore[union-attr]
         for layer_str, layer_data in by_layer.items():
             layer = int(layer_str)
             count = layer_data.get("total", 0)
@@ -190,7 +190,7 @@ class CastleEXStatsViewer:
         # axes組み合わせの推奨
         logic_only = axes_combinations.get("logic", 0)
         integrated = axes_combinations.get("context,emotion,logic", 0)
-        total = self.stats.get("total", 1)
+        total = self.stats.get("total", 1)  # type: ignore[union-attr]
         
         if logic_only / total > 0.5:
             recommendations.append({
@@ -208,8 +208,8 @@ class CastleEXStatsViewer:
         """hard negativeをどこに入れるかの推奨"""
         recommendations = []
         
-        by_layer = self.stats.get("by_layer", {})
-        error_dist = self.stats.get("error_type_distribution", {})
+        by_layer = self.stats.get("by_layer", {})  # type: ignore[union-attr]
+        error_dist = self.stats.get("error_type_distribution", {})  # type: ignore[union-attr]
         
         # Layer 5-6にhard negativeを推奨
         for layer_str in ["5", "6"]:
@@ -237,7 +237,7 @@ class CastleEXStatsViewer:
         print("CASTLE-EX データ分布レポート分析")
         print("=" * 60)
         print(f"ファイル: {self.stats_file}")
-        print(f"総データ数: {self.stats.get('total', 0)}")
+        print(f"総データ数: {self.stats.get('total', 0)}")  # type: ignore[union-attr]
         
         # 偏りチェック
         bias_check = self.check_biases()
@@ -283,7 +283,7 @@ class CastleEXStatsViewer:
         print("【統計サマリー】")
         print("=" * 60)
         
-        by_layer = self.stats.get("by_layer", {})
+        by_layer = self.stats.get("by_layer", {})  # type: ignore[union-attr]
         print("\n層別内訳:")
         for layer_str in sorted(by_layer.keys(), key=int):
             layer_data = by_layer[layer_str]
@@ -292,14 +292,14 @@ class CastleEXStatsViewer:
             negative = layer_data.get("negative", 0)
             print(f"  Layer {layer_str}: {total}件（正例: {positive}, 負例: {negative}）")
         
-        axes_combinations = self.stats.get("axes_combinations", {})
+        axes_combinations = self.stats.get("axes_combinations", {})  # type: ignore[union-attr]
         print("\naxes組み合わせ（上位5位）:")
         sorted_axes = sorted(axes_combinations.items(), key=lambda x: x[1], reverse=True)[:5]
         for axes_key, count in sorted_axes:
-            ratio = count / self.stats.get("total", 1)
+            ratio = count / self.stats.get("total", 1)  # type: ignore[union-attr]
             print(f"  {axes_key}: {count}件 ({ratio:.1%})")
         
-        error_dist = self.stats.get("error_type_distribution", {})
+        error_dist = self.stats.get("error_type_distribution", {})  # type: ignore[union-attr]
         if error_dist:
             print("\nerror_type分布:")
             for error_type, count in sorted(error_dist.items(), key=lambda x: x[1], reverse=True):

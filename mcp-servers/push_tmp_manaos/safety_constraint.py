@@ -358,7 +358,7 @@ class SafetyConstraintManager:
                     penalty_applied=penalty,
                     cycle=cycle,
                 )
-                violations.append(v.to_dict())
+                violations.append(v.to_dict())  # type: ignore
                 self._violations.append(v)
 
                 constraint_results[cid] = {
@@ -376,7 +376,7 @@ class SafetyConstraintManager:
         self._total_penalties += total_penalty
 
         # 回復提案
-        recovery = self._suggest_recovery(violations, warnings, metrics)
+        recovery = self._suggest_recovery(violations, warnings, metrics)  # type: ignore
 
         self._persist()
 

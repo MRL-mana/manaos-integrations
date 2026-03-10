@@ -63,7 +63,7 @@ class YouTubeHandler:
                 'extract_flat': False,
             }
             
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
                 info = ydl.extract_info(url, download=False)
                 
                 return {
@@ -95,7 +95,7 @@ class YouTubeHandler:
                 'audioquality': '192K',
             }
             
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
                 info = ydl.extract_info(url, download=True)
                 filename = ydl.prepare_filename(info)
                 

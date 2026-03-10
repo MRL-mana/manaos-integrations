@@ -121,7 +121,7 @@ class EasyPDFToExcel:
         """フォルダを取得または作成"""
         try:
             query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
-            results = self.service.files().list(q=query, fields='files(id)').execute()
+            results = self.service.files().list(q=query, fields='files(id)').execute()  # type: ignore[union-attr]
             files = results.get('files', [])
 
             if files:
@@ -129,7 +129,7 @@ class EasyPDFToExcel:
 
             # フォルダ作成
             file_metadata = {'name': folder_name, 'mimeType': 'application/vnd.google-apps.folder'}
-            folder = self.service.files().create(body=file_metadata, fields='id').execute()
+            folder = self.service.files().create(body=file_metadata, fields='id').execute()  # type: ignore[union-attr]
             return folder.get('id')
 
         except Exception as e:
@@ -138,13 +138,13 @@ class EasyPDFToExcel:
 
     def convert_pdf_via_drive_ocr(self, pdf_path: str):
         """Google Drive OCRを使ってPDF→Excel変換"""
-        pdf_path = Path(pdf_path)
+        pdf_path = Path(pdf_path)  # type: ignore
 
-        if not pdf_path.exists():
+        if not pdf_path.exists():  # type: ignore
             print(f"❌ PDFファイルが見つかりません: {pdf_path}")
             return None
 
-        print(f"\n📄 変換開始: {pdf_path.name}")
+        print(f"\n📄 変換開始: {pdf_path.name}")  # type: ignore
         print("-" * 60)
 
         try:
@@ -152,7 +152,7 @@ class EasyPDFToExcel:
             print("📤 Step 1: PDFをGoogle Driveにアップロード中（OCR処理）...")
 
             file_metadata = {
-                'name': pdf_path.name,
+                'name': pdf_path.name,  # type: ignore
                 'parents': [self.temp_folder_id],
                 'mimeType': 'application/vnd.google-apps.document'  # Google Docs形式に変換
             }
@@ -163,7 +163,7 @@ class EasyPDFToExcel:
                 resumable=True
             )
 
-            file = self.service.files().create(
+            file = self.service.files().create(  # type: ignore[union-attr]
                 body=file_metadata,
                 media_body=media,
                 fields='id, name',
@@ -180,7 +180,7 @@ class EasyPDFToExcel:
             # 2. テキストとしてエクスポート
             print("📥 Step 2: OCR結果をテキストとして取得中...")
 
-            request = self.service.files().export_media(
+            request = self.service.files().export_media(  # type: ignore[union-attr]
                 fileId=file_id,
                 mimeType='text/plain'
             )
@@ -197,7 +197,7 @@ class EasyPDFToExcel:
             # 3. 一時ファイル削除
             print("🗑️  Step 3: 一時ファイルを削除中...")
             try:
-                self.service.files().delete(fileId=file_id).execute()
+                self.service.files().delete(fileId=file_id).execute()  # type: ignore[union-attr]
             except Exception:
                 pass
 
@@ -208,7 +208,7 @@ class EasyPDFToExcel:
 
             # 5. テキストをExcel形式に変換
             print("📊 Step 5: Excelファイルを生成中...")
-            excel_path = self.text_to_excel(ocr_text, pdf_path.stem)
+            excel_path = self.text_to_excel(ocr_text, pdf_path.stem)  # type: ignore
 
             if excel_path:
                 print("✅ 変換完了！")
@@ -230,7 +230,7 @@ class EasyPDFToExcel:
             # ワークブック作成
             wb = openpyxl.Workbook()
             ws = wb.active
-            ws.title = "OCR抽出結果"
+            ws.title = "OCR抽出結果"  # type: ignore[union-attr]
 
             # ヘッダー行のスタイル
             header_font = Font(bold=True, color="FFFFFF")
@@ -241,25 +241,25 @@ class EasyPDFToExcel:
             lines = [line.strip() for line in text.split('\n') if line.strip()]
 
             if not lines:
-                ws.append(["OCR結果が空でした"])
-                ws['A1'].font = Font(italic=True, color="808080")
+                ws.append(["OCR結果が空でした"])  # type: ignore[union-attr]
+                ws['A1'].font = Font(italic=True, color="808080")  # type: ignore[index]
             else:
                 # 各行を1セルに
-                ws.append(["行番号", "内容"])
+                ws.append(["行番号", "内容"])  # type: ignore[union-attr]
 
                 # ヘッダー行のスタイル適用
-                for cell in ws[1]:
+                for cell in ws[1]:  # type: ignore[index]
                     cell.font = header_font
                     cell.fill = header_fill
                     cell.alignment = header_alignment
 
                 # データ行
                 for i, line in enumerate(lines, 1):
-                    ws.append([i, line])
+                    ws.append([i, line])  # type: ignore[union-attr]
 
                 # 列幅の自動調整
-                ws.column_dimensions['A'].width = 12
-                ws.column_dimensions['B'].width = 80
+                ws.column_dimensions['A'].width = 12  # type: ignore[union-attr]
+                ws.column_dimensions['B'].width = 80  # type: ignore[union-attr]
 
             # 保存
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -276,21 +276,21 @@ class EasyPDFToExcel:
             traceback.print_exc()
             return None
 
-    def upload_to_google_drive(self, excel_path: str, folder_id: str = None, file_name: str = None):
+    def upload_to_google_drive(self, excel_path: str, folder_id: str = None, file_name: str = None):  # type: ignore
         """ExcelファイルをGoogle Driveにアップロード"""
         try:
             if not self.service:
                 print("❌ Google Drive APIが初期化されていません")
                 return None
 
-            excel_path = Path(excel_path)
-            if not excel_path.exists():
+            excel_path = Path(excel_path)  # type: ignore
+            if not excel_path.exists():  # type: ignore
                 print(f"❌ ファイルが見つかりません: {excel_path}")
                 return None
 
             # ファイル名決定
             if not file_name:
-                file_name = excel_path.name
+                file_name = excel_path.name  # type: ignore
 
             print(f"\n📤 Google Driveにアップロード中: {file_name}")
 
@@ -343,7 +343,7 @@ class EasyPDFToExcel:
             print(f"\n📁 Google Driveフォルダから取得: {folder_id}")
 
             # PDFファイル取得
-            results = self.service.files().list(
+            results = self.service.files().list(  # type: ignore[union-attr]
                 q=f"'{folder_id}' in parents and mimeType='application/pdf'",
                 fields="files(id,name)",
                 pageSize=max_files,
@@ -367,7 +367,7 @@ class EasyPDFToExcel:
 
                 # ダウンロード
                 temp_path = Path("/tmp") / f"temp_{file_info['id']}.pdf"
-                request = self.service.files().get_media(fileId=file_info['id'])
+                request = self.service.files().get_media(fileId=file_info['id'])  # type: ignore[union-attr]
 
                 with open(temp_path, 'wb') as f:
                     downloader = MediaIoBaseDownload(f, request)
@@ -443,14 +443,14 @@ def fallback_to_local_method(pdf_path_or_folder_id, is_folder=False):
                 self.service = build('drive', 'v3', credentials=creds)
 
         def get_pdf_files(self, folder_id):
-            results = self.service.files().list(
+            results = self.service.files().list(  # type: ignore[union-attr]
                 q=f"'{folder_id}' in parents and mimeType='application/pdf'",
                 fields="files(id,name)", pageSize=1
             ).execute()
             return results.get('files', [])
 
         def download(self, file_id, output_path):
-            request = self.service.files().get_media(fileId=file_id)
+            request = self.service.files().get_media(fileId=file_id)  # type: ignore[union-attr]
             with open(output_path, 'wb') as f:
                 downloader = MediaIoBaseDownload(f, request)
                 done = False

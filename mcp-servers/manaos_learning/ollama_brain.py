@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class OllamaBrain:
     """Ollama統合クラス（共通ブレーン）"""
 
-    def __init__(self, base_url: str = None, model: str = "llama3.2"):
+    def __init__(self, base_url: str = None, model: str = "llama3.2"):  # type: ignore
         self.base_url = base_url or os.getenv("OLLAMA_URL", "http://localhost:11434")
         self.model = model or os.getenv("OLLAMA_MODEL", "llama3.2")
         self.available = self._check_availability()

@@ -2,8 +2,25 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
+import types
+from unittest.mock import MagicMock
 
 import pytest
+
+# local_llm_helper スタブ（LMStudio未起動環境用）
+if "local_llm_helper" not in sys.modules:
+    _llm_stub = types.ModuleType("local_llm_helper")
+
+    def _stub_generate(model, prompt, **kwargs):
+        return {"text": f"stub response for {model}", "model": model}
+
+    def _stub_list_models():
+        return ["qwen2.5-coder-14b-instruct"]
+
+    _llm_stub.generate = _stub_generate  # type: ignore
+    _llm_stub.list_models = _stub_list_models  # type: ignore
+    sys.modules["local_llm_helper"] = _llm_stub
 
 
 def test_lm_studio_generate_smoke():

@@ -53,7 +53,7 @@ class RealESRGANer():
 
         if isinstance(model_path, list):
             # dni
-            assert len(model_path) == len(dni_weight), 'model_path and dni_weight should have the save length.'
+            assert len(model_path) == len(dni_weight), 'model_path and dni_weight should have the save length.'  # type: ignore
             loadnet = self.dni(model_path[0], model_path[1], dni_weight)
         else:
             # if the model_path starts with https, it will first download models to the folder: weights
@@ -67,10 +67,10 @@ class RealESRGANer():
             keyname = 'params_ema'
         else:
             keyname = 'params'
-        model.load_state_dict(loadnet[keyname], strict=True)
+        model.load_state_dict(loadnet[keyname], strict=True)  # type: ignore[union-attr]
 
-        model.eval()
-        self.model = model.to(self.device)
+        model.eval()  # type: ignore[union-attr]
+        self.model = model.to(self.device)  # type: ignore[union-attr]
         if self.half:
             self.model = self.model.half()
 
@@ -176,7 +176,7 @@ class RealESRGANer():
 
                 # put tile into output image
                 self.output[:, :, output_start_y:output_end_y,
-                            output_start_x:output_end_x] = output_tile[:, :, output_start_y_tile:output_end_y_tile,
+                            output_start_x:output_end_x] = output_tile[:, :, output_start_y_tile:output_end_y_tile,  # type: ignore[possibly-unbound]
                                                                        output_start_x_tile:output_end_x_tile]
 
     def post_process(self):
@@ -230,7 +230,7 @@ class RealESRGANer():
         # ------------------- process the alpha channel if necessary ------------------- #
         if img_mode == 'RGBA':
             if alpha_upsampler == 'realesrgan':
-                self.pre_process(alpha)
+                self.pre_process(alpha)  # type: ignore[possibly-unbound]
                 if self.tile_size > 0:
                     self.tile_process()
                 else:
@@ -240,8 +240,8 @@ class RealESRGANer():
                 output_alpha = np.transpose(output_alpha[[2, 1, 0], :, :], (1, 2, 0))
                 output_alpha = cv2.cvtColor(output_alpha, cv2.COLOR_BGR2GRAY)
             else:  # use the cv2 resize for alpha channel
-                h, w = alpha.shape[0:2]
-                output_alpha = cv2.resize(alpha, (w * self.scale, h * self.scale), interpolation=cv2.INTER_LINEAR)
+                h, w = alpha.shape[0:2]  # type: ignore[possibly-unbound]
+                output_alpha = cv2.resize(alpha, (w * self.scale, h * self.scale), interpolation=cv2.INTER_LINEAR)  # type: ignore[possibly-unbound]
 
             # merge the alpha channel
             output_img = cv2.cvtColor(output_img, cv2.COLOR_BGR2BGRA)
@@ -307,7 +307,7 @@ class IOConsumer(threading.Thread):
             if isinstance(msg, str) and msg == 'quit':
                 break
 
-            output = msg['output']
-            save_path = msg['save_path']
+            output = msg['output']  # type: ignore
+            save_path = msg['save_path']  # type: ignore
             cv2.imwrite(save_path, output)
         print(f'IO worker {self.qid} is done.')

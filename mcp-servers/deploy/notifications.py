@@ -38,7 +38,7 @@ class NotificationManager:
     # Public interface
     # ------------------------------------------------------------------
 
-    def notify_decision(self, decision: "DecisionLog") -> None:
+    def notify_decision(self, decision: "DecisionLog") -> None:  # type: ignore[name-defined]
         if not self.enabled:
             return
         message = (
@@ -51,7 +51,7 @@ class NotificationManager:
             message += "\nTrade-offs: " + ", ".join(decision.trade_offs)
         self._dispatch(message)
 
-    def notify_future_intent(self, intent: "FutureIntent") -> None:
+    def notify_future_intent(self, intent: "FutureIntent") -> None:  # type: ignore[name-defined]
         if not self.enabled:
             return
         confidence = (
@@ -66,7 +66,7 @@ class NotificationManager:
             message += f"\nETA: {intent.eta_hint}"
         self._dispatch(message)
 
-    def notify_reflection(self, loop_eval: "LoopEval") -> None:
+    def notify_reflection(self, loop_eval: "LoopEval") -> None:  # type: ignore[name-defined]
         if not self.enabled:
             return
         issues = loop_eval.self_eval.get("issues")
@@ -92,7 +92,7 @@ class NotificationManager:
 
     def _send_slack(self, text: str) -> None:
         try:
-            self.session.post(self.channel.slack_webhook, json={"text": text}, timeout=5)
+            self.session.post(self.channel.slack_webhook, json={"text": text}, timeout=5)  # type: ignore
         except Exception:
             pass
 

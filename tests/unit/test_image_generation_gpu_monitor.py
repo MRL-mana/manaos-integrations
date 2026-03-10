@@ -74,7 +74,7 @@ class TestGPUMonitor:
             fan_speed_pct=40, power_draw_w=200, power_limit_w=350,
         )
         defaults.update(kwargs)
-        return GPUStatus(**defaults)
+        return GPUStatus(**defaults)  # type: ignore
 
     @patch("image_generation_service.gpu_monitor._query_nvidia_smi")
     def test_poll_stores_history(self, mock_smi):
@@ -97,7 +97,7 @@ class TestGPUMonitor:
         mock_smi.return_value = self._mock_status(temperature_c=70)
         m = GPUMonitor()
         m.poll()
-        assert m.current.temperature_c == 70
+        assert m.current.temperature_c == 70  # type: ignore[union-attr]
 
     @patch("image_generation_service.gpu_monitor._query_nvidia_smi")
     def test_can_accept_job_delegates(self, mock_smi):

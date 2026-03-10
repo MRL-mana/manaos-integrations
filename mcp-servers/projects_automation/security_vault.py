@@ -114,7 +114,7 @@ if __name__ == '__main__':
     print("\n📋 保存されたキー:")
     for key in vault.list_keys():
         value = vault.get(key)
-        masked = value[:8] + '...' + value[-4:] if len(value) > 12 else '***'
+        masked = value[:8] + '...' + value[-4:] if len(value) > 12 else '***'  # type: ignore[index]
         print(f"  - {key}: {masked}")
     
     print("\n🔒 使用方法:")

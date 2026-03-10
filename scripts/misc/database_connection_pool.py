@@ -125,7 +125,7 @@ class DatabaseConnectionPool:
                 conn = self._create_connection()
                 with self.lock:
                     self.active_connections += 1
-            raise error_handler.handle_exception(
+            raise error_handler.handle_exception(  # type: ignore
                 e,
                 context={"db_path": str(self.db_path), "action": "get_connection"},
                 user_message="データベース接続の取得に失敗しました"

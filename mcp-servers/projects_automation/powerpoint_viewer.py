@@ -129,5 +129,5 @@ if __name__ == '__main__':
     print("  Tailscale: http://100.93.120.33:5009")
     print("=" * 60)
     
-    app.run(host="0.0.0.0", port=port, debug=os.getenv("DEBUG", "False").lower() == "true")
+    app.run(host="0.0.0.0", port=port, debug=os.getenv("DEBUG", "False").lower() == "true")  # type: ignore[name-defined]
 

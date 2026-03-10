@@ -28,28 +28,28 @@ def read_daily_log(log_date: date) -> str:
     log_file = LOGS_DIR / f"daily-{log_date.strftime('%Y-%m-%d')}.log"
 
     if not log_file.exists():
-        return None
+        return None  # type: ignore
 
     try:
         return log_file.read_text(encoding="utf-8")
     except Exception as e:
         logger.warning(f"Failed to read {log_file}: {e}")
-        return None
+        return None  # type: ignore
 
 
 def parse_daily_log(content: str) -> Dict:
     """日次ログをパースして構造化"""
     if not content:
-        return None
+        return None  # type: ignore
 
     lines = content.strip().split('\n')
     if not lines:
-        return None
+        return None  # type: ignore
 
     # 日付を抽出
     date_line = lines[0]
     if not date_line.startswith('['):
-        return None
+        return None  # type: ignore
 
     result = {
         "date": date_line.strip('[]'),
@@ -96,7 +96,7 @@ def generate_weekly_summary(start_date: date, end_date: date) -> str:
         current_date += timedelta(days=1)
 
     if not daily_logs:
-        return None
+        return None  # type: ignore
 
     # Markdown形式でまとめを生成
     summary_lines = [

@@ -308,7 +308,7 @@ class DeviceOrchestrator:
         Returns:
             実行結果
         """
-        device = self.devices.get(task.assigned_device)
+        device = self.devices.get(task.assigned_device)  # type: ignore
         if not device:
             return {"success": False, "error": f"デバイスが見つかりません: {task.assigned_device}"}
 
@@ -351,7 +351,7 @@ class DeviceOrchestrator:
                     self.stats["failed_tasks"] += 1
 
                 # デバイスの負荷を更新
-                device = self.devices.get(task.assigned_device)
+                device = self.devices.get(task.assigned_device)  # type: ignore
                 if device:
                     device.current_load = max(0.0, device.current_load - 0.1)
 

@@ -140,7 +140,7 @@ class BehaviorAnalyzer:
         # 関連パターンを取得
         relevant_patterns = [
             pattern for pattern in self.behavior_patterns.values()
-            if pattern.context_key == context_key
+            if pattern.context_key == context_key  # type: ignore
         ]
         
         if not relevant_patterns:

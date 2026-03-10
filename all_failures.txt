@@ -1,0 +1,1186 @@
+2026-03-09 16:17:27 [    INFO] [          mrl-memory-extractor] ✅ MRL Memory Extractor初期化完了: C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-09 16:17:27 [    INFO] [          mrl-memory-extractor] ✅ MRL Memory Extractor初期化完了: C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-09 16:17:27 [    INFO] [        mrl-memory-kill-switch] ✅ Kill Switch初期化: FWPKM=True, Write=True
+2026-03-09 16:17:27 [    INFO] [         mrl-memory-quarantine] ✅ Memory Quarantine初期化完了
+2026-03-09 16:17:27 [    INFO] [        mrl-memory-ttl-manager] ✅ TTL Manager初期化完了
+2026-03-09 16:17:27 [    INFO] [             mrl-memory-system] ✅ MRL Memory System初期化完了: C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-09 16:17:27 [    INFO] [            mrl-memory-metrics] [OK] MRL Memory Metrics初期化完了: C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory\metrics
+2026-03-09 16:17:27 [    INFO] [       mrl-memory-api-security] SECURITY: auth=disabled, rate_limit=enabled, max_input=200000, pii_mask=enabled
+2026-03-09 16:17:27 [    INFO] [       mrl-memory-api-security] [OK] API Security初期化完了
+2026-03-09 16:17:27 [    INFO] [        mrl-memory-integration] Security initialized: require_auth=False, api_key=SET
+2026-03-09 16:17:27 [    INFO] [    mrl-memory-rollout-manager] ✅ Rollout Manager初期化: enabled=True, write_mode=full, sample_rate=1.0, review_effect=True
+2026-03-09 16:17:27 [    INFO] [               learning_system] ✅ API認証システムを初期化しました
+........s.................Fsss...ssss................................... [  1%]
+.....................................s..........F....................... [  2%]
+........................................................sF.............. [  3%]
+.....................................................................sss [  4%]
+ssss.................................................................... [  5%]
+...........FF........................................................... [  7%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 12%]
+..................................................................F..... [ 14%]
+.....................................................................F.. [ 15%]
+.......F................................................................ [ 16%]
+.........................s.............................................. [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 20%]
+........................................................s............... [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 33%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+.....................FFFFFF.FFFFFFF..................................... [ 56%]
+........................................................................ [ 57%]
+........................................................................ [ 59%]
+................F....................................................... [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+...................................F.................................... [ 63%]
+........................................................................ [ 64%]
+........................................................................ [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 69%]
+........................................................................ [ 70%]
+.....................................................F.................. [ 71%]
+........................................................................ [ 73%]
+......................FF..F...F.F....F.FFF.F....FFFFFF.................. [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+.......................................F................................ [ 88%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 95%]
+........................................................................ [ 96%]
+........................................................................ [ 97%]
+............................................................FFFFFFF..... [ 99%]
+.....................................................                    [100%]
+================================== FAILURES ===================================
+______________________ test_ultra_integrated_chat_smoke _______________________
+tests\e2e\test_ultra_integrated.py:19: in test_ultra_integrated_chat_smoke
+    from always_ready_llm_ultra_integrated import (
+llm\always_ready_llm_ultra_integrated.py:12: in <module>
+    from always_ready_llm_integrated import (
+llm\always_ready_llm_integrated.py:50: in <module>
+    class IntegratedLLMClient:
+llm\always_ready_llm_integrated.py:105: in IntegratedLLMClient
+    model: ModelType = ModelType.LIGHT,
+                       ^^^^^^^^^^^^^^^
+E   AttributeError: type object '_FakeModelType' has no attribute 'LIGHT'
+_____________________________ test_hf_integration _____________________________
+tests\integration\test_hf_manaos_integration.py:68: in test_hf_integration
+    print(f"  ダウンロード数: {info.get('downloads', 0):,}")
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: unsupported format string passed to MagicMock.__format__
+---------------------------- Captured stdout call -----------------------------
+============================================================
+Hugging Face統合テスト（ManaOS統合版）
+============================================================
+
+[0] Hugging Face Helper直接テスト
+------------------------------------------------------------
+✓ 0件のモデルが見つかりました
+
+[1] モデル検索テスト
+------------------------------------------------------------
+2026-03-09 16:19:47 [    INFO] [Integration.Obsidian] Obsidianの初期化を開始...
+2026-03-09 16:19:47 [    INFO] [Integration.Obsidian] Obsidian Vaultを初期化しました: C:\Users\mana4\Documents\Obsidian Vault
+2026-03-09 16:19:47 [    INFO] [Integration.Obsidian] Obsidianの初期化が完了しました
+2026-03-09 16:19:47 [    INFO] [Integration.Obsidian] ノート作成完了: C:\Users\mana4\Documents\Obsidian Vault\System\システム 2026-03-09.md
+2026-03-09 16:19:47 [    INFO] [memory-unified] Obsidianに保存: C:\Users\mana4\Documents\Obsidian Vault\System\システム 2026-03-09.md
+2026-03-09 16:19:47 [    INFO] [memory-unified] [Remember] system: 69c09349-bed0-43c7-b400-fa3e4e62e1a3
+2026-03-09 16:19:47 [    INFO] [manaos-core-api] [Act] Hugging Faceモデル検索: 0件
+✓ 0件のモデルが見つかりました
+
+[2] モデル情報取得テスト
+------------------------------------------------------------
+2026-03-09 16:19:47 [    INFO] [Integration.Obsidian] ノート作成完了: C:\Users\mana4\Documents\Obsidian Vault\System\システム 2026-03-09.md
+2026-03-09 16:19:47 [    INFO] [memory-unified] Obsidianに保存: C:\Users\mana4\Documents\Obsidian Vault\System\システム 2026-03-09.md
+2026-03-09 16:19:47 [    INFO] [memory-unified] [Remember] system: c5750e07-b236-4cb0-a3b9-7dba72f7e2f9
+2026-03-09 16:19:47 [    INFO] [manaos-core-api] [Act] Hugging Faceモデル情報取得: runwayml/stable-diffusion-v1-5
+✓ モデル情報を取得しました
+  モデルID: <MagicMock name='mock.get_model_info().get()' id='2202702571440'>
+------------------------------ Captured log call ------------------------------
+INFO     Integration.Obsidian:base_integration.py:101 Obsidianの初期化を開始...
+INFO     Integration.Obsidian:obsidian_integration.py:52 Obsidian Vaultを初期化しました: C:\Users\mana4\Documents\Obsidian Vault
+INFO     Integration.Obsidian:base_integration.py:106 Obsidianの初期化が完了しました
+INFO     Integration.Obsidian:obsidian_integration.py:138 ノート作成完了: C:\Users\mana4\Documents\Obsidian Vault\System\システム 2026-03-09.md
+INFO     memory-unified:memory_unified.py:160 Obsidianに保存: C:\Users\mana4\Documents\Obsidian Vault\System\システム 2026-03-09.md
+INFO     memory-unified:memory_unified.py:297 [Remember] system: 69c09349-bed0-43c7-b400-fa3e4e62e1a3
+INFO     manaos-core-api:manaos_core_api.py:716 [Act] Hugging Faceモデル検索: 0件
+INFO     Integration.Obsidian:obsidian_integration.py:138 ノート作成完了: C:\Users\mana4\Documents\Obsidian Vault\System\システム 2026-03-09.md
+INFO     memory-unified:memory_unified.py:160 Obsidianに保存: C:\Users\mana4\Documents\Obsidian Vault\System\システム 2026-03-09.md
+INFO     memory-unified:memory_unified.py:297 [Remember] system: c5750e07-b236-4cb0-a3b9-7dba72f7e2f9
+INFO     manaos-core-api:manaos_core_api.py:736 [Act] Hugging Faceモデル情報取得: runwayml/stable-diffusion-v1-5
+_______________________ test_service_bridge_integration _______________________
+tests\integration\test_mrl_manaos_integration.py:44: in test_service_bridge_integration
+    assert isinstance(services, dict)
+E   AssertionError: assert False
+E    +  where False = isinstance(<MagicMock name='mock.ManaOSServiceBridge().check_manaos_services()' id='2202762034352'>, dict)
+_______________ test_rate_limit_state_is_capped_and_ttl_cleaned _______________
+..\.venv\Lib\site-packages\_pytest\monkeypatch.py:79: in resolve
+    __import__(used)
+E   ModuleNotFoundError: No module named 'api_auth.time'; 'api_auth' is not a package
+
+The above exception was the direct cause of the following exception:
+tests\test_api_auth_rate_limit_state.py:13: in test_rate_limit_state_is_capped_and_ttl_cleaned
+    monkeypatch.setattr("api_auth.time.time", lambda: now[0])
+..\.venv\Lib\site-packages\_pytest\monkeypatch.py:104: in derive_importpath
+    target = resolve(module)
+             ^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\_pytest\monkeypatch.py:85: in resolve
+    raise ImportError(f"import error in {used}: {ex}") from ex
+E   ImportError: import error in api_auth.time: No module named 'api_auth.time'; 'api_auth' is not a package
+_____________________ test_client_history_window_eviction _____________________
+..\.venv\Lib\site-packages\_pytest\monkeypatch.py:79: in resolve
+    __import__(used)
+E   ModuleNotFoundError: No module named 'api_auth.time'; 'api_auth' is not a package
+
+The above exception was the direct cause of the following exception:
+tests\test_api_auth_rate_limit_state.py:42: in test_client_history_window_eviction
+    monkeypatch.setattr("api_auth.time.time", lambda: now[0])
+..\.venv\Lib\site-packages\_pytest\monkeypatch.py:104: in derive_importpath
+    target = resolve(module)
+             ^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\_pytest\monkeypatch.py:85: in resolve
+    raise ImportError(f"import error in {used}: {ex}") from ex
+E   ImportError: import error in api_auth.time: No module named 'api_auth.time'; 'api_auth' is not a package
+_______________________ TestSingleton.test_reset_works ________________________
+tests\test_lessons_recorder.py:266: in test_reset_works
+    assert a is not b
+E   assert <lessons_recorder.LessonsRecorder object at 0x00000200E081ACF0> is not <lessons_recorder.LessonsRecorder object at 0x00000200E081ACF0>
+_______ TestStoreToEpisodic.test_returns_none_when_episodic_unavailable _______
+tests\test_mrl_memory_mcp_server.py:634: in test_returns_none_when_episodic_unavailable
+    assert result is None
+E   AssertionError: assert {'entry_id': '1aee33ca-dad6-4ac5-8e28-6caf77ea9e8d', 'expires_at': '2026-03-10T07:25:25.015851'} is None
+---------------------------- Captured stdout call -----------------------------
+2026-03-09 16:25:25 [    INFO] [mrl_memory_mcp_server.server] EpisodicMemory 初期化成功
+------------------------------ Captured log call ------------------------------
+INFO     mrl_memory_mcp_server.server:server.py:101 EpisodicMemory 初期化成功
+___________ TestMetricsEpisodic.test_episodic_unavailable_when_none ___________
+tests\test_mrl_memory_mcp_server.py:699: in test_episodic_unavailable_when_none
+    assert result["episodic"]["episodic_available"] is False
+E   assert True is False
+---------------------------- Captured stdout call -----------------------------
+2026-03-09 16:25:25 [    INFO] [mrl_memory_mcp_server.server] EpisodicMemory 初期化成功
+---------------------------- Captured stderr call -----------------------------
+C:\Users\mana4\Desktop\manaos_integrations\scripts/misc\episodic_memory.py:463: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  now = datetime.utcnow().isoformat()
+------------------------------ Captured log call ------------------------------
+INFO     mrl_memory_mcp_server.server:server.py:101 EpisodicMemory 初期化成功
+_____________________ TestRecordUsage.test_records_action _____________________
+tests\unit\test_scripts_misc_learning_system_api.py:97: in test_records_action
+    assert resp.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+_______________ TestRecordUsage.test_returns_400_when_no_action _______________
+tests\unit\test_scripts_misc_learning_system_api.py:104: in test_returns_400_when_no_action
+    assert resp.status_code == 400
+E   assert 401 == 400
+E    +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+___________________ TestRecordUsage.test_calls_record_usage ___________________
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:964: in assert_called_once
+    raise AssertionError(msg)
+E   AssertionError: Expected 'record_usage' to have been called once. Called 0 times.
+
+During handling of the above exception, another exception occurred:
+tests\unit\test_scripts_misc_learning_system_api.py:111: in test_calls_record_usage
+    _ls_instance.record_usage.assert_called_once()
+E   AssertionError: Expected 'record_usage' to have been called once. Called 0 times.
+____________________ TestAnalyzePatterns.test_returns_200 _____________________
+tests\unit\test_scripts_misc_learning_system_api.py:121: in test_returns_200
+    assert resp.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+__________________ TestAnalyzePatterns.test_returns_analysis __________________
+tests\unit\test_scripts_misc_learning_system_api.py:125: in test_returns_analysis
+    assert "patterns" in data
+E   AssertionError: assert 'patterns' in {'error': 'Unauthorized', 'message': 'Invalid or missing API key'}
+_____________________ TestGetPreferences.test_returns_200 _____________________
+tests\unit\test_scripts_misc_learning_system_api.py:135: in test_returns_200
+    assert resp.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+____________________ TestGetOptimizations.test_returns_200 ____________________
+tests\unit\test_scripts_misc_learning_system_api.py:149: in test_returns_200
+    assert resp.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+__________________ TestGetOptimizations.test_includes_count ___________________
+tests\unit\test_scripts_misc_learning_system_api.py:153: in test_includes_count
+    assert "count" in data
+E   AssertionError: assert 'count' in {'error': 'Unauthorized', 'message': 'Invalid or missing API key'}
+_______________________ TestGetStatus.test_returns_200 ________________________
+tests\unit\test_scripts_misc_learning_system_api.py:164: in test_returns_200
+    assert resp.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+___________________ TestGetStatus.test_returns_status_field ___________________
+tests\unit\test_scripts_misc_learning_system_api.py:168: in test_returns_status_field
+    assert data["status"] == "active"
+           ^^^^^^^^^^^^^^
+E   KeyError: 'status'
+______________ TestApplyPreferences.test_returns_200_with_action ______________
+tests\unit\test_scripts_misc_learning_system_api.py:180: in test_returns_200_with_action
+    assert resp.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+_____________ TestApplyPreferences.test_returns_optimized_params ______________
+tests\unit\test_scripts_misc_learning_system_api.py:186: in test_returns_optimized_params
+    assert "optimized_params" in data
+E   AssertionError: assert 'optimized_params' in {'error': 'Unauthorized', 'message': 'Invalid or missing API key'}
+____________ TestApplyPreferences.test_returns_400_without_action _____________
+tests\unit\test_scripts_misc_learning_system_api.py:192: in test_returns_400_without_action
+    assert resp.status_code == 400
+E   assert 401 == 400
+E    +  where 401 = <WrapperTestResponse streamed [401 UNAUTHORIZED]>.status_code
+___________ TestEmergencyStopEndpoint.test_emergency_stop_with_auth ___________
+tests\unit\test_scripts_misc_local_remi_api.py:560: in test_emergency_stop_with_auth
+    pm_instance = pm_mod.get_process_manager.return_value
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'function' object has no attribute 'return_value'
+----------------------------- Captured log setup ------------------------------
+INFO     remi_audit:local_remi_api.py:215 Remi API started
+---------------------------- Captured log teardown ----------------------------
+INFO     remi_audit:local_remi_api.py:219 Remi API stopped
+_______________ TestJWTManager.test_init_without_key_calls_mock _______________
+tests\unit\test_scripts_misc_manaos_security.py:235: in test_init_without_key_calls_mock
+    mj.get_or_create_jwt_secret.reset_mock()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'function' object has no attribute 'reset_mock'
+_____ TestNotifySlack.test_no_webhook_no_slack_integration_returns_false ______
+tests\unit\test_scripts_misc_orchestrator_operational_metrics.py:199: in test_no_webhook_no_slack_integration_returns_false
+    assert result is False
+E   assert True is False
+---------------------------- Captured stdout call -----------------------------
+2026-03-09 16:40:24 [    INFO] [slack-integration] Slack API経由で送信: [error]
+対応: 再試行 or 内部ログ確認...
+2026-03-09 16:40:25 [    INFO] [slack-integration] Slack送信成功（API経由）
+2026-03-09 16:40:25 [    INFO] [orchestrator-operational-metrics] orchestrator アラートを Slack に送信しました（slack_integration 経由）
+------------------------------ Captured log call ------------------------------
+INFO     slack-integration:slack_integration.py:105 Slack API経由で送信: [error]
+対応: 再試行 or 内部ログ確認...
+INFO     slack-integration:slack_integration.py:119 Slack送信成功（API経由）
+INFO     orchestrator-operational-metrics:orchestrator_operational_metrics.py:223 orchestrator アラートを Slack に送信しました（slack_integration 経由）
+__________________ TestGetPersonaDisplay.test_name_from_dict __________________
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:93: in test_name_from_dict
+    assert persona.name == "Remi"
+E   AssertionError: assert 'seiso_gal_feminine' == 'Remi'
+E     
+E     - Remi
+E     + seiso_gal_feminine
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:30 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:30 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:30 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:30 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:30 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:30 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:30 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:30 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:30 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:30 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:30 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:30 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+__________________ TestGetPersonaDisplay.test_tone_from_dict __________________
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:97: in test_tone_from_dict
+    assert persona.tone == "friendly"
+E   AssertionError: assert '明るくやさしい、フレンドリー高めのカジュアル' == 'friendly'
+E     
+E     - friendly
+E     + 明るくやさしい、フレンドリー高めのカジュアル
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:30 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:30 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:30 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:30 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:30 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:30 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:30 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:30 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:30 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:30 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:30 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:30 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+___________ TestGetPersonaDisplay.test_object_persona_pass_through ____________
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:116: in test_object_persona_pass_through
+    integration.personality.get_current_persona.return_value = obj_persona
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'method' object has no attribute 'return_value' and no __dict__ for setting new attributes
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:30 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:30 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:30 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:30 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:30 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:30 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:30 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:30 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:30 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:30 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:30 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:30 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+_________ TestExecuteWithPersonality.test_personality_subdict_present _________
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:148: in test_personality_subdict_present
+    assert result["personality"]["name"] == "Remi"
+E   AssertionError: assert 'seiso_gal_feminine' == 'Remi'
+E     
+E     - Remi
+E     + seiso_gal_feminine
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:30 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:30 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:30 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:30 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:30 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:30 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:30 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:30 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:30 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:30 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:30 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:30 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+---------------------------- Captured stdout call -----------------------------
+2026-03-09 16:40:30 [    INFO] [Integration.Mem0] Mem0の初期化を開始...
+2026-03-09 16:40:30 [    INFO] [Integration.Mem0] Mem0統合: Ollamaを使用（無料） - http://localhost:11434/qwen2.5:7b
+2026-03-09 16:40:30 [ WARNING] [manaos-error-handler] [UNK_CONFI] unable to infer type for attribute "chroma_server_nofile"
+
+2026-03-09 16:40:30 [   ERROR] [Integration.Mem0] Mem0初期化エラー: unable to infer type for attribute "chroma_server_nofile"
+2026-03-09 16:40:30 [ WARNING] [Integration.Mem0] Mem0互換フォールバックで継続します
+2026-03-09 16:40:30 [    INFO] [Integration.Mem0] Mem0の初期化が完了しました
+2026-03-09 16:40:30 [    INFO] [Integration.Mem0] メモリを追加しました: b5c0cf1e-a934-4876-9c76-2de74e64e02c
+------------------------------ Captured log call ------------------------------
+INFO     Integration.Mem0:base_integration.py:101 Mem0の初期化を開始...
+INFO     Integration.Mem0:mem0_integration.py:92 Mem0統合: Ollamaを使用（無料） - http://localhost:11434/qwen2.5:7b
+WARNING  manaos-error-handler:manaos_error_handler.py:398 [UNK_CONFI] unable to infer type for attribute "chroma_server_nofile"
+ERROR    Integration.Mem0:mem0_integration.py:107 Mem0初期化エラー: unable to infer type for attribute "chroma_server_nofile"
+WARNING  Integration.Mem0:mem0_integration.py:109 Mem0互換フォールバックで継続します
+INFO     Integration.Mem0:base_integration.py:106 Mem0の初期化が完了しました
+INFO     Integration.Mem0:mem0_integration.py:140 メモリを追加しました: b5c0cf1e-a934-4876-9c76-2de74e64e02c
+___________ TestExecuteWithPersonality.test_record_and_learn_called ___________
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:155: in test_record_and_learn_called
+    integration.learning_memory.record_and_learn.reset_mock()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'function' object has no attribute 'reset_mock'
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:30 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:30 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:30 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:30 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:30 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:30 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:30 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:30 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:30 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:30 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:30 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:30 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+___________ TestExecuteAutonomousTask.test_record_and_learn_called ____________
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:191: in test_record_and_learn_called
+    integration.learning_memory.record_and_learn.reset_mock()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'function' object has no attribute 'reset_mock'
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:31 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:31 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:31 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:31 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:31 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:31 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+____________ TestGeneratePersonalityReport.test_has_required_keys _____________
+scripts\misc\database_connection_pool.py:114: in get_connection
+    yield conn
+archive\legacy_improved\secretary_system_optimized.py:267: in add_report
+    cursor.execute("""
+E   sqlite3.IntegrityError: UNIQUE constraint failed: reports.report_id
+
+During handling of the above exception, another exception occurred:
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:203: in test_has_required_keys
+    result = integration.generate_personality_report()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\misc\personality_autonomy_secretary_integration.py:315: in generate_personality_report
+    self.secretary.add_report(report)
+archive\legacy_improved\secretary_system_optimized.py:265: in add_report
+    with self.db_pool.get_connection() as conn:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+scripts\misc\database_connection_pool.py:128: in get_connection
+    raise error_handler.handle_exception(  # type: ignore
+E   TypeError: exceptions must derive from BaseException
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:31 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:31 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:31 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:31 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:31 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:31 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+---------------------------- Captured stdout call -----------------------------
+2026-03-09 16:40:31 [ WARNING] [manaos-error-handler] [UNK_INTEG] UNIQUE constraint failed: reports.report_id
+
+------------------------------ Captured log call ------------------------------
+WARNING  manaos-error-handler:manaos_error_handler.py:398 [UNK_INTEG] UNIQUE constraint failed: reports.report_id
+____________ TestGeneratePersonalityReport.test_daily_report_type _____________
+scripts\misc\database_connection_pool.py:114: in get_connection
+    yield conn
+archive\legacy_improved\secretary_system_optimized.py:267: in add_report
+    cursor.execute("""
+E   sqlite3.IntegrityError: UNIQUE constraint failed: reports.report_id
+
+During handling of the above exception, another exception occurred:
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:209: in test_daily_report_type
+    result = integration.generate_personality_report("daily")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\misc\personality_autonomy_secretary_integration.py:315: in generate_personality_report
+    self.secretary.add_report(report)
+archive\legacy_improved\secretary_system_optimized.py:265: in add_report
+    with self.db_pool.get_connection() as conn:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+scripts\misc\database_connection_pool.py:128: in get_connection
+    raise error_handler.handle_exception(  # type: ignore
+E   TypeError: exceptions must derive from BaseException
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:31 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:31 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:31 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:31 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:31 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:31 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+---------------------------- Captured stdout call -----------------------------
+2026-03-09 16:40:31 [ WARNING] [manaos-error-handler] [UNK_INTEG] UNIQUE constraint failed: reports.report_id
+
+------------------------------ Captured log call ------------------------------
+WARNING  manaos-error-handler:manaos_error_handler.py:398 [UNK_INTEG] UNIQUE constraint failed: reports.report_id
+____________ TestGeneratePersonalityReport.test_weekly_report_type ____________
+scripts\misc\database_connection_pool.py:114: in get_connection
+    yield conn
+archive\legacy_improved\secretary_system_optimized.py:267: in add_report
+    cursor.execute("""
+E   sqlite3.IntegrityError: UNIQUE constraint failed: reports.report_id
+
+During handling of the above exception, another exception occurred:
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:214: in test_weekly_report_type
+    result = integration.generate_personality_report("weekly")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\misc\personality_autonomy_secretary_integration.py:315: in generate_personality_report
+    self.secretary.add_report(report)
+archive\legacy_improved\secretary_system_optimized.py:265: in add_report
+    with self.db_pool.get_connection() as conn:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+scripts\misc\database_connection_pool.py:128: in get_connection
+    raise error_handler.handle_exception(  # type: ignore
+E   TypeError: exceptions must derive from BaseException
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:31 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:31 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:31 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:31 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:31 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:31 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+---------------------------- Captured stdout call -----------------------------
+2026-03-09 16:40:31 [ WARNING] [manaos-error-handler] [UNK_INTEG] UNIQUE constraint failed: reports.report_id
+
+------------------------------ Captured log call ------------------------------
+WARNING  manaos-error-handler:manaos_error_handler.py:398 [UNK_INTEG] UNIQUE constraint failed: reports.report_id
+______________ TestGetIntegratedStatus.test_has_personality_key _______________
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:228: in test_has_personality_key
+    assert result["personality"]["current_persona"] == "Remi"
+E   AssertionError: assert 'seiso_gal_feminine' == 'Remi'
+E     
+E     - Remi
+E     + seiso_gal_feminine
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:31 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:31 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:31 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:31 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:31 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:31 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+________________ TestOptimizeBasedOnLearning.test_returns_dict ________________
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:251: in test_returns_dict
+    result = integration.optimize_based_on_learning()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\misc\personality_autonomy_secretary_integration.py:345: in optimize_based_on_learning
+    analysis = self.learning_memory.analyze_and_optimize()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\misc\learning_memory_integration.py:124: in analyze_and_optimize
+    important_memories = self.memory.search_memories("", limit=10, min_importance=0.7)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'RAGMemoryOptimized' object has no attribute 'search_memories'
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:31 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:31 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:31 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:31 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:31 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:31 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+___________ TestOptimizeBasedOnLearning.test_has_optimizations_key ____________
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:255: in test_has_optimizations_key
+    result = integration.optimize_based_on_learning()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\misc\personality_autonomy_secretary_integration.py:345: in optimize_based_on_learning
+    analysis = self.learning_memory.analyze_and_optimize()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\misc\learning_memory_integration.py:124: in analyze_and_optimize
+    important_memories = self.memory.search_memories("", limit=10, min_importance=0.7)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'RAGMemoryOptimized' object has no attribute 'search_memories'
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:31 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:31 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:31 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:31 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:31 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:31 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+_ TestOptimizeBasedOnLearning.test_empty_recommendations_gives_no_optimizations _
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:260: in test_empty_recommendations_gives_no_optimizations
+    integration.learning_memory.analyze_and_optimize.return_value = {
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'method' object has no attribute 'return_value' and no __dict__ for setting new attributes
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:31 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:31 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:31 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:31 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:31 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:31 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+____ TestOptimizeBasedOnLearning.test_personality_recommendation_included _____
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:267: in test_personality_recommendation_included
+    integration.learning_memory.analyze_and_optimize.return_value = {
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'method' object has no attribute 'return_value' and no __dict__ for setting new attributes
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:31 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:31 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:31 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:31 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:31 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:31 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+______ TestOptimizeBasedOnLearning.test_autonomy_recommendation_included ______
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:275: in test_autonomy_recommendation_included
+    integration.learning_memory.analyze_and_optimize.return_value = {
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'method' object has no attribute 'return_value' and no __dict__ for setting new attributes
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:31 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:31 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:31 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:31 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:31 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:31 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+_______________ TestOptimizeBasedOnLearning.test_has_timestamp ________________
+tests\unit\test_scripts_misc_personality_autonomy_secretary_integration.py:283: in test_has_timestamp
+    result = integration.optimize_based_on_learning()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\misc\personality_autonomy_secretary_integration.py:345: in optimize_based_on_learning
+    analysis = self.learning_memory.analyze_and_optimize()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\misc\learning_memory_integration.py:124: in analyze_and_optimize
+    important_memories = self.memory.search_memories("", limit=10, min_importance=0.7)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'RAGMemoryOptimized' object has no attribute 'search_memories'
+---------------------------- Captured stdout setup ----------------------------
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+2026-03-09 16:40:31 [    INFO] [personality-system] ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+2026-03-09 16:40:31 [    INFO] [autonomy-system] ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+2026-03-09 16:40:31 [ WARNING] [config-cache] 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+2026-03-09 16:40:31 [    INFO] [secretary-system-optimized] ✅ Secretary System（最適化版）初期化完了
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+
+2026-03-09 16:40:31 [    INFO] [rag-memory-enhanced-v2] ✅ RAG記憶進化システム v2（強化版）初期化完了
+
+2026-03-09 16:40:31 [    INFO] [          rag-memory-optimized] RAGMemoryOptimized → V2互換ブリッジで起動
+2026-03-09 16:40:31 [    INFO] [learning-system] ✅ Learning System初期化完了
+
+2026-03-09 16:40:31 [    INFO] [learning-memory-integration] ✅ 学習系・記憶系統合管理システム初期化完了
+2026-03-09 16:40:31 [    INFO] [personality-autonomy-secretary-integration] ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+----------------------------- Captured log setup ------------------------------
+INFO     personality-system:personality_system.py:175 ✅ persona_config.yaml を適用: C:\Users\mana4\Desktop\manaos_integrations\persona_config.yaml
+INFO     personality-system:personality_system.py:83 ✅ Personality System初期化完了 (人格: seiso_gal_feminine)
+INFO     autonomy-system:autonomy_system.py:154 ✅ Autonomy System初期化完了 (レベル: L4_Act = 4)
+WARNING  config-cache:config_cache.py:79 設定ファイルが見つかりません: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_config.json。デフォルト値を使用します。
+INFO     secretary-system-optimized:secretary_system_optimized.py:172 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\secretary_system.db
+INFO     secretary-system-optimized:secretary_system_optimized.py:116 ✅ Secretary System（最適化版）初期化完了
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:135 ✅ データベース初期化完了: C:\Users\mana4\Desktop\manaos_integrations\archive\legacy_improved\rag_memory.db
+INFO     rag-memory-enhanced-v2:rag_memory_enhanced_v2.py:96 ✅ RAG記憶進化システム v2（強化版）初期化完了
+INFO     learning-system:learning_system.py:87 ✅ Learning System初期化完了
+INFO     learning-memory-integration:learning_memory_integration.py:53 ✅ 学習系・記憶系統合管理システム初期化完了
+INFO     personality-autonomy-secretary-integration:personality_autonomy_secretary_integration.py:66 ✅ 人格系・自律系・秘書系統合管理システム初期化完了
+_ TestStableDiffusionGeneratorInit.test_raises_runtime_error_when_pipeline_load_fails _
+tests\unit\test_scripts_misc_stable_diffusion_generator.py:53: in test_raises_runtime_error_when_pipeline_load_fails
+    _mod.StableDiffusionGenerator(model_id="fake/model")
+scripts\misc\stable_diffusion_generator.py:52: in __init__
+    self.torch_dtype = torch.float32
+                       ^^^^^^^^^^^^^
+E   AttributeError: module 'torch' has no attribute 'float32'
+__________________ TestCheckPythonPackages.test_returns_dict __________________
+tests\unit\test_trinity_tool_analysis.py:99: in test_returns_dict
+    result = self.ta.check_python_packages()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\trinity_tool_analysis.py:78: in check_python_packages
+    module = __import__(package)
+             ^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\__init__.py:30: in <module>
+    from . import dependency_versions_check
+..\.venv\Lib\site-packages\transformers\dependency_versions_check.py:16: in <module>
+    from .utils.versions import require_version, require_version_core
+..\.venv\Lib\site-packages\transformers\utils\__init__.py:22: in <module>
+    from .auto_docstring import (
+..\.venv\Lib\site-packages\transformers\utils\auto_docstring.py:32: in <module>
+    from .generic import ModelOutput
+..\.venv\Lib\site-packages\transformers\utils\generic.py:42: in <module>
+    if is_torch_available():
+       ^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\utils\import_utils.py:113: in is_torch_available
+    is_available, torch_version = _is_package_available("torch", return_version=True)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\utils\import_utils.py:50: in _is_package_available
+    spec = importlib.util.find_spec(pkg_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib.util>:110: in find_spec
+    ???
+E   ValueError: torch.__spec__ is None
+___________ TestCheckPythonPackages.test_expected_packages_present ____________
+tests\unit\test_trinity_tool_analysis.py:103: in test_expected_packages_present
+    result = self.ta.check_python_packages()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\trinity_tool_analysis.py:78: in check_python_packages
+    module = __import__(package)
+             ^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\__init__.py:30: in <module>
+    from . import dependency_versions_check
+..\.venv\Lib\site-packages\transformers\dependency_versions_check.py:16: in <module>
+    from .utils.versions import require_version, require_version_core
+..\.venv\Lib\site-packages\transformers\utils\__init__.py:22: in <module>
+    from .auto_docstring import (
+..\.venv\Lib\site-packages\transformers\utils\auto_docstring.py:32: in <module>
+    from .generic import ModelOutput
+..\.venv\Lib\site-packages\transformers\utils\generic.py:42: in <module>
+    if is_torch_available():
+       ^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\utils\import_utils.py:113: in is_torch_available
+    is_available, torch_version = _is_package_available("torch", return_version=True)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\utils\import_utils.py:50: in _is_package_available
+    spec = importlib.util.find_spec(pkg_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib.util>:110: in find_spec
+    ???
+E   ValueError: torch.__spec__ is None
+_________ TestCheckPythonPackages.test_each_entry_has_installed_bool __________
+tests\unit\test_trinity_tool_analysis.py:108: in test_each_entry_has_installed_bool
+    result = self.ta.check_python_packages()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\trinity_tool_analysis.py:78: in check_python_packages
+    module = __import__(package)
+             ^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\__init__.py:30: in <module>
+    from . import dependency_versions_check
+..\.venv\Lib\site-packages\transformers\dependency_versions_check.py:16: in <module>
+    from .utils.versions import require_version, require_version_core
+..\.venv\Lib\site-packages\transformers\utils\__init__.py:22: in <module>
+    from .auto_docstring import (
+..\.venv\Lib\site-packages\transformers\utils\auto_docstring.py:32: in <module>
+    from .generic import ModelOutput
+..\.venv\Lib\site-packages\transformers\utils\generic.py:42: in <module>
+    if is_torch_available():
+       ^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\utils\import_utils.py:113: in is_torch_available
+    is_available, torch_version = _is_package_available("torch", return_version=True)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\utils\import_utils.py:50: in _is_package_available
+    spec = importlib.util.find_spec(pkg_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib.util>:110: in find_spec
+    ???
+E   ValueError: torch.__spec__ is None
+___________ TestCheckPythonPackages.test_each_entry_has_version_key ___________
+tests\unit\test_trinity_tool_analysis.py:114: in test_each_entry_has_version_key
+    result = self.ta.check_python_packages()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\trinity_tool_analysis.py:78: in check_python_packages
+    module = __import__(package)
+             ^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\__init__.py:30: in <module>
+    from . import dependency_versions_check
+..\.venv\Lib\site-packages\transformers\dependency_versions_check.py:16: in <module>
+    from .utils.versions import require_version, require_version_core
+..\.venv\Lib\site-packages\transformers\utils\__init__.py:22: in <module>
+    from .auto_docstring import (
+..\.venv\Lib\site-packages\transformers\utils\auto_docstring.py:32: in <module>
+    from .generic import ModelOutput
+..\.venv\Lib\site-packages\transformers\utils\generic.py:42: in <module>
+    if is_torch_available():
+       ^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\utils\import_utils.py:113: in is_torch_available
+    is_available, torch_version = _is_package_available("torch", return_version=True)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\utils\import_utils.py:50: in _is_package_available
+    spec = importlib.util.find_spec(pkg_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib.util>:110: in find_spec
+    ???
+E   ValueError: torch.__spec__ is None
+___________ TestCheckPythonPackages.test_each_entry_has_description ___________
+tests\unit\test_trinity_tool_analysis.py:119: in test_each_entry_has_description
+    result = self.ta.check_python_packages()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\trinity_tool_analysis.py:78: in check_python_packages
+    module = __import__(package)
+             ^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\__init__.py:30: in <module>
+    from . import dependency_versions_check
+..\.venv\Lib\site-packages\transformers\dependency_versions_check.py:16: in <module>
+    from .utils.versions import require_version, require_version_core
+..\.venv\Lib\site-packages\transformers\utils\__init__.py:22: in <module>
+    from .auto_docstring import (
+..\.venv\Lib\site-packages\transformers\utils\auto_docstring.py:32: in <module>
+    from .generic import ModelOutput
+..\.venv\Lib\site-packages\transformers\utils\generic.py:42: in <module>
+    if is_torch_available():
+       ^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\utils\import_utils.py:113: in is_torch_available
+    is_available, torch_version = _is_package_available("torch", return_version=True)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\utils\import_utils.py:50: in _is_package_available
+    spec = importlib.util.find_spec(pkg_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib.util>:110: in find_spec
+    ???
+E   ValueError: torch.__spec__ is None
+_____ TestCheckPythonPackages.test_mock_installed_package_via_sys_modules _____
+tests\unit\test_trinity_tool_analysis.py:128: in test_mock_installed_package_via_sys_modules
+    result = self.ta.check_python_packages()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\trinity_tool_analysis.py:78: in check_python_packages
+    module = __import__(package)
+             ^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\__init__.py:30: in <module>
+    from . import dependency_versions_check
+..\.venv\Lib\site-packages\transformers\dependency_versions_check.py:16: in <module>
+    from .utils.versions import require_version, require_version_core
+..\.venv\Lib\site-packages\transformers\utils\__init__.py:22: in <module>
+    from .auto_docstring import (
+..\.venv\Lib\site-packages\transformers\utils\auto_docstring.py:32: in <module>
+    from .generic import ModelOutput
+..\.venv\Lib\site-packages\transformers\utils\generic.py:42: in <module>
+    if is_torch_available():
+       ^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\utils\import_utils.py:113: in is_torch_available
+    is_available, torch_version = _is_package_available("torch", return_version=True)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\utils\import_utils.py:50: in _is_package_available
+    spec = importlib.util.find_spec(pkg_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib.util>:110: in find_spec
+    ???
+E   ValueError: torch.__spec__ is None
+____ TestCheckPythonPackages.test_mock_uninstalled_package_via_sys_modules ____
+tests\unit\test_trinity_tool_analysis.py:139: in test_mock_uninstalled_package_via_sys_modules
+    result = self.ta.check_python_packages()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\trinity_tool_analysis.py:78: in check_python_packages
+    module = __import__(package)
+             ^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\__init__.py:30: in <module>
+    from . import dependency_versions_check
+..\.venv\Lib\site-packages\transformers\dependency_versions_check.py:16: in <module>
+    from .utils.versions import require_version, require_version_core
+..\.venv\Lib\site-packages\transformers\utils\__init__.py:22: in <module>
+    from .auto_docstring import (
+..\.venv\Lib\site-packages\transformers\utils\auto_docstring.py:32: in <module>
+    from .generic import ModelOutput
+..\.venv\Lib\site-packages\transformers\utils\generic.py:42: in <module>
+    if is_torch_available():
+       ^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\utils\import_utils.py:113: in is_torch_available
+    is_available, torch_version = _is_package_available("torch", return_version=True)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\.venv\Lib\site-packages\transformers\utils\import_utils.py:50: in _is_package_available
+    spec = importlib.util.find_spec(pkg_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib.util>:110: in find_spec
+    ???
+E   ValueError: torch.__spec__ is None
+=========================== short test summary info ===========================
+FAILED tests/e2e/test_ultra_integrated.py::test_ultra_integrated_chat_smoke
+FAILED tests/integration/test_hf_manaos_integration.py::test_hf_integration
+FAILED tests/integration/test_mrl_manaos_integration.py::test_service_bridge_integration
+FAILED tests/test_api_auth_rate_limit_state.py::test_rate_limit_state_is_capped_and_ttl_cleaned
+FAILED tests/test_api_auth_rate_limit_state.py::test_client_history_window_eviction
+FAILED tests/test_lessons_recorder.py::TestSingleton::test_reset_works - asse...
+FAILED tests/test_mrl_memory_mcp_server.py::TestStoreToEpisodic::test_returns_none_when_episodic_unavailable
+FAILED tests/test_mrl_memory_mcp_server.py::TestMetricsEpisodic::test_episodic_unavailable_when_none
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestRecordUsage::test_records_action
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestRecordUsage::test_returns_400_when_no_action
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestRecordUsage::test_calls_record_usage
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestAnalyzePatterns::test_returns_200
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestAnalyzePatterns::test_returns_analysis
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestGetPreferences::test_returns_200
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestGetOptimizations::test_returns_200
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestGetOptimizations::test_includes_count
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestGetStatus::test_returns_200
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestGetStatus::test_returns_status_field
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestApplyPreferences::test_returns_200_with_action
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestApplyPreferences::test_returns_optimized_params
+FAILED tests/unit/test_scripts_misc_learning_system_api.py::TestApplyPreferences::test_returns_400_without_action
+FAILED tests/unit/test_scripts_misc_local_remi_api.py::TestEmergencyStopEndpoint::test_emergency_stop_with_auth
+FAILED tests/unit/test_scripts_misc_manaos_security.py::TestJWTManager::test_init_without_key_calls_mock
+FAILED tests/unit/test_scripts_misc_orchestrator_operational_metrics.py::TestNotifySlack::test_no_webhook_no_slack_integration_returns_false
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestGetPersonaDisplay::test_name_from_dict
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestGetPersonaDisplay::test_tone_from_dict
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestGetPersonaDisplay::test_object_persona_pass_through
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestExecuteWithPersonality::test_personality_subdict_present
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestExecuteWithPersonality::test_record_and_learn_called
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestExecuteAutonomousTask::test_record_and_learn_called
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestGeneratePersonalityReport::test_has_required_keys
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestGeneratePersonalityReport::test_daily_report_type
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestGeneratePersonalityReport::test_weekly_report_type
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestGetIntegratedStatus::test_has_personality_key
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestOptimizeBasedOnLearning::test_returns_dict
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestOptimizeBasedOnLearning::test_has_optimizations_key
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestOptimizeBasedOnLearning::test_empty_recommendations_gives_no_optimizations
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestOptimizeBasedOnLearning::test_personality_recommendation_included
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestOptimizeBasedOnLearning::test_autonomy_recommendation_included
+FAILED tests/unit/test_scripts_misc_personality_autonomy_secretary_integration.py::TestOptimizeBasedOnLearning::test_has_timestamp
+FAILED tests/unit/test_scripts_misc_stable_diffusion_generator.py::TestStableDiffusionGeneratorInit::test_raises_runtime_error_when_pipeline_load_fails
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_returns_dict
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_expected_packages_present
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_each_entry_has_installed_bool
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_each_entry_has_version_key
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_each_entry_has_description
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_mock_installed_package_via_sys_modules
+FAILED tests/unit/test_trinity_tool_analysis.py::TestCheckPythonPackages::test_mock_uninstalled_package_via_sys_modules
+48 failed, 6034 passed, 19 skipped in 1660.10s (0:27:40)
+C:\Users\mana4\Desktop\manaos_integrations\api_auth.py:27: UserWarning: MANAOS_API_KEYS が未設定です。APIキーを環境変数で設定してください。
+  self._load_api_keys()

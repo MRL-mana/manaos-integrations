@@ -45,7 +45,7 @@ class RAGMemorySystem:
         
         # Embedding model
         if EMBEDDINGS_AVAILABLE:
-            self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+            self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')  # type: ignore[possibly-unbound]
             logger.info("✅ Embedding model loaded: all-MiniLM-L6-v2")
         else:
             self.embedding_model = None
@@ -53,9 +53,9 @@ class RAGMemorySystem:
         
         # ChromaDB client
         if CHROMADB_AVAILABLE:
-            self.client = chromadb.PersistentClient(
+            self.client = chromadb.PersistentClient(  # type: ignore[possibly-unbound]
                 path=str(self.db_path),
-                settings=Settings(
+                settings=Settings(  # type: ignore[possibly-unbound]
                     anonymized_telemetry=False,
                     allow_reset=True
                 )
@@ -140,10 +140,10 @@ class RAGMemorySystem:
                 for i in range(len(results['ids'][0])):
                     memory = {
                         'id': results['ids'][0][i],
-                        'content': results['documents'][0][i],
-                        'metadata': results['metadatas'][0][i],
-                        'distance': results['distances'][0][i] if 'distances' in results else None,
-                        'relevance': 1.0 - (results['distances'][0][i] if 'distances' in results else 0.5)
+                        'content': results['documents'][0][i],  # type: ignore[index]
+                        'metadata': results['metadatas'][0][i],  # type: ignore[index]
+                        'distance': results['distances'][0][i] if 'distances' in results else None,  # type: ignore[index]
+                        'relevance': 1.0 - (results['distances'][0][i] if 'distances' in results else 0.5)  # type: ignore[index]
                     }
                     memories.append(memory)
             
@@ -174,7 +174,7 @@ class RAGMemorySystem:
         else:
             return ""
     
-    def import_from_knowledge_md(self, knowledge_file: Path = None):
+    def import_from_knowledge_md(self, knowledge_file: Path = None):  # type: ignore
         """knowledge.mdからインポート"""
         if knowledge_file is None:
             knowledge_file = self.workspace / "shared" / "knowledge.md"
@@ -211,7 +211,7 @@ class RAGMemorySystem:
             logger.error(f"❌ Import failed: {e}")
             return 0
     
-    def import_from_dev_qa(self, dev_qa_file: Path = None):
+    def import_from_dev_qa(self, dev_qa_file: Path = None):  # type: ignore
         """dev_qa.mdからインポート"""
         if dev_qa_file is None:
             dev_qa_file = Path("/root/dev_qa.md")
@@ -248,7 +248,7 @@ class RAGMemorySystem:
             logger.error(f"❌ Import failed: {e}")
             return 0
     
-    def _save_to_file(self, content: str, metadata: Dict, memory_id: str = None) -> str:
+    def _save_to_file(self, content: str, metadata: Dict, memory_id: str = None) -> str:  # type: ignore
         """ファイルに保存（バックアップ）"""
         if memory_id is None:
             memory_id = f"mem_{datetime.now().strftime('%Y%m%d%H%M%S')}_{hash(content) % 10000:04d}"

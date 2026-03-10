@@ -54,15 +54,15 @@ class UnifiedMemory:
         
         # ローカルキャッシュディレクトリ
         if cache_dir is None:
-            cache_dir = Path(__file__).parent.parent / "data" / "memory_cache"
-        self.cache_dir = Path(cache_dir)
+            cache_dir = Path(__file__).parent.parent / "data" / "memory_cache"  # type: ignore
+        self.cache_dir = Path(cache_dir)  # type: ignore
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         
         # Obsidian統合
         self.obsidian = None
         if OBSIDIAN_AVAILABLE:
             try:
-                self.obsidian = ObsidianIntegration(str(self.vault_path))
+                self.obsidian = ObsidianIntegration(str(self.vault_path))  # type: ignore[possibly-unbound]
                 if not self.obsidian.is_available():
                     logger.warning(f"Obsidian Vaultが見つかりません: {self.vault_path}")
                     self.obsidian = None
@@ -295,7 +295,7 @@ class UnifiedMemory:
         try:
             memory_id = self._save_to_obsidian(formatted)
             logger.info(f"[Remember] {format_type}: {memory_id}")
-            return memory_id
+            return memory_id  # type: ignore
         
         except ObsidianError:
             # 失敗時はローカルキャッシュに退避

@@ -42,7 +42,7 @@ class AdvancedExcelSystem:
         try:
             wb = Workbook()
             ws = wb.active
-            ws.title = "メインデータ"
+            ws.title = "メインデータ"  # type: ignore[union-attr]
             
             # テンプレート設定に基づいてシート作成
             for sheet_config in config.get("sheets", []):
@@ -174,12 +174,12 @@ class AdvancedExcelSystem:
             data_range = Reference(ws, min_col=2, min_row=1, max_row=len(data) + 1, max_col=len(headers))
             categories = Reference(ws, min_col=1, min_row=2, max_row=len(data) + 1)
             
-            chart.add_data(data_range, titles_from_data=True)
-            chart.set_categories(categories)
-            chart.title = chart_data.get("title", f"{sheet_name} チャート")
+            chart.add_data(data_range, titles_from_data=True)  # type: ignore[possibly-unbound]
+            chart.set_categories(categories)  # type: ignore[possibly-unbound]
+            chart.title = chart_data.get("title", f"{sheet_name} チャート")  # type: ignore[possibly-unbound]
             
             # チャート配置
-            ws.add_chart(chart, "E2")
+            ws.add_chart(chart, "E2")  # type: ignore[possibly-unbound]
     
     def _create_summary_sheet(self, wb, sheet_name, config):
         """サマリーシート作成"""
@@ -215,15 +215,15 @@ class AdvancedExcelSystem:
             
             # 1. 生データシート
             ws_data = wb.active
-            ws_data.title = "生データ"
+            ws_data.title = "生データ"  # type: ignore[union-attr]
             
             # データをExcelに書き込み
             for col, column_name in enumerate(df.columns, 1):
-                ws_data.cell(row=1, column=col, value=column_name).font = Font(bold=True)
+                ws_data.cell(row=1, column=col, value=column_name).font = Font(bold=True)  # type: ignore[union-attr]
             
             for row, (_, data_row) in enumerate(df.iterrows(), 2):
                 for col, value in enumerate(data_row, 1):
-                    ws_data.cell(row=row, column=col, value=value)
+                    ws_data.cell(row=row, column=col, value=value)  # type: ignore[union-attr]
             
             # 2. 基本統計シート
             ws_stats = wb.create_sheet("基本統計")
@@ -330,16 +330,16 @@ class AdvancedExcelSystem:
         try:
             wb = Workbook()
             ws = wb.active
-            ws.title = "自動レポート"
+            ws.title = "自動レポート"  # type: ignore[union-attr]
             
             # レポートヘッダー
-            ws.merge_cells('A1:F1')
-            header_cell = ws['A1']
+            ws.merge_cells('A1:F1')  # type: ignore[union-attr]
+            header_cell = ws['A1']  # type: ignore[index]
             header_cell.value = f"{report_config.get('title', '自動レポート')} - {datetime.now().strftime('%Y年%m月%d日')}"
             header_cell.font = Font(name='Meiryo UI', size=16, bold=True, color="FFFFFF")
             header_cell.fill = PatternFill(start_color="2E8B57", end_color="2E8B57", fill_type="solid")
             header_cell.alignment = Alignment(horizontal="center", vertical="center")
-            ws.row_dimensions[1].height = 35
+            ws.row_dimensions[1].height = 35  # type: ignore[union-attr]
             
             # レポートセクション
             sections = report_config.get("sections", [])
@@ -347,7 +347,7 @@ class AdvancedExcelSystem:
             
             for section in sections:
                 # セクションタイトル
-                ws.cell(row=current_row, column=1, value=section["title"]).font = Font(size=14, bold=True, color="2E8B57")
+                ws.cell(row=current_row, column=1, value=section["title"]).font = Font(size=14, bold=True, color="2E8B57")  # type: ignore[union-attr]
                 current_row += 1
                 
                 # セクション内容
@@ -358,7 +358,7 @@ class AdvancedExcelSystem:
                     
                     # ヘッダー
                     for col, header in enumerate(headers, 1):
-                        cell = ws.cell(row=current_row, column=col, value=header)
+                        cell = ws.cell(row=current_row, column=col, value=header)  # type: ignore[union-attr]
                         cell.font = Font(bold=True)
                         cell.fill = PatternFill(start_color="E0E0E0", end_color="E0E0E0", fill_type="solid")
                     current_row += 1
@@ -366,19 +366,19 @@ class AdvancedExcelSystem:
                     # データ
                     for data_row in data:
                         for col, value in enumerate(data_row, 1):
-                            ws.cell(row=current_row, column=col, value=value)
+                            ws.cell(row=current_row, column=col, value=value)  # type: ignore[union-attr]
                         current_row += 1
                     current_row += 1
                 
                 elif "text" in section:
-                    ws.cell(row=current_row, column=1, value=section["text"])
+                    ws.cell(row=current_row, column=1, value=section["text"])  # type: ignore[union-attr]
                     current_row += 2
                 
                 elif "metrics" in section:
                     metrics = section["metrics"]
                     for metric in metrics:
-                        ws.cell(row=current_row, column=1, value=metric["label"]).font = Font(bold=True)
-                        ws.cell(row=current_row, column=2, value=metric["value"]).font = Font(size=12, color="2E8B57")
+                        ws.cell(row=current_row, column=1, value=metric["label"]).font = Font(bold=True)  # type: ignore[union-attr]
+                        ws.cell(row=current_row, column=2, value=metric["value"]).font = Font(size=12, color="2E8B57")  # type: ignore[union-attr]
                         current_row += 1
                     current_row += 1
             
@@ -408,10 +408,10 @@ class AdvancedExcelSystem:
             
             # Trinity AI シート
             ws_trinity_ai = wb.active
-            ws_trinity_ai.title = "Trinity AI"
+            ws_trinity_ai.title = "Trinity AI"  # type: ignore[union-attr]
             
-            ws_trinity_ai.merge_cells('A1:D1')
-            title_cell = ws_trinity_ai['A1']
+            ws_trinity_ai.merge_cells('A1:D1')  # type: ignore[union-attr]
+            title_cell = ws_trinity_ai['A1']  # type: ignore[index]
             title_cell.value = "Trinity AI - データ分析レポート"
             title_cell.font = Font(size=16, bold=True, color="FFFFFF")
             title_cell.fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
@@ -494,12 +494,12 @@ class AdvancedExcelSystem:
         try:
             wb = Workbook()
             ws = wb.active
-            ws.title = "リアルタイムデータ"
+            ws.title = "リアルタイムデータ"  # type: ignore[union-attr]
             
             # ヘッダー設定
             headers = ["タイムスタンプ", "データソース", "値", "ステータス", "更新時刻"]
             for col, header in enumerate(headers, 1):
-                cell = ws.cell(row=1, column=col, value=header)
+                cell = ws.cell(row=1, column=col, value=header)  # type: ignore[union-attr]
                 cell.font = Font(bold=True)
                 cell.fill = PatternFill(start_color="4169E1", end_color="4169E1", fill_type="solid")
                 cell.font = Font(color="FFFFFF")
@@ -514,7 +514,7 @@ class AdvancedExcelSystem:
             
             for row, data_row in enumerate(sample_data, 2):
                 for col, value in enumerate(data_row, 1):
-                    cell = ws.cell(row=row, column=col, value=value)
+                    cell = ws.cell(row=row, column=col, value=value)  # type: ignore[union-attr]
                     if col == 4:  # ステータス列
                         if value == "正常":
                             cell.fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")
@@ -530,9 +530,9 @@ class AdvancedExcelSystem:
             green_fill = PatternFill(start_color="4ECDC4", end_color="4ECDC4", fill_type="solid")
             
             # 値による条件付き書式
-            ws.conditional_formatting.add('C2:C100', CellIsRule(operator='greaterThan', formula=[200], fill=red_fill))
-            ws.conditional_formatting.add('C2:C100', CellIsRule(operator='between', formula=[100, 200], fill=yellow_fill))
-            ws.conditional_formatting.add('C2:C100', CellIsRule(operator='lessThan', formula=[100], fill=green_fill))
+            ws.conditional_formatting.add('C2:C100', CellIsRule(operator='greaterThan', formula=[200], fill=red_fill))  # type: ignore[union-attr]
+            ws.conditional_formatting.add('C2:C100', CellIsRule(operator='between', formula=[100, 200], fill=yellow_fill))  # type: ignore[union-attr]
+            ws.conditional_formatting.add('C2:C100', CellIsRule(operator='lessThan', formula=[100], fill=green_fill))  # type: ignore[union-attr]
             
             # ファイル保存
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')

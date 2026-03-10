@@ -49,8 +49,8 @@ class MultimodalIntegration:
     def _initialize_speech(self):
         """音声処理を初期化"""
         try:
-            self.speech_recognizer = sr.Recognizer()
-            self.speech_engine = pyttsx3.init()
+            self.speech_recognizer = sr.Recognizer()  # type: ignore[possibly-unbound]
+            self.speech_engine = pyttsx3.init()  # type: ignore[possibly-unbound]
         except Exception as e:
             print(f"音声処理初期化エラー: {e}")
     
@@ -198,15 +198,15 @@ class MultimodalIntegration:
             return result
         
         try:
-            with sr.AudioFile(audio_path) as source:
+            with sr.AudioFile(audio_path) as source:  # type: ignore[possibly-unbound]
                 audio = self.speech_recognizer.record(source)
                 text = self.speech_recognizer.recognize_google(audio, language='ja-JP')
                 
                 result["success"] = True
                 result["text"] = text
-        except sr.UnknownValueError:
+        except sr.UnknownValueError:  # type: ignore[possibly-unbound]
             result["error"] = "音声を認識できませんでした"
-        except sr.RequestError as e:
+        except sr.RequestError as e:  # type: ignore[possibly-unbound]
             result["error"] = f"音声認識サービスエラー: {e}"
         except Exception as e:
             result["error"] = f"音声変換エラー: {e}"

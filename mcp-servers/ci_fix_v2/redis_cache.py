@@ -57,7 +57,7 @@ class RedisCache:
         
         if REDIS_AVAILABLE:
             try:
-                self.redis_client = redis.Redis(
+                self.redis_client = redis.Redis(  # type: ignore[possibly-unbound]
                     host=host,
                     port=port,
                     db=db,

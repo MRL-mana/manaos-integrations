@@ -140,7 +140,7 @@ def call_llm_api(prompt: str) -> Optional[str]:
     if LLM_AVAILABLE and LLM_TYPE == "ollama":
         try:
             print("🤖 Ollama経由でLLMを呼び出し中...")
-            response = ollama_chat(
+            response = ollama_chat(  # type: ignore[possibly-unbound]
                 model="qwen3:4b",
                 message=prompt,
                 timeout=120

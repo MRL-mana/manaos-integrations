@@ -34,7 +34,7 @@ class X280ExcelDirectInput:
             wb = Workbook()
             
             # デフォルトシートを削除
-            wb.remove(wb.active)
+            wb.remove(wb.active)  # type: ignore
             
             # 1. メインデータシート
             ws_main = wb.create_sheet("メインデータ")

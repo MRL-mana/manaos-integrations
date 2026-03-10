@@ -92,7 +92,7 @@ class TrinitySlackIntegration:
             title="📋 新しいタスク",
             text=f"「{task['title']}」が追加されました",
             color="#4caf50",
-            fields=[
+            fields=[  # type: ignore
                 {"title": "優先度", "value": task.get('priority', '中'), "short": True},
                 {"title": "締切", "value": task.get('due', '未設定'), "short": True}
             ]
@@ -104,7 +104,7 @@ class TrinitySlackIntegration:
             title="📅 会議リマインダー",
             text=f"「{meeting['title']}」が間もなく開始します",
             color="#ff9800",
-            fields=[
+            fields=[  # type: ignore
                 {"title": "時刻", "value": meeting.get('time', '-'), "short": True},
                 {"title": "場所", "value": meeting.get('location', 'オンライン'), "short": True}
             ]

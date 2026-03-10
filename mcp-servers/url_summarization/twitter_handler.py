@@ -78,6 +78,6 @@ class TwitterHandler:
         match = re.search(r'/status/(\d+)', url)
         if match:
             return match.group(1)
-        return None
+        return None  # type: ignore
 
 

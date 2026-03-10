@@ -179,7 +179,7 @@ class MegaDataImporter:
             
         except Exception as e:
             logger.error(f"  ❌ Secretary: {e}")
-            result['error'] = str(e)
+            result['error'] = str(e)  # type: ignore
         
         return result
     

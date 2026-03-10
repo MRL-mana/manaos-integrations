@@ -185,28 +185,28 @@ class ComprehensiveSelfCapabilitiesSystem:
         self.learning_system = None
         if LEARNING_SYSTEM_AVAILABLE:
             try:
-                self.learning_system = LearningSystem()
+                self.learning_system = LearningSystem()  # type: ignore[operator]
             except Exception as e:
                 logger.warning(f"Learning System初期化エラー: {e}")
         
         self.auto_optimization = None
         if AUTO_OPTIMIZATION_AVAILABLE:
             try:
-                self.auto_optimization = AutoOptimization()
+                self.auto_optimization = AutoOptimization()  # type: ignore[operator]
             except Exception as e:
                 logger.warning(f"Auto Optimization初期化エラー: {e}")
         
         self.predictive_maintenance = None
         if PREDICTIVE_MAINTENANCE_AVAILABLE:
             try:
-                self.predictive_maintenance = PredictiveMaintenance()
+                self.predictive_maintenance = PredictiveMaintenance()  # type: ignore[operator]
             except Exception as e:
                 logger.warning(f"Predictive Maintenance初期化エラー: {e}")
         
         self.autonomy_system = None
         if AUTONOMY_SYSTEM_AVAILABLE:
             try:
-                self.autonomy_system = AutonomySystem()
+                self.autonomy_system = AutonomySystem()  # type: ignore[operator]
             except Exception as e:
                 logger.warning(f"Autonomy System初期化エラー: {e}")
         
@@ -214,7 +214,7 @@ class ComprehensiveSelfCapabilitiesSystem:
         self.self_evolution = None
         if SELF_EVOLUTION_AVAILABLE:
             try:
-                self.self_evolution = SelfEvolutionSystem()
+                self.self_evolution = SelfEvolutionSystem()  # type: ignore[operator]
                 logger.info("✅ Self Evolution System初期化完了")
             except Exception as e:
                 logger.warning(f"Self Evolution System初期化エラー: {e}")
@@ -223,7 +223,7 @@ class ComprehensiveSelfCapabilitiesSystem:
         self.self_protection = None
         if SELF_PROTECTION_AVAILABLE:
             try:
-                self.self_protection = SelfProtectionSystem()
+                self.self_protection = SelfProtectionSystem()  # type: ignore[operator]
                 logger.info("✅ Self Protection System初期化完了")
             except Exception as e:
                 logger.warning(f"Self Protection System初期化エラー: {e}")
@@ -232,7 +232,7 @@ class ComprehensiveSelfCapabilitiesSystem:
         self.self_management = None
         if SELF_MANAGEMENT_AVAILABLE:
             try:
-                self.self_management = SelfManagementSystem()
+                self.self_management = SelfManagementSystem()  # type: ignore[operator]
                 logger.info("✅ Self Management System初期化完了")
             except Exception as e:
                 logger.warning(f"Self Management System初期化エラー: {e}")
@@ -689,7 +689,7 @@ class ComprehensiveSelfCapabilitiesSystem:
                         return {"success": True, "message": f"設定ファイルを自動修正: {config_path}"}
                 
                 return {"success": True, "message": f"設定ファイル検証OK: {config_path}"}
-            except json.JSONDecodeError as e:
+            except json.JSONDecodeError as e:  # type: ignore[possibly-unbound]
                 # JSON解析エラーの場合、バックアップから復旧
                 backup_path = Path(f"{config_path}.backup")
                 if backup_path.exists():
@@ -795,7 +795,7 @@ class ComprehensiveSelfCapabilitiesSystem:
                             continue
                     
                     # CPU使用率を再取得
-                    time.sleep(0.1)
+                    time.sleep(0.1)  # type: ignore[attr-defined, misc]
                     for proc in processes:
                         try:
                             cpu = proc.cpu_percent()

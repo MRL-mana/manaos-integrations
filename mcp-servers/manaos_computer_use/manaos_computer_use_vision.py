@@ -122,7 +122,7 @@ class VisionEngine:
                 for keyword in actions:
                     if keyword.lower() in reasoning:
                         # テンプレートマッチを試行
-                        result = self.vision_hybrid.find_element(
+                        result = self.vision_hybrid.find_element(  # type: ignore[union-attr]
                             screenshot_path,
                             keyword,
                             confidence_threshold=0.7
@@ -134,7 +134,7 @@ class VisionEngine:
                             params['y'] = result['y']
                             
                             # 確信度ブースト
-                            boost = self.vision_hybrid.get_confidence_boost(
+                            boost = self.vision_hybrid.get_confidence_boost(  # type: ignore[union-attr]
                                 result.get('method', 'template'),
                                 template_matched=True,
                                 ocr_matched=False
@@ -176,7 +176,7 @@ class VisionEngine:
     def _call_claude(self, prompt: str, image_data: str) -> str:
         """Claude APIを呼び出し"""
         try:
-            message = self.client.messages.create(
+            message = self.client.messages.create(  # type: ignore
                 model=self.model,
                 max_tokens=2048,
                 messages=[
@@ -200,7 +200,7 @@ class VisionEngine:
                 ]
             )
             
-            return message.content[0].text
+            return message.content[0].text  # type: ignore
         
         except Exception as e:
             print(f"❌ Claude API呼び出し失敗: {e}")
@@ -217,7 +217,7 @@ class VisionEngine:
     def _call_openai(self, prompt: str, image_data: str) -> str:
         """OpenAI APIを呼び出し"""
         try:
-            response = self.client.chat.completions.create(
+            response = self.client.chat.completions.create(  # type: ignore
                 model=self.model,
                 messages=[
                     {
@@ -239,7 +239,7 @@ class VisionEngine:
                 max_tokens=2048
             )
             
-            return response.choices[0].message.content
+            return response.choices[0].message.content  # type: ignore
         
         except Exception as e:
             print(f"❌ OpenAI API呼び出し失敗: {e}")

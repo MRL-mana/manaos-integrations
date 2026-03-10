@@ -165,7 +165,7 @@ class SmartCostOptimizer:
             task = task_info["task"]
             frequency = task_info["frequency"]
             
-            analysis = self.analyze_task(task)
+            analysis = self.analyze_task(task)  # type: ignore
             cost_per_execution = analysis["cost"]
             monthly_cost = cost_per_execution * frequency
             total_cost += monthly_cost
@@ -210,7 +210,7 @@ class SmartCostOptimizer:
                 frequency = task_info["frequency"]
                 
                 # 定型化できるかチェック
-                analysis = self.analyze_task(task)
+                analysis = self.analyze_task(task)  # type: ignore
                 if analysis["complexity"] == TaskComplexity.MODERATE.value:
                     savings = breakdown["monthly_cost"]
                     potential_savings += savings

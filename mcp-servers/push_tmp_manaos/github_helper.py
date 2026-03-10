@@ -6,6 +6,7 @@ GitHubヘルパー機能
 """
 
 import os
+import sys
 import subprocess
 import json
 from pathlib import Path
@@ -32,7 +33,7 @@ class GitHubHelper:
         """
         self.github = None
         if GITHUB_INTEGRATION_AVAILABLE:
-            self.github = GitHubIntegration(token)
+            self.github = GitHubIntegration(token)  # type: ignore[possibly-unbound]
             if not self.github.is_available():
                 self.github = None
         
@@ -213,7 +214,7 @@ class GitHubHelper:
 ```
 
 ### 環境情報
-- Python: {os.sys.version}
+- Python: {sys.version}
 - OS: {os.name}
 """
         

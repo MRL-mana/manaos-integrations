@@ -73,7 +73,7 @@ class MultiModelManager:
     def query_best(
         self,
         prompt: str,
-        selection_criteria: Callable = None
+        selection_criteria: Callable = None  # type: ignore
     ) -> Dict[str, Any]:
         """
         最適なモデルでクエリを実行

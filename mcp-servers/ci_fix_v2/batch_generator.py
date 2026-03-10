@@ -205,7 +205,7 @@ class BatchGenerator:
                 style = StylePreset(style_name)
             except ValueError:
                 continue
-            req = ImageGenerateRequest(prompt=prompt, style=style)
+            req = ImageGenerateRequest(prompt=prompt, style=style)  # type: ignore[call-arg]
             tasks.append((style_name, self._service.submit_generation(req)))
 
         for style_name, task in tasks:

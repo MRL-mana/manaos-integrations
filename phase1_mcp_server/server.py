@@ -14,8 +14,8 @@ from mcp.types import TextContent, Tool
 if sys.platform == "win32":
     import io
 
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 ROOT = Path(__file__).resolve().parent.parent
 server = Server("phase1")

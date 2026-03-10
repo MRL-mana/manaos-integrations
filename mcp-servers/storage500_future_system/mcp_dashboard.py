@@ -174,7 +174,7 @@ class MCPDashboard:
         
         print("=" * 80)
     
-    def save_status(self, filename: str = None):
+    def save_status(self, filename: str = None):  # type: ignore
         """状態をJSONファイルに保存"""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

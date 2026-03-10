@@ -8,7 +8,7 @@ import requests
 
 if sys.platform == 'win32':
     import io
-    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 def _test_model_availability(model_name: str, timeout: int = 30) -> bool:
     """

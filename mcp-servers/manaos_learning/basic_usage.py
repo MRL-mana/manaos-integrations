@@ -7,10 +7,10 @@ import sys
 sys.path.insert(0, '/root')
 
 from manaos_learning import (
-    get_learning_api,
-    register_correction,
-    suggest_improvement,
-    apply_rules
+    get_learning_api,  # type: ignore[attr-defined]
+    register_correction,  # type: ignore[attr-defined]
+    suggest_improvement,  # type: ignore[attr-defined]
+    apply_rules  # type: ignore[attr-defined]
 )
 
 

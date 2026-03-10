@@ -128,7 +128,7 @@ class TestMakeRequest:
         ri.session.request.side_effect = req.exceptions.Timeout("timeout")
         result = ri._make_request("GET", "/x", max_retries=1)
         assert result is None
-        assert ri.last_error["type"] == "timeout"
+        assert ri.last_error["type"] == "timeout"  # type: ignore[index]
 
 
 # ---------------------------------------------------------------------------
@@ -140,7 +140,7 @@ class TestGetSpreadsheet:
         ri.session = MagicMock()
         ri.session.request.return_value = _make_session_response(200, {"id": "ss1", "title": "T"})
         result = ri.get_spreadsheet("ss1")
-        assert result["id"] == "ss1"
+        assert result["id"] == "ss1"  # type: ignore[index]
 
     def test_no_session_returns_none(self, monkeypatch):
         monkeypatch.delenv("ROWS_API_KEY", raising=False)
@@ -155,8 +155,8 @@ class TestListSpreadsheets:
         data = {"spreadsheets": [{"id": "ss1"}, {"id": "ss2"}]}
         ri.session.request.return_value = _make_session_response(200, data)
         result = ri.list_spreadsheets()
-        assert len(result) == 2
-        assert result[0]["id"] == "ss1"
+        assert len(result) == 2  # type: ignore
+        assert result[0]["id"] == "ss1"  # type: ignore[index]
 
     def test_new_format_items(self):
         ri = _make_ri()
@@ -164,7 +164,7 @@ class TestListSpreadsheets:
         data = [{"items": [{"id": "a"}, {"id": "b"}], "next_page_results": None}]
         ri.session.request.return_value = _make_session_response(200, data)
         result = ri.list_spreadsheets()
-        assert len(result) == 2
+        assert len(result) == 2  # type: ignore
 
     def test_dict_items_format(self):
         ri = _make_ri()
@@ -172,7 +172,7 @@ class TestListSpreadsheets:
         data = {"items": [{"id": "x"}]}
         ri.session.request.return_value = _make_session_response(200, data)
         result = ri.list_spreadsheets()
-        assert result[0]["id"] == "x"
+        assert result[0]["id"] == "x"  # type: ignore[index]
 
     def test_unexpected_format_sets_error(self):
         ri = _make_ri()
@@ -181,7 +181,7 @@ class TestListSpreadsheets:
         ri.session.request.return_value = _make_session_response(200, data)
         result = ri.list_spreadsheets()
         assert result is None
-        assert ri.last_error["type"] == "unexpected_response"
+        assert ri.last_error["type"] == "unexpected_response"  # type: ignore[index]
 
 
 class TestCreateSpreadsheet:
@@ -190,7 +190,7 @@ class TestCreateSpreadsheet:
         ri.session = MagicMock()
         ri.session.request.return_value = _make_session_response(200, {"id": "new1"})
         result = ri.create_spreadsheet("My Sheet")
-        assert result["id"] == "new1"
+        assert result["id"] == "new1"  # type: ignore[index]
         called_kwargs = ri.session.request.call_args
         assert called_kwargs is not None
 
@@ -204,7 +204,7 @@ class TestUpdateCell:
         ri.session = MagicMock()
         ri.session.request.return_value = _make_session_response(200, {"updated": True})
         result = ri.update_cell("ss1", "Sheet1", "A1", "hello")
-        assert result["updated"] is True
+        assert result["updated"] is True  # type: ignore[index]
 
     def test_no_session_returns_none(self, monkeypatch):
         monkeypatch.delenv("ROWS_API_KEY", raising=False)
@@ -218,7 +218,7 @@ class TestGetCell:
         ri.session = MagicMock()
         ri.session.request.return_value = _make_session_response(200, {"cell": "A1", "value": 42})
         result = ri.get_cell("ss1", "Sheet1", "A1")
-        assert result["value"] == 42
+        assert result["value"] == 42  # type: ignore[index]
 
 
 class TestGetRange:
@@ -243,7 +243,7 @@ class TestUpdateRange:
         ri.session = MagicMock()
         ri.session.request.return_value = _make_session_response(200, {"ok": True})
         result = ri.update_range("ss1", "Sheet1", "A1:B2", [[1, 2], [3, 4]])
-        assert result["ok"] is True
+        assert result["ok"] is True  # type: ignore[index]
 
 
 class TestSendToRows:
@@ -269,7 +269,7 @@ class TestAiQuery:
         ri.session = MagicMock()
         ri.session.request.return_value = _make_session_response(200, {"answer": "result"})
         result = ri.ai_query("ss1", "売上を分析して")
-        assert result["answer"] == "result"
+        assert result["answer"] == "result"  # type: ignore[index]
 
     def test_no_session_returns_none(self, monkeypatch):
         monkeypatch.delenv("ROWS_API_KEY", raising=False)

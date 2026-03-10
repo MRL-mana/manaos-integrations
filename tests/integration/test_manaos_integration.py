@@ -51,7 +51,7 @@ def test_slack_integration():
     """Slack Integration統合テスト"""
     print("\n=== Slack Integration統合テスト ===")
     try:
-        from slack_integration import execute_command
+        from slack_integration import execute_command  # type: ignore[attr-defined]
         
         # File Secretaryコマンドをテスト
         test_cases = [
@@ -107,8 +107,8 @@ def test_api_connection():
         else:
             print(f"⚠️ API接続失敗: HTTP {response.status_code}")
             return False
-    except httpx.ConnectError:
-        print(f"❌ API接続不可: {api_url} (起動していない可能性)")
+    except httpx.ConnectError:  # type: ignore[possibly-unbound]
+        print(f"❌ API接続不可: {api_url} (起動していない可能性)")  # type: ignore[possibly-unbound]
         return False
     except Exception as e:
         print(f"❌ API接続エラー: {e}")

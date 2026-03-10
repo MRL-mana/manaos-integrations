@@ -9,7 +9,7 @@ from typing import Optional, Dict, List, Any, Callable
 from datetime import datetime
 
 try:
-    from crewai import Agent, Task, Crew, Process
+    from crewai import Agent, Task, Crew, Process  # type: ignore[attr-defined]
     from crewai_tools import tool
     CREWAI_AVAILABLE = True
 except ImportError:
@@ -83,7 +83,7 @@ class CrewAIIntegration(BaseIntegration):
             初期化成功かどうか
         """
         try:
-            self.llm = Ollama(
+            self.llm = Ollama(  # type: ignore[possibly-unbound]
                 base_url=self.ollama_url,
                 model=self.model_name,
                 temperature=0.7
@@ -122,7 +122,7 @@ class CrewAIIntegration(BaseIntegration):
             return None
         
         try:
-            agent = Agent(
+            agent = Agent(  # type: ignore[operator]
                 role=role,
                 goal=goal,
                 backstory=backstory or f"{role}として活動するエージェントです。",
@@ -162,7 +162,7 @@ class CrewAIIntegration(BaseIntegration):
             return None
         
         try:
-            task = Task(
+            task = Task(  # type: ignore[operator]
                 description=description,
                 agent=agent,
                 expected_output=expected_output or "タスクの実行結果"
@@ -182,7 +182,7 @@ class CrewAIIntegration(BaseIntegration):
         self,
         agents: List[Any],
         tasks: List[Any],
-        process: Process = Process.sequential
+        process: Process = Process.sequential  # type: ignore[union-attr, valid-type]
     ) -> Optional[Dict[str, Any]]:
         """
         クルーを実行
@@ -199,7 +199,7 @@ class CrewAIIntegration(BaseIntegration):
             return None
         
         try:
-            crew = Crew(
+            crew = Crew(  # type: ignore[operator]
                 agents=agents,
                 tasks=tasks,
                 process=process,

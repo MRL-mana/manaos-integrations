@@ -128,34 +128,34 @@ def register_routes(app):
     @app.route('/api/auto/morning')
     def auto_morning():
         result = automation.morning_full_check()
-        return jsonify(result)
+        return jsonify(result)  # type: ignore[name-defined]
     
     @app.route('/api/auto/email_workflow')
     def auto_email():
         result = automation.email_workflow()
-        return jsonify(result)
+        return jsonify(result)  # type: ignore[name-defined]
     
     @app.route('/api/auto/meeting_prep')
     def auto_meeting():
         result = automation.meeting_prep()
-        return jsonify(result)
+        return jsonify(result)  # type: ignore[name-defined]
     
     @app.route('/api/auto/research', methods=['POST'])
     def auto_research():
-        data = request.json
+        data = request.json  # type: ignore[name-defined]
         topic = data.get('topic', '')
         result = automation.research_workflow(topic)
-        return jsonify(result)
+        return jsonify(result)  # type: ignore[name-defined]
     
     @app.route('/api/auto/end_of_day')
     def auto_end():
         result = automation.end_of_day()
-        return jsonify(result)
+        return jsonify(result)  # type: ignore[name-defined]
     
     @app.route('/api/auto/quick_optimize')
     def auto_optimize():
         result = automation.quick_optimize()
-        return jsonify(result)
+        return jsonify(result)  # type: ignore[name-defined]
 
 if __name__ == "__main__":
     # テスト実行

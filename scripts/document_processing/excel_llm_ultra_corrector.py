@@ -13,7 +13,7 @@ import os
 # Windowsでのエンコーディング処理はバッチファイルでchcp 65001を使用するため削除
 # if sys.platform == 'win32':
 #     import io
-#     sys.stdout.reconfigure(encoding='utf-8')
+#     sys.stdout.reconfigure(encoding='utf-8')  # type: ignore[attr-defined]
 
 from excel_llm_ensemble_corrector import EnsembleOCRCorrector
 

@@ -118,10 +118,10 @@ class LogResponse(BaseModel):
 # ----------------- UTILITY FUNCTIONS -----------------
 
 
-def get_repo(repo_path: str) -> git.Repo:
+def get_repo(repo_path: str) -> git.Repo:  # type: ignore[attr-defined]
     try:
-        return git.Repo(repo_path)
-    except git.InvalidGitRepositoryError:
+        return git.Repo(repo_path)  # type: ignore[attr-defined]
+    except git.InvalidGitRepositoryError:  # type: ignore[attr-defined]
         raise HTTPException(
             status_code=400, detail=f"Invalid Git repository at '{repo_path}'"
         )
@@ -279,7 +279,7 @@ def show_revision(request: GitShowRequest):
         f"Message: {commit.message.strip()}\n"
     )
     diff = commit.diff(
-        commit.parents[0] if commit.parents else git.NULL_TREE, create_patch=True
+        commit.parents[0] if commit.parents else git.NULL_TREE, create_patch=True  # type: ignore[attr-defined]
     )
     diff_text = "\n".join(d.diff.decode("utf-8") for d in diff)
     return TextResponse(result=details + "\n" + diff_text)
@@ -292,7 +292,7 @@ def show_revision(request: GitShowRequest):
 
 def init_repo(request: GitInitRequest):
     try:
-        repo = git.Repo.init(path=request.repo_path, mkdir=True)
+        repo = git.Repo.init(path=request.repo_path, mkdir=True)  # type: ignore[attr-defined]
         return TextResponse(
             result=f"Initialized empty Git repository at '{repo.git_dir}'"
         )

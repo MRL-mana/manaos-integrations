@@ -14,8 +14,8 @@ from datetime import datetime
 
 # Windowsでのエンコーディング設定
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 try:
     from google_drive_integration import GoogleDriveIntegration
@@ -83,14 +83,14 @@ def format_size(size_bytes: int) -> str:
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size_bytes < 1024.0:
             return f"{size_bytes:.2f} {unit}"
-        size_bytes /= 1024.0
+        size_bytes /= 1024.0  # type: ignore
     return f"{size_bytes:.2f} PB"
 
 
 def backup_to_google_drive(
     local_path: Path,
     drive_folder: str,
-    drive_integration: GoogleDriveIntegration
+    drive_integration: GoogleDriveIntegration  # type: ignore[valid-type]
 ) -> bool:
     """
     ディレクトリをGoogle Driveにバックアップ
@@ -209,7 +209,7 @@ def main():
         print("   google_drive_integration.py が必要です")
         return
     
-    drive = GoogleDriveIntegration()
+    drive = GoogleDriveIntegration()  # type: ignore[operator]
     if not drive.is_available():
         print("❌ Google Driveにアクセスできません")
         print("   認証情報を確認してください")

@@ -98,5 +98,5 @@ class UCB1:
                 }
                 for v in self.variants.values()
             ],
-            "best_variant": self.get_best_variant().id if self.get_best_variant() else None,
+            "best_variant": self.get_best_variant().id if self.get_best_variant() else None,  # type: ignore[union-attr]
         }

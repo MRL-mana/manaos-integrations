@@ -42,15 +42,15 @@ def _make_stub(name: str) -> types.ModuleType:
 # mcp_common
 _mc = _make_stub("mcp_common")
 if getattr(_mc, "__is_stub__", False):
-    _mc.check_mcp_available = lambda: False
-    _mc.start_health_thread = MagicMock()
-    _mc.get_mcp_logger = lambda n: MagicMock()
+    _mc.check_mcp_available = lambda: False  # type: ignore
+    _mc.start_health_thread = MagicMock()  # type: ignore
+    _mc.get_mcp_logger = lambda n: MagicMock()  # type: ignore
 
 # manaos_integrations._paths
 _mi = _make_stub("manaos_integrations")
 _mip = _make_stub("manaos_integrations._paths")
 if getattr(_mip, "__is_stub__", False):
-    _mip.MRL_MEMORY_PORT = 5105
+    _mip.MRL_MEMORY_PORT = 5105  # type: ignore
 
 # manaos関連（rag_memory_enhanced_v2が使う）
 for _mod in [
@@ -61,31 +61,31 @@ for _mod in [
     if not getattr(s, "__is_stub__", False):
         continue  # 実モジュールがある場合は属性を上書きしない
     if _mod == "manaos_logger":
-        s.get_logger = MagicMock(return_value=MagicMock())
-        s.get_service_logger = MagicMock(return_value=MagicMock())
+        s.get_logger = MagicMock(return_value=MagicMock())  # type: ignore
+        s.get_service_logger = MagicMock(return_value=MagicMock())  # type: ignore
     elif _mod == "manaos_error_handler":
-        s.ManaOSErrorHandler = MagicMock()
-        s.ErrorCategory = MagicMock()
-        s.ErrorSeverity = MagicMock()
+        s.ManaOSErrorHandler = MagicMock()  # type: ignore
+        s.ErrorCategory = MagicMock()  # type: ignore
+        s.ErrorSeverity = MagicMock()  # type: ignore
     elif _mod == "manaos_timeout_config":
-        s.get_timeout_config = MagicMock(return_value=MagicMock())
+        s.get_timeout_config = MagicMock(return_value=MagicMock())  # type: ignore
     elif _mod == "database_connection_pool":
-        s.get_pool = MagicMock(return_value=MagicMock())
+        s.get_pool = MagicMock(return_value=MagicMock())  # type: ignore
     elif _mod == "unified_cache_system":
-        s.get_unified_cache = MagicMock(return_value=MagicMock())
+        s.get_unified_cache = MagicMock(return_value=MagicMock())  # type: ignore
 
 # _paths
 _paths_stub = _make_stub("_paths")
 if getattr(_paths_stub, "__is_stub__", False):
-    _paths_stub.OLLAMA_PORT = 11434
-    _paths_stub.MRL_MEMORY_PORT = 5105
+    _paths_stub.OLLAMA_PORT = 11434  # type: ignore
+    _paths_stub.MRL_MEMORY_PORT = 5105  # type: ignore
 
 # requests
 import importlib
 _req = _make_stub("requests")
 if getattr(_req, "__is_stub__", False):
-    _req.post = MagicMock()
-    _req.get = MagicMock()
+    _req.post = MagicMock()  # type: ignore
+    _req.get = MagicMock()  # type: ignore
 
 # rag_memory_enhanced_v2 モック定義（後でパッチで差し替える）
 _rag_stub = _make_stub("rag_memory_enhanced_v2")
@@ -134,8 +134,8 @@ class _FakeEpisodicMemory:
         }
 
 
-_ep_stub.EpisodicMemory = _FakeEpisodicMemory
-_ep_stub.EpisodicEntry = _EpisodicEntry
+_ep_stub.EpisodicMemory = _FakeEpisodicMemory  # type: ignore
+_ep_stub.EpisodicEntry = _EpisodicEntry  # type: ignore
 
 
 @dataclass
@@ -154,7 +154,7 @@ class _MemoryEntry:
     embedding: Optional[List[float]] = None
 
 
-_rag_stub.MemoryEntry = _MemoryEntry
+_rag_stub.MemoryEntry = _MemoryEntry  # type: ignore
 
 
 class _FakeRAG:
@@ -212,7 +212,7 @@ class _FakeRAG:
         return [(e, 0.85) for e in self._entries[:limit]]
 
 
-_rag_stub.RAGMemoryEnhancedV2 = _FakeRAG
+_rag_stub.RAGMemoryEnhancedV2 = _FakeRAG  # type: ignore
 
 # ─── lessons_recorder スタブ ─────────────────────────────────────────────────
 
@@ -274,8 +274,8 @@ class _FakeLessonsRecorder:
 
 # リアルモジュールが既にある場合は Lesson を上書きしない
 if getattr(_lr_stub, "__is_stub__", False):
-    _lr_stub.LessonsRecorder = _FakeLessonsRecorder
-    _lr_stub.Lesson = _LessonEntry
+    _lr_stub.LessonsRecorder = _FakeLessonsRecorder  # type: ignore
+    _lr_stub.Lesson = _LessonEntry  # type: ignore
 
 # ─── agent_tracker スタブ（_UsageRecord/_AgentStats/_FakeAgentTracker 先に定義）─
 
@@ -320,9 +320,9 @@ class _FakeAgentTracker:
 
 _at_stub = _make_stub("agent_tracker")
 if getattr(_at_stub, "__is_stub__", False):
-    _at_stub.AgentTracker = _FakeAgentTracker
-    _at_stub.UsageRecord = _UsageRecord
-    _at_stub.AgentStats = _AgentStats
+    _at_stub.AgentTracker = _FakeAgentTracker  # type: ignore
+    _at_stub.UsageRecord = _UsageRecord  # type: ignore
+    _at_stub.AgentStats = _AgentStats  # type: ignore
 
 
 # ─── server モジュールをリセットしてインポート ───────────────────────────────
@@ -452,7 +452,7 @@ class TestStoreToRag:
         assert "status" in result or "error" in result  # エラーでも落ちない
 
         # 後片付け
-        _rag_stub.RAGMemoryEnhancedV2 = original
+        _rag_stub.RAGMemoryEnhancedV2 = original  # type: ignore
         srv._requests = _req
 
 
@@ -556,7 +556,7 @@ class TestMetricsRag:
         result = srv._metrics_rag()
         # RAGv2 が None → unavailable または error
         assert "rag_v2_available" in result or "error" in result
-        _rag_stub.RAGMemoryEnhancedV2 = original
+        _rag_stub.RAGMemoryEnhancedV2 = original  # type: ignore
 
     def test_avg_importance_after_store(self, fake_rag):
         fake_rag.add_memory("重要度テスト")
@@ -626,13 +626,10 @@ class TestStoreToEpisodic:
         srv._store_to_episodic("重要度チェック", session_id="s1")
         assert fake_episodic._entries[0].importance_score == 0.7
 
-    def test_returns_none_when_episodic_unavailable(self):
-        srv._episodic_memory = None
-        original = _ep_stub.EpisodicMemory
-        _ep_stub.EpisodicMemory = None  # type: ignore
+    def test_returns_none_when_episodic_unavailable(self, monkeypatch):
+        monkeypatch.setattr(srv, "_get_episodic", lambda: None)
         result = srv._store_to_episodic("unavailable test", session_id="s1")
         assert result is None
-        _ep_stub.EpisodicMemory = original
 
     def test_no_crash_on_store_error(self, fake_episodic):
         fake_episodic.store = MagicMock(side_effect=RuntimeError("broken"))
@@ -691,13 +688,10 @@ class TestMetricsEpisodic:
         result = srv._metrics_rag()
         assert result["episodic"]["total"] == 1
 
-    def test_episodic_unavailable_when_none(self, fake_rag):
-        srv._episodic_memory = None
-        original = _ep_stub.EpisodicMemory
-        _ep_stub.EpisodicMemory = None  # type: ignore
+    def test_episodic_unavailable_when_none(self, fake_rag, monkeypatch):
+        monkeypatch.setattr(srv, "_get_episodic", lambda: None)
         result = srv._metrics_rag()
         assert result["episodic"]["episodic_available"] is False
-        _ep_stub.EpisodicMemory = original
 
 
 # ─── _record_lesson() ────────────────────────────────────────────────────────
@@ -808,4 +802,4 @@ def teardown_module(module):  # noqa: ARG001
         if pre is None:
             sys.modules.pop(name, None)
         else:
-            sys.modules[name] = pre
+            sys.modules[name] = pre  # type: ignore

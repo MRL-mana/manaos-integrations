@@ -13,8 +13,8 @@ import time
 # Windowsコンソールのエンコーディング設定
 if sys.platform == "win32":
     import io
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')  # type: ignore[attr-defined]
 
 try:
     from manaos_integrations._paths import INTENT_ROUTER_PORT, UNIFIED_API_PORT

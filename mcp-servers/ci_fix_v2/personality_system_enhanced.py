@@ -78,11 +78,11 @@ class PersonalitySystemEnhanced:
         response = {
             "message": user_message,
             "personality": {
-                "name": persona.name,
-                "tone": persona.tone,
+                "name": persona.name,  # type: ignore
+                "tone": persona.tone,  # type: ignore
                 "response_style": predicted_style
             },
-            "personality_prompt": persona.personality_prompt,
+            "personality_prompt": persona.personality_prompt,  # type: ignore
             "timestamp": datetime.now().isoformat()
         }
         
@@ -159,7 +159,7 @@ class PersonalitySystemEnhanced:
             adaptations.append("応答スタイルの調整を検討")
         
         return {
-            "personality": persona.name,
+            "personality": persona.name,  # type: ignore
             "adaptations": adaptations,
             "timestamp": datetime.now().isoformat()
         }
@@ -173,9 +173,9 @@ class PersonalitySystemEnhanced:
         
         return {
             "current_persona": {
-                "name": persona.name,
-                "traits": [t.value for t in persona.traits],
-                "tone": persona.tone
+                "name": persona.name,  # type: ignore
+                "traits": [t.value for t in persona.traits],  # type: ignore
+                "tone": persona.tone  # type: ignore
             },
             "usage_stats": {
                 "total_responses": sum(

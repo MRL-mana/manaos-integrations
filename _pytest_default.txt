@@ -1,0 +1,151 @@
+[1m============================= test session starts =============================[0m
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\mana4\Desktop\manaos_integrations
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: anyio-4.12.1, asyncio-1.3.0, cov-7.0.0, mock-3.15.1
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+2026-03-09 15:26:47 [    INFO] [          mrl-memory-extractor] 笨・MRL Memory Extractor蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-09 15:26:47 [    INFO] [          mrl-memory-extractor] 笨・MRL Memory Extractor蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-09 15:26:47 [    INFO] [        mrl-memory-kill-switch] 笨・Kill Switch蛻晄悄蛹・ FWPKM=True, Write=True
+2026-03-09 15:26:47 [    INFO] [         mrl-memory-quarantine] 笨・Memory Quarantine蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 15:26:47 [    INFO] [        mrl-memory-ttl-manager] 笨・TTL Manager蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 15:26:47 [    INFO] [             mrl-memory-system] 笨・MRL Memory System蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-09 15:26:47 [    INFO] [            mrl-memory-metrics] [OK] MRL Memory Metrics蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory\metrics
+2026-03-09 15:26:47 [    INFO] [       mrl-memory-api-security] SECURITY: auth=disabled, rate_limit=enabled, max_input=200000, pii_mask=enabled
+2026-03-09 15:26:47 [    INFO] [       mrl-memory-api-security] [OK] API Security蛻晄悄蛹門ｮ御ｺ・
+2026-03-09 15:26:47 [    INFO] [        mrl-memory-integration] Security initialized: require_auth=False, api_key=SET
+2026-03-09 15:26:47 [    INFO] [    mrl-memory-rollout-manager] 笨・Rollout Manager蛻晄悄蛹・ enabled=True, write_mode=full, sample_rate=1.0, review_effect=True
+2026-03-09 15:26:48 [    INFO] [               learning_system] 笨・API隱崎ｨｼ繧ｷ繧ｹ繝・Β繧貞・譛溷喧縺励∪縺励◆
+collected 6101 items
+
+tests\e2e\test_all_features.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[33m                                      [  0%][0m
+tests\e2e\test_final_checklist.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[33ms[0m[33m                                  [  0%][0m
+tests\e2e\test_final_checklist_stable.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[33m                           [  0%][0m
+tests\e2e\test_full_workflow.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[33m                                 [  0%][0m
+tests\e2e\test_service_health_checks.py [32m.[0m[32m.[0m[32m.[0m[33m                              [  0%][0m
+tests\e2e\test_ultimate.py [32m.[0m[33m                                             [  0%][0m
+tests\e2e\test_ultra_integrated.py [31mF[0m[31m                                     [  0%][0m
+tests\e2e\test_unified_workflow.py [33ms[0m[33ms[0m[33ms[0m[32m.[0m[32m.[0m[32m.[0m[33ms[0m[33ms[0m[33ms[0m[33ms[0m[31m                            [  0%][0m
+tests\integration\test_all_apis.py [32m.[0m[32m.[0m[31m                                    [  0%][0m
+tests\integration\test_all_enhancements.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                         [  0%][0m
+tests\integration\test_all_integrations.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                       [  0%][0m
+tests\integration\test_all_mcp_tools.py [32m.[0m[32m.[0m[32m.[0m[31m                              [  0%][0m
+tests\integration\test_all_services.py [32m.[0m[31m                                 [  0%][0m
+tests\integration\test_all_systems.py [32m.[0m[32m.[0m[31m                                 [  0%][0m
+tests\integration\test_always_ready_llm.py [32m.[0m[31m                             [  0%][0m
+tests\integration\test_api_endpoints.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                             [  1%][0m
+tests\integration\test_api_endpoints_extension.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                 [  1%][0m
+tests\integration\test_api_key_auth.py [32m.[0m[31m                                 [  1%][0m
+tests\integration\test_api_server_auth.py [32m.[0m[32m.[0m[31m                             [  1%][0m
+tests\integration\test_apis_working.py [32m.[0m[32m.[0m[31m                                [  1%][0m
+tests\integration\test_auto_reflection.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                           [  1%][0m
+tests\integration\test_auto_save.py [32m.[0m[31m                                    [  1%][0m
+tests\integration\test_brave_search.py [32m.[0m[31m                                 [  1%][0m
+tests\integration\test_comfyui_civitai.py [32m.[0m[32m.[0m[31m                             [  1%][0m
+tests\integration\test_cross_chat_reflection.py [32m.[0m[31m                        [  1%][0m
+tests\integration\test_drive_indexer.py [32m.[0m[31m                                [  1%][0m
+tests\integration\test_e2e_image_pipeline.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m          [  1%][0m
+tests\integration\test_environment_variables.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                     [  1%][0m
+tests\integration\test_fellatio_prompt.py [32m.[0m[31m                              [  1%][0m
+tests\integration\test_file_secretary_llm_integration.py [32m.[0m[32m.[0m[32m.[0m[31m             [  1%][0m
+tests\integration\test_flask_direct.py [33ms[0m[31m                                 [  1%][0m
+tests\integration\test_free_integrations.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                       [  1%][0m
+tests\integration\test_gallery_api_direct.py [32m.[0m[31m                           [  1%][0m
+tests\integration\test_gallery_models_direct.py [32m.[0m[32m.[0m[31m                       [  1%][0m
+tests\integration\test_github_integration.py [32m.[0m[31m                           [  1%][0m
+tests\integration\test_hf_manaos_integration.py [31mF[0m[31m                        [  1%][0m
+tests\integration\test_implementations.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                         [  2%][0m
+tests\integration\test_improved_integrations.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                  [  2%][0m
+tests\integration\test_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                              [  2%][0m
+tests\integration\test_integration_all.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                           [  2%][0m
+tests\integration\test_integration_flow.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                         [  2%][0m
+tests\integration\test_intrinsic_motivation_integration.py [32m.[0m[31m             [  2%][0m
+tests\integration\test_lfm25_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                         [  2%][0m
+tests\integration\test_llm_routing.py [32m.[0m[32m.[0m[31m                                 [  2%][0m
+tests\integration\test_lm_studio.py [32m.[0m[31m                                    [  2%][0m
+tests\integration\test_lm_studio_direct.py [32m.[0m[32m.[0m[31m                            [  2%][0m
+tests\integration\test_lm_studio_load_model.py [32m.[0m[32m.[0m[31m                        [  2%][0m
+tests\integration\test_lm_studio_working.py [32m.[0m[31m                            [  2%][0m
+tests\integration\test_ltx2.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                                      [  2%][0m
+tests\integration\test_ltx2_infinity_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                 [  2%][0m
+tests\integration\test_ltx2_workflow.py [32m.[0m[31m                                [  2%][0m
+tests\integration\test_manaos_github_integration.py [32m.[0m[31m                    [  2%][0m
+tests\integration\test_manaos_integration.py [32m.[0m[32m.[0m[32m.[0m[31m                         [  2%][0m
+tests\integration\test_manaos_integration_complete.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m              [  2%][0m
+tests\integration\test_manaos_modules.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                           [  3%][0m
+tests\integration\test_manaos_tools_direct.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                    [  3%][0m
+tests\integration\test_mcp_api_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                       [  3%][0m
+tests\integration\test_memory_functionality.py [32m.[0m[32m.[0m[32m.[0m[31m                       [  3%][0m
+tests\integration\test_memory_unified.py [32m.[0m[32m.[0m[31m                              [  3%][0m
+tests\integration\test_mrl_manaos_integration.py [33ms[0m[31mF[0m
+
+================================== FAILURES ===================================
+[31m[1m______________________ test_ultra_integrated_chat_smoke _______________________[0m
+[1m[31mtests\e2e\test_ultra_integrated.py[0m:19: in test_ultra_integrated_chat_smoke
+    [0m[94mfrom[39;49;00m[90m [39;49;00m[04m[96malways_ready_llm_ultra_integrated[39;49;00m[90m [39;49;00m[94mimport[39;49;00m ([90m[39;49;00m
+[1m[31mllm\always_ready_llm_ultra_integrated.py[0m:12: in <module>
+    [0m[94mfrom[39;49;00m[90m [39;49;00m[04m[96malways_ready_llm_integrated[39;49;00m[90m [39;49;00m[94mimport[39;49;00m ([90m[39;49;00m
+[1m[31mllm\always_ready_llm_integrated.py[0m:50: in <module>
+    [0m[94mclass[39;49;00m[90m [39;49;00m[04m[92mIntegratedLLMClient[39;49;00m:[90m[39;49;00m
+[1m[31mllm\always_ready_llm_integrated.py[0m:105: in IntegratedLLMClient
+    [0mmodel: ModelType = ModelType.LIGHT,[90m[39;49;00m
+                       ^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mE   AttributeError: type object '_FakeModelType' has no attribute 'LIGHT'[0m
+[31m[1m_____________________________ test_hf_integration _____________________________[0m
+[1m[31mtests\integration\test_hf_manaos_integration.py[0m:68: in test_hf_integration
+    [0m[96mprint[39;49;00m([33mf[39;49;00m[33m"[39;49;00m[33m  繝繧ｦ繝ｳ繝ｭ繝ｼ繝画焚: [39;49;00m[33m{[39;49;00minfo.get([33m'[39;49;00m[33mdownloads[39;49;00m[33m'[39;49;00m,[90m [39;49;00m[94m0[39;49;00m)[33m:[39;49;00m[33m,[39;49;00m[33m}[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mE   TypeError: unsupported format string passed to MagicMock.__format__[0m
+---------------------------- Captured stdout call -----------------------------
+============================================================
+Hugging Face邨ｱ蜷医ユ繧ｹ繝茨ｼ・anaOS邨ｱ蜷育沿・・
+============================================================
+
+[0] Hugging Face Helper逶ｴ謗･繝・せ繝・
+------------------------------------------------------------
+笨・0莉ｶ縺ｮ繝｢繝・Ν縺瑚ｦ九▽縺九ｊ縺ｾ縺励◆
+
+[1] 繝｢繝・Ν讀懃ｴ｢繝・せ繝・
+------------------------------------------------------------
+2026-03-09 15:29:05 [    INFO] [Integration.Obsidian] Obsidian縺ｮ蛻晄悄蛹悶ｒ髢句ｧ・..
+2026-03-09 15:29:05 [    INFO] [Integration.Obsidian] Obsidian Vault繧貞・譛溷喧縺励∪縺励◆: C:\Users\mana4\Documents\Obsidian Vault
+2026-03-09 15:29:05 [    INFO] [Integration.Obsidian] Obsidian縺ｮ蛻晄悄蛹悶′螳御ｺ・＠縺ｾ縺励◆
+2026-03-09 15:29:05 [    INFO] [Integration.Obsidian] 繝弱・繝井ｽ懈・螳御ｺ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+2026-03-09 15:29:05 [    INFO] [memory-unified] Obsidian縺ｫ菫晏ｭ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+2026-03-09 15:29:05 [    INFO] [memory-unified] [Remember] system: 61f2a2c3-3e81-45ba-a144-3c113b424fa4
+2026-03-09 15:29:05 [    INFO] [manaos-core-api] [Act] Hugging Face繝｢繝・Ν讀懃ｴ｢: 0莉ｶ
+笨・0莉ｶ縺ｮ繝｢繝・Ν縺瑚ｦ九▽縺九ｊ縺ｾ縺励◆
+
+[2] 繝｢繝・Ν諠・ｱ蜿門ｾ励ユ繧ｹ繝・
+------------------------------------------------------------
+2026-03-09 15:29:05 [    INFO] [Integration.Obsidian] 繝弱・繝井ｽ懈・螳御ｺ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+2026-03-09 15:29:05 [    INFO] [memory-unified] Obsidian縺ｫ菫晏ｭ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+2026-03-09 15:29:05 [    INFO] [memory-unified] [Remember] system: 8d53e914-75ce-438c-ad00-7f7c0b2cf7ef
+2026-03-09 15:29:05 [    INFO] [manaos-core-api] [Act] Hugging Face繝｢繝・Ν諠・ｱ蜿門ｾ・ runwayml/stable-diffusion-v1-5
+笨・繝｢繝・Ν諠・ｱ繧貞叙蠕励＠縺ｾ縺励◆
+  繝｢繝・ΝID: <MagicMock name='mock.get_model_info().get()' id='2598740405488'>
+------------------------------ Captured log call ------------------------------
+[32mINFO    [0m Integration.Obsidian:base_integration.py:101 Obsidian縺ｮ蛻晄悄蛹悶ｒ髢句ｧ・..
+[32mINFO    [0m Integration.Obsidian:obsidian_integration.py:52 Obsidian Vault繧貞・譛溷喧縺励∪縺励◆: C:\Users\mana4\Documents\Obsidian Vault
+[32mINFO    [0m Integration.Obsidian:base_integration.py:106 Obsidian縺ｮ蛻晄悄蛹悶′螳御ｺ・＠縺ｾ縺励◆
+[32mINFO    [0m Integration.Obsidian:obsidian_integration.py:138 繝弱・繝井ｽ懈・螳御ｺ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+[32mINFO    [0m memory-unified:memory_unified.py:160 Obsidian縺ｫ菫晏ｭ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+[32mINFO    [0m memory-unified:memory_unified.py:297 [Remember] system: 61f2a2c3-3e81-45ba-a144-3c113b424fa4
+[32mINFO    [0m manaos-core-api:manaos_core_api.py:716 [Act] Hugging Face繝｢繝・Ν讀懃ｴ｢: 0莉ｶ
+[32mINFO    [0m Integration.Obsidian:obsidian_integration.py:138 繝弱・繝井ｽ懈・螳御ｺ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+[32mINFO    [0m memory-unified:memory_unified.py:160 Obsidian縺ｫ菫晏ｭ・ C:\Users\mana4\Documents\Obsidian Vault\System\繧ｷ繧ｹ繝・Β 2026-03-09.md
+[32mINFO    [0m memory-unified:memory_unified.py:297 [Remember] system: 8d53e914-75ce-438c-ad00-7f7c0b2cf7ef
+[32mINFO    [0m manaos-core-api:manaos_core_api.py:736 [Act] Hugging Face繝｢繝・Ν諠・ｱ蜿門ｾ・ runwayml/stable-diffusion-v1-5
+[31m[1m_______________________ test_service_bridge_integration _______________________[0m
+[1m[31mtests\integration\test_mrl_manaos_integration.py[0m:44: in test_service_bridge_integration
+    [0m[94massert[39;49;00m [96misinstance[39;49;00m(services, [96mdict[39;49;00m)[90m[39;49;00m
+[1m[31mE   AssertionError: assert False[0m
+[1m[31mE    +  where False = isinstance(<MagicMock name='mock.ManaOSServiceBridge().check_manaos_services()' id='2598800671136'>, dict)[0m
+[36m[1m=========================== short test summary info ===========================[0m
+[31mFAILED[0m tests/e2e/test_ultra_integrated.py::[1mtest_ultra_integrated_chat_smoke[0m - AttributeError: type object '_FakeModelType' has no attribute 'LIGHT'
+[31mFAILED[0m tests/integration/test_hf_manaos_integration.py::[1mtest_hf_integration[0m - TypeError: unsupported format string passed to MagicMock.__format__
+[31mFAILED[0m tests/integration/test_mrl_manaos_integration.py::[1mtest_service_bridge_integration[0m - AssertionError: assert False
+[31m!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 3 failures !!!!!!!!!!!!!!!!!!!!!!!!!![0m
+[31m===== [31m[1m3 failed[0m, [32m189 passed[0m, [33m10 skipped[0m, [33m46 warnings[0m[31m in 348.29s (0:05:48)[0m[31m ======[0m
+Task was destroyed but it is pending!
+task: <Task pending name='Task-144' coro=<PerformanceMonitor.start_monitoring.<locals>.monitor_loop() running at C:\Users\mana4\Desktop\manaos_integrations\scripts\misc\performance_monitor.py:72> wait_for=<Future pending cb=[Task.task_wakeup()]>>
