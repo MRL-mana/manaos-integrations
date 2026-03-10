@@ -1,18 +1,20 @@
 # ManaOS Integrations
 
-**v2.6.2** — ManaOS統合サービスシステム
+**v2.6.3** — ManaOS統合サービスシステム
 
 VSCode/Cursorに接続するメモリベースAIアシスタント。ManaOS と外部サービス（ComfyUI / Google Drive / CivitAI / n8n / Slack / Voice など）をつなぐ統合リポジトリ。
 
-## ✅ 最新反映（2026年3月5日）
+## ✅ 最新反映（2026年3月11日）
 
+- **JARVIS Pixel7 音声秘書** 完全実装 — termux-api / sox による音声I/O + SVC歌声変換 + SSH経由リモート制御 + 自動リトライ
+- **GTD Weekly Review** 自動化（毎週日曜21:30タスク登録スクリプト追加）
+- lintエラー全修正（E302/E501/E402/E401/E231/E241/W0612）・CRLF→LF行末正規化
 - PR #55: 画像生成サービス統合（image-generationサービス、OpenAPI拡張、LLMインポートパス強化）
 - PR #56: 決済スタブAPIの追加（POST /payment/stripe、POST /payment/komoju）
 - 画像生成基盤 v0.4.0（バッチ/フィードバック/GPU/メモリ/Slack/landing）にmaster統合済み
 - `heal.py`: `wait_for_deps` 追加 — 依存サービスが UP するまで待ってから起動（上流障害 vs 単独障害を自動判別）
 - `manaosctl deps` コマンド追加 — 依存一覧・起動順序・影響度分析
 - 自動ポリシー / Control Panel (port 9800) / events / analyze コマンド群を追加
-- `.github/copilot-instructions.md` 完全最新化（正確ポート・全コマンド記載）
 
 運用入口は引き続き Unified API（9502）です。
 
