@@ -26,7 +26,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from manaos_logger import get_service_logger
+from manaos_logger import get_service_logger  # noqa: E402
 
 logger = get_service_logger("pixel7-jarvis-io")
 
@@ -36,12 +36,14 @@ logger = get_service_logger("pixel7-jarvis-io")
 
 ADB_CONFIG_PATH = _REPO_ROOT / "adb_automation_config.json"
 
+
 def _load_adb_config() -> Dict[str, Any]:
     try:
         with open(ADB_CONFIG_PATH, encoding="utf-8") as f:
             return json.load(f)
     except Exception:
         return {}
+
 
 def _get_adb_path() -> str:
     """ADB実行ファイルを探す"""
@@ -62,6 +64,7 @@ def _get_adb_path() -> str:
         if candidate.exists():
             return str(candidate)
     return "adb"
+
 
 def _get_device_serial() -> str:
     cfg = _load_adb_config()
@@ -111,6 +114,7 @@ def _run_ssh(cmd: str, timeout: int = 30) -> subprocess.CompletedProcess:
         errors="ignore",
     )
 
+
 def _run_adb(args: list, timeout: int = 30, capture: bool = True) -> subprocess.CompletedProcess:
     adb = _get_adb_path()
     serial = _get_device_serial()
@@ -126,6 +130,7 @@ def _run_adb(args: list, timeout: int = 30, capture: bool = True) -> subprocess.
         encoding="utf-8",
         errors="ignore",
     )
+
 
 def _check_ssh_connection() -> bool:
     """Pixel7 への SSH 接続確認"""
@@ -185,12 +190,14 @@ def check_connection() -> bool:
     # ADB が使えない場合は SSH で確認
     return _check_ssh_connection()
 
+
 # ========================================
 # マイク: Pixel7 で録音 → WAV に変換
 # ========================================
 
 ANDROID_TMP_WAV = "/sdcard/jarvis_mic_input.wav"
 ANDROID_TMP_MP4 = "/sdcard/jarvis_mic_input.mp4"
+
 
 def record_audio_on_pixel7(
     duration_sec: int = 5,
@@ -208,7 +215,10 @@ def record_audio_on_pixel7(
         logger.error("Pixel7 に接続されていません")
         return None
 
-    local_out = local_out or Path(tempfile.gettempdir()) / f"pixel7_mic_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+    local_out = local_out or (
+        Path(tempfile.gettempdir())
+        / f"pixel7_mic_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
+    )
 
     # 録音前に古い一時ファイルを削除 (ADB or SSH)
     try:
@@ -227,7 +237,11 @@ def record_audio_on_pixel7(
             pulled = False
             try:
                 pull_result = _run_adb(["pull", ANDROID_TMP_WAV, str(local_out)], timeout=15)
-                if pull_result.returncode == 0 and local_out.exists() and local_out.stat().st_size > 1000:
+                if (
+                    pull_result.returncode == 0
+                    and local_out.exists()
+                    and local_out.stat().st_size > 1000
+                ):
                     pulled = True
             except Exception:
                 pass
@@ -261,7 +275,9 @@ def record_audio_on_pixel7(
 
     logger.warning(
         "⚠️  Pixel7 マイク録音失敗。以下のいずれかを行ってください:\n"
-        "  A) Termux で: mkdir -p ~/.termux && echo 'allow-external-apps = true' >> ~/.termux/termux.properties\n"
+        "  A) Termux で: mkdir -p ~/.termux"
+        " && echo 'allow-external-apps = true'"
+        " >> ~/.termux/termux.properties\n"
         "  B) F-Droid から Termux:API アプリをインストール\n"
         "  その後 Termux で: pkg install -y sox"
     )
@@ -291,6 +307,7 @@ def _convert_mp4_to_wav(mp4_path: Path, wav_path: Path) -> bool:
 # ========================================
 
 ANDROID_TMP_PLAY = "/sdcard/jarvis_tts_output.wav"
+
 
 def play_audio_on_pixel7(wav_path: Path) -> bool:
     """
@@ -342,7 +359,10 @@ def play_audio_on_pixel7(wav_path: Path) -> bool:
             except Exception:
                 _run_ssh(f"rm -f {ANDROID_TMP_PLAY}", timeout=5)
             return True
-        logger.debug(f"SSH play 失敗 (rc={play_result_ssh.returncode}): {play_result_ssh.stderr[:200]}")
+        logger.debug(
+            f"SSH play 失敗 (rc={play_result_ssh.returncode}):"
+            f" {play_result_ssh.stderr[:200]}"
+        )
     except Exception as e:
         logger.debug(f"SSH play 例外: {e}")
 
@@ -378,6 +398,7 @@ def play_audio_on_pixel7(wav_path: Path) -> bool:
 
 ANDROID_TMP_PHOTO = "/sdcard/jarvis_camera_shot.jpg"
 
+
 def capture_photo_from_pixel7(
     local_out: Optional[Path] = None,
     use_front_camera: bool = False,
@@ -393,7 +414,10 @@ def capture_photo_from_pixel7(
         logger.error("Pixel7 に接続されていません")
         return None
 
-    local_out = local_out or Path(tempfile.gettempdir()) / f"pixel7_photo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
+    local_out = local_out or (
+        Path(tempfile.gettempdir())
+        / f"pixel7_photo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
+    )
     camera_id = "1" if use_front_camera else "0"
 
     logger.info(f"Pixel7 カメラで撮影中 (camera_id={camera_id})...")
@@ -444,7 +468,7 @@ def capture_photo_from_pixel7(
 # Vision: 画像 → LLM で説明
 # ========================================
 
-import httpx
+import httpx  # noqa: E402
 
 try:
     from _paths import UNIFIED_API_PORT, LLM_ROUTING_PORT
@@ -593,7 +617,9 @@ class Pixel7JarvisIO:
     def is_connected(self) -> bool:
         return check_connection()
 
-    def wait_for_connection(self, retries: Optional[int] = None, wait: Optional[float] = None) -> bool:
+    def wait_for_connection(
+        self, retries: Optional[int] = None, wait: Optional[float] = None
+    ) -> bool:
         """接続を待機してリトライする（Tailscale 再接続等に対応）"""
         max_retries = retries if retries is not None else self.reconnect_retries
         wait_sec = wait if wait is not None else self.reconnect_wait

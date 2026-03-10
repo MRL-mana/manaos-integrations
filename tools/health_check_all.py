@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import sys, io
-if sys.stdout.encoding and sys.stdout.encoding.lower() in ('cp932', 'cp950', 'cp936', 'gbk', 'shift_jis'):
+import io
+import sys
+if sys.stdout.encoding and sys.stdout.encoding.lower() in (
+    'cp932', 'cp950', 'cp936', 'gbk', 'shift_jis'
+):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 """
 tools/health_check_all.py  - ManaOS 全サービスヘルスチェッカー
@@ -26,23 +29,23 @@ import urllib.error
 # ── サービス定義 ──────────────────────────────────────────────
 SERVICES = [
     # name                   url                                     tags
-    ("unified-api",         "http://127.0.0.1:9502/health",        ["core","docker"]),
-    ("mrl-memory",          "http://127.0.0.1:9507/health",        ["core","docker"]),
-    ("learning-system",     "http://127.0.0.1:9508/health",        ["core","docker"]),
+    ("unified-api",         "http://127.0.0.1:9502/health",        ["core", "docker"]),
+    ("mrl-memory",          "http://127.0.0.1:9507/health",        ["core", "docker"]),
+    ("learning-system",     "http://127.0.0.1:9508/health",        ["core", "docker"]),
     ("tool-server",         "http://127.0.0.1:9503/health",        ["docker"]),
-    ("prometheus",          "http://127.0.0.1:9090/-/healthy",     ["monitoring","docker"]),
-    ("cadvisor",            "http://127.0.0.1:8080/healthz",       ["monitoring","docker"]),
-    ("grafana",             "http://127.0.0.1:3000/api/health",    ["monitoring","docker"]),
+    ("prometheus",          "http://127.0.0.1:9090/-/healthy",     ["monitoring", "docker"]),
+    ("cadvisor",            "http://127.0.0.1:8080/healthz",       ["monitoring", "docker"]),
+    ("grafana",             "http://127.0.0.1:3000/api/health",    ["monitoring", "docker"]),
     ("open-webui",          "http://127.0.0.1:3001/health",        ["docker"]),
     ("secretary-api",       "http://127.0.0.1:5003/health",        ["docker"]),
     ("monitoring-dash",     "http://127.0.0.1:5005/health",        ["docker"]),
     ("n8n",                 "http://127.0.0.1:5678/healthz",       ["docker"]),
-    ("gallery-api",         "http://127.0.0.1:5559/health",        ["optional","docker"]),
+    ("gallery-api",         "http://127.0.0.1:5559/health",        ["optional", "docker"]),
     ("moltbot-gateway",     "http://127.0.0.1:8088/health",        ["optional"]),
     # Windows 直接起動サービス
-    ("step-deep-research",  "http://127.0.0.1:5120/health",        ["optional","windows"]),
-    ("file-secretary",      "http://127.0.0.1:8089/health",        ["optional","windows"]),
-    ("ops-dashboard",       "http://127.0.0.1:9640/health",        ["optional","windows"]),
+    ("step-deep-research",  "http://127.0.0.1:5120/health",        ["optional", "windows"]),
+    ("file-secretary",      "http://127.0.0.1:8089/health",        ["optional", "windows"]),
+    ("ops-dashboard",       "http://127.0.0.1:9640/health",        ["optional", "windows"]),
     ("perf-monitor",        "http://127.0.0.1:9425/health",        ["docker"]),
     ("slack-bot",           "http://127.0.0.1:5300/health",        ["docker"]),
     ("voicevox",            "http://127.0.0.1:50021/version",      ["docker"]),
@@ -82,7 +85,7 @@ def check_one(name: str, url: str, tags: list) -> Dict[str, Any]:
         return {"name": name, "url": url, "tags": tags,
                 "healthy": False, "status": "error",
                 "latency_ms": latency_ms, "error": f"HTTP {e.code}"}
-    except (http.client.RemoteDisconnected, ConnectionResetError) as e:
+    except (http.client.RemoteDisconnected, ConnectionResetError):
         # サーバーが応答後に接続を切断（HTTP/1.0 または正常終了パターン）→ alive 扱い
         latency_ms = int((time.monotonic() - start) * 1000)
         return {"name": name, "url": url, "tags": tags,
@@ -98,7 +101,7 @@ def check_one(name: str, url: str, tags: list) -> Dict[str, Any]:
 def load_ledger_services(ledger_path: str, filter_tag: str = None) -> list:  # type: ignore
     """services_ledger.yaml から (name, url, tags) を生成する。"""
     try:
-        import yaml
+        import yaml  # type: ignore[import-untyped]
     except ImportError:
         print("[ERROR] pyyaml が必要です: pip install pyyaml", file=sys.stderr)
         sys.exit(1)
@@ -148,7 +151,7 @@ def print_table(results: list, ts: str):
     print(f"  {'-'*22} {'-'*10} {'-'*8}  {'-'*35}")
     for r in results:
         mark = "OK" if r["healthy"] else "NG"
-        color_on  = "\033[32m" if r["healthy"] else "\033[31m"
+        color_on = "\033[32m" if r["healthy"] else "\033[31m"
         color_off = "\033[0m"
         lat = f"{r['latency_ms']}ms" if r["latency_ms"] < 9999 else "timeout"
         port = r["url"].split(":")[2].split("/")[0]

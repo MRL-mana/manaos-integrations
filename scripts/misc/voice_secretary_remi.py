@@ -45,7 +45,7 @@ except Exception:  # pragma: no cover
 # プロジェクトルートをパスに追加
 sys.path.insert(0, str(Path(__file__).parent))
 
-from voice_integration import (
+from voice_integration import (  # noqa: E402
     create_stt_engine,
     create_tts_engine,
     VoiceConversationLoop
@@ -60,12 +60,16 @@ logger = get_service_logger("voice-secretary-remi")
 INTENT_ROUTER_URL = os.getenv("INTENT_ROUTER_URL", f"http://127.0.0.1:{INTENT_ROUTER_PORT}")
 UNIFIED_API_URL = os.getenv("UNIFIED_API_URL", f"http://127.0.0.1:{UNIFIED_API_PORT}")
 LLM_ROUTING_URL = os.getenv("LLM_ROUTING_URL", f"http://127.0.0.1:{LLM_ROUTING_PORT}")
-PERSONALITY_SYSTEM_URL = os.getenv("PERSONALITY_SYSTEM_URL", f"http://127.0.0.1:{PERSONALITY_SYSTEM_PORT}")
+PERSONALITY_SYSTEM_URL = os.getenv(
+    "PERSONALITY_SYSTEM_URL", f"http://127.0.0.1:{PERSONALITY_SYSTEM_PORT}"
+)
 AUTONOMY_SYSTEM_URL = os.getenv("AUTONOMY_SYSTEM_URL", f"http://127.0.0.1:{AUTONOMY_SYSTEM_PORT}")
 RAG_MEMORY_URL = os.getenv("RAG_MEMORY_URL", f"http://127.0.0.1:{RAG_MEMORY_PORT}")
 LEARNING_SYSTEM_URL = os.getenv("LEARNING_SYSTEM_URL", f"http://127.0.0.1:{LEARNING_SYSTEM_PORT}")
 N8N_URL = os.getenv("N8N_URL", f"http://127.0.0.1:{N8N_PORT}")
-WINDOWS_AUTOMATION_URL = os.getenv("WINDOWS_AUTOMATION_URL", f"http://127.0.0.1:{WINDOWS_AUTOMATION_PORT}")
+WINDOWS_AUTOMATION_URL = os.getenv(
+    "WINDOWS_AUTOMATION_URL", f"http://127.0.0.1:{WINDOWS_AUTOMATION_PORT}"
+)
 PICO_HID_URL = os.getenv("PICO_HID_URL", f"http://127.0.0.1:{PICO_HID_PORT}")
 NOTION_AVAILABLE = os.getenv("NOTION_API_KEY") is not None
 SLACK_AVAILABLE = os.getenv("SLACK_WEBHOOK_URL") is not None
@@ -79,6 +83,7 @@ _CONVERSATION_SESSION_ID: str = datetime.now().strftime("remi_%Y%m%d%H%M%S")
 # エピソード記憶インスタンス（遅延初期化）
 _episodic_memory_instance = None
 
+
 def _get_episodic_memory() -> "Optional[Any]":
     """EpisodicMemory インスタンスを遅延取得"""
     global _episodic_memory_instance
@@ -89,6 +94,7 @@ def _get_episodic_memory() -> "Optional[Any]":
         except Exception:
             pass
     return _episodic_memory_instance
+
 
 # autonomy systemに通知する intent の種別
 _AUTONOMY_INTENT_TYPES = {"task_execution", "system_control", "scheduling"}
@@ -239,8 +245,8 @@ def create_intent_router_callback():
         """同期ラッパー"""
         return asyncio.run(classify_intent_async(text))
     
-    return intent_router_callback
-  # type: ignore
+    return intent_router_callback  # type: ignore
+
 
 def create_task_registration_callback():
     """タスク自動登録コールバックを作成（タスクキュー + autonomy system 両方に通知）"""
@@ -336,7 +342,11 @@ def create_conversation_save_callback():
                         f"{UNIFIED_API_URL}/api/obsidian/create",
                         json={
                             "title": f"音声会話 - {conversation_entry['timestamp']}",
-                            "content": f"**ユーザー**: {conversation_entry['user']}\n\n**レミ**: {conversation_entry['assistant']}\n\n**意図**: {conversation_entry.get('intent', 'unknown')}"
+                            "content": (
+                                f"**ユーザー**: {conversation_entry['user']}\n\n"
+                                f"**レミ**: {conversation_entry['assistant']}\n\n"
+                                f"**意図**: {conversation_entry.get('intent', 'unknown')}"
+                            ),
                         }
                     )
                     if response.status_code == 200:
@@ -351,7 +361,10 @@ def create_conversation_save_callback():
                     response = await client.post(
                         os.getenv("SLACK_WEBHOOK_URL"),  # type: ignore
                         json={
-                            "text": f"🎤 音声会話\n**ユーザー**: {conversation_entry['user']}\n**レミ**: {conversation_entry['assistant']}"
+                            "text": (
+                                f"🎤 音声会話\n**ユーザー**: {conversation_entry['user']}\n"
+                                f"**レミ**: {conversation_entry['assistant']}"
+                            ),
                         }
                     )
                     if response.status_code == 200:
@@ -385,7 +398,9 @@ def create_conversation_save_callback():
                         "output": conversation_entry.get("assistant", ""),
                         "intent": conversation_entry.get("intent", "unknown"),
                         "session_id": _CONVERSATION_SESSION_ID,
-                        "timestamp": conversation_entry.get("timestamp", datetime.now().isoformat()),
+                        "timestamp": conversation_entry.get(
+                            "timestamp", datetime.now().isoformat()
+                        ),
                     },
                 )
                 logger.debug("✅ Learning System に学習データを送信しました")
@@ -608,7 +623,10 @@ def main() -> None:
 
     logger.info("🤖 ManaOS JARVISパイプライン 起動中...")
     if use_pixel7:
-        logger.info("   📱 Pixel7 I/O → STT → Intent Router → [Autonomy/LLM+Personality] → Pixel7 スピーカー")
+        logger.info(
+            "   📱 Pixel7 I/O → STT → Intent Router"
+            " → [Autonomy/LLM+Personality] → Pixel7 スピーカー"
+        )
     else:
         logger.info("   音声入力 → STT → Intent Router → [Autonomy/LLM+Personality] → VOICEVOX → 音声出力")
 
@@ -675,6 +693,7 @@ def main() -> None:
 
             # llm_callback をラップしてカメラキーワードを横取り
             _orig_llm = llm_callback
+
             def llm_callback_with_camera(text: str) -> str:  # type: ignore[misc]
                 if any(kw in text for kw in ["カメラ", "撮影", "見て", "何が見える"]):
                     return pixel7_io.shoot(prompt=text)
