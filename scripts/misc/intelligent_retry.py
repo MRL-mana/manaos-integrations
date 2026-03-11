@@ -15,6 +15,7 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 from functools import wraps
 import asyncio
+import inspect
 
 # 統一モジュールのインポート
 from manaos_logger import get_logger, get_service_logger
@@ -238,7 +239,7 @@ class IntelligentRetry:
         
         for attempt in range(self.retry_config.max_retries + 1):
             try:
-                if asyncio.iscoroutinefunction(func):
+                if inspect.iscoroutinefunction(func):
                     result = await func(*args, **kwargs)
                 else:
                     result = func(*args, **kwargs)

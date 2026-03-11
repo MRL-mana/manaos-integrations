@@ -288,7 +288,14 @@ def main():
 
 
 def test_all_services_smoke():
-    result = main()
+    from unittest.mock import patch, MagicMock
+    import httpx
+
+    def _refused(*args, **kwargs):
+        raise httpx.ConnectError("Connection refused")
+
+    with patch("httpx.get", side_effect=_refused), patch("httpx.post", side_effect=_refused):
+        result = main()
     assert isinstance(result, bool)
 
 

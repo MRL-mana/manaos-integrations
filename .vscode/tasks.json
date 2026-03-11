@@ -1,4 +1,4 @@
-{
+﻿{
   "version": "2.0.0",
   "inputs": [
     {
@@ -16,7 +16,7 @@
       "args": ["scripts/generate_image_cli.py", "${input:manaosImagePrompt}"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true },
       "group": "none"
     },
     {
@@ -26,7 +26,7 @@
       "args": ["scripts/generate_image_cli.py", "--mufufu", "${input:manaosImagePrompt}"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true },
       "group": "none"
     },
     {
@@ -36,7 +36,7 @@
       "args": ["scripts/generate_image_cli.py", "--lab", "${input:manaosImagePrompt}"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true },
       "group": "none"
     },
     {
@@ -46,7 +46,7 @@
       "args": ["scripts/generate_image_cli.py", "--jp", "${input:manaosImagePrompt}"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true },
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true },
       "group": "none"
     },
     {
@@ -56,7 +56,7 @@
       "args": ["${workspaceFolder}/tools/manaosctl.py", "policy", "--list"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared" }
+      "presentation": { "reveal": "silent", "panel": "shared" }
     },
     {
       "label": "ManaOS: policy --check",
@@ -65,7 +65,7 @@
       "args": ["${workspaceFolder}/tools/manaosctl.py", "policy", "--check"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared" }
+      "presentation": { "reveal": "silent", "panel": "shared" }
     },
     {
       "label": "ManaOS: Control Panel 起動 (port 9800)",
@@ -75,7 +75,7 @@
       "isBackground": true,
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "dedicated" }
+      "presentation": { "reveal": "silent", "panel": "dedicated" }
     },
     {
       "label": "ManaOS: Control Panel を開く (ブラウザ)",
@@ -93,7 +93,7 @@
       "args": ["${workspaceFolder}/scripts/misc/manaos_daily_report.py", "--stdout"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared" }
+      "presentation": { "reveal": "silent", "panel": "shared" }
     },
 
     // ─── manaosctl 運用タスク群 ──────────────────────────────
@@ -104,7 +104,7 @@
       "args": ["tools/manaosctl.py", "status"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "ManaOS: ② up（Tier0+1 起動）",
@@ -113,7 +113,7 @@
       "args": ["tools/manaosctl.py", "up"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "ManaOS: ③ heal（DOWNを自動復旧）",
@@ -122,7 +122,7 @@
       "args": ["tools/manaosctl.py", "heal"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "ManaOS: ④ deps --order（起動順序確認）",
@@ -131,7 +131,7 @@
       "args": ["tools/manaosctl.py", "deps", "--order"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "ManaOS: ⑤ events（直近イベント30件）",
@@ -140,7 +140,7 @@
       "args": ["tools/manaosctl.py", "events"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "ManaOS: ⑥ analyze（LLMでイベント分析）",
@@ -149,7 +149,7 @@
       "args": ["tools/manaosctl.py", "analyze"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "ManaOS: ⑦ tier（Tier別サービス一覧）",
@@ -158,7 +158,7 @@
       "args": ["tools/manaosctl.py", "tier"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "ManaOS: heal --dry-run（復旧プレビュー）",
@@ -167,7 +167,7 @@
       "args": ["tools/manaosctl.py", "heal", "--dry-run"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "ManaOS: deps（全依存一覧）",
@@ -176,7 +176,7 @@
       "args": ["tools/manaosctl.py", "deps"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "ManaOS: deps --tree（blast-radius ツリー）",
@@ -185,7 +185,7 @@
       "args": ["tools/manaosctl.py", "deps", "--tree"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "ManaOS: watch --once（監視1回実行）",
@@ -194,7 +194,7 @@
       "args": ["tools/manaosctl.py", "watch", "--once"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "ManaOS: watch（60秒間隔 監視ループ）",
@@ -203,7 +203,7 @@
       "args": ["tools/manaosctl.py", "watch"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     // ── GTD ──────────────────────────────────────────────────────────────────
     {
@@ -213,7 +213,7 @@
       "args": ["tools/manaosctl.py", "gtd", "morning"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "shell: ManaOS: GTD Inbox一覧（件数確認）",
@@ -222,7 +222,7 @@
       "args": ["tools/manaosctl.py", "gtd", "inbox"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "shell: ManaOS: GTD Morning タスク登録（毎朝07:00）",
@@ -236,7 +236,7 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "shell: ManaOS: GTD Morning タスク解除",
@@ -245,7 +245,7 @@
       "args": ["/Delete", "/TN", "ManaOS_GTD_Morning", "/F"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "shell: ManaOS: GTD Capture Server 起動（port 5130）",
@@ -255,7 +255,7 @@
       "options": { "cwd": "${workspaceFolder}" },
       "isBackground": true,
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "dedicated", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "dedicated", "echo": true }
     },
     {
       "label": "shell: ManaOS: GTD Capture Server 停止",
@@ -264,7 +264,7 @@
       "args": ["-Command", "Get-NetTCPConnection -LocalPort 5130 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id (Get-Process -Id (Get-NetTCPConnection -LocalPort 5130 -State Listen).OwningProcess).Id -Force }; Write-Host 'GTD Capture Server 停止完了 (port 5130)'"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "shell: ManaOS: GTD Capture ヘルスチェック",
@@ -273,7 +273,7 @@
       "args": ["-Command", "try { $r = Invoke-RestMethod http://127.0.0.1:5130/health; Write-Host \"UP: $($r | ConvertTo-Json -Compress)\" } catch { Write-Host 'DOWN: GTD Capture Server は起動していません' }"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "shell: ManaOS: GTD Pixel7 Shortcuts インポートファイルを開く",
@@ -282,7 +282,7 @@
       "args": ["http://127.0.0.1:5130/import/shortcuts"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "shell: ManaOS: GTD Pixel7 ショートカット インポート実行",
@@ -291,7 +291,7 @@
       "args": ["-Command", "Invoke-WebRequest http://127.0.0.1:5130/download/gtd-shortcuts -OutFile $env:TEMP\\gtd_pixel7_shortcuts.json; Write-Host \"保存先: $env:TEMP\\gtd_pixel7_shortcuts.json\""],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "shell: ManaOS: GTD Next Actions一覧",
@@ -300,7 +300,7 @@
       "args": ["tools/manaosctl.py", "gtd", "next"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "shell: ManaOS: GTD Process（Inbox振り分け）",
@@ -309,7 +309,7 @@
       "args": ["tools/manaosctl.py", "gtd", "process"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "dedicated", "echo": true, "focus": true }
+      "presentation": { "reveal": "silent", "panel": "dedicated", "echo": true, "focus": false }
     },
     {
       "label": "shell: ManaOS: GTD Weekly Review",
@@ -318,7 +318,7 @@
       "args": ["tools/manaosctl.py", "gtd", "weekly"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "shell: ManaOS: GTD Commit (daily log)",
@@ -327,7 +327,7 @@
       "args": ["tools/manaosctl.py", "gtd", "commit", "--push"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "echo": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "echo": true }
     },
     {
       "label": "shell: ManaOS: GTD Do（今これをやる）",
@@ -336,7 +336,7 @@
       "args": ["tools/manaosctl.py", "gtd", "do"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "dedicated", "echo": true, "focus": true }
+      "presentation": { "reveal": "silent", "panel": "dedicated", "echo": true, "focus": false }
     },
     {
       "label": "shell: ManaOS: GTD Done（完了！）",
@@ -345,7 +345,7 @@
       "args": ["tools/manaosctl.py", "gtd", "done"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "dedicated", "echo": true, "focus": true }
+      "presentation": { "reveal": "silent", "panel": "dedicated", "echo": true, "focus": false }
     },
     {
       "label": "🎤 JARVIS: Pixel7 起動",
@@ -354,7 +354,7 @@
       "args": ["-NoExit", "-File", "${workspaceFolder}/scripts/misc/run_pixel7_jarvis.ps1"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true, "clear": true }
+      "presentation": { "reveal": "silent", "panel": "dedicated", "focus": false, "clear": true }
     },
     {
       "label": "🎤 JARVIS: Pixel7 起動（カメラ有効）",
@@ -363,7 +363,7 @@
       "args": ["-NoExit", "-File", "${workspaceFolder}/scripts/misc/run_pixel7_jarvis.ps1", "-Camera"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true, "clear": true }
+      "presentation": { "reveal": "silent", "panel": "dedicated", "focus": false, "clear": true }
     },
     {
       "label": "⛔ JARVIS: Pixel7 停止",
@@ -372,7 +372,7 @@
       "args": ["-Command", "Get-Process python -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match 'voice_secretary_remi' } | Stop-Process -Force; Write-Host '✅ JARVIS 停止しました'"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "focus": false }
+      "presentation": { "reveal": "silent", "panel": "shared", "focus": false }
     },
     {
       "label": "🔌 JARVIS: Pixel7 接続テスト",
@@ -381,7 +381,7 @@
       "args": ["-Command", "$adb = 'C:\\Users\\mana4\\Desktop\\scrcpy\\scrcpy-win64-v3.3.4\\adb.exe'; Write-Host '--- ADB devices ---'; & $adb devices; Write-Host ''; Write-Host '--- SSH ping ---'; ssh -i ~/.ssh/id_ed25519 -p 8022 -o StrictHostKeyChecking=no -o ConnectTimeout=5 100.84.2.125 'echo OK' 2>&1 | ForEach-Object { Write-Host $_ }"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "shared", "focus": true }
+      "presentation": { "reveal": "silent", "panel": "shared", "focus": false }
     }
   ]
 }

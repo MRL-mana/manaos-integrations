@@ -423,9 +423,12 @@ def get_dashboard_data():
                     "charts": charts_data
                 }
         
-        # 同期的に実行（簡易版）
+        # 同期的に実行（既存のイベントループがある場合も安全に動作）
         import asyncio
-        data = asyncio.run(fetch_metrics())
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(asyncio.run, fetch_metrics())
+            data = future.result()
         
         return jsonify(data)
     

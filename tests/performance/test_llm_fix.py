@@ -81,7 +81,14 @@ class TestLLMClientFix:
         try:
             import slack_integration
             # LLM_AVAILABLE 属性が True/False いずれかに設定されているか、なければ skip
+            # slack_integration はサブパッケージなので slack_integration.slack_integration も確認
             llm_available = getattr(slack_integration, "LLM_AVAILABLE", None)
+            if llm_available is None:
+                try:
+                    import slack_integration.slack_integration as _si_mod
+                    llm_available = getattr(_si_mod, "LLM_AVAILABLE", None)
+                except Exception:
+                    pass
             if llm_available is None:
                 pytest.skip("slack_integration has no LLM_AVAILABLE attribute")
             assert isinstance(llm_available, bool)

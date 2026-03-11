@@ -80,17 +80,6 @@ extend-exclude = '''
 )/
 '''
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = "-v --tb=short"
-filterwarnings = [
-    "ignore::pytest.PytestUnknownMarkWarning",
-    "ignore:The NumPy module was reloaded.*:UserWarning:PIL\\._typing",
-]
-
 [tool.mypy]
 python_version = "3.11"
 warn_return_any = true

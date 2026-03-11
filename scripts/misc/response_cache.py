@@ -14,6 +14,7 @@ from pathlib import Path
 from dataclasses import dataclass, asdict
 from functools import wraps
 import asyncio
+import inspect
 
 # 統一モジュールのインポート
 from manaos_logger import get_logger, get_service_logger
@@ -356,7 +357,7 @@ class ResponseCache:
                     return cached_value
                 
                 # キャッシュミス - 関数を実行
-                if asyncio.iscoroutinefunction(func):
+                if inspect.iscoroutinefunction(func):
                     result = await func(*args, **kwargs)
                 else:
                     result = func(*args, **kwargs)
@@ -381,7 +382,7 @@ class ResponseCache:
                 
                 return result
             
-            if asyncio.iscoroutinefunction(func):
+            if inspect.iscoroutinefunction(func):
                 return async_wrapper  # type: ignore
             else:
                 return sync_wrapper

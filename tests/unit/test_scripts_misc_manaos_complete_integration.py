@@ -53,10 +53,25 @@ from scripts.misc.manaos_complete_integration import ManaOSCompleteIntegration
 # Fixtures
 # ══════════════════════════════════════════════════════════════════════════
 
+@pytest.fixture(autouse=True)
+def _block_http(monkeypatch):
+    """Prevent any real HTTP connections in all tests in this module."""
+    monkeypatch.setattr("requests.Session", MagicMock)
+    monkeypatch.setattr("requests.get", MagicMock(side_effect=ConnectionError("no http")))
+    monkeypatch.setattr("requests.post", MagicMock(side_effect=ConnectionError("no http")))
+
+
 @pytest.fixture
 def integration():
     """ManaOSCompleteIntegration with all optional systems mocked"""
-    return ManaOSCompleteIntegration()
+    ci = ManaOSCompleteIntegration()
+    # Replace n8n with a safe mock regardless of contamination state
+    mock_n8n = MagicMock()
+    mock_n8n.list_workflows.return_value = []
+    mock_n8n.is_available.return_value = True
+    mock_n8n.base_url = "http://localhost:5678"
+    ci.n8n = mock_n8n
+    return ci
 
 
 # ══════════════════════════════════════════════════════════════════════════

@@ -89,6 +89,13 @@ def pytest_configure(config):
         import manaos_logger  # noqa: F401
     except Exception:
         pass
+    # unit テスト収集時の sys.modules 直接代入による汚染を防ぐため、
+    # collection 前に重要モジュールを事前インポートしてキャッシュする
+    for _mod in ("_paths", "manaos_core_api", "unified_api_server"):
+        try:
+            __import__(_mod)
+        except Exception:
+            pass
     _restore_stdio()
 
 

@@ -221,11 +221,7 @@ class TestWindowsAutomationMCPServer:
     def test_server_has_tools(self):
         """サーバーに16ツールが登録されている"""
         try:
-            from windows_automation_mcp_server.server import app  # type: ignore[attr-defined]
-            # mcp Server の _tools_list にアクセス（mcp ライブラリの内部構造に依存）
-            # 存在しなければスキップ
-            if hasattr(app, "list_tools"):
-                pytest.skip("Cannot inspect tools without running server")
+            from windows_automation_mcp_server.server import server as app  # type: ignore[attr-defined]
             assert app is not None
         except Exception:
             pytest.skip("Cannot inspect MCP app in test env")

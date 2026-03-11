@@ -6,8 +6,6 @@ services:
     volumes:
     - ollama_data:/root/.ollama
     - ./ollama_models:/models
-    ports:
-    - 11434:11434
     environment:
     - OLLAMA_HOST=0.0.0.0:11434
     - OLLAMA_KEEP_ALIVE=5m
@@ -25,9 +23,8 @@ services:
     healthcheck:
       test:
       - CMD
-      - curl
-      - -f
-      - http://127.0.0.1:11434/api/tags
+      - ollama
+      - list
       interval: 30s
       timeout: 10s
       retries: 3

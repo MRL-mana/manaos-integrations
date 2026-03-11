@@ -19,6 +19,7 @@ for _mod in [
     "_paths",
     "manaos_service_bridge",
     "manaos_complete_integration",
+    "manaos_performance_optimizer",  # prevent background asyncio monitoring tasks
     "ai_agent_autonomous",  # prevent emoji print on import
 ]:
     sys.modules.setdefault(_mod, MagicMock())
@@ -235,11 +236,13 @@ class TestDistributeTask:
 
 class TestOptimizeResources:
     def test_returns_dict(self, orch):
-        result = orch.optimize_resources()
+        with patch("requests.get", side_effect=ConnectionError("no")):
+            result = orch.optimize_resources()
         assert isinstance(result, dict)
 
     def test_has_resource_optimizations_key(self, orch):
-        result = orch.optimize_resources()
+        with patch("requests.get", side_effect=ConnectionError("no")):
+            result = orch.optimize_resources()
         assert "resource_optimizations" in result or "optimizations" in result
 
 
@@ -249,14 +252,16 @@ class TestOptimizeResources:
 
 class TestEnhanceSystem:
     def test_returns_dict(self, orch):
-        result = orch.enhance_system()
+        with patch("requests.get", side_effect=ConnectionError("no")):
+            result = orch.enhance_system()
         assert isinstance(result, dict)
 
     def test_doesnt_raise(self, orch):
-        try:
-            orch.enhance_system()
-        except Exception as exc:
-            pytest.fail(f"enhance_system raised: {exc}")
+        with patch("requests.get", side_effect=ConnectionError("no")):
+            try:
+                orch.enhance_system()
+            except Exception as exc:
+                pytest.fail(f"enhance_system raised: {exc}")
 
 
 # ══════════════════════════════════════════════════════════════════════════

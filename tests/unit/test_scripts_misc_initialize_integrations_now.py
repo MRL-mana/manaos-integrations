@@ -67,8 +67,10 @@ class TestInitializeIntegrationsNow:
 
     def test_import_error_handled(self, monkeypatch):
         sys.modules.pop("initialize_integrations_now", None)
-        sys.modules.pop("unified_api_server", None)
-        # Don't inject unified_api_server stub → ImportError path
+        # Simulate unified_api_server import failure (None → ImportError)
+        monkeypatch.setitem(sys.modules, "unified_api_server", None)
+        # Also block n8n_integration from making real HTTP connections
+        monkeypatch.setitem(sys.modules, "n8n_integration", MagicMock())
         sys.modules.setdefault("_paths", _make_paths_stub())
         monkeypatch.syspath_prepend(str(_MISC))
         with patch("builtins.print"), patch("time.sleep"):

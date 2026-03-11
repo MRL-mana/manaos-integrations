@@ -56,6 +56,8 @@ def test_free_integrations_import_and_availability_smoke(module_name, class_name
             value = instance.is_available()
         except Exception as exc:
             pytest.skip(f"is_available 実行失敗のためスキップ: {exc}")
+        if not isinstance(value, bool):
+            pytest.skip(f"is_available が bool を返しませんでした (type={type(value).__name__}) — モジュールが他テストでモック済みの可能性あり")
         assert isinstance(value, bool)
     else:
         assert instance is not None

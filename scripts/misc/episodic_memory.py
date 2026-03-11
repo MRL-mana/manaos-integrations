@@ -17,7 +17,7 @@ import os
 import sqlite3
 import uuid
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Dict, Any
 from pathlib import Path
 from dataclasses import dataclass, asdict, field
@@ -66,7 +66,7 @@ class EpisodicEntry:
         tags: Optional[List[str]] = None,
         ttl_hours: int = DEFAULT_TTL_HOURS,
     ) -> "EpisodicEntry":
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         return cls(
             entry_id=str(uuid.uuid4()),
             content=content,
@@ -81,7 +81,7 @@ class EpisodicEntry:
         )
 
     def is_expired(self) -> bool:
-        return datetime.utcnow() > datetime.fromisoformat(self.expires_at)
+        return datetime.now(timezone.utc).replace(tzinfo=None) > datetime.fromisoformat(self.expires_at)
 
     def to_summary(self) -> Dict[str, Any]:
         return {
@@ -268,7 +268,7 @@ class EpisodicMemory:
 
         if not include_expired:
             conditions.append("expires_at > ?")
-            params.append(datetime.utcnow().isoformat())
+            params.append(datetime.now(timezone.utc).replace(tzinfo=None).isoformat())
 
         where = " AND ".join(conditions)
         params.append(max(1, min(limit, MAX_SEARCH_RESULTS * 2)))
@@ -308,7 +308,7 @@ class EpisodicMemory:
         params: list = [
             f"%{query}%",
             min_importance,
-            datetime.utcnow().isoformat(),
+            datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
         ]
 
         if session_id is not None:
@@ -438,7 +438,7 @@ class EpisodicMemory:
         Returns:
             削除件数
         """
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
         with self._conn() as conn:
             if also_promoted:
                 result = conn.execute(
@@ -460,7 +460,7 @@ class EpisodicMemory:
 
     def stats(self) -> Dict[str, Any]:
         """記憶ストアの統計情報を返す。"""
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
         with self._conn() as conn:
             total = conn.execute("SELECT COUNT(*) FROM episodic_entries").fetchone()[0]
             active = conn.execute(

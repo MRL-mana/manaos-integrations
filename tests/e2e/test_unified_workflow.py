@@ -271,9 +271,15 @@ class TestPerformanceUnderLoad:
 @pytest.fixture(scope="module")
 def client():
     """テスト用 Flask クライアント"""
+    import sys
+    # 他テストファイルがモジュールレベルで注入したスタブをクリアして本物をロード
+    _mods_to_refresh = ["unified_api_server", "flask", "flask_cors"]
+    _saved = {k: sys.modules.pop(k) for k in _mods_to_refresh if k in sys.modules}
     try:
         from unified_api_server import app
         app.config["TESTING"] = True
         yield app.test_client()
     except ImportError:
         pytest.skip("unified_api_server not available")
+    finally:
+        sys.modules.update(_saved)

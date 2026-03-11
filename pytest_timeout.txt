@@ -1,0 +1,171 @@
+C:\Users\mana4\Desktop\manaos_integrations\api_auth.py:27: UserWarning: MANAOS_API_KEYS 縺梧悴險ｭ螳壹〒縺吶・PI繧ｭ繝ｼ繧堤腸蠅・､画焚縺ｧ險ｭ螳壹＠縺ｦ縺上□縺輔＞縲・
+  self._load_api_keys()
+2026-03-10 17:23:54 [    INFO] [unified] 笨・API隱崎ｨｼ繧ｷ繧ｹ繝・Β繧貞・譛溷喧縺励∪縺励◆
+2026-03-10 17:23:54 [    INFO] [unified] .env繝輔ぃ繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲０S迺ｰ蠅・､画焚縺ｮ險ｭ螳壹ｒ菴ｿ逕ｨ縺励∪縺吶・
+2026-03-10 17:23:54 [ WARNING] [unified] SVI ﾃ・Wan 2.2蜍慕判逕滓・邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-10 17:23:54 [ WARNING] [unified] LTX-2蜍慕判逕滓・邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-10 17:23:54 [ WARNING] [unified] 笞・・LTX-2 Infinity邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: No module named 'ltx2_infinity_integration'
+2026-03-10 17:23:54 [ WARNING] [unified] GoogleDrive邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-10 17:23:54 [ WARNING] [llm-redis-cache] Redis縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ縲る壼ｸｸ縺ｮ繧ｭ繝｣繝・す繝･繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-10 17:23:54 [    INFO] [http-session-pool] HTTP繧ｻ繝・す繝ｧ繝ｳ繝励・繝ｫ繧貞・譛溷喧縺励∪縺励◆ (譛螟ｧ繧ｻ繝・す繝ｧ繝ｳ謨ｰ: 20)
+2026-03-10 17:23:54 [    INFO] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ繧ｭ繝｣繝・す繝･繧貞・譛溷喧縺励∪縺励◆
+2026-03-10 17:23:55 [    INFO] [Integration.Obsidian] Obsidian縺ｮ蛻晄悄蛹悶ｒ髢句ｧ・..
+2026-03-10 17:23:55 [    INFO] [Integration.Obsidian] Obsidian Vault繧貞・譛溷喧縺励∪縺励◆: C:\Users\mana4\Documents\Obsidian Vault
+2026-03-10 17:23:55 [    INFO] [Integration.Obsidian] Obsidian縺ｮ蛻晄悄蛹悶′螳御ｺ・＠縺ｾ縺励◆
+2026-03-10 17:23:55 [ WARNING] [unified] 騾夂衍繝上ヶ繝｢繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-10 17:23:55 [ WARNING] [unified] 逕ｻ蜒上せ繝医ャ繧ｯ繝｢繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-10 17:23:55 [ WARNING] [unified] OH MY OPENCODE邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-10 17:23:55 [ WARNING] [unified] Excel/LLM蜃ｦ逅・ｵｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-10 17:23:59 [    INFO] [voice-integration] 笨・faster-whisper 縺悟茜逕ｨ蜿ｯ閭ｽ縺ｧ縺・
+2026-03-10 17:23:59 [ WARNING] [voice-integration] 笞・・whisper 縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ縲ゅヵ繧ｩ繝ｼ繝ｫ繝舌ャ繧ｯ縺ｨ縺励※菴ｿ逕ｨ蜿ｯ閭ｽ縺ｧ縺・
+2026-03-10 17:23:59 [    INFO] [voice-integration] 笨・VOICEVOX API 縺悟茜逕ｨ蜿ｯ閭ｽ縺ｧ縺・
+2026-03-10 17:23:59 [    INFO] [voice-integration] 笨・Style-Bert-VITS2 API 縺悟茜逕ｨ蜿ｯ閭ｽ縺ｧ縺呻ｼ・TTP邨檎罰・・
+2026-03-10 17:23:59 [ WARNING] [voice-integration] 笞・・pyaudio 縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ縲Ｑip install pyaudio 繧貞ｮ溯｡後＠縺ｦ縺上□縺輔＞
+2026-03-10 17:23:59 [ WARNING] [voice-integration] 笞・・webrtcvad 縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ縲Ｑip install webrtcvad 繧貞ｮ溯｡後＠縺ｦ縺上□縺輔＞・・AD謾ｹ蝟・ｩ溯・・・
+2026-03-10 17:23:59 [    INFO] [unified] 笨・髻ｳ螢ｰ讖溯・邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺悟茜逕ｨ蜿ｯ閭ｽ縺ｧ縺・
+2026-03-10 17:23:59 [    INFO] [unified] 笨・Health Check Optimizer 繧貞・譛溷喧縺励∪縺励◆
+C:\Users\mana4\Desktop\.venv\Lib\site-packages\pytest_asyncio\plugin.py:247: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+2026-03-10 17:23:59 [    INFO] [          mrl-memory-extractor] 笨・MRL Memory Extractor蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-10 17:23:59 [    INFO] [          mrl-memory-extractor] 笨・MRL Memory Extractor蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-10 17:23:59 [    INFO] [        mrl-memory-kill-switch] 笨・Kill Switch蛻晄悄蛹・ FWPKM=True, Write=True
+2026-03-10 17:23:59 [    INFO] [         mrl-memory-quarantine] 笨・Memory Quarantine蛻晄悄蛹門ｮ御ｺ・
+2026-03-10 17:23:59 [    INFO] [        mrl-memory-ttl-manager] 笨・TTL Manager蛻晄悄蛹門ｮ御ｺ・
+2026-03-10 17:23:59 [    INFO] [             mrl-memory-system] 笨・MRL Memory System蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-10 17:23:59 [    INFO] [            mrl-memory-metrics] [OK] MRL Memory Metrics蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory\metrics
+2026-03-10 17:23:59 [    INFO] [       mrl-memory-api-security] SECURITY: auth=disabled, rate_limit=enabled, max_input=200000, pii_mask=enabled
+2026-03-10 17:23:59 [    INFO] [       mrl-memory-api-security] [OK] API Security蛻晄悄蛹門ｮ御ｺ・
+2026-03-10 17:23:59 [    INFO] [        mrl-memory-integration] Security initialized: require_auth=False, api_key=SET
+2026-03-10 17:23:59 [    INFO] [    mrl-memory-rollout-manager] 笨・Rollout Manager蛻晄悄蛹・ enabled=True, write_mode=full, sample_rate=1.0, review_effect=True
+2026-03-10 17:23:59 [    INFO] [               learning_system] 笨・API隱崎ｨｼ繧ｷ繧ｹ繝・Β繧貞・譛溷喧縺励∪縺励◆
+........s..................sss...ssss.................+++++++++++++++++++++++++++++++++++ Timeout +++++++++++++++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Captured stdout ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+======================================================================
+ｧｪ ManaOS 蜈ｨ繧ｵ繝ｼ繝薙せ繝・せ繝・
+======================================================================
+
+ｧｪ Intent Router (繝昴・繝・ 5100) 繝・せ繝井ｸｭ... 笞・・ Connection refused
+ｧｪ Task Planner (繝昴・繝・ 5101) 繝・せ繝井ｸｭ... 笞・・ Connection refused
+ｧｪ Task Critic (繝昴・繝・ 5102) 繝・せ繝井ｸｭ... 笞・・ Connection refused
+ｧｪ RAG險俶・騾ｲ蛹・(繝昴・繝・ 5103) 繝・せ繝井ｸｭ... 笞・・ Connection refused
+ｧｪ 豎守畑繧ｿ繧ｹ繧ｯ繧ｭ繝･繝ｼ (繝昴・繝・ 5104) 繝・せ繝井ｸｭ... 笞・・ Connection refused
+ｧｪ UI謫堺ｽ懈ｩ溯・ (繝昴・繝・ 5105) 繝・せ繝井ｸｭ... 笞・・ Connection refused
+ｧｪ 邨ｱ蜷医が繝ｼ繧ｱ繧ｹ繝医Ξ繝ｼ繧ｿ繝ｼ (繝昴・繝・ 5106) 繝・せ繝井ｸｭ... 笞・・ Connection refused
+ｧｪ Executor諡｡蠑ｵ (繝昴・繝・ 5107) 繝・せ繝井ｸｭ... 笞・・ Connection refused
+ｧｪ Portal邨ｱ蜷・(繝昴・繝・ 5108) 繝・せ繝井ｸｭ... 笞・・ Connection refused
+ｧｪ 謌先棡迚ｩ閾ｪ蜍慕函謌・(繝昴・繝・ 5109) 繝・せ繝井ｸｭ... 笞・・ Connection refused
+ｧｪ LLM譛驕ｩ蛹・(繝昴・繝・ 5110) 繝・せ繝井ｸｭ... ~~~~~~~~~~~~~~~~~~~~~~~~~~ Stack of Thread-1 (33972) ~~~~~~~~~~~~~~~~~~~~~~~~~~
+  File "C:\Users\mana4\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\mana4\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\posthog\consumer.py", line 65, in run
+    self.upload()
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\posthog\consumer.py", line 76, in upload
+    batch = self.next()
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\posthog\consumer.py", line 107, in next
+    item = queue.get(block=True, timeout=self.flush_interval - elapsed)
+  File "C:\Users\mana4\AppData\Local\Python\pythoncore-3.14-64\Lib\queue.py", line 210, in get
+    self.not_empty.wait(remaining)
+  File "C:\Users\mana4\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 373, in wait
+    gotit = waiter.acquire(True, timeout)
+~~~~~~~~~~~~~~~~~~~~~~~~~ Stack of MainThread (59484) ~~~~~~~~~~~~~~~~~~~~~~~~~
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pytest\__main__.py", line 9, in <module>
+    raise SystemExit(pytest.console_main())
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\config\__init__.py", line 223, in console_main
+    code = main()
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\config\__init__.py", line 199, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\main.py", line 365, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\main.py", line 318, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\main.py", line 372, in _main
+    config.hook.pytest_runtestloop(session=session)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\main.py", line 396, in pytest_runtestloop
+    item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\runner.py", line 118, in pytest_runtest_protocol
+    runtestprotocol(item, nextitem=nextitem)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\runner.py", line 137, in runtestprotocol
+    reports.append(call_and_report(item, "call", log))
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\runner.py", line 244, in call_and_report
+    call = CallInfo.from_call(
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\runner.py", line 353, in from_call
+    result: TResult | None = func()
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\runner.py", line 245, in <lambda>
+    lambda: runtest_hook(item=item, **kwds),
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\runner.py", line 179, in pytest_runtest_call
+    item.runtest()
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\python.py", line 1720, in runtest
+    self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\_pytest\python.py", line 166, in pytest_pyfunc_call
+    result = testfunction(**testargs)
+  File "C:\Users\mana4\Desktop\manaos_integrations\tests\integration\test_all_services.py", line 291, in test_all_services_smoke
+    result = main()
+  File "C:\Users\mana4\Desktop\manaos_integrations\tests\integration\test_all_services.py", line 253, in main
+    result = _run_service_test(name, port, test_func)
+  File "C:\Users\mana4\Desktop\manaos_integrations\tests\integration\test_all_services.py", line 26, in _run_service_test
+    result = test_func(port)
+  File "C:\Users\mana4\Desktop\manaos_integrations\tests\integration\test_all_services.py", line 221, in _test_llm_optimization
+    response = httpx.get(f"http://127.0.0.1:{port}/health", timeout=5)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\httpx\_api.py", line 195, in get
+    return request(
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\httpx\_api.py", line 109, in request
+    return client.request(
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\httpx\_client.py", line 825, in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\httpx\_transports\default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\httpcore\_sync\connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\httpcore\_sync\connection.py", line 78, in handle_request
+    stream = self._connect(request)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\httpcore\_sync\connection.py", line 124, in _connect
+    stream = self._network_backend.connect_tcp(**kwargs)
+  File "C:\Users\mana4\Desktop\.venv\Lib\site-packages\httpcore\_backends\sync.py", line 208, in connect_tcp
+    sock = socket.create_connection(
+  File "C:\Users\mana4\AppData\Local\Python\pythoncore-3.14-64\Lib\socket.py", line 855, in create_connection
+    sock.connect(sa)
++++++++++++++++++++++++++++++++++++ Timeout +++++++++++++++++++++++++++++++++++

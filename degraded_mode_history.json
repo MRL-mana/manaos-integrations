@@ -466,5 +466,59 @@
       "cpu_percent": 13.2,
       "memory_percent": 98.4
     }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-10T14:10:23.891801",
+    "context": {
+      "cpu_percent": 7.8,
+      "memory_percent": 97.1
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-10T14:10:36.450933",
+    "context": {
+      "cpu_percent": 6.4,
+      "memory_percent": 96.9
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-10T15:18:06.037567",
+    "context": {
+      "cpu_percent": 12.7,
+      "memory_percent": 98.2
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-10T15:18:28.512716",
+    "context": {
+      "cpu_percent": 13.3,
+      "memory_percent": 98.3
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-10T15:44:56.817364",
+    "context": {
+      "cpu_percent": 39.1,
+      "memory_percent": 99.3
+    }
+  },
+  {
+    "old_mode": "normal",
+    "new_mode": "minimal",
+    "timestamp": "2026-03-10T15:45:19.956242",
+    "context": {
+      "cpu_percent": 24.0,
+      "memory_percent": 99.1
+    }
   }
 ]

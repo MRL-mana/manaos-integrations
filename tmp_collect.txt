@@ -1,0 +1,15 @@
+C:\Users\mana4\Desktop\manaos_integrations\api_auth.py:27: UserWarning: MANAOS_API_KEYS 縺梧悴險ｭ螳壹〒縺吶・PI繧ｭ繝ｼ繧堤腸蠅・､画焚縺ｧ險ｭ螳壹＠縺ｦ縺上□縺輔＞縲・
+  self._load_api_keys()
+2026-03-10 18:25:43 [    INFO] [unified] 笨・API隱崎ｨｼ繧ｷ繧ｹ繝・Β繧貞・譛溷喧縺励∪縺励◆
+2026-03-10 18:25:43 [    INFO] [unified] .env繝輔ぃ繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲０S迺ｰ蠅・､画焚縺ｮ險ｭ螳壹ｒ菴ｿ逕ｨ縺励∪縺吶・
+2026-03-10 18:25:43 [ WARNING] [unified] SVI ﾃ・Wan 2.2蜍慕判逕滓・邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-10 18:25:43 [    INFO] [unified] 笨・LTX-2 Infinity邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺悟茜逕ｨ蜿ｯ閭ｽ縺ｧ縺・
+2026-03-10 18:25:45 [ WARNING] [llm-redis-cache] Redis縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ縲る壼ｸｸ縺ｮ繧ｭ繝｣繝・す繝･繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-10 18:25:45 [    INFO] [http-session-pool] HTTP繧ｻ繝・す繝ｧ繝ｳ繝励・繝ｫ繧貞・譛溷喧縺励∪縺励◆ (譛螟ｧ繧ｻ繝・す繝ｧ繝ｳ謨ｰ: 20)
+2026-03-10 18:25:45 [    INFO] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ繧ｭ繝｣繝・す繝･繧貞・譛溷喧縺励∪縺励◆
+2026-03-10 18:25:45 [    INFO] [Integration.Obsidian] Obsidian縺ｮ蛻晄悄蛹悶ｒ髢句ｧ・..
+2026-03-10 18:25:45 [    INFO] [Integration.Obsidian] Obsidian Vault繧貞・譛溷喧縺励∪縺励◆: C:\Users\mana4\Documents\Obsidian Vault
+2026-03-10 18:25:45 [    INFO] [Integration.Obsidian] Obsidian縺ｮ蛻晄悄蛹悶′螳御ｺ・＠縺ｾ縺励◆
+2026-03-10 18:25:45 [ WARNING] [unified] 騾夂衍繝上ヶ繝｢繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-10 18:25:45 [ WARNING] [unified] OH MY OPENCODE邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-10 18:25:45 [ WARNING] [unified] Excel/LLM蜃ｦ逅・ｵｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ

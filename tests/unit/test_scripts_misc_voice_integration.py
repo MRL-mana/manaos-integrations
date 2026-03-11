@@ -149,12 +149,13 @@ class TestSTTEngineInit:
         assert engine.language == "en"
 
     def test_no_model_when_packages_unavailable(self):
-        # faster_whisper and whisper are not installed
-        assert not FASTER_WHISPER_AVAILABLE
-        assert not WHISPER_CPP_AVAILABLE
-        engine = STTEngine()
-        assert engine.model is None
-        assert engine.whisper_model is None
+        # faster_whisper and whisper are not installed (mock them away to simulate absence)
+        import scripts.misc.voice_integration as _vi
+        with patch.object(_vi, "FASTER_WHISPER_AVAILABLE", False), \
+             patch.object(_vi, "WHISPER_CPP_AVAILABLE", False):
+            engine = STTEngine()
+            assert engine.model is None
+            assert engine.whisper_model is None
 
     def test_compute_type_stored(self):
         engine = STTEngine(compute_type="int8")
@@ -163,10 +164,13 @@ class TestSTTEngineInit:
 
 class TestSTTEngineTranscribe:
     def test_raises_when_no_model(self):
-        engine = STTEngine()
-        assert engine.model is None and engine.whisper_model is None
-        with pytest.raises(Exception, match="初期化されていません"):
-            engine.transcribe(b"dummy", 16000)
+        import scripts.misc.voice_integration as _vi
+        with patch.object(_vi, "FASTER_WHISPER_AVAILABLE", False), \
+             patch.object(_vi, "WHISPER_CPP_AVAILABLE", False):
+            engine = STTEngine()
+            assert engine.model is None and engine.whisper_model is None
+            with pytest.raises(Exception, match="初期化されていません"):
+                engine.transcribe(b"dummy", 16000)
 
 
 class TestSTTEngineBytesToNumpy:

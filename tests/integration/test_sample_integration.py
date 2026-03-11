@@ -56,7 +56,7 @@ def integration_test_config():
     }
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 async def http_client():
     """HTTPクライアント"""
     timeout = aiohttp.ClientTimeout(total=10)

@@ -257,8 +257,8 @@ class RedisCache:
                 
                 return result
             
-            import asyncio
-            if asyncio.iscoroutinefunction(func):
+            import inspect
+            if inspect.iscoroutinefunction(func):
                 return async_wrapper
             else:
                 return sync_wrapper

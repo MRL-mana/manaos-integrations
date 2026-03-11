@@ -1016,5 +1016,155 @@
       "パフォーマンス最適化を検討してください"
     ],
     "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773119422",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T14:10:22.881597",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773119422",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 96.1%",
+    "component": "memory",
+    "detected_at": "2026-03-10T14:10:22.881625",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773119435",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T14:10:35.441370",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773119435",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 97.9%",
+    "component": "memory",
+    "detected_at": "2026-03-10T14:10:35.441398",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773123485",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T15:18:05.026038",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773123485",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 98.2%",
+    "component": "memory",
+    "detected_at": "2026-03-10T15:18:05.026067",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773123507",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T15:18:27.502522",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773123507",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 98.2%",
+    "component": "memory",
+    "detected_at": "2026-03-10T15:18:27.502552",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773125095",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T15:44:55.804607",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773125095",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 99.2%",
+    "component": "memory",
+    "detected_at": "2026-03-10T15:44:55.804639",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "health_critical_1773125118",
+    "issue_type": "stability",
+    "severity": "critical",
+    "description": "システムヘルスがクリティカル状態です",
+    "component": "system",
+    "detected_at": "2026-03-10T15:45:18.943509",
+    "recommendations": [
+      "リソース使用率を確認してください",
+      "不要なプロセスを終了してください"
+    ],
+    "status": "detected"
+  },
+  {
+    "issue_id": "bottleneck_1773125118",
+    "issue_type": "performance",
+    "severity": "high",
+    "description": "メモリ使用率が高い: 99.1%",
+    "component": "memory",
+    "detected_at": "2026-03-10T15:45:18.943545",
+    "recommendations": [
+      "パフォーマンス最適化を検討してください"
+    ],
+    "status": "detected"
   }
 ]

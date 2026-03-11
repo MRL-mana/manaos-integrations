@@ -237,7 +237,7 @@ class TestPicoHIDMCPServer:
     def test_hid_tools_count(self):
         """サーバーに11ツールが定義されている"""
         try:
-            from pico_hid_mcp_server.server import app  # type: ignore[attr-defined]
+            from pico_hid_mcp_server.server import server as app  # type: ignore[attr-defined]
             assert app is not None
         except Exception:
             pytest.skip("Cannot inspect MCP app in test env")

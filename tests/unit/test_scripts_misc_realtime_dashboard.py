@@ -27,11 +27,14 @@ if (
     import flask as _real_flask  # noqa: F401
 
 # unified_api_server
+# 後続テスト（e2e / performance / integration）への汚染を防ぐため
+# 上書き前に元の値を保存し、SUT import 後に即座に復元する。
+_uas_original: Any = sys.modules.get("unified_api_server")
 _uas_mock: Any = cast(Any, types.ModuleType("unified_api_server"))
 _fake_integrations: dict[str, Any] = {}
 _uas_mock.initialize_integrations = MagicMock()
 _uas_mock.integrations = _fake_integrations
-sys.modules["unified_api_server"] = _uas_mock  # setdefault ではなく強制上書き
+sys.modules["unified_api_server"] = _uas_mock  # SUT import のために一時的に設定
 
 # flask_socketio
 _fsi: Any = cast(Any, types.ModuleType("flask_socketio"))
@@ -53,6 +56,15 @@ sys.modules.setdefault("ai_agent_autonomous", _aaa)
 # realtime_dashboard を強制再ロード（flask がモック状態でロードされていた場合を修正）
 sys.modules.pop("scripts.misc.realtime_dashboard", None)
 import scripts.misc.realtime_dashboard as _sut  # noqa: E402, F811
+
+# SUT が unified_api_server のモックを使って初期化されたので、
+# sys.modules["unified_api_server"] を元の値に戻す（他テストへの汚染防止）。
+# _sut.integrations は既に _fake_integrations への参照を持っているため、
+# sys.modules のエントリを戻しても _sut の動作には影響しない。
+if _uas_original is not None:
+    sys.modules["unified_api_server"] = _uas_original
+else:
+    sys.modules.pop("unified_api_server", None)
 
 
 @pytest.fixture(autouse=True)

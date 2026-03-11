@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 $repo = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $repo
@@ -88,10 +88,29 @@ if (Test-Path $lock) {
 
 New-Item -ItemType File -Path $lock -Force | Out-Null
 
+# タイムアウト上限: 120 秒
+$TimeoutMs = 120000
+$stderrLog = Join-Path $logDir "dashboard_cli_stderr.log"
+
 try {
-    & $pythonExe "tools/dashboard_cli.py" --check --ci --json --no-color | Out-File -FilePath $tmp -Encoding utf8
-    if ($LASTEXITCODE -ne 0) {
-        throw "dashboard_cli.py exited with code $LASTEXITCODE"
+    # Start-Process でタイムアウトを制御する (パイプ経由だとハング時に無限待ちになるため)
+    $procArgs = @{
+        FilePath               = $pythonExe
+        ArgumentList           = @("tools/dashboard_cli.py", "--check", "--ci", "--json", "--no-color")
+        RedirectStandardOutput = $tmp
+        RedirectStandardError  = $stderrLog
+        NoNewWindow            = $true
+        PassThru               = $true
+    }
+    $proc = Start-Process @procArgs
+
+    $finished = $proc.WaitForExit($TimeoutMs)
+    if (-not $finished) {
+        $proc.Kill()
+        throw "dashboard_cli.py timed out after $($TimeoutMs / 1000)s"
+    }
+    if ($proc.ExitCode -ne 0) {
+        throw "dashboard_cli.py exited with code $($proc.ExitCode)"
     }
 
     if (-not (Test-Path $tmp)) {
@@ -100,13 +119,14 @@ try {
 
     $dashboard = Get-Content -Path $tmp -Raw | ConvertFrom-Json
     $notifySummary = [ordered]@{
-        generated_at = (Get-Date).ToString("s")
+        generated_at              = (Get-Date).ToString("s")
         file_secretary_fail_check = Get-NotifySummary -Path (Join-Path $logDir "file_secretary_fail_check.log")
-        dashboard_alert = Get-NotifySummary -Path (Join-Path $logDir "dashboard_alert.log")
+        dashboard_alert           = Get-NotifySummary -Path (Join-Path $logDir "dashboard_alert.log")
     }
 
     $dashboard | Add-Member -MemberType NoteProperty -Name "notify" -Value $notifySummary -Force
-    $dashboard | ConvertTo-Json -Depth 20 | Set-Content -Path $tmp -Encoding utf8
+    # $dashboard | ConvertTo-Json だとパイプライン経由の型変換エラーが出るため -InputObject を使用
+    ConvertTo-Json -InputObject $dashboard -Depth 20 | Set-Content -Path $tmp -Encoding utf8
 
     Move-Item -Force $tmp $dst
     Add-Content -Path $log -Value "$ts OK"

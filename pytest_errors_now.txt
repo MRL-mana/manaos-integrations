@@ -1,0 +1,43 @@
+C:\Users\mana4\Desktop\manaos_integrations\api_auth.py:27: UserWarning: MANAOS_API_KEYS 縺梧悴險ｭ螳壹〒縺吶・PI繧ｭ繝ｼ繧堤腸蠅・､画焚縺ｧ險ｭ螳壹＠縺ｦ縺上□縺輔＞縲・
+  self._load_api_keys()
+2026-03-11 08:35:26 [    INFO] [unified] 笨・API隱崎ｨｼ繧ｷ繧ｹ繝・Β繧貞・譛溷喧縺励∪縺励◆
+2026-03-11 08:35:26 [    INFO] [unified] .env繝輔ぃ繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲０S迺ｰ蠅・､画焚縺ｮ險ｭ螳壹ｒ菴ｿ逕ｨ縺励∪縺吶・
+2026-03-11 08:35:26 [ WARNING] [unified] SVI ﾃ・Wan 2.2蜍慕判逕滓・邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-11 08:35:26 [ WARNING] [unified] LTX-2蜍慕判逕滓・邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-11 08:35:26 [ WARNING] [unified] 笞・・LTX-2 Infinity邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: No module named 'ltx2_infinity_integration'
+2026-03-11 08:35:26 [ WARNING] [unified] GoogleDrive邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-11 08:35:27 [ WARNING] [llm-redis-cache] Redis縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ縲る壼ｸｸ縺ｮ繧ｭ繝｣繝・す繝･繧剃ｽｿ逕ｨ縺励∪縺吶・
+2026-03-11 08:35:27 [    INFO] [http-session-pool] HTTP繧ｻ繝・す繝ｧ繝ｳ繝励・繝ｫ繧貞・譛溷喧縺励∪縺励◆ (譛螟ｧ繧ｻ繝・す繝ｧ繝ｳ謨ｰ: 20)
+2026-03-11 08:35:27 [    INFO] [config-cache] 險ｭ螳壹ヵ繧｡繧､繝ｫ繧ｭ繝｣繝・す繝･繧貞・譛溷喧縺励∪縺励◆
+2026-03-11 08:35:27 [    INFO] [Integration.Obsidian] Obsidian縺ｮ蛻晄悄蛹悶ｒ髢句ｧ・..
+2026-03-11 08:35:27 [    INFO] [Integration.Obsidian] Obsidian Vault繧貞・譛溷喧縺励∪縺励◆: C:\Users\mana4\Documents\Obsidian Vault
+2026-03-11 08:35:27 [    INFO] [Integration.Obsidian] Obsidian縺ｮ蛻晄悄蛹悶′螳御ｺ・＠縺ｾ縺励◆
+2026-03-11 08:35:27 [ WARNING] [unified] 騾夂衍繝上ヶ繝｢繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-11 08:35:27 [ WARNING] [unified] 逕ｻ蜒上せ繝医ャ繧ｯ繝｢繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-11 08:35:27 [ WARNING] [unified] OH MY OPENCODE邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-11 08:35:27 [ WARNING] [unified] Excel/LLM蜃ｦ逅・ｵｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ
+2026-03-11 08:35:30 [    INFO] [voice-integration] 笨・faster-whisper 縺悟茜逕ｨ蜿ｯ閭ｽ縺ｧ縺・
+2026-03-11 08:35:30 [ WARNING] [voice-integration] 笞・・whisper 縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ縲ゅヵ繧ｩ繝ｼ繝ｫ繝舌ャ繧ｯ縺ｨ縺励※菴ｿ逕ｨ蜿ｯ閭ｽ縺ｧ縺・
+2026-03-11 08:35:30 [    INFO] [voice-integration] 笨・VOICEVOX API 縺悟茜逕ｨ蜿ｯ閭ｽ縺ｧ縺・
+2026-03-11 08:35:30 [    INFO] [voice-integration] 笨・Style-Bert-VITS2 API 縺悟茜逕ｨ蜿ｯ閭ｽ縺ｧ縺呻ｼ・TTP邨檎罰・・
+2026-03-11 08:35:30 [ WARNING] [voice-integration] 笞・・pyaudio 縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ縲Ｑip install pyaudio 繧貞ｮ溯｡後＠縺ｦ縺上□縺輔＞
+2026-03-11 08:35:30 [ WARNING] [voice-integration] 笞・・webrtcvad 縺悟茜逕ｨ縺ｧ縺阪∪縺帙ｓ縲Ｑip install webrtcvad 繧貞ｮ溯｡後＠縺ｦ縺上□縺輔＞・・AD謾ｹ蝟・ｩ溯・・・
+2026-03-11 08:35:30 [    INFO] [unified] 笨・髻ｳ螢ｰ讖溯・邨ｱ蜷医Δ繧ｸ繝･繝ｼ繝ｫ縺悟茜逕ｨ蜿ｯ閭ｽ縺ｧ縺・
+2026-03-11 08:35:30 [    INFO] [unified] 笨・Health Check Optimizer 繧貞・譛溷喧縺励∪縺励◆
+C:\Users\mana4\Desktop\.venv\Lib\site-packages\pytest_asyncio\plugin.py:247: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+[1m============================= test session starts =============================[0m
+[1mcollecting ... [0m2026-03-11 08:35:30 [    INFO] [          mrl-memory-extractor] 笨・MRL Memory Extractor蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-11 08:35:30 [    INFO] [          mrl-memory-extractor] 笨・MRL Memory Extractor蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-11 08:35:30 [    INFO] [        mrl-memory-kill-switch] 笨・Kill Switch蛻晄悄蛹・ FWPKM=True, Write=True
+2026-03-11 08:35:30 [    INFO] [         mrl-memory-quarantine] 笨・Memory Quarantine蛻晄悄蛹門ｮ御ｺ・
+2026-03-11 08:35:30 [    INFO] [        mrl-memory-ttl-manager] 笨・TTL Manager蛻晄悄蛹門ｮ御ｺ・
+2026-03-11 08:35:30 [    INFO] [             mrl-memory-system] 笨・MRL Memory System蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory
+2026-03-11 08:35:30 [    INFO] [            mrl-memory-metrics] [OK] MRL Memory Metrics蛻晄悄蛹門ｮ御ｺ・ C:\Users\mana4\Desktop\manaos_integrations\mrl_memory\mrl_memory\metrics
+2026-03-11 08:35:30 [    INFO] [       mrl-memory-api-security] SECURITY: auth=disabled, rate_limit=enabled, max_input=200000, pii_mask=enabled
+2026-03-11 08:35:30 [    INFO] [       mrl-memory-api-security] [OK] API Security蛻晄悄蛹門ｮ御ｺ・
+2026-03-11 08:35:30 [    INFO] [        mrl-memory-integration] Security initialized: require_auth=False, api_key=SET
+2026-03-11 08:35:30 [    INFO] [    mrl-memory-rollout-manager] 笨・Rollout Manager蛻晄悄蛹・ enabled=True, write_mode=full, sample_rate=1.0, review_effect=True
+2026-03-11 08:35:30 [    INFO] [               learning_system] 笨・API隱崎ｨｼ繧ｷ繧ｹ繝・Β繧貞・譛溷喧縺励∪縺励◆

@@ -26,7 +26,7 @@ def test_hf_integration():
         results = helper.search_models("stable diffusion", task="text-to-image", limit=3)
         print(f"✓ {len(results)}件のモデルが見つかりました")
         for i, model in enumerate(results, 1):
-            print(f"  {i}. {model['id']} ({model['downloads']:,} downloads)")
+            print(f"  {i}. {model['id']} ({int(model.get('downloads') or 0):,} downloads)")
         
     except Exception as e:
         print(f"✗ Hugging Face Helperテストエラー: {e}")
@@ -49,7 +49,7 @@ def test_hf_integration():
         models = result.get("models", [])
         print(f"✓ {len(models)}件のモデルが見つかりました")
         for i, model in enumerate(models[:3], 1):
-            print(f"  {i}. {model['id']} ({model['downloads']:,} downloads)")
+            print(f"  {i}. {model['id']} ({int(model.get('downloads') or 0):,} downloads)")
     
     # 2. モデル情報取得テスト
     print("\n[2] モデル情報取得テスト")

@@ -9,7 +9,7 @@ import json
 import sys
 import os
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 import subprocess
 import signal
 import time
@@ -29,7 +29,7 @@ class TrafficRampUpController:
 ╔════════════════════════════════════════════════════════════════════╗
 ║              🚀 トラフィック段階投入システム起動                      ║
 ╠════════════════════════════════════════════════════════════════════╣
-║ 時刻: {datetime.utcnow().isoformat()}
+║ 時刻: {datetime.now(timezone.utc).replace(tzinfo=None).isoformat()}
 ║ スクリプト: automated_traffic_ramp_up.py
 ║ ログファイル: {self.log_file}
 ║ 状態ファイル: {self.state_file}
@@ -146,7 +146,7 @@ class TrafficRampUpController:
                 state = {}
             
             state["current_phase"] = target_phase
-            state["timestamp"] = datetime.utcnow().isoformat()
+            state["timestamp"] = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
             
             with open(self.state_file, "w") as f:
                 json.dump(state, f, indent=2)
@@ -178,7 +178,7 @@ class TrafficRampUpController:
         previous_phase = phase_progression.get(current_phase, "phase1")
         
         state["current_phase"] = previous_phase
-        state["timestamp"] = datetime.utcnow().isoformat()
+        state["timestamp"] = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
         
         with open(self.state_file, "w") as f:
             json.dump(state, f, indent=2)

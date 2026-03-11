@@ -8,7 +8,7 @@ OpenAPI/Swagger自動ドキュメントを生成します。
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 import uvicorn
@@ -24,20 +24,18 @@ class HealthResponse(BaseModel):
     timestamp: datetime = Field(..., description="チェック時刻")
     version: str = Field(..., description="APIバージョン")
     services: Dict[str, str] = Field(..., description="各サービスの状態")
-    
-    class Config:
-        schema_extra = {
-            "example": {
-                "status": "healthy",
-                "timestamp": "2026-02-16T10:30:00Z",
-                "version": "2.6.0",
-                "services": {
-                    "unified_api": "healthy",
-                    "mrl_memory": "healthy",
-                    "learning_system": "healthy"
-                }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "status": "healthy",
+            "timestamp": "2026-02-16T10:30:00Z",
+            "version": "2.6.0",
+            "services": {
+                "unified_api": "healthy",
+                "mrl_memory": "healthy",
+                "learning_system": "healthy"
             }
         }
+    })
 
 
 class MemoryStoreRequest(BaseModel):
@@ -46,16 +44,14 @@ class MemoryStoreRequest(BaseModel):
     value: Any = Field(..., description="保存する値（任意のJSON形式）")
     ttl: Optional[int] = Field(None, description="有効期限（秒）", ge=1)
     tags: Optional[List[str]] = Field(None, description="検索用タグ")
-    
-    class Config:
-        schema_extra = {
-            "example": {
-                "key": "user_preferences_12345",
-                "value": {"theme": "dark", "language": "ja"},
-                "ttl": 3600,
-                "tags": ["user", "preferences"]
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "key": "user_preferences_12345",
+            "value": {"theme": "dark", "language": "ja"},
+            "ttl": 3600,
+            "tags": ["user", "preferences"]
         }
+    })
 
 
 class MemoryStoreResponse(BaseModel):
@@ -80,22 +76,20 @@ class LearningEventRequest(BaseModel):
     event_type: str = Field(..., description="イベントタイプ", pattern="^(success|failure|optimization)$")
     context: Dict[str, Any] = Field(..., description="イベントコンテキスト")
     metadata: Optional[Dict[str, Any]] = Field(None, description="追加メタデータ")
-    
-    class Config:
-        schema_extra = {
-            "example": {
-                "event_type": "success",
-                "context": {
-                    "task": "image_generation",
-                    "model": "stable-diffusion-xl",
-                    "duration_ms": 3500
-                },
-                "metadata": {
-                    "user_id": "12345",
-                    "quality_score": 0.95
-                }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "event_type": "success",
+            "context": {
+                "task": "image_generation",
+                "model": "stable-diffusion-xl",
+                "duration_ms": 3500
+            },
+            "metadata": {
+                "user_id": "12345",
+                "quality_score": 0.95
             }
         }
+    })
 
 
 class LearningEventResponse(BaseModel):
@@ -111,16 +105,14 @@ class LLMRoutingRequest(BaseModel):
     max_tokens: Optional[int] = Field(None, description="最大トークン数", ge=1, le=4096)
     temperature: Optional[float] = Field(0.7, description="温度パラメータ", ge=0.0, le=2.0)
     preferred_model: Optional[str] = Field(None, description="優先モデル名")
-    
-    class Config:
-        schema_extra = {
-            "example": {
-                "prompt": "日本の首都はどこですか？",
-                "max_tokens": 100,
-                "temperature": 0.7,
-                "preferred_model": "gpt-4"
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "prompt": "日本の首都はどこですか？",
+            "max_tokens": 100,
+            "temperature": 0.7,
+            "preferred_model": "gpt-4"
         }
+    })
 
 
 class LLMRoutingResponse(BaseModel):

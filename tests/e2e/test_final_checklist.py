@@ -264,7 +264,19 @@ def test_5_safety_guard():
             import sys
             import os
             sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-            from manaos_core_api import ManaOSCoreAPI
+            # 他のテストがモジュールレベルでスタブを挿入している場合があるため
+            # 一時的にキャッシュを退避してリアルモジュールをロードする
+            _cached_stub = sys.modules.pop("manaos_core_api", None)
+            try:
+                import manaos_core_api as _mca_real
+                ManaOSCoreAPI = getattr(_mca_real, "ManaOSCoreAPI", None)
+            finally:
+                if _cached_stub is not None:
+                    sys.modules["manaos_core_api"] = _cached_stub
+                else:
+                    sys.modules.pop("manaos_core_api", None)
+            if ManaOSCoreAPI is None:
+                raise ImportError("ManaOSCoreAPI not found in manaos_core_api")
             
             api = ManaOSCoreAPI()
             
