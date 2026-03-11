@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 try:
     from werkzeug.exceptions import HTTPException
@@ -3328,24 +3329,32 @@ def initialize_integrations():
     # 初期化タスクを実行
     initialization_status["pending"] = [name for name, _ in init_tasks]
 
-    for name, init_func in init_tasks:
+    # 並列初期化: I/O待ちが多いため ThreadPoolExecutor で高速化
+    _INIT_MAX_WORKERS = int(os.getenv("MANAOS_INIT_WORKERS", "8"))
+
+    def _init_one(name: str, init_func) -> tuple[str, Any, Optional[Exception]]:
         try:
-            with initialization_lock:
-                initialization_status["pending"].remove(name)
             instance = init_func()
-            integrations[name] = instance
-            with initialization_lock:
-                initialization_status["completed"].append(name)
-            logger.info(f"{name}統合を初期化しました")
-        except Exception as e:
+            return (name, instance, None)
+        except Exception as exc:
+            import traceback as _tb
+            logger.debug(_tb.format_exc())
+            return (name, None, exc)
+
+    with ThreadPoolExecutor(max_workers=_INIT_MAX_WORKERS, thread_name_prefix="manaos_init") as pool:
+        futures = {pool.submit(_init_one, name, init_func): name for name, init_func in init_tasks}
+        for fut in as_completed(futures):
+            name, instance, exc = fut.result()
             with initialization_lock:
                 if name in initialization_status["pending"]:
                     initialization_status["pending"].remove(name)
-                initialization_status["failed"].append(name)
-            logger.warning(f"{name}統合の初期化に失敗: {e}")
-            import traceback
-
-            logger.debug(traceback.format_exc())
+                if exc is None:
+                    integrations[name] = instance
+                    initialization_status["completed"].append(name)
+                    logger.info(f"{name}統合を初期化しました")
+                else:
+                    initialization_status["failed"].append(name)
+                    logger.warning(f"{name}統合の初期化に失敗: {exc}")
 
     # 初期化完了チェック（運用のゲート）
     with initialization_lock:

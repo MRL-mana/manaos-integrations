@@ -235,6 +235,83 @@ document.getElementById('f').onsubmit = async (e) => {
     return PlainTextResponse(html, media_type="text/html")
 
 
+class ProcessRequest(BaseModel):
+    filename: str
+    next_action: str = ""
+    project: str = ""
+
+
+@app.post("/api/gtd/process")
+def process_inbox(req: ProcessRequest):
+    """Inbox アイテムを Next-Actions に昇格させ、Inbox から削除する"""
+    inbox_file = GTD_INBOX / req.filename
+    if not inbox_file.exists():
+        raise HTTPException(status_code=404, detail=f"Inbox に {req.filename} が見つかりません")
+
+    # 安全チェック: inbox ディレクトリ外へのパストラバーサル防止
+    try:
+        inbox_file.resolve().relative_to(GTD_INBOX.resolve())
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    content = inbox_file.read_text(encoding="utf-8")
+    now = datetime.now()
+    stamp = now.strftime("%Y%m%d_%H%M")
+
+    # Next-Action ファイルを生成
+    title = req.next_action or inbox_file.stem
+    na_slug = slugify(title)
+    na_fname = f"{stamp}_{na_slug}.md"
+    na_path = GTD_NA / na_fname
+
+    na_content = f"""# {title}
+
+- 処理日時: {now.strftime('%Y-%m-%d %H:%M')}
+- プロジェクト: {req.project or '（未設定）'}
+- 元ファイル: {req.filename}
+
+## 元のキャプチャ
+{content}
+"""
+    na_path.write_text(na_content, encoding="utf-8")
+    inbox_file.unlink()
+
+    inbox_count = len([f for f in GTD_INBOX.glob("*.md") if f.name != "README.md"])
+    na_count = len([f for f in GTD_NA.glob("*.md") if f.name != "README.md"])
+    return {
+        "status": "ok",
+        "processed": req.filename,
+        "next_action_file": na_fname,
+        "inbox_count": inbox_count,
+        "next_actions_count": na_count,
+        "message": f"✅ Next-Actions に昇格しました（Inbox 残 {inbox_count} 件）",
+    }
+
+
+@app.delete("/api/gtd/inbox/{filename}")
+def delete_inbox(filename: str):
+    """Inbox アイテムを削除（ゴミ・完了済み）"""
+    # .md 拡張子のみ許可
+    if not filename.endswith(".md"):
+        raise HTTPException(status_code=400, detail="filename must end with .md")
+    inbox_file = GTD_INBOX / filename
+    # パストラバーサル防止
+    try:
+        inbox_file.resolve().relative_to(GTD_INBOX.resolve())
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    if not inbox_file.exists():
+        raise HTTPException(status_code=404, detail=f"{filename} が見つかりません")
+    inbox_file.unlink()
+    inbox_count = len([f for f in GTD_INBOX.glob("*.md") if f.name != "README.md"])
+    return {
+        "status": "ok",
+        "deleted": filename,
+        "inbox_count": inbox_count,
+        "message": f"🗑️ 削除しました（Inbox 残 {inbox_count} 件）",
+    }
+
+
 @app.get("/morning", response_class=PlainTextResponse)
 def morning_page():
     """Pixel7 ブラウザ用モーニングサマリページ"""

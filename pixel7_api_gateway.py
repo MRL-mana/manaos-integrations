@@ -187,6 +187,58 @@ async def root():
     }
 
 
+class BatchCommandItem(BaseModel):
+    command: str
+    timeout: Optional[int] = 30
+    id: Optional[str] = None
+
+
+class BatchCommandRequest(BaseModel):
+    commands: List[BatchCommandItem]
+    max_parallel: Optional[int] = 4
+
+
+@app.post("/api/batch")
+async def batch_commands(
+    request: BatchCommandRequest,
+    _: None = Depends(require_auth),
+    __: None = Depends(require_full_profile),
+):
+    """複数の Android shell コマンドを並列実行（PIXEL7_API_ALLOW_EXEC=1 が必要）"""
+    if os.getenv("PIXEL7_API_ALLOW_EXEC", "0").strip() != "1":
+        raise HTTPException(
+            status_code=403,
+            detail="/api/batch is disabled (set PIXEL7_API_ALLOW_EXEC=1)",
+        )
+    items = request.commands[:20]  # 最大20コマンドに制限
+    max_parallel = max(1, min(request.max_parallel or 4, 8))
+
+    async def run_one(item: BatchCommandItem) -> Dict[str, Any]:
+        start = datetime.now()
+        result = await execute_android_command(item.command, item.timeout or 30)
+        return {
+            "id": item.id or item.command[:40],
+            "command": item.command,
+            "exit_code": result["exit_code"],
+            "stdout": result["stdout"],
+            "stderr": result["stderr"],
+            "execution_time": (datetime.now() - start).total_seconds(),
+        }
+
+    # asyncio.gather でmax_parallel個ずつ並列実行
+    results = []
+    for chunk_start in range(0, len(items), max_parallel):
+        chunk = items[chunk_start: chunk_start + max_parallel]
+        chunk_results = await asyncio.gather(*[run_one(item) for item in chunk])
+        results.extend(chunk_results)
+
+    return JSONResponse(content={
+        "total": len(results),
+        "results": results,
+        "timestamp": datetime.now().isoformat(),
+    })
+
+
 @app.post("/api/execute")
 async def execute_command(
     request: CommandRequest,
