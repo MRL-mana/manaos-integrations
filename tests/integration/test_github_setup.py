@@ -27,7 +27,7 @@ except ImportError:
 
 # PyGithubの確認
 try:
-    from github import Github
+    from github import Github, Auth
     print("[OK] PyGithub: インストール済み")
 except ImportError:
     print("[ERROR] PyGithub: 未インストール")
@@ -41,7 +41,7 @@ if token:
     
     # GitHub接続テスト
     try:
-        github = Github(token)  # type: ignore[possibly-unbound]
+        github = Github(auth=Auth.Token(token))  # type: ignore[possibly-unbound]
         user = github.get_user()
         print(f"[OK] GitHub接続成功: {user.login}")
     except Exception as e:

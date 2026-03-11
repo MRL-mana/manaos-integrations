@@ -1,4 +1,4 @@
-"""
+﻿"""
 ManaOS 統合テストサンプル
 
 このファイルは、統合テストの作成例を示しています。
@@ -108,7 +108,7 @@ async def test_memory_store_and_retrieve(integration_test_config, http_client):
     
     # テストデータ
     test_data = {
-        "key": f"integration_test_{asyncio.get_event_loop().time()}",
+        "key": f"integration_test_{asyncio.get_running_loop().time()}",
         "value": {
             "test": "integration_data",
             "nested": {"field": "value"}
@@ -158,7 +158,7 @@ async def test_learning_event_recording(integration_test_config, http_client):
             "model": "test_model"
         },
         "metadata": {
-            "test_id": f"integration_{asyncio.get_event_loop().time()}"
+            "test_id": f"integration_{asyncio.get_running_loop().time()}"
         }
     }
     
@@ -186,7 +186,7 @@ async def test_cross_service_workflow(integration_test_config, http_client):
     learning_url = integration_test_config["learning_api_url"]
     
     # 1. メモリにデータを保存
-    test_key = f"workflow_test_{asyncio.get_event_loop().time()}"
+    test_key = f"workflow_test_{asyncio.get_running_loop().time()}"
     memory_data = {
         "key": test_key,
         "value": {"workflow": "test_data"},

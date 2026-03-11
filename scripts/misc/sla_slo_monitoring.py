@@ -1,4 +1,4 @@
-"""
+﻿"""
 ManaOS SLA/SLO監視
 
 サービスレベル目標の定義と監視
@@ -7,7 +7,7 @@ ManaOS SLA/SLO監視
 import os
 from dataclasses import dataclass
 from typing import Dict, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone, timezone
 
 
 # ===========================
@@ -212,7 +212,7 @@ class ErrorBudgetTracker:
     
     def __init__(self, slo: SLO):
         self.slo = slo
-        self.week_start = datetime.utcnow() - timedelta(days=datetime.utcnow().weekday())
+        self.week_start = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=datetime.now(timezone.utc).replace(tzinfo=None).weekday())
     
     def calculate_budget(self, window_days: int = 7) -> Dict:
         """エラーバジェット計算"""

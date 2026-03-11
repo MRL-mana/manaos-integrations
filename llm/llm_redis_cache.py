@@ -16,7 +16,7 @@ try:
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
-    logger.warning("Redisが利用できません。通常のキャッシュを使用します。")
+    logger.debug("Redisが利用できません。通常のキャッシュを使用します。")
 
 
 class RedisCache:
@@ -50,7 +50,7 @@ class RedisCache:
             return
         
         if not REDIS_AVAILABLE:
-            logger.warning("Redisが利用できません。キャッシュは無効化されます。")
+            logger.debug("Redisが利用できません。キャッシュは無効化されます。")
             self.redis_client = None
             return
         

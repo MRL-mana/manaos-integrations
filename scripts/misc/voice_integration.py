@@ -76,7 +76,7 @@ try:
     WHISPER_CPP_AVAILABLE = True
     logger.info("✅ whisper (OpenAI) が利用可能です")
 except ImportError:
-    logger.warning("⚠️ whisper が利用できません。フォールバックとして使用可能です")
+    logger.debug("⚠️ whisper が利用できません。フォールバックとして使用可能です")
 
 # ========================================
 # TTS (Text-to-Speech) - VOICEVOX / Style-Bert-VITS2
@@ -110,7 +110,7 @@ try:
     PYAUDIO_AVAILABLE = True
     logger.info("✅ pyaudio が利用可能です")
 except ImportError:
-    logger.warning("⚠️ pyaudio が利用できません。pip install pyaudio を実行してください")
+    logger.debug("⚠️ pyaudio が利用できません。pip install pyaudio を実行してください")
 
 # ========================================
 # VAD (Voice Activity Detection)
@@ -123,7 +123,7 @@ try:
     WEBRTCVAD_AVAILABLE = True
     logger.info("✅ webrtcvad が利用可能です")
 except ImportError:
-    logger.warning(
+    logger.debug(
         "⚠️ webrtcvad が利用できません。pip install webrtcvad を実行してください（VAD改善機能）"
     )
 

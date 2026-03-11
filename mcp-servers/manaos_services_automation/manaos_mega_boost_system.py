@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 🚀 ManaOS MEGA BOOST System
 全サービスを統合・最適化・並列処理で超高速化
@@ -102,7 +102,7 @@ def check_service_health(service_name: str, service_info: Dict) -> Dict[str, Any
 
 async def check_all_services_parallel() -> List[Dict[str, Any]]:
     """全サービスを並列でヘルスチェック"""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         tasks = [
@@ -395,7 +395,7 @@ if __name__ == '__main__':
     print()
     
     # バックグラウンドモニタリング起動
-    # loop = asyncio.get_event_loop()
+    # loop = asyncio.get_running_loop()
     # loop.create_task(background_monitoring())
     
     # Flaskサーバー起動

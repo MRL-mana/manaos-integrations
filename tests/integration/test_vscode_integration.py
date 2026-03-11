@@ -99,9 +99,10 @@ def check_python_env():
     
     # 主要モジュールの確認
     try:
-        import flask
-        print(f"✅ Flask: {flask.__version__}")  # type: ignore[attr-defined]
-    except ImportError:
+        import importlib.metadata
+        flask_version = importlib.metadata.version("flask")
+        print(f"✅ Flask: {flask_version}")
+    except Exception:
         print(f"❌ Flask: インストール済みではありません")
     
     try:

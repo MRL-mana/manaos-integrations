@@ -94,7 +94,7 @@ class ManaOSCoreAPI:
 
                 self._llm_router = LLMRouter()
             except ImportError:
-                logger.warning("LLMルーターが利用できません")
+                logger.debug("LLMルーターが利用できません")
         return self._llm_router
 
     def _get_notification_hub(self):
@@ -105,7 +105,7 @@ class ManaOSCoreAPI:
 
                 self._notification_hub = NotificationHub()
             except ImportError:
-                logger.warning("通知ハブが利用できません")
+                logger.debug("通知ハブが利用できません")
         return self._notification_hub
 
     def _get_unified_memory(self):
@@ -116,7 +116,7 @@ class ManaOSCoreAPI:
 
                 self._unified_memory = UnifiedMemory()
             except ImportError:
-                logger.warning("統一記憶システムが利用できません")
+                logger.debug("統一記憶システムが利用できません")
         return self._unified_memory
 
     def _get_mrl_memory(self):
@@ -165,7 +165,7 @@ class ManaOSCoreAPI:
                 output_dir = os.getenv("HF_OUTPUT_DIR", "generated_images")
                 self._hf_integration = HuggingFaceManaOSIntegration(output_dir=output_dir)
             except ImportError as e:
-                logger.warning(f"Hugging Face統合が利用できません: {e}")
+                logger.debug(f"Hugging Face統合が利用できません: {e}")
         return self._hf_integration
 
     def _get_searxng_integration(self):
@@ -177,7 +177,7 @@ class ManaOSCoreAPI:
                 base_url = os.getenv("SEARXNG_BASE_URL", DEFAULT_SEARXNG_BASE_URL)
                 self._searxng_integration = SearXNGIntegration(base_url=base_url)
             except ImportError as e:
-                logger.warning(f"SearXNG統合が利用できません: {e}")
+                logger.debug(f"SearXNG統合が利用できません: {e}")
         return self._searxng_integration
 
     def _get_brave_search_integration(self):
@@ -188,7 +188,7 @@ class ManaOSCoreAPI:
 
                 self._brave_search_integration = BraveSearchIntegration()
             except ImportError as e:
-                logger.warning(f"Brave Search統合が利用できません: {e}")
+                logger.debug(f"Brave Search統合が利用できません: {e}")
         return self._brave_search_integration
 
     def _get_base_ai_integration(self, use_free: bool = False):
@@ -202,7 +202,7 @@ class ManaOSCoreAPI:
 
                 self._base_ai_integration[use_free] = BaseAIIntegration(use_free=use_free)
             except ImportError as e:
-                logger.warning(f"Base AI統合が利用できません: {e}")
+                logger.debug(f"Base AI統合が利用できません: {e}")
                 return None
 
         return self._base_ai_integration.get(use_free)

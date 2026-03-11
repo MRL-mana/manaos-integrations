@@ -68,30 +68,30 @@
       "name": "MyModel",
       "downloads": 1000
     },
-    "last_updated": "2026-03-11T10:35:57.733278"
+    "last_updated": "2026-03-11T12:35:06.570072"
   },
   "m1": {
     "info": {
       "name": "A"
     },
-    "last_updated": "2026-03-11T10:35:57.740833"
+    "last_updated": "2026-03-11T12:35:06.576840"
   },
   "m2": {
     "info": {
       "name": "B"
     },
-    "last_updated": "2026-03-11T10:35:57.741291"
+    "last_updated": "2026-03-11T12:35:06.577218"
   },
   "org/cached": {
     "info": {
       "name": "CachedModel"
     },
-    "last_updated": "2026-03-11T10:35:57.752460"
+    "last_updated": "2026-03-11T12:35:06.587196"
   },
   "org/old": {
     "info": {
       "name": "FreshModel"
     },
-    "last_updated": "2026-03-11T10:35:57.756963"
+    "last_updated": "2026-03-11T12:35:06.591284"
   }
 }

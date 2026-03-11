@@ -19,7 +19,7 @@ if (-not (Test-Path $scriptPath)) {
 }
 
 $escapedScript = $scriptPath.Replace('"', '""')
-$tr = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$escapedScript`" -WindowMinutes $WindowMinutes -FailThreshold $FailThreshold"
+$tr = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$escapedScript`" -WindowMinutes $WindowMinutes -FailThreshold $FailThreshold"
 
 schtasks /Create /TN $TaskName /SC MINUTE /MO $IntervalMinutes /TR $tr /F | Out-Null
 

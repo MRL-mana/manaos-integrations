@@ -554,7 +554,7 @@ class LLMRouter:
             obsidian = ObsidianIntegration(vault_path)
 
             if not obsidian.is_available():
-                logger.warning(f"Obsidian Vaultが見つかりません: {vault_path}。ローカルに保存します。")
+                logger.debug(f"Obsidian Vaultが見つかりません: {vault_path}。ローカルに保存します。")
                 self._save_audit_log_to_local(audit_log)
                 return
 

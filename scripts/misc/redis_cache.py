@@ -28,7 +28,7 @@ try:
     import redis
     REDIS_AVAILABLE = True
 except ImportError:
-    logger.warning("⚠️ Redisが利用できません。pip install redis でインストールしてください。")
+    logger.debug("⚠️ Redisが利用できません。pip install redis でインストールしてください。")
 
 
 class RedisCache:
@@ -76,7 +76,7 @@ class RedisCache:
                 logger.warning(f"Redis接続エラー: {error.message}")
                 self.redis_client = None
         else:
-            logger.warning("⚠️ Redisが利用できません。ローカルキャッシュのみ使用します。")
+            logger.debug("⚠️ Redisが利用できません。ローカルキャッシュのみ使用します。")
     
     def _generate_key(self, cache_type: str, *args, **kwargs) -> str:
         """キャッシュキーを生成"""

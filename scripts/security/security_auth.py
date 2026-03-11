@@ -1,4 +1,4 @@
-"""
+﻿"""
 ManaOS API セキュリティ認証層
 
 JWT/OAuth2を使用した認証・認可の実装
@@ -7,7 +7,7 @@ JWT/OAuth2を使用した認証・認可の実装
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone, timezone
 from typing import Optional, Dict, Any
 import jwt
 import os
@@ -99,14 +99,14 @@ class JWTManager:
         if expires_delta is None:
             expires_delta = timedelta(minutes=SecurityConfig.ACCESS_TOKEN_EXPIRE_MINUTES)
         
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc).replace(tzinfo=None) + expires_delta
         
         payload = {
             "user_id": user_id,
             "role": role.value,
             "scopes": scopes or [],
             "exp": expire,
-            "iat": datetime.utcnow(),
+            "iat": datetime.now(timezone.utc).replace(tzinfo=None),
             "type": "access"
         }
         
@@ -121,14 +121,14 @@ class JWTManager:
     @staticmethod
     def create_refresh_token(user_id: str) -> str:
         """リフレッシュトークン作成"""
-        expire = datetime.utcnow() + timedelta(
+        expire = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(
             days=SecurityConfig.REFRESH_TOKEN_EXPIRE_DAYS
         )
         
         payload = {
             "user_id": user_id,
             "exp": expire,
-            "iat": datetime.utcnow(),
+            "iat": datetime.now(timezone.utc).replace(tzinfo=None),
             "type": "refresh"
         }
         

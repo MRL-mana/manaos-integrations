@@ -53,3 +53,6 @@ Pillow>=10.0.0
 pyserial>=3.5
 pynput>=1.7.0
 mss>=9.0.0
+
+# キャッシュ（Redis）
+redis>=5.0.0

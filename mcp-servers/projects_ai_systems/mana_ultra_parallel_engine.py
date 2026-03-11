@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Mana Ultra Parallel Engine
 超高速並列処理エンジン - 32ワーカーでさらなる高速化
@@ -96,7 +96,7 @@ class ManaUltraParallelEngine:
     
     async def optimize_memory(self) -> Dict[str, Any]:
         """メモリ最適化"""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self._optimize_memory)
     
     def _optimize_memory(self) -> Dict[str, Any]:
@@ -113,7 +113,7 @@ class ManaUltraParallelEngine:
     
     async def optimize_disk(self) -> Dict[str, Any]:
         """ディスク最適化"""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self._optimize_disk)
     
     def _optimize_disk(self) -> Dict[str, Any]:
@@ -134,7 +134,7 @@ class ManaUltraParallelEngine:
     
     async def clean_logs(self) -> Dict[str, Any]:
         """ログクリーン"""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self._clean_logs)
     
     def _clean_logs(self) -> Dict[str, Any]:
@@ -154,7 +154,7 @@ class ManaUltraParallelEngine:
     
     async def analyze_security(self) -> Dict[str, Any]:
         """セキュリティ分析"""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self._analyze_security)
     
     def _analyze_security(self) -> Dict[str, Any]:
@@ -186,7 +186,7 @@ class ManaUltraParallelEngine:
     
     async def optimize_databases(self) -> Dict[str, Any]:
         """データベース最適化"""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self._optimize_databases)
     
     def _optimize_databases(self) -> Dict[str, Any]:

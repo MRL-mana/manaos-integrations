@@ -1,4 +1,4 @@
-"""
+﻿"""
 Google Calendar, Tasks, Sheets, Keep 統合モジュール
 マナOS向けのGoogle生産性ツール統合
 """
@@ -7,7 +7,7 @@ import os
 import json
 from pathlib import Path
 from typing import Optional, List, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 
 try:
@@ -186,7 +186,7 @@ class GoogleProductivityIntegration(BaseIntegration):
                 maxResults=max_results,
                 singleEvents=True,
                 orderBy='startTime',
-                timeMin=datetime.utcnow().isoformat() + 'Z'
+                timeMin=datetime.now(timezone.utc).replace(tzinfo=None).isoformat() + 'Z'
             ).execute()
             return result.get('items', [])
         except Exception as e:

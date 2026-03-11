@@ -1,4 +1,4 @@
-"""
+﻿"""
 ManaOS統合APIサーバー（修正版）
 すべての外部システム統合を管理する統合API
 """
@@ -329,7 +329,7 @@ try:
         # Secretsはファイル直読みではなく、OS環境変数または .env で注入する
         logger.info(".envファイルが見つかりません。OS環境変数の設定を使用します。")
 except ImportError:
-    logger.warning("python-dotenvがインストールされていません")
+    logger.debug("python-dotenvがインストールされていません")
     logger.info("OS環境変数の設定を使用します。")
 
 # 統合モジュールのインポート（すべてオプション）
@@ -350,7 +350,7 @@ try:
 
     STEP_DEEP_RESEARCH_AVAILABLE = True
 except ImportError:
-    logger.warning("Step-Deep-Research統合モジュールが見つかりません")
+    logger.debug("Step-Deep-Research統合モジュールが見つかりません")
     STEP_DEEP_RESEARCH_AVAILABLE = False
 
 # ComfyUI統合（オプション）
@@ -359,7 +359,7 @@ try:
 
     COMFYUI_AVAILABLE = True
 except ImportError:
-    logger.warning("ComfyUI統合モジュールが見つかりません")
+    logger.debug("ComfyUI統合モジュールが見つかりません")
 
 # SVI × Wan 2.2動画生成統合（オプション）
 try:
@@ -367,7 +367,7 @@ try:
 
     SVI_WAN22_AVAILABLE = True
 except ImportError:
-    logger.warning("SVI × Wan 2.2動画生成統合モジュールが見つかりません")
+    logger.debug("SVI × Wan 2.2動画生成統合モジュールが見つかりません")
 
 # LTX-2動画生成統合（オプション）
 try:
@@ -375,7 +375,7 @@ try:
 
     LTX2_AVAILABLE = True
 except ImportError:
-    logger.warning("LTX-2動画生成統合モジュールが見つかりません")
+    logger.debug("LTX-2動画生成統合モジュールが見つかりません")
     LTX2_AVAILABLE = False
 
 # LTX-2 Infinity統合（オプション）
@@ -390,7 +390,7 @@ try:
     LTX2_INFINITY_AVAILABLE = True
     logger.info("✅ LTX-2 Infinity統合モジュールが利用可能です")
 except ImportError as e:
-    logger.warning(f"⚠️ LTX-2 Infinity統合モジュールが見つかりません: {e}")
+    logger.debug(f"LTX-2 Infinity統合モジュールが見つかりません: {e}")
     LTX2_INFINITY_AVAILABLE = False
 
 # GoogleDrive統合（オプション）
@@ -399,7 +399,7 @@ try:
 
     GOOGLE_DRIVE_AVAILABLE = True
 except ImportError:
-    logger.warning("GoogleDrive統合モジュールが見つかりません")
+    logger.debug("GoogleDrive統合モジュールが見つかりません")
 
 # CivitAI統合（オプション）
 try:
@@ -407,7 +407,7 @@ try:
 
     CIVITAI_AVAILABLE = True
 except ImportError:
-    logger.warning("CivitAI統合モジュールが見つかりません")
+    logger.debug("CivitAI統合モジュールが見つかりません")
 
 # LangChain統合（オプション）
 try:
@@ -415,7 +415,7 @@ try:
 
     LANGCHAIN_AVAILABLE = True
 except ImportError:
-    logger.warning("LangChain統合モジュールが見つかりません")
+    logger.debug("LangChain統合モジュールが見つかりません")
 
 # Mem0統合（オプション）
 try:
@@ -423,7 +423,7 @@ try:
 
     MEM0_AVAILABLE = True
 except ImportError:
-    logger.warning("Mem0統合モジュールが見つかりません")
+    logger.debug("Mem0統合モジュールが見つかりません")
 
 # Obsidian統合（オプション）
 try:
@@ -431,7 +431,7 @@ try:
 
     OBSIDIAN_AVAILABLE = True
 except ImportError:
-    logger.warning("Obsidian統合モジュールが見つかりません")
+    logger.debug("Obsidian統合モジュールが見つかりません")
 
 # ローカルLLM統合（オプション）
 try:
@@ -439,7 +439,7 @@ try:
 
     LOCAL_LLM_AVAILABLE = True
 except ImportError:
-    logger.warning("LocalLLM統合モジュールが見つかりません")
+    logger.debug("LocalLLM統合モジュールが見つかりません")
 
 # Redisキャッシュ統合（オプション）
 REDIS_CACHE_AVAILABLE = False
@@ -448,7 +448,7 @@ try:
 
     REDIS_CACHE_AVAILABLE = True
 except ImportError:
-    logger.warning("Redisキャッシュモジュールが見つかりません")
+    logger.debug("Redisキャッシュモジュールが見つかりません")
 
 # 統一キャッシュシステム統合（オプション）
 UNIFIED_CACHE_AVAILABLE = False
@@ -457,7 +457,7 @@ try:
 
     UNIFIED_CACHE_AVAILABLE = True
 except ImportError:
-    logger.warning("統一キャッシュシステムモジュールが見つかりません")
+    logger.debug("統一キャッシュシステムモジュールが見つかりません")
 
 # パフォーマンス最適化システム統合（オプション）
 PERFORMANCE_OPTIMIZER_AVAILABLE = False
@@ -466,7 +466,7 @@ try:
 
     PERFORMANCE_OPTIMIZER_AVAILABLE = True
 except ImportError:
-    logger.warning("パフォーマンス最適化システムモジュールが見つかりません")
+    logger.debug("パフォーマンス最適化システムモジュールが見つかりません")
 
 # 拡張フェーズ統合（オプション）
 LLM_ROUTING_AVAILABLE = False
@@ -481,7 +481,7 @@ try:
 
     LLM_ROUTING_AVAILABLE = True
 except ImportError:
-    logger.warning("LLMルーティングモジュールが見つかりません")
+    logger.debug("LLMルーティングモジュールが見つかりません")
 
 # 拡張LLMルーティング統合（難易度判定対応）
 ENHANCED_LLM_ROUTING_AVAILABLE = False
@@ -490,7 +490,7 @@ try:
 
     ENHANCED_LLM_ROUTING_AVAILABLE = True
 except ImportError:
-    logger.warning("拡張LLMルーティングモジュールが見つかりません")
+    logger.debug("拡張LLMルーティングモジュールが見つかりません")
 
 # 統一記憶システム統合（オプション）
 try:
@@ -498,7 +498,7 @@ try:
 
     MEMORY_UNIFIED_AVAILABLE = True
 except ImportError:
-    logger.warning("統一記憶システムモジュールが見つかりません")
+    logger.debug("統一記憶システムモジュールが見つかりません")
 
 # 記憶統合ブリッジ（UnifiedMemory + Mem0 + Phase2 一本化）
 try:
@@ -538,7 +538,7 @@ try:
 
     NOTIFICATION_HUB_AVAILABLE = True
 except ImportError:
-    logger.warning("通知ハブモジュールが見つかりません")
+    logger.debug("通知ハブモジュールが見つかりません")
 
 # 秘書機能統合（オプション）
 try:
@@ -546,7 +546,7 @@ try:
 
     SECRETARY_AVAILABLE = True
 except ImportError:
-    logger.warning("秘書機能モジュールが見つかりません")
+    logger.debug("秘書機能モジュールが見つかりません")
 
 # 画像ストック統合（オプション）
 try:
@@ -554,7 +554,7 @@ try:
 
     IMAGE_STOCK_AVAILABLE = True
 except ImportError:
-    logger.warning("画像ストックモジュールが見つかりません")
+    logger.debug("画像ストックモジュールが見つかりません")
 
 # Rows統合（オプション）
 try:
@@ -562,7 +562,7 @@ try:
 
     ROWS_AVAILABLE = True
 except ImportError:
-    logger.warning("Rows統合モジュールが見つかりません")
+    logger.debug("Rows統合モジュールが見つかりません")
     ROWS_AVAILABLE = False
 
 # GitHub統合（オプション）
@@ -571,7 +571,7 @@ try:
 
     GITHUB_AVAILABLE = True
 except ImportError:
-    logger.warning("GitHub統合モジュールが見つかりません")
+    logger.debug("GitHub統合モジュールが見つかりません")
     GITHUB_AVAILABLE = False
 
 # n8n統合（オプション）
@@ -580,7 +580,7 @@ try:
 
     N8N_AVAILABLE = True
 except ImportError:
-    logger.warning("n8n統合モジュールが見つかりません")
+    logger.debug("n8n統合モジュールが見つかりません")
     N8N_AVAILABLE = False
 
 # Brave Search統合（オプション）
@@ -590,7 +590,7 @@ try:
 
     BRAVE_SEARCH_AVAILABLE = True
 except ImportError:
-    logger.warning("Brave Search統合モジュールが見つかりません")
+    logger.debug("Brave Search統合モジュールが見つかりません")
 
 # Base AI統合（オプション）
 BASE_AI_AVAILABLE = False
@@ -599,7 +599,7 @@ try:
 
     BASE_AI_AVAILABLE = True
 except ImportError:
-    logger.warning("Base AI統合モジュールが見つかりません")
+    logger.debug("Base AI統合モジュールが見つかりません")
 
 # OH MY OPENCODE統合（オプション）
 OH_MY_OPENCODE_AVAILABLE = False
@@ -608,7 +608,7 @@ try:
 
     OH_MY_OPENCODE_AVAILABLE = True
 except ImportError:
-    logger.warning("OH MY OPENCODE統合モジュールが見つかりません")
+    logger.debug("OH MY OPENCODE統合モジュールが見つかりません")
 
 # Excel/LLM処理統合（オプション）
 EXCEL_LLM_AVAILABLE = False
@@ -617,7 +617,7 @@ try:
 
     EXCEL_LLM_AVAILABLE = True
 except ImportError:
-    logger.warning("Excel/LLM処理統合モジュールが見つかりません")
+    logger.debug("Excel/LLM処理統合モジュールが見つかりません")
     EXCEL_LLM_AVAILABLE = False
 
 # 音声機能統合（オプション）
@@ -635,7 +635,7 @@ try:
     VOICE_INTEGRATION_AVAILABLE = True
     logger.info("✅ 音声機能統合モジュールが利用可能です")
 except ImportError as e:
-    logger.warning(f"⚠️ 音声機能統合モジュールが見つかりません: {e}")
+    logger.debug(f"音声機能統合モジュールが見つかりません: {e}")
     VOICE_INTEGRATION_AVAILABLE = False
 
 app = Flask(__name__)
@@ -1726,7 +1726,7 @@ def api_comfyui_generate():
                 scheduler = OPTIMIZED_PARAMS.get("scheduler", scheduler)
             logger.info("✅ 闇の実験室（lab_mode）: ネガ最小限・表現はモデルに委ねます")
         except ImportError as e:
-            logger.warning(f"mufufu_config_lab が見つかりません: {e}")
+            logger.debug(f"mufufu_config_lab が見つかりません: {e}")
 
     # ムフフモード: 身体崩れ対策強化（lab_mode でないとき）
     elif mufufu_mode:
@@ -1750,7 +1750,7 @@ def api_comfyui_generate():
                 scheduler = OPTIMIZED_PARAMS.get("scheduler", scheduler)
             logger.info("✅ ムフフモード: 身体崩れ対策タグを適用しました")
         except ImportError as e:
-            logger.warning(f"mufufu_config が見つかりません: {e}")
+            logger.debug(f"mufufu_config が見つかりません: {e}")
 
     try:
         prompt_id = comfyui.generate_image(

@@ -74,28 +74,22 @@ foreach ($script in $installerScripts) {
 
 $registeredOffenders = New-Object System.Collections.Generic.List[object]
 if (-not $SkipRegisteredTaskAudit) {
-    $queryOutput = @(& schtasks /Query /FO LIST /V 2>&1 | ForEach-Object { [string]$_ })
-    $currentTaskName = $null
-
-    foreach ($line in $queryOutput) {
-        if ($line -match '^(TaskName|タスク名):\s*(.+)$') {
-            $currentTaskName = $Matches[2].Trim()
-            continue
-        }
-        if ($line -match '^(Task To Run|実行するタスク):\s*(.+)$') {
-            $taskRun = $Matches[2].Trim()
-            $normalizedTaskName = $currentTaskName
-            if (-not [string]::IsNullOrWhiteSpace($normalizedTaskName)) {
-                $normalizedTaskName = $normalizedTaskName.TrimStart('\\')
-            }
-            if ($managedTaskNames.Contains($normalizedTaskName) -and $taskRun -match $shellPattern -and -not ($taskRun -match $hiddenPattern)) {
+    # schtasks の代わりに Get-ScheduledTask API を使用（日本語環境でのエンコーディング問題を回避）
+    $allTasks = Get-ScheduledTask -ErrorAction SilentlyContinue | Where-Object { $_.State -ne 'Disabled' }
+    foreach ($task in $allTasks) {
+        try {
+            $a = $task.Actions[0]
+            $exe = [string]$a.Execute
+            $args = [string]$a.Arguments
+            $taskToRun = "$exe $args".Trim()
+            if ($exe -match $shellPattern -and -not ($taskToRun -match $hiddenPattern)) {
                 $registeredOffenders.Add([pscustomobject]@{
-                    task_name = $currentTaskName
-                    task_to_run = $taskRun
+                    task_name  = $task.TaskName
+                    task_to_run = $taskToRun
                     reason = 'registered task command uses PowerShell without hidden window switch'
                 })
             }
-        }
+        } catch {}
     }
 }
 

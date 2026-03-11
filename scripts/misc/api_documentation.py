@@ -1,4 +1,4 @@
-"""
+﻿"""
 ManaOS API自動ドキュメント生成
 
 このモジュールは、FastAPIを使用してManaOS統合APIの
@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone, timezone
 import uvicorn
 import os
 
@@ -254,7 +254,7 @@ async def health_check():
     """ヘルスチェックエンドポイント"""
     return {
         "status": "healthy",
-        "timestamp": datetime.utcnow(),
+        "timestamp": datetime.now(timezone.utc).replace(tzinfo=None),
         "version": "2.6.0",
         "services": {
             "unified_api": "healthy",
@@ -285,8 +285,8 @@ async def store_memory(request: MemoryStoreRequest):
     return {
         "success": True,
         "key": request.key,
-        "timestamp": datetime.utcnow(),
-        "expires_at": datetime.utcnow() if request.ttl else None
+        "timestamp": datetime.now(timezone.utc).replace(tzinfo=None),
+        "expires_at": datetime.now(timezone.utc).replace(tzinfo=None) if request.ttl else None
     }
 
 
@@ -308,7 +308,7 @@ async def retrieve_memory(key: str):
         "found": True,
         "key": key,
         "value": {"example": "data"},
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc).replace(tzinfo=None),
         "expires_at": None
     }
 
@@ -325,7 +325,7 @@ async def record_learning_event(request: LearningEventRequest):
     """学習イベント記録エンドポイント"""
     return {
         "success": True,
-        "event_id": "evt_" + datetime.utcnow().strftime("%Y%m%d%H%M%S"),
+        "event_id": "evt_" + datetime.now(timezone.utc).replace(tzinfo=None).strftime("%Y%m%d%H%M%S"),
         "recommendations": [
             "モデルパラメータの調整を検討してください",
             "キャッシュサイズを増やすことで性能向上が期待できます"

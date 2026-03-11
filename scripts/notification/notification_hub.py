@@ -19,7 +19,7 @@ try:
     NOTIFICATION_SYSTEM_AVAILABLE = True
 except ImportError:
     NOTIFICATION_SYSTEM_AVAILABLE = False
-    logger.warning("通知システムが利用できません")
+    logger.debug("通知システムが利用できません")
 
 
 class NotificationHub:

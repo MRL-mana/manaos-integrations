@@ -1,4 +1,4 @@
-"""
+﻿"""
 タスク実行制御（タイムアウト、並行実行数制限、リトライ）
 """
 
@@ -60,7 +60,7 @@ async def execute_task_with_control(
         for attempt in range(1, MAX_RETRY_ATTEMPTS + 1):
             try:
                 # タイムアウト付きで実行
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
                 executor = ThreadPoolExecutor(max_workers=1)
 
                 try:

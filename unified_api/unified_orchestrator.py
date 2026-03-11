@@ -40,7 +40,7 @@ try:
 except ImportError:
     METRICS_AVAILABLE = False
     MetricType = None  # ダミー値
-    logger.warning("⚠️ Metrics Collectorが利用できません")
+    logger.debug("⚠️ Metrics Collectorが利用できません")
 
 try:
     from intelligent_retry import IntelligentRetry, RetryConfig, CircuitBreakerConfig
@@ -48,7 +48,7 @@ try:
     RETRY_AVAILABLE = True
 except ImportError:
     RETRY_AVAILABLE = False
-    logger.warning("⚠️ Intelligent Retryが利用できません")
+    logger.debug("⚠️ Intelligent Retryが利用できません")
 
 try:
     from response_cache import ResponseCache
@@ -56,7 +56,7 @@ try:
     CACHE_AVAILABLE = True
 except ImportError:
     CACHE_AVAILABLE = False
-    logger.warning("⚠️ Response Cacheが利用できません")
+    logger.debug("⚠️ Response Cacheが利用できません")
 
 # エラーハンドラーの初期化
 error_handler = ManaOSErrorHandler("UnifiedOrchestrator")

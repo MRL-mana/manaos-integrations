@@ -1,4 +1,4 @@
-"""
+﻿"""
 MRL Memory MCPサーバー (RAGMemoryEnhancedV2 直接接続版)
 ========================================================
 エージェントの会話・アクション履歴を RAGMemoryEnhancedV2 に直接保存・検索する。
@@ -527,7 +527,7 @@ if MCP_AVAILABLE:
     @server.call_tool()
     async def call_tool(name: str, arguments: dict):
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             if name == "memory_search":
                 result = await loop.run_in_executor(
                     None, lambda: _search_rag(arguments["query"], arguments.get("limit", 10))

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 💬 Trinity Slack Integration
 Slack通知＆Bot統合
@@ -62,7 +62,7 @@ class TrinitySlackIntegration:
                     "color": color,
                     "text": text,
                     "footer": "Trinity Secretary",
-                    "ts": int(asyncio.get_event_loop().time())
+                    "ts": int(asyncio.get_running_loop().time())
                 }]
             }
             

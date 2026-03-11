@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 ManaOS v1.0 自動トラフィック段階投入システム
@@ -9,7 +9,7 @@ import asyncio
 import json
 import time
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone, timezone
 from pathlib import Path
 from typing import Dict, List
 import httpx
@@ -74,7 +74,7 @@ class TrafficRampUpSystem:
     
     def __init__(self):
         self.current_phase = "phase1"
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc).replace(tzinfo=None)
         self.metrics = {
             "phase1": {"errors": [], "latencies": [], "timestamps": []},
             "phase2": {"errors": [], "latencies": [], "timestamps": []},
@@ -100,7 +100,7 @@ class TrafficRampUpSystem:
             json.dump({
                 "current_phase": self.current_phase,
                 "start_time": self.start_time.isoformat(),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
             }, f, indent=2)
     
     async def check_service_health(self) -> Dict[str, bool]:
@@ -135,7 +135,7 @@ class TrafficRampUpSystem:
         error_rate = (down_count / len(health)) * 100
         
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
             "services_up": up_count,
             "services_down": down_count,
             "health_check_pass_rate": (up_count / len(health)) * 100,
@@ -153,11 +153,11 @@ class TrafficRampUpSystem:
             return False
         
         # フェーズ開始時刻を計算
-        phase_start = datetime.utcnow() - timedelta(minutes=5)  # 簡略化
+        phase_start = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=5)  # 簡略化
         phase_duration = timedelta(minutes=phase_config["duration_minutes"])
         phase_end = phase_start + phase_duration
         
-        if datetime.utcnow() >= phase_end:
+        if datetime.now(timezone.utc).replace(tzinfo=None) >= phase_end:
             logger.info(f"⏱️ {self.current_phase} の期間終了")
             return True
         
@@ -180,7 +180,7 @@ class TrafficRampUpSystem:
 ╠════════════════════════════════════════════════════════════════════╣
 ║ {self.current_phase.upper()} → {next_phase.upper()}
 ║ トラフィック投入率: {PHASES[self.current_phase]['traffic_percentage']}% → {PHASES[next_phase]['traffic_percentage']}%
-║ タイムスタンプ: {datetime.utcnow().isoformat()}
+║ タイムスタンプ: {datetime.now(timezone.utc).replace(tzinfo=None).isoformat()}
 ╚════════════════════════════════════════════════════════════════════╝
             """)
             self.current_phase = next_phase
@@ -220,7 +220,7 @@ class TrafficRampUpSystem:
 ╔════════════════════════════════════════════════════════════════════╗
 ║                 🚀 本番環境トラフィック段階投入開始                  ║
 ╠════════════════════════════════════════════════════════════════════╣
-║ 開始時刻: {datetime.utcnow().isoformat()}
+║ 開始時刻: {datetime.now(timezone.utc).replace(tzinfo=None).isoformat()}
 ║ フェーズ1: 10% トラフィック (30分)
 ║ フェーズ2: 30% トラフィック (1時間)
 ║ フェーズ3: 100% トラフィック (本格稼動)

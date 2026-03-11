@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 ManaOS v1.0 本番環境最終稼動確認スクリプト
@@ -8,7 +8,7 @@ Final Production Go/No-Go Decision Script
 import asyncio
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone, timezone
 import httpx
 
 SERVICES = {
@@ -105,7 +105,7 @@ async def final_health_check():
   {go_no_go}
   
   判定: {decision}
-  時刻: {datetime.utcnow().isoformat()}
+  時刻: {datetime.now(timezone.utc).replace(tzinfo=None).isoformat()}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -131,7 +131,7 @@ async def final_health_check():
     with open("production_go_decision.json", "w") as f:
         json.dump({
             "decision": "GO",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
             "services_up": up_count,
             "services_total": total_count,
             "health_percentage": (up_count/total_count)*100,
