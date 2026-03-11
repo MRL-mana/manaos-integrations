@@ -35,6 +35,7 @@ const RECOVERY_HINTS = {
   rpg_backend: 'cd manaos-rpg && python -m backend',
   rpg_frontend: 'cd manaos-rpg/frontend && npm run dev',
   unified_api_server: 'cd unified_api && python -m server',
+  jarvis_pixel7: 'pwsh scripts/misc/run_pixel7_jarvis.ps1 で起動（または Tasks: JARVIS Pixel7 起動）',
 }
 
 const ServiceRow = memo(function ServiceRow({ s }) {

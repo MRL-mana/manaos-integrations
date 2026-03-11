@@ -13,6 +13,10 @@ const TAG_COLORS = {
   automation:  '#B56BFF',
   docker:      '#FF6BB5',
   mcp:         '#6BFFDA',
+  voice:       '#FF6BDA',
+  device:      '#6BFFD8',
+  pixel7:      '#FFD86B',
+  network:     '#6B9BFF',
 }
 
 function pickColor(tags) {

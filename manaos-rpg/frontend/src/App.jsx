@@ -64,6 +64,12 @@ export default function App() {
   const stateRef = useRef(null)
   const apiBase = useMemo(() => getApiBase(), [])
 
+  /* テーマを body に適用 */
+  useEffect(() => {
+    const theme = settings?.theme || 'default'
+    document.body.dataset.theme = theme
+  }, [settings?.theme])
+
   const refreshSnapshot = useCallback(async function refreshSnapshot() {
     if (refreshingRef.current) return null
     refreshingRef.current = true
@@ -164,16 +170,22 @@ export default function App() {
       .catch(() => {})
   }, [])
 
+  const effectiveRefreshMs = useMemo(() => {
+    const ms = Number(settings?.refreshMs)
+    if (ms >= 5000 && ms <= 600000) return ms
+    return AUTO_REFRESH_MS
+  }, [settings?.refreshMs])
+
   useEffect(() => {
     if (!autoRefresh) return
     const id = setInterval(() => {
       refreshState().then(() => {
         if (active === 'logs') refreshEvents()
       })
-    }, AUTO_REFRESH_MS)
+    }, effectiveRefreshMs)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoRefresh, active])
+  }, [autoRefresh, active, effectiveRefreshMs])
 
   useEffect(() => {
     if (active === 'logs') refreshEvents()
@@ -289,7 +301,7 @@ export default function App() {
           <button onClick={refreshState} disabled={loading}>読込（/api/state）</button>
           <label className="autoRefresh">
             <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />
-            自動更新（30秒）
+            自動更新（{effectiveRefreshMs >= 60000 ? `${Math.round(effectiveRefreshMs / 60000)}分` : `${Math.round(effectiveRefreshMs / 1000)}秒`}）
             {autoRefresh ? <span className="pulse">●</span> : null}
           </label>
         </div>

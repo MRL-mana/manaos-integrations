@@ -9,6 +9,8 @@ const CAT_ICONS = {
   model: '🧠',
   device: '🗺️',
   skill: '✨',
+  quest: '📜',
+  action: '⚡',
   nav: '🗂️',
 }
 
@@ -59,6 +61,30 @@ function buildIndex(state) {
         sub: [s.category, ...(s.tags || [])].filter(Boolean).join(' · '),
         alive: true,
         tab: 'skills',
+      })
+    }
+  }
+  if (Array.isArray(state?.quests)) {
+    for (const q of state.quests) {
+      items.push({
+        cat: 'quest',
+        id: q.id,
+        label: q.name || q.id,
+        sub: [q.kind, ...(q.tags || [])].filter(Boolean).join(' · '),
+        alive: true,
+        tab: 'quests',
+      })
+    }
+  }
+  if (Array.isArray(state?.actions)) {
+    for (const a of state.actions) {
+      items.push({
+        cat: 'action',
+        id: a.id,
+        label: a.name || a.id,
+        sub: [a.kind, a.service_id, ...(a.tags || [])].filter(Boolean).join(' · '),
+        alive: true,
+        tab: 'quests',
       })
     }
   }
