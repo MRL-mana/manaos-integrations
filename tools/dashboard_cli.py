@@ -464,6 +464,7 @@ def main() -> int:
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--timeout", type=float, default=2.5)
     parser.add_argument("--no-color", action="store_true")
+    parser.add_argument("--output", default=None, help="JSON出力先ファイルパス (--json と組み合わせて使用)")
     parser.add_argument(
         "--blast",
         action="store_true",
@@ -512,7 +513,12 @@ def main() -> int:
     }
 
     if args.json:
-        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        json_str = json.dumps(payload, ensure_ascii=False, indent=2)
+        if args.output:
+            import pathlib
+            pathlib.Path(args.output).write_text(json_str, encoding="utf-8")
+        else:
+            print(json_str)
         return 0
 
     use_color = (not args.no_color) and sys.stdout.isatty()
