@@ -1013,6 +1013,12 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
             <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('gtd_status')}>GTD status</button>
             <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('gtd_morning')}>GTD morning</button>
             <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('integrations_status')}>integrations status</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('x280_health')}>X280 health</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('x280_status')}>X280 status</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('x280_adb_devices')}>X280 ADB devices</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('pixel7_health')}>Pixel7 health</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('pixel7_status')}>Pixel7 status</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('pixel7_macro_commands')}>Pixel7 macros</button>
             <span className="small">AUTH? が出る場合は `MANAOS_UNIFIED_API_KEY` を設定</span>
           </div>
           {monitorOut ? <OutputBlock text={monitorOut} onClear={() => setMonitorOut('')} /> : <div className="small">ここにJSONを表示（エラーも含む）</div>}

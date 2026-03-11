@@ -438,3 +438,36 @@ def api_unified_pixel7_macro_broadcast(body: dict[str, Any]) -> dict[str, Any]:
     payload = _validate_proxy_body(body)
     return _unified_post("/api/pixel7/macro/broadcast", payload=payload, timeout_s=12.0)
 
+
+# ---------------------------------------------------------------------------
+# X280 API Gateway（直接）
+# ---------------------------------------------------------------------------
+
+@router.get("/api/unified/x280/health")
+def api_unified_x280_health() -> dict[str, Any]:
+    return _unified_get("/api/x280/health", timeout_s=8.0)
+
+
+@router.get("/api/unified/x280/status")
+def api_unified_x280_status() -> dict[str, Any]:
+    return _unified_get("/api/x280/status", timeout_s=8.0)
+
+
+@router.get("/api/unified/x280/adb/devices")
+def api_unified_x280_adb_devices() -> dict[str, Any]:
+    return _unified_get("/api/x280/adb/devices", timeout_s=10.0)
+
+
+@router.post("/api/unified/x280/adb/setup")
+def api_unified_x280_adb_setup(body: dict[str, Any]) -> dict[str, Any]:
+    _require_unified_write()
+    payload = _validate_proxy_body(body)
+    return _unified_post("/api/x280/adb/setup", payload=payload, timeout_s=15.0)
+
+
+@router.post("/api/unified/x280/adb/connect")
+def api_unified_x280_adb_connect(body: dict[str, Any]) -> dict[str, Any]:
+    _require_unified_write()
+    payload = _validate_proxy_body(body)
+    return _unified_post("/api/x280/adb/connect", payload=payload, timeout_s=12.0)
+

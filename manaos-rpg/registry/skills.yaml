@@ -346,6 +346,39 @@ skills:
         notes: "X280に接続されたADBデバイス一覧"
         url: http://127.0.0.1:9502/api/x280/adb/devices
         integration_key: x280_gateway
+      - id: pixel7_direct_health
+        label: Pixel7 API Gateway ヘルス
+        tags: [device, api, gateway]
+        notes: "Pixel7 直接 API Gateway（port 5122）ヘルス確認"
+        url: http://127.0.0.1:9502/api/pixel7/health
+        integration_key: pixel7_gateway
+      - id: pixel7_direct_status
+        label: Pixel7 API Gateway ステータス
+        tags: [device, api, status]
+        notes: "Pixel7 API Gateway 総合ステータス"
+        url: http://127.0.0.1:9502/api/pixel7/status
+        integration_key: pixel7_gateway
+      - id: pixel7_direct_macro_commands
+        label: Pixel7 マクロコマンド一覧
+        tags: [device, api, macro]
+        notes: "Pixel7 に登録されたマクロコマンド取得"
+        url: http://127.0.0.1:9502/api/pixel7/macro/commands
+        integration_key: pixel7_gateway
+      - id: pixel7_direct_execute
+        label: Pixel7 コマンド実行（直接）
+        tags: [device, api, gateway]
+        notes: "Pixel7 API Gateway 直接コマンド（RPG経由）"
+        proxy_id: post_api_pixel7_execute
+      - id: pixel7_direct_open_url
+        label: Pixel7 URL を開く（直接）
+        tags: [device, api, browser]
+        notes: "Pixel7 でURLを開く（RPG経由）"
+        proxy_id: post_api_pixel7_open_url
+      - id: pixel7_direct_macro
+        label: Pixel7 マクロ送信（直接）
+        tags: [device, api, macro]
+        notes: "Pixel7 マクロブロードキャスト（RPG経由）"
+        proxy_id: post_api_pixel7_macro_broadcast
       - id: pixel7_jarvis
         label: Pixel7 JARVIS 音声秘書
         tags: [voice, ai, adb]
@@ -435,3 +468,13 @@ skills:
         notes: "ブラウザ Capture UI（Capture Server 直接）"
         url: http://127.0.0.1:5130/capture
         integration_key: gtd_capture
+
+  - id: sd_prompt
+    label: SD プロンプト生成
+    tags: [ai, image, prompt]
+    items:
+      - id: sd_prompt_generate
+        label: SD プロンプト生成（日本語→英語）
+        tags: [api, ai, image]
+        notes: "日本語説明→英語 Stable Diffusion プロンプト自動生成（Ollama llama3-uncensored）"
+        proxy_id: post_api_sd_prompt_generate

@@ -268,3 +268,56 @@ def test_pixel7_macro_broadcast_ok(rpg_client):
 def test_pixel7_macro_broadcast_write_disabled(rpg_client_readonly):
     r = rpg_client_readonly.post("/api/unified/pixel7/macro/broadcast", json={"name": "wake_up"})
     assert r.status_code == 403
+
+
+# ---------------------------------------------------------------------------
+# X280 health / status / adb/devices (GET)
+# ---------------------------------------------------------------------------
+
+def test_x280_health_ok(rpg_client):
+    with patch("core.unified_client._http_json_get", return_value=_ok_response({"status": "ok"})):
+        r = rpg_client.get("/api/unified/x280/health")
+    assert r.status_code == 200
+    assert r.json()["ok"] is True
+
+
+def test_x280_status_ok(rpg_client):
+    with patch("core.unified_client._http_json_get", return_value=_ok_response({"adb_connected": True})):
+        r = rpg_client.get("/api/unified/x280/status")
+    assert r.status_code == 200
+    assert r.json()["ok"] is True
+
+
+def test_x280_adb_devices_ok(rpg_client):
+    with patch("core.unified_client._http_json_get", return_value=_ok_response({"devices": []})):
+        r = rpg_client.get("/api/unified/x280/adb/devices")
+    assert r.status_code == 200
+    assert r.json()["ok"] is True
+
+
+# ---------------------------------------------------------------------------
+# X280 adb/setup / adb/connect (POST, write-gated)
+# ---------------------------------------------------------------------------
+
+def test_x280_adb_setup_ok(rpg_client):
+    with patch("core.unified_client._http_json_post", return_value=_ok_response({"result": "done"})):
+        r = rpg_client.post("/api/unified/x280/adb/setup", json={"target": "pixel7"})
+    assert r.status_code == 200
+    assert r.json()["ok"] is True
+
+
+def test_x280_adb_setup_write_disabled(rpg_client_readonly):
+    r = rpg_client_readonly.post("/api/unified/x280/adb/setup", json={"target": "pixel7"})
+    assert r.status_code == 403
+
+
+def test_x280_adb_connect_ok(rpg_client):
+    with patch("core.unified_client._http_json_post", return_value=_ok_response({"connected": True})):
+        r = rpg_client.post("/api/unified/x280/adb/connect", json={"host": "192.168.1.100"})
+    assert r.status_code == 200
+    assert r.json()["ok"] is True
+
+
+def test_x280_adb_connect_write_disabled(rpg_client_readonly):
+    r = rpg_client_readonly.post("/api/unified/x280/adb/connect", json={"host": "192.168.1.100"})
+    assert r.status_code == 403

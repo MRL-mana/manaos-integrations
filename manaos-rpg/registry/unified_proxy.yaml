@@ -203,3 +203,40 @@ rules:
   gate: write
   enabled: true
   timeout_s: 12
+
+# --- X280 direct ---
+- id: get_api_x280_health
+  label: X280 ヘルス確認
+  method: GET
+  path: /api/x280/health
+  gate: read
+  enabled: true
+  timeout_s: 8
+- id: get_api_x280_status
+  label: X280 ステータス
+  method: GET
+  path: /api/x280/status
+  gate: read
+  enabled: true
+  timeout_s: 8
+- id: get_api_x280_adb_devices
+  label: X280 ADB デバイス一覧
+  method: GET
+  path: /api/x280/adb/devices
+  gate: read
+  enabled: true
+  timeout_s: 10
+- id: post_api_x280_adb_setup
+  label: X280 ADB セットアップ
+  method: POST
+  path: /api/x280/adb/setup
+  gate: write
+  enabled: true
+  timeout_s: 15
+- id: post_api_x280_adb_connect
+  label: X280 ADB 接続
+  method: POST
+  path: /api/x280/adb/connect
+  gate: write
+  enabled: true
+  timeout_s: 12
