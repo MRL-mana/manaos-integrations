@@ -120,6 +120,15 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
   const [analyzeCodeContext, setAnalyzeCodeContext] = useState('')
   const [analyzeOut, setAnalyzeOut] = useState('')
 
+  const [gtdInbox, setGtdInbox] = useState([])
+  const [gtdCaptureText, setGtdCaptureText] = useState('')
+  const [gtdCaptureType, setGtdCaptureType] = useState('メモ')
+  const [gtdCaptureNote, setGtdCaptureNote] = useState('')
+  const [gtdMorning, setGtdMorning] = useState('')
+  const [gtdProcessFile, setGtdProcessFile] = useState('')
+  const [gtdProcessNA, setGtdProcessNA] = useState('')
+  const [gtdOut, setGtdOut] = useState('')
+
   const proxyRules = useMemo(() => (Array.isArray(unifiedProxy?.rules) ? unifiedProxy.rules : []), [unifiedProxy])
 
   const openapi = unifiedIntegrations?.data?.openapi
@@ -593,6 +602,98 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
     }
   }
 
+  async function fetchGtdInbox() {
+    setBusyOp('gtd_inbox')
+    setGtdOut('')
+    try {
+      const res = await fetch(`${apiBase}/api/unified/gtd/inbox/list`)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setGtdOut(`ERR: ${data?.detail || data?.error || res.status}`)
+        return
+      }
+      setGtdInbox(Array.isArray(data?.data) ? data.data : [])
+      setGtdOut(truncateOutput(JSON.stringify(data, null, 2)))
+    } catch (e) {
+      setGtdOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+
+  async function fetchGtdMorning() {
+    setBusyOp('gtd_morning')
+    setGtdMorning('')
+    setGtdOut('')
+    try {
+      const res = await fetch(`${apiBase}/api/unified/gtd/morning`)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setGtdOut(`ERR: ${data?.detail || data?.error || res.status}`)
+        return
+      }
+      const txt = data?.data?.summary || data?.data?.morning_summary || JSON.stringify(data.data, null, 2)
+      setGtdMorning(truncateOutput(String(txt)))
+      setGtdOut(truncateOutput(JSON.stringify(data, null, 2)))
+    } catch (e) {
+      setGtdOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+
+  async function runGtdCapture() {
+    const text = gtdCaptureText.trim()
+    if (!text) return
+    setBusyOp('gtd_capture')
+    setGtdOut('')
+    try {
+      const res = await fetch(`${apiBase}/api/unified/gtd/capture`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, type: gtdCaptureType, note: gtdCaptureNote || undefined })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setGtdOut(`ERR: ${data?.detail || data?.error || res.status}`)
+        return
+      }
+      setGtdCaptureText('')
+      setGtdCaptureNote('')
+      setGtdOut(truncateOutput(JSON.stringify(data, null, 2)))
+    } catch (e) {
+      setGtdOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+
+  async function runGtdProcess() {
+    const filename = gtdProcessFile.trim()
+    if (!filename) return
+    setBusyOp('gtd_process')
+    setGtdOut('')
+    try {
+      const res = await fetch(`${apiBase}/api/unified/gtd/process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename, next_action: gtdProcessNA || undefined })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setGtdOut(`ERR: ${data?.detail || data?.error || res.status}`)
+        return
+      }
+      setGtdProcessFile('')
+      setGtdProcessNA('')
+      setGtdOut(truncateOutput(JSON.stringify(data, null, 2)))
+    } catch (e) {
+      setGtdOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+
   return (
     <div>
       <div className="panelTitle">魔法（スキル）</div>
@@ -710,6 +811,9 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
             <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('llm_models')}>LLM models</button>
             <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('unified_openapi')}>Unified OpenAPI</button>
             <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('unified_proxy_doctor')}>Proxy Doctor</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('gtd_status')}>GTD status</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('gtd_morning')}>GTD morning</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('integrations_status')}>integrations status</button>
             <span className="small">AUTH? が出る場合は `MANAOS_UNIFIED_API_KEY` を設定</span>
           </div>
           {monitorOut ? <OutputBlock text={monitorOut} onClear={() => setMonitorOut('')} /> : <div className="small">ここにJSONを表示（エラーも含む）</div>}
@@ -876,6 +980,82 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
           </div>
 
           {notifyOut ? <OutputBlock text={notifyOut} onClear={() => setNotifyOut('')} /> : <div className="small">結果はここに出る（queued/sent/failed など）</div>}
+        </div>
+      </div>
+
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">GTD</span>
+          <span>タスク管理（Getting Things Done）</span>
+          <span className="small">/api/unified/gtd/*</span>
+        </div>
+        <div className="boxBody">
+          <div className="skillActions">
+            <button className="link" disabled={!!busyOp} onClick={fetchGtdMorning}>{busyOp === 'gtd_morning' ? '…' : '今日の優先事項（morning）'}</button>
+            <button className="link" disabled={!!busyOp} onClick={fetchGtdInbox}>{busyOp === 'gtd_inbox' ? '…' : 'Inbox 一覧'}</button>
+          </div>
+          {gtdMorning ? (
+            <div className="small mt10" style={{ whiteSpace: 'pre-wrap', maxHeight: '180px', overflowY: 'auto' }}>{gtdMorning}</div>
+          ) : null}
+          {gtdInbox.length > 0 ? (
+            <div className="mt10">
+              <div className="small">Inbox（{gtdInbox.length}件）— クリックでファイル名を Process欄にセット</div>
+              <div style={{ maxHeight: '140px', overflowY: 'auto' }}>
+                {gtdInbox.map((f, i) => (
+                  <div key={i} className="small mono" style={{ cursor: 'pointer', padding: '2px 0' }}
+                    onClick={() => setGtdProcessFile(String(f?.filename || f || ''))}
+                  >{String(f?.filename || f || '')}</div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="hr" />
+
+          <div className="sectionHead">
+            <span className="mono">CAPTURE</span>
+            <span>Inbox に登録（POST）</span>
+            <span className="small">/api/unified/gtd/capture</span>
+          </div>
+          <textarea className="input" rows={2} value={gtdCaptureText} onChange={(e) => setGtdCaptureText(e.target.value)} placeholder="text（必須）— 登録する内容" aria-label="GTDキャプチャテキスト" />
+          <div className="kv">
+            <span>TYPE</span>
+            <span>
+              <select value={gtdCaptureType} onChange={(e) => setGtdCaptureType(e.target.value)} aria-label="GTDキャプチャ種別">
+                <option value="メモ">メモ</option>
+                <option value="タスク">タスク</option>
+                <option value="アイデア">アイデア</option>
+                <option value="参照">参照</option>
+                <option value="懸念">懸念</option>
+              </select>
+            </span>
+          </div>
+          <textarea className="input" rows={2} value={gtdCaptureNote} onChange={(e) => setGtdCaptureNote(e.target.value)} placeholder="note（任意）— 補足メモ" aria-label="GTDキャプチャノート" />
+          <div className="skillActions">
+            <button className="link" onClick={runGtdCapture} disabled={!!busyOp || !gtdCaptureText.trim()}>{busyOp === 'gtd_capture' ? '登録中…' : '登録（POST）'}</button>
+            <span className="small">※ backendで `MANAOS_RPG_ENABLE_UNIFIED_WRITE=1` が必要</span>
+          </div>
+
+          <div className="hr" />
+
+          <div className="sectionHead">
+            <span className="mono">PROCESS</span>
+            <span>Inbox 処理（POST）</span>
+            <span className="small">/api/unified/gtd/process</span>
+          </div>
+          <div className="kv">
+            <span>FILE</span>
+            <span>
+              <input className="input" value={gtdProcessFile} onChange={(e) => setGtdProcessFile(e.target.value)} placeholder="filename（必須）— Inboxファイル名" aria-label="GTD処理ファイル名" />
+            </span>
+          </div>
+          <textarea className="input" rows={2} value={gtdProcessNA} onChange={(e) => setGtdProcessNA(e.target.value)} placeholder="next_action（任意）— 次のアクション" aria-label="GTD次のアクション" />
+          <div className="skillActions">
+            <button className="link" onClick={runGtdProcess} disabled={!!busyOp || !gtdProcessFile.trim()}>{busyOp === 'gtd_process' ? '処理中…' : '処理（POST）'}</button>
+            <span className="small">※ backendで `MANAOS_RPG_ENABLE_UNIFIED_WRITE=1` が必要</span>
+          </div>
+
+          {gtdOut ? <OutputBlock text={gtdOut} onClear={() => setGtdOut('')} /> : <div className="small">結果はここに出る</div>}
         </div>
       </div>
 

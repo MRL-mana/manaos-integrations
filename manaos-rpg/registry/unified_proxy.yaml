@@ -35,3 +35,120 @@ rules:
   gate: write
   enabled: true
   timeout_s: 12
+
+# --- 統合モジュール ---
+- id: get_api_integrations_status
+  label: 統合モジュール ステータス
+  method: GET
+  path: /api/integrations/status
+  gate: read
+  enabled: true
+  timeout_s: 12
+
+# --- ComfyUI キュー/履歴 ---
+- id: get_api_comfyui_queue
+  label: ComfyUI キュー確認
+  method: GET
+  path: /api/comfyui/queue
+  gate: read
+  enabled: true
+  timeout_s: 10
+- id: get_api_comfyui_history
+  label: ComfyUI 履歴確認
+  method: GET
+  path: /api/comfyui/history
+  gate: read
+  enabled: true
+  timeout_s: 10
+
+# --- LLM ---
+- id: get_api_llm_health
+  label: LLM ヘルスチェック
+  method: GET
+  path: /api/llm/health
+  gate: read
+  enabled: true
+  timeout_s: 10
+- id: get_api_llm_models_enhanced
+  label: LLM モデル一覧（enhanced）
+  method: GET
+  path: /api/llm/models-enhanced
+  gate: read
+  enabled: true
+  timeout_s: 10
+- id: post_api_llm_analyze
+  label: LLM 難易度分析
+  method: POST
+  path: /api/llm/analyze
+  gate: write
+  enabled: true
+  timeout_s: 30
+- id: post_api_llm_route_enhanced
+  label: LLM ルーティング（enhanced）
+  method: POST
+  path: /api/llm/route-enhanced
+  gate: write
+  enabled: true
+  timeout_s: 60
+
+# --- Memory ---
+- id: get_api_memory_recall
+  label: Memory recall（検索）
+  method: GET
+  path: /api/memory/recall
+  gate: read
+  enabled: true
+  timeout_s: 12
+- id: post_api_memory_store
+  label: Memory store（保存）
+  method: POST
+  path: /api/memory/store
+  gate: write
+  enabled: true
+  timeout_s: 20
+
+# --- GTD ---
+- id: get_api_gtd_status
+  label: GTD ステータス
+  method: GET
+  path: /api/gtd/status
+  gate: read
+  enabled: true
+  timeout_s: 10
+- id: get_api_gtd_morning
+  label: GTD 今日の優先事項（モーニング）
+  method: GET
+  path: /api/gtd/morning
+  gate: read
+  enabled: true
+  timeout_s: 10
+- id: get_api_gtd_inbox_list
+  label: GTD Inbox 一覧
+  method: GET
+  path: /api/gtd/inbox/list
+  gate: read
+  enabled: true
+  timeout_s: 10
+- id: post_api_gtd_capture
+  label: GTD Capture（タスク登録）
+  method: POST
+  path: /api/gtd/capture
+  gate: write
+  enabled: true
+  timeout_s: 12
+- id: post_api_gtd_process
+  label: GTD Process（Inbox処理）
+  method: POST
+  path: /api/gtd/process
+  gate: write
+  enabled: true
+  timeout_s: 12
+
+# --- SD Prompt ---
+- id: post_api_sd_prompt_generate
+  label: SD プロンプト生成
+  method: POST
+  path: /api/sd-prompt/generate
+  gate: write
+  enabled: true
+  timeout_s: 30

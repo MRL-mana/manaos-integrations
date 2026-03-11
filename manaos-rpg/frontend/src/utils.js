@@ -41,7 +41,10 @@ export const MONITOR_ROUTES = {
   llm_health: { path: '/api/unified/llm/health', requires: '/api/llm/health' },
   llm_models: { path: '/api/unified/llm/models-enhanced', requires: '/api/llm/models-enhanced' },
   unified_openapi: { path: '/api/unified/openapi' },
-  unified_proxy_doctor: { path: '/api/unified/proxy/doctor?limit=200&probe_timeout_s=1.5&max_total_s=8' }
+  unified_proxy_doctor: { path: '/api/unified/proxy/doctor?limit=200&probe_timeout_s=1.5&max_total_s=8' },
+  gtd_status: { path: '/api/unified/gtd/status', requires: '/api/gtd/status' },
+  gtd_morning: { path: '/api/unified/gtd/morning', requires: '/api/gtd/morning' },
+  integrations_status: { path: '/api/unified/integrations/status', requires: '/api/integrations/status' }
 }
 
 export function pad2(n) {

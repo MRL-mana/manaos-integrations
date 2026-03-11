@@ -392,3 +392,32 @@ skills:
         label: Slack
         tags: [communication]
         notes: "通知/ボット/統合"
+
+  - id: gtd
+    label: GTD（タスク管理）
+    tags: [gtd, secretary, task]
+    items:
+      - id: gtd_status
+        label: GTD ステータス
+        tags: [api, status]
+        notes: "Capture Server 生存確認 + Inbox件数"
+        url: http://127.0.0.1:9502/api/gtd/status
+        integration_key: gtd_capture
+      - id: gtd_morning
+        label: GTD 今日の優先事項（モーニング）
+        tags: [api, morning]
+        notes: "今日の最重要タスク / 日次ログ サマリ"
+        url: http://127.0.0.1:9502/api/gtd/morning
+        integration_key: gtd_capture
+      - id: gtd_inbox_list
+        label: GTD Inbox 一覧
+        tags: [api, inbox]
+        notes: "未処理 Inbox ファイル一覧"
+        url: http://127.0.0.1:9502/api/gtd/inbox/list
+        integration_key: gtd_capture
+      - id: gtd_capture_ui
+        label: GTD Capture（UI）
+        tags: [ui, capture]
+        notes: "ブラウザ Capture UI（Capture Server 直接）"
+        url: http://127.0.0.1:5130/capture
+        integration_key: gtd_capture

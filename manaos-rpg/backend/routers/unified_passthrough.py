@@ -319,3 +319,61 @@ def api_unified_ltx2_infinity_generate(body: dict[str, Any]) -> dict[str, Any]:
         payload=payload,
         timeout_s=300.0,
     )
+
+
+# ---------------------------------------------------------------------------
+# GTD (Getting Things Done)
+# ---------------------------------------------------------------------------
+
+@router.get("/api/unified/gtd/status")
+def api_unified_gtd_status() -> dict[str, Any]:
+    return _unified_get("/api/gtd/status", timeout_s=8.0)
+
+
+@router.get("/api/unified/gtd/morning")
+def api_unified_gtd_morning() -> dict[str, Any]:
+    return _unified_get("/api/gtd/morning", timeout_s=8.0)
+
+
+@router.get("/api/unified/gtd/inbox/list")
+def api_unified_gtd_inbox_list() -> dict[str, Any]:
+    return _unified_get("/api/gtd/inbox/list", timeout_s=8.0)
+
+
+@router.post("/api/unified/gtd/capture")
+def api_unified_gtd_capture(body: dict[str, Any]) -> dict[str, Any]:
+    _require_unified_write()
+    payload = _validate_proxy_body(body)
+    text = str(payload.get("text") or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="text is required")
+    return _unified_post("/api/gtd/capture", payload=payload, timeout_s=12.0)
+
+
+@router.post("/api/unified/gtd/process")
+def api_unified_gtd_process(body: dict[str, Any]) -> dict[str, Any]:
+    _require_unified_write()
+    payload = _validate_proxy_body(body)
+    if not payload.get("filename"):
+        raise HTTPException(status_code=400, detail="filename is required")
+    return _unified_post("/api/gtd/process", payload=payload, timeout_s=12.0)
+
+
+# ---------------------------------------------------------------------------
+# 統合モジュール ステータス
+# ---------------------------------------------------------------------------
+
+@router.get("/api/unified/integrations/status")
+def api_unified_integrations_status() -> dict[str, Any]:
+    return _unified_get("/api/integrations/status", timeout_s=12.0)
+
+
+# ---------------------------------------------------------------------------
+# SD Prompt 生成
+# ---------------------------------------------------------------------------
+
+@router.post("/api/unified/sd-prompt/generate")
+def api_unified_sd_prompt_generate(body: dict[str, Any]) -> dict[str, Any]:
+    _require_unified_write()
+    payload = _validate_proxy_body(body)
+    return _unified_post("/api/sd-prompt/generate", payload=payload, timeout_s=30.0)
