@@ -471,3 +471,10 @@ def api_unified_x280_adb_connect(body: dict[str, Any]) -> dict[str, Any]:
     payload = _validate_proxy_body(body)
     return _unified_post("/api/x280/adb/connect", payload=payload, timeout_s=12.0)
 
+
+@router.post("/api/unified/x280/adb/forward")
+def api_unified_x280_adb_forward(body: dict[str, Any]) -> dict[str, Any]:
+    _require_unified_write()
+    payload = _validate_proxy_body(body)
+    return _unified_post("/api/x280/adb/forward", payload=payload, timeout_s=10.0)
+
