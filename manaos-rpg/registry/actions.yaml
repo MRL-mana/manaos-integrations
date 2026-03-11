@@ -135,6 +135,22 @@ actions:
     timeout_sec: 900
     tags: [ops, storage, backup, cloud]
 
+  - id: jarvis_io_test
+    label: JARVIS I/O 接続テスト（Pixel7 connect + mic 3秒）
+    kind: pwsh_file
+    path: scripts/misc/pixel7_jarvis_io.py
+    cwd: .\
+    timeout_sec: 60
+    tags: [device, voice]
+
+  - id: jarvis_start
+    label: JARVIS 起動（Pixel7 音声秘書 / 通常モード）
+    kind: pwsh_file
+    path: scripts/misc/run_pixel7_jarvis.ps1
+    cwd: .\
+    timeout_sec: 30
+    tags: [device, voice]
+
   - id: organize_c_ai_to_d
     label: CのAI生成物をD(AI)へ整理移動
     kind: pwsh_file

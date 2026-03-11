@@ -60,6 +60,18 @@ quests:
     action_id: unified_proxy_enable_read_exists
     tags: [ops]
 
+  - id: run_jarvis_io_test
+    label: JARVIS I/O 接続テスト（Pixel7）
+    kind: action
+    action_id: jarvis_io_test
+    tags: [device, voice]
+
+  - id: run_jarvis_start
+    label: JARVIS 起動（Pixel7 音声秘書）
+    kind: action
+    action_id: jarvis_start
+    tags: [device, voice]
+
   - id: run_mrl_memory_write_on_full
     label: mrl-memory 書き込みON（full）
     kind: action

@@ -591,6 +591,13 @@ services:
     tags: [device, adb]
     depends_on: []
 
+  # ═══════ JARVIS / Voice Secretary ═══════
+  - id: jarvis_pixel7
+    name: JARVIS 音声秘書 (Pixel7)
+    kind: process
+    tags: [ai, voice, device, pixel7]
+    depends_on: [ollama]
+
   # ═══════ Training (実行中) ═══════
   - id: castle_ex_training
     name: castle_ex LoRA Training

@@ -332,6 +332,10 @@ skills:
         label: X280 リモートセットアップ
         tags: [remote, rdp]
         notes: "母艦→X280 入口準備"
+      - id: pixel7_jarvis
+        label: Pixel7 JARVIS 音声秘書
+        tags: [voice, ai, adb]
+        notes: "Pixel7をマイク/スピーカー/カメラとして使うレミ音声秘書（So-VITS-SVC対応）"
 
   - id: web_search
     label: Web検索
