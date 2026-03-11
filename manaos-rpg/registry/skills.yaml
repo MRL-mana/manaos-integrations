@@ -330,8 +330,22 @@ skills:
         notes: "keepalive + scrcpy watch + reboot watch ワンボタン"
       - id: x280_setup
         label: X280 リモートセットアップ
-        tags: [remote, rdp]
-        notes: "母艦→X280 入口準備"
+        tags: [remote, rdp, gateway]
+        notes: "母艦→X280 入口準備（ファイル転送＋ゲートウェイ起動）"
+        url: http://127.0.0.1:9502/api/x280/health
+        integration_key: x280_gateway
+      - id: x280_gateway_status
+        label: X280 ゲートウェイ状態
+        tags: [remote, api, status]
+        notes: "X280 ADB・Pixel7接続の総合ステータス"
+        url: http://127.0.0.1:9502/api/x280/status
+        integration_key: x280_gateway
+      - id: x280_adb_devices
+        label: X280 ADB デバイス一覧
+        tags: [adb, remote]
+        notes: "X280に接続されたADBデバイス一覧"
+        url: http://127.0.0.1:9502/api/x280/adb/devices
+        integration_key: x280_gateway
       - id: pixel7_jarvis
         label: Pixel7 JARVIS 音声秘書
         tags: [voice, ai, adb]

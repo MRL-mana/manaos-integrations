@@ -44,7 +44,10 @@ export const MONITOR_ROUTES = {
   unified_proxy_doctor: { path: '/api/unified/proxy/doctor?limit=200&probe_timeout_s=1.5&max_total_s=8' },
   gtd_status: { path: '/api/unified/gtd/status', requires: '/api/gtd/status' },
   gtd_morning: { path: '/api/unified/gtd/morning', requires: '/api/gtd/morning' },
-  integrations_status: { path: '/api/unified/integrations/status', requires: '/api/integrations/status' }
+  integrations_status: { path: '/api/unified/integrations/status', requires: '/api/integrations/status' },
+  x280_health: { path: '/api/unified/x280/health', requires: '/api/x280/health' },
+  x280_status: { path: '/api/unified/x280/status', requires: '/api/x280/status' },
+  x280_adb_devices: { path: '/api/unified/x280/adb/devices', requires: '/api/x280/adb/devices' }
 }
 
 export function pad2(n) {

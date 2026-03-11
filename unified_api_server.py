@@ -2287,6 +2287,78 @@ def gtd_inbox_delete_proxy(filename: str):
 
 
 # ---------------------------------------------------------------------------
+# X280 API Gateway プロキシ  /api/x280/*  →  X280_API_URL (port 5120)
+# ---------------------------------------------------------------------------
+
+def _x280_api_url() -> str:
+    return os.getenv("X280_API_URL", "http://100.127.121.20:5120")
+
+
+def _x280_proxy(subpath: str):
+    """X280 API Gateway (port 5120) へ透過的にプロキシする"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_unavailable", 503, error="unavailable", namespace="x280")
+
+    base = _x280_api_url().rstrip("/")
+    url = f"{base}/{subpath}"
+
+    method = request.method
+    try:
+        resp = requests.request(
+            method=method,
+            url=url,
+            headers={k: v for k, v in request.headers if k.lower() != "host"},
+            data=request.get_data(),
+            params=request.args,
+            timeout=15,
+        )
+        return (resp.content, resp.status_code, {"Content-Type": resp.headers.get("Content-Type", "application/json")})
+    except requests.exceptions.ConnectionError:
+        return _json_error("x280_gateway_unreachable", 503, error="unavailable", namespace="x280")
+    except requests.exceptions.Timeout:
+        return _json_error("x280_gateway_timeout", 504, error="timeout", namespace="x280")
+    except Exception as e:
+        logger.warning(f"X280 proxy error: {e}")
+        return _json_error("x280_proxy_failed", 500, error="internal_error", namespace="x280")
+
+
+@app.route("/api/x280/health", methods=["GET"])
+def x280_health_proxy():
+    return _x280_proxy("health")
+
+
+@app.route("/api/x280/status", methods=["GET"])
+def x280_status_proxy():
+    return _x280_proxy("api/status")
+
+
+@app.route("/api/x280/adb/devices", methods=["GET"])
+def x280_adb_devices_proxy():
+    return _x280_proxy("api/adb/devices")
+
+
+@app.route("/api/x280/adb/setup", methods=["POST"])
+def x280_adb_setup_proxy():
+    return _x280_proxy("api/adb/setup")
+
+
+@app.route("/api/x280/adb/forward", methods=["POST"])
+def x280_adb_forward_proxy():
+    return _x280_proxy("api/adb/forward")
+
+
+@app.route("/api/x280/adb/connect", methods=["POST"])
+def x280_adb_connect_proxy():
+    return _x280_proxy("api/adb/connect")
+
+
+@app.route("/api/x280/pixel7/<path:subpath>", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+def x280_pixel7_proxy(subpath: str):
+    """母艦 → X280 → Pixel7 の3段プロキシ"""
+    return _x280_proxy(f"api/pixel7/{subpath}")
+
+
+# ---------------------------------------------------------------------------
 
 
 @app.route("/ops/plan", methods=["POST"])

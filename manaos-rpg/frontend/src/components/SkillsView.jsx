@@ -129,6 +129,10 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
   const [gtdProcessNA, setGtdProcessNA] = useState('')
   const [gtdOut, setGtdOut] = useState('')
 
+  const [x280Out, setX280Out] = useState('')
+  const [x280Devices, setX280Devices] = useState([])
+  const [x280AdbForwardPort, setX280AdbForwardPort] = useState('5122')
+
   const proxyRules = useMemo(() => (Array.isArray(unifiedProxy?.rules) ? unifiedProxy.rules : []), [unifiedProxy])
 
   const openapi = unifiedIntegrations?.data?.openapi
@@ -694,6 +698,69 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
     }
   }
 
+  async function fetchX280Status() {
+    setBusyOp('x280_status')
+    setX280Out('')
+    try {
+      const res = await fetch(`${apiBase}/api/unified/x280/status`)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setX280Out(`ERR: ${data?.detail || data?.error || res.status}`)
+        return
+      }
+      const devs = data?.adb?.devices || []
+      setX280Devices(devs)
+      setX280Out(truncateOutput(JSON.stringify(data, null, 2)))
+    } catch (e) {
+      setX280Out(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+
+  async function runX280AdbSetup() {
+    setBusyOp('x280_adb_setup')
+    setX280Out('')
+    try {
+      const res = await fetch(`${apiBase}/api/unified/x280/adb/setup`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setX280Out(`ERR: ${data?.detail || data?.error || res.status}`)
+        return
+      }
+      const devs = data?.devices || []
+      setX280Devices(devs)
+      setX280Out(truncateOutput(JSON.stringify(data, null, 2)))
+    } catch (e) {
+      setX280Out(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+
+  async function runX280AdbForward() {
+    const port = parseInt(x280AdbForwardPort, 10) || 5122
+    setBusyOp('x280_adb_forward')
+    setX280Out('')
+    try {
+      const res = await fetch(`${apiBase}/api/unified/x280/adb/forward`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ local_port: port, remote_port: port })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setX280Out(`ERR: ${data?.detail || data?.error || res.status}`)
+        return
+      }
+      setX280Out(truncateOutput(JSON.stringify(data, null, 2)))
+    } catch (e) {
+      setX280Out(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+
   return (
     <div>
       <div className="panelTitle">魔法（スキル）</div>
@@ -1056,6 +1123,43 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
           </div>
 
           {gtdOut ? <OutputBlock text={gtdOut} onClear={() => setGtdOut('')} /> : <div className="small">結果はここに出る</div>}
+        </div>
+      </div>
+
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">X280</span>
+          <span>母艦 → X280 → Pixel7 ゲートウェイ</span>
+          <span className="small">/api/unified/x280/*</span>
+        </div>
+        <div className="boxBody">
+          <div className="small">X280 API Gateway（port 5120）経由でPixel7をリモート操作。USB接続時はADBフォワードで3段プロキシ。</div>
+          <div className="skillActions">
+            <button className="link" onClick={fetchX280Status} disabled={!!busyOp}>{busyOp === 'x280_status' ? '確認中…' : 'ステータス確認'}</button>
+            <button className="link" onClick={() => fetchMonitor('x280_health')} disabled={!!busyOp}>MONITOR ヘルス</button>
+            <button className="link" onClick={() => fetchMonitor('x280_adb_devices')} disabled={!!busyOp}>MONITOR ADB</button>
+          </div>
+          {x280Devices.length > 0 && (
+            <div className="small mt6">
+              <b>接続デバイス:</b> {x280Devices.join(', ')}
+            </div>
+          )}
+          <div className="hr" />
+          <div className="small"><b>ADB セットアップ（USB接続→フォワード自動設定）</b></div>
+          <div className="skillActions">
+            <button className="link" onClick={runX280AdbSetup} disabled={!!busyOp}>{busyOp === 'x280_adb_setup' ? 'セットアップ中…' : 'ADB Setup（POST）'}</button>
+            <span className="small">Pixel7 USB接続後に実行 → adb forward tcp:5122 自動設定</span>
+          </div>
+          <div className="hr" />
+          <div className="small"><b>ADB ポートフォワード（手動）</b></div>
+          <div className="kv">
+            <span>PORT</span>
+            <input className="input" style={{width:'80px'}} value={x280AdbForwardPort} onChange={(e) => setX280AdbForwardPort(e.target.value)} placeholder="5122" aria-label="ADBフォワードポート" />
+          </div>
+          <div className="skillActions">
+            <button className="link" onClick={runX280AdbForward} disabled={!!busyOp || !x280AdbForwardPort}>{busyOp === 'x280_adb_forward' ? '設定中…' : 'Forward（POST）'}</button>
+          </div>
+          {x280Out ? <OutputBlock text={x280Out} onClear={() => setX280Out('')} /> : <div className="small">結果はここに出る</div>}
         </div>
       </div>
 
