@@ -87,7 +87,7 @@ warn_unused_configs = true
 ignore_missing_imports = true
 
 [tool.pycodestyle]
-max_line_length = 100
+max_line_length = 140
 
 [tool.pylint.MASTER]
 ignored-modules = ["fastapi", "pydantic", "starlette", "stripe", "uvicorn"]
