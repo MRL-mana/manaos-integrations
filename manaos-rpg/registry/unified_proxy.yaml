@@ -152,3 +152,54 @@ rules:
   gate: write
   enabled: true
   timeout_s: 30
+
+# --- Pixel7 direct ---
+- id: get_api_pixel7_health
+  label: Pixel7 ヘルス確認
+  method: GET
+  path: /api/pixel7/health
+  gate: read
+  enabled: true
+  timeout_s: 8
+- id: get_api_pixel7_status
+  label: Pixel7 ステータス
+  method: GET
+  path: /api/pixel7/status
+  gate: read
+  enabled: true
+  timeout_s: 8
+- id: get_api_pixel7_system_info
+  label: Pixel7 システム情報
+  method: GET
+  path: /api/pixel7/system/info
+  gate: read
+  enabled: true
+  timeout_s: 8
+- id: get_api_pixel7_macro_commands
+  label: Pixel7 マクロコマンド一覧
+  method: GET
+  path: /api/pixel7/macro/commands
+  gate: read
+  enabled: true
+  timeout_s: 8
+- id: post_api_pixel7_execute
+  label: Pixel7 コマンド実行
+  method: POST
+  path: /api/pixel7/execute
+  gate: write
+  enabled: true
+  timeout_s: 12
+- id: post_api_pixel7_open_url
+  label: Pixel7 URL を開く
+  method: POST
+  path: /api/pixel7/open/url
+  gate: write
+  enabled: true
+  timeout_s: 12
+- id: post_api_pixel7_macro_broadcast
+  label: Pixel7 マクロ送信
+  method: POST
+  path: /api/pixel7/macro/broadcast
+  gate: write
+  enabled: true
+  timeout_s: 12

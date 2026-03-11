@@ -129,6 +129,16 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
   const [gtdProcessNA, setGtdProcessNA] = useState('')
   const [gtdOut, setGtdOut] = useState('')
 
+  const [sdPromptDesc, setSdPromptDesc] = useState('')
+  const [sdPromptOut, setSdPromptOut] = useState('')
+
+  const [pixel7Out, setPixel7Out] = useState('')
+  const [pixel7ExecCmd, setPixel7ExecCmd] = useState('')
+  const [pixel7ExecArgs, setPixel7ExecArgs] = useState('')
+  const [pixel7OpenUrl, setPixel7OpenUrl] = useState('')
+  const [pixel7MacroName, setPixel7MacroName] = useState('')
+  const [pixel7MacroArgs, setPixel7MacroArgs] = useState('{}')
+
   const [x280Out, setX280Out] = useState('')
   const [x280Devices, setX280Devices] = useState([])
   const [x280AdbForwardPort, setX280AdbForwardPort] = useState('5122')
@@ -761,6 +771,128 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
     }
   }
 
+  async function runSdPrompt() {
+    const desc = sdPromptDesc.trim()
+    if (!desc) return
+    setBusyOp('sd_prompt')
+    setSdPromptOut('')
+    try {
+      const res = await fetch(`${apiBase}/api/unified/sd-prompt/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: desc })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setSdPromptOut(`ERR: ${data?.detail || data?.error || res.status}`)
+        return
+      }
+      setSdPromptOut(truncateOutput(JSON.stringify(data, null, 2)))
+    } catch (e) {
+      setSdPromptOut(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+
+  async function fetchPixel7Status() {
+    setBusyOp('pixel7_status')
+    setPixel7Out('')
+    try {
+      const res = await fetch(`${apiBase}/api/unified/pixel7/status`)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setPixel7Out(`ERR: ${data?.detail || data?.error || res.status}`)
+        return
+      }
+      setPixel7Out(truncateOutput(JSON.stringify(data, null, 2)))
+    } catch (e) {
+      setPixel7Out(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+
+  async function runPixel7Execute() {
+    const cmd = pixel7ExecCmd.trim()
+    if (!cmd) return
+    setBusyOp('pixel7_execute')
+    setPixel7Out('')
+    try {
+      let args
+      if (pixel7ExecArgs.trim()) {
+        try { args = JSON.parse(pixel7ExecArgs.trim()) } catch { args = pixel7ExecArgs.trim() }
+      }
+      const res = await fetch(`${apiBase}/api/unified/pixel7/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: cmd, ...(args !== undefined ? { args } : {}) })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setPixel7Out(`ERR: ${data?.detail || data?.error || res.status}`)
+        return
+      }
+      setPixel7Out(truncateOutput(JSON.stringify(data, null, 2)))
+    } catch (e) {
+      setPixel7Out(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+
+  async function runPixel7OpenUrl() {
+    const url = pixel7OpenUrl.trim()
+    if (!url) return
+    setBusyOp('pixel7_open_url')
+    setPixel7Out('')
+    try {
+      const res = await fetch(`${apiBase}/api/unified/pixel7/open/url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setPixel7Out(`ERR: ${data?.detail || data?.error || res.status}`)
+        return
+      }
+      setPixel7Out(truncateOutput(JSON.stringify(data, null, 2)))
+    } catch (e) {
+      setPixel7Out(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+
+  async function runPixel7MacroBroadcast() {
+    const name = pixel7MacroName.trim()
+    if (!name) return
+    setBusyOp('pixel7_macro')
+    setPixel7Out('')
+    try {
+      let argsObj = {}
+      if (pixel7MacroArgs.trim() && pixel7MacroArgs.trim() !== '{}') {
+        try { argsObj = JSON.parse(pixel7MacroArgs.trim()) } catch { argsObj = {} }
+      }
+      const res = await fetch(`${apiBase}/api/unified/pixel7/macro/broadcast`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, ...argsObj })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setPixel7Out(`ERR: ${data?.detail || data?.error || res.status}`)
+        return
+      }
+      setPixel7Out(truncateOutput(JSON.stringify(data, null, 2)))
+    } catch (e) {
+      setPixel7Out(`ERR: ${String(e?.message || e)}`)
+    } finally {
+      setBusyOp('')
+    }
+  }
+
   return (
     <div>
       <div className="panelTitle">魔法（スキル）</div>
@@ -1128,6 +1260,36 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
 
       <div className="sectionBlock">
         <div className="sectionHead">
+          <span className="mono">SD PROMPT</span>
+          <span>Stable Diffusion プロンプト生成（POST）</span>
+          <span className="small">/api/unified/sd-prompt/generate</span>
+        </div>
+        <div className="boxBody">
+          <div className="small">日本語の説明文から英語の SD プロンプトを自動生成します。</div>
+          <textarea
+            className="input"
+            rows={3}
+            value={sdPromptDesc}
+            onChange={(e) => setSdPromptDesc(e.target.value)}
+            placeholder="description（必須）— 例：青い空と白い雲の下を走る少女"
+            aria-label="SDプロンプト説明文"
+          />
+          <div className="skillActions">
+            <button
+              className="link"
+              onClick={runSdPrompt}
+              disabled={!!busyOp || !sdPromptDesc.trim()}
+            >
+              {busyOp === 'sd_prompt' ? '生成中…' : '生成（POST）'}
+            </button>
+            <span className="small">※ MANAOS_RPG_ENABLE_UNIFIED_WRITE=1 が必要</span>
+          </div>
+          {sdPromptOut ? <OutputBlock text={sdPromptOut} onClear={() => setSdPromptOut('')} /> : <div className="small">生成された英語プロンプトがここに出る</div>}
+        </div>
+      </div>
+
+      <div className="sectionBlock">
+        <div className="sectionHead">
           <span className="mono">X280</span>
           <span>母艦 → X280 → Pixel7 ゲートウェイ</span>
           <span className="small">/api/unified/x280/*</span>
@@ -1160,6 +1322,89 @@ export default function SkillsView({ skills, prompts, unifiedIntegrations, unifi
             <button className="link" onClick={runX280AdbForward} disabled={!!busyOp || !x280AdbForwardPort}>{busyOp === 'x280_adb_forward' ? '設定中…' : 'Forward（POST）'}</button>
           </div>
           {x280Out ? <OutputBlock text={x280Out} onClear={() => setX280Out('')} /> : <div className="small">結果はここに出る</div>}
+        </div>
+      </div>
+
+      <div className="sectionBlock">
+        <div className="sectionHead">
+          <span className="mono">PIXEL7</span>
+          <span>Pixel7 API Gateway（直接）</span>
+          <span className="small">/api/unified/pixel7/*</span>
+        </div>
+        <div className="boxBody">
+          <div className="small">母艦の Pixel7 API Gateway（port 5122）に直接アクセス。USB ADB 接続不要（Wi-Fi経由可）。</div>
+          <div className="skillActions">
+            <button className="link" disabled={!!busyOp} onClick={fetchPixel7Status}>{busyOp === 'pixel7_status' ? '確認中…' : 'ステータス確認'}</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('pixel7_health')}>MONITOR ヘルス</button>
+            <button className="link" disabled={!!busyOp} onClick={() => fetchMonitor('pixel7_status')}>MONITOR ステータス</button>
+          </div>
+          <div className="hr" />
+          <div className="small"><b>コマンド実行（execute）</b></div>
+          <div className="kv">
+            <span>CMD</span>
+            <input
+              className="input"
+              value={pixel7ExecCmd}
+              onChange={(e) => setPixel7ExecCmd(e.target.value)}
+              placeholder="command（必須）— 例：screenshot"
+              aria-label="Pixel7コマンド"
+            />
+          </div>
+          <div className="kv">
+            <span>ARGS</span>
+            <input
+              className="input"
+              value={pixel7ExecArgs}
+              onChange={(e) => setPixel7ExecArgs(e.target.value)}
+              placeholder="args（任意・JSON or 文字列）"
+              aria-label="Pixel7コマンド引数"
+            />
+          </div>
+          <div className="skillActions">
+            <button className="link" onClick={runPixel7Execute} disabled={!!busyOp || !pixel7ExecCmd.trim()}>{busyOp === 'pixel7_execute' ? '実行中…' : 'execute（POST）'}</button>
+            <span className="small">※ MANAOS_RPG_ENABLE_UNIFIED_WRITE=1 が必要</span>
+          </div>
+          <div className="hr" />
+          <div className="small"><b>URL を開く（open/url）</b></div>
+          <div className="kv">
+            <span>URL</span>
+            <input
+              className="input"
+              value={pixel7OpenUrl}
+              onChange={(e) => setPixel7OpenUrl(e.target.value)}
+              placeholder="https://example.com"
+              aria-label="Pixel7 URL"
+            />
+          </div>
+          <div className="skillActions">
+            <button className="link" onClick={runPixel7OpenUrl} disabled={!!busyOp || !pixel7OpenUrl.trim()}>{busyOp === 'pixel7_open_url' ? '開く中…' : 'open/url（POST）'}</button>
+          </div>
+          <div className="hr" />
+          <div className="small"><b>マクロ送信（macro/broadcast）</b></div>
+          <div className="kv">
+            <span>NAME</span>
+            <input
+              className="input"
+              value={pixel7MacroName}
+              onChange={(e) => setPixel7MacroName(e.target.value)}
+              placeholder="macro name（必須）"
+              aria-label="Pixel7マクロ名"
+            />
+          </div>
+          <div className="kv">
+            <span>ARGS</span>
+            <input
+              className="input"
+              value={pixel7MacroArgs}
+              onChange={(e) => setPixel7MacroArgs(e.target.value)}
+              placeholder="{}"
+              aria-label="Pixel7マクロ引数JSON"
+            />
+          </div>
+          <div className="skillActions">
+            <button className="link" onClick={runPixel7MacroBroadcast} disabled={!!busyOp || !pixel7MacroName.trim()}>{busyOp === 'pixel7_macro' ? '送信中…' : 'macro/broadcast（POST）'}</button>
+          </div>
+          {pixel7Out ? <OutputBlock text={pixel7Out} onClear={() => setPixel7Out('')} /> : <div className="small">結果はここに出る</div>}
         </div>
       </div>
 

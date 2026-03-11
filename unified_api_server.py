@@ -2359,6 +2359,87 @@ def x280_pixel7_proxy(subpath: str):
 
 
 # ---------------------------------------------------------------------------
+# Pixel7 API Gateway プロキシ  /api/pixel7/*  →  PIXEL7_API_URL (port 5122)
+# ---------------------------------------------------------------------------
+
+def _pixel7_api_url() -> str:
+    return os.getenv("PIXEL7_API_URL", "http://127.0.0.1:5122")
+
+
+def _pixel7_proxy(subpath: str):
+    """Pixel7 API Gateway (port 5122) へ透過的にプロキシする"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_unavailable", 503, error="unavailable", namespace="pixel7")
+
+    base = _pixel7_api_url().rstrip("/")
+    url = f"{base}/{subpath}"
+
+    method = request.method
+    try:
+        resp = requests.request(
+            method=method,
+            url=url,
+            headers={k: v for k, v in request.headers if k.lower() != "host"},
+            data=request.get_data(),
+            params=request.args,
+            timeout=15,
+        )
+        return (resp.content, resp.status_code, {"Content-Type": resp.headers.get("Content-Type", "application/json")})
+    except requests.exceptions.ConnectionError:
+        return _json_error("pixel7_gateway_unreachable", 503, error="unavailable", namespace="pixel7")
+    except requests.exceptions.Timeout:
+        return _json_error("pixel7_gateway_timeout", 504, error="timeout", namespace="pixel7")
+    except Exception as e:
+        logger.warning(f"Pixel7 proxy error: {e}")
+        return _json_error("pixel7_proxy_failed", 500, error="internal_error", namespace="pixel7")
+
+
+@app.route("/api/pixel7/health", methods=["GET"])
+def pixel7_health_proxy():
+    return _pixel7_proxy("api/health")
+
+
+@app.route("/api/pixel7/status", methods=["GET"])
+def pixel7_status_proxy():
+    return _pixel7_proxy("api/status")
+
+
+@app.route("/api/pixel7/system/info", methods=["GET"])
+def pixel7_system_info_proxy():
+    return _pixel7_proxy("api/system/info")
+
+
+@app.route("/api/pixel7/system/resources", methods=["GET"])
+def pixel7_system_resources_proxy():
+    return _pixel7_proxy("api/system/resources")
+
+
+@app.route("/api/pixel7/macro/commands", methods=["GET"])
+def pixel7_macro_commands_proxy():
+    return _pixel7_proxy("api/macro/commands")
+
+
+@app.route("/api/pixel7/execute", methods=["POST"])
+def pixel7_execute_proxy():
+    return _pixel7_proxy("api/execute")
+
+
+@app.route("/api/pixel7/batch", methods=["POST"])
+def pixel7_batch_proxy():
+    return _pixel7_proxy("api/batch")
+
+
+@app.route("/api/pixel7/open/url", methods=["POST"])
+def pixel7_open_url_proxy():
+    return _pixel7_proxy("api/open/url")
+
+
+@app.route("/api/pixel7/macro/broadcast", methods=["POST"])
+def pixel7_macro_broadcast_proxy():
+    return _pixel7_proxy("api/macro/broadcast")
+
+
+# ---------------------------------------------------------------------------
 
 
 @app.route("/ops/plan", methods=["POST"])

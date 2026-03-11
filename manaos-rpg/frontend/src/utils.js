@@ -47,7 +47,10 @@ export const MONITOR_ROUTES = {
   integrations_status: { path: '/api/unified/integrations/status', requires: '/api/integrations/status' },
   x280_health: { path: '/api/unified/x280/health', requires: '/api/x280/health' },
   x280_status: { path: '/api/unified/x280/status', requires: '/api/x280/status' },
-  x280_adb_devices: { path: '/api/unified/x280/adb/devices', requires: '/api/x280/adb/devices' }
+  x280_adb_devices: { path: '/api/unified/x280/adb/devices', requires: '/api/x280/adb/devices' },
+  pixel7_health: { path: '/api/unified/pixel7/health', requires: '/api/pixel7/health' },
+  pixel7_status: { path: '/api/unified/pixel7/status', requires: '/api/pixel7/status' },
+  pixel7_macro_commands: { path: '/api/unified/pixel7/macro/commands', requires: '/api/pixel7/macro/commands' }
 }
 
 export function pad2(n) {

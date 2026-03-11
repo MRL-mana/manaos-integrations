@@ -377,3 +377,64 @@ def api_unified_sd_prompt_generate(body: dict[str, Any]) -> dict[str, Any]:
     _require_unified_write()
     payload = _validate_proxy_body(body)
     return _unified_post("/api/sd-prompt/generate", payload=payload, timeout_s=30.0)
+
+
+# ---------------------------------------------------------------------------
+# Pixel7 API Gateway（直接）
+# ---------------------------------------------------------------------------
+
+@router.get("/api/unified/pixel7/health")
+def api_unified_pixel7_health() -> dict[str, Any]:
+    return _unified_get("/api/pixel7/health", timeout_s=8.0)
+
+
+@router.get("/api/unified/pixel7/status")
+def api_unified_pixel7_status() -> dict[str, Any]:
+    return _unified_get("/api/pixel7/status", timeout_s=8.0)
+
+
+@router.get("/api/unified/pixel7/system/info")
+def api_unified_pixel7_system_info() -> dict[str, Any]:
+    return _unified_get("/api/pixel7/system/info", timeout_s=8.0)
+
+
+@router.get("/api/unified/pixel7/system/resources")
+def api_unified_pixel7_system_resources() -> dict[str, Any]:
+    return _unified_get("/api/pixel7/system/resources", timeout_s=8.0)
+
+
+@router.get("/api/unified/pixel7/macro/commands")
+def api_unified_pixel7_macro_commands() -> dict[str, Any]:
+    return _unified_get("/api/pixel7/macro/commands", timeout_s=8.0)
+
+
+@router.post("/api/unified/pixel7/execute")
+def api_unified_pixel7_execute(body: dict[str, Any]) -> dict[str, Any]:
+    _require_unified_write()
+    payload = _validate_proxy_body(body)
+    return _unified_post("/api/pixel7/execute", payload=payload, timeout_s=12.0)
+
+
+@router.post("/api/unified/pixel7/batch")
+def api_unified_pixel7_batch(body: dict[str, Any]) -> dict[str, Any]:
+    _require_unified_write()
+    payload = _validate_proxy_body(body)
+    return _unified_post("/api/pixel7/batch", payload=payload, timeout_s=15.0)
+
+
+@router.post("/api/unified/pixel7/open/url")
+def api_unified_pixel7_open_url(body: dict[str, Any]) -> dict[str, Any]:
+    _require_unified_write()
+    payload = _validate_proxy_body(body)
+    url = str(payload.get("url") or "").strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="url is required")
+    return _unified_post("/api/pixel7/open/url", payload=payload, timeout_s=12.0)
+
+
+@router.post("/api/unified/pixel7/macro/broadcast")
+def api_unified_pixel7_macro_broadcast(body: dict[str, Any]) -> dict[str, Any]:
+    _require_unified_write()
+    payload = _validate_proxy_body(body)
+    return _unified_post("/api/pixel7/macro/broadcast", payload=payload, timeout_s=12.0)
+
