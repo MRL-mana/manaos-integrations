@@ -2220,6 +2220,75 @@ def _ops_build_fallback_plan(text: str) -> Dict[str, Any]:
     }
 
 
+# ---------------------------------------------------------------------------
+# GTD Capture Server プロキシ  /api/gtd/*  →  GTD_CAPTURE_URL (port 5130)
+# ---------------------------------------------------------------------------
+
+def _gtd_capture_url() -> str:
+    return os.getenv("GTD_CAPTURE_URL", "http://127.0.0.1:5130")
+
+
+def _gtd_proxy(subpath: str):
+    """GTD Capture Server (port 5130) へ透過的にプロキシする"""
+    if not REQUESTS_AVAILABLE:
+        return _json_error("requests_unavailable", 503, error="unavailable", namespace="gtd")
+
+    base = _gtd_capture_url().rstrip("/")
+    url = f"{base}/api/gtd/{subpath}"
+
+    method = request.method
+    try:
+        resp = requests.request(
+            method=method,
+            url=url,
+            headers={k: v for k, v in request.headers if k.lower() != "host"},
+            data=request.get_data(),
+            params=request.args,
+            timeout=15,
+        )
+        return (resp.content, resp.status_code, {"Content-Type": resp.headers.get("Content-Type", "application/json")})
+    except requests.exceptions.ConnectionError:
+        return _json_error("gtd_capture_server_unreachable", 503, error="unavailable", namespace="gtd")
+    except requests.exceptions.Timeout:
+        return _json_error("gtd_capture_server_timeout", 504, error="timeout", namespace="gtd")
+    except Exception as e:
+        logger.warning(f"GTD proxy error: {e}")
+        return _json_error("gtd_proxy_failed", 500, error="internal_error", namespace="gtd")
+
+
+@app.route("/api/gtd/status", methods=["GET"])
+def gtd_status_proxy():
+    return _gtd_proxy("status")
+
+
+@app.route("/api/gtd/capture", methods=["POST"])
+def gtd_capture_proxy():
+    return _gtd_proxy("capture")
+
+
+@app.route("/api/gtd/morning", methods=["GET"])
+def gtd_morning_proxy():
+    return _gtd_proxy("morning")
+
+
+@app.route("/api/gtd/inbox/list", methods=["GET"])
+def gtd_inbox_list_proxy():
+    return _gtd_proxy("inbox/list")
+
+
+@app.route("/api/gtd/process", methods=["POST"])
+def gtd_process_proxy():
+    return _gtd_proxy("process")
+
+
+@app.route("/api/gtd/inbox/<path:filename>", methods=["DELETE"])
+def gtd_inbox_delete_proxy(filename: str):
+    return _gtd_proxy(f"inbox/{filename}")
+
+
+# ---------------------------------------------------------------------------
+
+
 @app.route("/ops/plan", methods=["POST"])
 def ops_plan_blueprint():
     """Blueprint互換: 実行計画の作成"""
