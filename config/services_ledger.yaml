@@ -414,3 +414,20 @@ optional:
     auto_restart: false
     cost_risk: "low"
     recovery_hint: "python gtd_capture_server.py を手動起動。gtd/ ディレクトリが存在するか確認。"
+  # ---------------------------------------------------------------------------
+  # Tier 2: RPG API (自律動作・ヘルスチェーン)
+  # ---------------------------------------------------------------------------
+  manaos_rpg:
+    port: 9510
+    url: "http://127.0.0.1:9510"
+    enabled: true
+    tier: 2
+    blast_note: "RPG自律動作・ヘルスチェーン・画像一覧APIが停止する。chat_serverのrpg_autonomy/manual_check/recent_imagesツールが動作不可。"
+    depends_on: []
+    description: "ManaOS RPG API - 自律動作状態・ヘルスチェーン・最近の生成画像一覧"
+    health_url: "http://127.0.0.1:9510/api/autonomy"
+    start_cmd: "python -m uvicorn app:app --host 0.0.0.0 --port 9510"
+    stop_cmd: "pkill -f 'uvicorn app:app.*9510' || true"
+    auto_restart: false
+    cost_risk: "low"
+    recovery_hint: "cd manaos-rpg/backend && python -m uvicorn app:app --host 0.0.0.0 --port 9510 で起動"
