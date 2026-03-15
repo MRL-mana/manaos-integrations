@@ -75,7 +75,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./manaos_integrations
           file: ./manaos_integrations/Dockerfile
@@ -140,7 +140,7 @@ jobs:
           (github.ref == 'refs/heads/main' || 
            github.ref == 'refs/heads/develop' ||
            github.event.inputs.push_to_registry == 'true')
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./manaos_integrations
           file: ./manaos_integrations/Dockerfile
@@ -165,7 +165,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build image for scanning
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./manaos_integrations
           file: ./manaos_integrations/Dockerfile
